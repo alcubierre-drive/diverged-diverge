@@ -5,6 +5,7 @@ import diverge
 import numpy as np
 import sys
 
+# hopping elements (p orbitals)
 def get_phase(o1,o2,po1,po2):
     if(o1 == o2 and o1 == 0):
         return 1.0
@@ -44,9 +45,8 @@ def get_phase(o1,o2,po1,po2):
                 return 1.
 
 
-def emery_model( Ud=3.0, Up=1.0, tdd=0.1,tpp=0.3, tdp=1.0,
-                nk=24, nkf=1, tu_maxdist=2.01,
-                outfile="mod.dvg" ):
+def emery_model( Ud=3.0, Up=1.0, tdd=0.1, tpp=0.3, tdp=1.0, nk=24, nkf=1,
+                 tu_maxdist=2.01, outfile="mod.dvg" ):
 
     # basic setup
     model = diverge.model_init()
@@ -62,8 +62,6 @@ def emery_model( Ud=3.0, Up=1.0, tdd=0.1,tpp=0.3, tdp=1.0,
     # lattice
     L = diverge.view_array( model.contents.lattice, dtype=np.float64, shape=(3,3) )
     L[:,:] = np.eye(3)
-    L[0,:2] = [1.0,0.0]
-    L[1,:2] = [0.0,1.0]
 
     # positions
     positions = diverge.view_array( model.contents.positions, dtype=np.float64, shape=(3,3) )
@@ -155,7 +153,7 @@ def emery_model( Ud=3.0, Up=1.0, tdd=0.1,tpp=0.3, tdp=1.0,
         diverge.mpi_py_eprint("invalid model")
     diverge.model_internals_common( model )
     diverge.model_internals_tu( model, tu_maxdist )
-    print("Symmetry error is: ",diverge.symmetrize_2pt_fine(model,diverge.model_internals_get_H(model),None))
+    diverge.mpi_py_eprint("symmetry error is: %.5e" % diverge.symmetrize_2pt_fine(model,diverge.model_internals_get_H(model),None))
 
     checksum = diverge.model_to_file( model, outfile, True )
     diverge.mpi_py_eprint("wrote to file '%s' (%s)" % (outfile, checksum))
@@ -201,7 +199,10 @@ def cleanup( model, step ):
 diverge.mpi_init(None, None)
 diverge.compilation_status()
 
-model = emery_model( nk=24, nkf = 1, outfile="mod.dvg")
-step = flow( model, outfile="flow.dat" )
-post( step, outfile="out.dvg" )
+model = emery_model( nk=24, nkf = 1, outfile="emery.py_mod.dvg")
+step = flow( model, outfile="emery.py_flow.dat" )
+post( step, outfile="emery.py_out.dvg" )
+
 cleanup( model, step )
+
+diverge.mpi_finalize()
