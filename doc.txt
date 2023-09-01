@@ -8,7 +8,7 @@ from pip:
 pip install diverge
 ============
 You can further download <divERGe.tar.gz at
-https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.2/divERGe.tar.gz>
+https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.3/divERGe.tar.gz>
 to obtain a pre-compiled copy of divERGe that additionally contains the <C
 library at libdivERGe.so> and <some examples at Examples>. For all more pre-built
 versions, see <releases at
@@ -44,7 +44,7 @@ You should now see output as below:
 Troubleshooting::
 If the pip installation fails, you can navigate to the folder where you
 extracted <diverge.tar.gz at
-https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.2/divERGe.tar.gz>
+https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.3/divERGe.tar.gz>
 and execute
 === Code ===
 python3 setup.py install

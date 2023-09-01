@@ -22,7 +22,7 @@ must write an equivalent wrapper yourself.
 # [Documentation](https://frg.pages.rwth-aachen.de/diverge/)
 [https://frg.pages.rwth-aachen.de/diverge/](https://frg.pages.rwth-aachen.de/diverge/)
 
-# [Download CPU release](https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.2/divERGe.tar.gz)
+# [Download CPU release](https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.3/divERGe.tar.gz)
 Generic linux (amd64) builds (GLIBC>=2.17, this should be given almost anywhere
 to date) can be downloaded
 [here](https://git.rwth-aachen.de/frg/diverge/-/tree/master/public/releases). We
@@ -43,12 +43,11 @@ form.
 # Authors
 **Jonas B. Hauck** and **Lennart Klebl**, 2023.
 
+________________________________________________________________________________
+
 # TODOs
-- Add emery model
-- Make repo smaller (compress commits)
-- Make public?
-- doku - structured arrays in python, struct datatype usage
-- example symmetries from python (emery)
-- Wir sollten die log messages ein bisschen aufräumen. Habe mpi_vrb_printf()
-  gebaut, das ist standardmäßig nicht aktiv
+- examples: revisit emery model
+- doc: structured arrays in python, struct datatype usage example symmetries
+  from python (emery)
+- code: clean up log messages (```mpi_vrb_printf()``` vs ```mpi_log_printf()```)
 

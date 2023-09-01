@@ -53,7 +53,7 @@ Makefile_local_CUDA10_2='
 USE_CUDA := true
 CUDA_ROOT := /usr/local/cuda-10.2
 CUCC := $(CUDA_ROOT)/bin/nvcc
-DEFINES += -DCUDA_CIRCUMVENT_CONSTEXPR -DCUDA_VERSION_STR="\"$(shell cat $(CUDA_ROOT)/version.txt)\""
+DEFINES += -DCUDA_CIRCUMVENT_CONSTEXPR -DCUDA_VERSION_STR="\CUDA "$(shell cat $(CUDA_ROOT)/version.txt)\""
 LIBPREFIX_CUDA := -L$(CUDA_ROOT)/lib64 -l
 CULIBS := $(LIBPREFIX_CUDA)cudart_static \
 	  $(LIBPREFIX_CUDA)cufft_static \
