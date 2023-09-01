@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("so",["Class"],[["so",,[["libdivERGe",,,,0,"File:doc_libdivERGe.txt:libdivERGe.so","TextFileClass:libdivERGe.so"]]]]);

@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("ful",["Function"],[["full_vertex_generator_t",,[[,,,,0,"File:src/diverge_model.h:full_vertex_generator_t"]]]]);

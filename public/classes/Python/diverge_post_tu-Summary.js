@@ -1,0 +1,1 @@
+﻿NDFramePage.OnPageTitleLoaded("PythonClass:diverge_post_tu","diverge_post_tu");NDSummary.OnSummaryLoaded("PythonClass:diverge_post_tu",[["Python","Python"]],[["Classes","Class"],["Functions","Function"],["Groups","Group"]],[[266,0,0,"diverge_post_tu"],[267,0,2,"Functions","Functions"],[268,0,1,"diverge_read","diverge_read"]]);

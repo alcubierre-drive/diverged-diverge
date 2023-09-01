@@ -1,0 +1,67 @@
+#pragma once
+
+#include "../diverge_model.h"
+#include "../diverge_common.h"
+#include "../diverge_internals_struct.h"
+#include "../diverge_Eigen3.hpp"
+#include "diverge_interface.hpp"
+#include "global.hpp"
+#include "vertex.hpp"
+#include "propagator.hpp"
+#include "selfenergy.hpp"
+#include "projection_wrapper.hpp"
+#include "projection_handler.hpp"
+#include "../misc/batched_gemms.h"
+
+void vertex_product(complex128_t* result, const complex128_t* const  B,
+                    const complex128_t* const C, complex128_t* helper,
+                    char* GPUbuffer[32][3] ,
+                    const index_t productsize, const index_t nbatch,
+                    const double prefac = 1.0);
+
+class tu_stepper{
+public:
+    tu_stepper(bool* channel,Projection*, tu_loop_t* loop, Vertex* Vertex);
+    vector<double> tu_step_euler(Vertex* inout, double lambda, double dlambda);
+
+    ~tu_stepper(){
+        delete internal_vertex;
+        if(channel_selection[3]) {
+            delete self;
+            free(coarseGF);
+        }
+    }
+    selfEnergy* self;
+    Vertex* internal_vertex;
+
+    vector<double> get_timings( void ) const {
+        return { w_time_GF, w_time_loop, w_time_projection,
+                    w_time_product, w_time_add_find_max, w_time_self, w_time_full};
+    }
+    vector<string> get_timings_descr( void ) const {
+        return { "Greens function", "loop", "projection", "contract", "max and add", "self", "full step" };
+    }
+    index_t get_num_calls( void ) const {
+        return num_calls;
+    }
+
+    double w_time_GF = 0.;
+    double w_time_full = 0.;
+    double w_time_loop = 0.;
+    double w_time_product = 0.;
+    double w_time_projection = 0.;
+    double w_time_add_find_max = 0.;
+    double w_time_self = 0.;
+
+
+private:
+    tu_loop_t* loop;
+    Projection* proj;
+    bool channel_selection[4];
+    double norm[3];
+    index_t prodsize;
+    index_t nk;
+    index_t my_nk;
+    index_t num_calls = 0;
+    complex128_t* coarseGF;
+};

@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("rs_",["Struct","Variable"],[["rs_hopping_t",,[[,,,,0,"File:src/diverge_model.h:rs_hopping_t","CClass:rs_hopping_t"]]],["rs_symmetries",,[["diverge_model_t",,,,1,"File:src/diverge_model.h:diverge_model_t.rs_symmetries","CClass:diverge_model_t:rs_symmetries"]]],["rs_vertex_t",,[[,,,,0,"File:src/diverge_model.h:rs_vertex_t","CClass:rs_vertex_t"]]]]);

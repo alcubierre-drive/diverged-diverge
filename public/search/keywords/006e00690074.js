@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("nit",["Variable"],[["niter",,[["diverge_euler_t",,,,0,"File:src/diverge_euler.h:diverge_euler_t.niter","CClass:diverge_euler_t:niter"]]]]);

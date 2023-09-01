@@ -1,0 +1,1 @@
+﻿NDSummary.OnToolTipsLoaded("PythonClass:mpi_stdout_logger",{284:"<div class=\"NDToolTip TClass LPython\"><div class=\"NDClassPrototype\" id=\"NDClassPrototype284\"><div class=\"CPEntry TClass Current\"><div class=\"CPName\">mpi_stdout_logger</div></div></div><div class=\"TTSummary\">direct output to stdout and a file at the same time. usage:</div></div>"});

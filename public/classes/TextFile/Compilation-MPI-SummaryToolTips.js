@@ -1,0 +1,1 @@
+﻿NDSummary.OnToolTipsLoaded("TextFileClass:Compilation-MPI",{302:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">in your \'Makefile.local\', put</div></div>"});

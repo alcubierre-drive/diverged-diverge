@@ -1,0 +1,67 @@
+#include "../catch.hpp"
+#include "../../src/diverge_model.h"
+#include "../../src/diverge_flow_step.h"
+#include "../../src/diverge_flow_step_internal.hpp"
+#include "../../src/diverge_patching.h"
+#include "../../src/diverge_model_internals.h"
+#include "../../src/diverge_model_output.h"
+
+#include "../../src/grid/vertex_memory.hpp"
+
+#include "../../src/tu/diverge_interface.hpp"
+#include "../../src/tu/diverge_interface_symmstruct.hpp"
+#include "../../src/tu/vertex.hpp"
+#include "../../src/tu/projection_wrapper.hpp"
+#include "../../src/tu/flow_stepper.hpp"
+#include "../../src/misc/generate_symmetries.h"
+#include "../../src/diverge_symmetrize.h"
+
+#include "../model_examples/model_constructor.hpp"
+#include "../helper_functions.hpp"
+
+
+void full_vertex(const diverge_model_t* mod, index_t k1, index_t k2, index_t k3, complex128_t* buf) {
+    index_t nk = kdim( mod->nk );
+    index_t n_os = mod->n_orb * mod->n_spin;
+    index_t size_batch = POW4(n_os);
+    index_t koff = k3 + nk *(k2 + nk * k1);
+    memcpy((void*)buf,(void*)(mod->internals->ham + size_batch * koff),
+            sizeof(complex128_t)*size_batch);
+}
+
+TEST_CASE("check init_from_full","[tu_from_full]") {
+
+    diverge_model_t* mod1 = gen_honeycomb_lat_hub_sym(6,6);
+
+    diverge_model_internals_tu( mod1, 1.2 );
+    diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
+    double dLambda = -0.1;
+    double Lambda = 1;
+
+    for (int i=0; i<4; ++i) {
+        diverge_flow_step_euler( step1, Lambda, dLambda );
+        Lambda += dLambda;
+    }
+    for(index_t i = 0; i < step1->tu_vertex->full_vert_size;++i) {
+        step1->tu_vertex->Pch[i] = 0.0;
+        step1->tu_vertex->Cch[i] = 0.0;
+    }
+    index_t nk = kdim( mod1->nk );
+    index_t n_os = mod1->n_orb * mod1->n_spin;
+    index_t size = POW4(n_os) * POW3(nk);
+
+    mod1->internals->ham = (complex128_t*)realloc(mod1->internals->ham,size*sizeof(complex128_t));
+    complex128_t* buf = (complex128_t*) calloc( size, sizeof(complex128_t) );
+    step1->tu_vertex->project_fullV(mod1, mod1->internals->ham);
+
+    mod1->ffill = &full_vertex;
+    Projection proj (mod1);
+    tu_loop_t loop (mod1);
+    Vertex v2(mod1, &proj,&loop);
+    v2.project_fullV(mod1, buf);
+    CHECK(check_equal(buf,mod1->internals->ham,size));
+
+    free(buf);
+    diverge_flow_step_free(step1);
+    diverge_model_free( mod1 );
+}

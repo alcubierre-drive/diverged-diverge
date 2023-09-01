@@ -1,0 +1,1 @@
+﻿NDSummary.OnToolTipsLoaded("File:doc_patching.txt",{300:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">Advanced npatch setup in divERGe</div></div>"});

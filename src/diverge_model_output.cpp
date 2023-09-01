@@ -1,0 +1,324 @@
+#include "diverge_model_output.h"
+#include "diverge_internals_struct.h"
+#include "diverge_model.h"
+#include "misc/number_repr_checks.h"
+#include "misc/mpi_functions.h"
+
+#include "misc/eigen.h"
+#include "misc/md5.h"
+
+#include "diverge_momentum_gen.h"
+#include "diverge_Eigen3.hpp"
+
+static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t npath );
+static index_t h_diverge_model_nbandstructure = DIVERGE_MODEL_NBANDSTRUCTURE;
+
+void diverge_model_output_set_npath( int npath ) {
+    h_diverge_model_nbandstructure = npath;
+}
+
+char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int include_common_internals ) {
+    char* md5sum = NULL;
+    uindex_t lmd5sum = 0;
+    if (diverge_mpi_comm_rank() == 0) {
+        // allocate the header
+        char* buf = (char*)calloc(sizeof(index_t),128);
+
+        // print the magic number
+        index_t* ibuf = (index_t*)buf;
+        index_t displ = sizeof(index_t)*128;
+        int idx = 0;
+        ibuf[idx++] = DIVERGE_MODEL_MAGIC_NUMBER;
+
+        #define ADD_ARRAY_TO_IBUF( size ) { \
+        ibuf[idx++] = displ; \
+        ibuf[idx] = size; \
+        displ += ibuf[idx++]; \
+        }
+
+        // name
+        ADD_ARRAY_TO_IBUF( sizeof(char)*MAX_NAME_LENGTH );
+
+        ibuf[idx++] = mod->internals->dim;
+        ibuf[idx++] = mod->nk[0];
+        ibuf[idx++] = mod->nk[1];
+        ibuf[idx++] = mod->nk[2];
+        ibuf[idx++] = mod->nkf[0];
+        ibuf[idx++] = mod->nkf[1];
+        ibuf[idx++] = mod->nkf[2];
+
+        // patching
+        if (mod->patching != NULL) {
+            ibuf[idx++] = mod->patching->n_patches;
+
+            ADD_ARRAY_TO_IBUF( sizeof(index_t)*ibuf[10] );
+            ADD_ARRAY_TO_IBUF( sizeof(double)*ibuf[10] );
+            ADD_ARRAY_TO_IBUF( sizeof(index_t)*ibuf[10] );
+            ADD_ARRAY_TO_IBUF( sizeof(index_t)*ibuf[10] );
+
+            ADD_ARRAY_TO_IBUF( sizeof(index_t) *
+                (mod->patching->p_displ[mod->patching->n_patches-1] +
+                 mod->patching->p_count[mod->patching->n_patches-1]) );
+            ADD_ARRAY_TO_IBUF( sizeof(index_t) *
+                (mod->patching->p_displ[mod->patching->n_patches-1] +
+                 mod->patching->p_count[mod->patching->n_patches-1]) );
+        } else {
+            // set to displ if NULL
+            ibuf[11] = ibuf[13] = ibuf[15] = ibuf[17] = ibuf[19] = ibuf[21] = displ;
+            idx = 23;
+        }
+
+        // ibz path
+        ADD_ARRAY_TO_IBUF(sizeof(double)*3*mod->n_ibz_path);
+
+        ibuf[idx++] = mod->n_orb;
+
+        // lattice as double[3][3]
+        double* dbuf = (double*)buf;
+        for (int ll=0; ll<9; ++ll)
+            dbuf[idx++] = ((double*)mod->lattice)[ll];
+
+        // positions
+        ADD_ARRAY_TO_IBUF(sizeof(double)*3*mod->n_orb);
+
+        ibuf[idx++] = mod->n_sym;
+
+        // orbital symmetries
+        ADD_ARRAY_TO_IBUF(sizeof(complex128_t)*mod->n_orb*mod->n_orb*mod->n_sym);
+        // realspace symmetries
+        ADD_ARRAY_TO_IBUF(sizeof(double)*9*mod->n_sym);
+
+        ibuf[idx++] = mod->n_hop;
+        // realspace hoppings
+        ADD_ARRAY_TO_IBUF(sizeof(rs_hopping_t)*mod->n_hop);
+
+        ibuf[idx++] = mod->SU2;
+        ibuf[idx++] = mod->n_spin;
+
+        ibuf[idx++] = mod->n_vert;
+        // realspace vertex
+        ADD_ARRAY_TO_IBUF(sizeof(rs_vertex_t)*mod->n_vert);
+
+        ibuf[idx++] = mod->n_tu_ff;
+        // formfactors
+        ADD_ARRAY_TO_IBUF(sizeof(tu_formfactor_t)*mod->n_tu_ff);
+
+        ibuf[idx++] = mod->n_vert_chan[0];
+        ibuf[idx++] = mod->n_vert_chan[1];
+        ibuf[idx++] = mod->n_vert_chan[2];
+
+        // additional data
+        ADD_ARRAY_TO_IBUF(mod->nbytes_data);
+
+        // reciprocal lattice as double[3][3]
+        double Gvec[3][3];
+        diverge_model_generate_mom_basis(mod->lattice, Gvec);
+        for (int ll=0; ll<9; ++ll)
+            dbuf[idx++] = ((double*)Gvec)[ll];
+
+        idx = 80;
+        if (include_common_internals) {
+            // kmesh, kfmesh, H, U, E
+            ADD_ARRAY_TO_IBUF(sizeof(double)*3*kdim(mod->nk));
+            ADD_ARRAY_TO_IBUF(sizeof(double)*3*kdimtot(mod->nk, mod->nkf));
+            ADD_ARRAY_TO_IBUF(sizeof(complex128_t)*POW2(mod->n_orb*mod->n_spin)*kdimtot(mod->nk, mod->nkf));
+            ADD_ARRAY_TO_IBUF(sizeof(complex128_t)*POW2(mod->n_orb*mod->n_spin)*kdimtot(mod->nk, mod->nkf));
+            ADD_ARRAY_TO_IBUF(sizeof(double)*mod->n_orb*mod->n_spin*kdimtot(mod->nk, mod->nkf));
+        } else {
+            // set to displ if not wanted
+            ibuf[80] = ibuf[82] = ibuf[84] = ibuf[86] = ibuf[88] = displ;
+            idx = 90;
+        }
+
+        idx = 100;
+        if (mod->n_ibz_path > 0) {
+            // bandstructure, including the k coordinates *after* the bands
+            ADD_ARRAY_TO_IBUF( sizeof(double) * (mod->n_orb*mod->n_spin + 3) *
+                    ((mod->n_ibz_path-1)*h_diverge_model_nbandstructure + 1) );
+        } else {
+            ADD_ARRAY_TO_IBUF( 0 );
+        }
+
+        // save struct offsets and sizes
+        ibuf[102] = offsetof(rs_hopping_t, R);
+        ibuf[103] = offsetof(rs_hopping_t, o1);
+        ibuf[104] = offsetof(rs_hopping_t, o2);
+        ibuf[105] = offsetof(rs_hopping_t, s1);
+        ibuf[106] = offsetof(rs_hopping_t, s2);
+        ibuf[107] = offsetof(rs_hopping_t, t);
+        ibuf[108] = sizeof(rs_hopping_t);
+        ibuf[109] = offsetof(rs_vertex_t, chan);
+        ibuf[110] = offsetof(rs_vertex_t, R);
+        ibuf[111] = offsetof(rs_vertex_t, o1);
+        ibuf[112] = offsetof(rs_vertex_t, o2);
+        ibuf[113] = offsetof(rs_vertex_t, s1);
+        ibuf[114] = offsetof(rs_vertex_t, s2);
+        ibuf[115] = offsetof(rs_vertex_t, s3);
+        ibuf[116] = offsetof(rs_vertex_t, s4);
+        ibuf[117] = offsetof(rs_vertex_t, V);
+        ibuf[118] = sizeof(rs_vertex_t);
+        ibuf[119] = offsetof(tu_formfactor_t, R);
+        ibuf[120] = offsetof(tu_formfactor_t, ofrom);
+        ibuf[121] = offsetof(tu_formfactor_t, oto);
+        ibuf[122] = offsetof(tu_formfactor_t, d);
+        ibuf[123] = offsetof(tu_formfactor_t, ffidx);
+        ibuf[124] = sizeof(tu_formfactor_t);
+
+        // information on whether numerics is OK
+        uindex_t checkmask = 0;
+        uint8_t one = 1;
+        uindex_t firstbit = checkmask | (one << 7);
+        if (!check_iec_float())
+            checkmask |= firstbit >> 0;
+        if (!check_iec_double())
+            checkmask |= firstbit >> 1;
+        if (!check_little_endian())
+            checkmask |= firstbit >> 2;
+        if (!check_8bit_char())
+            checkmask |= firstbit >> 3;
+        uindex_t* ubuf = (uindex_t*)ibuf;
+        ubuf[127] = checkmask;
+
+        // realloc all the memory needed
+        buf = (char*)realloc(buf, ibuf[100] + ibuf[101]);
+        ibuf = (index_t*)buf;
+        dbuf = (double*)buf;
+
+        // copy over the arrays
+        #define COPY_ARY_TO_BUF( ary ) { \
+        memcpy( buf + ibuf[idx], ary, ibuf[idx+1] ); \
+        idx+=2; \
+        }
+        idx = 1;
+        COPY_ARY_TO_BUF( mod->name );
+        if (mod->patching != NULL) {
+            idx = 11;
+            COPY_ARY_TO_BUF( mod->patching->patches );
+            COPY_ARY_TO_BUF( mod->patching->weights );
+            COPY_ARY_TO_BUF( mod->patching->p_count );
+            COPY_ARY_TO_BUF( mod->patching->p_displ );
+            COPY_ARY_TO_BUF( mod->patching->p_map );
+            COPY_ARY_TO_BUF( mod->patching->p_weights );
+        }
+
+        idx = 23;
+        COPY_ARY_TO_BUF( mod->ibz_path )
+
+        idx = 35;
+        COPY_ARY_TO_BUF( mod->positions );
+
+        idx = 38;
+        COPY_ARY_TO_BUF( mod->orb_symmetries );
+        COPY_ARY_TO_BUF( mod->rs_symmetries );
+
+        idx = 43;
+        COPY_ARY_TO_BUF( mod->hop );
+
+        idx = 48;
+        COPY_ARY_TO_BUF( mod->vert );
+
+        idx = 51;
+        COPY_ARY_TO_BUF( mod->tu_ff );
+
+        idx = 56;
+        if (mod->data != NULL) {
+            COPY_ARY_TO_BUF( mod->data );
+        }
+
+        if (include_common_internals) {
+            idx = 80;
+            COPY_ARY_TO_BUF( mod->internals->kmesh );
+            COPY_ARY_TO_BUF( mod->internals->kfmesh );
+            COPY_ARY_TO_BUF( mod->internals->ham );
+            COPY_ARY_TO_BUF( mod->internals->U );
+            COPY_ARY_TO_BUF( mod->internals->E );
+        }
+
+        // and generate the bandstructure array
+        if (mod->n_ibz_path > 0) {
+            mpi_log_printf("generating bandstructure with %li points per segment\n",
+                    h_diverge_model_nbandstructure );
+            generate_bandstructure( mod, (double*)(buf+ibuf[100]), h_diverge_model_nbandstructure );
+        }
+
+        // calculate md5sum
+        md5sum = md5sum_div(buf, ibuf[100]+ibuf[101]);
+        lmd5sum = strlen(md5sum);
+
+        // write to file
+        FILE* f = fopen(fname, "wb");
+        if (!f) {
+            mpi_err_printf( "could not open file %s. no output.\n", fname );
+        } else {
+            fwrite(buf, sizeof(char), ibuf[100]+ibuf[101], f);
+            fclose(f);
+        }
+
+        // and free the buffer
+        free(buf);
+    }
+
+    // broadcast the md5sum to all ranks
+    diverge_mpi_bcast_bytes( &lmd5sum, sizeof(uindex_t), 0 );
+    if (md5sum == NULL)
+        // hack to not use malloc but static memory instead
+        md5sum = md5sum_div( (char*)&lmd5sum, sizeof(uindex_t) );
+    diverge_mpi_bcast_bytes( md5sum, lmd5sum+1, 0 );
+    return md5sum;
+}
+
+static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t npath ) {
+
+    typedef Eigen::Vector<index_t,3> Vec3idx;
+
+    if (mod->n_ibz_path <= 1) {
+        mpi_wrn_printf("bandstructure is bogus. need n_ibz_path > 1\n");
+        return;
+    }
+
+    Mat3d Gvec;
+    Map<Mat3d> Lvec((double*)mod->lattice);
+    diverge_model_generate_mom_basis(mod->lattice, (double(*)[3])Gvec.data());
+
+    index_t no = mod->n_orb,
+            ns = mod->n_spin,
+            nb = mod->n_orb * mod->n_spin;
+
+    complex128_t* H = (complex128_t*)malloc(sizeof(complex128_t)*POW2(nb));
+    complex128_t* U = (complex128_t*)malloc(sizeof(complex128_t)*POW2(nb));
+    #define zero_out(Hbuf) { \
+        memset((void*)Hbuf, 0, sizeof(complex128_t)*POW2(nb)); \
+    }
+
+    index_t running_idx = 0;
+    index_t nseg = mod->n_ibz_path-1;
+    for (index_t seg=0; seg<nseg; ++seg) {
+        index_t ni = (seg != (nseg-1)) ? (npath) : (npath+1);
+        Map<Vec3d> s0vec( (double*)&mod->ibz_path[seg] );
+        Map<Vec3d> s1vec( (double*)&mod->ibz_path[seg+1] );
+        for (index_t i=0; i<ni; ++i) {
+            double x = (double)i / (double)npath;
+            Vec3d k0vec = Gvec * s0vec,
+                  k1vec = Gvec * s1vec;
+            Vec3d kvec = k0vec + (k1vec - k0vec) * x;
+            zero_out(H);
+            for (index_t h=0; h<mod->n_hop; ++h) {
+                rs_hopping_t* hh = mod->hop+h;
+                Vec3d Rvec = Lvec * Map<Vec3idx>( hh->R ).cast<double>();
+                H[IDX4(hh->s2, hh->o2, hh->s1, hh->o1, no, ns, no)] +=
+                    std::exp(-complex128_t(0,1) * Rvec.dot(kvec)) * hh->t;
+            }
+            double* here_buf = buf + (nb+3) * running_idx;
+            eigen_solve(H, U, here_buf, nb);
+            for (index_t b=0; b<nb; ++b) {
+                here_buf[b] -= mod->internals->mu;
+            }
+            Map<Vec3d>(here_buf + nb) = kvec;
+            running_idx++;
+        }
+    }
+
+    free(H);
+    free(U);
+}
+

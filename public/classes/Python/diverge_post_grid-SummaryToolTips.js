@@ -1,0 +1,1 @@
+﻿NDSummary.OnToolTipsLoaded("PythonClass:diverge_post_grid",{265:"<div class=\"NDToolTip TClass LPython\"><div class=\"NDClassPrototype\" id=\"NDClassPrototype265\"><div class=\"CPEntry TClass Current\"><div class=\"CPName\">diverge_post_grid</div></div></div><div class=\"TTSummary\">documentation found in docstring, i.e., do the following from within python</div></div>"});

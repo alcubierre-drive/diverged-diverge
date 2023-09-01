@@ -1,0 +1,1 @@
+﻿NDSummary.OnToolTipsLoaded("TextFileClass:Compilation",{});

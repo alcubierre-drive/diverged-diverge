@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("sit",["Struct"],[["site_descr_t",,[[,,,,0,"File:src/misc/generate_symmetries.h:site_descr_t","CClass:site_descr_t"]]]]);

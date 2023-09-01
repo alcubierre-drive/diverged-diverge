@@ -1,0 +1,1 @@
+﻿NDFramePage.OnPageTitleLoaded("CClass:tu_formfactor_t","tu_formfactor_t");NDSummary.OnSummaryLoaded("CClass:tu_formfactor_t",[["C/C++","C"]],[["Groups","Group"],["Structs","Struct"],["Variables","Variable"]],[[216,0,1,"tu_formfactor_t"],[217,0,0,"Variables","Variables"],[218,0,2,"R[3]","R"],[219,0,2,"ofrom, oto","ofrom,oto"],[220,0,2,"d","d"]]);

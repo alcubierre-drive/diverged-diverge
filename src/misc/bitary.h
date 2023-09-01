@@ -1,0 +1,64 @@
+#pragma once
+
+#ifdef __cplusplus
+#include <cstddef>
+#include <cstdlib>
+#include <climits>
+#else // __cplusplus
+#include <stddef.h>
+#include <stdlib.h>
+#include <limits.h>
+#endif // __cplusplus
+
+#if (CHAR_BIT == 8)
+#define CHAR_MOD(x) ((x)&7)
+#else
+#define CHAR_MOD(x) ((x)%CHAR_BIT)
+#endif
+
+#if (CHAR_BIT == 8)
+#define CHAR_DIV(x) ((x)>>3)
+#else
+#define CHAR_DIV(x) ((x)/CHAR_BIT)
+#endif
+
+typedef unsigned char cbit;
+typedef unsigned char cbyte_t;
+
+static inline void bit_set( cbyte_t* b, cbit bit ) {
+    *b |= 1 << bit;
+}
+
+static inline void bit_unset( cbyte_t* b, cbit bit ) {
+    *b &= ~(1 << bit);
+}
+
+static inline void bit_toggle( cbyte_t* b, cbit bit ) {
+    *b ^= 1 << bit;
+}
+
+static inline cbit bit_get( const cbyte_t* b, cbit bit ) {
+    return (*b >> bit) & 1;
+}
+
+static inline cbyte_t* bitary_alloc( size_t nbit ) {
+    cbyte_t* result = (cbyte_t*)calloc(sizeof(cbyte_t), CHAR_DIV(nbit)+(CHAR_MOD(nbit) != 0));
+    return result;
+}
+
+static inline void bitary_set( cbyte_t* ary, size_t bitidx ) {
+    bit_set( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
+}
+
+static inline void bitary_unset( cbyte_t* ary, size_t bitidx ) {
+    bit_unset( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
+}
+
+static inline void bitary_toggle( cbyte_t* ary, size_t bitidx ) {
+    bit_toggle( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
+}
+
+static inline cbit bitary_get( const cbyte_t* ary, size_t bitidx ) {
+    return bit_get( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
+}
+

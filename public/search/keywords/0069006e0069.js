@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("ini",["Function"],[["init_C_channel",,[[,,,,0,"File:src/diverge_interaction_helper.h:init_C_channel"]]],["init_D_channel",,[[,,,,0,"File:src/diverge_interaction_helper.h:init_D_channel"]]],["init_P_channel",,[[,,,,0,"File:src/diverge_interaction_helper.h:init_P_channel"]]]]);

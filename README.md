@@ -1,0 +1,54 @@
+# DivERGe implements various ERG examples
+DivERGe provides a versatile framework to set up (one,) two and three
+dimensional functional renormalization group (FRG/ERG) calculations under the
+static vertex approximation.
+
+It implements three backends, the grid FRG, truncated unity FRG (TUFRG) and
+orbital space n-patch FRG.
+
+For maximum performance, the code is written in C/C++ with extensions in CUDA
+(GPUs). It makes minimal use of other dependencies, only FFTW and LAPACK are
+required. MPI may be used if desired. DivERGe can be interfaced from C/C++ or
+python, with an existing python FFI wrapper. This wrapper is published in pypi,
+such that you can run
+```
+pip install diverge
+```
+on a 64bit linux machine and directly use divERGe. For different architectures,
+compilation is additionally required (and putting the correct
+```libdivERGe.so``` in your ```LD_LIBRARY_PATH```). For any other language, you
+must write an equivalent wrapper yourself.
+
+# [Documentation](https://frg.pages.rwth-aachen.de/diverge/)
+[https://frg.pages.rwth-aachen.de/diverge/](https://frg.pages.rwth-aachen.de/diverge/)
+
+# [Download CPU release](https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.2/divERGe.tar.gz)
+Generic linux (amd64) builds (GLIBC>=2.17, this should be given almost anywhere
+to date) can be downloaded
+[here](https://git.rwth-aachen.de/frg/diverge/-/tree/master/public/releases). We
+recommend building from source for an optimized version on the HPC
+infrastructure to your availability.
+
+# Citation
+Please cite [arXiv.XXXX.XXXXX](https://doi.org/XX.XXXXX/arXiv.XXXX.XXXXX) when
+using divERGe.
+
+# License
+divERGe is published under the
+[GPLv3](https://www.gnu.org/licenses/gpl-3.0.html). The releases include
+non-free parts (CUDA) and differently licensed software
+([OpenBLAS](https://www.openblas.net/), [FFTW](https://www.fftw.org/)) in binary
+form.
+
+# Authors
+**Jonas B. Hauck** and **Lennart Klebl**, 2023.
+
+# TODOs
+- Add emery model
+- Make repo smaller (compress commits)
+- Make public?
+- doku - structured arrays in python, struct datatype usage
+- example symmetries from python (emery)
+- Wir sollten die log messages ein bisschen aufräumen. Habe mpi_vrb_printf()
+  gebaut, das ist standardmäßig nicht aktiv
+

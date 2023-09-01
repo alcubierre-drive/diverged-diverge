@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("s2,",["Variable"],[["s2,",,[["rs_vertex_t","o1, o2, s1, s2, s3, s4",,"o1,o2,s1,s2,s3,s4",0,"File:src/diverge_model.h:rs_vertex_t.o1,o2,s1,s2,s3,s4","CClass:rs_vertex_t:o1,o2,s1,s2,s3,s4"]]]]);

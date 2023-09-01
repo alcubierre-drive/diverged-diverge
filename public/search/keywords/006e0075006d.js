@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("num",["Variable"],[["numpy",,[["dvg",,,,0,"File:build/lib/diverge/__init__.py:dvg.numpy","PythonClass:dvg:numpy"]]]]);

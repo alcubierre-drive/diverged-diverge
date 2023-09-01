@@ -1,0 +1,22 @@
+Namespace: Examples
+Examples for divERGe::
+Examples are found in the <examples/ at
+https://git.rwth-aachen.de/frg/diverge/-/blob/master/examples/> directory. In
+the git repository, they are furthermore grouped into programming languages. In
+the release tarball, all examples are merged within examples/.
+
+For a step-by-step tutorial of the python interface, look at
+<examples/?-*.py at
+https://git.rwth-aachen.de/frg/diverge/-/blob/master/examples/python_tutorial/>,
+i.e., the files
+=== Code ===
+0-init.py
+1-model-nickelate.py
+2-plot.py
+3-interactions.py
+4-flow.py
+============
+
+For a step-by-step tutorial of the C/C++ interface, see the <documentation of
+the C library at libdivERGe.so> or <examples/hubbard.c at
+https://git.rwth-aachen.de/frg/diverge/-/blob/master/examples/c_cpp/hubbard.c>

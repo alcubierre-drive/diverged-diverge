@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("lam",["Variable"],[["Lambda",,[["diverge_euler_t",,,,0,"File:src/diverge_euler.h:diverge_euler_t.Lambda","CClass:diverge_euler_t:Lambda"]]],["Lambda_min",,[["diverge_euler_t",,,,0,"File:src/diverge_euler.h:diverge_euler_t.Lambda_min","CClass:diverge_euler_t:Lambda_min"]]]]);

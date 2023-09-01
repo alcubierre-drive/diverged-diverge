@@ -1,0 +1,1 @@
+﻿NDSummary.OnToolTipsLoaded("TextFileClass:Symmetries",{269:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">Point group symmetries in divERGe</div></div>"});

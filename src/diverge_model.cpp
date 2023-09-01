@@ -1,0 +1,229 @@
+#include "diverge_model.h"
+#include "diverge_internals_struct.h"
+#include "diverge_interaction_helper.h"
+#include "diverge_Eigen3.hpp"
+#include <fftw3.h>
+#include <algorithm>
+#include <cassert>
+
+diverge_model_t* diverge_model_init(void) {
+    diverge_model_t* result = (diverge_model_t*)calloc(1,sizeof(diverge_model_t));
+    result->hfill = &hamilton_generator_default;
+    result->gfill = &greensfunc_generator_default;
+    result->vfill = &channel_vertex_generator_default;
+    result->ffill = NULL;
+    result->n_vert_chan[0] = -1;
+    result->n_spin = 1;
+    result->SU2 = 1;
+    result->internals = (internals_t*)calloc(1,sizeof(internals_t));
+    result->internals->has_common_internals = 0;
+    return result;
+}
+
+void diverge_model_free(diverge_model_t* model) {
+    if (model->patching) {
+        free(model->patching->patches);
+        free(model->patching->weights);
+        free(model->patching->p_count);
+        free(model->patching->p_displ);
+        free(model->patching->p_map);
+        free(model->patching->p_weights);
+    }
+    free(model->patching);
+
+    if (model->internals) {
+        free(model->internals->kmesh);
+        free(model->internals->kfmesh);
+        free(model->internals->ham);
+        free(model->internals->E);
+        free(model->internals->U);
+        free(model->internals->greens);
+
+        free(model->internals->grid_kfmesh);
+        free(model->internals->grid_weights);
+        free(model->internals->grid_kfrev);
+        free(model->internals->grid_k1m2);
+        free(model->internals->grid_k1p2);
+        free(model->internals->grid_greens_p_buf);
+        free(model->internals->grid_greens_m_buf);
+        if ((model->internals->grid_vertex != NULL) &&
+            (model->internals->grid_vertex_destructor != NULL))
+            (*(model->internals->grid_vertex_destructor))( model->internals->grid_vertex );
+        if ((model->internals->grid_sym != NULL) &&
+            (model->internals->grid_sym_destructor != NULL))
+            (*(model->internals->grid_sym_destructor))( model->internals->grid_sym );
+        if ((model->internals->patch_vertex != NULL) &&
+            (model->internals->patch_vertex_destructor != NULL))
+            (*(model->internals->patch_vertex_destructor))( model->internals->patch_vertex );
+        if ((model->internals->tu_data != NULL) &&
+            (model->internals->tu_data_destructor != NULL))
+            (*(model->internals->tu_data_destructor))( model->internals->tu_data );
+
+        free(model->internals->patch_kmesh);
+        free(model->internals->patch_pmesh);
+        free(model->internals->patch_k3map);
+
+        free(model->internals->symm_map_mom_fine);
+        free(model->internals->symm_map_mom_crs);
+        free(model->internals->symm_beyond_UC);
+        free(model->internals->symm_map_orb);
+        free(model->internals->symm_orb_off);
+        free(model->internals->symm_orb_len);
+        free(model->internals->symm_pref);
+    }
+    free(model->internals);
+    free(model->tu_ff);
+    free(model->orb_symmetries);
+    free(model->data);
+    free(model->hop);
+    free(model->vert);
+
+    free(model);
+}
+
+void hamilton_generator_default(const diverge_model_t* model, complex128_t* buf) {
+    const index_t n_hop = model->n_hop;
+    const rs_hopping_t* hop = model->hop;
+    const index_t n_kx = model->nk[0]*model->nkf[0];
+    const index_t n_ky = model->nk[1]*model->nkf[1];
+    const index_t n_kz = model->nk[2]*model->nkf[2];
+    const index_t n_kpts = n_kx*n_ky*n_kz;
+    const index_t n_spin = model->n_spin;
+    const index_t n_orb = model->n_orb;
+
+    index_t buf_sz = sizeof(complex128_t)*n_kpts*POW2(n_orb*n_spin);
+    fftw_complex* fftw_buf = (fftw_complex*)fftw_malloc(buf_sz);
+    complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
+
+    index_t stride_fft = POW2(n_orb*n_spin);
+    fftw_iodim64 dims[3];
+    dims[0].n = n_kx, dims[1].n = n_ky, dims[2].n = n_kz;
+    dims[0].is = n_kz*n_ky*stride_fft, dims[1].is = n_kz*stride_fft, dims[2].is = stride_fft;
+    dims[0].os = n_kz*n_ky*stride_fft, dims[1].os = n_kz*stride_fft, dims[2].os = stride_fft;
+    fftw_iodim64 howmany;
+    howmany.n = stride_fft, howmany.is = 1, howmany.os = 1;
+    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, FFTW_ESTIMATE);
+
+    memset((void*)fftw_cbuf, 0, buf_sz);
+
+    if (n_kpts*POW2(n_spin*n_orb) < n_hop && n_kpts > 1)
+        mpi_wrn_printf("More hoppings than kpts. Hamiltonian generation may fail.\n");
+    // fill fftw_cbuf as H[R]
+    for (index_t idx = 0; idx < n_hop; ++idx) {
+        index_t o1 = hop[idx].o1,
+                s1 = hop[idx].s1,
+                o2 = hop[idx].o2,
+                s2 = hop[idx].s2;
+        index_t R[3]; for (int i=0; i<3; ++i) R[i] = hop[idx].R[i];
+
+        index_t x_id = (n_kx + R[0]) % n_kx,
+                y_id = (n_ky + R[1]) % n_ky,
+                z_id = (n_kz + R[2]) % n_kz;
+        index_t Ridx = IDX3(x_id, y_id, z_id, n_ky, n_kz);
+        fftw_cbuf[IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb)] += hop[idx].t;
+    }
+    if(n_kpts > 1)
+        fftw_execute(p);
+    fftw_destroy_plan(p);
+
+    memcpy(buf, (void*)fftw_buf, buf_sz);
+    fftw_free(fftw_buf);
+}
+
+greensfunc_op_t greensfunc_generator_default(const diverge_model_t* model,
+        complex128_t Lambda_, gf_complex_t* buf_) {
+    complex128_t Lambda = *(complex128_t*)(&Lambda_);
+    gf_complex_t* buf = (gf_complex_t*)(buf_);
+
+    const index_t nkf = kdimtot(model->nk, model->nkf);
+    const index_t nb = model->n_spin * model->n_orb;
+    const complex128_t* U = (const complex128_t*) model->internals->U;
+    const double* E = model->internals->E;
+
+    for (int sign=0; sign<2; ++sign) {
+        complex128_t L = sign ? Lambda : std::conj(Lambda);
+        #pragma omp parallel for collapse(3)
+        for (index_t k=0; k<nkf; ++k)
+        for (index_t o=0; o<nb; ++o)
+        for (index_t p=0; p<nb; ++p) {
+            complex128_t tmp = 0.0;
+            for (index_t b=0; b<nb; ++b)
+                tmp += U[IDX3(k,b,o,nb,nb)] * std::conj(U[IDX3(k,b,p,nb,nb)]) / (L - E[IDX2(k,b,nb)]);
+            buf[IDX4(sign, k, o, p, nkf, nb, nb)] = tmp;
+        }
+    }
+    return greensfunc_op_cpu;
+}
+
+static inline void sort_rs_vertex_elements(diverge_model_t* model) {
+    if (model->n_vert_chan[0] != -1) return;
+    const index_t* nk = model->nk;
+    std::sort( model->vert, model->vert + model->n_vert,
+        [nk](const rs_vertex_t& V1, const rs_vertex_t& V2)->bool{
+            return V1.R[0]*nk[1]*nk[2] + V1.R[1]*nk[2] + V1.R[2] <
+                   V2.R[0]*nk[1]*nk[2] + V2.R[1]*nk[2] + V2.R[2];
+        });
+    std::stable_sort( model->vert, model->vert + model->n_vert,
+        [](const rs_vertex_t& V1, const rs_vertex_t& V2)->bool{
+            return V1.chan < V2.chan;
+        });
+    char chans[] = "CDP";
+    rs_vertex_t* vptr = model->vert;
+    const rs_vertex_t* vptr_end = model->vert + model->n_vert;
+    for (int i=0; i<3; ++i) {
+        model->n_vert_chan[i] = 0;
+        while (vptr != vptr_end && vptr->chan == chans[i]) {
+            vptr++;
+            model->n_vert_chan[i]++;
+        }
+    }
+}
+
+int channel_vertex_generator_default(diverge_model_t* model, char channel, complex128_t* buf) {
+    sort_rs_vertex_elements(model);
+
+    index_t n_kx = model->nk[0],
+            n_ky = model->nk[1],
+            n_kz = model->nk[2],
+            n_spin = model->n_spin,
+            n_orb = model->n_orb;
+
+    index_t stride_fft = POW2(n_orb*n_spin*n_spin);
+
+    fftw_iodim64 dims[3];
+    dims[0].n = n_kx, dims[1].n = n_ky, dims[2].n = n_kz;
+    dims[0].is = n_kz*n_ky*stride_fft, dims[1].is = n_kz*stride_fft, dims[2].is = stride_fft;
+    dims[0].os = n_kz*n_ky*stride_fft, dims[1].os = n_kz*stride_fft, dims[2].os = stride_fft;
+
+    fftw_iodim64 howmany;
+    howmany.n = stride_fft, howmany.is = 1, howmany.os = 1;
+
+    index_t buf_sz = sizeof(complex128_t)*kdim(model->nk)*POW2(n_orb*n_spin*n_spin);
+    fftw_complex* fftw_buf = (fftw_complex*)fftw_malloc(buf_sz);
+    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, FFTW_ESTIMATE);
+
+    memset(fftw_buf, 0, buf_sz);
+
+    int filled = 0;
+    if (channel == 'P') {
+        filled = init_P_channel(model, (complex128_t*)fftw_buf);
+    } else if (channel == 'C') {
+        filled = init_C_channel(model, (complex128_t*)fftw_buf);
+    } else if (channel == 'D') {
+        filled = init_D_channel(model, (complex128_t*)fftw_buf);
+    } else {
+        mpi_wrn_printf("unknown channel supplied, using 'D'.\n");
+        filled = init_D_channel(model, (complex128_t*)fftw_buf);
+    }
+
+    if (filled)
+        fftw_execute(p);
+    else
+        memset((void*)buf, 0, buf_sz);
+    fftw_destroy_plan(p);
+    memcpy((void*)buf, fftw_buf, buf_sz);
+    fftw_free(fftw_buf);
+
+    return filled;
+}
+

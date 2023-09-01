@@ -1,0 +1,1 @@
+﻿NDFramePage.OnPageTitleLoaded("File:doc.txt","doc.txt");NDSummary.OnSummaryLoaded("File:doc.txt",[["Text File","TextFile"]],[["Sections","Section"]],[[309,0,0,"divERGe","divERGe"]]);

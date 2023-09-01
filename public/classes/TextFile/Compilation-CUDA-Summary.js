@@ -1,0 +1,1 @@
+﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Compilation-CUDA","Compilation-CUDA");NDSummary.OnSummaryLoaded("TextFileClass:Compilation-CUDA",[["Text File","TextFile"]],[["Classes","Class"]],[[303,0,0,"Compilation-CUDA"]]);
