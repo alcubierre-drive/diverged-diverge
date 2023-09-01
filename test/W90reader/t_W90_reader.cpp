@@ -5,15 +5,29 @@
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
 #include "../../src/misc/read_W90.h"
+
+#include "graphene_dat.h"
+#include <cstdio>
+
 #include <string>
 
 TEST_CASE("W90 read in","[W90reader]") {
     diverge_model_t* model = gen_honeycomb_lat_hub(2,2,1,1,1,0,0,0);
     index_t len = 0;
     index_t n_spin = 0;
-    std::string fname{"./test/W90reader/graphene.dat"};
+
+    std::string fname = gen_graphene_hr_dat();
+
+    char fcontent[1024];
+    FILE* fptr = fopen(fname.c_str(), "r");
+    int nread = fread(fcontent, 1, 1024, fptr);
+    fclose(fptr);
+    memset( fcontent+nread, 0, 1024-nread );
+    mpi_fil_printf( "generated file '%s' as W90 file for testing. Content:\n%s",
+            fname.c_str(), fcontent );
     rs_hopping_t* cmp = model->hop;
     rs_hopping_t* hop = diverge_read_W90_C(fname.c_str(),n_spin,&len);
+    remove( fname.c_str() );
     // check all hoppings exist and are equal
     CHECK(len > 0);
     for(index_t elem = 0; elem < len; ++elem) {

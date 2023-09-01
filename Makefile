@@ -83,10 +83,10 @@ TEST_CPP := $(shell find test/ -name '*.cpp')
 TEST_C := $(shell find test/ -name '*.c')
 
 OBJ_CPP += $(patsubst %.cpp,%.cpp.o,$(TEST_CPP))
-OBJ_C += $(patsubst %.cpp,%.cpp.o,$(TEST_C))
+OBJ_C += $(patsubst %.c,%.c.o,$(TEST_C))
 
 DEP_CPP += $(patsubst %.cpp,%.cpp.d,$(TEST_CPP))
-DEP_C += $(patsubst %.cpp,%.cpp.d,$(TEST_C))
+DEP_C += $(patsubst %.c,%.c.d,$(TEST_C))
 
 HEADERS += $(shell find test/ -name '*.h') \
            $(shell find test/ -name '*.hpp')

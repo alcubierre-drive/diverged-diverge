@@ -1,1 +1,1 @@
-﻿NDSummary.OnToolTipsLoaded("TextFileClass:Compilation-CUDA",{306:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">in your \'Makefile.local\', put</div></div>"});
+﻿NDSummary.OnToolTipsLoaded("TextFileClass:Compilation-CUDA",{269:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">in your \'Makefile.local\', put</div></div>"});

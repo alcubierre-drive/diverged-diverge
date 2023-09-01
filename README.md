@@ -46,8 +46,8 @@ form.
 ________________________________________________________________________________
 
 # TODOs
-- examples: revisit emery model
 - doc: structured arrays in python, struct datatype usage example symmetries
   from python (emery)
 - code: clean up log messages (```mpi_vrb_printf()``` vs ```mpi_log_printf()```)
+
 
