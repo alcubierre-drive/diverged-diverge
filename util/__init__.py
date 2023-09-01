@@ -862,6 +862,12 @@ def run_tests( args=[] ):
         mpi_py_eprint("could not find test function")
         return 1
 
+# Function: info
+# print information on the shared library
+def info():
+    info_str = str(_libs["divERGe"].access['cdecl'])
+    mpi_py_eprint( info_str )
+
 # hacking
 model_hack = _libs["divERGe"].get("diverge_model_hack", "cdecl")
 model_hack.argtypes = [POINTER(model_t), String, String]
