@@ -49,4 +49,4 @@ static/
 *.bin
 build/
 dist/
-diverge.egg-info/
+diverge_flow.egg-info/

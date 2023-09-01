@@ -5,7 +5,7 @@ Getting Started::
 For an easy start with the <divERGe python interface at dvg>, install divERGe
 from pip:
 === Code ===
-pip install diverge
+pip install diverge-flow
 ============
 You can further download <divERGe.tar.gz at
 https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.3/divERGe.tar.gz>

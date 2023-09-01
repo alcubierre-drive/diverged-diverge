@@ -12,7 +12,7 @@ required. MPI may be used if desired. DivERGe can be interfaced from C/C++ or
 python, with an existing python FFI wrapper. This wrapper is published in pypi,
 such that you can run
 ```
-pip install diverge
+pip install diverge-flow
 ```
 on a 64bit linux machine and directly use divERGe. For different architectures,
 compilation is additionally required (and putting the correct
@@ -29,6 +29,17 @@ to date) can be downloaded
 recommend building from source for an optimized version on the HPC
 infrastructure to your availability.
 
+# Testing
+We use a slightly modified version of
+[Catch2](https://github.com/catchorg/Catch2) for testing. To check divERGe's
+health from python, run
+```
+import diverge
+diverge.mpi_init(None, None)
+diverge.run_tests()
+diverge.mpi_finalize()
+```
+
 # Citation
 Please cite [arXiv.XXXX.XXXXX](https://doi.org/XX.XXXXX/arXiv.XXXX.XXXXX) when
 using divERGe.
@@ -36,9 +47,9 @@ using divERGe.
 # License
 divERGe is published under the
 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html). The releases include
-non-free parts (CUDA) and differently licensed software
-([OpenBLAS](https://www.openblas.net/), [FFTW](https://www.fftw.org/)) in binary
-form.
+non-free parts ([CUDA](https://developer.nvidia.com/cuda-toolkit)) and
+differently licensed software ([OpenBLAS](https://www.openblas.net/),
+[FFTW](https://www.fftw.org/)) in binary form.
 
 # Authors
 **Jonas B. Hauck** and **Lennart Klebl**, 2023.

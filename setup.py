@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-   name='diverge',
-   version='v0.3.2',
+   name='diverge-flow',
+   version='v0.3.0',
    description='divERGe implements various ERG examples',
    long_description_content_type = 'text/markdown',
    packages=['diverge'],

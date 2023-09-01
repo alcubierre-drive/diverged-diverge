@@ -6,6 +6,9 @@ INC_TEST := true
 DEFINES := -DNDEBUG -DEIGEN_NO_DEBUG -DDIVERGE_OPENBLAS_LIMIT_THREADS=40
 # DEFINES += -DDIVERGE_LOG_COLORLESS
 DEFINES += -DDIVERGE_LOG_GRAYSCALE
+
+DEFINES += -DBHK_NK=4 -DBHK_NUM=5 -DBHK_L0=2
+
 DEFINE_VERSION := -DTAG_VERSION=\"$(shell git tag --list "v*.*" | tail -n1)\"
 INCLUDES += -Istatic/include -Istatic/include/openblas
 PREFLAGS = -include static/include/force_link_glibc_2.17.h
@@ -19,7 +22,7 @@ Makefile_local_CUDA10_1='
 USE_CUDA := true
 CUDA_ROOT := /usr/local/cuda-10.1
 CUCC := $(CUDA_ROOT)/bin/nvcc
-DEFINES += -DCUDA_CIRCUMVENT_CONSTEXPR -DCUDA_VERSION_STR="\CUDA "$(shell cat $(CUDA_ROOT)/version.txt)\""
+DEFINES += -DCUDA_CIRCUMVENT_CONSTEXPR -DCUDA_VERSION_STR="\"CUDA $(shell cat $(CUDA_ROOT)/version.txt)\""
 LIBPREFIX_CUDA := -L$(CUDA_ROOT)/lib64 -l
 LIBPREFIX_CUBLAS := -L/usr/lib64/lib -l
 CULIBS := $(LIBPREFIX_CUDA)cudart_static \
@@ -53,7 +56,7 @@ Makefile_local_CUDA10_2='
 USE_CUDA := true
 CUDA_ROOT := /usr/local/cuda-10.2
 CUCC := $(CUDA_ROOT)/bin/nvcc
-DEFINES += -DCUDA_CIRCUMVENT_CONSTEXPR -DCUDA_VERSION_STR="\CUDA "$(shell cat $(CUDA_ROOT)/version.txt)\""
+DEFINES += -DCUDA_CIRCUMVENT_CONSTEXPR -DCUDA_VERSION_STR="\"CUDA $(shell cat $(CUDA_ROOT)/version.txt)\""
 LIBPREFIX_CUDA := -L$(CUDA_ROOT)/lib64 -l
 CULIBS := $(LIBPREFIX_CUDA)cudart_static \
 	  $(LIBPREFIX_CUDA)cufft_static \
