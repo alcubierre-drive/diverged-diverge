@@ -853,7 +853,10 @@ del loaderclass
 add_library_search_dirs(['.'])
 
 # Begin libraries
-_libs["divERGe"] = load_library("divERGe")
+try:
+    _libs["divERGe"] = load_library("divERGe")
+except:
+    _libs["divERGe"] = None
 
 # 1 libraries
 # End libraries
