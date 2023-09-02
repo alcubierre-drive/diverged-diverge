@@ -82,6 +82,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("dkm_random_seed") {
         dkm_set_use_random_seed( atoi(val) );
     }
+    CHECKKEY("symm_internal_ham") {
+        INTERNALS->enforce_symmetries = atoi(val);
+    }
 
     if (key_) {
         if (key_set) {

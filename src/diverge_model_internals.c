@@ -2,6 +2,7 @@
 
 #include "diverge_internals_struct.h"
 #include "diverge_momentum_gen.h"
+#include "diverge_symmetrize.h"
 #include "misc/batched_eigen.h"
 #include "misc/mpi_functions.h"
 #include "misc/merge_orb_w_rs_symm.h"
@@ -95,6 +96,12 @@ void diverge_model_internals_common( diverge_model_t* model ) {
 
     mpi_log_printf("filling hamiltonian buffer\n");
     (*(model->hfill))( model, intls->ham );
+
+    if (intls->enforce_symmetries) {
+        mpi_log_printf("%i× enforcing symmetries on *internal* hamiltonian\n", intls->enforce_symmetries);
+        for (int i=0; i<intls->enforce_symmetries; ++i)
+            diverge_symmetrize_2pt_fine( model, intls->ham, NULL );
+    }
 
     mpi_log_printf("diagonalizing hamiltonian\n");
     memcpy( intls->U, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
