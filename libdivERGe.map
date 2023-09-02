@@ -93,6 +93,8 @@ DIVERGE_1.0 {
         diverge_symmetrize_2pt_fine;
         diverge_symmetrize_mom_coarse;
         diverge_symmetrize_mom_fine;
+        find_bandstructure_pts;
+        find_bandstructure_pts_crs;
         greensfunc_generator_default;
         hamilton_generator_default;
         init_C_channel;
