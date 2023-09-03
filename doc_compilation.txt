@@ -21,6 +21,12 @@ LIBS += -L/opt/fftw/lib/
 ============
 into the 'Makefile.local' (*this is an example, actual content will differ!*)
 
+Examples for Makefile.local::
+The <make.local/ directory at
+https://git.rwth-aachen.de/frg/diverge/-/tree/master/make.local/>
+of the git repo contains various examples of how to compile divERGe on certain
+machines/configurations.
+
 Variables defined and used in 'Makefile':::
 Compilers etc.
 === Code ===
