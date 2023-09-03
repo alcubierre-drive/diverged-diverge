@@ -49,9 +49,13 @@ bool init_inv_symmerty_map(diverge_model_t* model) {
     CMat3d id_rs = CMat3d::Identity();
     CMatXcd id_orb = CMatXcd::Identity(mi,mi);
     bool added_symm = false;
+    index_t which_is_identity = -1;
     for(index_t sym = 0; sym < n_sym; ++sym) {
         Map<CMat3d> sym_rs(rs_symmetries+sym*9);
         Map<CMatXcd> sym_orb((orb_symmetries)+sym*mi*mi,mi,mi);
+        if(approxEQ(sym_rs,id_rs) && approxEQ(sym_orb,id_orb)) {
+            which_is_identity = sym;
+        }
         bool found = false;
         index_t symt = 0;
         while( symt < n_sym && !found) {
@@ -97,6 +101,33 @@ bool init_inv_symmerty_map(diverge_model_t* model) {
         symm->inv_symmetry.resize(n_sym);
         memcpy(symm->inv_symmetry.data(),syms.data(),n_sym*sizeof(index_t));
     }
+    if(which_is_identity == -1) {
+        mpi_log_printf("identity missing, will be added now \n");
+        // copy old arrays
+        added_symm = true;
+        complex128_t* orbsymcpy = (complex128_t*)calloc(n_sym * mi *mi, sizeof(complex128_t));
+        memcpy(orbsymcpy, orb_symmetries, n_sym * mi*mi * sizeof(complex128_t));
+        index_t n_symold = n_sym;
+        n_sym += 1;
+        vector<index_t> syms;
+        syms.resize(n_sym);
+        memcpy(syms.data(),symm->inv_symmetry.data(), n_symold*sizeof(index_t));
+        free(model->orb_symmetries);
+        model->orb_symmetries = (complex128_t*)calloc(n_sym * mi * mi, sizeof(complex128_t));
+        orb_symmetries = model->orb_symmetries;
+        memcpy(orb_symmetries,orbsymcpy, n_symold * mi*mi * sizeof(complex128_t));
+        free(orbsymcpy);
+
+        Map<CMat3d> sym_rsm(rs_symmetries+(n_symold)*9);
+        Map<CMatXcd> sym_orbm(orb_symmetries+(n_symold)*mi*mi,mi,mi);
+        sym_rsm = id_rs;
+        sym_orbm = id_orb;
+        syms[n_symold] = n_symold;
+        syms[n_symold] = n_symold;
+
+        symm->inv_symmetry.resize(n_sym);
+        memcpy(symm->inv_symmetry.data(),syms.data(),n_sym*sizeof(index_t));
+    }
     return added_symm;
 }
 
@@ -111,6 +142,25 @@ void init_ibz(diverge_model_t* model) {
     for(uint i = 0; i < nk; ++i)
         is_mapped_to_ibz[i] = false;
 
+    complex128_t* orb_symmetries = (complex128_t*)model->orb_symmetries;
+    double* rs_symmetries = (double*)model->rs_symmetries;
+    index_t n_orb = model->n_orb;
+    index_t n_spin = model->n_spin;
+    index_t mi = n_orb * n_spin;
+    CMat3d id_rs = CMat3d::Identity();
+    CMatXcd id_orb = CMatXcd::Identity(mi,mi);
+    index_t which_is_identity = -1;
+    for(index_t sym = 0; sym < n_sym; ++sym) {
+        Map<CMat3d> sym_rs(rs_symmetries+sym*9);
+        Map<CMatXcd> sym_orb((orb_symmetries)+sym*mi*mi,mi,mi);
+        if(approxEQ(sym_rs,id_rs) && approxEQ(sym_orb,id_orb)) {
+            which_is_identity = sym;
+            sym = n_sym;
+        }
+    }
+    if(which_is_identity < 0) {
+        mpi_err_printf("identity not contained in symmetry operations - this will fail!\n");
+    }
 
     index_t current_ibz_idx = 0;
     symm->kmaps_to.resize(nk);
@@ -120,7 +170,7 @@ void init_ibz(diverge_model_t* model) {
         if (!is_mapped_to_ibz[ii]) {
             symm->idx_ibz_in_fullmesh.push_back(ii);
             is_mapped_to_ibz[ii] = true;
-            symm->which_symmetry_used[ii] = {0, symm->inv_symmetry[0]};
+            symm->which_symmetry_used[ii] = {which_is_identity, symm->inv_symmetry[which_is_identity]};
             symm->kmaps_to[ii] = current_ibz_idx;
             for (index_t s=0; s<n_sym; ++s) {
                 index_t idx = mom_maps_to[s+n_sym*ii];
