@@ -38,8 +38,6 @@ public:
         }
     }
 
-    //DELETE_CONSTRUCTOR_RULE_OF_FIVE(selfEnergy);
-
     void selfenergy_flow(complex128_t* self_en, const complex128_t* P_in,
                         const complex128_t* C_in, const complex128_t* D_in,
                         const complex128_t* GF, const double prefac_sub);

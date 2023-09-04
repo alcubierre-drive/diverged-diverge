@@ -2,7 +2,6 @@
 
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 
-
 selfEnergy::selfEnergy(Vertex* vertex)
 :
     model{vertex->model},

@@ -1,5 +1,5 @@
 #include "selfenergy.hpp"
-#include <iostream>
+
 inline static void transpose(complex128_t* inp, complex128_t* buf, index_t nx, index_t ny) {
     for(index_t x = 0; x < nx; ++x)
     for(index_t y = 0; y < ny; ++y) {
