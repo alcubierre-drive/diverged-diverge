@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("fin",["Function"],[["find_bandstructure_pts",,[[,,,,0,"File:src/misc/find_bandstructure_pts.h:find_bandstructure_pts"]]],["find_bandstructure_pts_crs",,[[,,,,0,"File:src/misc/find_bandstructure_pts.h:find_bandstructure_pts_crs"]]]]);

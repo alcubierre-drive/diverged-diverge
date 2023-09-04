@@ -34,7 +34,8 @@ DEVICES = -gencode arch=compute_70,code=sm_70 \
 	  -gencode arch=compute_80,code=sm_80
 
 DEFINE_VERSION := -DTAG_VERSION=\"$(shell git tag --list "v*.*" | tail -n1)\" \
-		  -DGIT_VERSION=\"$(shell git rev-parse --short HEAD)$(shell (git diff --quiet && git diff --cached --exit-code --quiet) || echo ':dirty')\"
+		  -DGIT_VERSION=\"$(shell git rev-parse --short HEAD)$(shell (git diff --quiet && git diff --cached --exit-code --quiet) || echo ':dirty')\" \
+		  -DGIT_VERSION_BRANCH=\"$(shell git rev-parse --abbrev-ref HEAD)\"
 
 SRC_C := $(shell find ./src/ -name '*.c')
 SRC_CPP := $(shell find ./src/ -name '*.cpp')

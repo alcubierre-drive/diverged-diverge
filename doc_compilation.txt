@@ -163,6 +163,7 @@ DIVERGE_OPENBLAS_LIMIT_THREADS=VAL - limit the number of threads to be used in
                                      maximum number of threads that can be
                                      exceeded by modern cluster architectures.
 GIT_VERSION=VAL - set the git version string to VAL
+GIT_VERSION_BRANCH=VAL - set the git branch string to VAL
 GRID_FF_SHELL_DISTANCE=VAL - set the maximum distance of formfactors to be
                              generated in the grid FRG code to VAL
 LEAVE_EIGEN_BROKEN - do not turn off Eigen optimizations. They are nice in
