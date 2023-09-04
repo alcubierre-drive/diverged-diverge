@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("PythonClass:diverge_post_grid","diverge_post_grid");NDSummary.OnSummaryLoaded("PythonClass:diverge_post_grid",[["Python","Python"]],[["Classes","Class"]],[[270,0,0,"diverge_post_grid"]]);
+﻿NDFramePage.OnPageTitleLoaded("PythonClass:diverge_post_grid","diverge_post_grid");NDSummary.OnSummaryLoaded("PythonClass:diverge_post_grid",[["Python","Python"]],[["Classes","Class"]],[[263,0,0,"diverge_post_grid"]]);

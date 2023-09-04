@@ -21,7 +21,6 @@ struct internals_t {
     int periodic_direction[3];
     index_t dim;
     bool enforce_exchange;
-    int enforce_symmetries;
     index_t has_common_internals;
     double mu;
 
