@@ -24,7 +24,7 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin ) {
     int weight_elem = 0;
     string line;
     bool outer = n_spin>=0 ? true:false;
-    n_spin = abs(n_spin); n_spin = n_spin == 0 ? 1 : n_spin;
+    n_spin = std::abs(n_spin); n_spin = n_spin == 0 ? 1 : n_spin;
     index_t n_orb = 0;
 
     vector<double> weights;

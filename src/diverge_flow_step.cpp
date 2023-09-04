@@ -1,6 +1,7 @@
 #include "diverge_flow_step_internal.hpp"
 #include "misc/batched_gemms.h"
 #include "misc/batched_eigen.h"
+#include "misc/batched_zgemd.h"
 #include "diverge_filling.h"
 #include "diverge_model_internals.h"
 
@@ -475,6 +476,8 @@ double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* 
 
         Map<MatXcd>(Utmp + k*nb*nb, nb, nb) = UU * EE.asDiagonal() * UU.adjoint() + SS;
     }
+    memcpy( Utmp, S, sizeof(complex128_t)*nk*nb*nb );
+    batched_zgemd_r( Utmp, U, E, 1.0, 1.0, nb, nk );
     // do the eigensolution
     batched_eigen_shut_up(1);
     batched_eigen_r( NULL, -2, Utmp, Etmp, nb, nk );

@@ -2,6 +2,7 @@
 
 #include "diverge_internals_struct.h"
 #include "diverge_momentum_gen.h"
+#include "diverge_symmetrize.h"
 #include "misc/batched_eigen.h"
 #include "misc/mpi_functions.h"
 #include "misc/merge_orb_w_rs_symm.h"
@@ -96,8 +97,8 @@ void diverge_model_internals_common( diverge_model_t* model ) {
 
     mpi_vrb_printf("filling hamiltonian buffer\n");
     (*(model->hfill))( model, intls->ham );
-    if(model->n_sym < 0) {
-        model->n_sym*=-1;
+    if (model->n_sym < 0) {
+        model->n_sym *= -1;
         double err = diverge_symmetrize_2pt_fine( model, intls->ham, intls->U );
         mpi_log_printf("resymmetrized Hamiltonian, error was %1.5f", err);
     }

@@ -539,14 +539,14 @@ void tu_postproduction::to_file(string filename, bool save_self) {
     header[127] = header[i-1]*sizeof(complex128_t)+header[i-2];
 
     index_t my_nk_off = vertex->my_nk_off;
-    int sindex = sizeof(index_t);
-    int schar = sizeof(char);
-    int sdou = sizeof(double);
-    int scdou = sizeof(complex128_t);
-    int new_off = 0;
+    index_t sindex = sizeof(index_t);
+    index_t schar = sizeof(char);
+    index_t sdou = sizeof(double);
+    index_t scdou = sizeof(complex128_t);
+    index_t new_off = 0;
 
     new_off = diverge_mpi_write_byte_to_file(file, header, new_off, 128*sindex);
-    int n_osff = (my_rank == 0) ? vertex->n_orbff : 0;
+    index_t n_osff = (my_rank == 0) ? vertex->n_orbff : 0;
     new_off = diverge_mpi_write_byte_to_file(file, tu_data->mi_to_ofrom, new_off, n_osff*sindex);
     new_off = diverge_mpi_write_byte_to_file(file, tu_data->mi_to_oto, new_off, n_osff*sindex);
     new_off = diverge_mpi_write_byte_to_file(file, tu_data->mi_to_R, new_off, 3*n_osff*sindex);
@@ -554,7 +554,7 @@ void tu_postproduction::to_file(string filename, bool save_self) {
     new_off = diverge_mpi_write_byte_to_file(file, tu_data->bond_sizes, new_off, n_osff*sindex);
     new_off = diverge_mpi_write_byte_to_file(file, tu_data->bond_offsets, new_off, n_osff*sindex);
 
-    int nibz = (my_rank == 0) ? tu_data->nkibz : 0;
+    index_t nibz = (my_rank == 0) ? tu_data->nkibz : 0;
     new_off = diverge_mpi_write_byte_to_file(file, tu_data->symm->idx_ibz_in_fullmesh.data(), new_off, nibz*sindex);
     // P vertex write
     new_off = diverge_mpi_write_byte_to_file(file, lenP, new_off + my_nk_off*sindex, my_nk*sindex);

@@ -1,0 +1,12 @@
+INC_TEST := true
+DEFINES := -DUSE_ALTERNATIVE_TIME
+DEFINES += -DNDEBUG -DEIGEN_NO_DEBUG -DBHK_NK=3 -DBHK_L0=2 -DBHK_NUM=5
+INCLUDES += -I/data/data/com.termux/files/usr/include/openblas/ -I$(HOME)/software/include
+CXXFLAGS += -Ofast -mtune=native
+CFLAGS += -Ofast -mtune=native
+
+# requires installation of fftw in $(HOME)/software
+
+LIBS = -lopenblas -L$(HOME)/software/lib -lfftw3_omp -lfftw3
+SOFLAGS = -shared
+STRIP = echo

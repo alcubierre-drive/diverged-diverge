@@ -16,8 +16,9 @@ pip install diverge-flow
 ```
 on a 64bit linux machine and directly use divERGe. For different architectures,
 compilation is additionally required (and putting the correct
-```libdivERGe.so``` in your ```LD_LIBRARY_PATH```). For any other language, you
-must write an equivalent wrapper yourself.
+```libdivERGe.so``` in your ```LD_LIBRARY_PATH```). You can verify the .so file
+in use by calling ```diverge.info()``` from python. For any other language, you
+must write all the FFI wrappers yourself.
 
 # [Documentation](https://frg.pages.rwth-aachen.de/diverge/)
 [https://frg.pages.rwth-aachen.de/diverge/](https://frg.pages.rwth-aachen.de/diverge/)
@@ -60,5 +61,5 @@ ________________________________________________________________________________
 - doc: structured arrays in python, struct datatype usage example symmetries
   from python (emery)
 - code: clean up log messages (```mpi_vrb_printf()``` vs ```mpi_log_printf()```)
-
+- examples: hubbard.py with USE_GRID=False doesn't work
 

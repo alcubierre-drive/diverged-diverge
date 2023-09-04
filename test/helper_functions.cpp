@@ -11,7 +11,7 @@ bool check_hermicity(complex128_t* data, index_t linsize,index_t batches){
         tmp += std::abs(data[i+linsize*(j+linsize*k)]
                     - std::conj(data[j+linsize*(i+linsize*k)]));
     }
-    return abs(tmp) < 1e-10;
+    return std::abs(tmp) < 1e-10;
 }
 
 
@@ -49,7 +49,7 @@ bool check_equal(complex128_t* data1, complex128_t* data2, index_t size, double 
     double max_diff = 0.0;
     for (index_t i = 0; i < size;++i) {
         if (std::abs(data1[i] - data2[i]) > max_diff) {
-            max_diff += abs(data1[i] - data2[i]);
+            max_diff += std::abs(data1[i] - data2[i]);
             if (max_diff > errbnd) {
                 mpi_log_printf_all("rank %2d: maximal difference is %f at %f and %f at idx %d\n",
                         diverge_mpi_comm_rank(), max_diff, ((double*)data1)[2*i], ((double*)data2)[2*i], (int)i );
@@ -63,7 +63,7 @@ bool check_equal(double* data1, double* data2, index_t size, double errbnd)
     double max_diff = 0.0;
     for (index_t i = 0; i < size;++i) {
         if (std::abs(data1[i] - data2[i]) > max_diff) {
-            max_diff += abs(data1[i] - data2[i]);
+            max_diff += std::abs(data1[i] - data2[i]);
             if (max_diff > errbnd) {
                 mpi_log_printf_all("rank %2d: maximal difference is %f at idx %d\n",
                         diverge_mpi_comm_rank(), max_diff, (int)i );

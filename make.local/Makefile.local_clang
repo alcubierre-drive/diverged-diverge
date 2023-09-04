@@ -1,0 +1,16 @@
+INC_TEST := true
+# USE_MPI := true
+# CXX := mpicxx
+# CC := mpicc
+# LD := mpicxx
+
+CXX := clang
+CC := clang
+LD := clang
+
+DEFINES += -DDIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT
+LIBS += -lm -lstdc++
+
+INCLUDES += -I/usr/include/openblas/
+DEFINES += -DBHK_NK=4 -DBHK_NUM=5 -DBHK_L0=2 -Ofast -march=native -DNDEBUG -DEIGEN_NO_DEBUG
+

@@ -199,7 +199,7 @@ void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int d
     MPI_File_close( &fh );
 }
 
-int diverge_mpi_write_byte_to_file( void* file, const void* data, int displ, int count ) {
+index_t diverge_mpi_write_byte_to_file( void* file, const void* data, index_t displ, index_t count ) {
     if (file == NULL) {
         mpi_err_printf("got NULL as file argument. returning 0.\n");
         return 0;
@@ -208,8 +208,8 @@ int diverge_mpi_write_byte_to_file( void* file, const void* data, int displ, int
     MPI_File* fh = (MPI_File*)file;
     MPI_File_set_view( *fh, displ, MPI_BYTE, MPI_BYTE, "native", MPI_INFO_NULL );
     MPI_File_write_at( *fh, 0, data, count, MPI_BYTE, MPI_STATUS_IGNORE );
-    int end_data = displ + count;
-    MPI_Allreduce( MPI_IN_PLACE, &end_data, 1, MPI_INT, MPI_MAX, diverge_mpi_comm );
+    index_t end_data = displ + count;
+    MPI_Allreduce( MPI_IN_PLACE, &end_data, 1, MPI_INT64_T, MPI_MAX, diverge_mpi_comm );
     return end_data;
 }
 
@@ -378,7 +378,7 @@ void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int d
 }
 
 
-int diverge_mpi_write_byte_to_file( void* file, const void* data, int displ, int count){
+index_t diverge_mpi_write_byte_to_file( void* file, const void* data, index_t displ, index_t count){
     if (file == NULL) {
         mpi_err_printf("got NULL as file argument. returning 0.\n");
         return 0;

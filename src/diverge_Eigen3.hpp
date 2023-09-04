@@ -20,7 +20,12 @@
 
 #endif // LEAVE_EIGEN_BROKEN
 
+#ifndef SKIP_EIGEN3_INCLUDE_PREFIX
 #include <eigen3/Eigen/Dense>
+#else
+#include <Eigen/Dense>
+#endif
+
 #include <complex>
 typedef Eigen::Vector2i Vec2i;
 typedef Eigen::Vector3i Vec3i;

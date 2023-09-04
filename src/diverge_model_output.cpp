@@ -3,6 +3,7 @@
 #include "diverge_model.h"
 #include "misc/number_repr_checks.h"
 #include "misc/mpi_functions.h"
+#include "misc/find_bandstructure_pts.h"
 
 #include "misc/eigen.h"
 #include "misc/md5.h"
@@ -131,10 +132,30 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int includ
         }
 
         idx = 100;
+        index_t *band_indices = NULL, n_band_indices = 0, *n_band_segments = NULL;
+        bool use_band_indices = false;
+        bool include_bandstructure = false;
         if (mod->n_ibz_path > 0) {
             // bandstructure, including the k coordinates *after* the bands
-            ADD_ARRAY_TO_IBUF( sizeof(double) * (mod->n_orb*mod->n_spin + 3) *
-                    ((mod->n_ibz_path-1)*h_diverge_model_nbandstructure + 1) );
+            if (h_diverge_model_nbandstructure == -1 && mod->internals->has_common_internals) {
+                mpi_log_printf( "using fine kmesh data for band structure\n" );
+                n_band_segments = find_bandstructure_pts( mod, &band_indices, &n_band_indices );
+                if (band_indices != NULL && n_band_indices > 0) {
+                    use_band_indices = true;
+                    include_bandstructure = true;
+                    ADD_ARRAY_TO_IBUF( sizeof(double) * (mod->n_orb*mod->n_spin + 3) * n_band_indices );
+                } else {
+                    mpi_err_printf( "could not find band structure indices, skipping\n" );
+                    ADD_ARRAY_TO_IBUF( 0 );
+                }
+            } else if (h_diverge_model_nbandstructure < -1) {
+                mpi_wrn_printf( "invalid value %li for npath\n", h_diverge_model_nbandstructure );
+                ADD_ARRAY_TO_IBUF( 0 );
+            } else {
+                include_bandstructure = true;
+                ADD_ARRAY_TO_IBUF( sizeof(double) * (mod->n_orb*mod->n_spin + 3) *
+                        ((mod->n_ibz_path-1)*h_diverge_model_nbandstructure + 1) );
+            }
         } else {
             ADD_ARRAY_TO_IBUF( 0 );
         }
@@ -235,11 +256,30 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int includ
         }
 
         // and generate the bandstructure array
-        if (mod->n_ibz_path > 0) {
-            mpi_log_printf("generating bandstructure with %li points per segment\n",
-                    h_diverge_model_nbandstructure );
-            generate_bandstructure( mod, (double*)(buf+ibuf[100]), h_diverge_model_nbandstructure );
+        if (include_bandstructure) {
+            if (use_band_indices) {
+                mpi_log_printf("reading bandstructure from fine mesh, %li points\n", n_band_indices);
+                double* E = mod->internals->E;
+                double* kf = mod->internals->kfmesh;
+                double* out = (double*)(buf+ibuf[100]);
+                index_t nb = mod->n_orb * mod->n_spin;
+                index_t cnt = 0;
+                for (index_t i=0; i<n_band_indices; ++i) {
+                    for (index_t b=0; b<nb; ++b)
+                        out[cnt++] = E[band_indices[i]*nb + b];
+                    for (int d=0; d<3; ++d)
+                        out[cnt++] = kf[band_indices[i]*3+d];
+                }
+            } else {
+                mpi_log_printf("generating bandstructure with %li points per segment\n",
+                        h_diverge_model_nbandstructure );
+                generate_bandstructure( mod, (double*)(buf+ibuf[100]), h_diverge_model_nbandstructure );
+            }
         }
+
+        // free band indices
+        if (band_indices != NULL) free(band_indices);
+        if (n_band_segments != NULL) free(n_band_segments);
 
         // calculate md5sum
         md5sum = md5sum_div(buf, ibuf[100]+ibuf[101]);

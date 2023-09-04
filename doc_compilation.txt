@@ -21,6 +21,12 @@ LIBS += -L/opt/fftw/lib/
 ============
 into the 'Makefile.local' (*this is an example, actual content will differ!*)
 
+Examples for Makefile.local::
+The <make.local/ directory at
+https://git.rwth-aachen.de/frg/diverge/-/tree/master/make.local/>
+of the git repo contains various examples of how to compile divERGe on certain
+machines/configurations.
+
 Variables defined and used in 'Makefile':::
 Compilers etc.
 === Code ===
@@ -157,6 +163,7 @@ DIVERGE_OPENBLAS_LIMIT_THREADS=VAL - limit the number of threads to be used in
                                      maximum number of threads that can be
                                      exceeded by modern cluster architectures.
 GIT_VERSION=VAL - set the git version string to VAL
+GIT_VERSION_BRANCH=VAL - set the git branch string to VAL
 GRID_FF_SHELL_DISTANCE=VAL - set the maximum distance of formfactors to be
                              generated in the grid FRG code to VAL
 LEAVE_EIGEN_BROKEN - do not turn off Eigen optimizations. They are nice in
@@ -185,6 +192,10 @@ NPATCH_ALMOST_ZERO=VAL - define VAL that is seen to be zero for floating point
 NPATCH_PERIODIC_NORM_NG=VAL - for momentum additions/subtractions that extend
                               over more than one primitive zone, define the
                               range in G vectors that is searched
+SKIP_EIGEN3_INCLUDE_PREFIX - some clusters install eigen3 in a way equivalent to
+                             /usr/include/Eigen instead of
+                             /usr/include/eigen3/Eigen. This flag is there to
+                             enable the former.
 SKIP_FLOW_TIMING - do not time the flow step in the grid FRG code
 TAG_VERSION=VAL - set the git tag version string to VAL
 TU_MAGIC_NUMBER_POST_PROCESSING=VAL - set the TU backend post processing magic

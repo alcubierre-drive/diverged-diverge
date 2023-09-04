@@ -23,6 +23,7 @@
 #include "misc/alloc.h"
 #include "misc/read_W90.h"
 #include "misc/generate_symmetries.h"
+#include "misc/find_bandstructure_pts.h"
 
 #include "diverge_common.h"
 #include "diverge_model.h"

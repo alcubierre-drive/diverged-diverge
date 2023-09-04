@@ -9,20 +9,24 @@ static char h_git_version[512];
 #undef NO_GIT_VERSION
 #endif
 
+#ifndef GIT_VERSION_BRANCH
+#define GIT_VERSION_BRANCH "git"
+#endif
+
 #if defined(TAG_VERSION) & defined(NO_GIT_VERSION)
 #define VERSION TAG_VERSION
 #endif
 
 #if defined(TAG_VERSION) & !defined(NO_GIT_VERSION)
-#define VERSION TAG_VERSION ",git:" GIT_VERSION
+#define VERSION TAG_VERSION "," GIT_VERSION_BRANCH ":" GIT_VERSION
 #endif
 
 #if !defined(TAG_VERSION) & defined(NO_GIT_VERSION)
-#define VERSION "git:undef"
+#define VERSION GIT_VERSION_BRANCH ":undef"
 #endif
 
 #if !defined(TAG_VERSION) & !defined(NO_GIT_VERSION)
-#define VERSION "git:" GIT_VERSION
+#define VERSION GIT_VERSION_BRANCH ":" GIT_VERSION
 #endif
 
 const char* get_version( void ) {
