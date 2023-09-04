@@ -32,6 +32,17 @@ double diverge_symmetrize_2pt_coarse( diverge_model_t* model, complex128_t* buf,
 // aux - auxiliary buffer that may be either NULL or of the same size as buf
 double diverge_symmetrize_2pt_fine( diverge_model_t* model, complex128_t* buf, complex128_t* aux );
 
+// Function: diverge_symmetrize_greens
+// symmetrizes 2pt function of type <gf_complex_t> on a fine mesh (as the
+// Green's function).  returns maximum difference between symmetrized and
+// un-symmetrized buffer.
+//
+// Parameters:
+// model - the divERGe model
+// buf - buffer to symmetrize, length (nkf, nb, nb) with nb = n_orb * n_spin
+// aux - auxiliary buffer that may be either NULL or of the same size as buf
+double diverge_symmetrize_greens( diverge_model_t* model, gf_complex_t* buf, gf_complex_t* aux );
+
 // Function: diverge_symmetrize_mom_coarse
 // symmetrizes coarse mesh momentum space function (no orbital/spin indices)
 // stored in buf. returns maximum difference between symmetrized and
