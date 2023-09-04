@@ -6,8 +6,8 @@ import numpy as np
 # some parameters
 params_emery = dict( Ud=3.0, Up=1.0, tdd=0.2, tpp=0.3, tdp=1.0 )
 
-positions = np.array( [[0,0,0], [0.5,0,0], [0,0.5,0]] )
 lattice = np.eye(3)
+positions = np.array( [[0,0,0], [0.5,0,0], [0,0.5,0]] )
 
 # get the hopping phase between p orbitals
 def get_phase( o1, o2, po1, po2 ):
@@ -34,7 +34,7 @@ def get_phase( o1, o2, po1, po2 ):
 hop_list = []
 tdd_norm = 1.0
 tdp_norm = 0.5
-tpp_norm = 0.5*np.sqrt(2.)
+tpp_norm = 1./np.sqrt(2.)
 for Rx in range(-2,3):
     for Ry in range(-2,3):
         for o1 in range(3):
@@ -61,6 +61,7 @@ vertices[2] = ( 'D', [0,0,0], 2,2, -1,0,0,0, (params_emery['Up'],0.0) )
 ibz_path = np.array( [ [0,0,0], [0,0.5,0], [0.5,0.5,0], [0,0,0] ] )
 
 # let it flow
-diverge.autoflow( hop_array, vertices, nk=[16,16,0], nkf=[5,5,0], no=3,
-                  lattice=lattice, sites=positions, ibz_path=ibz_path )
+diverge.autoflow( hop_array, vertices, nk=[8,8,0], nkf=[5,5,0], no=3,
+                  lattice=lattice, sites=positions, ibz_path=ibz_path,
+                  formfactor_maxdist=1.01, maxvert=3.01 )
 

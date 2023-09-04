@@ -12,7 +12,7 @@ diverge.mpi_loglevel_set(2)
 
 # some parameters
 params_emery = dict( Ud=3.0, Up=1.0, tdd=0.2, tpp=0.3, tdp=1.0 )
-params_frg = dict( nk=16, nkf=5, filling=0.8, npatches_ibz=3, tu_distance=1.51,
+params_frg = dict( nk=8, nkf=5, filling=0.8, npatches_ibz=3, tu_distance=1.51,
                    model_output="model.dvg", mode="tu", channels="PCD", maxvert=50.0,
                    maxiter=10, flow_output="flow.dat", post_output="post.dvg" )
 

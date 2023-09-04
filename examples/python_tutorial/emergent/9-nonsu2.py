@@ -12,9 +12,9 @@ diverge.mpi_loglevel_set(2)
 
 # some parameters
 params_emery = dict( Ud=3.0, Up=1.0, tdd=0.2, tpp=0.3, tdp=1.0, B_zeeman=0.1 )
-params_frg = dict( nk=12, nkf=5, filling=0.8, npatches_ibz=3, tu_distance=1.51,
+params_frg = dict( nk=12, nkf=5, filling=0.8, npatches_ibz=3, tu_distance=1.01,
                    model_output="model.dvg", mode="tu", channels="PCD", maxvert=50.0,
-                   maxiter=2, flow_output="flow.dat", post_output="post.dvg" )
+                   maxiter=15, flow_output="flow.dat", post_output="post.dvg" )
 
 # we now use the actual model structure
 model = diverge.model_init()
@@ -127,7 +127,7 @@ def symmetry_setup( model ):
     syms = np.zeros( (1,), dtype=diverge.sym_op_t )
 
     # and allocation/mapping of the model structures
-    orb_symmetries = diverge.alloc_array( (8,3,3), dtype="complex128_t" )
+    orb_symmetries = diverge.alloc_array( (8,6,6), dtype="complex128_t" )
     model.contents.orb_symmetries = orb_symmetries.ctypes.data
     rs_symmetries = diverge.view_array( model.contents.rs_symmetries, dtype=np.float64, shape=(8,3,3) )
     model.contents.n_sym = 8
@@ -135,29 +135,28 @@ def symmetry_setup( model ):
     # E
     syms[0]["normal_vector"] = [0,0,1.0]
     syms[0]["type"] = "E"
-    rs_symmetries[0], orb_symmetries[0] = diverge.generate_symm_trafo(1,orbs,syms)
+    rs_symmetries[0], orb_symmetries[0] = diverge.generate_symm_trafo(2,orbs,syms)
     # 2C4
     syms[0]["type"] = "R"
     syms[0]["angle"] = 90
-    rs_symmetries[1], orb_symmetries[1] = diverge.generate_symm_trafo(1,orbs,syms)
+    rs_symmetries[1], orb_symmetries[1] = diverge.generate_symm_trafo(2,orbs,syms)
     syms[0]["angle"] = 3*90
-    rs_symmetries[3], orb_symmetries[3] = diverge.generate_symm_trafo(1,orbs,syms)
+    rs_symmetries[3], orb_symmetries[3] = diverge.generate_symm_trafo(2,orbs,syms)
     # C2
     syms[0]["angle"] = 2*90
-    rs_symmetries[2], orb_symmetries[2] = diverge.generate_symm_trafo(1,orbs,syms)
+    rs_symmetries[2], orb_symmetries[2] = diverge.generate_symm_trafo(2,orbs,syms)
     # 2sigma_v
     syms[0]["type"] = "M"
     syms[0]["normal_vector"] = [1.0,0,0.0]
-    rs_symmetries[4], orb_symmetries[4] = diverge.generate_symm_trafo(1,orbs,syms)
+    rs_symmetries[4], orb_symmetries[4] = diverge.generate_symm_trafo(2,orbs,syms)
     syms[0]["normal_vector"] = [0.0,1.0,0.0]
-    rs_symmetries[5], orb_symmetries[5] = diverge.generate_symm_trafo(1,orbs,syms)
+    rs_symmetries[5], orb_symmetries[5] = diverge.generate_symm_trafo(2,orbs,syms)
     # 2sigma_d
     syms[0]["normal_vector"] = [1.0,1.0,0.0]
-    rs_symmetries[6], orb_symmetries[6] = diverge.generate_symm_trafo(1,orbs,syms)
+    rs_symmetries[6], orb_symmetries[6] = diverge.generate_symm_trafo(2,orbs,syms)
     syms[0]["normal_vector"] = [1.0,-1.0,0.0]
-    rs_symmetries[7], orb_symmetries[7] = diverge.generate_symm_trafo(1,orbs,syms)
-# TODO symmetry setup for nonSU2 models is more complicated, skip for now.
-# symmetry_setup( model )
+    rs_symmetries[7], orb_symmetries[7] = diverge.generate_symm_trafo(2,orbs,syms)
+symmetry_setup( model )
 
 # validate the model
 if diverge.model_validate( model ):

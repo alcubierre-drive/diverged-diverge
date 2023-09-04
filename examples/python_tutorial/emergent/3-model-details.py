@@ -8,7 +8,7 @@ diverge.mpi_init( None, None )
 
 # some parameters
 params_emery = dict( Ud=3.0, Up=1.0, tdd=0.2, tpp=0.3, tdp=1.0 )
-params_frg = dict( nk=16, nkf=5, model_output="emery_model.dvg" )
+params_frg = dict( nk=8, nkf=5, model_output="model.dvg" )
 
 # we now use the actual model structure
 model = diverge.model_init()
