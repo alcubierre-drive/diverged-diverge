@@ -4,7 +4,7 @@
 import diverge
 import numpy as np
 
-USE_GRID = True
+USE_GRID = False
 
 # TODO(lk):
 # -talk about initialization and that it's necessary but uninteresting
@@ -143,35 +143,8 @@ if USE_GRID:
     # initialize internal grid structures
     diverge.model_internals_grid( model )
 else:
-    # for how the patching generation functions work please consult the
-    # documentation. use at your own risk.
-    pts = (diverge.POINTER(diverge.index_t))()
-    npts = diverge.index_t()
-    diverge.patching_find_fs_pts_C( model, None, 1, 6, 100, diverge.ctypes.byref(pts), diverge.ctypes.byref(npts) )
-
-    # the patching_from_indices function is used to generate a patching given
-    # indices of the momentum mesh as patches. use is risk-free once we have a
-    # meaningful list of patches. in numpy notation, with NPPTS an array of
-    # dtype=diverge.index_t, the call would look like
-    #
-    # model.contents.patching = diverge.patching_from_indices( model, NPPTS.ctypes.data, NPPTS.size )
-    #
-    # but here we use the automatically found Fermi surface that got attached to
-    # the pointer pts:
-    model.contents.patching = diverge.patching_from_indices( model, pts, npts )
-    # therefore we must explicitly free that memory:
-    diverge.mem_free( pts )
-
-    # use some magic to reduce computation effort. consult the documentation.
-    # use at your own risk.
-    diverge.patching_autofine( model, model.contents.patching, None, 1, 40, 0.1, 2.0, 0.5 )
-    # after using the magic, we must resymmetrize the refinement. this is done
-    # here.
-    diverge.patching_symmetrize_refinement( model, model.contents.patching )
-
-    # and finally, with a valid model.contents.patching, we can generate the
-    # internal patch structures
-    diverge.model_internals_patch( model )
+    # initialize internal patch structures
+    diverge.model_internals_patch( model, 6 )
 
 # now write the model output including internals (True)
 checksum = diverge.model_to_file( model, "mod.dvg", True )

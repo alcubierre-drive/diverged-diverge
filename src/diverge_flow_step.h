@@ -125,10 +125,10 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
 // sizeof(complex128_t) * (nktot, nb, nb) + sizeof(double) * (nktot, nb)
 void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspace );
 
-// Function: diverge_flow_step_refill_Hself generates the Hamiltonian +
-// self-energy and diagonalizes it in the workspace buffer (same size as above,
-// energies after matrices). Finds the filling and returns the chemical
-// potential needed to obtain this filling value
+// Function: diverge_flow_step_refill_Hself
+// generates the Hamiltonian + self-energy and diagonalizes it in the workspace
+// buffer (same size as above, energies after matrices). Finds the filling and
+// returns the chemical potential needed to obtain this filling value
 double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* workspace );
 
 #ifdef __cplusplus
