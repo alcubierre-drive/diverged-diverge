@@ -107,6 +107,9 @@ private:
     const index_t* bond_offsets;
     const double* bos_freq;
     const symmstruct_t* symm;
+    const bool P_flow;
+    const bool C_flow;
+    const bool D_flow;
 
     constexpr inline index_t IBZ_2_BZ(const index_t q)
     {return symm->use_symmetries ? symm->idx_ibz_in_fullmesh[q] : q;}

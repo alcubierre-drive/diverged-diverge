@@ -64,4 +64,5 @@ private:
     index_t my_nk;
     index_t num_calls = 0;
     complex128_t* coarseGF;
+    bool tu_selfenergy_flow;
 };

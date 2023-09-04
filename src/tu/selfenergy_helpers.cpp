@@ -26,7 +26,10 @@ selfEnergy::selfEnergy(Vertex* vertex)
     bond_sizes{tu_data->bond_sizes},
     bond_offsets{tu_data->bond_offsets},
     bos_freq{tu_data->bosonic_freq.data()},
-    symm{vertex->symm}
+    symm{vertex->symm},
+    P_flow{vertex->P_flow},
+    C_flow{vertex->C_flow},
+    D_flow{vertex->D_flow}
 {
     reco_helper = vertex->product_helper;
     interpol_helper = vertex->bubble_helper;

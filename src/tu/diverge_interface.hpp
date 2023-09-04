@@ -20,6 +20,7 @@ struct tu_data_t {
     index_t my_nk_off;
 
     double offload_cpu;
+    bool tu_selfenergy_flow;
 
     // reduction of computational cost of the loop
     vector<Vec3i> existing_ff;

@@ -2,7 +2,6 @@
 #include "cuda_init.hpp"
 #include "../misc/batched_eigen.h"
 #include <omp.h>
-#include <iostream>
 
 tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 :

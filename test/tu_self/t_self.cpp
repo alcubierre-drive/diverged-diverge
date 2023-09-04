@@ -14,7 +14,6 @@
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
-#include <iostream>
 
 #ifndef USE_GF_FLOATS
 void init_random_PCD(diverge_model_t* model, Vertex* vertex, Projection * proj, double* value) {
@@ -68,8 +67,8 @@ TEST_CASE("self energy Realspace vs k space SU2 static","[self][self_kVSr_SU2]")
     Projection ProjMix (mix);
 
     Vertex VertOrb(orb, &ProjOrb,&PropOrb, true,true,true,true);
-    Vertex VertMom(mom, &ProjMom,&PropMom,  true,true,true,true);
-    Vertex VertMix(mix, &ProjMix,&PropMix,  true,true,true,true);
+    Vertex VertMom(mom, &ProjMom,&PropMom, true,true,true,true);
+    Vertex VertMix(mix, &ProjMix,&PropMix, true,true,true,true);
     double value[3] = {0.1,-0.4,1.8};
     init_random_PCD(orb,&VertOrb,&ProjOrb,value);
     init_random_PCD(mom,&VertMom,&ProjMom,value);
@@ -406,6 +405,56 @@ TEST_CASE("self energy Realspace vs k space SU2 flow","[self][self_flow]"){
     diverge_model_free(mom);
     diverge_flow_step_free(stepo);
     diverge_flow_step_free(stepm);
+}
+
+TEST_CASE("pure selfenergy flow","[self][self_flow]"){
+    diverge_model_t* mom = gen_square_lat_hub(4, 4);
+    diverge_model_internals_tu(mom, 1.1);
+    ((tu_data_t*)mom->internals->tu_data)->tu_selfenergy_flow = true;
+
+    diverge_flow_step_t* step = diverge_flow_step_init(mom, "TU", "PCDS");
+
+    double Lambda = 1.0;
+    double dLambda = -0.1;
+    for (int i=0; i<5; ++i) {
+        if (Lambda < 0) break;
+        diverge_flow_step_euler( step, Lambda, dLambda );
+        Lambda += dLambda;
+    }
+    diverge_model_free(mom);
+    diverge_flow_step_free(step);
+}
+TEST_CASE("P+self","[self][self_flow]"){
+    diverge_model_t* mom = gen_square_lat_hub(4, 4);
+    diverge_model_internals_tu(mom, 1.1);
+
+    diverge_flow_step_t* step = diverge_flow_step_init(mom, "TU", "PS");
+
+    double Lambda = 1.0;
+    double dLambda = -0.1;
+    for (int i=0; i<5; ++i) {
+        if (Lambda < 0) break;
+        diverge_flow_step_euler( step, Lambda, dLambda );
+        Lambda += dLambda;
+    }
+    diverge_model_free(mom);
+    diverge_flow_step_free(step);
+}
+TEST_CASE("D+self","[self][self_flow]"){
+    diverge_model_t* mom = gen_square_lat_hub(4, 4);
+    diverge_model_internals_tu(mom, 1.1);
+
+    diverge_flow_step_t* step = diverge_flow_step_init(mom, "TU", "DS");
+
+    double Lambda = 1.0;
+    double dLambda = -0.1;
+    for (int i=0; i<5; ++i) {
+        if (Lambda < 0) break;
+        diverge_flow_step_euler( step, Lambda, dLambda );
+        Lambda += dLambda;
+    }
+    diverge_model_free(mom);
+    diverge_flow_step_free(step);
 }
 
 #endif // MPI

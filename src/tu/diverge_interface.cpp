@@ -18,6 +18,7 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
                  model->nkf[0] * model->nkf[1] * model->nkf[2];
     info->symm = new symmstruct_t;
     info->use_reduced_loop = true;
+    info->tu_selfenergy_flow = false;
     model->internals->tu_data = (void*) info;
     model->internals->tu_data_destructor = tu_data_destructor;
     info->n_frq = n_frq;
@@ -246,7 +247,7 @@ void init_ff_struct(const double max_dist, diverge_model_t* model) {
                 refinement_allowed = false;
         }
     }
-    if(!refinement_allowed)
+    if(!refinement_allowed && tu_data -> nkf > 1)
         mpi_wrn_printf("Too many ff - refinement breaks symmetry!\n")
 
     sort_ff_struct(model->tu_ff, model->n_tu_ff);

@@ -5,6 +5,7 @@
 #include "misc/batched_eigen.h"
 #include "misc/mpi_functions.h"
 #include "misc/merge_orb_w_rs_symm.h"
+#include "diverge_symmetrize.h"
 #include <omp.h>
 
 
@@ -81,22 +82,27 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         mpi_wrn_printf("trying to continue anyways…\n");
     }
 
-    mpi_log_printf("allocating/generating meshes\n");
+    mpi_vrb_printf("allocating/generating meshes\n");
     intls->kmesh = (double*)malloc(sizeof(double)*nk*3);
     intls->kfmesh = (double*)malloc(sizeof(double)*nktot*3);
     diverge_model_generate_meshes( intls->kmesh, intls->kfmesh, model->nk,
             model->nkf, model->lattice );
 
-    mpi_log_printf("allocating internal common buffers\n");
+    mpi_vrb_printf("allocating internal common buffers\n");
     intls->ham = (complex128_t*)calloc(nktot*nb*nb,sizeof(complex128_t));
     intls->U = (complex128_t*)calloc(nktot*nb*nb,sizeof(complex128_t));
     intls->E = (double*)calloc(nktot*nb,sizeof(double));
     intls->greens = (gf_complex_t*)calloc(nktot*nb*nb*2,sizeof(gf_complex_t));
 
-    mpi_log_printf("filling hamiltonian buffer\n");
+    mpi_vrb_printf("filling hamiltonian buffer\n");
     (*(model->hfill))( model, intls->ham );
+    if(model->n_sym < 0) {
+        model->n_sym*=-1;
+        double err = diverge_symmetrize_2pt_fine( model, intls->ham, intls->U );
+        mpi_log_printf("resymmetrized Hamiltonian, error was %1.5f", err);
+    }
 
-    mpi_log_printf("diagonalizing hamiltonian\n");
+    mpi_vrb_printf("diagonalizing hamiltonian\n");
     memcpy( intls->U, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
     batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
 

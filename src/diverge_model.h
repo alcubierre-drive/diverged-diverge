@@ -149,7 +149,8 @@ struct diverge_model_t {
 
     // Variable: n_sym
     // symmetry setup. use helper functions to generate meaningful symmetry
-    // operations.
+    // operations. if n_sym is negative, the Hamiltonian will be resymmetrized
+    // before the diagonalisation
     index_t n_sym;
     // Variable: orb_symmetries
     complex128_t* orb_symmetries; // shape (n_sym, ns*no, ns*no)
