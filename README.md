@@ -61,5 +61,4 @@ ________________________________________________________________________________
 - doc: structured arrays in python, struct datatype usage example symmetries
   from python (emery)
 - code: clean up log messages (```mpi_vrb_printf()``` vs ```mpi_log_printf()```)
-- examples: hubbard.py with USE_GRID=False doesn't work
 

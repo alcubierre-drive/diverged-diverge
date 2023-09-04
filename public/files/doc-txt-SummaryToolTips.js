@@ -1,1 +1,1 @@
-﻿NDSummary.OnToolTipsLoaded("File:doc.txt",{312:"<div class=\"NDToolTip TSection LTextFile\"><div class=\"TTSummary\">For an easy start with the divERGe python interface, install divERGe from pip:</div></div>"});
+﻿NDSummary.OnToolTipsLoaded("File:doc.txt",{269:"<div class=\"NDToolTip TSection LTextFile\"><div class=\"TTSummary\">For an easy start with the divERGe python interface, install divERGe from pip:</div></div>"});

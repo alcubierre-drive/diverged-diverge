@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("vie",["Function"],[["view_array",,[["dvg",,,,0,"File:build/lib/diverge/__init__.py:dvg.view_array","PythonClass:dvg:view_array"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("vie",["Function"],[["view_array",,[["dvg",,,,0,"File:util/__init__.py:dvg.view_array","PythonClass:dvg:view_array"]]]]);
