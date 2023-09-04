@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("PythonClass:diverge_post_patch","diverge_post_patch");NDSummary.OnSummaryLoaded("PythonClass:diverge_post_patch",[["Python","Python"]],[["Classes","Class"]],[[260,0,0,"diverge_post_patch"]]);
+﻿NDFramePage.OnPageTitleLoaded("PythonClass:diverge_post_patch","diverge_post_patch");NDSummary.OnSummaryLoaded("PythonClass:diverge_post_patch",[["Python","Python"]],[["Classes","Class"]],[[269,0,0,"diverge_post_patch"]]);

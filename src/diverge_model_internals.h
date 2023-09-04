@@ -14,37 +14,6 @@ int diverge_model_validate( diverge_model_t* model );
 // Prepare the common part of the <internals_t> struct
 void diverge_model_internals_common( diverge_model_t* model );
 
-// Function: diverge_model_internals_get_E
-// returns the internally generated energies (nk*nkf, nb).
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
-double*       diverge_model_internals_get_E(      const diverge_model_t* model );
-// Function: diverge_model_internals_get_U
-// returns the internally generated orbital to band transform (nk*nkf, nb, nb)
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
-complex128_t* diverge_model_internals_get_U(      const diverge_model_t* model );
-// Function: diverge_model_internals_get_H
-// returns the internally generated hamiltonian (nk*nkf, nb, nb)
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
-complex128_t* diverge_model_internals_get_H(      const diverge_model_t* model );
-// Function: diverge_model_internals_get_kmesh
-// returns the internally generated coarse momentum mesh (nk, 3)
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
-double*       diverge_model_internals_get_kmesh(  const diverge_model_t* model );
-// Function: diverge_model_internals_get_kfmesh
-// returns the internally generated coarse momentum mesh (nk*nkf, 3)
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
-double*       diverge_model_internals_get_kfmesh( const diverge_model_t* model );
-
 // Function: diverge_model_internals_grid
 // Prepare the grid part of the <internals_t> struct
 void diverge_model_internals_grid( diverge_model_t* model );
@@ -89,6 +58,40 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
 // interactions in their 'natural' (i.e. D) channel only, and not both C and D
 // channel.
 
+// Namespace: diverge_model_internals_get_
+// some getter functions to access internals. may break for non-standard
+// models.
+//
+// Function: diverge_model_internals_get_E
+// returns the internally generated energies (nk*nkf, nb).
+//
+// <diverge_model_internals_common> must have been called, otherwise NULL is
+// returned.
+double*       diverge_model_internals_get_E(      const diverge_model_t* model );
+// Function: diverge_model_internals_get_U
+// returns the internally generated orbital to band transform (nk*nkf, nb, nb)
+//
+// <diverge_model_internals_common> must have been called, otherwise NULL is
+// returned.
+complex128_t* diverge_model_internals_get_U(      const diverge_model_t* model );
+// Function: diverge_model_internals_get_H
+// returns the internally generated hamiltonian (nk*nkf, nb, nb)
+//
+// <diverge_model_internals_common> must have been called, otherwise NULL is
+// returned.
+complex128_t* diverge_model_internals_get_H(      const diverge_model_t* model );
+// Function: diverge_model_internals_get_kmesh
+// returns the internally generated coarse momentum mesh (nk, 3)
+//
+// <diverge_model_internals_common> must have been called, otherwise NULL is
+// returned.
+double*       diverge_model_internals_get_kmesh(  const diverge_model_t* model );
+// Function: diverge_model_internals_get_kfmesh
+// returns the internally generated coarse momentum mesh (nk*nkf, 3)
+//
+// <diverge_model_internals_common> must have been called, otherwise NULL is
+// returned.
+double*       diverge_model_internals_get_kfmesh( const diverge_model_t* model );
 #ifdef __cplusplus
 }
 #endif
