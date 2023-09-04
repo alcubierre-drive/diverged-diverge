@@ -1,0 +1,13 @@
+INC_TEST := true
+USE_CUDA := true
+
+CXX := icx
+CC := icx
+LD := icx
+
+DEFINES += -DUSE_MKL -DSKIP_EIGEN3_INCLUDE_PREFIX -DNDEBUG \
+           -DEIGEN_NO_DEBUG -DDIVERGE_LOG_GRAYSCALE -DBHK_NK=4 -DBHK_NUM=5 \
+           -DBHK_L0=2
+INCLUDES += -I$(CUDA_ROOT)/include
+PREFLAGS += -Ofast -march=native
+LIBS += -llapack -lstdc++
