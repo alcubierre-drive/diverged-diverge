@@ -34,6 +34,9 @@ void mpi_dbg_printf( const char* logname, int loglevel, const char* fname, int l
 // Function: mpi_log_printf
 // print log message (loglevel 3)
 #define mpi_log_printf( ... ) mpi_dbg_printf( "log", 3, __FILE__, __LINE__, __VA_ARGS__ );
+// Function: mpi_vrb_printf_all
+// print verbose message (loglevel 5) from all ranks
+#define mpi_vrb_printf_all( ... ) mpi_dbg_printf_all( "verbose", 5, __FILE__, __LINE__, __VA_ARGS__ );
 // Function: mpi_vrb_printf
 // print verbose message (loglevel 5, off by default)
 #define mpi_vrb_printf( ... ) mpi_dbg_printf( "verbose", 5, __FILE__, __LINE__, __VA_ARGS__ );

@@ -419,6 +419,6 @@ void init_MPI_dist(diverge_model_t* model) {
                            + momenta_per_rank * (rank-remainder);
     }
     diverge_mpi_barrier();
-    mpi_log_printf_all( "rank=%d mynk=%d nkibz=%d\n", rank, tu_data->my_nk, tu_data->nkibz);
+    mpi_vrb_printf_all( "rank=%d mynk=%d nkibz=%d\n", rank, tu_data->my_nk, tu_data->nkibz);
 }
 
