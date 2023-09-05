@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Compilation-DEFINES","Compilation-DEFINES");NDSummary.OnSummaryLoaded("TextFileClass:Compilation-DEFINES",[["Text File","TextFile"]],[["Classes","Class"]],[[276,0,0,"Compilation-DEFINES"]]);
+﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Compilation-DEFINES","Compilation-DEFINES");NDSummary.OnSummaryLoaded("TextFileClass:Compilation-DEFINES",[["Text File","TextFile"]],[["Classes","Class"]],[[314,0,0,"Compilation-DEFINES"]]);

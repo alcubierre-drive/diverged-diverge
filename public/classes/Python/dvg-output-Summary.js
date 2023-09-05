@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("PythonClass:dvg-output","dvg-output");NDSummary.OnSummaryLoaded("PythonClass:dvg-output",[["Python","Python"]],[["Classes","Class"]],[[261,0,0,"dvg-output"]]);
+﻿NDFramePage.OnPageTitleLoaded("PythonClass:dvg-output","dvg-output");NDSummary.OnSummaryLoaded("PythonClass:dvg-output",[["Python","Python"]],[["Classes","Class"]],[[285,0,0,"dvg-output"]]);

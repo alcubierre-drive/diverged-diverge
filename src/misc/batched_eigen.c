@@ -80,9 +80,9 @@ static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
 
             if (!helper_batched_eigen_shut_up) {
                 if (should_reset_nchunks) {
-                    mpi_log_printf("batched eigen: %i@%i devices@chunks\n", ndevices, batched_eigen_get_nchunks());
+                    mpi_vrb_printf("batched eigen: %i@%i devices@chunks\n", ndevices, batched_eigen_get_nchunks());
                 } else {
-                    mpi_log_printf("batched eigen: %i devices\n", ndevices);
+                    mpi_vrb_printf("batched eigen: %i devices\n", ndevices);
                 }
             }
         }

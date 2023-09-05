@@ -41,7 +41,7 @@ int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_outpu
     char chans[3] = {'P', 'C', 'D'};
 
     if (ocfg->q_matrices) {
-        mpi_log_printf("generating q matrices…\n");
+        mpi_vrb_printf("generating q matrices…\n");
         double time_per_chan[3];
         for (int c=0; c<3; ++c) {
             double tick = diverge_mpi_wtime();

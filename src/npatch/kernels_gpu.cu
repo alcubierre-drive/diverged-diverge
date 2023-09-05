@@ -292,7 +292,7 @@ static void helper_kernel_memory_setup( index_t V_sz, index_t, index_t k3map_sz,
 
     double sizes_sum = 0.0;
     for (int i=0; i<helper_kernel_memory_count; ++i) sizes_sum += helper_kernel_memory_size[i];
-    mpi_log_printf("initializing contractions on GPU, using %.1fGiB\n", sizes_sum/(1024.0*1024.0*1024.0));
+    mpi_vrb_printf("initializing contractions on GPU, using %.1fGiB\n", sizes_sum/(1024.0*1024.0*1024.0));
 
     // this is important, as atomicAdd only works for device memory
     for (int dev=0; dev<helper_kernel_ngpus; ++dev) {

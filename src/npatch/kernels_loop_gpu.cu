@@ -374,7 +374,7 @@ void* npatch_loop_gen_gpu( void* data ) {
             CUDA_CHECK( cudaMemPrefetchAsync( helper_klp_dispptr[g], sizeof(cu_gf_complex_t)*nknb*(nb+1), helper_klp_gpus[g], helper_klp_streams[g] ) );
         }
         double additional_mem = sizeof(cu_gf_complex_t)*nknb*(1+nb);
-        mpi_log_printf( "initializing GF on GPUs, using additional %.1fGiB\n", additional_mem/(1024.*1024.*1024.) );
+        mpi_vrb_printf( "initializing GF on GPUs, using additional %.1fGiB\n", additional_mem/(1024.*1024.*1024.) );
 
         // and sync
         for (int g=0; g<helper_klp_ngpus; ++g)
@@ -492,7 +492,7 @@ static bool helper_klp_setup( const int* gpus, int ngpus, const int nblocks[3], 
 
         double sizes_sum = 0.0;
         for (int i=0; i<sizeof(sizes_want)/sizeof(size_t); ++i) sizes_sum += sizes_want[i];
-        mpi_log_printf("initializing loops on GPU, using %.1fGiB\n", sizes_sum/(1024.0*1024.0*1024.0));
+        mpi_vrb_printf("initializing loops on GPU, using %.1fGiB\n", sizes_sum/(1024.0*1024.0*1024.0));
 
         for (int x=0; x<helper_klp_cnt; ++x)
             helper_klp_sz[x] = sizes_want[x];

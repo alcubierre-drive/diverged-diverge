@@ -49,7 +49,7 @@ void symmetrize_npatch_vertex( diverge_model_t* model, complex128_t* buf, const 
         imap[-1] = 1;
     }
 
-    // XXX the routine is not thoroughly tested for true patching systems...
+    // TODO the routine is not thoroughly tested for true patching systems...
     int niter=1;
     while (niter--) {
 

@@ -49,7 +49,7 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin ) {
                     len = stol(s);
                 }
             }
-            mpi_log_printf("#Rvecs=%d, n_orb=%d, n_spin=%d\n", len,n_orb,n_spin);
+            mpi_vrb_printf("W90 #Rvecs=%d, n_orb=%d, n_spin=%d\n", len,n_orb,n_spin);
             hop_elem.reserve( len * POW2( n_orb * n_spin ) );
             weights.resize( len );
             memset( weights.data(), 0, sizeof(double)*weights.size() );

@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("arr",["Class"],[["Arrays",,[[,"Structured Arrays",,,0,"File:util/__init__.py:Structured_Arrays","PythonClass:Structured_Arrays"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("arr",["Class"],[["Arrays",,[[,"Structured Arrays",,,0,"File:build/lib/diverge/__init__.py:Structured_Arrays","PythonClass:Structured_Arrays"]]]]);

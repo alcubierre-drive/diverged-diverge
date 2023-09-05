@@ -59,7 +59,7 @@ void batched_gemm_cublas_init( index_t N ) {
         cublas_setup_num = -1;
         return;
     } else {
-        mpi_log_printf("initializing %i GPUs for batched GEMMs with N=%li\n", ndevices, N );
+        mpi_vrb_printf("initializing %i GPUs for batched GEMMs with N=%li\n", ndevices, N );
         cublas_setup_num = N;
         cublas_has_setup = true;
     }

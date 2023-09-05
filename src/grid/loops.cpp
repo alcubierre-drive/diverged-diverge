@@ -246,7 +246,7 @@ static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_
     nff = rs_ff.size()*2+1;
 
     if (nff > intls->grid_nk)
-        mpi_wrn_printf("attempting to create more formfactors (%li) than mesh points (%li)\n",
+        mpi_log_printf("attempting to create more formfactors (%li) than mesh points (%li)\n",
                 nff, intls->grid_nk);
     complex128_t* formfac = (complex128_t*)malloc(sizeof(complex128_t)*nff*intls->grid_nk);
     complex128_t* buf = formfac;

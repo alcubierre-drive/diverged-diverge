@@ -107,7 +107,7 @@ void LinearizedGapSolution::_calc( double T, char chan, bool use_loop, string ve
 
     if (vertex_file != "") {
         FILE* v = fopen( vertex_file.c_str(), "w" );
-        mpi_scc_printf( "writing MF q=0 '%c' vertex to file\n", chan )
+        mpi_log_printf( "writing MF q=0 '%c' vertex to file\n", chan )
         if (!v) {
             mpi_err_printf( "could not open file\n" );
         } else {

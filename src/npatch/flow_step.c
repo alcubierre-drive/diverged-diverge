@@ -88,7 +88,7 @@ void npatch_setup_arch( const int* gpus, int ngpus, const int nblocks[3], float 
     if (gpus == NULL) {
         ngpus = npatch_flow_gpu_device_count();
         if (ngpus > 0) {
-            mpi_log_printf("detected %i devices for npatch GPU flow\n", ngpus);
+            mpi_vrb_printf("detected %i devices for npatch GPU flow\n", ngpus);
             free_gpu_ary = true;
             int* gp = (int*)malloc(sizeof(int)*ngpus);
             for (int i=0; i<ngpus; ++i) gp[i] = i;
@@ -106,7 +106,7 @@ void npatch_setup_arch( const int* gpus, int ngpus, const int nblocks[3], float 
     int nbl[] = {1024, 1024, 1};
     if (nblocks == NULL) {
         nblocks = nbl;
-        mpi_log_printf("automatic GPU block setup done with {%i,%i,%i}\n", nbl[0], nbl[1], nbl[2]);
+        mpi_vrb_printf("automatic GPU block setup done with {%i,%i,%i}\n", nbl[0], nbl[1], nbl[2]);
     }
 
     npatch_flow_step_gpu_workshare = gpu_workshare;

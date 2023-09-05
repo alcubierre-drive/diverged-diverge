@@ -97,8 +97,8 @@ void VertexMemory::init_from_qbuf( const complex128_t* qbuf_in, char chan_in, in
             for (index_t SC=0; SC<ns; ++SC)
             for (index_t SD=0; SD<ns; ++SD) {
                 index_t s1 = 0, s2 = 0, s3 = 0, s4 = 0;
-                // XXX it is unclear which formulation should be used. to pass
-                // the BHK test, one of the ones below must be taken.
+                // TODO it is unclear which formulation should be used. to pass
+                // the BHK test, the selection below must be taken.
                 const int h_C_idx = 9;
                 const int h_D_idx = 8;
                 switch (chan_in) {
@@ -185,7 +185,7 @@ void VertexMemory::print_memory_requirement() {
     double max_mem = *std::max_element( memory_per_rank.begin(), memory_per_rank.end() );
     double GB = 1024.*1024.*1024.;
 
-    mpi_log_printf( "grid vertex, mem per rank: %.1fGB-(%.1fGB)-%.1fGB\n", min_mem/GB, mean_mem/GB, max_mem/GB );
+    mpi_vrb_printf( "grid vertex, mem per rank: %.1fGB-(%.1fGB)-%.1fGB\n", min_mem/GB, mean_mem/GB, max_mem/GB );
 }
 
 void VertexMemory::remove_projected_components( complex128_t* buf, complex128_t* aux_buf,

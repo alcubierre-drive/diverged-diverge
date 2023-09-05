@@ -10,8 +10,9 @@
 namespace grid {
 
 typedef struct symm_props symm_props;
-// XXX grid re-symmetrization untested for the case of multi-orbital multi-site.
-// Luckily, only a maniac would do a grid FRG calculation for such systems.
+// TODO grid re-symmetrization not thoroughly tested for the case of
+// multi-orbital multi-site. Luckily, only a maniac would do a grid FRG
+// calculation for such systems.
 class SymmetryTransform {
     public:
         SymmetryTransform(
