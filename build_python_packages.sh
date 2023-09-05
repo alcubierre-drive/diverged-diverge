@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $1 = "clean" ]
+if [ "$1" = "clean" ]
 then
     rm -rf build diverge_flow.egg-info dist
     exit 0
