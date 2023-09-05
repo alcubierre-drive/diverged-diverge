@@ -125,7 +125,6 @@ def emery_model( Ud=3.0, Up=1.0, tdd=0.1, tpp=0.3, tdp=1.0, nk=24, nkf=1,
     model.contents.n_sym = nsym
 
     orb_symmetries = diverge.alloc_array( (nsym,3,3), dtype="complex128_t" )
-    model.contents.orb_symmetries = orb_symmetries.ctypes.data
     rs_symmetries = diverge.view_array( model.contents.rs_symmetries, dtype=np.float64, shape=(nsym,3,3) )
     syms[0]["normal_vector"] = [0,0,1.0]
     syms[0]["type"] = "E"
@@ -147,6 +146,7 @@ def emery_model( Ud=3.0, Up=1.0, tdd=0.1, tpp=0.3, tdp=1.0, nk=24, nkf=1,
     rs_symmetries[6], orb_symmetries[6] = diverge.generate_symm_trafo(1,orbs,syms)
     syms[0]["normal_vector"] = [1.0,-1.0,0.0]
     rs_symmetries[7], orb_symmetries[7] = diverge.generate_symm_trafo(1,orbs,syms)
+    model.contents.orb_symmetries = orb_symmetries.ctypes.data
 
     # validate model and initialize internals
     if diverge.model_validate( model ):
