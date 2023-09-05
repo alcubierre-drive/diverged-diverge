@@ -100,7 +100,7 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     if (model->n_sym < 0) {
         model->n_sym *= -1;
         double err = diverge_symmetrize_2pt_fine( model, intls->ham, intls->U );
-        mpi_log_printf("resymmetrized Hamiltonian, error was %1.5f", err);
+        mpi_log_printf("resymmetrized Hamiltonian, error was %1.5f \n", err);
     }
 
     mpi_vrb_printf("diagonalizing hamiltonian\n");

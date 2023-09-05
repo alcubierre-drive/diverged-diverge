@@ -88,7 +88,7 @@ bool init_inv_symmerty_map(diverge_model_t* model) {
         free(orbsymcpy);
         for (index_t i = 0; i < (index_t)missing_symmetries.size();++i) {
             index_t sym = missing_symmetries[i];
-            mpi_log_printf("symmetry %d was missing an inverse, got %d syms \n", sym, n_sym);
+            mpi_wrn_printf("symmetry %d was missing an inverse, got %d syms \n", sym, n_sym);
             Map<CMat3d> sym_rs(rs_symmetries+sym*9);
             Map<CMatXcd> sym_orb(orb_symmetries+sym*mi*mi,mi,mi);
             Map<CMat3d> sym_rsm(rs_symmetries+(n_symold + i)*9);
@@ -102,7 +102,7 @@ bool init_inv_symmerty_map(diverge_model_t* model) {
         memcpy(symm->inv_symmetry.data(),syms.data(),n_sym*sizeof(index_t));
     }
     if(which_is_identity == -1) {
-        mpi_log_printf("identity missing, will be added now \n");
+        mpi_wrn_printf("identity missing, will be added now \n");
         // copy old arrays
         added_symm = true;
         complex128_t* orbsymcpy = (complex128_t*)calloc(n_sym * mi *mi, sizeof(complex128_t));
@@ -330,7 +330,7 @@ void init_map_for_one_leg(diverge_model_t* model, vector<Vec3d>& beyond_UC) {
 }
 
 void init_symmetry_maps_o2m(diverge_model_t* model, vector<Vec3d>& beyond_UC) {
-    mpi_log_printf("Generate one-to-many maps\n");
+    mpi_vrb_printf("Generate one-to-many maps\n");
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
     symmstruct_t* symm = tu_data->symm;
     index_t n_spin = model->n_spin;

@@ -157,13 +157,13 @@ void init_bond_descriptor(diverge_model_t* model) {
 
 void init_ff_struct(const double max_dist, diverge_model_t* model) {
     if(model->n_tu_ff != 0) {
-        mpi_log_printf("do not autogenerate bonds (user orbff)\n");
+        mpi_wrn_printf("do not autogenerate bonds (user orbff)\n");
         sort_ff_struct(model->tu_ff, model->n_tu_ff);
         fill_existing_ff(model);
         init_bond_descriptor(model);
         return ;
     }
-    mpi_log_printf("autogenerate bonds (orbff)\n");
+    mpi_vrb_printf("autogenerate bonds (orbff)\n");
     int periodic_iter[3];
     periodic_iter[0] = model->internals->periodic_direction[0] ? 3:0;
     periodic_iter[1] = model->internals->periodic_direction[1] ? 3:0;
@@ -329,7 +329,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
 
     if(!tu_data->use_reduced_loop || tu_data->nktot==1) {
-        mpi_log_printf("deactivate reduced TU loop algorithm\n");
+        mpi_vrb_printf("deactivate reduced TU loop algorithm\n");
         tu_data->use_reduced_loop = false;
         tu_data->ff_idx_to_unique_ff_elem = (index_t*)calloc(1,sizeof(index_t));
         return;
@@ -346,7 +346,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
         mpi_log_printf("speedup impossible, no orbff maps\n");
         return ;
     }
-    mpi_log_printf("%d unique orbff pairs, gen maps…\n", num_unique_pairs);
+    mpi_vrb_printf("%d unique orbff pairs, gen maps…\n", num_unique_pairs);
     vector<vector<array<index_t,2>>> _lmap;
     index_t nff = tu_data->existing_ff.size();
     // iterate over all unique pair combinations
@@ -393,7 +393,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     }
     tu_data->lmap_l.shrink_to_fit();
     tu_data->lmap_r.shrink_to_fit();
-    mpi_log_printf("#unique orbff=%lu (with %lu unique ff from %li)\n",
+    mpi_vrb_printf("#unique orbff=%lu (with %lu unique ff from %li)\n",
                 tu_data->unique_mi_l.size(), tu_data->unique_ff_combi.size(), POW2(tu_data->n_orbff));
 }
 
