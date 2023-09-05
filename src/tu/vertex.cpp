@@ -58,14 +58,14 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
         ph_bubble_int = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
         memsize += 2*full_vert_size;
     }
-    mpi_log_printf("TU euler requires %.1f GB\n", memsize * sizeof(complex128_t) / POW3(1024.))
+    mpi_vrb_printf("TU euler requires %.1f GB\n", memsize * sizeof(complex128_t) / POW3(1024.))
     initialize_GPU_memory(proj, loop);
     if (model->ffill != NULL) {
         init_U_from_fullV(model,proj);
     }else{
         init_U(model -> internals -> enforce_exchange);
     }
-    mpi_log_printf("TU vertex size: %.1f GB\n", (double)memsize/ POW3(1024.));
+    mpi_vrb_printf("TU vertex size: %.1f GB\n", (double)memsize/ POW3(1024.));
 }
 
 void Vertex::init_U(bool enforce_exchange) {
@@ -284,7 +284,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         size_t total;
         CUDA_CHECK( cudaSetDevice( i ) );
         CUDA_CHECK( cudaMemGetInfo( &available_memory[i], &total ) );
-        mpi_log_printf("TU GPU %d has %.1f GB available\n", i, available_memory[i] / POW3(1024.));
+        mpi_vrb_printf("TU GPU %d has %.1f GB available\n", i, available_memory[i] / POW3(1024.));
         available_memory[i] *= 0.95;
 
         index_t prop_mem = 0;
@@ -374,7 +374,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         // XXX needed to set the values to sth always >= 0
         memory_GPU = MAX( memory_GPU, 128*16 );
         memory_managed = MAX( memory_managed, 128*16 );
-        mpi_log_printf("TU GPU pool with %.1f GB on-device and %.1f GB managed\n", memory_GPU / POW3(1024.), memory_managed / POW3(1024.));
+        mpi_vrb_printf("TU GPU pool with %.1f GB on-device and %.1f GB managed\n", memory_GPU / POW3(1024.), memory_managed / POW3(1024.));
         CUDA_CHECK( cudaMalloc(&GPU_memory_pool[i], memory_GPU) );
         CUDA_CHECK( cudaMallocManaged(&GPU_memory_pool_managed[i], memory_managed) );
 

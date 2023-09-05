@@ -38,7 +38,7 @@ void cuda_setup() {
         return;
     tu_has_gpu_setup = true;
     CUDA_CHECK(cudaGetDeviceCount(&tu_num_of_devices));
-    mpi_log_printf("TU kernels using %d GPUs\n", tu_num_of_devices);
+    mpi_vrb_printf("TU kernels using %d GPUs\n", tu_num_of_devices);
     tu_gpu_stream = (cudaStream_t*)malloc(sizeof(cudaStream_t) *tu_num_of_devices);
     tu_gpu_downstream = (cudaStream_t*)malloc(sizeof(cudaStream_t) *tu_num_of_devices);
 
@@ -57,7 +57,7 @@ void cuda_setup() {
         assert( err == 0 );
     }
     CUDA_CHECK( cudaSetDevice(tu_deviceid[0]) );
-    mpi_log_printf("successful TU GPU initialization.\n");
+    mpi_vrb_printf("successful TU GPU initialization.\n");
 }
 
 void cuda_deconstruct() {
@@ -127,7 +127,7 @@ void cuda_setup_projections(cuda_proj_descr_t* cp,index_t ntasks, index_t my_nk)
     for(uint ii = 1; ii< (size_t)tu_num_of_devices;++ii)
         cp->_qstart_proj[ii] = cp->_threadkpts_proj[ii-1]+cp->_qstart_proj[ii-1];
     for(uint ii = 0; ii< (size_t)tu_num_of_devices;++ii)
-        mpi_log_printf("TU:proj GPU %d: nq=%4d (+%4d)\n", ii, cp->_threadkpts_proj[ii] , cp->_qstart_proj[ii]);
+        mpi_vrb_printf("TU:proj GPU %d: nq=%4d (+%4d)\n", ii, cp->_threadkpts_proj[ii] , cp->_qstart_proj[ii]);
 
     #endif
 }
@@ -156,8 +156,8 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
     for(uint ii = 1; ii< (size_t)tu_num_of_devices;++ii)
         cp->_off_prop[ii] = cp->_tasks_prop[ii-1]+cp->_off_prop[ii-1];
     for(uint ii = 0; ii< (size_t)tu_num_of_devices;++ii)
-        mpi_log_printf("TU:prop GPU %d: ntasks=%9d (+%9d)\n", ii, cp->_tasks_prop[ii], cp->_off_prop[ii]);
-    mpi_log_printf("TU:prop CPU  : ntasks=%9d (+%9d)\n", cp->_tasks_cpu, cp->_off_cpu);
+        mpi_vrb_printf("TU:prop GPU %d: ntasks=%9d (+%9d)\n", ii, cp->_tasks_prop[ii], cp->_off_prop[ii]);
+    mpi_vrb_printf("TU:prop CPU  : ntasks=%9d (+%9d)\n", cp->_tasks_cpu, cp->_off_cpu);
     if(!cp->dims_set) {
         cp->dims[0] = nkpts[0], cp->dims[1] = nkpts[1],
         cp->dims[2] = nkpts[2];
@@ -185,6 +185,6 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
         cp->nk_per_thread -= 1;
     }
     cp->n_kblocks = nk/cp->nk_per_thread;
-    mpi_log_printf("TU prop GPU setup: nblock=%d, nk_per_thread=%d, nk=%d\n", cp->n_kblocks, cp->nk_per_thread, nk);
+    mpi_vrb_printf("TU prop GPU setup: nblock=%d, nk_per_thread=%d, nk=%d\n", cp->n_kblocks, cp->nk_per_thread, nk);
 #endif
 }

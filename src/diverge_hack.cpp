@@ -88,7 +88,7 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
 
     if (key_) {
         if (key_set) {
-            mpi_log_printf("hacking: %s=%s\n", key_, val);
+            mpi_vrb_printf("hacking: %s=%s\n", key_, val);
         } else {
             mpi_wrn_printf("hacking: %s not a valid key\n", key_);
         }

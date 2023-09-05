@@ -53,7 +53,7 @@ vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double
         np_search = np_ibz;
         mpi_wrn_printf("must have np_search>=np_ibz. reset np_search=np_ibz\n");
     }
-    mpi_log_printf("finding FS with np_ibz=%li and np_search=%li\n", np_ibz, np_search);
+    mpi_vrb_printf("finding FS with np_ibz=%li and np_search=%li\n", np_ibz, np_search);
 
     index_t nk = kdim(mod->nk);
     // reset energy to automatic energy if not passed as parameter
@@ -132,7 +132,7 @@ vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double
     auto k_idx_fs_end = std::unique( k_idx_fs.begin(), k_idx_fs.end() );
     k_idx_fs.erase( k_idx_fs_end, k_idx_fs.end() );
 
-    mpi_scc_printf("found %lu patches\n", k_idx_fs.size());
+    mpi_vrb_printf("found %lu patches\n", k_idx_fs.size());
     return k_idx_fs;
 }
 
@@ -157,7 +157,7 @@ typedef struct pgen_info_t pgen_info_t;
 
 mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index_t* pp, index_t np ) {
 
-    mpi_log_printf("generate patching struct from patch indices\n");
+    mpi_vrb_printf("generate patching struct from patch indices\n");
 
     index_t nk_flat[3];
     memcpy(nk_flat, mod->nk, sizeof(index_t)*3);
@@ -501,7 +501,7 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
     if (energies == NULL)
         energies = mod->internals->E;
 
-    mpi_log_printf("starting autofine using the $k$-means Lloyd algorithm\n");
+    mpi_vrb_printf("starting autofine using the $k$-means Lloyd algorithm\n");
 
     typedef vector<dvec2_t> points_t;
     typedef vector<uint32_t> indices_t;
@@ -617,7 +617,7 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
         total_size += new_patches[pi].size();
     }
     if (added_self)
-        mpi_log_printf("added patch itself for %li times\n", added_self);
+        mpi_vrb_printf("added patch itself for %li times\n", added_self);
 
     patch->p_weights = (double*)realloc(patch->p_weights, sizeof(double)*total_size);
     patch->p_map = (index_t*)realloc(patch->p_map, sizeof(index_t)*total_size);
@@ -640,13 +640,13 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
     mpi_tim_printf( "dkm min/max time: %.1fs, %.1fs\n", *ptmin, *ptmax );
     index_t ntot = patch->p_count[patch->n_patches-1] + patch->p_displ[patch->n_patches-1],
             ktot = kdim(mod->nk);
-    mpi_scc_printf( "autofine done. using %li/%li points (%.1f%%)\n", ntot, ktot,
+    mpi_vrb_printf( "autofine done. using %li/%li points (%.1f%%)\n", ntot, ktot,
             100.0*(double)ntot/(double)ktot );
 }
 
 void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_t* patch ) {
 
-    mpi_log_printf("starting refinement symmetrizer\n");
+    mpi_vrb_printf("starting refinement symmetrizer\n");
 
     const index_t np = patch->n_patches;
     index_t nk_flat[3];

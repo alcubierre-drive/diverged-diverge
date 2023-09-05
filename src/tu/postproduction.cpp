@@ -439,7 +439,7 @@ void tu_postproduction::to_file(string filename, bool save_self) {
     if(vertex->use_self && save_self)
         size_self = POW2(n_orb*vertex->n_spin)*vertex->nk*vertex->nkf;
 
-    mpi_log_printf_all( "rank %i: try opening file %s\n", my_rank, filename.c_str() );
+    mpi_vrb_printf_all( "rank %d: try opening file %s\n", my_rank, filename.c_str() );
     void* file = diverge_mpi_open_file(filename.c_str());
     header[i] = TU_MAGIC_NUMBER_POST_PROCESSING,++i;
     header[i] = vertex->n_orb, ++i;

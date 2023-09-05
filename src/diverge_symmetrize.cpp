@@ -40,7 +40,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         model->internals->symm_map_orb &&
         model->internals->symm_pref &&
         model->n_sym > 0) return;
-    mpi_log_printf("generate symmetries \n")
+    mpi_vrb_printf("generate symmetries \n")
 
     index_t nk = kdim(model->nk);
     index_t nktot = kdimtot(model->nk, model->nkf);
@@ -166,7 +166,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     }
     for (index_t i = 0; i < n_os*n_sym; ++i) {
         if(orbmaps_to_len[i]>1) {
-            mpi_log_printf("Symmetries map one to many \n");
+            mpi_vrb_printf("Symmetries map one to many \n");
             i= n_os*n_sym;
         }
     }
