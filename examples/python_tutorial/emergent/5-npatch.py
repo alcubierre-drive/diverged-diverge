@@ -6,12 +6,9 @@ import numpy as np
 # initialization, needed for MPI compiled library
 diverge.mpi_init( None, None )
 
-# set the loglevel
-diverge.mpi_loglevel_set(2)
-
 # some parameters
 params_emery = dict( Ud=3.0, Up=1.0, tdd=0.2, tpp=0.3, tdp=1.0 )
-params_frg = dict( nk=400, nkf=1, filling=0.8, npatches_ibz=6, model_output="model.dvg" )
+params_frg = dict( nk=80, nkf=1, filling=0.8, npatches_ibz=6, model_output="model_npatch.dvg" )
 
 # we now use the actual model structure
 model = diverge.model_init()

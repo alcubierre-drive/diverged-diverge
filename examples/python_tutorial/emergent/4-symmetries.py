@@ -6,9 +6,6 @@ import numpy as np
 # initialization, needed for MPI compiled library
 diverge.mpi_init( None, None )
 
-# set the loglevel
-diverge.mpi_loglevel_set(2)
-
 # some parameters
 params_emery = dict( Ud=3.0, Up=1.0, tdd=0.2, tpp=0.3, tdp=1.0 )
 params_frg = dict( nk=16, nkf=5, model_output="model.dvg" )
