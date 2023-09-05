@@ -21,6 +21,7 @@ static void tu_pp( diverge_flow_step_t* st,
 
 void diverge_postprocess_and_write( diverge_flow_step_t* st,
         const diverge_postprocess_config_t* pc, const char* file ) {
+    mpi_log_printf( "writing postprocessing file %s\n", file );
     diverge_postprocess_config_t pc_def = diverge_postprocess_config_default_CPP();
     if (pc == NULL)
         pc = &pc_def;
@@ -58,22 +59,21 @@ static void grid_pp( diverge_flow_step_t* st,
     post_process.set_num_singular_values( nsing );
     post_process.set_loop_usage( pc->grid_use_loop );
 
-    mpi_log_printf( "susceptibilities\n" );
+    mpi_vrb_printf( "susceptibilities\n" );
     post_process.susceptibility( st->Lambda, 'P' );
     if (st->mod->SU2 > 0)
         post_process.susceptibility( st->Lambda, 'C' );
     post_process.susceptibility( st->Lambda, 'D' );
 
-    mpi_log_printf( "linearized gaps\n" );
+    mpi_vrb_printf( "linearized gaps\n" );
     post_process.linearized_gap( st->Lambda, 'P', pc->grid_lingap_vertex_file_P );
     if (st->mod->SU2 > 0)
         post_process.linearized_gap( st->Lambda, 'C', pc->grid_lingap_vertex_file_C );
     post_process.linearized_gap( st->Lambda, 'D', pc->grid_lingap_vertex_file_D );
 
-    mpi_log_printf( "communicating results\n" );
+    mpi_vrb_printf( "communicating results\n" );
     post_process.communicate();
 
-    mpi_scc_printf( "wrote postprocess file to '%s'\n", file );
     index_t* file_header = post_process.to_file( file );
     grid::print_post_processing_file_header( file_header );
     free( file_header );
@@ -92,7 +92,6 @@ static void patch_pp( diverge_flow_step_t* st,
     patch_pc.Lp = pc->patch_Lp;
     patch_pc.Lm = pc->patch_Lm;
     npatch_output_post( (npatch_vertex_t*)st->intls->patch_vertex, st->patch_loop, &patch_pc, file );
-    mpi_scc_printf( "wrote postprocess file to '%s'\n", file );
 }
 
 static void tu_pp( diverge_flow_step_t* st,
@@ -104,5 +103,4 @@ static void tu_pp( diverge_flow_step_t* st,
     tu_pc.cutoff_rel = pc->tu_storing_relative;
     tu_pc.run_and_save(file,pc->tu_lingap,pc->tu_susceptibilities_ff,pc->tu_susceptibilities_full,
                         pc->tu_selfenergy);
-    mpi_scc_printf( "wrote postprocess file to '%s'\n", file );
 }

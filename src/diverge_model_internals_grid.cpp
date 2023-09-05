@@ -189,7 +189,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     //
     // example for ffill/vfill usage
     if (model->ffill != NULL) {
-        mpi_log_printf("using full vertex generator\n");
+        mpi_vrb_printf("using full vertex generator\n");
         complex128_t* vbuf = V->vertex_buffers[2];
         vector<index_t> qlist = V->qshare();
 
@@ -205,7 +205,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
         (*V)( vbuf, V->vertex_buffers[0], "V_to_D", false, 1.0 );
         V->overwrite_transform( 0, 1, "D_to_P" );
     } else {
-        mpi_log_printf("using channel vertex generators\n");
+        mpi_vrb_printf("using channel vertex generators\n");
         memset( (void*)V->vertex_buffers[0], 0, sizeof(complex128_t)*V->qshare().size()*POW2(intls->grid_nk)*POW4(ns*no) );
         complex128_t* qbuf_in = (complex128_t*)calloc(sizeof(complex128_t), intls->grid_nk * POW2(ns*ns*no));
         for (char chan : {'C', 'P', 'D'}) {
@@ -220,7 +220,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     //
     // example for exchange symmetry enforcment
     if (intls->enforce_exchange) {
-        mpi_log_printf( "enforcing exchange symmetry of initial vertex\n" );
+        mpi_vrb_printf( "enforcing exchange symmetry of initial vertex\n" );
         V->exchange_symmetry();
     }
     intls->grid_vertex = (void*)V;

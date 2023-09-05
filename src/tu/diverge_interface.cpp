@@ -248,13 +248,12 @@ void init_ff_struct(const double max_dist, diverge_model_t* model) {
         }
     }
     if(!refinement_allowed && tu_data -> nkf > 1)
-        mpi_wrn_printf("Too many ff - refinement breaks symmetry!\n")
+        mpi_wrn_printf("Too many ff - refinement breaks symmetry!\n");
 
     sort_ff_struct(model->tu_ff, model->n_tu_ff);
     fill_existing_ff(model);
     init_bond_descriptor(model);
-    mpi_log_printf("generate %d ff-bonds with <= max. %d bonds per site\n", 
-                    real_ff.size(),tu_data->n_bonds)
+    mpi_vrb_printf("generate %d ff-bonds with max. %d bonds per site\n", real_ff.size(),tu_data->n_bonds);
 }
 
 
@@ -343,7 +342,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
 
     if(num_unique_pairs >  (index_t)(0.7*tu_data->n_orbff)) {
         tu_data->use_reduced_loop = false;
-        mpi_log_printf("speedup impossible, no orbff maps\n");
+        mpi_vrb_printf("speedup impossible, no orbff maps\n");
         return ;
     }
     mpi_vrb_printf("%d unique orbff pairs, gen maps…\n", num_unique_pairs);
@@ -420,6 +419,6 @@ void init_MPI_dist(diverge_model_t* model) {
                            + momenta_per_rank * (rank-remainder);
     }
     diverge_mpi_barrier();
-    mpi_log_printf_all( "rank=%2d mynk=%4d nkibz=%4d\n", rank, tu_data->my_nk, tu_data->nkibz);
+    mpi_log_printf_all( "rank=%d mynk=%d nkibz=%d\n", rank, tu_data->my_nk, tu_data->nkibz);
 }
 

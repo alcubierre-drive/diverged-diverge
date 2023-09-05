@@ -190,7 +190,7 @@ void init_ibz(diverge_model_t* model) {
     }
     free(is_mapped_to_ibz);
     tu_data->nkibz = (index_t)(symm->idx_ibz_in_fullmesh.size());
-    mpi_log_printf("#k in ibz: %li\n", tu_data->nkibz);
+    mpi_vrb_printf("#k in ibz: %li\n", tu_data->nkibz);
 
     //! only necessary for MPI
     //! gives for each IBZ point which points it corresponds to beyond the

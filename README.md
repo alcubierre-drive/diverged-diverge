@@ -62,8 +62,6 @@ ________________________________________________________________________________
 # TODOs
 - doc: structured arrays in python (done?), struct datatype usage example
   symmetries from python (emery)
-- code: clean up log messages (```mpi_vrb_printf()``` vs ```mpi_log_printf()```)
-  in TU code and diverge common code (src) (grid/npatch/misc done)
 - code: include static self-energies in both grid and npatch, with fourier
   selection and cutoff in npatch
 - code: all TODO messsages grep'd in the source files (end of make)

@@ -19,6 +19,7 @@ void diverge_model_output_set_npath( int npath ) {
 }
 
 char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int include_common_internals ) {
+    mpi_log_printf( "output model to %s\n", fname );
     char* md5sum = NULL;
     uindex_t lmd5sum = 0;
     if (diverge_mpi_comm_rank() == 0) {
@@ -138,7 +139,7 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int includ
         if (mod->n_ibz_path > 0) {
             // bandstructure, including the k coordinates *after* the bands
             if (h_diverge_model_nbandstructure == -1 && mod->internals->has_common_internals) {
-                mpi_log_printf( "using fine kmesh data for band structure\n" );
+                mpi_vrb_printf( "using fine kmesh data for band structure\n" );
                 n_band_segments = find_bandstructure_pts( mod, &band_indices, &n_band_indices );
                 if (band_indices != NULL && n_band_indices > 0) {
                     use_band_indices = true;
@@ -258,7 +259,7 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int includ
         // and generate the bandstructure array
         if (include_bandstructure) {
             if (use_band_indices) {
-                mpi_log_printf("reading bandstructure from fine mesh, %li points\n", n_band_indices);
+                mpi_vrb_printf("reading bandstructure from fine mesh, %li points\n", n_band_indices);
                 double* E = mod->internals->E;
                 double* kf = mod->internals->kfmesh;
                 double* out = (double*)(buf+ibuf[100]);
@@ -271,7 +272,7 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int includ
                         out[cnt++] = kf[band_indices[i]*3+d];
                 }
             } else {
-                mpi_log_printf("generating bandstructure with %li points per segment\n",
+                mpi_vrb_printf("generating bandstructure with %li points per segment\n",
                         h_diverge_model_nbandstructure );
                 generate_bandstructure( mod, (double*)(buf+ibuf[100]), h_diverge_model_nbandstructure );
             }

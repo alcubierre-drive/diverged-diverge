@@ -41,7 +41,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
     model->internals->patch_loop_gpu_weights = NULL;
 
     if (model->patching == NULL) {
-        mpi_log_printf("continuing with autopatch and np_ibz = %li\n", np_ibz);
+        mpi_vrb_printf("continuing with autopatch and np_ibz = %li\n", np_ibz);
         index_t *pts, npts;
         diverge_patching_find_fs_pts_C( model, NULL, model->n_orb * model->n_spin, np_ibz, np_ibz > 100 ? np_ibz : 100, &pts, &npts );
         mom_patching_t* patch = diverge_patching_from_indices( model, pts, npts );
@@ -50,7 +50,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
         diverge_patching_symmetrize_refinement( model, patch );
         model->patching = patch;
     } else {
-        mpi_log_printf("discarding np_ibz parameter in patch internals\n");
+        mpi_vrb_printf("discarding np_ibz parameter in patch internals\n");
     }
 
     double kbasis[3][3];
@@ -92,7 +92,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
     complex128_t* vbuf = V->V;
     memset( vbuf, 0, sizeof(complex128_t)*V->size );
     if (model->ffill != NULL) {
-        mpi_log_printf("using full vertex generator\n");
+        mpi_vrb_printf("using full vertex generator\n");
         const index_t no4 = POW4(model->internals->patch_nb);
         #pragma omp parallel for collapse(3)
         for (index_t p1=0; p1<np; ++p1)
@@ -101,7 +101,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
             (*(model->ffill))( model, patches[p1], patches[p2], patches[p3],
                     vbuf + IDX3(p1, p2, p3, np, np)*no4 );
     } else {
-        mpi_log_printf("using channel vertex generators\n");
+        mpi_vrb_printf("using channel vertex generators\n");
         complex128_t* qbuf_in = (complex128_t*)calloc(sizeof(complex128_t),
                 model->internals->patch_nk * POW2(POW2(model->n_spin) * model->n_orb));
         char chans[] = "CPD";
@@ -113,7 +113,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
     }
 
     if (model->internals->enforce_exchange) {
-        mpi_log_printf( "enforcing exchange symmetry of initial vertex\n" );
+        mpi_vrb_printf( "enforcing exchange symmetry of initial vertex\n" );
         npatch_flow_step_enforce_exchange( vbuf, NULL, k3map, np, model->internals->patch_nb, 0.5 );
     }
     model->internals->patch_vertex = V;
