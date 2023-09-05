@@ -85,7 +85,7 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int includ
         ibuf[idx++] = mod->n_sym;
 
         // orbital symmetries
-        ADD_ARRAY_TO_IBUF(sizeof(complex128_t)*mod->n_orb*mod->n_orb*mod->n_sym);
+        ADD_ARRAY_TO_IBUF(sizeof(complex128_t)*mod->n_orb*mod->n_orb*mod->n_spin*mod->n_spin*mod->n_sym);
         // realspace symmetries
         ADD_ARRAY_TO_IBUF(sizeof(double)*9*mod->n_sym);
 
