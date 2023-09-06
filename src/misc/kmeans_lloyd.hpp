@@ -110,7 +110,6 @@ vector<array<T, N>> random_plusplus(const vector<array<T, N>>& data, uint32_t k,
         // Calculate the distance to the closest mean for each data point
         auto distances = details::closest_distance(means, data);
         // Pick a random point weighted by the distance from existing means
-        // TODO: This might convert floating point weights to ints, distorting the distribution for small weights
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
         std::discrete_distribution<input_size_t> generator(distances.begin(), distances.end());
 #else  // MSVC++ older than 14.0
@@ -300,7 +299,6 @@ tuple<vector<array<T, N>>, vector<uint32_t>> kmeans_lloyd(
     std::random_device rand_device;
     uint64_t seed = parameters.has_random_seed() ? parameters.get_random_seed() : rand_device();
     vector<array<T, N>> means = details::random_plusplus(data, parameters.get_k(), seed);
-    // TODO initialize with means in parameters if set
 
     vector<array<T, N>> old_means;
     vector<array<T, N>> old_old_means;
