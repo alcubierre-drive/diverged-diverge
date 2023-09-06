@@ -61,7 +61,7 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
                 w_time_projection += tock-tick;
 
                 tick = diverge_mpi_wtime();
-                loop->ph_loop(internal_vertex->ph_bubble_int);
+                loop->ph_loop(internal_vertex->ph_bubble_int,internal_vertex->bubble_helper);
                 tock = diverge_mpi_wtime();
                 w_time_loop += tock-tick;
 
@@ -101,7 +101,7 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
 
             tick = diverge_mpi_wtime();
             if(channel_selection[1] || channel_selection[2]) {
-                loop->ph_loop(internal_vertex->ph_bubble_int);
+                loop->ph_loop(internal_vertex->ph_bubble_int,internal_vertex->bubble_helper);
             }
             tock = diverge_mpi_wtime();
             w_time_loop += tock-tick;
@@ -135,7 +135,7 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
             w_time_projection += tock-tick;
 
             tick = diverge_mpi_wtime();
-            loop->pp_loop(internal_vertex->pp_bubble_int);
+            loop->pp_loop(internal_vertex->pp_bubble_int,internal_vertex->bubble_helper);
             tock = diverge_mpi_wtime();
             w_time_loop += tock-tick;
 
