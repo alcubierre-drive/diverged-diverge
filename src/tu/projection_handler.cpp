@@ -73,6 +73,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
             time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
+        timings(time_cpyfill,time_reco,time_handler_ft,time_add);
         return ;
     }
     #endif // USE_CUDA
@@ -141,6 +142,7 @@ void D_projection(complex128_t* proj_vertex,
              time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
+        timings(time_cpyfill,time_reco,time_handler_ft,time_add);
         return ;
     }
     #endif // USE_CUDA
@@ -209,6 +211,7 @@ void C_projection(complex128_t* proj_vertex,
             time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
+        timings(time_cpyfill,time_reco,time_handler_ft,time_add);
         return ;
     }
     #endif // USE_CUDA
