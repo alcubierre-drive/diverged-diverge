@@ -122,4 +122,5 @@ private:
     vector<complex128_t*> buffer_ggp;
     complex128_t* GF_fft_plus;
     complex128_t* GF_fft_conj_plus;
+    void allocate_GPU_memory();
 };

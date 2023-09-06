@@ -52,39 +52,23 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
             for(int i = 0; i < omp_get_max_threads();++i) {
                 buffer_ggm[i] = (complex128_t*)fftw_malloc(nktot*sizeof(fftw_complex));
                 buffer_ggp[i] = (complex128_t*)fftw_malloc(nktot*sizeof(fftw_complex));
-                //string filename = "ph_sim_wisdom"+std::to_string(nktot);
-                //int imported = fftw_import_wisdom_from_filename(filename.c_str());
                 fftPH[i] = fftw_plan_many_dft(3, dims, 1,
                         (fftw_complex*)buffer_ggm[i],
                         dims,1,nktot,(fftw_complex*)buffer_ggp[i],
                         dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-                //if(imported != 0)
-                //    fftw_export_wisdom_to_filename(filename.c_str());
-                //filename = "pp_sim_wisdom"+std::to_string(nktot);
-                //imported = fftw_import_wisdom_from_filename(filename.c_str());
                 fftPP[i] = fftw_plan_many_dft(3, dims, 1,
                         (fftw_complex*)buffer_ggm[i],
                         dims,1,nktot,(fftw_complex*)buffer_ggp[i],
                         dims,1,nktot,FFTW_FORWARD, FFTW_MEASURE);
-                //if(imported != 0)
-                //    fftw_export_wisdom_to_filename(filename.c_str());
             }
-            //string filename = "gf_wisdom"+std::to_string(nktot)+std::to_string(POW2(n_spin*n_orb));
-            //int imported = fftw_import_wisdom_from_filename(filename.c_str());
             fftGF = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
                     (fftw_complex*)GF_fft_plus,
                     dims,1,nktot,(fftw_complex*)GF_fft_plus,
                     dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-            //if(imported != 0)
-            //    fftw_export_wisdom_to_filename(filename.c_str());
-            //string filename = "gf_wisdom2"+std::to_string(nktot)+std::to_string(POW2(n_spin*n_orb));
-            //imported = fftw_import_wisdom_from_filename(filename.c_str());
             fftGFconj = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
                     (fftw_complex*)GF_fft_conj_plus,
                     dims,1,nktot,(fftw_complex*)GF_fft_conj_plus,
                     dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-            //if(imported != 0)
-            //    fftw_export_wisdom_to_filename(filename.c_str());
         }
     }
     fftw_plan_with_nthreads(omp_get_max_threads());
@@ -114,6 +98,21 @@ tu_loop_t::~tu_loop_t() {
         }
     }
     #ifdef USE_CUDA
+    if(cuda_descr.prop_memory_set_local = true) {
+        for(int i = 0; i<tu_num_of_devices;++i) {
+            cudaFree(cuda_descr.mi_to_R[i]);
+            cudaFree(cuda_descr.c_to_f_q[i]);
+            cudaFree(cuda_descr.nkdev[i]);
+            cudaFree(cuda_descr.GF_fft[i]);
+            cudaFree(cuda_descr.GF_fft_conj[i]);
+            cudaFree(cuda_descr.buf_GG[i][0]);
+            cudaFree(cuda_descr.buf_GG[i][1]);
+            cudaFree(cuda_descr.buf_res[i][0]);
+            cudaFree(cuda_descr.buf_res[i][1]);
+            cudaFree(cuda_descr.fft_workspace[i][0]);
+            cudaFree(cuda_descr.fft_workspace[i][1]);
+        }
+    }
     CUDA_CHECK(cudaHostUnregister(GF_fft_plus));
     CUDA_CHECK(cudaHostUnregister(GF_fft_conj_plus));
     #endif
@@ -228,6 +227,10 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
 
 #ifdef USE_CUDA
 void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L) {
+    if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
+        mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
+        allocate_GPU_memory();
+    }
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
@@ -237,7 +240,11 @@ void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L) {
                             dims, mi_to_ofrom, mi_to_oto, mi_to_R);
 }
 
-void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L){
+void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
+    if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
+        mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
+        allocate_GPU_memory();
+    }
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
@@ -247,7 +254,11 @@ void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L){
                             dims, mi_to_ofrom, mi_to_oto, mi_to_R);
 }
 
-void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L){
+void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L) {
+    if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
+        mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
+        allocate_GPU_memory();
+    }
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
@@ -258,7 +269,11 @@ void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L){
                                       tu_data->unique_mi_r.data(),tu_data->unique_mi_l.size());
 }
 
-void tu_loop_t::S_pp_loop_static_red_gpu(complex128_t* L){
+void tu_loop_t::S_pp_loop_static_red_gpu(complex128_t* L) {
+    if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
+        mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
+        allocate_GPU_memory();
+    }
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
@@ -278,7 +293,57 @@ void tu_loop_t::merge_gpu_cpu_loop(complex128_t* L, complex128_t* tmpgpu) const 
     scale_loop(L, -1./(2.*M_PI), my_nk*POW4(n_spin)*POW2(n_orbff)*n_frq);
 }
 
+#ifndef CUDA_MEM_ALIGN
+#define CUDA_MEM_ALIGN 256
+#endif
+
+static index_t ensure_align(index_t numToRound) {
+
+    index_t remainder = numToRound % 256;
+    if (remainder == 0)
+        return numToRound;
+
+    return numToRound + 256 - remainder;
+}
+
+void tu_loop_t::allocate_GPU_memory() {
+    if(cuda_descr.prop_memory_set_vertex)
+        return;
+    cuda_descr.prop_memory_set_local = true;
+
+    index_t prop_memsize[11] = {0};
+    const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
+
+    size_t available_memory[256] = {0};
+    for(int i = 0; i<tu_num_of_devices;++i) {
+        prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R
+        prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk); // c_to_f_q
+        prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev
+        prop_memsize[3] = ensure_align(_GF_size); // GF_fft
+        prop_memsize[4] = ensure_align(_GF_size); // GF_fft_conj
+        prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 0
+        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 1
+        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
+        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 1
+        prop_memsize[9] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 0
+        prop_memsize[10] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 1
+
+        cudaMalloc(cuda_descr.mi_to_R[i], prop_memsize[0]);
+        cudaMalloc(cuda_descr.c_to_f_q[i], prop_memsize[1]);
+        cudaMalloc(cuda_descr.nkdev[i], prop_memsize[2]);
+        cudaMalloc(cuda_descr.GF_fft[i], prop_memsize[3]);
+        cudaMalloc(cuda_descr.GF_fft_conj[i], prop_memsize[4]);
+        cudaMalloc(cuda_descr.buf_GG[i][0], prop_memsize[5]);
+        cudaMalloc(cuda_descr.buf_GG[i][1], prop_memsize[6]);
+        cudaMalloc(cuda_descr.buf_res[i][0], prop_memsize[7]);
+        cudaMalloc(cuda_descr.buf_res[i][1], prop_memsize[8]);
+        cudaMalloc(cuda_descr.fft_workspace[i][0], prop_memsize[9]);
+        cudaMalloc(cuda_descr.fft_workspace[i][1], prop_memsize[10]);
+    }
+}
+
 #else
+void tu_loop_t::allocate_GPU_memory(){;}
 
 void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L){(void)L;}
 

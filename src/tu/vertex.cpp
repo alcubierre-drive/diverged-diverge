@@ -219,36 +219,35 @@ Vertex::Vertex(const Vertex& other)
     selfenergy_size{other.selfenergy_size}, symm{other.symm},P_flow{other.P_flow},
     C_flow{other.C_flow},D_flow{other.D_flow},use_self{other.use_self}
 {
-        Pch = nullptr;
-        Cch = nullptr;
-        Dch = nullptr;
-        bubble_helper = other.bubble_helper;
-        product_helper = other.product_helper;
-        projection_helper = other.projection_helper;
-        if(P_flow)Pch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
-        if(C_flow)Cch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
-        if(D_flow)Dch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
+    Pch = nullptr;
+    Cch = nullptr;
+    Dch = nullptr;
+    bubble_helper = other.bubble_helper;
+    product_helper = other.product_helper;
+    projection_helper = other.projection_helper;
+    if(P_flow)Pch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
+    if(C_flow)Cch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
+    if(D_flow)Dch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
 
-        if(use_self)self_en = (complex128_t*)calloc(selfenergy_size, sizeof(complex128_t));
-        if(P_flow)pp_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
-        if(C_flow || D_flow)ph_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
+    if(use_self)self_en = (complex128_t*)calloc(selfenergy_size, sizeof(complex128_t));
+    if(P_flow)pp_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
+    if(C_flow || D_flow)ph_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
 
-        if(P_flow)mcopy(Pch,other.get_P_ptr_cst(),this->full_vert_size);
-        if(C_flow)mcopy(Cch,other.get_C_ptr_cst(),this->full_vert_size);
-        if(D_flow)mcopy(Dch,other.get_D_ptr_cst(),this->full_vert_size);
-        if(P_flow)mcopy(pp_bubble_int,other.get_PP_bubble_cst(),this->full_bubble_size);
-        if(C_flow || D_flow)mcopy(ph_bubble_int,other.get_PH_bubble_cst(),this->full_bubble_size);
-        if(use_self)mcopy(self_en,other.get_E_ptr_cst(),this->selfenergy_size);
-        owns = false;
-        for(int i = 0; i < 32; ++i)
-        for(int j = 0; j < 3; ++j) {
-            GPU_gemm_buffer[i][j] = other.GPU_gemm_buffer[i][j];
-        }
+    if(P_flow)mcopy(Pch,other.get_P_ptr_cst(),this->full_vert_size);
+    if(C_flow)mcopy(Cch,other.get_C_ptr_cst(),this->full_vert_size);
+    if(D_flow)mcopy(Dch,other.get_D_ptr_cst(),this->full_vert_size);
+    if(P_flow)mcopy(pp_bubble_int,other.get_PP_bubble_cst(),this->full_bubble_size);
+    if(C_flow || D_flow)mcopy(ph_bubble_int,other.get_PH_bubble_cst(),this->full_bubble_size);
+    if(use_self)mcopy(self_en,other.get_E_ptr_cst(),this->selfenergy_size);
+    owns = false;
+    for(int i = 0; i < 32; ++i)
+    for(int j = 0; j < 3; ++j) {
+        GPU_gemm_buffer[i][j] = other.GPU_gemm_buffer[i][j];
+    }
 }
 
 
-Vertex& Vertex::operator=(const Vertex& other)
-{
+Vertex& Vertex::operator=(const Vertex& other) {
     if(P_flow)mcopy(Pch,other.get_P_ptr_cst(),this->full_vert_size);
     if(C_flow)mcopy(Cch,other.get_C_ptr_cst(),this->full_vert_size);
     if(D_flow)mcopy(Dch,other.get_D_ptr_cst(),this->full_vert_size);
@@ -259,8 +258,10 @@ Vertex& Vertex::operator=(const Vertex& other)
 
     return *this;
 }
+#ifndef CUDA_MEM_ALIGN
 #define CUDA_MEM_ALIGN 256
-#ifdef USE_CUDA
+#endif
+
 static index_t ensure_align(index_t numToRound) {
 
     index_t remainder = numToRound % 256;
@@ -269,7 +270,6 @@ static index_t ensure_align(index_t numToRound) {
 
     return numToRound + 256 - remainder;
 }
-#endif
 
 void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
     (void)proj;(void)loop;
@@ -278,6 +278,24 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         mpi_err_printf("CUDA initailized wrongly. TUFRG will fail!\n");
         return ;
     }
+    if(loop->cuda_descr.prop_memory_set_local) {
+        mpi_err_printf("Memory for loop already allocated, free it first!\n");
+        loop->cuda_descr.prop_memory_set_local = false;
+        for(int i = 0; i<tu_num_of_devices;++i) {
+            cudaFree(loop->cuda_descr.mi_to_R[i]);
+            cudaFree(loop->cuda_descr.c_to_f_q[i]);
+            cudaFree(loop->cuda_descr.nkdev[i]);
+            cudaFree(loop->cuda_descr.GF_fft[i]);
+            cudaFree(loop->cuda_descr.GF_fft_conj[i]);
+            cudaFree(loop->cuda_descr.buf_GG[i][0]);
+            cudaFree(loop->cuda_descr.buf_GG[i][1]);
+            cudaFree(loop->cuda_descr.buf_res[i][0]);
+            cudaFree(loop->cuda_descr.buf_res[i][1]);
+            cudaFree(loop->cuda_descr.fft_workspace[i][0]);
+            cudaFree(loop->cuda_descr.fft_workspace[i][1]);
+        }
+    }
+    has_gpu_memory = true;
     index_t nktot = nk * nkf;
     size_t available_memory[256] = {0};
     for(int i = 0; i<tu_num_of_devices;++i) {
@@ -425,6 +443,8 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         cproj->buf_res1[i] = (cuDoubleComplex*)((proj_memtype[6] == 0) ? GPU_memory_pool[i] + proj_memoffset[6]
                                                                        : GPU_memory_pool_managed[i] + proj_memoffset_managed[6]);
     }
+    proj->proj_descr.proj_memory_set_vertex = true;
+    loop->cuda_descr.prop_memory_set_vertex = true;
     CUDA_CHECK( cudaSetDevice( 0 ) );
 #endif
 }
