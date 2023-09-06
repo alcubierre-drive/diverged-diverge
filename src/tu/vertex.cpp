@@ -261,7 +261,7 @@ Vertex& Vertex::operator=(const Vertex& other) {
 #ifndef CUDA_MEM_ALIGN
 #define CUDA_MEM_ALIGN 256
 #endif
-
+#ifdef USE_CUDA
 static index_t ensure_align(index_t numToRound) {
 
     index_t remainder = numToRound % 256;
@@ -270,6 +270,7 @@ static index_t ensure_align(index_t numToRound) {
 
     return numToRound + 256 - remainder;
 }
+#endif
 
 void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
     (void)proj;(void)loop;
