@@ -443,8 +443,6 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         cproj->buf_res1[i] = (cuDoubleComplex*)((proj_memtype[6] == 0) ? GPU_memory_pool[i] + proj_memoffset[6]
                                                                        : GPU_memory_pool_managed[i] + proj_memoffset_managed[6]);
     }
-    proj->proj_descr.proj_memory_set_vertex = true;
-    loop->cuda_descr.prop_memory_set_vertex = true;
     CUDA_CHECK( cudaSetDevice( 0 ) );
 #endif
 }

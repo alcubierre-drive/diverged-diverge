@@ -328,17 +328,17 @@ void tu_loop_t::allocate_GPU_memory() {
         prop_memsize[9] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 0
         prop_memsize[10] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 1
 
-        cudaMalloc(cuda_descr.mi_to_R[i], prop_memsize[0]);
-        cudaMalloc(cuda_descr.c_to_f_q[i], prop_memsize[1]);
-        cudaMalloc(cuda_descr.nkdev[i], prop_memsize[2]);
-        cudaMalloc(cuda_descr.GF_fft[i], prop_memsize[3]);
-        cudaMalloc(cuda_descr.GF_fft_conj[i], prop_memsize[4]);
-        cudaMalloc(cuda_descr.buf_GG[i][0], prop_memsize[5]);
-        cudaMalloc(cuda_descr.buf_GG[i][1], prop_memsize[6]);
-        cudaMalloc(cuda_descr.buf_res[i][0], prop_memsize[7]);
-        cudaMalloc(cuda_descr.buf_res[i][1], prop_memsize[8]);
-        cudaMalloc(cuda_descr.fft_workspace[i][0], prop_memsize[9]);
-        cudaMalloc(cuda_descr.fft_workspace[i][1], prop_memsize[10]);
+        cudaMalloc(&((void*)(cuda_descr.mi_to_R[i]), prop_memsize[0]);
+        cudaMalloc(&((void*)(cuda_descr.c_to_f_q[i]), prop_memsize[1]);
+        cudaMalloc(&((void*)(cuda_descr.nkdev[i]), prop_memsize[2]);
+        cudaMalloc(&((void*)(cuda_descr.GF_fft[i]), prop_memsize[3]);
+        cudaMalloc(&((void*)(cuda_descr.GF_fft_conj[i]), prop_memsize[4]);
+        cudaMalloc(&((void*)(cuda_descr.buf_GG[i][0]), prop_memsize[5]);
+        cudaMalloc(&((void*)(cuda_descr.buf_GG[i][1]), prop_memsize[6]);
+        cudaMalloc(&((void*)(cuda_descr.buf_res[i][0]), prop_memsize[7]);
+        cudaMalloc(&((void*)(cuda_descr.buf_res[i][1]), prop_memsize[8]);
+        cudaMalloc(&((void*)(cuda_descr.fft_workspace[i][0]), prop_memsize[9]);
+        cudaMalloc(&((void*)(cuda_descr.fft_workspace[i][1]), prop_memsize[10]);
     }
 }
 
