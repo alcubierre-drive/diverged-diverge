@@ -169,6 +169,10 @@ void tu_loop_t::get_GF_for_self(complex128_t* coarseGF) {
     }
 }
 
+
+#ifdef USE_CUDA
+
+
 void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
     if(nktot==1){
         S_ph_loop_static_rs(L);
@@ -176,7 +180,7 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
         bool do_free = false;
         if(cuda_descr.prop_has_gpu_setup && tmpgpu == nullptr) {
             do_free = true;
-            tmpgpu = (complex128_t*) calloc(my_nk*POW2(n_orbff*POW2(n_spin)), sizeof(complex128_t));
+            cudaMallocHost(&tmpgpu, my_nk*POW2(n_orbff*POW2(n_spin))*sizeof(complex128_t));
         }
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
@@ -193,7 +197,7 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
             cpu.join(); gpu.join();
         }
         if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop(L, tmpgpu);
-        if(do_free) free(tmpgpu);
+        if(do_free) cudaFreeHost(tmpgpu);
     }
 }
 
@@ -204,7 +208,7 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
         bool do_free = false;
         if(cuda_descr.prop_has_gpu_setup && tmpgpu == nullptr) {
             do_free = true;
-            tmpgpu = (complex128_t*) calloc(my_nk*POW2(n_orbff*POW2(n_spin)), sizeof(complex128_t));
+            cudaMallocHost(&tmpgpu, my_nk*POW2(n_orbff*POW2(n_spin))*sizeof(complex128_t));
         }
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
@@ -221,11 +225,10 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
             cpu.join(); gpu.join();
         }
         if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop(L, tmpgpu);
-        if(do_free) free(tmpgpu);
+        if(do_free) cudaFreeHost(tmpgpu);
     }
 }
 
-#ifdef USE_CUDA
 void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L) {
     if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
         mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
@@ -342,6 +345,40 @@ void tu_loop_t::allocate_GPU_memory() {
 }
 
 #else
+
+
+void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
+    (void)tmpgpu;
+    if(nktot==1){
+        S_pp_loop_static_rs(L);
+    }else{
+        memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
+        if(tu_data->use_reduced_loop) {
+            S_ph_loop_static_red(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
+                                 !cuda_descr.prop_has_gpu_setup);
+        }else{
+            S_ph_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
+                                    !cuda_descr.prop_has_gpu_setup);});
+        }
+    }
+}
+
+void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
+    (void)tmpgpu;
+    if(nktot==1){
+        S_pp_loop_static_rs(L);
+    }else{
+        memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
+        if(tu_data->use_reduced_loop) {
+            S_pp_loop_static_red(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
+                                 !cuda_descr.prop_has_gpu_setup);
+        }else{
+            S_pp_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
+                                    !cuda_descr.prop_has_gpu_setup);});
+        }
+    }
+}
+
 void tu_loop_t::allocate_GPU_memory(){;}
 
 void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L){(void)L;}
