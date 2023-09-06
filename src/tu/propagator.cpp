@@ -314,7 +314,6 @@ void tu_loop_t::allocate_GPU_memory() {
     index_t prop_memsize[11] = {0};
     const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
 
-    size_t available_memory[256] = {0};
     for(int i = 0; i<tu_num_of_devices;++i) {
         prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R
         prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk); // c_to_f_q
