@@ -350,7 +350,7 @@ void tu_loop_t::allocate_GPU_memory() {
 void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
     (void)tmpgpu;
     if(nktot==1){
-        S_pp_loop_static_rs(L);
+        S_ph_loop_static_rs(L);
     }else{
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {

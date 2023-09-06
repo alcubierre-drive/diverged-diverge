@@ -424,6 +424,7 @@ TEST_CASE("pure selfenergy flow","[self][self_flow]"){
     diverge_model_free(mom);
     diverge_flow_step_free(step);
 }
+
 TEST_CASE("P+self","[self][self_flow]"){
     diverge_model_t* mom = gen_square_lat_hub(4, 4);
     diverge_model_internals_tu(mom, 1.1);
@@ -440,6 +441,7 @@ TEST_CASE("P+self","[self][self_flow]"){
     diverge_model_free(mom);
     diverge_flow_step_free(step);
 }
+
 TEST_CASE("D+self","[self][self_flow]"){
     diverge_model_t* mom = gen_square_lat_hub(4, 4);
     diverge_model_internals_tu(mom, 1.1);

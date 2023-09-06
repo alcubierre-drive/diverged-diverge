@@ -129,27 +129,28 @@ Projection::Projection(const diverge_model_t* const model)
     tick = diverge_mpi_wtime();
     init_CP_PC_proj(model);
     tock = diverge_mpi_wtime();
-    mpi_tim_printf("init_CP_PC_proj  took %7.2fs\n",tock-tick);
+    mpi_vrb_printf("init_CP_PC_proj  took %7.2fs\n",tock-tick);
+
     tick = diverge_mpi_wtime();
     init_CD_DC_proj(model);
     tock = diverge_mpi_wtime();
-    mpi_tim_printf("init_CD_DC_proj  took %7.2fs\n",tock-tick);
+    mpi_vrb_printf("init_CD_DC_proj  took %7.2fs\n",tock-tick);
 
     tick = diverge_mpi_wtime();
     init_P_to_D_proj(model);
     tock = diverge_mpi_wtime();
-    mpi_tim_printf("init_P_to_D_proj took %7.2fs\n",tock-tick);
+    mpi_vrb_printf("init_P_to_D_proj took %7.2fs\n",tock-tick);
 
     tick = diverge_mpi_wtime();
     init_D_to_P_proj(model);
     tock = diverge_mpi_wtime();
-    mpi_tim_printf("init_D_to_P_proj took %7.2fs\n",tock-tick);
+    mpi_vrb_printf("init_D_to_P_proj took %7.2fs\n",tock-tick);
 
 
     tick = diverge_mpi_wtime();
     init_to_mom_map_existing_r(model);
     tock = diverge_mpi_wtime();
-    mpi_tim_printf("constructing existing vectors took %7.2fs\n",tock-tick);
+    mpi_vrb_printf("constructing existing vectors took %7.2fs\n",tock-tick);
 
     mpi_communicate();
     init_prefac_vector(model);
