@@ -358,7 +358,7 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
                                  !cuda_descr.prop_has_gpu_setup);
         }else{
             S_ph_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
-                                    !cuda_descr.prop_has_gpu_setup);});
+                                    !cuda_descr.prop_has_gpu_setup);
         }
     }
 }
@@ -374,7 +374,7 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
                                  !cuda_descr.prop_has_gpu_setup);
         }else{
             S_pp_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
-                                    !cuda_descr.prop_has_gpu_setup);});
+                                    !cuda_descr.prop_has_gpu_setup);
         }
     }
 }
