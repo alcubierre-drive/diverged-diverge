@@ -98,7 +98,7 @@ tu_loop_t::~tu_loop_t() {
         }
     }
     #ifdef USE_CUDA
-    if(cuda_descr.prop_memory_set_local = true) {
+    if(cuda_descr.prop_memory_set_local) {
         for(int i = 0; i<tu_num_of_devices;++i) {
             cudaFree(cuda_descr.mi_to_R[i]);
             cudaFree(cuda_descr.c_to_f_q[i]);
