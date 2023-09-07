@@ -18,7 +18,12 @@ void diverge_model_output_set_npath( int npath ) {
     h_diverge_model_nbandstructure = npath;
 }
 
-char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int include_common_internals ) {
+char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int ici ) {
+    return diverge_model_to_file_finegrained( mod, fname, ici, ici, ici, ici, ici );
+}
+
+char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname,
+        int include_kc, int include_kf, int include_H, int include_U, int include_E ) {
     mpi_log_printf( "output model to %s\n", fname );
     char* md5sum = NULL;
     uindex_t lmd5sum = 0;
@@ -118,19 +123,37 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int includ
         for (int ll=0; ll<9; ++ll)
             dbuf[idx++] = ((double*)Gvec)[ll];
 
-        idx = 80;
-        if (include_common_internals) {
-            // kmesh, kfmesh, H, U, E
+        if (include_kc) {
+            idx = 80;
             ADD_ARRAY_TO_IBUF(sizeof(double)*3*kdim(mod->nk));
+        } else {
+            ibuf[80] = displ;
+        }
+        if (include_kf) {
+            idx = 82;
             ADD_ARRAY_TO_IBUF(sizeof(double)*3*kdimtot(mod->nk, mod->nkf));
+        } else {
+            ibuf[82] = displ;
+        }
+        if (include_H) {
+            idx = 84;
             ADD_ARRAY_TO_IBUF(sizeof(complex128_t)*POW2(mod->n_orb*mod->n_spin)*kdimtot(mod->nk, mod->nkf));
+        } else {
+            ibuf[84] = displ;
+        }
+        if (include_U) {
+            idx = 86;
             ADD_ARRAY_TO_IBUF(sizeof(complex128_t)*POW2(mod->n_orb*mod->n_spin)*kdimtot(mod->nk, mod->nkf));
+        } else {
+            ibuf[86] = displ;
+        }
+        if (include_E) {
+            idx = 88;
             ADD_ARRAY_TO_IBUF(sizeof(double)*mod->n_orb*mod->n_spin*kdimtot(mod->nk, mod->nkf));
         } else {
-            // set to displ if not wanted
-            ibuf[80] = ibuf[82] = ibuf[84] = ibuf[86] = ibuf[88] = displ;
-            idx = 90;
+            ibuf[88] = displ;
         }
+        idx = 90;
 
         idx = 100;
         index_t *band_indices = NULL, n_band_indices = 0, *n_band_segments = NULL;
@@ -247,12 +270,24 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int includ
             COPY_ARY_TO_BUF( mod->data );
         }
 
-        if (include_common_internals) {
+        if (include_kc) {
             idx = 80;
             COPY_ARY_TO_BUF( mod->internals->kmesh );
+        }
+        if (include_kf) {
+            idx = 82;
             COPY_ARY_TO_BUF( mod->internals->kfmesh );
+        }
+        if (include_H) {
+            idx = 84;
             COPY_ARY_TO_BUF( mod->internals->ham );
+        }
+        if (include_U) {
+            idx = 86;
             COPY_ARY_TO_BUF( mod->internals->U );
+        }
+        if (include_E) {
+            idx = 88;
             COPY_ARY_TO_BUF( mod->internals->E );
         }
 

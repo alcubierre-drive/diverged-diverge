@@ -48,6 +48,7 @@ DIVERGE_1.0 {
         diverge_model_set_chempot;
         diverge_model_set_filling;
         diverge_model_to_file;
+        diverge_model_to_file_finegrained;
         diverge_model_validate;
         diverge_mpi_allgather_double;
         diverge_mpi_allgather_index;
@@ -91,6 +92,7 @@ DIVERGE_1.0 {
         diverge_run_tests;
         diverge_symmetrize_2pt_coarse;
         diverge_symmetrize_2pt_fine;
+        diverge_symmetrize_greens;
         diverge_symmetrize_mom_coarse;
         diverge_symmetrize_mom_fine;
         find_bandstructure_pts;

@@ -774,6 +774,14 @@ if not _libs["divERGe"] is None:
         model_to_file.restype = String
         model_to_file.errcheck = ReturnString
 
+    model_to_file_finegrained = _libs["divERGe"].get("diverge_model_to_file_finegrained", "cdecl")
+    model_to_file_finegrained.argtypes = [POINTER(model_t), String, c_int, c_int, c_int, c_int, c_int]
+    if sizeof(c_int) == sizeof(c_void_p):
+        model_to_file_finegrained.restype = ReturnString
+    else:
+        model_to_file_finegrained.restype = String
+        model_to_file_finegrained.errcheck = ReturnString
+
     # Momentum generator
     model_generate_meshes = _libs["divERGe"].get("diverge_model_generate_meshes", "cdecl")
     model_generate_meshes.argtypes = [POINTER(c_double), POINTER(c_double), index_t * int(3), index_t * int(3), (c_double * int(3)) * int(3)]

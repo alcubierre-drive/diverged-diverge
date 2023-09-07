@@ -112,6 +112,24 @@ typedef struct diverge_model_t diverge_model_t;
  *   bit.
  */
 char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int include_common_internals );
+// TODO(LK) should we keep include_common_internals in here?
+
+// Function: diverge_model_to_file_finegrained
+// offers the same functionality as <diverge_model_to_file> including
+// fine-grained controls over all internal structures. Returns the md5sum of the
+// written file as *static* string.
+//
+// Parameters:
+// mod - model
+// fname - file name of the output
+// include_kc - include the coarse mesh?
+// include_kf - include the fine mesh?
+// include_H - include the Hamiltonian (on the fine mesh)?
+// include_U - include the orbital to band transformation (on the fine mesh)?
+// include_E - include the energies (on the fine mesh)?
+char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname,
+        int include_kc, int include_kf, int include_H, int include_U, int include_E );
+// TODO(LK) we could add even more fine grained control in principle
 
 // Function: diverge_model_output_set_npath
 // set the number of points per IBZ segment for the bandstructure calculation.
