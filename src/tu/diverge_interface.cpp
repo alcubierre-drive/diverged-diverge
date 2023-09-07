@@ -253,7 +253,7 @@ void init_ff_struct(const double max_dist, diverge_model_t* model) {
     sort_ff_struct(model->tu_ff, model->n_tu_ff);
     fill_existing_ff(model);
     init_bond_descriptor(model);
-    mpi_vrb_printf("generate %d ff-bonds with max. %d bonds per site\n", real_ff.size(),tu_data->n_bonds);
+    mpi_log_printf("generate %d ff-bonds with max. %d bonds per site\n", real_ff.size(),tu_data->n_bonds);
 }
 
 
@@ -328,7 +328,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
 
     if(!tu_data->use_reduced_loop || tu_data->nktot==1) {
-        mpi_vrb_printf("deactivate reduced TU loop algorithm\n");
+        mpi_log_printf("deactivate reduced TU loop algorithm\n");
         tu_data->use_reduced_loop = false;
         tu_data->ff_idx_to_unique_ff_elem = (index_t*)calloc(1,sizeof(index_t));
         return;
@@ -419,6 +419,6 @@ void init_MPI_dist(diverge_model_t* model) {
                            + momenta_per_rank * (rank-remainder);
     }
     diverge_mpi_barrier();
-    mpi_vrb_printf_all( "rank=%d mynk=%d nkibz=%d\n", rank, tu_data->my_nk, tu_data->nkibz);
+    mpi_log_printf_all( "rank=%d mynk=%d nkibz=%d\n", rank, tu_data->my_nk, tu_data->nkibz);
 }
 

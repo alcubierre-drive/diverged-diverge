@@ -15,10 +15,7 @@
 #include "cuda_init.hpp"
 
 static inline __device__ index_t mem_offset() {
-    index_t blockId = blockIdx.y + blockIdx.x * gridDim.y;
-    index_t threadId = blockId * (blockDim.x * blockDim.y) +
-        threadIdx.y + threadIdx.x * blockDim.y;
-    return threadId;
+    return blockIdx.x*blockDim.x + threadIdx.x;
 }
 
 __global__ void GF_prod_ph(__restrict__ cuDoubleComplex* const buf,
@@ -472,7 +469,6 @@ __global__ void GF_prod_ph(__restrict__ cuDoubleComplex* const buf,
     while(kx >= nk[0]) kx -= nk[0];
     while(ky >= nk[1]) ky -= nk[1];
     while(kz >= nk[2]) kz -= nk[2];
-
     for(index_t k = kbegin; k < kbegin+nk_per_thread; ++k) {
         buf[k] = cuCmul(GF[kz + nk[2]*(ky+nk[1]*kx)+off_orb1],GF[k+off_orb2]);
         buf[k] = cuCadd(buf[k], cuCmul(GFconj[kz + nk[2]*(ky+nk[1]*kx)+off_orb1],GFconj[k+off_orb2]));

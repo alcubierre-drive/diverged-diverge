@@ -26,8 +26,8 @@ struct cuda_prop_descr_t {
     int _off_prop[32] = {0};
     int _tasks_cpu = 0;
     int _off_cpu = 0;
-    array<int,3> nthread {24,24,1};
-    array<int,3> nblock {18,18,1};
+    array<int,3> nthread {512,1,1};
+    array<int,3> nblock {18,1,1};
     size_t nk_per_thread = 1;
     size_t n_kblocks = 1;
     cufftHandle* gpu_fft;

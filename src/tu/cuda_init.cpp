@@ -165,8 +165,7 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
     }
     double numt = cp->nthread[0]*cp->nthread[1]*cp->nthread[2];
     double min_blocks = (cp->dims[0]*cp->dims[1]*cp->dims[2]+numt-1)/numt;
-    double min_xy = sqrt(min_blocks);
-    cp->nblock = {(int)ceil(min_xy),(int)ceil(min_xy),1};
+    cp->nblock = {(int)min_blocks,1,1};
 
     long long int nk = cp->dims[0]*cp->dims[1]*cp->dims[2];
     cp->gpu_fft = (cufftHandle*)malloc(sizeof(cufftHandle)*tu_num_of_devices);
