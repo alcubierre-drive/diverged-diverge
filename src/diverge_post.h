@@ -131,6 +131,11 @@ diverge_postprocess_config_t diverge_postprocess_config_default_CPP( void );
 void diverge_postprocess_and_write( diverge_flow_step_t* st,
         const diverge_postprocess_config_t* pc, const char* file );
 
+// TODO(LK) we might want to include the Metznerish Way of doing a channel
+// specific inverse BSE equation such that post-processing output doesn't depend
+// on the maximal stopping scale of the flow equations. Need to integrate up the
+// bubble though...
+
 #ifdef __cplusplus
 }
 #endif
