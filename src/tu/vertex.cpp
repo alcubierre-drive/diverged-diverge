@@ -1,5 +1,5 @@
 #include "vertex.hpp"
-
+#include <iostream>
 
 Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop, 
                 bool P, bool C, bool D, bool self)
@@ -107,8 +107,8 @@ void Vertex::init_U(bool enforce_exchange) {
                         i2134 = IDX7(full_q, s4, s3, o3, s1, s2, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
                         i1243 = IDX7(full_q, s3, s4, o3, s2, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
                         i2143 = IDX7(full_q, s3, s4, o3, s1, s2, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
-                Pch[r1234] = 0.5 * (helper_crossing[i1234] - helper_crossing[i1243] +
-                                    helper_crossing[i2143] - helper_crossing[i2134]);
+                Pch[r1234] = 0.5 * (helper[i1234] - helper[i1243] +
+                                    helper[i2143] - helper[i2134]);
             }
         }
     }
