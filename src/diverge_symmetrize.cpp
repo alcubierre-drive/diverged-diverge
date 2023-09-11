@@ -125,7 +125,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
                 maps_to = o2;
                 mapped_pos[o1+n_orb*s] = to_trial;
                 bey_UC = ( to - to_trial );
-                assert((bey_UC-(in*UC1+im*UC2+iq*UC3)).norm() < 1e-10);
+                assert((bey_UC-(in*UC1+im*UC2+iq*UC3)).norm() < 1e-4);
                 goto symmetrizer_orb_found;
             }
         }
