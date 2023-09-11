@@ -174,9 +174,9 @@ void Vertex::init_U(bool enforce_exchange) {
             index_t mfull_q = to_minus_q(full_q, model->nk);
             index_t i1234 = IDX7(full_q, s4, s3, o3, s2, s1, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
                     r1234 = IDX7(q, s4, s3, o3, s2, s1, o1, n_spin, n_spin, n_orbff, n_spin, n_spin, n_orbff),
-                    i2134 = IDX7(mfull_q, s4, s3, o3, s1, s2, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
+                    i2134 = IDX7(mfull_q, s4, s3, o1, s1, s2, o3, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
                     i1243 = IDX7(full_q, s3, s4, o3, s2, s1, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
-                    i2143 = IDX7(mfull_q, s3, s4, o3, s1, s2, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb);
+                    i2143 = IDX7(mfull_q, s3, s4, o1, s1, s2, o3, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb);
             complex128_t val_D = 0.5 * (helper_crossing[i1234] + helper_crossing[i2143] -
                                         helper[i2134] - helper[i1243]);
             complex128_t val_C = 0.5 * (helper[i1234] + helper[i2143] -
