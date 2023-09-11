@@ -85,13 +85,11 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t s2=0; s2<n_spin; ++s2)
             for (index_t s1=0; s1<n_spin; ++s1)
             for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s12 = IDX2(s2, s1, n_spin),
-                        s34 = IDX2(s4, s3, n_spin);
                 index_t s21 = IDX2(s1, s2, n_spin),
                         s43 = IDX2(s3, s4, n_spin);
                 complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
                                 s21, o1, s43, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Pch[IDX5(q, s34, o3, s12, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+                Pch[IDX5(q, s21, o1, s43, o3,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
             }
         } else {
             model->vfill(model,'P',helper);
@@ -126,13 +124,11 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t s2=0; s2<n_spin; ++s2)
             for (index_t s1=0; s1<n_spin; ++s1)
             for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s12 = IDX2(s2, s1, n_spin),
-                        s34 = IDX2(s4, s3, n_spin);
                 index_t s21 = IDX2(s1, s2, n_spin),
                         s43 = IDX2(s3, s4, n_spin);
                 complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
                                 s43, o1, s21, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Cch[IDX5(q, s34, o3, s12, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+                Cch[IDX5(q, s21, o1, s43, o3,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
             }
         }
         if(D_flow) {
@@ -145,13 +141,11 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t s2=0; s2<n_spin; ++s2)
             for (index_t s1=0; s1<n_spin; ++s1)
             for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s12 = IDX2(s2, s1, n_spin),
-                        s34 = IDX2(s4, s3, n_spin);
                 index_t s21 = IDX2(s1, s2, n_spin),
                         s43 = IDX2(s3, s4, n_spin);
                 complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off], 
                                 s21, o1, s43, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Dch[IDX5(q, s34, o3, s12, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+                Dch[IDX5(q, s21, o1, s43, o3,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
             }
         }
     }else{
