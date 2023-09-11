@@ -1,0 +1,28 @@
+# module load Stages/2023
+# module load GCC/11.3.0 \
+#     CUDA/11.7 \
+#     imkl/2022.1.0 \
+#     FFTW/3.3.10
+
+DEFINES := -DUSE_MKL
+
+CXXFLAGS += -Ofast -march=native
+CFLAGS += -Ofast -march=native
+
+CXXFLAGS += -flto
+CFLAGS += -flto
+LDFLAGS += -Ofast -march=native -flto=24 -Wno-lto-type-mismatch
+CXXFLAGS += -fno-exceptions
+CFLAGS += -fno-exceptions
+LDFLAGS += -fno-exceptions
+
+LIBS = -fopenmp -lfftw3 -lfftw3_omp \
+       -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread
+
+DEFINES += -DEIGEN_NO_DEBUG -DNDEBUG
+
+USE_CUDA := true
+INCLUDES += -I$(CUDA_PATH)/include
+CUFLAGS += -O9 --use_fast_math -Xcompiler="-Ofast -march=native" \
+           --expt-relaxed-constexpr --diag-suppress 20236,20012
+LIBS += -L$(CUDA_PATH)/lib64
