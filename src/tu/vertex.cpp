@@ -1,6 +1,5 @@
 #include "vertex.hpp"
 
-
 Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop, 
                 bool P, bool C, bool D, bool self)
 :
@@ -58,43 +57,26 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
         ph_bubble_int = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
         memsize += 2*full_vert_size;
     }
-    mpi_log_printf("TU euler requires %.1f GB\n", memsize * sizeof(complex128_t) / POW3(1024.))
+    mpi_vrb_printf("TU euler requires %.1f GB\n", memsize * sizeof(complex128_t) / POW3(1024.))
     initialize_GPU_memory(proj, loop);
     if (model->ffill != NULL) {
         init_U_from_fullV(model,proj);
     }else{
         init_U(model -> internals -> enforce_exchange);
     }
-    mpi_log_printf("TU vertex size: %.1f GB\n", (double)memsize/ POW3(1024.));
+    mpi_vrb_printf("TU vertex size: %.1f GB\n", (double)memsize/ POW3(1024.));
 }
 
 void Vertex::init_U(bool enforce_exchange) {
     complex128_t* helper_crossing = NULL;
-    complex128_t* helper = (complex128_t*)calloc(POW2(n_orbff)*nk*POW4(n_spin), sizeof(complex128_t));
-    if(enforce_exchange)
-        helper_crossing = (complex128_t*)calloc(POW2(n_orbff)*nk*POW4(n_spin), sizeof(complex128_t));
-
+    complex128_t* helper = (complex128_t*)calloc(POW2(n_orb)*nk*POW4(n_spin), sizeof(complex128_t));
+    if(enforce_exchange){
+        mpi_vrb_printf("enforcing exchange \n");
+        helper_crossing = (complex128_t*)calloc(POW2(n_orb)*nk*POW4(n_spin), sizeof(complex128_t));
+    }
     if(P_flow) {
-        model->vfill(model,'P',helper);
-        #pragma omp parallel for schedule(static) collapse(4)
-        for (index_t q=0; q< my_nk; ++q)
-        for (index_t s4=0; s4<n_spin; ++s4)
-        for (index_t s3=0; s3<n_spin; ++s3)
-        for (index_t o3=0; o3<n_orb; ++o3)
-        for (index_t s2=0; s2<n_spin; ++s2)
-        for (index_t s1=0; s1<n_spin; ++s1)
-        for (index_t o1=0; o1<n_orb; ++o1) {
-            index_t s12 = IDX2(s2, s1, n_spin),
-                    s34 = IDX2(s4, s3, n_spin);
-            index_t s21 = IDX2(s1, s2, n_spin),
-                    s43 = IDX2(s3, s4, n_spin);
-            complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off], 
-                            s21, o1, s43, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-            Pch[IDX5(q, s34, o3, s12, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
-        }
-        if(enforce_exchange) {
-            memcpy((void*)helper_crossing,(void*)Pch,sizeof(complex128_t)*full_vert_size);
-            memset((void*)Pch, 0, sizeof(complex128_t)*full_vert_size);
+        if(!enforce_exchange) {
+            model->vfill(model,'P',helper);
             #pragma omp parallel for schedule(static) collapse(4)
             for (index_t q=0; q< my_nk; ++q)
             for (index_t s4=0; s4<n_spin; ++s4)
@@ -103,12 +85,32 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t s2=0; s2<n_spin; ++s2)
             for (index_t s1=0; s1<n_spin; ++s1)
             for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t i1234 = IDX7(q, s4, s3, o3, s2, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
-                        i2134 = IDX7(q, s4, s3, o3, s1, s2, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
-                        i1243 = IDX7(q, s3, s4, o3, s2, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
-                        i2143 = IDX7(q, s3, s4, o3, s1, s2, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff);
-                Pch[i1234] = 0.5 * (helper_crossing[i1234] - helper_crossing[i1243] +
-                                    helper_crossing[i2143] - helper_crossing[i2134]);
+                index_t s21 = IDX2(s2, s1, n_spin),
+                        s43 = IDX2(s4, s3, n_spin);
+                index_t s12 = IDX2(s1, s2, n_spin),
+                        s34 = IDX2(s3, s4, n_spin);
+                complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
+                                s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
+                Pch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+            }
+        } else {
+            model->vfill(model,'P',helper);
+            #pragma omp parallel for schedule(static) collapse(4)
+            for (index_t q=0; q < my_nk; ++q)
+            for (index_t s4=0; s4<n_spin; ++s4)
+            for (index_t s3=0; s3<n_spin; ++s3)
+            for (index_t o3=0; o3<n_orb; ++o3)
+            for (index_t s2=0; s2<n_spin; ++s2)
+            for (index_t s1=0; s1<n_spin; ++s1)
+            for (index_t o1=0; o1<n_orb; ++o1) {
+                index_t full_q = symm->idx_ibz_in_fullmesh[q+my_nk_off];
+                index_t r1234 = IDX7(q, s4, s3, o3, s2, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
+                        i1234 = IDX7(full_q, s1, s2, o1, s3, s4, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                        i2134 = IDX7(full_q, s2, s1, o1, s3, s4, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                        i1243 = IDX7(full_q, s1, s2, o1, s4, s3, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                        i2143 = IDX7(full_q, s2, s1, o1, s4, s3, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
+                Pch[r1234] = 0.5 * (helper[i1234] - helper[i1243] +
+                                    helper[i2143] - helper[i2134]);
             }
         }
     }
@@ -124,13 +126,13 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t s2=0; s2<n_spin; ++s2)
             for (index_t s1=0; s1<n_spin; ++s1)
             for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s12 = IDX2(s2, s1, n_spin),
-                        s34 = IDX2(s4, s3, n_spin);
-                index_t s21 = IDX2(s1, s2, n_spin),
-                        s43 = IDX2(s3, s4, n_spin);
+                index_t s21 = IDX2(s2, s1, n_spin),
+                        s43 = IDX2(s2, s4, n_spin);
+                index_t s12 = IDX2(s1, s2, n_spin),
+                        s34 = IDX2(s3, s4, n_spin);
                 complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
-                                s43, o1, s21, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Cch[IDX5(q, s34, o3, s12, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+                                s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
+                Cch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
             }
         }
         if(D_flow) {
@@ -143,13 +145,13 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t s2=0; s2<n_spin; ++s2)
             for (index_t s1=0; s1<n_spin; ++s1)
             for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s12 = IDX2(s2, s1, n_spin),
-                        s34 = IDX2(s4, s3, n_spin);
-                index_t s21 = IDX2(s1, s2, n_spin),
-                        s43 = IDX2(s3, s4, n_spin);
+                index_t s21 = IDX2(s2, s1, n_spin),
+                        s43 = IDX2(s4, s3, n_spin);
+                index_t s12 = IDX2(s1, s2, n_spin),
+                        s34 = IDX2(s3, s4, n_spin);
                 complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off], 
-                                s21, o1, s43, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Dch[IDX5(q, s34, o3, s12, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+                                s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
+                Dch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
             }
         }
     }else{
@@ -176,17 +178,22 @@ void Vertex::init_U(bool enforce_exchange) {
         for (index_t o1=0; o1<n_orb; ++o1) {
             index_t full_q = symm->idx_ibz_in_fullmesh[q+my_nk_off];
             index_t mfull_q = to_minus_q(full_q, model->nk);
-            index_t i1234 = IDX7(full_q, s4, s3, o3, s2, s1, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
-                    r1234 = IDX7(q, s4, s3, o3, s2, s1, o1, n_spin, n_spin, n_orbff, n_spin, n_spin, n_orbff),
-                    i2134 = IDX7(mfull_q, s4, s3, o3, s1, s2, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
-                    i1243 = IDX7(full_q, s3, s4, o3, s2, s1, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
-                    i2143 = IDX7(mfull_q, s3, s4, o3, s1, s2, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb);
-            complex128_t val_D = 0.5 * (helper_crossing[i1234] + helper_crossing[i2143] -
-                                        helper[i2134] - helper[i1243]);
-            complex128_t val_C = 0.5 * (helper[i1234] + helper[i2143] -
-                                        helper_crossing[i2134] - helper_crossing[i1243]);
-            Dch[r1234] = val_D;
-            Cch[r1234] = val_C;
+            index_t rc1234 = IDX7(q, s2, s3, o3, s4, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
+                    rd1234 = IDX7(q, s2, s4, o3, s3, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
+                    id1234 = IDX7(full_q, s1, s3, o1, s4, s2, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    id1243 = IDX7(full_q, s1, s4, o1, s3, s2, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    id2134 = IDX7(mfull_q, s2, s3, o3, s4, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    id2143 = IDX7(mfull_q, s2, s4, o3, s3, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    ic1234 = IDX7(full_q, s1, s4, o1, s3, s2, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    ic1243 = IDX7(full_q, s1, s3, o1, s4, s2, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    ic2134 = IDX7(mfull_q, s2, s4, o3, s3, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    ic2143 = IDX7(mfull_q, s2, s3, o3, s4, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
+            complex128_t val_D = 0.5 * (helper_crossing[id1234] + helper_crossing[id2143] -
+                                        helper[ic2134] - helper[ic1243]);
+            complex128_t val_C = 0.5 * (helper[ic1234] + helper[ic2143] -
+                                        helper_crossing[id2134] - helper_crossing[id1243]);
+            Dch[rd1234] = val_D;
+            Cch[rc1234] = val_C;
         }
     }
     free(helper);
@@ -219,36 +226,35 @@ Vertex::Vertex(const Vertex& other)
     selfenergy_size{other.selfenergy_size}, symm{other.symm},P_flow{other.P_flow},
     C_flow{other.C_flow},D_flow{other.D_flow},use_self{other.use_self}
 {
-        Pch = nullptr;
-        Cch = nullptr;
-        Dch = nullptr;
-        bubble_helper = other.bubble_helper;
-        product_helper = other.product_helper;
-        projection_helper = other.projection_helper;
-        if(P_flow)Pch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
-        if(C_flow)Cch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
-        if(D_flow)Dch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
+    Pch = nullptr;
+    Cch = nullptr;
+    Dch = nullptr;
+    bubble_helper = other.bubble_helper;
+    product_helper = other.product_helper;
+    projection_helper = other.projection_helper;
+    if(P_flow)Pch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
+    if(C_flow)Cch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
+    if(D_flow)Dch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
 
-        if(use_self)self_en = (complex128_t*)calloc(selfenergy_size, sizeof(complex128_t));
-        if(P_flow)pp_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
-        if(C_flow || D_flow)ph_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
+    if(use_self)self_en = (complex128_t*)calloc(selfenergy_size, sizeof(complex128_t));
+    if(P_flow)pp_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
+    if(C_flow || D_flow)ph_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
 
-        if(P_flow)mcopy(Pch,other.get_P_ptr_cst(),this->full_vert_size);
-        if(C_flow)mcopy(Cch,other.get_C_ptr_cst(),this->full_vert_size);
-        if(D_flow)mcopy(Dch,other.get_D_ptr_cst(),this->full_vert_size);
-        if(P_flow)mcopy(pp_bubble_int,other.get_PP_bubble_cst(),this->full_bubble_size);
-        if(C_flow || D_flow)mcopy(ph_bubble_int,other.get_PH_bubble_cst(),this->full_bubble_size);
-        if(use_self)mcopy(self_en,other.get_E_ptr_cst(),this->selfenergy_size);
-        owns = false;
-        for(int i = 0; i < 32; ++i)
-        for(int j = 0; j < 3; ++j) {
-            GPU_gemm_buffer[i][j] = other.GPU_gemm_buffer[i][j];
-        }
+    if(P_flow)mcopy(Pch,other.get_P_ptr_cst(),this->full_vert_size);
+    if(C_flow)mcopy(Cch,other.get_C_ptr_cst(),this->full_vert_size);
+    if(D_flow)mcopy(Dch,other.get_D_ptr_cst(),this->full_vert_size);
+    if(P_flow)mcopy(pp_bubble_int,other.get_PP_bubble_cst(),this->full_bubble_size);
+    if(C_flow || D_flow)mcopy(ph_bubble_int,other.get_PH_bubble_cst(),this->full_bubble_size);
+    if(use_self)mcopy(self_en,other.get_E_ptr_cst(),this->selfenergy_size);
+    owns = false;
+    for(int i = 0; i < 32; ++i)
+    for(int j = 0; j < 3; ++j) {
+        GPU_gemm_buffer[i][j] = other.GPU_gemm_buffer[i][j];
+    }
 }
 
 
-Vertex& Vertex::operator=(const Vertex& other)
-{
+Vertex& Vertex::operator=(const Vertex& other) {
     if(P_flow)mcopy(Pch,other.get_P_ptr_cst(),this->full_vert_size);
     if(C_flow)mcopy(Cch,other.get_C_ptr_cst(),this->full_vert_size);
     if(D_flow)mcopy(Dch,other.get_D_ptr_cst(),this->full_vert_size);
@@ -259,7 +265,9 @@ Vertex& Vertex::operator=(const Vertex& other)
 
     return *this;
 }
+#ifndef CUDA_MEM_ALIGN
 #define CUDA_MEM_ALIGN 256
+#endif
 #ifdef USE_CUDA
 static index_t ensure_align(index_t numToRound) {
 
@@ -278,13 +286,31 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         mpi_err_printf("CUDA initailized wrongly. TUFRG will fail!\n");
         return ;
     }
+    if(loop->cuda_descr.prop_memory_set_local) {
+        mpi_err_printf("Memory for loop already allocated, free it first!\n");
+        loop->cuda_descr.prop_memory_set_local = false;
+        for(int i = 0; i<tu_num_of_devices;++i) {
+            cudaFree(loop->cuda_descr.mi_to_R[i]);
+            cudaFree(loop->cuda_descr.c_to_f_q[i]);
+            cudaFree(loop->cuda_descr.nkdev[i]);
+            cudaFree(loop->cuda_descr.GF_fft[i]);
+            cudaFree(loop->cuda_descr.GF_fft_conj[i]);
+            cudaFree(loop->cuda_descr.buf_GG[i][0]);
+            cudaFree(loop->cuda_descr.buf_GG[i][1]);
+            cudaFree(loop->cuda_descr.buf_res[i][0]);
+            cudaFree(loop->cuda_descr.buf_res[i][1]);
+            cudaFree(loop->cuda_descr.fft_workspace[i][0]);
+            cudaFree(loop->cuda_descr.fft_workspace[i][1]);
+        }
+    }
+    has_gpu_memory = true;
     index_t nktot = nk * nkf;
     size_t available_memory[256] = {0};
     for(int i = 0; i<tu_num_of_devices;++i) {
         size_t total;
         CUDA_CHECK( cudaSetDevice( i ) );
         CUDA_CHECK( cudaMemGetInfo( &available_memory[i], &total ) );
-        mpi_log_printf("TU GPU %d has %.1f GB available\n", i, available_memory[i] / POW3(1024.));
+        mpi_vrb_printf("TU GPU %d has %.1f GB available\n", i, available_memory[i] / POW3(1024.));
         available_memory[i] *= 0.95;
 
         index_t prop_mem = 0;
@@ -374,7 +400,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         // XXX needed to set the values to sth always >= 0
         memory_GPU = MAX( memory_GPU, 128*16 );
         memory_managed = MAX( memory_managed, 128*16 );
-        mpi_log_printf("TU GPU pool with %.1f GB on-device and %.1f GB managed\n", memory_GPU / POW3(1024.), memory_managed / POW3(1024.));
+        mpi_vrb_printf("TU GPU pool with %.1f GB on-device and %.1f GB managed\n", memory_GPU / POW3(1024.), memory_managed / POW3(1024.));
         CUDA_CHECK( cudaMalloc(&GPU_memory_pool[i], memory_GPU) );
         CUDA_CHECK( cudaMallocManaged(&GPU_memory_pool_managed[i], memory_managed) );
 
@@ -425,6 +451,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         cproj->buf_res1[i] = (cuDoubleComplex*)((proj_memtype[6] == 0) ? GPU_memory_pool[i] + proj_memoffset[6]
                                                                        : GPU_memory_pool_managed[i] + proj_memoffset_managed[6]);
     }
+    loop->cuda_descr.prop_memory_set_vertex = true;
     CUDA_CHECK( cudaSetDevice( 0 ) );
 #endif
 }
