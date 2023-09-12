@@ -111,12 +111,6 @@ typedef uint64_t uindex_t;
 #define MAX(x,y) (x) > (y) ? (x) : (y)
 #define MIN(x,y) (x) < (y) ? (x) : (y)
 
-// some legacy DEFINE statements
-#ifdef USE_CUDA
-#define _NPATCH_USE_CUSOLVER
-#define _GRID_USE_CUBLAS_GEMM
-#endif
-
 #ifndef BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB
 #define BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB 4ul
 #endif // BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB
