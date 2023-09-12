@@ -9,7 +9,6 @@
 
 #include "misc/mpi_functions.h"
 #include "misc/kmeans_lloyd.hpp"
-#include "misc/vector.h"
 #include "misc/bitary.h"
 #include "misc/cmath_helpers.h"
 
@@ -221,9 +220,9 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
         }
     }
 
-    vector_t* kf_per_patch = (vector_t*)malloc(sizeof(vector_t)*np);
+    vector<vector<index_t>> kf_per_patch(np);
     for (index_t p=0; p<np; ++p)
-        vector_init( kf_per_patch+p, nkf_per_patch[p] );
+        kf_per_patch[p].resize( nkf_per_patch[p] );
 
     memset(nkf_per_patch, 0, sizeof(index_t)*np);
 
@@ -231,11 +230,11 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
         if (kf_patch_info[k].howmany > 1) {
             for (index_t pi=0; pi<kf_patch_info[k].howmany; ++pi) {
                 index_t p = kf_patch_info[k].multi[pi];
-                vector_set( kf_per_patch+p, nkf_per_patch[p]++, k );
+                kf_per_patch[p][nkf_per_patch[p]++] = k;
             }
         } else {
             index_t p = kf_patch_info[k].p;
-            vector_set( kf_per_patch+p, nkf_per_patch[p]++, k );
+            kf_per_patch[p][nkf_per_patch[p]++] = k;
         }
     }
     free(nkf_per_patch);
@@ -251,7 +250,7 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
 
     // set count and displ
     for (index_t p=0; p<np; ++p) {
-        patch->p_count[p] = kf_per_patch[p].size;
+        patch->p_count[p] = kf_per_patch[p].size();
         patch->p_displ[p] = p == 0 ? 0 : patch->p_displ[p-1] + patch->p_count[p-1];
     }
     index_t total_refined = patch->p_count[np-1] + patch->p_displ[np-1];
@@ -277,7 +276,7 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
         index_t displ = patch->p_displ[p];
         double total_weight = 0.;
         for (index_t d=0; d<patch->p_count[p]; ++d) {
-            patch->p_map[displ+d] = vector_get( kf_per_patch+p, d );
+            patch->p_map[displ+d] = kf_per_patch[p][d];
             total_weight += fine_weights[patch->p_map[displ+d]];
         }
         patch->weights[p] = total_weight;
@@ -301,11 +300,6 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
         }
     }
 
-
-    for (index_t p=0; p<np; ++p) {
-        vector_free( kf_per_patch+p );
-    }
-    free( kf_per_patch );
     free( kf );
 
     // update p_weights
