@@ -11,6 +11,8 @@
 #include "npatch/kernels_gpu.h"
 #include "npatch/loop.h"
 
+#include <cfloat>
+
 static void diverge_flow_step_select_channels( diverge_flow_step_t* st, const char* chans_ );
 
 diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* method_, const char* channels ) {
@@ -434,10 +436,13 @@ void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspac
     // find mu
     double mu = diverge_flow_step_refill_Hself( s, nu, workspace );
 
-    // and readjust the energies accordingly
-    #pragma omp parallel for
-    for (index_t kb=0; kb<nk*nb; ++kb)
-        E[kb] -= mu;
+    // only continue if no error
+    if (mu != DBL_MAX) {
+        // and readjust the energies accordingly
+        #pragma omp parallel for
+        for (index_t kb=0; kb<nk*nb; ++kb)
+            E[kb] -= mu;
+    }
 
     // and free it
     if (free_workspace) free( workspace );
@@ -483,6 +488,11 @@ double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* 
     batched_eigen_r( NULL, -2, Utmp, Etmp, nb, nk );
     batched_eigen_shut_up(0);
 
-    // get the chemical potential corresponding to the filling
-    return diverge_model_set_filling( m, Etmp, nb, nu );
+    if (nu < -1.0 || nu > 2.0) {
+        mpi_vrb_printf( "refilling at nu < -1.0 || nu > 2.0 doesn't work, returning %.2e\n", DBL_MAX );
+        return DBL_MAX;
+    } else {
+        // get the chemical potential corresponding to the filling
+        return diverge_model_set_filling( m, Etmp, nb, nu );
+    }
 }
