@@ -53,6 +53,7 @@ diverge_model_t* test_model(int n_spin) {
                 helper.V = J;
                 helper.chan = 'P';
                 Rvert.push_back(helper);
+                helper.V = J;
                 helper.chan = 'C';
                 Rvert.push_back(helper);
                 helper.V = U - 2.* J;
@@ -66,28 +67,29 @@ diverge_model_t* test_model(int n_spin) {
             helper.o1 = o1;
             helper.o2 = o2;
             if( o1 == o2 ) {
-                for(index_t s1 = 0; s1 < 2; ++s1){
-                    index_t s2 = s1 == 0 ? 1 : 0;
-                    helper.s1 = s1,helper.s2 = s2,helper.s3 = s1,helper.s4 = s2;
-                    helper.V = U; helper.chan = 'D';
-                    Rvert.push_back(helper);
-                }
+                helper.s1 = -1;
+                helper.V = U; helper.chan = 'D';
+                Rvert.push_back(helper);
+
             }else{
-                for(index_t s1 = 0; s1 < 2; ++s1) {
-                    index_t s2 = s1 == 0 ? 1 : 0;
-                    helper.s1 = s1,helper.s2 = s2,helper.s3 = s1,helper.s4 = s2;
-                    helper.V = J; helper.chan = 'C';
-                    Rvert.push_back(helper);
-                    helper.V = J; helper.chan = 'P';
-                    Rvert.push_back(helper);
+                    helper.s1 = -1;
                     helper.V = U-2*J; helper.chan = 'D';
                     Rvert.push_back(helper);
 
-                    s2 = s1 ;
-                    helper.s1 = s1,helper.s2 = s2,helper.s3 = s1,helper.s4 = s2;
-                    helper.V = U-3*J; helper.chan = 'D';
+                for(index_t s1 = 0; s1 < 2; ++s1) {
+                    index_t s2 = s1 == 0 ? 1 : 0;
+                    helper.s1 = s1,helper.s2 = s2, helper.s3 = s1,helper.s4 = s2;
+                    helper.V = J; helper.chan = 'C';
+                    Rvert.push_back(helper);
+
+                    helper.s1 = s1,helper.s2 = s2, helper.s3 = s1,helper.s4 = s2;
+                    helper.V = J; helper.chan = 'P';
+                    Rvert.push_back(helper);
+                    helper.s1 = s1,helper.s2 = s1, helper.s3 = s1,helper.s4 = s1;
+                    helper.V = J; helper.chan = 'C';
                     Rvert.push_back(helper);
                 }
+
             }
         }
     }
