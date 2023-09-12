@@ -808,6 +808,20 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
     diverge_patching_mpi_equalize( patch );
 }
 
+void diverge_patching_free( mom_patching_t* patching ) {
+    if (patching) {
+        free(patching->patches);
+        free(patching->weights);
+        free(patching->p_count);
+        free(patching->p_displ);
+        free(patching->p_map);
+        free(patching->p_weights);
+        free(patching);
+    } else {
+        mpi_err_printf( "cannot free empty patching struct\n" );
+    }
+}
+
 static vector<Mat3d> rs_syms( diverge_model_t* mod ) {
     if (mod->n_sym < 1)
         return {Mat3d::Identity()};

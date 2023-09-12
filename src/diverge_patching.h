@@ -44,6 +44,11 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
 // method.
 void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_t* patch );
 
+// Function: diverge_patching_free
+// frees all resources of a <mom_patching_t> structure. Usage is typically not
+// needed, but for advanced patching calculations it may be advantageous.
+void diverge_patching_free( mom_patching_t* patching );
+
 
 // typical calling of the above functions in the model would look like
 //

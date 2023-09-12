@@ -544,6 +544,10 @@ if not _libs["divERGe"] is None:
     model_internals_patch.argtypes = [POINTER(model_t), index_t]
     model_internals_patch.restype = None
 
+    model_internals_reset = _libs["divERGe"].get("diverge_model_internals_reset", "cdecl")
+    model_internals_reset.argtypes = [POINTER(model_t)]
+    model_internals_reset.restype = None
+
     model_internals_tu = _libs["divERGe"].get("diverge_model_internals_tu", "cdecl")
     model_internals_tu.argtypes = [POINTER(model_t), c_double]
     model_internals_tu.restype = None
@@ -833,6 +837,10 @@ if not _libs["divERGe"] is None:
         pts_cpy = np.copy( pts_ary )
         mem_free( pts )
         return pts_cpy
+
+    patching_free = _libs["divERGe"].get("diverge_patching_free", "cdecl")
+    patching_free.argtypes = [POINTER(mom_patching_t)]
+    patching_free.restype = None
 
     patching_from_indices = _libs["divERGe"].get("diverge_patching_from_indices", "cdecl")
     patching_from_indices.argtypes = [POINTER(model_t), c_voidp, index_t]

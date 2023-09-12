@@ -112,6 +112,54 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     merge_rs_orb(model);
 }
 
+void diverge_model_internals_reset( diverge_model_t* model ) {
+    if (model->internals == NULL) {
+        mpi_err_printf("cannot reset internals, ptr==NULL\n");
+        return;
+    }
+    free(model->internals->kmesh);
+    free(model->internals->kfmesh);
+    free(model->internals->ham);
+    free(model->internals->E);
+    free(model->internals->U);
+    free(model->internals->greens);
+
+    free(model->internals->grid_kfmesh);
+    free(model->internals->grid_weights);
+    free(model->internals->grid_kfrev);
+    free(model->internals->grid_k1m2);
+    free(model->internals->grid_k1p2);
+    free(model->internals->grid_greens_p_buf);
+    free(model->internals->grid_greens_m_buf);
+    if ((model->internals->grid_vertex != NULL) &&
+        (model->internals->grid_vertex_destructor != NULL))
+        (*(model->internals->grid_vertex_destructor))( model->internals->grid_vertex );
+    if ((model->internals->grid_sym != NULL) &&
+        (model->internals->grid_sym_destructor != NULL))
+        (*(model->internals->grid_sym_destructor))( model->internals->grid_sym );
+    if ((model->internals->patch_vertex != NULL) &&
+        (model->internals->patch_vertex_destructor != NULL))
+        (*(model->internals->patch_vertex_destructor))( model->internals->patch_vertex );
+    if ((model->internals->tu_data != NULL) &&
+        (model->internals->tu_data_destructor != NULL))
+        (*(model->internals->tu_data_destructor))( model->internals->tu_data );
+
+    free(model->internals->patch_kmesh);
+    free(model->internals->patch_pmesh);
+    free(model->internals->patch_k3map);
+
+    free(model->internals->symm_map_mom_fine);
+    free(model->internals->symm_map_mom_crs);
+    free(model->internals->symm_beyond_UC);
+    free(model->internals->symm_map_orb);
+    free(model->internals->symm_orb_off);
+    free(model->internals->symm_orb_len);
+    free(model->internals->symm_pref);
+
+    memset(model->internals, 0, sizeof(internals_t));
+    model->internals->has_common_internals = 0;
+}
+
 #define verbose_assert( expr, ... ) \
     if (!(expr)) { \
         error++; \

@@ -34,6 +34,11 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz );
 //  max_dist - distance up to which formfactors should be included.
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
 
+// Function: diverge_model_internals_reset
+// Reset all internal structures of the model and free their resources. Does not
+// reset the patching. Usage is discouraged.
+void diverge_model_internals_reset( diverge_model_t* model );
+
 // DEVELOPERS
 //
 // For a new backend, you must write your own diverge_model_internals_backend

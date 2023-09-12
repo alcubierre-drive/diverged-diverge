@@ -2,6 +2,8 @@
 #include "diverge_internals_struct.h"
 #include "diverge_interaction_helper.h"
 #include "diverge_Eigen3.hpp"
+#include "diverge_patching.h"
+#include "diverge_model_internals.h"
 #include <fftw3.h>
 #include <algorithm>
 #include <cassert>
@@ -22,55 +24,11 @@ diverge_model_t* diverge_model_init(void) {
 
 void diverge_model_free(diverge_model_t* model) {
     if (model->patching) {
-        free(model->patching->patches);
-        free(model->patching->weights);
-        free(model->patching->p_count);
-        free(model->patching->p_displ);
-        free(model->patching->p_map);
-        free(model->patching->p_weights);
+        diverge_patching_free(model->patching);
+        model->patching = NULL;
     }
-    free(model->patching);
-
-    if (model->internals) {
-        free(model->internals->kmesh);
-        free(model->internals->kfmesh);
-        free(model->internals->ham);
-        free(model->internals->E);
-        free(model->internals->U);
-        free(model->internals->greens);
-
-        free(model->internals->grid_kfmesh);
-        free(model->internals->grid_weights);
-        free(model->internals->grid_kfrev);
-        free(model->internals->grid_k1m2);
-        free(model->internals->grid_k1p2);
-        free(model->internals->grid_greens_p_buf);
-        free(model->internals->grid_greens_m_buf);
-        if ((model->internals->grid_vertex != NULL) &&
-            (model->internals->grid_vertex_destructor != NULL))
-            (*(model->internals->grid_vertex_destructor))( model->internals->grid_vertex );
-        if ((model->internals->grid_sym != NULL) &&
-            (model->internals->grid_sym_destructor != NULL))
-            (*(model->internals->grid_sym_destructor))( model->internals->grid_sym );
-        if ((model->internals->patch_vertex != NULL) &&
-            (model->internals->patch_vertex_destructor != NULL))
-            (*(model->internals->patch_vertex_destructor))( model->internals->patch_vertex );
-        if ((model->internals->tu_data != NULL) &&
-            (model->internals->tu_data_destructor != NULL))
-            (*(model->internals->tu_data_destructor))( model->internals->tu_data );
-
-        free(model->internals->patch_kmesh);
-        free(model->internals->patch_pmesh);
-        free(model->internals->patch_k3map);
-
-        free(model->internals->symm_map_mom_fine);
-        free(model->internals->symm_map_mom_crs);
-        free(model->internals->symm_beyond_UC);
-        free(model->internals->symm_map_orb);
-        free(model->internals->symm_orb_off);
-        free(model->internals->symm_orb_len);
-        free(model->internals->symm_pref);
-    }
+    if (model->internals)
+        diverge_model_internals_reset(model);
     free(model->internals);
     free(model->tu_ff);
     free(model->orb_symmetries);

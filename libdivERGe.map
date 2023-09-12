@@ -42,6 +42,7 @@ DIVERGE_1.0 {
         diverge_model_internals_get_kmesh;
         diverge_model_internals_grid;
         diverge_model_internals_patch;
+        diverge_model_internals_reset;
         diverge_model_internals_tu;
         diverge_model_output_set_npath;
         diverge_model_print_hacks;
@@ -83,6 +84,7 @@ DIVERGE_1.0 {
         diverge_mpi_wtime;
         diverge_patching_autofine;
         diverge_patching_find_fs_pts_C;
+        diverge_patching_free;
         diverge_patching_from_indices;
         diverge_patching_symmetrize_refinement;
         diverge_postprocess_and_write;
