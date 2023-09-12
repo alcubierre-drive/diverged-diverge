@@ -144,7 +144,7 @@ void selfEnergy::selfenergy_flow_rs(complex128_t* self_en,
 {
     // selfenergy flow equation
     const index_t blocksize_self = POW2(n_orb*n_spin);
-    const complex128_t prefac = -pref_subst/(2.0*M_PI);
+    const complex128_t prefac = pref_subst/(2.0*M_PI);
     //set all elements to zero
 
     mfill(self_en, blocksize_self*n_frq, 0.0);
@@ -252,7 +252,7 @@ void selfEnergy::selfenergy_flow_rs_SU2(complex128_t* self_en,
 {
     // selfenergy flow equation
     const index_t blocksize_self = POW2(n_orb*n_spin);
-    const double prefac = -pref_subst/(2.0*M_PI);
+    const double prefac = pref_subst/(2.0*M_PI);
     //set all elements to zero
     mfill(self_en, blocksize_self, 0.0);
 
@@ -522,7 +522,7 @@ void selfEnergy::selfenergy_flow_mom(complex128_t* const self_en,
     diverge_mpi_allreduce_complex_sum_inplace(self_en, selfsize);
     if(nk != nktot)
     {
-        const double prefac = -pref_subst/(2.0*M_PI*(double)nk*(double)nk);
+        const double prefac = pref_subst/(2.0*M_PI*(double)nk*(double)nk);
         for(index_t i = 0; i < POW2(n_spin*n_orb)*nk*n_frq; ++i)
             self_en[i] *= prefac;
         fftw_execute_dft_helper(fft_fullself_ip,self_en,self_en);
@@ -532,7 +532,7 @@ void selfEnergy::selfenergy_flow_mom(complex128_t* const self_en,
         fftw_execute_dft_helper(ifft_fullself_ip,self_en,self_en);
         fft_interpolate(self_en);
     }else{
-        const double prefac = -pref_subst/(2.0*M_PI*(double)nk*(double)nk);
+        const double prefac = pref_subst/(2.0*M_PI*(double)nk*(double)nk);
         for(index_t i = 0; i < POW2(n_spin*n_orb)*nk*n_frq; ++i)
             self_en[i] *= prefac;
 
@@ -741,7 +741,7 @@ void selfEnergy::selfenergy_flow_mom_SU2(complex128_t* self_en,
     diverge_mpi_allreduce_complex_sum_inplace(self_en, selfsize);
 
     if(nk != nktot) {
-        const double prefac = -pref_subst/(2.0*M_PI*(double)nk*(double)nk);
+        const double prefac = pref_subst/(2.0*M_PI*(double)nk*(double)nk);
         for(index_t i = 0; i < POW2(n_spin*n_orb)*nk; ++i)
             self_en[i] *= prefac;
         fftw_execute_dft_helper(fft_fullself_ip,self_en,self_en);
@@ -751,7 +751,7 @@ void selfEnergy::selfenergy_flow_mom_SU2(complex128_t* self_en,
         fftw_execute_dft_helper(ifft_fullself_ip,self_en,self_en);
         fft_interpolate(self_en);
     }else{
-        const double prefac = -pref_subst/(2.0*M_PI*(double)nk*(double)nk);
+        const double prefac = pref_subst/(2.0*M_PI*(double)nk*(double)nk);
         for(index_t i = 0; i < POW2(n_spin*n_orb)*nk; ++i)
             self_en[i] *= prefac;
         fftw_execute_dft_helper(fft_fullself_ip,self_en,self_en);

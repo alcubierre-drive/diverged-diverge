@@ -14,12 +14,11 @@
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
-#include <iostream>
 
-diverge_model_t* test_model(int n_spin) {
+diverge_model_t* test_model(int n_spin, int kx = 1, int kxf = 1) {
     diverge_model_t* mod1 = diverge_model_init();
     mod1->n_orb = 2;
-    mod1->nk[0]=1;mod1->nkf[0]=1;
+    mod1->nk[0]=kx;mod1->nkf[0]=kxf;
     mod1->n_spin = n_spin;
     mod1->SU2 = (n_spin == 1) ? true : false;
     mod1->lattice[0][0] = mod1->lattice[1][1] = mod1->lattice[2][2] = 1.0;
@@ -33,6 +32,7 @@ diverge_model_t* test_model(int n_spin) {
         mod1->hop[4+6*s] = rs_hopping_t{ {0,0,0}, 1,0,s,s, 0.5 };
         mod1->hop[5+6*s] = rs_hopping_t{ {0,0,0}, 0,1,s,s, 0.5 };
     }
+    index_t n_orb = mod1->n_orb;
     double U = 1.0;
     double J = 0.1;
     vector<rs_vertex_t> Rvert;
@@ -40,8 +40,8 @@ diverge_model_t* test_model(int n_spin) {
     rs_vertex_t helper;
     helper.s1 = -1, helper.R[0] = 0, helper.R[1] = 0, helper.R[2] = 0;
     if(mod1->SU2) {
-        for(index_t o1 = 0; o1 < 2; ++o1)
-        for(index_t o2 = 0; o2 < 2; ++o2) {
+        for(index_t o1 = 0; o1 < n_orb; ++o1)
+        for(index_t o2 = 0; o2 < n_orb; ++o2) {
             helper.o1 = o1;
             helper.o2 = o2;
             if( o1 == o2 ) {
@@ -62,8 +62,8 @@ diverge_model_t* test_model(int n_spin) {
             }
         }
     }else{
-        for(index_t o1 = 0; o1 < 2; ++o1)
-        for(index_t o2 = 0; o2 < 2; ++o2) {
+        for(index_t o1 = 0; o1 < n_orb; ++o1)
+        for(index_t o2 = 0; o2 < n_orb; ++o2) {
             helper.o1 = o1;
             helper.o2 = o2;
             if( o1 == o2 ) {
@@ -222,7 +222,7 @@ TEST_CASE("two orbital model in 1d","[hk]") {
 
     double Lambda = 1.0;
     double dLambda = -0.1;
-    for (int i=0; i<1; ++i) {
+    for (int i=0; i<5; ++i) {
         diverge_flow_step_euler( s1, Lambda, dLambda );
         diverge_flow_step_euler( s2, Lambda, dLambda );
 
@@ -234,6 +234,38 @@ TEST_CASE("two orbital model in 1d","[hk]") {
     diverge_flow_step_free( s1 );
     diverge_flow_step_free( s2 );
     free(vertex);
+    diverge_model_free( mod1 );
+    diverge_model_free( mod2 );
+}
+
+
+TEST_CASE("two orbital model in 1d mom","[mhk]") {
+    mpi_loglevel_set( 5 );
+    diverge_model_t* mod1 = test_model(1,10,5);
+    diverge_model_t* mod2 = test_model(2,10,5);
+    diverge_model_internals_tu( mod1, 1.01 );
+    diverge_model_internals_tu( mod2, 1.01 );
+    diverge_flow_step_t* s1 = diverge_flow_step_init( mod1, "tu", "SPCD" );
+    diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "SPCD" );
+    Vertex* v1 = s1->tu_vertex;
+    Vertex* v2 = s2->tu_vertex;
+    CHECK(err_D(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_C(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_P(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+
+    double Lambda = 1.0;
+    double dLambda = -0.1;
+    for (int i=0; i<5; ++i) {
+        diverge_flow_step_euler( s1, Lambda, dLambda );
+        diverge_flow_step_euler( s2, Lambda, dLambda );
+
+        Lambda += dLambda;
+    }
+    CHECK(err_D(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_C(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_P(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+    diverge_flow_step_free( s1 );
+    diverge_flow_step_free( s2 );
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }

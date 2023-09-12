@@ -133,7 +133,7 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
             index_t kk = k >= nktot ? k - nktot : k;
             Map<MatXcd> S(self_energy+nb2*kk,nb,nb);
             Map<MatXgfct> GF0(gf_buf+nb2*k,nb,nb);
-            GF0 = GF0.inverse() + S.cast<gf_complex_t>();
+            GF0 = GF0.inverse() - S.cast<gf_complex_t>();
             GF0 = GF0.inverse();
         }
     }
