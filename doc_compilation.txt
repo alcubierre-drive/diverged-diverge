@@ -128,6 +128,11 @@ BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB=GB - set maximum size of chunk in GB for GPU
                                        batched eigensolver to GB
 BATCHED_GEMMS_ZLACPY_LAPACKE - if defined, use the zlacpy lapack function to
                                copy vectors. may be faster on some systems.
+BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS=VAL - compile all batched GEMMs where
+                                                the matrix dimension is (much)
+                                                smaller than the number of
+                                                executions up to matrix size VAL
+                                                explicitly. default: 4.
 CUDA_CIRCUMVENT_CONSTEXPR - on old CUDA versions, constexpr may not be
                             supported. define to circumvent this issue.
 CUDA_DEFINE_ATOMIC_ADD - on old CUDA versions (or when compiling for old
