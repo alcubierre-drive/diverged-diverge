@@ -1,5 +1,4 @@
 #include "vertex.hpp"
-#include <iostream>
 
 Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop, 
                 bool P, bool C, bool D, bool self)
@@ -71,9 +70,10 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
 void Vertex::init_U(bool enforce_exchange) {
     complex128_t* helper_crossing = NULL;
     complex128_t* helper = (complex128_t*)calloc(POW2(n_orb)*nk*POW4(n_spin), sizeof(complex128_t));
-    if(enforce_exchange)
+    if(enforce_exchange){
+        mpi_vrb_printf("enforcing exchange \n");
         helper_crossing = (complex128_t*)calloc(POW2(n_orb)*nk*POW4(n_spin), sizeof(complex128_t));
-
+    }
     if(P_flow) {
         if(!enforce_exchange) {
             model->vfill(model,'P',helper);
@@ -85,11 +85,13 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t s2=0; s2<n_spin; ++s2)
             for (index_t s1=0; s1<n_spin; ++s1)
             for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s21 = IDX2(s1, s2, n_spin),
-                        s43 = IDX2(s3, s4, n_spin);
+                index_t s21 = IDX2(s2, s1, n_spin),
+                        s43 = IDX2(s4, s3, n_spin);
+                index_t s12 = IDX2(s1, s2, n_spin),
+                        s34 = IDX2(s3, s4, n_spin);
                 complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
-                                s21, o1, s43, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Pch[IDX5(q, s21, o1, s43, o3,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+                                s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
+                Pch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
             }
         } else {
             model->vfill(model,'P',helper);
@@ -103,10 +105,10 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t o1=0; o1<n_orb; ++o1) {
                 index_t full_q = symm->idx_ibz_in_fullmesh[q+my_nk_off];
                 index_t r1234 = IDX7(q, s4, s3, o3, s2, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
-                        i1234 = IDX7(full_q, s4, s3, o3, s2, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
-                        i2134 = IDX7(full_q, s4, s3, o3, s1, s2, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
-                        i1243 = IDX7(full_q, s3, s4, o3, s2, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
-                        i2143 = IDX7(full_q, s3, s4, o3, s1, s2, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
+                        i1234 = IDX7(full_q, s1, s2, o1, s3, s4, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                        i2134 = IDX7(full_q, s2, s1, o1, s3, s4, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                        i1243 = IDX7(full_q, s1, s2, o1, s4, s3, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                        i2143 = IDX7(full_q, s2, s1, o1, s4, s3, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
                 Pch[r1234] = 0.5 * (helper[i1234] - helper[i1243] +
                                     helper[i2143] - helper[i2134]);
             }
@@ -124,11 +126,13 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t s2=0; s2<n_spin; ++s2)
             for (index_t s1=0; s1<n_spin; ++s1)
             for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s21 = IDX2(s1, s2, n_spin),
-                        s43 = IDX2(s3, s4, n_spin);
+                index_t s21 = IDX2(s2, s1, n_spin),
+                        s43 = IDX2(s2, s4, n_spin);
+                index_t s12 = IDX2(s1, s2, n_spin),
+                        s34 = IDX2(s3, s4, n_spin);
                 complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
-                                s43, o1, s21, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Cch[IDX5(q, s21, o1, s43, o3,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+                                s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
+                Cch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
             }
         }
         if(D_flow) {
@@ -141,11 +145,13 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t s2=0; s2<n_spin; ++s2)
             for (index_t s1=0; s1<n_spin; ++s1)
             for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s21 = IDX2(s1, s2, n_spin),
-                        s43 = IDX2(s3, s4, n_spin);
+                index_t s21 = IDX2(s2, s1, n_spin),
+                        s43 = IDX2(s4, s3, n_spin);
+                index_t s12 = IDX2(s1, s2, n_spin),
+                        s34 = IDX2(s3, s4, n_spin);
                 complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off], 
-                                s21, o1, s43, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Dch[IDX5(q, s21, o1, s43, o3,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+                                s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
+                Dch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
             }
         }
     }else{
@@ -172,17 +178,22 @@ void Vertex::init_U(bool enforce_exchange) {
         for (index_t o1=0; o1<n_orb; ++o1) {
             index_t full_q = symm->idx_ibz_in_fullmesh[q+my_nk_off];
             index_t mfull_q = to_minus_q(full_q, model->nk);
-            index_t i1234 = IDX7(full_q, s4, s3, o3, s2, s1, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
-                    r1234 = IDX7(q, s4, s3, o3, s2, s1, o1, n_spin, n_spin, n_orbff, n_spin, n_spin, n_orbff),
-                    i2134 = IDX7(mfull_q, s4, s3, o1, s1, s2, o3, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
-                    i1243 = IDX7(full_q, s3, s4, o3, s2, s1, o1, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb),
-                    i2143 = IDX7(mfull_q, s3, s4, o1, s1, s2, o3, n_spin, n_spin, n_orb, n_spin, n_spin, n_orb);
-            complex128_t val_D = 0.5 * (helper_crossing[i1234] + helper_crossing[i2143] -
-                                        helper[i2134] - helper[i1243]);
-            complex128_t val_C = 0.5 * (helper[i1234] + helper[i2143] -
-                                        helper_crossing[i2134] - helper_crossing[i1243]);
-            Dch[r1234] = val_D;
-            Cch[r1234] = val_C;
+            index_t rc1234 = IDX7(q, s2, s3, o3, s4, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
+                    rd1234 = IDX7(q, s2, s4, o3, s3, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
+                    id1234 = IDX7(full_q, s1, s3, o1, s4, s2, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    id1243 = IDX7(full_q, s1, s4, o1, s3, s2, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    id2134 = IDX7(mfull_q, s2, s3, o3, s4, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    id2143 = IDX7(mfull_q, s2, s4, o3, s3, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    ic1234 = IDX7(full_q, s1, s4, o1, s3, s2, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    ic1243 = IDX7(full_q, s1, s3, o1, s4, s2, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    ic2134 = IDX7(mfull_q, s2, s4, o3, s3, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    ic2143 = IDX7(mfull_q, s2, s3, o3, s4, s1, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
+            complex128_t val_D = 0.5 * (helper_crossing[id1234] + helper_crossing[id2143] -
+                                        helper[ic2134] - helper[ic1243]);
+            complex128_t val_C = 0.5 * (helper[ic1234] + helper[ic2143] -
+                                        helper_crossing[id2134] - helper_crossing[id1243]);
+            Dch[rd1234] = val_D;
+            Cch[rc1234] = val_C;
         }
     }
     free(helper);

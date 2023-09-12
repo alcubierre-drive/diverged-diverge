@@ -28,7 +28,7 @@ tu_stepper::tu_stepper(bool* channel, Projection* projin,tu_loop_t* loopin, Vert
         norm[1] = -1.0;
         norm[2] =  2.0;
     }else{
-        norm[0] = -1./((double)fabs(vertexin->n_spin));
+        norm[0] = -1./((double)std::abs(vertexin->n_spin));
         norm[1] = -1.0;
         norm[2] =  1.0;
     }
