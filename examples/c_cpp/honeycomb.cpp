@@ -92,7 +92,8 @@ int main(int argc, char** argv) {
     diverge_symmetrize_2pt_fine( m, diverge_model_internals_get_H(m), NULL );
     diverge_model_set_filling( m, NULL, -1, 0.7 );
     diverge_model_internals_patch( m, np );
-    diverge_model_to_file(m, __FILE__ ".mod.dvg", 1);
+    char* md5 = diverge_model_to_file(m, __FILE__ ".mod.dvg", 1);
+    mpi_usr_printf( "md5sum: %s\n", md5 );
 
     diverge_flow_step_t* s = diverge_flow_step_init( m, "patch", "PCD" );
     diverge_euler_t eu = diverge_euler_defaults_CPP();
