@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "kernels_helpers.h"
 #include "kernels_gpu_helpers.hpp"
 #include "../diverge_model.h"

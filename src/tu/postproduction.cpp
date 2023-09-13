@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "postproduction.hpp"
 #include "../misc/batched_eigen.h"
 #include "../misc/batched_gemms.h"

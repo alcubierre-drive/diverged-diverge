@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "projection_implementation.hpp"
 
 void _to_C(complex128_t* proj_vertex, const complex128_t* const I_channel,

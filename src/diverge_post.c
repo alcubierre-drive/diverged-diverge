@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "diverge_post.h"
 
 diverge_postprocess_config_t diverge_postprocess_config_default_CPP( void ) {

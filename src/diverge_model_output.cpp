@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "diverge_model_output.h"
 #include "diverge_internals_struct.h"
 #include "diverge_model.h"

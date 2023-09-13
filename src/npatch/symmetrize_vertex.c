@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "symmetrize_vertex.h"
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"

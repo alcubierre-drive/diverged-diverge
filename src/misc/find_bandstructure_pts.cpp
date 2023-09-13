@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "find_bandstructure_pts.h"
 #include "bitary.h"
 #include "../diverge_Eigen3.hpp"

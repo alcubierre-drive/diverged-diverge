@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "kernels_gpu.h"
 #include "../misc/mpi_functions.h"
 #include "../misc/cuda_error.h"

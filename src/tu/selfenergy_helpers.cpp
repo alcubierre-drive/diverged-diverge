@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "selfenergy.hpp"
 
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;

@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 /* md5.c taken from https://github.com/Zunawe/md5-c
  *
  * This is free and unencumbered software released into the public domain.

@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("rea",["Function","Enumeration"],[["read_W90_PY",,[["dvg",,,,0,"File:util/__init__.py:dvg.read_W90_PY","PythonClass:dvg:read_W90_PY"]]],["real_harmonics_t",,[[,,,,1,"File:src/misc/generate_symmetries.h:real_harmonics_t"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("rea",["Function","Enumeration"],[["read_W90_PY",,[["dvg",,,,0,"File:build/lib/diverge/__init__.py:dvg.read_W90_PY","PythonClass:dvg:read_W90_PY"]]],["real_harmonics_t",,[[,,,,1,"File:src/misc/generate_symmetries.h:real_harmonics_t"]]]]);

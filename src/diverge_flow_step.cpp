@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "diverge_flow_step_internal.hpp"
 #include "misc/batched_gemms.h"
 #include "misc/batched_eigen.h"

@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 // TODO(LK) the batched zgemd in its 'smart' version is not working the way we'd
 // want it to. In case anyone spots the bug: It should be as fast/faster than
 // what's written below...
