@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Compilation","Compilation");NDSummary.OnSummaryLoaded("TextFileClass:Compilation",[["Text File","TextFile"]],[["Classes","Class"]],[[304,0,0,"Compilation"]]);
+﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Compilation","Compilation");NDSummary.OnSummaryLoaded("TextFileClass:Compilation",[["Text File","TextFile"]],[["Classes","Class"]],[[297,0,0,"Compilation"]]);
