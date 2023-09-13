@@ -1,0 +1,27 @@
+# modele load gcc/12 openmpi/4.1 cuda/12.1 mkl/2022.2
+USE_CUDA := true
+INC_TEST := true
+
+# USE_MPI := true
+# CXX := mpicxx
+# CC := mpicc
+# LD := mpicxx
+
+INCLUDES += -I$(HOME)/software/include -I$(MKLROOT)/include -I$(CUDA_HOME)/include
+DEFINES += -DUSE_MKL -DNDEBUG -DEIGEN_NO_DEBUG -DUSE_GF_FLOATS \
+	-DDIVERGE_LOG_GRAYSCALE
+CXXFLAGS += -Ofast -mtune=native -march=native -m64 -flto
+CFLAGS += -Ofast -mtune=native -march=native -m64 -flto
+CUFLAGS += -O4 --use_fast_math --gpu-architecture=compute_80 \
+	--expt-relaxed-constexpr -ccbin $(CXX) \
+	-Xcompiler="-Ofast -mtune=native -march=native -m64" \
+	-diag-suppress 20012
+LIBS := -flto=24 -Wno-lto-type-mismatch -Wno-maybe-uninitialized \
+	-L$(CUDA_HOME)/lib64 -L$(HOME)/software/lib \
+	-Wl,--start-group \
+		${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
+		${MKLROOT}/lib/intel64/libmkl_gnu_thread.a \
+		${MKLROOT}/lib/intel64/libmkl_core.a \
+	-Wl,--end-group \
+	-lgomp -lpthread -lm -ldl -lfftw3 -lfftw3_omp
+
