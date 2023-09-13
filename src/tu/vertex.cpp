@@ -286,6 +286,9 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         mpi_err_printf("CUDA initailized wrongly. TUFRG will fail!\n");
         return ;
     }
+// TODO(LK) this fails on the master branch; cannot compile with GPU and the
+// below stuff...
+#if 0
     if(loop->cuda_descr.prop_memory_set_local) {
         mpi_err_printf("Memory for loop already allocated, free it first!\n");
         loop->cuda_descr.prop_memory_set_local = false;
@@ -303,6 +306,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
             cudaFree(loop->cuda_descr.fft_workspace[i][1]);
         }
     }
+#endif
     has_gpu_memory = true;
     index_t nktot = nk * nkf;
     size_t available_memory[256] = {0};
@@ -451,7 +455,8 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         cproj->buf_res1[i] = (cuDoubleComplex*)((proj_memtype[6] == 0) ? GPU_memory_pool[i] + proj_memoffset[6]
                                                                        : GPU_memory_pool_managed[i] + proj_memoffset_managed[6]);
     }
-    loop->cuda_descr.prop_memory_set_vertex = true;
+    // TODO(LK) same as above
+    /* loop->cuda_descr.prop_memory_set_vertex = true; */
     CUDA_CHECK( cudaSetDevice( 0 ) );
 #endif
 }
