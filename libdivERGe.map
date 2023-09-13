@@ -23,6 +23,8 @@ DIVERGE_1.0 {
         diverge_flow_step_vertmax;
         diverge_generate_symm_maps;
         diverge_generate_symm_trafo;
+        diverge_license;
+        diverge_license_print;
         diverge_mem_alloc_complex128_t;
         diverge_mem_alloc_rs_hopping_t;
         diverge_mem_alloc_rs_vertex_t;

@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("gen",["Function"],[["generate_symm_trafo",,[["dvg",,,,0,"File:build/lib/diverge/__init__.py:dvg.generate_symm_trafo","PythonClass:dvg:generate_symm_trafo"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("gen",["Function"],[["generate_symm_trafo",,[["dvg",,,,0,"File:util/__init__.py:dvg.generate_symm_trafo","PythonClass:dvg:generate_symm_trafo"]]]]);

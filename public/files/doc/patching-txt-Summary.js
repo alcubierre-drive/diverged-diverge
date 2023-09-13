@@ -1,0 +1,1 @@
+﻿NDFramePage.OnPageTitleLoaded("File:doc/patching.txt","patching.txt");NDSummary.OnSummaryLoaded("File:doc/patching.txt",[["Text File","TextFile"]],[["Classes","Class"]],[[302,0,0,"Patching","Patching"]]);

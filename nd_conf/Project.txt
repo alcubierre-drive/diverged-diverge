@@ -24,7 +24,7 @@ Timestamp: Last Updated Month Day Year
 #    year  - Four digit year.  2022 is "2022".
 
 Style: Style
-Home Page: ../doc.txt
+Home Page: ../doc/general.txt
 
 
 # This is where you put general information about your project.  None of these

@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("sym",["Struct","Class"],[["sym_op_t",,[[,,,,0,"File:src/misc/generate_symmetries.h:sym_op_t","CClass:sym_op_t"]]],["Symmetries",,[[,,,,1,"File:doc_symmetries.txt:Symmetries","TextFileClass:Symmetries"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("sym",["Struct","Class"],[["sym_op_t",,[[,,,,0,"File:src/misc/generate_symmetries.h:sym_op_t","CClass:sym_op_t"]]],["Symmetries",,[[,,,,1,"File:doc/symmetries.txt:Symmetries","TextFileClass:Symmetries"]]]]);
