@@ -1,6 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "graphene_dat.h"
+
+#ifndef SKIP_MKSTEMP_DECLARATION
+int mkstemp(char* template);
+#endif
 
 unsigned char graphene_dat[] = {
   0x20, 0x20, 0x20, 0x20, 0x41, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x69,
@@ -54,13 +59,12 @@ unsigned char graphene_dat[] = {
 };
 unsigned int graphene_dat_len = 572;
 
-static char graphene_hr_dat_fname[L_tmpnam];
+char graphene_hr_dat_fname[1024] = {0};
 
 const char* gen_graphene_hr_dat( void ) {
-    tmpnam( graphene_hr_dat_fname );
-    FILE* f = fopen( graphene_hr_dat_fname, "w" );
-    fwrite( graphene_dat, 1, graphene_dat_len, f );
-    fclose( f );
+    snprintf(graphene_hr_dat_fname, 1023, "./.graphene_hr_dat.XXXXXX");
+    int fd = mkstemp( graphene_hr_dat_fname );
+    write( fd, graphene_dat, graphene_dat_len );
+    close( fd );
     return graphene_hr_dat_fname;
 }
-// TODO(LK) use mkstemp
