@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
         printf( "%.5e %.5e\n", eu.Lambda, maxvert );
     } while (diverge_euler_next( &eu, maxvert ));
 
-    diverge_postprocess_and_write( s, NULL, __FILE__ ".out.dvg" );
+    diverge_postprocess_and_write( s, __FILE__ ".out.dvg" );
 
     diverge_flow_step_free( s );
     diverge_model_free( m );

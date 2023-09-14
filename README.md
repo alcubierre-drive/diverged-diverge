@@ -65,9 +65,6 @@ ________________________________________________________________________________
 - code: include static self-energies in both grid and npatch, with fourier
   selection and cutoff in npatch
 # TODOs pre 0.4:
-- model_output no include_common_internals
-- model_output_finegrained use structure
-- postprocessing output -> finegrained & normal
 - DIVERGE_FFTW_NUM_THREADS, DIVERGE_OMP_NUM_THREADS,
   DIVERGE_OPENBLAS_NUM_THREADS
 # TODOs post 0.4:

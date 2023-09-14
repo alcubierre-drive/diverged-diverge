@@ -111,8 +111,7 @@ int main( int argc, char** argv ) {
     } while (diverge_euler_next(&eu, vmax));
 
     // post-process
-    diverge_postprocess_config_t pc = diverge_postprocess_config_default;
-    diverge_postprocess_and_write( f, &pc, __FILE__ "_out.dvg" );
+    diverge_postprocess_and_write( f, __FILE__ "_out.dvg" );
 
     // cleanup
     diverge_flow_step_free(f);

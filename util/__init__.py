@@ -771,8 +771,12 @@ if not _libs["divERGe"] is None:
     postprocess_config_default_CPP.restype = postprocess_config_t
 
     postprocess_and_write = _libs["divERGe"].get("diverge_postprocess_and_write", "cdecl")
-    postprocess_and_write.argtypes = [POINTER(flow_step_t), POINTER(postprocess_config_t), String]
+    postprocess_and_write.argtypes = [POINTER(flow_step_t), String]
     postprocess_and_write.restype = None
+
+    postprocess_and_write_finegrained = _libs["divERGe"].get("diverge_postprocess_and_write_finegrained", "cdecl")
+    postprocess_and_write_finegrained.argtypes = [POINTER(flow_step_t), String, POINTER(postprocess_config_t)]
+    postprocess_and_write_finegrained.restype = None
 
     # Model output
     model_output_set_npath = _libs["divERGe"].get("diverge_model_output_set_npath", "cdecl")
@@ -1175,7 +1179,7 @@ if not _libs["divERGe"] is None:
         sys.stdout = stdout_
 
         mpi_py_eprint( "postprocessing output to %s…" % post_output )
-        postprocess_and_write( step, None, post_output )
+        postprocess_and_write( step, post_output )
 
         flow_step_free( step )
         model_free( model )

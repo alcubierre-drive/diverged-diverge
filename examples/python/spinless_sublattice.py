@@ -100,7 +100,7 @@ while True:
     if not eu_next:
         break
 
-diverge.postprocess_and_write( step, None, "out.dvg" )
+diverge.postprocess_and_write( step, "out.dvg" )
 diverge.flow_step_free( step )
 diverge.model_free( model )
 diverge.finalize()

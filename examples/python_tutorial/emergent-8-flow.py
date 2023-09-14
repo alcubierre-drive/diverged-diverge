@@ -196,7 +196,7 @@ while True:
 sys.stdout = stdout
 
 # postprocess result
-diverge.postprocess_and_write( step, None, params_frg['post_output'] )
+diverge.postprocess_and_write( step, params_frg['post_output'] )
 
 # write to file
 checksum = diverge.model_to_file( model, params_frg['model_output'] )

@@ -181,8 +181,8 @@ while True:
 ############################### POST PROCESSING ################################
 ################################################################################
 
-# write the flow output with default settings (None)
-diverge.postprocess_and_write( step, None, "out.dvg" )
+# write the flow output
+diverge.postprocess_and_write( step, "out.dvg" )
 
 # clean up all the divERGe internals
 diverge.flow_step_free( step )

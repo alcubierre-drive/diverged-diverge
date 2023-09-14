@@ -75,7 +75,7 @@ while dvg.euler_next( dvg.byref(euler), vertmax[0] ):
 postconf = dvg.postprocess_config_default_CPP()
 postconf.tu_storing_threshold = 0.8
 postconf.tu_storing_relative = True
-dvg.postprocess_and_write( step, dvg.byref(postconf), "nickelate_post.dvg" )
+dvg.postprocess_and_write( step, "nickelate_post.dvg", dvg.byref(postconf) )
 
 # clean up
 dvg.flow_step_free( step )

@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
     fclose( f );
 
     sprintf( outfile, "%sout.dvg", prefix );
-    diverge_postprocess_and_write( s, NULL, outfile );
+    diverge_postprocess_and_write( s, outfile );
     diverge_flow_step_free( s );
 
     diverge_model_free( m );

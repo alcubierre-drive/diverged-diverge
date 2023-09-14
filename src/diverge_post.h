@@ -8,7 +8,9 @@
 extern "C" {
 #endif
 
-// Class: diverge_postprocess_config_t
+// Struct: diverge_postprocess_config_t
+//
+// Info:
 // patch_ - used with the patch backend
 // grid_ - used with the grid backend
 // tu_ - used with the tu backend
@@ -130,8 +132,15 @@ static const diverge_postprocess_config_t diverge_postprocess_config_default = {
 diverge_postprocess_config_t diverge_postprocess_config_default_CPP( void );
 
 // Function: diverge_postprocess_and_write
-void diverge_postprocess_and_write( diverge_flow_step_t* st,
-        const diverge_postprocess_config_t* pc, const char* file );
+// post-processing and output to disk
+void diverge_postprocess_and_write( diverge_flow_step_t* st, const char* file );
+
+// Function: diverge_postprocess_and_write_finegrained
+// same as <diverge_postprocess_and_write> but with control over the parameters
+// in <diverge_postprocess_config_t>. <diverge_postprocess_and_write> uses the
+// defaults.
+void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st, const char* file,
+        const diverge_postprocess_config_t* cfg );
 
 // TODO(LK) we might want to include the Metznerish Way of doing a channel
 // specific inverse BSE equation such that post-processing output doesn't depend

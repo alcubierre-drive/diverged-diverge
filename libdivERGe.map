@@ -94,6 +94,7 @@ DIVERGE_0.3 {
         diverge_patching_from_indices;
         diverge_patching_symmetrize_refinement;
         diverge_postprocess_and_write;
+        diverge_postprocess_and_write_finegrained;
         diverge_postprocess_config_default_CPP;
         diverge_read_W90_C;
         diverge_reset;

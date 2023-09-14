@@ -16,17 +16,21 @@ static void patch_pp( diverge_flow_step_t* st,
 static void tu_pp( diverge_flow_step_t* st,
         const diverge_postprocess_config_t* pc, const char* file );
 
+void diverge_postprocess_and_write( diverge_flow_step_t* st, const char* file ) {
+    diverge_postprocess_and_write_finegrained( st, file, NULL );
+}
+
 // DEVELOPERS
 //
 // For a new backend, you can add a new post processing routine similar to the
 // above three and call it in the switch() {} statement below
 
-void diverge_postprocess_and_write( diverge_flow_step_t* st,
-        const diverge_postprocess_config_t* pc, const char* file ) {
+void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st,
+        const char* file, const diverge_postprocess_config_t* pc ) {
     mpi_log_printf( "writing postprocessing file %s\n", file );
     diverge_postprocess_config_t pc_def = diverge_postprocess_config_default_CPP();
-    if (pc == NULL)
-        pc = &pc_def;
+    if (pc == NULL) pc = &pc_def;
+
     switch (st->type) {
         case diverge_tu:
             tu_pp( st, pc, file );

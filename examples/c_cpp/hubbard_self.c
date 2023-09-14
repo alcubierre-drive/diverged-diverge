@@ -117,8 +117,7 @@ int main( int argc, char** argv ) {
     free( dos );
 
     // post-process
-    diverge_postprocess_config_t pc = diverge_postprocess_config_default;
-    diverge_postprocess_and_write( f, &pc, __FILE__ "_out.dvg" );
+    diverge_postprocess_and_write( f, __FILE__ "_out.dvg" );
 
     // cleanup
     diverge_flow_step_free(f);

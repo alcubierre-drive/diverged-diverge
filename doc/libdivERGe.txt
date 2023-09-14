@@ -199,11 +199,10 @@ cahnnel maxima after each flow step.
 Postprocessing::
 The postprocessing procedure is fairly simple. We run
 <diverge_postprocess_and_write at
-diverge_postprocess_config_t.diverge_postprocess_and_write> with a NULL
-parameter for the second argument (<diverge_postprocess_config_t>) to use the
-defaults:
+diverge_postprocess_config_t.diverge_postprocess_and_write> and obtain output in
+"post.diverge".
 ---- C/C++ ----
-diverge_postprocess_and_write( st, NULL, "post.diverge" );
+diverge_postprocess_and_write( st, "post.diverge" );
 ---------------
 Again, we can use <diverge.output at dvg-output> to load the data into
 python:

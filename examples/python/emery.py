@@ -189,7 +189,7 @@ def flow( model, maxvert=200, outfile="flow.dat", chans="PCD" ):
     return step
 
 def post( step, outfile="out.dvg" ):
-    diverge.postprocess_and_write( step, None, outfile )
+    diverge.postprocess_and_write( step, outfile )
 
 def cleanup( model, step ):
     diverge.flow_step_free( step )
