@@ -30,6 +30,7 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
     init_symmetries(model);
     init_doping_per_UC(model);
     info->offload_cpu = 0.0;
+    info->percent_mem_GPU_blocked = 0.9;
 }
 
 void tu_data_destructor(void* tu_da) {
