@@ -266,7 +266,7 @@ void init_doping_per_UC(diverge_model_t* model) {
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
     tu_data->doping_per_UC = 0.0;
     double helper = 0.;
-    #pragma omp parallel for collapse(2) reduction(+:helper)
+    #pragma omp parallel for collapse(2) reduction(+:helper) num_threads(diverge_omp_num_threads())
     for(index_t nk = 0; nk<tu_data->nktot; ++nk)
     for(index_t os1 = 0; os1<model->n_orb*model->n_spin;++os1) {
         if(model->internals->E[os1+model->n_orb*model->n_spin*nk]<0.0) {

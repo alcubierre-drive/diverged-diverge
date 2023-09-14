@@ -1,6 +1,7 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "batched_gemms.h"
+#include "mpi_functions.h"
 
 #ifdef USE_MKL
 #include <mkl.h>
@@ -45,7 +46,7 @@ template<int dim>
 void batched_gemm_overlapping_helper( const complex128_t* Astart, const complex128_t* Bstart,
         complex128_t* Cstart, index_t N, complex128_t alpha, complex128_t beta, index_t num ) {
     typedef Matrix<complex128_t,dim,dim> Mat_cd;
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         Mat_cd mat_buf = Mat_cd::Zero(N,N);
         #pragma omp for
@@ -117,7 +118,7 @@ void batched_gemm_overlapping( const complex128_t* Astart, const complex128_t* B
         complex128_t* Cstart, index_t N, complex128_t alpha, complex128_t beta, index_t num ) {
     int nthreads = omp_get_max_threads();
     void* cmemory = calloc(nthreads*N*N,sizeof(complex128_t));
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<num; ++i) {
         complex128_t* buf = (complex128_t*)cmemory + N*N*omp_get_thread_num();
         memcpy( buf, Cstart + N*N*i, sizeof(complex128_t)*N*N );
@@ -129,7 +130,7 @@ void batched_gemm_overlapping( const complex128_t* Astart, const complex128_t* B
 }
 void batched_gemm( const complex128_t* Astart, const complex128_t* Bstart,
         complex128_t* Cstart, index_t N, complex128_t alpha, complex128_t beta, index_t num ) {
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<num; ++i) {
         cblas_zgemm( CblasColMajor, CblasNoTrans, CblasNoTrans, N, N, N, &alpha,
                 Bstart + N*N*i, N, Astart + N*N*i, N, &beta, Cstart + N*N*i, N );
@@ -182,7 +183,7 @@ void batched_gemm_vertex_loop( complex128_t* vertex, const complex128_t* loop, i
     complex128_t* buffers = (complex128_t*)calloc(N*N*omp_get_max_threads(),sizeof(complex128_t));
     complex128_t alpha = 1.0;
     complex128_t beta = 0.0;
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<qsize; ++q)
     for (index_t k=0; k<nk; ++k)
     for (index_t kp=0; kp<nk; ++kp) {
@@ -204,7 +205,7 @@ void batched_gemm_loop_vertex( const complex128_t* loop, complex128_t* vertex, i
     complex128_t* buffers = (complex128_t*)calloc(N*N*omp_get_max_threads(),sizeof(complex128_t));
     complex128_t alpha = 1.0;
     complex128_t beta = 0.0;
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<qsize; ++q)
     for (index_t k=0; k<nk; ++k)
     for (index_t kp=0; kp<nk; ++kp) {
@@ -227,7 +228,7 @@ void _batched_gemm_vertex_loop( complex128_t* vertex, const complex128_t* loop, 
         index_t nk, index_t nb ) {
     index_t N = nb*nb;
     complex128_t* buffers = (complex128_t*)calloc(N*N*omp_get_max_threads(),sizeof(complex128_t));
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<qsize; ++q)
     for (index_t k=0; k<nk; ++k)
     for (index_t kp=0; kp<nk; ++kp) {
@@ -265,7 +266,7 @@ void _batched_gemm_loop_vertex( const complex128_t* loop, complex128_t* vertex, 
         index_t nk, index_t nb ) {
     index_t N = nb*nb;
     complex128_t* buffers = (complex128_t*)calloc(N*N*omp_get_max_threads(),sizeof(complex128_t));
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<qsize; ++q)
     for (index_t k=0; k<nk; ++k)
     for (index_t kp=0; kp<nk; ++kp) {
@@ -349,7 +350,7 @@ void batched_gemm_N_ll_num_helper( const complex128_t* A, const complex128_t* B,
 
     typedef Matrix<complex128_t,dim,dim> Mat_cd;
 
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         Mat_cd mat_buf = Mat_cd::Zero(N,N);
         #pragma omp for

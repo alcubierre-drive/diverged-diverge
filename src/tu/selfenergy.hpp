@@ -137,14 +137,14 @@ inline void selfEnergy::reco(complex128_t* const buf, const complex128_t* const 
         const index_t my_nk_in_bz_off = symm->my_nk_in_bz_off;
 
         if(abs(b-1.) > 1e-10) {
-            #pragma omp parallel for schedule(static)
+            #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
             for(index_t r = 0; r < rest*nk; ++r)
                 buf[r] *= b;
         }
 
         const index_t nsq = POW2(n_spin);
         const index_t legdim = nsq*n_orbff;
-        #pragma omp parallel for schedule(static) collapse(5)
+        #pragma omp parallel for schedule(static) collapse(5) num_threads(diverge_omp_num_threads())
         for(index_t s4 = 0; s4<(n_spin);++s4)
         for(index_t s3 = 0; s3<(n_spin);++s3)
         for(index_t mo3 = 0; mo3<n_orbff;++mo3)
@@ -207,7 +207,7 @@ inline void selfEnergy::reco(complex128_t* const buf, const complex128_t* const 
             }
         }
     }else{
-        #pragma omp parallel for schedule(static) collapse(7)
+        #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
         for(index_t s4 = 0; s4<(n_spin);++s4)
         for(index_t s3 = 0; s3<(n_spin);++s3)
         for(index_t mo3 = 0; mo3<n_orbff;++mo3)

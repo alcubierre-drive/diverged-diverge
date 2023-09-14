@@ -79,7 +79,7 @@ void Vertex::init_U(bool enforce_exchange) {
     if(P_flow) {
         if(!enforce_exchange) {
             model->vfill(model,'P',helper);
-            #pragma omp parallel for schedule(static) collapse(4)
+            #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
             for (index_t q=0; q< my_nk; ++q)
             for (index_t s4=0; s4<n_spin; ++s4)
             for (index_t s3=0; s3<n_spin; ++s3)
@@ -97,7 +97,7 @@ void Vertex::init_U(bool enforce_exchange) {
             }
         } else {
             model->vfill(model,'P',helper);
-            #pragma omp parallel for schedule(static) collapse(4)
+            #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
             for (index_t q=0; q < my_nk; ++q)
             for (index_t s4=0; s4<n_spin; ++s4)
             for (index_t s3=0; s3<n_spin; ++s3)
@@ -120,7 +120,7 @@ void Vertex::init_U(bool enforce_exchange) {
     {
         if(C_flow) {
             model->vfill(model,'C',helper);
-            #pragma omp parallel for schedule(static) collapse(4)
+            #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
             for (index_t q=0; q< my_nk; ++q)
             for (index_t s4=0; s4<n_spin; ++s4)
             for (index_t s3=0; s3<n_spin; ++s3)
@@ -139,7 +139,7 @@ void Vertex::init_U(bool enforce_exchange) {
         }
         if(D_flow) {
             model->vfill(model,'D',helper);
-            #pragma omp parallel for schedule(static) collapse(4)
+            #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
             for (index_t q=0; q< my_nk; ++q)
             for (index_t s4=0; s4<n_spin; ++s4)
             for (index_t s3=0; s3<n_spin; ++s3)
@@ -170,7 +170,7 @@ void Vertex::init_U(bool enforce_exchange) {
 
         model->vfill(model,'D',helper_crossing);
         model->vfill(model,'C',helper);
-        #pragma omp parallel for schedule(static) collapse(4)
+        #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
         for (index_t q=0; q< my_nk; ++q)
         for (index_t s4=0; s4<n_spin; ++s4)
         for (index_t s3=0; s3<n_spin; ++s3)
@@ -211,7 +211,7 @@ void Vertex::init_selfenergy() {
 void Vertex::unset_selfenergy() {
     const complex128_t* ham = (complex128_t*)model->internals->ham;
     const index_t hamsize = POW2(n_orb*n_spin)*nkf*nk;
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for(index_t b_idx = 0; b_idx < n_frq;++b_idx)
     for(index_t ii = 0; ii<hamsize;++ii) {
             self_en[ii+b_idx*hamsize] -= ham[ii];
@@ -487,7 +487,7 @@ Vertex::~Vertex()
 
 void add(Vertex &result,
             const Vertex &inp, const double factor) {
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         if(result.P_flow) {
             #pragma omp for schedule(static)
@@ -529,7 +529,7 @@ void add(Vertex &result,
 
 
 void set(Vertex &f,const Vertex &initial,const Vertex &inp, const double factor) {
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         if(f.P_flow) {
             #pragma omp for schedule(static)
@@ -576,7 +576,7 @@ void set(Vertex &f,const Vertex &initial,const Vertex &inp, const double factor)
 
 
 void multiply(Vertex &f,const Vertex &inp, const double factor) {
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         if(f.P_flow) {
             #pragma omp for schedule(static)

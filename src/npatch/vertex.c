@@ -5,6 +5,7 @@
 #include "loop.h"
 #include "../misc/eigen.h"
 #include "../misc/batched_eigen.h"
+#include "../misc/mpi_functions.h"
 
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
@@ -70,7 +71,7 @@ void npatch_qvert_mat_eigen( npatch_qvert_mat_t* qvm, index_t nq, index_t nv, ch
         batched_eigen_shut_up(1);
         batched_eigen_r( NULL, -1, vector, valueR, Nmax, nq );
         batched_eigen_shut_up(0);
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
         for (int q=0; q<nq; ++q) {
             eigensolution_sort( vector+q*Nmax*Nmax, valueR+q*Nmax, Nmax, which );
 

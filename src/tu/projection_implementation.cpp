@@ -16,7 +16,7 @@ void _to_C(complex128_t* proj_vertex, const complex128_t* const I_channel,
 {
     const index_t mapped_indices = rsmap_to.size();
     if(nk == 1) {
-        #pragma omp parallel for collapse(5) schedule(dynamic)
+        #pragma omp parallel for collapse(5) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t s1 = 0; s1<(num_spin);++s1)
         for(index_t s2 = 0; s2<(num_spin);++s2){
             for(index_t s3 = 0; s3<(num_spin);++s3)
@@ -36,7 +36,7 @@ void _to_C(complex128_t* proj_vertex, const complex128_t* const I_channel,
             }
         }
     }else{
-        #pragma omp parallel for collapse(6) schedule(dynamic)
+        #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t qTO = 0; qTO<my_nk;++qTO)
         for(index_t s1 = 0; s1<(num_spin);++s1)
         for(index_t s2 = 0; s2<(num_spin);++s2)
@@ -80,7 +80,7 @@ void _to_P(complex128_t* proj_vertex, const complex128_t* const I_channel,
 {
     const index_t mapped_indices = rsmap_to.size();
     if(nk == 1) {
-        #pragma omp parallel for collapse(5) schedule(dynamic)
+        #pragma omp parallel for collapse(5) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t s1 = 0; s1<(num_spin);++s1)
         for(index_t s2 = 0; s2<(num_spin);++s2){
             for(index_t s3 = 0; s3<(num_spin);++s3)
@@ -101,7 +101,7 @@ void _to_P(complex128_t* proj_vertex, const complex128_t* const I_channel,
         }
     }else{
         const index_t mapped_indices = rsmap_to.size();
-        #pragma omp parallel for collapse(6) schedule(dynamic)
+        #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t qTO = 0; qTO<my_nk;++qTO){
             for(index_t s1 = 0; s1<(num_spin);++s1)
             for(index_t s2 = 0; s2<(num_spin);++s2){
@@ -146,7 +146,7 @@ void _to_D(complex128_t* proj_vertex, const complex128_t* const I_channel,
 {
     const index_t mapped_indices = rsmap_to.size();
     if(nk==1) {
-        #pragma omp parallel for collapse(5) schedule(dynamic)
+        #pragma omp parallel for collapse(5) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t s1 = 0; s1<(num_spin);++s1)
         for(index_t s2 = 0; s2<(num_spin);++s2){
             for(index_t s3 = 0; s3<(num_spin);++s3)
@@ -167,7 +167,7 @@ void _to_D(complex128_t* proj_vertex, const complex128_t* const I_channel,
         }
     }else{
         const index_t mapped_indices = rsmap_to.size();
-        #pragma omp parallel for collapse(6) schedule(dynamic)
+        #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t qTO = 0; qTO<my_nk;++qTO){
             for(index_t s1 = 0; s1<(num_spin);++s1)
             for(index_t s2 = 0; s2<(num_spin);++s2){

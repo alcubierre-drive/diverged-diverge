@@ -2,6 +2,7 @@
 
 #include "diverge_filling.h"
 #include "diverge_internals_struct.h"
+#include "misc/mpi_functions.h"
 #include <algorithm>
 
 double diverge_model_get_filling( diverge_model_t* model, const double* E, index_t nb ) {
@@ -11,7 +12,7 @@ double diverge_model_get_filling( diverge_model_t* model, const double* E, index
         E = model->internals->E;
     }
     index_t zero_E = 0;
-    #pragma omp parallel for reduction(+:zero_E)
+    #pragma omp parallel for reduction(+:zero_E) num_threads(diverge_omp_num_threads())
     for (index_t kb=0; kb<nk*nb; ++kb)
         zero_E += E[kb] < 0.0;
     return (double)zero_E / (double)(nk*nb);
@@ -23,7 +24,7 @@ void diverge_model_set_chempot( diverge_model_t* model, double* E, index_t nb, d
         nb = model->n_orb * model->n_spin;
         E = model->internals->E;
     }
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t kb=0; kb<nk*nb; ++kb)
         E[kb] -= mu;
     model->internals->mu = mu;

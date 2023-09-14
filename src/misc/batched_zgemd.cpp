@@ -15,7 +15,7 @@ void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
 
     const double E_add = *std::min_element( E, E+N*num ) + DIVERGE_EPS_MESH;
 
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<num; ++i)
     for (index_t b=0; b<N; ++b)
     for (index_t o=0; o<N; ++o)
@@ -25,7 +25,7 @@ void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
 
     free( buf );
 
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<num; ++i)
     for (index_t b=0; b<N; ++b)
         S[IDX3(i,b,b,N,N)] -= alpha * E_add;
@@ -34,11 +34,12 @@ void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
 #endif
 
 #include "batched_zgemd.h"
+#include "mpi_functions.h"
 #include "../diverge_Eigen3.hpp"
 
 void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
         complex128_t alpha, complex128_t beta, index_t N, index_t num ) {
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<num; ++i) {
         Map<MatXcd> UU(U + i*N*N, N, N);
         Map<VecXd> EE(E + i*N, N);

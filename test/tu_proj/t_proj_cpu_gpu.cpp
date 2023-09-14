@@ -28,7 +28,7 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
     std::mt19937 re{rd()};
     std::normal_distribution<double> unif{0, 5.0};
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t j = 0; j < VertMom.full_vert_size; ++j) {
         VertMom.Pch[j] = unif(re);
         VertMom.Cch[j] = unif(re);
@@ -41,7 +41,7 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
     P_projection(r2,&VertMom,&ProjMom);
     P_projection_no_GPU(r1,&VertMom,&ProjMom);
     CHECK(check_equal(r1,r2,POW2(VertMom.n_orbff)*VertMom.my_nk));
-    
+
     C_projection(r2,&VertMom,&ProjMom);
     C_projection_no_GPU(r1,&VertMom,&ProjMom);
     CHECK(check_equal(r1,r2,POW2(VertMom.n_orbff)*VertMom.my_nk));
@@ -49,7 +49,7 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
     D_projection(r2,&VertMom,&ProjMom);
     D_projection_no_GPU(r1,&VertMom,&ProjMom);
     CHECK(check_equal(r1,r2,POW2(VertMom.n_orbff)*VertMom.my_nk));
-    
+
     diverge_model_free(mom);
     free(r1);
     free(r2);

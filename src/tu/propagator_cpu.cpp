@@ -12,7 +12,7 @@ void tu_loop_t::S_ph_loop_static_simple(complex128_t* loop, index_t ntasks, inde
     const index_t* vnkf = model->nkf;
     int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]),
                                          (int)(vnk[2]*vnkf[2])};
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         fftw_plan _fft_L = fftPH[omp_get_thread_num()];
         complex128_t* MY_BUFFER_GGm = buffer_ggm[omp_get_thread_num()];
@@ -87,7 +87,7 @@ void tu_loop_t::S_pp_loop_static_simple(complex128_t* loop, index_t ntasks, inde
     const index_t* vnkf = model->nkf;
     int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]),
                                          (int)(vnk[2]*vnkf[2])};
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         fftw_plan _fft_L = fftPP[omp_get_thread_num()];
         complex128_t* MY_BUFFER_GGm = buffer_ggm[omp_get_thread_num()];
@@ -163,7 +163,7 @@ void tu_loop_t::S_ph_loop_static_red(complex128_t* loop, index_t ntasks, index_t
     const index_t* vnkf = model->nkf;
     int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]),
                                          (int)(vnk[2]*vnkf[2])};
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         fftw_plan _fft_L = fftPH[omp_get_thread_num()];
         complex128_t* MY_BUFFER_GGm = buffer_ggm[omp_get_thread_num()];
@@ -242,7 +242,7 @@ void tu_loop_t::S_pp_loop_static_red(complex128_t* loop, index_t ntasks, index_t
     const index_t* vnkf = model->nkf;
     int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]),
                                          (int)(vnk[2]*vnkf[2])};
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         fftw_plan _fft_L = fftPP[omp_get_thread_num()];
         complex128_t* MY_BUFFER_GGm = buffer_ggm[omp_get_thread_num()];
@@ -318,7 +318,7 @@ void tu_loop_t::S_pp_loop_static_red(complex128_t* loop, index_t ntasks, index_t
 
 void tu_loop_t::S_ph_loop_static_rs(complex128_t* L) const {
     const double prefac = -1.0/(2.0*M_PI);
-    #pragma omp parallel for collapse(3) schedule(dynamic)
+    #pragma omp parallel for collapse(3) schedule(dynamic) num_threads(diverge_omp_num_threads())
     for(index_t s3 = 0; s3<(n_spin);++s3)
     for(index_t s4 = 0; s4<(n_spin);++s4)
     for(index_t mo3 = 0; mo3<n_orbff;++mo3)
@@ -340,7 +340,7 @@ void tu_loop_t::S_ph_loop_static_rs(complex128_t* L) const {
 
 void tu_loop_t::S_pp_loop_static_rs(complex128_t* L) const {
     const double prefac = -1.0/(2.0*M_PI);
-    #pragma omp parallel for collapse(3) schedule(dynamic)
+    #pragma omp parallel for collapse(3) schedule(dynamic) num_threads(diverge_omp_num_threads())
     for(index_t s3 = 0; s3<(n_spin);++s3)
     for(index_t s4 = 0; s4<(n_spin);++s4)
     for(index_t mo3 = 0; mo3<n_orbff;++mo3)

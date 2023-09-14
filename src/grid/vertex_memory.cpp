@@ -73,7 +73,7 @@ void VertexMemory::init_from_qbuf( const complex128_t* qbuf_in, char chan_in, in
     const index_t *k1p2 = _IG->get_k1p2(),
                   *k1m2 = _IG->get_k1m2();
 
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t k1i=0; k1i<nk1; ++k1i)
     for (index_t k2=0; k2<_nk; ++k2)
     for (index_t k3=0; k3<_nk; ++k3) {
@@ -268,7 +268,7 @@ void VertexMemory::operator()( const complex128_t* buf_in, complex128_t* buf_out
 
 void VertexMemory::operator()( const complex128_t* buf_in, complex128_t* buf_out, bool add,
         double scale ) {
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<_size; ++i) {
         if (add)
             buf_out[i] += buf_in[i] * scale;
@@ -534,7 +534,7 @@ void VertexMemory::get_vertex( complex128_t* buf, char channel ) {
     }
     vector<index_t> qlist = qshare();
     index_t rest = POW4(_nb)*POW2(_nk);
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (uindex_t i=0; i<qlist.size(); ++i) {
         for (index_t r=0; r<rest; ++r) {
             buf[r+rest * qlist[i]] = vertex_buffers[1][r+rest*i];
@@ -563,7 +563,7 @@ void VertexMemory::_change_basis_k123( complex128_t* V, complex128_t* U ) {
     const bool use_k3map = k3map != nullptr;
 
     complex128_t* buffers = (complex128_t*) malloc(sizeof(complex128_t)*bandstuff*omp_get_max_threads());
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (int k1=k1start; k1<k1stop; ++k1)
     for (int k2=0; k2<nk; ++k2)
     for (int k3=0; k3<nk; ++k3) {

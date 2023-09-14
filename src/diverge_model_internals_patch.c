@@ -7,6 +7,7 @@
 #include "npatch/flow_step.h"
 #include "diverge_patching_helpers.h"
 #include "diverge_patching.h"
+#include "misc/mpi_functions.h"
 
 static void patch_vertex_destructor( void* vvert ) {
     npatch_vertex_t* vert = (npatch_vertex_t*)vvert;
@@ -76,7 +77,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
 
     model->internals->patch_kmesh = (complex128_t*)malloc(sizeof(complex128_t)*model->internals->patch_nk);
     complex128_t* pkmesh = model->internals->patch_kmesh;
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<model->internals->patch_nk; ++k)
         pkmesh[k] = kun[k].k;
 
@@ -84,7 +85,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
     index_t* k3map = model->internals->patch_k3map;
     complex128_t g1 = model->internals->patch_g1,
                  g2 = model->internals->patch_g2;
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t k1=0; k1<np; ++k1)
     for (index_t k2=0; k2<np; ++k2)
     for (index_t k3=0; k3<np; ++k3)
@@ -96,7 +97,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
     if (model->ffill != NULL) {
         mpi_vrb_printf("using full vertex generator\n");
         const index_t no4 = POW4(model->internals->patch_nb);
-        #pragma omp parallel for collapse(3)
+        #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
         for (index_t p1=0; p1<np; ++p1)
         for (index_t p2=0; p2<np; ++p2)
         for (index_t p3=0; p3<np; ++p3)
@@ -127,7 +128,7 @@ static void add_to_npatch_vert_from_qbuf( complex128_t* vbuf,
     index_t np, index_t no, index_t ns, const index_t nk[3], char chan ) {
 
     const index_t nb = no * ns;
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t p1=0; p1<np; ++p1)
     for (index_t p2=0; p2<np; ++p2)
     for (index_t p3=0; p3<np; ++p3) {

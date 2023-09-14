@@ -5,7 +5,7 @@
 
 inline void add_to_all_frq(complex128_t* const to, const complex128_t* const inc,
                            index_t nb, index_t rest) {
-    #pragma omp parallel for collapse(2) schedule(static)
+    #pragma omp parallel for collapse(2) schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t i = 0; i < nb; ++i)
     for(index_t r = 0; r < rest; ++r) {
         to[r+rest*i] += inc[r];

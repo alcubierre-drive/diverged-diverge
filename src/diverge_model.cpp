@@ -3,6 +3,7 @@
 #include "diverge_model.h"
 #include "diverge_internals_struct.h"
 #include "misc/init_interaction_channels.h"
+#include "misc/mpi_functions.h"
 #include "diverge_Eigen3.hpp"
 #include "diverge_patching.h"
 #include "diverge_model_internals.h"
@@ -102,7 +103,7 @@ greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* mode
 
     for (int sign=0; sign<2; ++sign) {
         complex128_t L = sign ? Lambda : std::conj(Lambda);
-        #pragma omp parallel for collapse(3)
+        #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
         for (index_t k=0; k<nkf; ++k)
         for (index_t o=0; o<nb; ++o)
         for (index_t p=0; p<nb; ++p) {

@@ -15,7 +15,7 @@
 
 
 inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t idx = 0; idx < len; ++idx) {
         ((double*)(loop+idx))[0] *= pref;
         ((double*)(loop+idx))[1] *= pref;

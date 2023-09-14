@@ -167,7 +167,7 @@ void Projection::init_prefac_vector(const diverge_model_t* const model) {
     index_t nk = model->nk[0] * model->nk[1] * model->nk[2];
     complex128_t* prefac_proj = (complex128_t*) calloc(nk*_nr,sizeof(complex128_t));
 
-    #pragma omp parallel for collapse(2) schedule(dynamic)
+    #pragma omp parallel for collapse(2) schedule(dynamic) num_threads(diverge_omp_num_threads())
     for(index_t rv = 0; rv < _nr; ++rv)
     for(index_t kx = 0; kx < model->nk[0]; ++kx)
     for(index_t ky = 0; ky < model->nk[1]; ++ky)
@@ -179,7 +179,7 @@ void Projection::init_prefac_vector(const diverge_model_t* const model) {
     }
     my_prefac_proj = (complex128_t*) calloc(tu_data->my_nk*_nr,sizeof(complex128_t));
     my_prefac_proj_rk = (complex128_t*) calloc(tu_data->my_nk*_nr,sizeof(complex128_t));
-    #pragma omp parallel for collapse(2) schedule(dynamic)
+    #pragma omp parallel for collapse(2) schedule(dynamic) num_threads(diverge_omp_num_threads())
     for(index_t rv = 0; rv < _nr; ++rv)
     for(index_t k = 0; k < tu_data->my_nk; ++k) {
         my_prefac_proj[k+tu_data->my_nk*rv] =
@@ -191,7 +191,7 @@ void Projection::init_prefac_vector(const diverge_model_t* const model) {
     const index_t my_nk_in_bz = tu_data->symm->my_nk_in_bz;
     const index_t my_nk_in_bz_off = tu_data->symm->my_nk_in_bz_off;
     my_prefac_reco = (complex128_t*) calloc(my_nk_in_bz*_nr,sizeof(complex128_t));
-    #pragma omp parallel for collapse(2) schedule(dynamic)
+    #pragma omp parallel for collapse(2) schedule(dynamic) num_threads(diverge_omp_num_threads())
     for(index_t k = 0; k < my_nk_in_bz; ++k)
     for(index_t rv = 0; rv < _nr; ++rv) {
         const index_t q_in_full = tu_data->symm->from_ibz_2_bz[k + my_nk_in_bz_off];
@@ -205,8 +205,8 @@ void Projection::init_CP_PC_proj(const diverge_model_t* const model) {
     if(diverge_mpi_comm_rank() != 0) return;
     vector<array<index_t, 2>> f_helper;
     vector<array<index_t, 2>> r_helper;
-    // calculate site dependent index ma omp parallel
-    #pragma omp parallel
+    // calculate site dependent index map
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         vector<array<index_t, 2>> my_t;
         my_t.reserve(POW2(n_orbff)/omp_get_max_threads());
@@ -275,7 +275,7 @@ void Projection::init_CD_DC_proj(const diverge_model_t* const model) {
     vector<array<index_t, 2>> r_helper;
 
     // calculate site dependent index map
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         vector<array<index_t, 2>> my_t;
         my_t.reserve(POW2(n_orbff)/omp_get_max_threads());
@@ -344,7 +344,7 @@ void Projection::init_D_to_P_proj(const diverge_model_t* const model) {
     vector<array<index_t, 2>> f_helper;
     vector<array<index_t, 2>> r_helper;
     if(diverge_mpi_comm_rank() != 0) return;
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         vector<array<index_t, 2>> my_t;
         my_t.reserve(POW2(n_orbff)/omp_get_max_threads());
@@ -421,7 +421,7 @@ void Projection::init_P_to_D_proj(const diverge_model_t* const model) {
     if(diverge_mpi_comm_rank() != 0) return;
     vector<array<index_t, 2>> f_helper;
     vector<array<index_t, 2>> r_helper;
-    #pragma omp parallel
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         vector<array<index_t, 2>> my_t;
         my_t.reserve(POW2(n_orbff)/omp_get_max_threads());

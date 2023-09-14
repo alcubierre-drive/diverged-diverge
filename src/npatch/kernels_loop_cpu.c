@@ -26,7 +26,7 @@ void* npatch_loop_gen_cpu( void* data ) {
     const index_t L0 = loop_info->start,
                   L1 = loop_info->stop;
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t L_idx = L0; L_idx < L1; ++L_idx) {
         UNRAVEL_V( L_idx, p, p1, p2, o1, o2, o3, o4 )
         index_t k = p_idx[p],

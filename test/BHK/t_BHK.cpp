@@ -68,7 +68,7 @@ double test_symm_4_pnt( diverge_model_t* model, complex128_t* buf ) {
     complex128_t* aux = (complex128_t*) calloc( size, sizeof(complex128_t) );
     memcpy( aux, buf, size * sizeof(complex128_t) );
     memset( (void*) buf, 0, size * sizeof(complex128_t) );
-    #pragma omp parallel for schedule(static) collapse(11)
+    #pragma omp parallel for schedule(static) collapse(11) num_threads(diverge_omp_num_threads())
     for (index_t k1=0; k1<nk; ++k1)
     for (index_t k2=0; k2<nk; ++k2)
     for (index_t k3=0; k3<nk; ++k3)
@@ -122,7 +122,7 @@ double test_symm_4_pnt( diverge_model_t* model, complex128_t* buf ) {
         }
     }
     double max_diff = 0.;
-    #pragma omp parallel for reduction(max:max_diff)
+    #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
     for (index_t idx=0; idx<size; ++idx)
         max_diff = MAX(max_diff, std::abs(buf[idx]-aux[idx]));
     mpi_log_printf("maximal error %2.5f \n", max_diff);
@@ -205,7 +205,7 @@ static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
 static inline void compare_vertices( complex128_t* v1, complex128_t* v2, index_t size ) {
     double csum_nosort = 0.0, cmax_nosort = 0.0;
 
-    #pragma omp parallel for reduction(+:csum_nosort) reduction(max:cmax_nosort)
+    #pragma omp parallel for reduction(+:csum_nosort) reduction(max:cmax_nosort) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<size; ++i) {
         double cval = std::abs(v1[i]-v2[i]);
         csum_nosort += cval;

@@ -164,7 +164,7 @@ void batched_gemm( const complex128_t* Astart, const complex128_t* Bstart,
 
 void batched_gemm_with_buffers( const complex128_t* Astart, const complex128_t* Bstart,
         complex128_t* Cstart, char* AGPU[32][3], index_t N, complex128_t alpha, complex128_t beta, index_t num ) {
-    
+
     batched_gemm_cublas_w_buffer_init();
 
     index_t numdev = num/cublas_ndevices > 0 ? cublas_ndevices : 1;

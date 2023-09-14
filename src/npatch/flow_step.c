@@ -455,14 +455,14 @@ static void flow_internal_setup(index_t sz, index_t sz_factor, float gpu_worksha
 }
 
 static void add_to_ary( complex128_t* ary, const complex128_t* add, index_t sz ) {
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<sz; ++i) {
         ary[i] += add[i];
     }
 }
 
 static void add_and_scale_to_ary( complex128_t* ary, const complex128_t* add, complex128_t scale, index_t sz ) {
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<sz; ++i) {
         ary[i] += scale * add[i];
     }
@@ -477,7 +477,7 @@ void npatch_flow_step_enforce_exchange( complex128_t* V, complex128_t* aux,
     #define RAVEL_V( k1, k2, k3, o1, o2, o3, o4 ) ((((((k1*np+k2)*np+k3)*nb+o1)*nb+o2)*nb+o3)*nb+o4)
 
     memcpy( aux, V, sizeof(complex128_t)*POW3(np)*POW4(nb) );
-    #pragma omp parallel for collapse(7)
+    #pragma omp parallel for collapse(7) num_threads(diverge_omp_num_threads())
     for (index_t k1=0; k1<np; ++k1)
     for (index_t k2=0; k2<np; ++k2)
     for (index_t k3=0; k3<np; ++k3)
@@ -499,7 +499,7 @@ void npatch_flow_step_enforce_exchange( complex128_t* V, complex128_t* aux,
 
 static double find_max( const complex128_t* ary, index_t sz ) {
     double ary_max = 0.0;
-    #pragma omp parallel for reduction(max:ary_max)
+    #pragma omp parallel for reduction(max:ary_max) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<sz; ++i)
         ary_max = MAX(cabs(ary[i]), ary_max);
     return ary_max;

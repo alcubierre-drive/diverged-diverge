@@ -41,7 +41,7 @@ selfEnergy::selfEnergy(Vertex* vertex)
         ffkmesh = (complex128_t*) calloc(nk*nff, sizeof(complex128_t));
         const vector<Vec3i>& existing_ff = tu_data->existing_ff;
 
-        #pragma omp parallel for collapse(2) schedule(dynamic)
+        #pragma omp parallel for collapse(2) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t rv = 0; rv < nff; ++rv)
         for(index_t kx = 0; kx < model->nk[0]; ++kx)
         for(index_t ky = 0; ky < model->nk[1]; ++ky)

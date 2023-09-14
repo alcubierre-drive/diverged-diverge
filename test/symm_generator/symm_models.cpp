@@ -47,7 +47,7 @@ double test_symm_4_pnt( diverge_model_t* model, Vertex* vertex ) {
     complex128_t* buf = (complex128_t*) calloc( size, sizeof(complex128_t) );
     vertex->project_fullV(model, aux);
 
-   #pragma omp parallel for schedule(static) collapse(11)
+   #pragma omp parallel for schedule(static) collapse(11) num_threads(diverge_omp_num_threads())
     for (index_t k1=0; k1<nk; ++k1)
     for (index_t k2=0; k2<nk; ++k2)
     for (index_t k3=0; k3<nk; ++k3)
@@ -101,7 +101,7 @@ double test_symm_4_pnt( diverge_model_t* model, Vertex* vertex ) {
         }
     }
     double max_diff = 0.;
-    #pragma omp parallel for reduction(max:max_diff)
+    #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
     for (index_t idx=0; idx<size; ++idx)  {
         max_diff = MAX(max_diff, std::abs(buf[idx]-aux[idx]));
     }

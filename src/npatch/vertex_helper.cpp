@@ -1,6 +1,7 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "../diverge_Eigen3.hpp"
+#include "../misc/mpi_functions.h"
 #include <algorithm>
 #include <vector>
 #include <utility>
@@ -20,7 +21,7 @@ void vhelper_vertex_sort_in_q( complex128_t* vertex, qkkp_t* vindex, index_t np,
     typedef std::pair<complex128_t,qkkp_t> v_element_t;
     vector<v_element_t> vsort(size);
 
-    #pragma omp parallel for schedule(static) collapse(2)
+    #pragma omp parallel for schedule(static) collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t p3=0; p3<np3; ++p3) for (index_t o4=0; o4<no4; ++o4)
         vsort[p3*no4+o4] = { vertex[p3*no4+o4], vindex[p3] };
 
@@ -37,7 +38,7 @@ void vhelper_vertex_sort_in_q( complex128_t* vertex, qkkp_t* vindex, index_t np,
                 return va.second.q < vb.second.q;
             } );
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t p3=0; p3<np3; ++p3) {
         for (index_t o4=0; o4<no4; ++o4) {
             vertex[p3*no4+o4] = vsort[p3*no4+o4].first;
@@ -134,7 +135,7 @@ npatch_qvert_mat_t* vhelper_q_vertex_matrix_from_vertex( const complex128_t* q_v
 
 complex128_t* vhelper_q_vertex_matrices_to_buffer( npatch_qvert_mat_t* qvm, index_t nq, index_t Nmax ) {
     complex128_t* result = (complex128_t*)calloc(Nmax*Nmax*nq, sizeof(complex128_t));
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<nq; ++q) {
         index_t N_orig = qvm[q].nb * qvm[q].nb * qvm[q].n_k_kp;
         Map<MatXcd> data_orig( qvm[q].data, N_orig, N_orig );
@@ -154,7 +155,7 @@ static inline double q_vertex_norm( const complex128_t* data, index_t matrix_siz
 void vhelper_q_vertex_sort_max( npatch_qvert_mat_t* qvm, index_t* pnq, double max_rel ) {
     typedef std::pair<double,index_t> norm_t;
     vector<norm_t> norms(*pnq);
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<*pnq; ++q) {
         norm_t elem;
         elem.first = q_vertex_norm( qvm[q].data, qvm[q].n_k_kp*qvm[q].nb*qvm[q].nb );

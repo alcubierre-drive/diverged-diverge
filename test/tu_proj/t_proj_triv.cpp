@@ -28,7 +28,7 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     std::mt19937 re{rd()};
     std::normal_distribution<double> unif{0, 5.0};
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t j = 0; j < VertMom.full_vert_size; ++j) {
         VertMom.Pch[j] = unif(re)+I128*unif(re);
         VertMom.Cch[j] = unif(re)+I128*unif(re);
@@ -77,7 +77,7 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
         std::mt19937 re{rd()};
         std::normal_distribution<double> unif{0, 5.0};
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t j = 0; j < VertMom.full_vert_size; ++j) {
         VertMom.Pch[j] = unif(re)+I128*unif(re);
         VertMom.Cch[j] = unif(re)+I128*unif(re);

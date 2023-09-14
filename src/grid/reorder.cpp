@@ -38,7 +38,7 @@ static void gen_send_pack( const complex128_t* vertex, const index_t* send_map,
         const dist_info* dist, complex128_t* pack ) {
     const index_t start = dist->starts[dist->myrank];
     const index_t stop = dist->stops[dist->myrank];
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=start; i<stop; ++i) {
         const index_t loc = i-start;
         pack[loc] = vertex[send_map[loc] - start];
@@ -57,13 +57,13 @@ static void write_recv_pack( complex128_t* vertex_T, const index_t* recv_map,
     const index_t start = dist->starts[dist->myrank];
     const index_t stop = dist->stops[dist->myrank];
     if (add) {
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t i=start; i<stop; ++i) {
             const index_t loc = i - start;
             vertex_T[recv_map[loc] - start] += scale*pack[loc];
         }
     } else {
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t i=start; i<stop; ++i) {
             const index_t loc = i - start;
             vertex_T[recv_map[loc] - start] = scale*pack[loc];

@@ -82,6 +82,9 @@ double diverge_mpi_max( double* send );
 void diverge_mpi_bcast_bytes( void* inout, int size, int root );
 void diverge_mpi_gather_double( const double* send, int scnt, double* recv, int rcnt, int root );
 
+// some OMP stuff, needed for proper environment control
+int diverge_omp_num_threads( void );
+
 #ifdef __cplusplus
 }
 #endif

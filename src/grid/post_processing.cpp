@@ -282,7 +282,7 @@ void PostProcessing::_calc_sus( complex128_t* buf, double T, char chan ) {
     }
     batched_gemm_vertex_loop( V.vertex_buffers[1], loop, _qsize, _nk, _nb );
     batched_gemm_loop_vertex( loop, V.vertex_buffers[1], _qsize, _nk, _nb );
-    #pragma omp parallel for collapse(6)
+    #pragma omp parallel for collapse(6) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<_qsize; ++q)
     for (index_t f=0; f<_nff; ++f)
     for (index_t b1=0; b1<_nb; ++b1)
@@ -299,7 +299,7 @@ void PostProcessing::_calc_sus( complex128_t* buf, double T, char chan ) {
             buf[Suscindex_t] += V.vertex_buffers[1][Vertexindex_t] * ff[f*_nk+k] * ff[f*_nk+kp];
         }
     }
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<_Xsize; ++i) {
         buf[i] /= (double)(_nk*_nk);
     }

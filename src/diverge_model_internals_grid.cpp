@@ -37,7 +37,7 @@ static void generate_refinement( const vector<Vec3d>& fine,
     weights.reserve( fine.size() );
     rev.reserve( fine.size() );
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (uindex_t i=0; i<fine.size(); ++i) {
 
         // calc dist to every coarse pt
@@ -114,14 +114,14 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     // fill fine kpts
     double* kpts = intls->kfmesh;
     vector<Vec3d> fine_pts( initial_nkf * intls->grid_nk );
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<initial_nkf * intls->grid_nk; ++k)
         fine_pts[k] = Map<Vec3d>( kpts+k*3 );
 
     // fill coarse kpts
     double* kcpts = intls->kmesh;
     vector<Vec3d> coarse_pts( intls->grid_nk );
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<intls->grid_nk; ++k)
         coarse_pts[k] = Map<Vec3d>( kcpts+k*3 );
 
@@ -173,7 +173,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
 
     intls->grid_k1m2 = (index_t*)malloc(sizeof(index_t)*intls->grid_nk*intls->grid_nk);
     intls->grid_k1p2 = (index_t*)malloc(sizeof(index_t)*intls->grid_nk*intls->grid_nk);
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t k1=0; k1<intls->grid_nk; ++k1)
     for (index_t k2=0; k2<intls->grid_nk; ++k2) {
         intls->grid_k1m2[IDX2(k1,k2,intls->grid_nk)] = k1m2(k1, k2, model->nk);
@@ -197,7 +197,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
 
         const index_t nk = intls->grid_nk;
         const index_t no4 = POW2(nb*nb);
-        #pragma omp parallel for collapse(3)
+        #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
         for (uindex_t k1=0; k1<qlist.size(); ++k1)
         for (index_t k2=0; k2<nk; ++k2)
         for (index_t k3=0; k3<nk; ++k3)

@@ -74,7 +74,7 @@ void* npatch_cpu_flow_step_##su##_##chan ( void* _params ) { \
     const index_t k123start = start/Nb4, \
                   k123stop = stop/Nb4; \
     \
-    DO_PRAGMA(omp parallel for schedule(static) collapse(2)) \
+    DO_PRAGMA(omp parallel for schedule(static) collapse(2) num_threads(diverge_omp_num_threads())) \
     for (index_t phi_k_idx=k123start; phi_k_idx<k123stop; ++phi_k_idx) \
     for (index_t k=0; k<np; ++k) { \
         \

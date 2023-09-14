@@ -75,7 +75,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
         // unproject P
         if(P_flow) {
             reco<'P'>(buffer);
-            #pragma omp parallel for collapse(8) schedule(dynamic)
+            #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for(index_t s1 = 0; s1<n_spin;++s1)
             for(index_t s2 = 0; s2<n_spin;++s2)
             for(index_t s3 = 0; s3<n_spin;++s3)
@@ -112,7 +112,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
         // unproject C
         if(C_flow) {
             reco<'C'>(buffer);
-            #pragma omp parallel for collapse(8) schedule(dynamic)
+            #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for(index_t s1 = 0; s1<n_spin;++s1)
             for(index_t s2 = 0; s2<n_spin;++s2)
             for(index_t s3 = 0; s3<n_spin;++s3)
@@ -150,7 +150,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
         // unproject D
         if(D_flow) {
             reco<'D'>(buffer);
-            #pragma omp parallel for collapse(8) schedule(dynamic)
+            #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for(index_t s1 = 0; s1<n_spin;++s1)
             for(index_t s2 = 0; s2<n_spin;++s2)
             for(index_t s3 = 0; s3<n_spin;++s3)
@@ -217,7 +217,7 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, Projection* proj) {
             index_t k3 = sub_mom(k1,symm->idx_ibz_in_fullmesh[q+my_nk_off],nkd);
             index_t k2 = sub_mom(k4,symm->idx_ibz_in_fullmesh[q+my_nk_off],nkd);
             (*(model->ffill))( model, k1, k2, k3, buf );
-            #pragma omp parallel for collapse(6) schedule(dynamic)
+            #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for (index_t s4=0; s4<n_spin; ++s4)
             for (index_t s3=0; s3<n_spin; ++s3)
             for (index_t s2=0; s2<n_spin; ++s2)
@@ -249,7 +249,7 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, Projection* proj) {
         for(index_t k3 = 0; k3 < nk; ++k3) {
             index_t k2 = sub_mom(k3,symm->idx_ibz_in_fullmesh[q+my_nk_off],nkd);
             (*(model->ffill))( model, k1, k2, k3, buf );
-            #pragma omp parallel for collapse(6) schedule(dynamic)
+            #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for (index_t s4=0; s4<n_spin; ++s4)
             for (index_t s3=0; s3<n_spin; ++s3)
             for (index_t s2=0; s2<n_spin; ++s2)
@@ -282,7 +282,7 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, Projection* proj) {
         for(index_t k3 = 0; k3 < nk; ++k3) {
             index_t k2 = sub_mom(symm->idx_ibz_in_fullmesh[q+my_nk_off], k1, nkd);
             (*(model->ffill))( model, k1, k2, k3, buf );
-            #pragma omp parallel for collapse(6) schedule(dynamic)
+            #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for (index_t s4=0; s4<n_spin; ++s4)
             for (index_t s3=0; s3<n_spin; ++s3)
             for (index_t s2=0; s2<n_spin; ++s2)

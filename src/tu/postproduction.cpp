@@ -7,7 +7,7 @@
 
 static bool check_hermicity(complex128_t* data, index_t linsize){
     double err_max = 0.;
-    #pragma omp parallel for reduction(max:err_max)
+    #pragma omp parallel for reduction(max:err_max) num_threads(diverge_omp_num_threads())
     for(index_t i=0; i<linsize; ++i)
     for(index_t j=0; j<linsize; ++j) {
         double err = std::abs(data[IDX2(i,j,linsize)] - std::conj(data[IDX2(j,i,linsize)]));
@@ -140,7 +140,7 @@ void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
             apply_permutation_in_place(idx, p);
             memcpy(val+off[q],vals.data(),sizeof(double)*len[q]);
 
-            #pragma omp parallel for schedule(static) collapse(3)
+            #pragma omp parallel for schedule(static) collapse(3) num_threads(diverge_omp_num_threads())
             for(index_t m1 = 0; m1 < POW2(n_spin); ++m1)
             for(uindex_t j = 0; j<idx.size();++j)
             for(index_t o1 = 0; o1<vertex->n_orbff;++o1) {
@@ -281,7 +281,7 @@ static void _susc_o14k(const diverge_model_t* const model,
     fill_Rvec_from_vec(model, tu_data->existing_ff.data(), R);
 
     complex128_t* FS_ff = (complex128_t*)calloc(nff,sizeof(complex128_t));
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for(index_t ff=0; ff<nff; ++ff)
     for(index_t k=0; k<tu_data->nk; ++k) {
         FS_ff[ff] += exp(-I128*(R[3*ff+0]*kmesh[3*k+0]
@@ -291,7 +291,7 @@ static void _susc_o14k(const diverge_model_t* const model,
     free(R);
     const index_t norb = n_spin*n_orb;
 
-    #pragma omp parallel for schedule(static) collapse(7)
+    #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
     for(index_t k = 0; k< my_nk; ++k)
     for(index_t s1 = 0; s1 < (n_spin); ++s1)
     for(index_t s2 = 0; s2 < (n_spin); ++s2)

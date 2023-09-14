@@ -4,6 +4,7 @@
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_symmetrize.h"
+#include "../misc/mpi_functions.h"
 
 static double dot(double* A, double* B) {
     return A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
@@ -30,13 +31,13 @@ void symmetrize_npatch_vertex( diverge_model_t* model, complex128_t* buf, const 
     index_t* symm_map_mom = model->internals->symm_map_mom_crs;
     index_t n_sym = model->n_sym;
     if (!imap[-1]) {
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for(index_t k = 0; k < nk; ++k) imap[k] = -1;
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for(index_t k = 0; k < np; ++k) imap[map[k]] = k;
 
         index_t missing = 0;
-        #pragma omp parallel for collapse(2) reduction(+:missing)
+        #pragma omp parallel for collapse(2) reduction(+:missing) num_threads(diverge_omp_num_threads())
         for ( index_t m1 = 0; m1 < np; ++m1 )
         for ( index_t s = 0; s < n_sym; ++s ) {
             index_t mk1 = imap[symm_map_mom[s + n_sym * map[m1]]];
@@ -67,7 +68,7 @@ void symmetrize_npatch_vertex( diverge_model_t* model, complex128_t* buf, const 
 
     double norm = 1./(double) n_sym;
 
-    #pragma omp parallel for collapse(11)
+    #pragma omp parallel for collapse(11) num_threads(diverge_omp_num_threads())
     for (index_t p1=0; p1<np; ++p1)
     for (index_t p2=0; p2<np; ++p2)
     for (index_t p3=0; p3<np; ++p3)

@@ -350,7 +350,7 @@ void* npatch_loop_gen_gpu( void* data ) {
         if (complex_E) {
             const complex128_t* _E_fine = loop_info->L->E;
             const complex128_t* _U_fine = loop_info->L->U;
-            #pragma omp parallel for schedule(static)
+            #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
             for (index_t kb=0; kb<nknb; ++kb) {
                 h_E_fine[kb] = _E_fine[kb];
                 for (index_t b=0; b<nb; ++b)
@@ -359,7 +359,7 @@ void* npatch_loop_gen_gpu( void* data ) {
         } else {
             const double* _E_fine = loop_info->L->E_real;
             const complex128_t* _U_fine = loop_info->L->U;
-            #pragma omp parallel for schedule(static)
+            #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
             for (index_t kb=0; kb<nknb; ++kb) {
                 h_E_fine[kb] = _E_fine[kb];
                 for (index_t b=0; b<nb; ++b)

@@ -74,7 +74,7 @@ vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double
     vector<double> E_ibz(nk_ibz);
     // ibz indices for each energy
     vector<index_t> E_ibz_idx(nk_ibz);
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t ibz=0; ibz<nk_ibz; ++ibz) {
         E_ibz[ibz] = Map<VecXd>( const_cast<double*>(E) + nb*ibz_to_bz[ibz], nb ).array().abs().minCoeff();
         E_ibz_idx[ibz] = ibz;
@@ -165,7 +165,7 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
     const index_t nk = kdim(mod->nk);
     complex128_t* kf = (complex128_t*)malloc(sizeof(complex128_t)*nk);
     kpoint_union_t* kum = (kpoint_union_t*)mod->internals->kmesh;
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<nk; ++k)
         kf[k] = kum[k].k;
 
@@ -176,7 +176,7 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
     memcpy(&g2, kbasis[1], sizeof(complex128_t));
 
     pgen_info_t* kf_patch_info = (pgen_info_t*)malloc(sizeof(pgen_info_t)*nk);
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<nk; ++k) {
         index_t thispatch = -1;
         double min_norm = 2.*M_PI;
@@ -210,7 +210,7 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
     }
 
     index_t* nkf_per_patch = (index_t*)calloc(np, sizeof(index_t));
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<nk; ++k) {
         if (kf_patch_info[k].howmany > 1) {
             for (index_t pi=0; pi<kf_patch_info[k].howmany; ++pi)
@@ -262,7 +262,7 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
 
     // save fine weights for each kpt so we can 'choose' later on
     double* fine_weights = (double*)malloc(sizeof(double)*nk);
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<nk; ++k)
         fine_weights[k] = 1./(double)kf_patch_info[k].howmany;
 
@@ -273,7 +273,7 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
     }
     free(kf_patch_info);
 
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic) num_threads(diverge_omp_num_threads())
     for (index_t p=0; p<np; ++p) {
         index_t displ = patch->p_displ[p];
         double total_weight = 0.;
@@ -292,7 +292,7 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
         patch->weights[p] = 1./tw;
     }
 
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic) num_threads(diverge_omp_num_threads())
     for (index_t p=0; p<np; ++p) {
         index_t displ = patch->p_displ[p];
         for (index_t d=0; d<patch->p_count[p]; ++d) {
@@ -405,7 +405,7 @@ void diverge_patching_weights_equalize( mom_patching_t* P ) {
     double *w_fine = P->p_weights,
            *w_coarse = P->weights;
     double global_sum = 0.0;
-    #pragma omp parallel for reduction(+:global_sum)
+    #pragma omp parallel for reduction(+:global_sum) num_threads(diverge_omp_num_threads())
     for (index_t p=0; p<np; ++p) {
         double local_sum = 0.0;
         for (index_t c=0; c<cnt[p]; ++c)
@@ -509,7 +509,7 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
     const index_t nk = kdim(mod->nk);
     complex128_t* kmesh = (complex128_t*)malloc(sizeof(complex128_t)*nk);
     kpoint_union_t* kum = (kpoint_union_t*)mod->internals->kmesh;
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<nk; ++k)
         kmesh[k] = kum[k].k;
 
@@ -538,7 +538,7 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
     vector<vector<index_t>> new_patches(np);
     vector<vector<double>> new_weights(np);
     vector<double> timings(np, 0.0);
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic) num_threads(diverge_omp_num_threads())
     for (int p=0; p<np; ++p) {
         index_t pcoord = patch->patches[p];
         index_t* pmap = patch->p_map + patch->p_displ[p];
@@ -767,7 +767,7 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
     // store total weights of each patching point so we can reset them
     // accordingly
     vector<double> weight_per_patch(np, 0.0);
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t pp=0; pp<np; ++pp)
         for (index_t c=0; c<patch->p_count[pp]; ++c)
             weight_per_patch[pp] += patch->p_weights[patch->p_displ[pp]+c];
@@ -790,7 +790,7 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
 
     // generate the new weights of every patch
     vector<double> new_weight_per_patch(np, 0.0);
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t pp=0; pp<np; ++pp)
         for (index_t c=0; c<patch->p_count[pp]; ++c)
             new_weight_per_patch[pp] += patch->p_weights[patch->p_displ[pp]+c];

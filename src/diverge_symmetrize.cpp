@@ -5,6 +5,7 @@
 #include "diverge_internals_struct.h"
 #include "diverge_momentum_gen.h"
 #include "diverge_Eigen3.hpp"
+#include "misc/mpi_functions.h"
 #include <vector>
 #include <cassert>
 
@@ -65,7 +66,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     double* rs_symmetries = (double*)model->rs_symmetries;
     complex128_t* orb_symmetries = (complex128_t*)model->orb_symmetries;
 
-    #pragma omp parallel for schedule(static) collapse(2)
+    #pragma omp parallel for schedule(static) collapse(2) num_threads(diverge_omp_num_threads())
     for(index_t s = 0; s < n_sym; ++s)
     for(index_t k = 0; k < nk; ++k) {
         Map<CMat3d> sym(rs_symmetries+s*9);
@@ -77,7 +78,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         symm_map_mom_crs[s+n_sym*k] = idx;
         if (!found) mpi_err_printf("not all momenta mappable (%d->%d; accuracy issue?)\n", s, k);
     }
-    #pragma omp parallel for schedule(static) collapse(2)
+    #pragma omp parallel for schedule(static) collapse(2) num_threads(diverge_omp_num_threads())
     for(index_t s = 0; s < n_sym; ++s)
     for(index_t k = 0; k < nktot; ++k) {
         Map<CMat3d> sym(rs_symmetries+s*9);
@@ -105,7 +106,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     Map<Vec3d> UC2(model->lattice[1]);
     Map<Vec3d> UC3(model->lattice[2]);
 
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for(index_t s = 0; s < n_sym; ++s)
     for(index_t o1 = 0; o1 < n_orb; ++o1) {
         Map<CMat3d> sym_rs(rs_symmetries+s*9);

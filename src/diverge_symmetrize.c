@@ -3,6 +3,7 @@
 #include "diverge_model.h"
 #include "diverge_symmetrize.h"
 #include "diverge_internals_struct.h"
+#include "misc/mpi_functions.h"
 
 #define alloc_aux( size ) \
     bool free_aux = false; \
@@ -45,7 +46,7 @@ double diverge_symmetrize_2pt_coarse( diverge_model_t* model, complex128_t* buf,
     index_t* symm_orb_len = model->internals->symm_orb_len;
     complex128_t* symm_pref = model->internals->symm_pref;
 
-    #pragma omp parallel for collapse(5)
+    #pragma omp parallel for collapse(5) num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<nk; ++k)
     for (index_t oo1=0; oo1<n_orb; ++oo1)
     for (index_t ss1=0; ss1<n_spin; ++ss1)
@@ -71,7 +72,7 @@ double diverge_symmetrize_2pt_coarse( diverge_model_t* model, complex128_t* buf,
         }
     }
     double max_diff = 0.;
-    #pragma omp parallel for reduction(max:max_diff)
+    #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
     for (index_t idx=0; idx<nk*n_os*n_os; ++idx)
         max_diff = MAX(max_diff, cabs(buf[idx]-aux[idx]));
 
@@ -102,7 +103,7 @@ double diverge_symmetrize_2pt_fine( diverge_model_t* model, complex128_t* buf, c
     index_t* symm_orb_len = model->internals->symm_orb_len;
     complex128_t* symm_pref = model->internals->symm_pref;
 
-    #pragma omp parallel for collapse(5)
+    #pragma omp parallel for collapse(5) num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<nk; ++k)
     for (index_t oo1=0; oo1<n_orb; ++oo1)
     for (index_t ss1=0; ss1<n_spin; ++ss1)
@@ -128,7 +129,7 @@ double diverge_symmetrize_2pt_fine( diverge_model_t* model, complex128_t* buf, c
         }
     }
     double max_diff = 0.;
-    #pragma omp parallel for reduction(max:max_diff)
+    #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
     for (index_t idx=0; idx<nk*n_os*n_os; ++idx) {
         max_diff = MAX(max_diff, cabs(buf[idx]-aux[idx]));
     }
@@ -160,7 +161,7 @@ double diverge_symmetrize_greens( diverge_model_t* model, gf_complex_t* buf, gf_
     index_t* symm_orb_len = model->internals->symm_orb_len;
     complex128_t* symm_pref = model->internals->symm_pref;
 
-    #pragma omp parallel for collapse(5)
+    #pragma omp parallel for collapse(5) num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<nk; ++k)
     for (index_t oo1=0; oo1<n_orb; ++oo1)
     for (index_t ss1=0; ss1<n_spin; ++ss1)
@@ -186,7 +187,7 @@ double diverge_symmetrize_greens( diverge_model_t* model, gf_complex_t* buf, gf_
         }
     }
     double max_diff = 0.;
-    #pragma omp parallel for reduction(max:max_diff)
+    #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
     for (index_t idx=0; idx<nk*n_os*n_os; ++idx) {
         max_diff = MAX(max_diff, cabs(buf[idx]-aux[idx]));
     }
@@ -208,7 +209,7 @@ double diverge_symmetrize_mom_coarse( diverge_model_t* model, double* buf, index
 
     index_t* symm_map_mom = model->internals->symm_map_mom_crs;
     double max_diff = 0.0;
-    #pragma omp parallel for collapse(2) reduction(max:max_diff)
+    #pragma omp parallel for collapse(2) reduction(max:max_diff) num_threads(diverge_omp_num_threads())
     for( index_t k = 0; k < nk; ++k )
     for( index_t o = 0; o < sub; ++o ) {
         for( index_t s = 0; s < n_sym; ++s )
@@ -233,7 +234,7 @@ double diverge_symmetrize_mom_fine( diverge_model_t* model, double* buf, index_t
 
     index_t* symm_map_mom = model->internals->symm_map_mom_fine;
     double max_diff = 0.0;
-    #pragma omp parallel for collapse(2) reduction(max:max_diff)
+    #pragma omp parallel for collapse(2) reduction(max:max_diff) num_threads(diverge_omp_num_threads())
     for( index_t k = 0; k < nk; ++k )
     for( index_t o = 0; o < sub; ++o ) {
         for( index_t s = 0; s < n_sym; ++s )

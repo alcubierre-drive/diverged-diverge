@@ -126,7 +126,7 @@ static void frg_loop_calc_P_greens( complex128_t* mem, const complex128_t* green
 
     const double norm = 1./2./M_PI;
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t Loopindex=0; Loopindex<LoopSize; ++Loopindex) {
         index_t q = Loopindex/(nk*nb*nb*nb*nb) + qstart,
               k = (Loopindex%(nk*nb*nb*nb*nb))/(nb*nb*nb*nb),
@@ -158,7 +158,7 @@ static void frg_loop_calc_C_greens( complex128_t* mem, const complex128_t* green
 
     const double norm = 1./2./M_PI;
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t Loopindex=0; Loopindex<LoopSize; ++Loopindex) {
         index_t q = Loopindex/(nk*nb*nb*nb*nb) + qstart,
               k = (Loopindex%(nk*nb*nb*nb*nb))/(nb*nb*nb*nb),
@@ -190,14 +190,14 @@ static void transform_to_gbuf( const gf_complex_t* greens, complex128_t* greens_
     const gf_complex_t* div_gm = greens + div_nk_nkf*nb*nb;
     const index_t nb2 = nb*nb;
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t kg=0; kg<grid_nk_nkf; ++kg) {
         index_t kd = grid_kfmesh[kg];
         for (index_t bb=0; bb<nb2; ++bb)
             greens_p[kg*nb2+bb] = -div_gp[kd*nb2+bb];
     }
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t kg=0; kg<grid_nk_nkf; ++kg) {
         index_t kd = grid_kfmesh[kg];
         for (index_t bb=0; bb<nb2; ++bb)

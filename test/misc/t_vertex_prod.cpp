@@ -21,7 +21,7 @@ TEST_CASE("vert_prod", "[vprod]") {
     std::mt19937 re{rd()};
     std::normal_distribution<double> unif{0, 1.0};
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t j = 0; j < N*N*b; ++j) {
         B[j] = unif(re);
         C[j] = unif(re);
@@ -30,12 +30,12 @@ TEST_CASE("vert_prod", "[vprod]") {
     #ifdef USE_CUDA
     int devices = 0;
     CUDA_CHECK(cudaGetDeviceCount(&devices));
-    for(int i = 0; i<devices;++i) {        
+    for(int i = 0; i<devices;++i) {
         cudaSetDevice( i );
         char* p1;
         char* p2;
         char* p3;
-        
+
         CUDA_CHECK( cudaMalloc(&p1, N*N*sizeof(cuDoubleComplex)) );
         CUDA_CHECK( cudaMalloc(&p2, N*N*sizeof(cuDoubleComplex)) );
         CUDA_CHECK( cudaMalloc(&p3, N*N*sizeof(cuDoubleComplex)) );
@@ -44,7 +44,7 @@ TEST_CASE("vert_prod", "[vprod]") {
     #endif
 
     vertex_product(r1,B,C,help,buf,N,b,1.0);
-    #pragma omp parallel for collapse(3) schedule(static)
+    #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t k = 0; k<b;++k)
     for(index_t o1 = 0; o1<N;++o1)
     for(index_t o2 = 0; o2<N;++o2){

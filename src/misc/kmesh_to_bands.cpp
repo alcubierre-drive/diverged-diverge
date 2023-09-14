@@ -2,6 +2,7 @@
 
 #include "kmesh_to_bands.h"
 #include "bitary.h"
+#include "mpi_functions.h"
 #include "../diverge_Eigen3.hpp"
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
@@ -47,7 +48,7 @@ static void find_bandstructure_segment_indices( const double start_[3], const
     cbyte_t* reached = bitary_alloc( nktot );
 
     index_t n_reached = 0;
-    #pragma omp parallel for reduction(+:n_reached)
+    #pragma omp parallel for reduction(+:n_reached) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<nktot; ++i) {
         Map<const Vec3d> K( kfmesh + 3*i );
         Vec3d Bb = BQ * (K-A);
@@ -68,7 +69,7 @@ static void find_bandstructure_segment_indices( const double start_[3], const
     vector<index_t> t_indices(n_reached);
     index_t tidx = 0;
 
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<nktot; ++i) {
         if (bitary_get( reached, i )) {
             Map<const Vec3d> K( kfmesh + 3*i );

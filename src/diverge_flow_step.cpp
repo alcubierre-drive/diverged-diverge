@@ -441,7 +441,7 @@ void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspac
     // only continue if no error
     if (mu != DBL_MAX) {
         // and readjust the energies accordingly
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t kb=0; kb<nk*nb; ++kb)
             E[kb] -= mu;
     }
@@ -475,7 +475,7 @@ double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* 
     double* Etmp = (double*)( Utmp + nk*nb*nb );
 
     // add S to UEU* (in Utmp)
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<nk; ++k) {
         Map<MatXcd> UU(U + k*nb*nb, nb, nb);
         Map<VecXd> EE(E + k*nb, nb);

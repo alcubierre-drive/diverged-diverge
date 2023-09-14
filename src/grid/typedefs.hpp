@@ -29,7 +29,7 @@ double take_time( T x ) {
 
 static inline double absmax( const complex128_t* ary, index_t cnt ) {
     double result = 0.0;
-    #pragma omp parallel for reduction(max:result)
+    #pragma omp parallel for reduction(max:result) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<cnt; ++i)
         result = std::max(result, std::abs(ary[i]));
     return result;

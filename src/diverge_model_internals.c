@@ -78,9 +78,9 @@ void diverge_model_internals_common( diverge_model_t* model ) {
 
     intls->enforce_exchange = model->SU2 == 0;
 
-    if (nk < diverge_mpi_comm_size() * omp_get_max_threads()) {
+    if (nk < diverge_mpi_comm_size() * diverge_omp_num_threads()) {
         mpi_wrn_printf("using more ranks×threads (%i×%i) than coarse kpts (%li).\n",
-                diverge_mpi_comm_size(), omp_get_max_threads(), nk);
+                diverge_mpi_comm_size(), diverge_omp_num_threads(), nk);
         mpi_wrn_printf("please run divERGe with sensible OMP_NUM_THREADS exported\n");
         mpi_wrn_printf("trying to continue anyways…\n");
     }

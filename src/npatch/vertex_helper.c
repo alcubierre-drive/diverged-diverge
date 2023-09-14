@@ -2,6 +2,7 @@
 
 #include "vertex_helper.h"
 #include "loop.h"
+#include "../misc/mpi_functions.h"
 
 static inline index_t _k1m2( index_t k1, index_t k2, index_t nk_flat ) {
     return ((k1 / nk_flat - k2 / nk_flat + nk_flat) % nk_flat)*nk_flat +
@@ -57,7 +58,7 @@ void vhelper_vertex_in_q_channel( const npatch_vertex_t* vert, const npatch_loop
     complex128_t* vertex = (complex128_t*)malloc(sizeof(complex128_t)*vert->size);
     qkkp_t* vindex = (qkkp_t*)malloc(sizeof(qkkp_t)*np*np*np);
 
-    #pragma omp parallel for schedule(static) collapse(3)
+    #pragma omp parallel for schedule(static) collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t p1=0; p1<np; ++p1)
     for (index_t p2=0; p2<np; ++p2)
     for (index_t p3=0; p3<np; ++p3) {

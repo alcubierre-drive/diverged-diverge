@@ -31,7 +31,7 @@ void t_P_projection(complex128_t* proj_vertex,
     diverge_mpi_allreduce_complex_sum_inplace(full_channel, nk*n_orbff*n_orbff);
 
     // C_to_P
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for(index_t qTO = 0; qTO<my_nk;++qTO)
     for(index_t o1 = 0; o1 < n_orb; ++o1)
     for(index_t o3 = 0; o3 < n_orb; ++o3) {
@@ -71,7 +71,7 @@ void t_P_projection(complex128_t* proj_vertex,
     memcpy(full_channel+n_orbff*n_orbff*my_nk_off,D,n_orbff*n_orbff*my_nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(full_channel, nk*n_orbff*n_orbff);
     // D_to_P
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for(index_t qTO = 0; qTO<my_nk;++qTO)
     for(index_t o1 = 0; o1 < n_orb; ++o1)
     for(index_t o3 = 0; o3 < n_orb; ++o3)
@@ -141,7 +141,7 @@ void t_C_projection(complex128_t* proj_vertex,
     diverge_mpi_allreduce_complex_sum_inplace(full_channel, nk*n_orbff*n_orbff);
 
     // C_to_P
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for(index_t qTO = 0; qTO<my_nk;++qTO)
     for(index_t o1 = 0; o1 < n_orb; ++o1)
     for(index_t o3 = 0; o3 < n_orb; ++o3) {
@@ -181,7 +181,7 @@ void t_C_projection(complex128_t* proj_vertex,
     memcpy(full_channel+n_orbff*n_orbff*my_nk_off,D,n_orbff*n_orbff*my_nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(full_channel, nk*n_orbff*n_orbff);
     // D_to_P
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for(index_t qTO = 0; qTO<my_nk;++qTO)
     for(index_t o1 = 0; o1 < n_orb; ++o1)
     for(index_t o3 = 0; o3 < n_orb; ++o3)
@@ -253,7 +253,7 @@ void t_D_projection(complex128_t* proj_vertex,
     diverge_mpi_allreduce_complex_sum_inplace(full_channel, nk*n_orbff*n_orbff);
 
     // C_to_D
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for(index_t qTO = 0; qTO<my_nk;++qTO)
     for(index_t o1 = 0; o1 < n_orb; ++o1)
     for(index_t o4 = 0; o4 < n_orb; ++o4)
@@ -295,7 +295,7 @@ void t_D_projection(complex128_t* proj_vertex,
     memcpy(full_channel+n_orbff*n_orbff*my_nk_off,P,n_orbff*n_orbff*my_nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(full_channel, nk*n_orbff*n_orbff);
     // P to D
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for(index_t qTO = 0; qTO<my_nk;++qTO)
     for(index_t o1 = 0; o1 < n_orb; ++o1)
     for(index_t o4 = 0; o4 < n_orb; ++o4)

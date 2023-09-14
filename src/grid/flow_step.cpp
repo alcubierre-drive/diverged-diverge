@@ -169,7 +169,7 @@ double FlowStep::_add_dv_to_v() {
     complex128_t* vertex = _V->vertex_buffers[0];
     complex128_t* d_vertex = _V->vertex_buffers[1];
     index_t Vsize = _V->get_size();
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<Vsize; ++i) vertex[i] += d_vertex[i];
     double Vmax = absmax( vertex, Vsize );
     return Vmax;

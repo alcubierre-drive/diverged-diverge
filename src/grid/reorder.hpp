@@ -64,7 +64,7 @@ void gen_maps( index_t* send_map, int* send_displs, int* send_counts,
     trafo_index* send_map_ = (trafo_index*)calloc((stop-start),sizeof(trafo_index));
     trafo_index* recv_map_ = (trafo_index*)calloc((stop-start),sizeof(trafo_index));
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=start; i<stop; ++i) {
         index_t loc = i - start;
         send_map_[loc].local_index = i;
@@ -83,7 +83,7 @@ void gen_maps( index_t* send_map, int* send_displs, int* send_counts,
         send_counts[r] = 0;
         recv_counts[r] = 0;
     }
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t j=0; j<dist->sizes[dist->myrank]; ++j) {
         #pragma omp atomic
         send_counts[send_map_[j].remote_rank]++;
@@ -97,7 +97,7 @@ void gen_maps( index_t* send_map, int* send_displs, int* send_counts,
         recv_displs[r] = recv_displs[r-1] + recv_counts[r-1];
     }
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t j=0; j<dist->sizes[dist->myrank]; ++j) {
         send_map[j] = send_map_[j].local_index;
         recv_map[j] = recv_map_[j].local_index;

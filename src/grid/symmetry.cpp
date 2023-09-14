@@ -93,7 +93,7 @@ SymmetryTransform::SymmetryTransform(
     nsym = _symmetries.size();
     _symm_props.resize( nsym );
     _k_symmap.resize( nsym );
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<nsym; ++i) {
         _symm_props[i] = gen_symm_props( _basis, _lattice, _symmetries[i] );
         _k_symmap[i] = k_symmap( _kmesh, _reciprocal, _symmetries[i] );
@@ -132,7 +132,7 @@ void SymmetryTransform::transform_P( const index_t* k1m2, const index_t* k1p2,
         _symmetry_maps_P[symm].resize(LoopSize);
         _symmetry_phases_P[symm].resize(LoopSize);
     }
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t Loopindex_t=0; Loopindex_t<LoopSize; ++Loopindex_t) {
         index_t q = Loopindex_t/(nk*nb*nb*nb*nb) + qstart,
               k = (Loopindex_t%(nk*nb*nb*nb*nb))/(nb*nb*nb*nb),
@@ -189,7 +189,7 @@ void SymmetryTransform::transform_C( const index_t* k1m2, const index_t*,
         _symmetry_phases_C[symm].resize(LoopSize);
     }
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t Loopindex_t=0; Loopindex_t<LoopSize; ++Loopindex_t) {
 
         index_t q = Loopindex_t/(nk*nb*nb*nb*nb) + qstart,
@@ -340,7 +340,7 @@ SymmetryCommunicatorFactory::SymmetryCommunicatorFactory( SymmetryTransform* st,
         vector<complex128_t>& pC = _st->get_phases<'C'>( i );
         vector<index_t>& mP = _st->get_map<'P'>( i );
         vector<index_t>& mC = _st->get_map<'C'>( i );
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t l=0; l<_loop_size; ++l) {
             _symops_P[i][l].current_rank = rank;
             _symops_P[i][l].current_index = _qstart*qfac + l;
@@ -431,7 +431,7 @@ SymmetryCommunication SymmetryCommunicatorFactory::gen_communication( index_t sy
     }
 
     index_t qfac = _nk * _nb * _nb * _nb * _nb;
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t x=0; x<_loop_size; ++x) {
         result.reorder_before_send[x] = symop[x].current_index - _qstarts[symop[x].current_rank]*qfac;
         result.phase_before_send[x] = symop[x].phase;
@@ -514,7 +514,7 @@ int LoopSymmetrizer::operator()( complex128_t* loop_in, complex128_t* loop_out, 
     const index_t* recv_map = comm.reorder_after_recv.data();
 
     if (!comm.use_orbital_matrix) {
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t x=0; x<_loop_size; ++x) {
             _send_buf[x] = loop_in[send_map[x]] * send_phase[x];
         }
@@ -522,7 +522,7 @@ int LoopSymmetrizer::operator()( complex128_t* loop_in, complex128_t* loop_out, 
         const MatXcd orbital_matrix = comm.orbital_matrix;
         const index_t nb = orbital_matrix.rows();
         memset((void*)_send_buf.data(), 0, sizeof(complex128_t)*_loop_size);
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t qk=0; qk<_loop_size/(nb*nb*nb*nb); ++qk) {
             index_t x = qk*nb*nb*nb*nb;
             for (index_t o=0; o<nb*nb*nb*nb; ++o)
@@ -560,7 +560,7 @@ int LoopSymmetrizer::operator()( complex128_t* loop_in, complex128_t* loop_out, 
     diverge_mpi_alltoallv_bytes( _send_buf.data(), send_counts, send_displs,
             _recv_buf.data(), recv_counts, recv_displs, sizeof(complex128_t) );
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t x=0; x<_loop_size; ++x) {
         loop_out[recv_map[x]] += _recv_buf[x];
     }
@@ -597,7 +597,7 @@ complex128_t* LoopSymmetrizer::operator()( complex128_t* loop, char chan ) {
             return loop;
         }
     double norm = 1./(double)_nsym;
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (int i=0; i<_loop_size; ++i)
         out[i] *= norm;
 

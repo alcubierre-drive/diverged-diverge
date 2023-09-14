@@ -142,7 +142,7 @@ static void* exec_call_gpu_kernel( void* _params ) {
     complex128_t* dPhi_copy = (complex128_t*)malloc(sizeof(complex128_t)*(stop-start));
     CUDA_CHECK( cudaMemcpy( dPhi_copy, dPhi_d+start, sizeof(complex128_t)*(stop-start), cudaMemcpyDeviceToHost ) );
     CUDA_CHECK( cudaDeviceSynchronize() );
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t i=start; i<stop; ++i)
         params->dPhi[i] += dPhi_copy[i-start];
     free(dPhi_copy);

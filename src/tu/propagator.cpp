@@ -130,7 +130,7 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
 
     typedef Matrix<gf_complex_t,-1,-1> MatXgfct;
     if(self_energy != nullptr) {
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for(index_t k=0; k<nktot*2; ++k) {
             index_t kk = k >= nktot ? k - nktot : k;
             Map<MatXcd> S(self_energy+nb2*kk,nb,nb);
@@ -141,14 +141,14 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
     }
 
     const gf_complex_t weight = 1./(double)nktot;
-    #pragma omp parallel for collapse(3) schedule(static)
+    #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t b = 0; b < nb; ++b)
     for(index_t o = 0; o < nb; ++o)
     for(index_t k = 0; k < nktot; ++k) {
         GF_fft_plus[k+nktot*(b+nb*o)] = gf_buf[o+nb*b+nb2*k]*weight;
     }
 
-    #pragma omp parallel for collapse(3) schedule(static)
+    #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t b = 0; b < nb; ++b)
     for(index_t o = 0; o < nb; ++o)
     for(index_t k = 0; k < nktot; ++k) {
@@ -163,7 +163,7 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
 void tu_loop_t::get_GF_for_self(complex128_t* coarseGF) {
     index_t nb = (n_spin*n_orb);
     index_t nb2 = POW2(n_spin*n_orb);
-    #pragma omp parallel for collapse(3) schedule(static)
+    #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t b = 0; b < nb; ++b)
     for(index_t o = 0; o < nb; ++o)
     for(index_t k = 0; k < nk; ++k) {
