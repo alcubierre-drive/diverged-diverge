@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=1.0
+VERSION=0.3
 SYMBOLS=DIVERGE_$VERSION
 OUTFILE=libdivERGe.map
 
