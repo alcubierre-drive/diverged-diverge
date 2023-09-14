@@ -152,7 +152,7 @@ diverge.model_internals_tu( model, params_frg['tu_distance'] )
 diverge.mpi_py_eprint( "found %i unique formfactors" % model.contents.n_tu_ff )
 
 # write to file
-checksum = diverge.model_to_file( model, params_frg['model_output'], True )
+checksum = diverge.model_to_file( model, params_frg['model_output'] )
 diverge.mpi_py_eprint( "wrote model to file %s (%s)" % (params_frg['model_output'], checksum) )
 
 # free resources

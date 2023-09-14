@@ -146,8 +146,8 @@ else:
     # initialize internal patch structures
     diverge.model_internals_patch( model, 6 )
 
-# now write the model output including internals (True)
-checksum = diverge.model_to_file( model, "mod.dvg", True )
+# now write the model output
+checksum = diverge.model_to_file( model, "mod.dvg" )
 
 ################################################################################
 ######################### FLOW STEPPER AND FLOW ################################

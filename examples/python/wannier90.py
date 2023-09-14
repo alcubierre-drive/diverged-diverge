@@ -52,7 +52,7 @@ diverge.model_internals_common( model )
 
 npath = 2000
 diverge.model_output_set_npath( npath )
-checksum = diverge.model_to_file( model, "mod.dvg", True )
+checksum = diverge.model_to_file( model, "mod.dvg" )
 
 diverge.model_free( model )
 diverge.finalize()

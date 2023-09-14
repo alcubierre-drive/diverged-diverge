@@ -151,7 +151,9 @@ mu = diverge.model_set_filling( model, None, -1, params_frg['filling'] )
 diverge.model_internals_patch( model, params_frg['npatches_ibz'] )
 
 # write to file
-checksum = diverge.model_to_file( model, params_frg['model_output'], True )
+cfg = diverge.model_output_conf_defaults_CPP()
+cfg.kc = True
+checksum = diverge.model_to_file_finegrained( model, params_frg['model_output'], diverge.byref(cfg) )
 diverge.mpi_py_eprint( "wrote model to file %s (%s)" % (params_frg['model_output'], checksum) )
 
 # free resources

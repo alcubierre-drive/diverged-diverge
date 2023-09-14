@@ -127,7 +127,7 @@ def honeycomb_model( U=3.0, t=1.0, tp=0.235, mu=1.5, nk=1200, nkf=1,
     else:
         diverge.mpi_py_eprint("unsupported mode. use 'tu' or 'patch'")
 
-    checksum = diverge.model_to_file( model, outfile, True )
+    checksum = diverge.model_to_file( model, outfile )
     diverge.mpi_py_eprint("wrote to file '%s' (%s)" % (outfile, checksum))
 
     return model

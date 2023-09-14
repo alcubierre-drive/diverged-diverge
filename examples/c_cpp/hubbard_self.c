@@ -92,7 +92,7 @@ int main( int argc, char** argv ) {
     double* omega = (double*)malloc(sizeof(double)*1000);
     double* dos = (double*)malloc(sizeof(double)*1000);
     // output
-    mpi_usr_printf( "model@%s\n", diverge_model_to_file(m, __FILE__ "_mod.dvg", 1) );
+    mpi_usr_printf( "model@%s\n", diverge_model_to_file(m, __FILE__ "_mod.dvg") );
 
     FILE* dosfile = fopen( __FILE__ "_fdos.bin", "w" );
 

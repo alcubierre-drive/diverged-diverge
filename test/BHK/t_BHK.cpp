@@ -144,7 +144,7 @@ static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
     mkdir("bhk.dir", S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
 
     sprintf(fname, "bhk.dir/model-%s.dvg", mod->name); \
-    diverge_model_to_file( mod, fname, true );
+    diverge_model_to_file( mod, fname );
     #endif
 
     char* mode = NULL;

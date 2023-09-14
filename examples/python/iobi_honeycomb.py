@@ -83,7 +83,7 @@ if diverge.model_validate( model ):
     diverge.mpi_py_eprint("invalid model")
 diverge.model_internals_common( model )
 diverge.model_internals_tu( model, 0.1 )
-checksum = diverge.model_to_file( model, "hiobi_m.dvg", True )
+checksum = diverge.model_to_file( model, "hiobi_m.dvg" )
 diverge.model_set_chempot( model, None, -1, mu )
 
 step = diverge.flow_step_init( model, "tu", "CD" )

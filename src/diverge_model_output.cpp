@@ -20,12 +20,21 @@ void diverge_model_output_set_npath( int npath ) {
     h_diverge_model_nbandstructure = npath;
 }
 
-char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int ici ) {
-    return diverge_model_to_file_finegrained( mod, fname, ici, ici, ici, ici, ici );
+char* diverge_model_to_file( diverge_model_t* mod, const char* fname ) {
+    return diverge_model_to_file_finegrained( mod, fname, NULL );
 }
 
 char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname,
-        int include_kc, int include_kf, int include_H, int include_U, int include_E ) {
+        const diverge_model_output_conf_t* cfg ) {
+
+    diverge_model_output_conf_t dcfg = diverge_model_output_conf_defaults_CPP();
+    if (!cfg) cfg = &dcfg;
+
+    int include_kc = cfg->kc,
+        include_kf = cfg->kf,
+        include_H = cfg->H,
+        include_U = cfg->U,
+        include_E = cfg->E;
     mpi_log_printf( "output model to %s\n", fname );
     char* md5sum = NULL;
     uindex_t lmd5sum = 0;

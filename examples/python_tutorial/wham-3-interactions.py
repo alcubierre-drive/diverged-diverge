@@ -64,7 +64,7 @@ if dvg.model_validate( model ):
 
 dvg.model_internals_common( model )
 dvg.model_internals_tu( model, 3.92 * 1.1 )
-dvg.model_to_file( model, "nickelate_model.dvg", True ) # common internals
+dvg.model_to_file( model, "nickelate_model.dvg" )
 
 dvg.model_free( model )
 dvg.finalize()

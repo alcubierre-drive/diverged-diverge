@@ -95,7 +95,7 @@ int main( int argc, char** argv ) {
     if (grid_mode) diverge_model_internals_grid(m);
 
     // output
-    mpi_usr_printf( "model@%s\n", diverge_model_to_file(m, __FILE__ "_mod.dvg", 1) );
+    mpi_usr_printf( "model@%s\n", diverge_model_to_file(m, __FILE__ "_mod.dvg") );
 
     // flow step & integrate
     diverge_flow_step_t* f = diverge_flow_step_init(m, mode, "PCD");

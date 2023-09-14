@@ -146,7 +146,7 @@ As we might want to understand whether our model implementation is correct
 without doing the numerically expensive FRG flow, we can save it to a file using
 <diverge_model_to_file>:
 ---- C/C++ ----
-char* md5 = diverge_model_to_file( mod, "model.diverge", true );
+char* md5 = diverge_model_to_file( mod, "model.diverge" );
 ---------------
 The md5sum of the model is saved in the string md5 (which points to static
 memory, i.e., doesn't need to be free'd). From python, we can read the

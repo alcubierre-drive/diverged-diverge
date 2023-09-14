@@ -75,7 +75,7 @@ diverge.model_internals_common( model )
 diverge.model_internals_tu( model, 3.1 )
 
 
-checksum = diverge.model_to_file( model, "model.dvg", True )
+checksum = diverge.model_to_file( model, "model.dvg" )
 diverge.model_set_chempot( model, None, -1, mu )
 
 step = diverge.flow_step_init( model, "tu", "PCDS" )

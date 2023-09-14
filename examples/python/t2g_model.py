@@ -77,7 +77,7 @@ def t2g_model( U = 1.0, J=0.1, nk=24, nkf=1,
     diverge.model_internals_common( model )
     diverge.model_internals_tu( model, tu_maxdist )
 
-    checksum = diverge.model_to_file( model, outfile, True )
+    checksum = diverge.model_to_file( model, outfile )
     diverge.mpi_py_eprint("wrote to file '%s' (%s)" % (outfile, checksum))
     return model
 
@@ -121,7 +121,7 @@ diverge.init(None, None)
 diverge.compilation_status()
 
 model = t2g_model( nk=24, nkf = 1, outfile="t2g_model.py_mod.dvg")
-step = flow( model, outfile="emery.py_flow.dat" )
-post( step, outfile="emery.py_out.dvg" )
+step = flow( model, outfile="t2g_model.py_flow.dat" )
+post( step, outfile="t2g_model.py_out.dvg" )
 cleanup( model, step )
 diverge.finalize()

@@ -199,7 +199,7 @@ sys.stdout = stdout
 diverge.postprocess_and_write( step, None, params_frg['post_output'] )
 
 # write to file
-checksum = diverge.model_to_file( model, params_frg['model_output'], True )
+checksum = diverge.model_to_file( model, params_frg['model_output'] )
 diverge.mpi_py_eprint( "wrote model to file %s (%s)" % (params_frg['model_output'], checksum) )
 
 # free resources

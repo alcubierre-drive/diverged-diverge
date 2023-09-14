@@ -63,7 +63,8 @@ typedef struct diverge_model_t diverge_model_t;
  * header[56-57] - data [displ, size]
  * header[58-66] - reciprocal latttice [interpret as double[3][3]]
  *
- * _if include_common_internals == true, else all the following are zero_
+ * _by default all the following are zero. They can be controlled via the
+ * finegrained function <diverge_model_to_file_finegrained>_
  *
  * header[80-81] - kmesh [displ, size]
  * header[82-83] - kfmesh [displ, size]
@@ -113,8 +114,43 @@ typedef struct diverge_model_t diverge_model_t;
  * - the fourth bit is one when 1 byte (sizeof(char)) is not the same as 8
  *   bit.
  */
-char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int include_common_internals );
-// TODO(LK) should we keep include_common_internals in here?
+char* diverge_model_to_file( diverge_model_t* mod, const char* fname );
+
+// Struct: diverge_model_output_conf_t
+// to have fine-grained output control over diverge_model_to_file
+//
+// Members (bool/int):
+// kc - coarse kmesh
+// kf - fine kmesh
+// H - Hamiltonian
+// U - Orbital to band matrices
+// E - energies
+typedef struct diverge_model_output_conf_t {
+    int kc;
+    int kf;
+    int H;
+    int U;
+    int E;
+} diverge_model_output_conf_t;
+
+#if !defined(__cplusplus) && !defined(CTYPESGEN)
+// defaults for C
+static const diverge_model_output_conf_t diverge_model_output_conf_defaults = {
+    .kc = 0,
+    .kf = 0,
+    .H = 0,
+    .U = 0,
+    .E = 0,
+};
+#endif // __cplusplus
+
+// Function: diverge_model_output_conf_defaults_CPP
+// return the defaults of the <diverge_model_output_conf_t> structure from
+// CPP/Python. For C you can use a plain, simple
+// === C/C++ ===
+// diverge_model_output_conf_t outconf = diverge_model_output_conf_defaults;
+// =============
+diverge_model_output_conf_t diverge_model_output_conf_defaults_CPP( void );
 
 // Function: diverge_model_to_file_finegrained
 // offers the same functionality as <diverge_model_to_file> including
@@ -124,15 +160,12 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname, int includ
 // Parameters:
 // mod - model
 // fname - file name of the output
-// include_kc - include the coarse mesh?
-// include_kf - include the fine mesh?
-// include_H - include the Hamiltonian (on the fine mesh)?
-// include_U - include the orbital to band transformation (on the fine mesh)?
-// include_E - include the energies (on the fine mesh)?
+// cfg - pointer to <diverge_model_output_conf_t>, can be NULL for defaults.
 char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname,
-        int include_kc, int include_kf, int include_H, int include_U, int include_E );
-// TODO(LK) we could add even more fine grained control in principle
+        const diverge_model_output_conf_t* cfg );
 
+// TODO(LK) add this to the output config; as additional parameter that doesn't
+// have precedence over sth that's set by the function?
 // Function: diverge_model_output_set_npath
 // set the number of points per IBZ segment for the bandstructure calculation.
 // defaults to DIVERGE_MODEL_NBANDSTRUCTURE (300). must be called before

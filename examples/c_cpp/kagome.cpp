@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
     char outfile[1024];
     sprintf( outfile, "%s_mod.dvg", __FILE__ );
-    diverge_model_to_file( m, outfile, true );
+    diverge_model_to_file( m, outfile );
 
     if(tu_mode) {
         // number = maximal allowed distance

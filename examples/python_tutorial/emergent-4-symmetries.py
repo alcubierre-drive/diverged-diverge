@@ -148,7 +148,7 @@ error = diverge.symmetrize_2pt_fine( model, diverge.model_internals_get_H(model)
 diverge.mpi_py_eprint( "symmetrization error: %.5e" % error )
 
 # write to file
-checksum = diverge.model_to_file( model, params_frg['model_output'], True )
+checksum = diverge.model_to_file( model, params_frg['model_output'] )
 diverge.mpi_py_eprint( "wrote model to file %s (%s)" % (params_frg['model_output'], checksum) )
 
 # free resources

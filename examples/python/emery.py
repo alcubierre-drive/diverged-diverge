@@ -155,7 +155,7 @@ def emery_model( Ud=3.0, Up=1.0, tdd=0.1, tpp=0.3, tdp=1.0, nk=24, nkf=1,
     diverge.model_internals_tu( model, tu_maxdist )
     diverge.mpi_py_eprint("symmetry error is: %.5e" % diverge.symmetrize_2pt_fine(model,diverge.model_internals_get_H(model),None))
 
-    checksum = diverge.model_to_file( model, outfile, True )
+    checksum = diverge.model_to_file( model, outfile )
     diverge.mpi_py_eprint("wrote to file '%s' (%s)" % (outfile, checksum))
     return model
 

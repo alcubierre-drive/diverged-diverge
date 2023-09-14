@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     char outfile[1024];
     diverge_model_output_set_npath( 50 );
     sprintf( outfile, "%smod.dvg", prefix );
-    diverge_model_to_file( m, outfile, true );
+    diverge_model_to_file( m, outfile );
 
     diverge_model_internals_tu( m, 1.01 );
 

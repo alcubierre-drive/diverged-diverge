@@ -780,15 +780,34 @@ if not _libs["divERGe"] is None:
     model_output_set_npath.restype = None
 
     model_to_file = _libs["divERGe"].get("diverge_model_to_file", "cdecl")
-    model_to_file.argtypes = [POINTER(model_t), String, c_int]
+    model_to_file.argtypes = [POINTER(model_t), String]
     if sizeof(c_int) == sizeof(c_void_p):
         model_to_file.restype = ReturnString
     else:
         model_to_file.restype = String
         model_to_file.errcheck = ReturnString
 
+    # config
+    class struct_model_output_conf_t(Structure):
+        pass
+    struct_model_output_conf_t.__slots__ = [
+        'kc', 'kf', 'H', 'U', 'E',
+    ]
+    struct_model_output_conf_t._fields_ = [
+        ('kc', c_int),
+        ('kf', c_int),
+        ('H', c_int),
+        ('U', c_int),
+        ('E', c_int),
+    ]
+    model_output_conf_t = struct_model_output_conf_t
+
+    model_output_conf_defaults_CPP = _libs["divERGe"].get("diverge_model_output_conf_defaults_CPP", "cdecl")
+    model_output_conf_defaults_CPP.argtypes = []
+    model_output_conf_defaults_CPP.restype = model_output_conf_t
+
     model_to_file_finegrained = _libs["divERGe"].get("diverge_model_to_file_finegrained", "cdecl")
-    model_to_file_finegrained.argtypes = [POINTER(model_t), String, c_int, c_int, c_int, c_int, c_int]
+    model_to_file_finegrained.argtypes = [POINTER(model_t), String, POINTER(model_output_conf_t)]
     if sizeof(c_int) == sizeof(c_void_p):
         model_to_file_finegrained.restype = ReturnString
     else:
@@ -803,19 +822,6 @@ if not _libs["divERGe"] is None:
     model_generate_mom_basis = _libs["divERGe"].get("diverge_model_generate_mom_basis", "cdecl")
     model_generate_mom_basis.argtypes = [(c_double * int(3)) * int(3), (c_double * int(3)) * int(3)]
     model_generate_mom_basis.restype = None
-
-    # Interaction helper
-    init_P_channel = _libs["divERGe"].get("init_P_channel", "cdecl")
-    init_P_channel.argtypes = [POINTER(model_t), POINTER(complex128_t)]
-    init_P_channel.restype = c_int
-
-    init_C_channel = _libs["divERGe"].get("init_C_channel", "cdecl")
-    init_C_channel.argtypes = [POINTER(model_t), POINTER(complex128_t)]
-    init_C_channel.restype = c_int
-
-    init_D_channel = _libs["divERGe"].get("init_D_channel", "cdecl")
-    init_D_channel.argtypes = [POINTER(model_t), POINTER(complex128_t)]
-    init_D_channel.restype = c_int
 
     # Patching
     patching_find_fs_pts_C_ = _libs["divERGe"].get("diverge_patching_find_fs_pts_C", "cdecl")
@@ -1139,7 +1145,7 @@ if not _libs["divERGe"] is None:
             model_internals_patch( model, npatches_ibz )
         elif mode == "tu":
             model_internals_tu( model, formfactor_maxdist )
-        checksum = model_to_file( model, model_output, True )
+        checksum = model_to_file( model, model_output )
         mpi_py_eprint( "model output to %s, checksum %s" % (model_output, checksum) )
 
         step = flow_step_init( model, mode, channels )
