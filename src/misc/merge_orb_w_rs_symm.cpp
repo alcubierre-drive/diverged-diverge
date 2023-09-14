@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "merge_orb_w_rs_symm.h"
 #include "../diverge_Eigen3.hpp"
 

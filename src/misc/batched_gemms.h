@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #pragma once
 
 #include "../diverge_common.h"
@@ -23,6 +25,10 @@ void batched_gemm_loop_vertex( const complex128_t* loop, complex128_t* vertex, i
 void batched_gemm_cublas_init( index_t N );
 void batched_gemm_cublas_clear( void );
 void batched_gemm_cublas_w_buffer_clear( void );
+
+// assumes col-major order of each individual matrix, A and B may overlap
+void batched_gemm_N_ll_num( const complex128_t* A, const complex128_t* B, complex128_t* C,
+        index_t N, complex128_t alpha, complex128_t beta, index_t num, bool Aconj, bool Bconj );
 
 #ifdef __cplusplus
 }

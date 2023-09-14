@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "diverge_model.h"
 #include "diverge_symmetrize.h"
 #include "diverge_internals_struct.h"
@@ -25,10 +27,6 @@ static inline bool map_back_to_BZ(Vec3d* k_point, index_t* idx, const diverge_mo
     *idx = IDX3( lround(ai(0))%nk(0), lround(ai(1))%nk(1), lround(ai(2))%nk(2), nk(1), nk(2));
     *k_point = Map<Vec3d>( mesh+3*(*idx) );
     return (*idx < (nk(0)*nk(1)*nk(2)));
-}
-
-static inline bool approxEQ(MatXcd A, MatXcd B) {
-    return (A-B).lpNorm<Eigen::Infinity>() < 1e-7;
 }
 
 void diverge_generate_symm_maps( diverge_model_t* model ) {

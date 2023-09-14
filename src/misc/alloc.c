@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "alloc.h"
 
 rs_hopping_t* diverge_mem_alloc_rs_hopping_t( index_t num ) {

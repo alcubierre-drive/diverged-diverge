@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("pri",["Function"],[["print",,[["dvg",,,,0,"File:build/lib/diverge/__init__.py:dvg.print","PythonClass:dvg:print"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("pri",["Function"],[["print",,[["dvg",,,,0,"File:util/__init__.py:dvg.print","PythonClass:dvg:print"]]]]);

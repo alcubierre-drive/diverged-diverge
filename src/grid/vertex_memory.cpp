@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "vertex_memory.hpp"
 #include "index_gymnastics.hpp"
 #include "reorder.hpp"

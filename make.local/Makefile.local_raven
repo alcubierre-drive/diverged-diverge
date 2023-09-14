@@ -1,0 +1,23 @@
+# module load cuda/11.6 intel/21.6.0 mkl/2022.1 fftw-serial/3.3.10 openmpi/4.1 boost/1.73 gcc/11  
+USE_CUDA := true
+INC_TEST := true
+DEFINES += -DBHK_NK=4 -DBHK_L0=2 -DBHK_NUM=12 -DUSE_BOOST_SORT
+
+INCLUDES += -I$(HOME)/software/boost_1_76_0/ -I$(CUDA_HOME)/include \
+            -I$(HOME)/software -I$(FFTW_HOME)/include -I$(MKL_HOME)/include
+
+LDFLAGS := -L$(CUDA_HOME)/lib64 -lcudart -lcuda -lcufft -lcublas -lcusolver \
+        -lcusolverMg -lcrypto -lssl \
+        -L$(FFTW_HOME)/lib -lfftw3 -lfftw3_omp -lfftw3f -lfftw3f_omp -qmkl \
+        -std=c++17 -lstdc++
+
+DEFINES += -DNDEBUG -DEIGEN_NO_DEBUG -DUSE_MKL
+# DEFINES += -DUSE_GF_FLOATS
+CXXFLAGS += -Ofast -march=native -mtune=native
+CFLAGS += -Ofast -march=native -mtune=native
+CUFLAGS += -O4 --use_fast_math -gencode arch=compute_80,code=sm_80 \
+           --expt-relaxed-constexpr
+
+CXX := icx
+CC := icx
+LD := icx

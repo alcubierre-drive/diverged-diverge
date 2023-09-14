@@ -1,0 +1,1 @@
+﻿NDFramePage.OnPageTitleLoaded("File:src/misc/license.h","license.h");NDSummary.OnSummaryLoaded("File:src/misc/license.h",[["C/C++","C"]],[["Functions","Function"],["Groups","Group"]],[[1,0,1,"Functions","Functions"],[2,0,0,"diverge_license","diverge_license"],[3,0,0,"diverge_license_print","diverge_license_print"]]);

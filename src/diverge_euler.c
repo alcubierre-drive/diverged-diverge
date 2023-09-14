@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "diverge_euler.h"
 
 bool diverge_euler_next( diverge_euler_t* de, double Vmax ) {

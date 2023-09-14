@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "selfenergy.hpp"
 
 inline static void transpose(complex128_t* inp, complex128_t* buf, index_t nx, index_t ny) {

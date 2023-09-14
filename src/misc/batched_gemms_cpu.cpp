@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "batched_gemms.h"
 
 #ifdef USE_MKL
@@ -338,3 +340,150 @@ static void batched_gemms_zlacpy( index_t N, const complex128_t* A, complex128_t
 }
 #endif // BATCHED_GEMMS_ZLACPY_LAPACKE
 #endif
+
+#include "../diverge_Eigen3.hpp"
+
+template<int dim, bool Aconj, bool Bconj>
+void batched_gemm_N_ll_num_helper( const complex128_t* A, const complex128_t* B, complex128_t* C,
+        index_t N, complex128_t alpha, complex128_t beta, index_t num ) {
+
+    typedef Matrix<complex128_t,dim,dim> Mat_cd;
+
+    #pragma omp parallel
+    {
+        Mat_cd mat_buf = Mat_cd::Zero(N,N);
+        #pragma omp for
+        for (index_t i=0; i<num; ++i) {
+            Map<const Mat_cd> Amap( A + N*N*i, N, N);
+            Map<const Mat_cd> Bmap( B + N*N*i, N, N);
+            Map<Mat_cd> Cmap( C + N*N*i, N, N);
+
+            mat_buf = Cmap;
+            if constexpr(Aconj && Bconj)
+                mat_buf = Amap.adjoint() * Bmap.adjoint() * alpha + mat_buf * beta;
+            else if constexpr(Aconj && !Bconj)
+                mat_buf = Amap.adjoint() * Bmap * alpha + mat_buf * beta;
+            else if constexpr(!Aconj && Bconj)
+                mat_buf = Amap * Bmap.adjoint() * alpha + mat_buf * beta;
+            else
+                mat_buf = Amap * Bmap * alpha + mat_buf * beta;
+            Cmap = mat_buf;
+        }
+    }
+}
+
+void batched_gemm_N_ll_num( const complex128_t* A, const complex128_t* B, complex128_t* C,
+        index_t N, complex128_t alpha, complex128_t beta, index_t num, bool Aconj, bool Bconj ) {
+    switch (N) {
+        #define make_case( dim ) \
+        case dim: \
+            if (!Aconj && !Bconj) \
+                batched_gemm_N_ll_num_helper<dim,false,false>( A, B, C, N, alpha, beta, num ); \
+            if (!Aconj && Bconj) \
+                batched_gemm_N_ll_num_helper<dim,false,true>( A, B, C, N, alpha, beta, num ); \
+            if (Aconj && !Bconj) \
+                batched_gemm_N_ll_num_helper<dim,true,false>( A, B, C, N, alpha, beta, num ); \
+            if (Aconj && Bconj) \
+                batched_gemm_N_ll_num_helper<dim,true,true>( A, B, C, N, alpha, beta, num ); \
+            break;
+#ifndef BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS
+#define BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS 4
+#endif // BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS
+        make_case( 1 )
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 2
+        make_case( 2 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 3
+        make_case( 3 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 4
+        make_case( 4 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 5
+        make_case( 5 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 6
+        make_case( 6 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 7
+        make_case( 7 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 8
+        make_case( 8 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 9
+        make_case( 9 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 10
+        make_case( 10 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 11
+        make_case( 11 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 12
+        make_case( 12 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 13
+        make_case( 13 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 14
+        make_case( 14 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 15
+        make_case( 15 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 16
+        make_case( 16 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 17
+        make_case( 17 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 18
+        make_case( 18 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 19
+        make_case( 19 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 20
+        make_case( 20 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 21
+        make_case( 21 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 22
+        make_case( 22 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 23
+        make_case( 23 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 24
+        make_case( 24 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 25
+        make_case( 25 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 26
+        make_case( 26 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 27
+        make_case( 27 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 28
+        make_case( 28 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 29
+        make_case( 29 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 30
+        make_case( 30 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 31
+        make_case( 31 )
+        #endif
+        #if BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS >= 32
+        make_case( 32 )
+        #endif
+        default:
+        make_case( -1 )
+    }
+}

@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "memory_pool.hpp"
 #include "cuda_error.h"
 #include <algorithm>

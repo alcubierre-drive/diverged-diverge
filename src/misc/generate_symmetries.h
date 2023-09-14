@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #pragma once
 
 #include "../diverge_common.h"
@@ -105,8 +107,8 @@ typedef struct site_descr_t {
 // default initialization in c++ is weird...
 #ifdef __cplusplus
     index_t n_functions = 0;
-    double xaxis[MAX_ORBS_PER_SITE][3] = {0};
-    double zaxis[MAX_ORBS_PER_SITE][3] = {0};
+    double xaxis[MAX_ORBS_PER_SITE][3] = {{0}};
+    double zaxis[MAX_ORBS_PER_SITE][3] = {{0}};
 #else
     // Var: n_functions
     index_t n_functions;

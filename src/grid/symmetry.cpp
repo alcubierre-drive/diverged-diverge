@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "symmetry.hpp"
 #include <algorithm>
 #ifdef USE_BOOST_SORT

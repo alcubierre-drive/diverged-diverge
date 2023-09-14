@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "misc/compilation_status.h"
 #include "misc/mpi_functions.h"
 #include "diverge_run_tests.h"

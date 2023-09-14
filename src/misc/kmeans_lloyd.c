@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "kmeans_lloyd.h"
 
 static int h_dkm_use_random_seed = 0;

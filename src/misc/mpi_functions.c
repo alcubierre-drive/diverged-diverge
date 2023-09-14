@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "mpi_functions.h"
 
 #include <fftw3.h>
@@ -20,7 +22,7 @@ static void init_internal_libs( void ) {
 
     #ifndef DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT
     if (dvg_previous_log_color)
-        mpi_log_set_colors(isatty(fileno(stderr)));
+        mpi_log_set_colors(isatty(STDERR_FILENO));
     #endif
 
     #ifdef DIVERGE_OPENBLAS_LIMIT_THREADS

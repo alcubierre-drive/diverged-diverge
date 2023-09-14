@@ -1,0 +1,1 @@
+﻿NDFramePage.OnPageTitleLoaded("File:doc/symmetries.txt","symmetries.txt");NDSummary.OnSummaryLoaded("File:doc/symmetries.txt",[["Text File","TextFile"]],[["Classes","Class"]],[[268,0,0,"Symmetries","Symmetries"]]);

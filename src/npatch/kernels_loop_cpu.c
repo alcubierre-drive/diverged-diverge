@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "kernels_loop_cpu.h"
 #include "kernels_helpers.h"
 #include "../diverge_internals_struct.h"

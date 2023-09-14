@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "mpi_log.h"
 #include "mpi_functions.h" // diverge_mpi_comm_rank()
 #include <stdarg.h>

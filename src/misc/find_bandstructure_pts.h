@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #pragma once
 
 #include "../diverge_common.h"
@@ -47,6 +49,9 @@ index_t* find_bandstructure_pts( diverge_model_t* m, index_t** indices, index_t*
 // Function: find_bandstructure_pts_crs
 // same as <find_bandstructure_pts>, but for the coarse mesh.
 index_t* find_bandstructure_pts_crs( diverge_model_t* m, index_t** indices, index_t* n_indices );
+
+// TODO(LK) need to prefix these functions with diverge_ somehow. Don't want
+// incredibly long names, though. ideas?
 
 #ifdef __cplusplus
 }

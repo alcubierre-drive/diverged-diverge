@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "vertex.hpp"
 
 Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop, 

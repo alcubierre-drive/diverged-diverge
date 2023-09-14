@@ -1,0 +1,46 @@
+Namespace: Symmetries
+
+Point group symmetries in divERGe
+
+Example: Hubbard Model::
+
+For the automatic patch finding algorithm, symmetries are *strongly
+recommended*. Truncated unity FRG benefits from symmetries by reducing the
+computational cost. Grid FRG requires symmetries for re-symmetrization of the
+loop objects for multi-site models. As the model we implement is a square
+lattice Hubbard model, we write all the elements of C4v into the symmetry
+arrays. Not that the snippet below makes use of the Eigen3 classes imported in
+diverge_Eigen3.hpp. From the python interface, consider
+<diverge_model_t->orb_symmetries> as a (n_sym, n_orb, n_orb) array of
+<complex128_t> and <diverge_model_t->rs_symmetries> as a (n_sym, 3, 3) array of
+doubles. The former must be allocated (e.g. via
+<diverge_mem_alloc_complex128_t>, or just plain malloc/calloc).
+---- C/C++ ----
+mod->n_sym = 8;
+mod->orb_symmetries = (complex128_t*)diverge_mem_alloc_complex128_t(8);
+for (index_t s=0; s<8; ++s) {
+    mod->orb_symmetries[s] = 1.0;
+    // map rs_symmetries[s] to 3x3 matrix
+    Map<Mat3d> symmat(mod->rs_symmetries[s][0]);
+    // and fill with appropriate symmetry operation
+    switch (s) {
+        case 0: symmat = Mat3d::Identity(); break;
+        case 1: symmat = Mat3d::Identity(); symmat.block<2,2>(0,0) = Rot2d(M_PI).toRotationMatrix(); break;
+        case 2: symmat = Mat3d::Identity(); symmat.block<2,2>(0,0) = Rot2d(0.5*M_PI).toRotationMatrix(); break;
+        case 3: symmat = Mat3d::Identity(); symmat.block<2,2>(0,0) = Rot2d(1.5*M_PI).toRotationMatrix(); break;
+        case 4: symmat = Mat3d::Identity(); symmat(0,0) = -1; break;
+        case 5: symmat = Mat3d::Identity(); symmat(1,1) = -1; break;
+        case 6: symmat = Mat3d::Identity(); symmat(0,0) = -1;
+                symmat.block<2,2>(0,0) = Rot2d(0.25*M_PI)*symmat.block<2,2>(0,0)*Rot2d(-0.25*M_PI); break;
+        case 7: symmat = Mat3d::Identity(); symmat(1,1) = -1;
+                symmat.block<2,2>(0,0) = Rot2d(0.25*M_PI)*symmat.block<2,2>(0,0)*Rot2d(-0.25*M_PI); break;
+        default: break;
+    }
+}
+---------------
+
+Symmetry Generators::
+see <diverge_generate_symm_trafo at site_descr_t.diverge_generate_symm_trafo>.
+=== C/C++ ===
+// TODO missing
+=============

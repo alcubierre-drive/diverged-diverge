@@ -194,6 +194,15 @@ if not _libs["divERGe"] is None:
     compilation_status.argtypes = []
     compilation_status.restype = None
 
+    # License
+    license = _libs["divERGe"].get("diverge_license", "cdecl")
+    license.argtypes = []
+    license.restype = String
+
+    license_print = _libs["divERGe"].get("diverge_license_print", "cdecl")
+    license_print.argtypes = []
+    license_print.restype = None
+
     # Symmetry Generator
     real_harmonics_t = c_int
     orb_s = 0

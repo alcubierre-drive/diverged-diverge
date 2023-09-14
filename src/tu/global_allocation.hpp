@@ -1,3 +1,5 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #pragma once
 template<typename T>
 inline void mcopy(T* to, const T* from, const long long unsigned size)
