@@ -556,7 +556,7 @@ class diverge_post_tu:
         self.Pval = get_array_header( iL, np.float64 )
         self.Pvec = get_array_header( iL, np.complex128 )
 
-        self.Pvec = self.Pvec.reshape((np.sum(self.Plen),n_spin,n_spin,n_bonds,n_orb))
+        self.Pvec = self.Pvec.reshape((np.sum(self.Plen),n_spin,n_spin,n_orbff))
 
         self.Clen = get_array_header( iL, np.longlong )
         self.Coff = get_array_header( iL, np.longlong )
@@ -564,7 +564,7 @@ class diverge_post_tu:
         self.Cval = get_array_header( iL, np.float64 )
         self.Cvec = get_array_header( iL, np.complex128 )
 
-        self.Cvec = self.Cvec.reshape((np.sum(self.Clen),n_spin,n_spin,n_bonds,n_orb))
+        self.Cvec = self.Cvec.reshape((np.sum(self.Clen),n_spin,n_spin,n_orbff))
 
         self.Dlen = get_array_header( iL, np.longlong )
         self.Doff = get_array_header( iL, np.longlong )
@@ -572,7 +572,7 @@ class diverge_post_tu:
         self.Dval = get_array_header( iL, np.float64 )
         self.Dvec = get_array_header( iL, np.complex128 )
 
-        self.Dvec = self.Dvec.reshape((np.sum(self.Dlen),n_spin,n_spin,n_bonds,n_orb))
+        self.Dvec = self.Dvec.reshape((np.sum(self.Dlen),n_spin,n_spin,n_orbff))
 
         self.S_sc = get_array_header( iL, np.float64 )
         self.n_svdP = d_header[iL[0]-1]
