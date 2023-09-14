@@ -7,34 +7,6 @@
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 typedef Eigen::Matrix<complex128_t,-1,-1,Eigen::RowMajor> CMatXcd;
 
-static inline bool map_back_to_BZ(Vec3d &k_point,
-        index_t* helper,diverge_model_t* model) {
-    Map<Vec3d> UC1(model->lattice[0]);
-    Map<Vec3d> UC2(model->lattice[1]);
-    Map<Vec3d> UC3(model->lattice[2]);
-    double a0 = k_point.dot(UC1)/(2.0*M_PI);
-    double a1 = k_point.dot(UC2)/(2.0*M_PI);
-    double a2 = k_point.dot(UC3)/(2.0*M_PI);
-    if(std::abs(a0)>0.5+1e-12){a0  -= (double)round(a0);}
-    if(std::abs(a1)>0.5+1e-12){a1  -= (double)round(a1);}
-    if(std::abs(a2)>0.5+1e-12){a2  -= (double)round(a2);}
-    if (a0 < -1e-12) a0 += 1.0;
-    if (a1 < -1e-12) a1 += 1.0;
-    if (a2 < -1e-12) a2 += 1.0;
-
-    *helper = IDX3(round(std::abs(a0)*model->nk[0]),round(std::abs(a1)*model->nk[1]),
-                    round(std::abs(a2)*model->nk[2]),model->nk[1],model->nk[2]);
-
-    Map<Vec3d> kpnt(model->internals->kmesh+*helper*3);
-    double kbasis[3][3];
-    diverge_model_generate_mom_basis(model->lattice,kbasis);
-    Map<Vec3d> mUC1(kbasis[0]); Map<Vec3d> mUC2(kbasis[1]);
-    Map<Vec3d> mUC3(kbasis[2]);
-    k_point = a0 * mUC1 + a1 * mUC2 + a2 * mUC3;
-    return (*helper < ((tu_data_t*)(model->internals->tu_data))->nk
-                && (k_point - kpnt).norm() < 1e-6);
-}
-
 static inline bool approxEQ(MatXcd A, MatXcd B) { return (A-B).lpNorm<Eigen::Infinity>() < 1e-7; }
 
 bool init_inv_symmerty_map(diverge_model_t* model) {

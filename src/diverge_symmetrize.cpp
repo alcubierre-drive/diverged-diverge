@@ -29,10 +29,6 @@ static inline bool map_back_to_BZ(Vec3d* k_point, index_t* idx, const diverge_mo
     return (*idx < (nk(0)*nk(1)*nk(2)));
 }
 
-static inline bool approxEQ(MatXcd A, MatXcd B) {
-    return (A-B).lpNorm<Eigen::Infinity>() < 1e-7;
-}
-
 void diverge_generate_symm_maps( diverge_model_t* model ) {
     if (model->internals->symm_orb_off &&
         model->internals->symm_orb_len &&
