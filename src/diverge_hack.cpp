@@ -44,6 +44,13 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
 
     CHECKKEY("tu_cpu_offload") {
         TU_INTERNALS->offload_cpu = atof(val);
+        if(TU_INTERNALS->offload_cpu > 1.0)
+            TU_INTERNALS->offload_cpu = 0.0;
+    }
+    CHECKKEY("tu_cpu_offload") {
+        TU_INTERNALS->percent_mem_GPU_blocked = atof(val);
+        if(TU_INTERNALS->percent_mem_GPU_blocked > 1.0)
+            TU_INTERNALS->percent_mem_GPU_blocked = 0.9;
     }
     CHECKKEY("tu_selfenergy_flow") {
         TU_INTERNALS->tu_selfenergy_flow = (bool)atoi(val);

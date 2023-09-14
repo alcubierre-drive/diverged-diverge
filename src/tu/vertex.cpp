@@ -313,7 +313,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         CUDA_CHECK( cudaSetDevice( i ) );
         CUDA_CHECK( cudaMemGetInfo( &available_memory[i], &total ) );
         mpi_vrb_printf("TU GPU %d has %.1f GB available\n", i, available_memory[i] / POW3(1024.));
-        available_memory[i] *= 0.95;
+        available_memory[i] *= tu_data->percent_mem_GPU_blocked;
 
         index_t prop_mem = 0;
         index_t prop_mem_managed = 0;
