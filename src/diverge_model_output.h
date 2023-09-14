@@ -64,7 +64,8 @@ typedef struct diverge_model_t diverge_model_t;
  * header[58-66] - reciprocal latttice [interpret as double[3][3]]
  *
  * _by default all the following are zero. They can be controlled via the
- * finegrained function <diverge_model_to_file_finegrained>_
+ * finegrained function <diverge_model_to_file_finegrained at
+ * diverge_model_output_conf_t.diverge_model_to_file_finegrained>_
  *
  * header[80-81] - kmesh [displ, size]
  * header[82-83] - kfmesh [displ, size]

@@ -1,1 +1,1 @@
-﻿NDSummary.OnToolTipsLoaded("File:doc/license.txt",{303:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">Version 3, 29 June 2007</div></div>"});
+﻿NDSummary.OnToolTipsLoaded("File:doc/license.txt",{306:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">Version 3, 29 June 2007</div></div>"});

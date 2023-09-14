@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("ham",["Function"],[["hamilton_generator_default",,[["diverge_model_t",,,,0,"File:src/diverge_model.h:diverge_model_t.hamilton_generator_default","CClass:diverge_model_t:hamilton_generator_default"]]],["hamiltonian_generator_t",,[[,,,,0,"File:src/diverge_model.h:hamiltonian_generator_t"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("ham",["Function"],[["hamiltonian_generator_t",,[[,,,,0,"File:src/diverge_model.h:hamiltonian_generator_t"]]]]);
