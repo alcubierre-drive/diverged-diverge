@@ -64,5 +64,17 @@ ________________________________________________________________________________
   symmetries from python (emery)
 - code: include static self-energies in both grid and npatch, with fourier
   selection and cutoff in npatch
-- code: all TODO messsages grep'd in the source files (end of make)
+# TODOs pre 0.4:
+- mpi_init(), mpi_finalize(), mpi_embed(), mpi_ -> diverge_init(),
+  diverge_finalize()...
+- find_bandstructure_pts -> diverge_!
+- model_output no include_common_internals
+- model_output_finegrained use structure
+- postprocessing output -> finegrained & normal
+- DIVERGE_FFTW_NUM_THREADS, DIVERGE_OMP_NUM_THREADS,
+  DIVERGE_OPENBLAS_NUM_THREADS
+# TODOs post 0.4:
+- checkpointing of flow step
+- c library functions for model files
+
 
