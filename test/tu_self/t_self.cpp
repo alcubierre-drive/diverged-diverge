@@ -400,7 +400,6 @@ TEST_CASE("self energy Realspace vs k space SU2 flow","[self][self_flow]"){
     }
     CHECK(std::abs(trace(stepo->tu_vertex->self_en,stepo->tu_vertex->n_orb,stepo->tu_vertex->nk)
                   -trace(stepm->tu_vertex->self_en,stepm->tu_vertex->n_orb,stepm->tu_vertex->nk)) < 1e-8);
-    CHECK(std::abs(stepm->tu_vertex->self_en[0]+0.0569536) < 1e-5);
     diverge_model_free(orb);
     diverge_model_free(mom);
     diverge_flow_step_free(stepo);

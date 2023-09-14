@@ -301,7 +301,6 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, Projection* proj) {
             }
         }
     }
-
     free(Rvec);
     free(buf);
 }

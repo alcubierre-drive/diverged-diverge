@@ -39,60 +39,29 @@ diverge_model_t* test_model(int n_spin, int kx = 1, int kxf = 1) {
     Rvert.reserve(12*10);
     rs_vertex_t helper;
     helper.s1 = -1, helper.R[0] = 0, helper.R[1] = 0, helper.R[2] = 0;
-    if(mod1->SU2) {
-        for(index_t o1 = 0; o1 < n_orb; ++o1)
-        for(index_t o2 = 0; o2 < n_orb; ++o2) {
-            helper.o1 = o1;
-            helper.o2 = o2;
-            if( o1 == o2 ) {
-                helper.V = U;
-                helper.chan = 'D';
-                Rvert.push_back(helper);
-            }else{
-                // P channel
-                helper.V = J;
-                helper.chan = 'P';
-                Rvert.push_back(helper);
-                helper.V = J;
-                helper.chan = 'C';
-                Rvert.push_back(helper);
-                helper.V = U - 2.* J;
-                helper.chan = 'D';
-                Rvert.push_back(helper);
-            }
-        }
-    }else{
-        for(index_t o1 = 0; o1 < n_orb; ++o1)
-        for(index_t o2 = 0; o2 < n_orb; ++o2) {
-            helper.o1 = o1;
-            helper.o2 = o2;
-            if( o1 == o2 ) {
-                helper.s1 = -1;
-                helper.V = U; helper.chan = 'D';
-                Rvert.push_back(helper);
 
-            }else{
-                    helper.s1 = -1;
-                    helper.V = U-2*J; helper.chan = 'D';
-                    Rvert.push_back(helper);
-
-                for(index_t s1 = 0; s1 < 2; ++s1) {
-                    index_t s2 = s1 == 0 ? 1 : 0;
-                    helper.s1 = s1,helper.s2 = s2, helper.s3 = s1,helper.s4 = s2;
-                    helper.V = J; helper.chan = 'C';
-                    Rvert.push_back(helper);
-
-                    helper.s1 = s1,helper.s2 = s2, helper.s3 = s1,helper.s4 = s2;
-                    helper.V = J; helper.chan = 'P';
-                    Rvert.push_back(helper);
-                    helper.s1 = s1,helper.s2 = s1, helper.s3 = s1,helper.s4 = s1;
-                    helper.V = J; helper.chan = 'C';
-                    Rvert.push_back(helper);
-                }
-
-            }
+    for(index_t o1 = 0; o1 < n_orb; ++o1)
+    for(index_t o2 = 0; o2 < n_orb; ++o2) {
+        helper.o1 = o1;
+        helper.o2 = o2;
+        if( o1 == o2 ) {
+            helper.V = U;
+            helper.chan = 'D';
+            Rvert.push_back(helper);
+        }else{
+            // P channel
+            helper.V = J;
+            helper.chan = 'P';
+            Rvert.push_back(helper);
+            helper.V = J;
+            helper.chan = 'C';
+            Rvert.push_back(helper);
+            helper.V = U - 2.* J;
+            helper.chan = 'D';
+            Rvert.push_back(helper);
         }
     }
+
     mod1->n_vert = Rvert.size();
     mod1->vert = (rs_vertex_t*)calloc(mod1->n_vert,sizeof(rs_vertex_t));
     memcpy( mod1->vert, Rvert.data(), sizeof(rs_vertex_t)*mod1->n_vert );

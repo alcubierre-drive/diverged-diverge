@@ -85,7 +85,7 @@ static inline void init_C_channel_nonSU2(const diverge_model_t* model, complex12
         if (s1 == -1) {
             for (index_t si1=0; si1<2; si1++)
             for (index_t si2=0; si2<2; si2++) {
-                s1 = si1, s2 = si1, s3 = si2, s4 = si2;
+                s1 = si1, s2 = si2, s3 = si1, s4 = si2;
                 buf[IDX7(Ridx,s1,s2,o1,s3,s4,o2,ns,ns,no,ns,ns,no)] += model->vert[idx].V;
             }
         } else {
@@ -148,7 +148,7 @@ static inline void init_P_channel_nonSU2(const diverge_model_t* model, complex12
         if (s1 == -1) {
             for (index_t si1=0; si1<2; si1++)
             for (index_t si2=0; si2<2; si2++) {
-                s1 = si1, s2 = si1, s3 = si2, s4 = si2;
+                s1 = si1, s2 = si2, s3 = si1, s4 = si2;
                 buf[IDX7(Ridx,s1,s2,o1,s3,s4,o2,ns,ns,no,ns,ns,no)] += model->vert[idx].V;
             }
         } else {

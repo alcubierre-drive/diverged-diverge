@@ -105,10 +105,10 @@ void Vertex::init_U(bool enforce_exchange) {
             for (index_t o1=0; o1<n_orb; ++o1) {
                 index_t full_q = symm->idx_ibz_in_fullmesh[q+my_nk_off];
                 index_t r1234 = IDX7(q, s4, s3, o3, s2, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
-                        i1234 = IDX7(full_q, s1, s2, o1, s3, s4, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
-                        i2134 = IDX7(full_q, s2, s1, o1, s3, s4, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
-                        i1243 = IDX7(full_q, s1, s2, o1, s4, s3, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
-                        i2143 = IDX7(full_q, s2, s1, o1, s4, s3, o3,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
+                        i1234 = IDX7(full_q, s2, s1, o3, s4, s3, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                        i2134 = IDX7(full_q, s1, s2, o3, s4, s3, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                        i1243 = IDX7(full_q, s2, s1, o3, s3, s4, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                        i2143 = IDX7(full_q, s1, s2, o3, s3, s4, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
                 Pch[r1234] = 0.5 * (helper[i1234] - helper[i1243] +
                                     helper[i2143] - helper[i2134]);
             }
