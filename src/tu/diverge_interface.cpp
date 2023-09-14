@@ -102,6 +102,8 @@ inline void sort_ff_struct(tu_formfactor_t* tu_ff, index_t n_tu_ff) {
                         return tu_ff[a].R[0] < tu_ff[b].R[0];
                     if (tu_ff[a].R[1] != tu_ff[b].R[1])
                         return tu_ff[a].R[1] < tu_ff[b].R[1];
+                    if (tu_ff[a].R[2] != tu_ff[b].R[2])
+                        return tu_ff[a].R[2] < tu_ff[b].R[2];
                     return abs(tu_ff[a].ofrom - tu_ff[a].oto) < abs(tu_ff[b].ofrom - tu_ff[b].oto);
                 });
     tu_formfactor_t* ff_copy = (tu_formfactor_t*)calloc(n_tu_ff,sizeof(tu_formfactor_t));
