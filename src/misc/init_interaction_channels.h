@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "diverge_model.h"
+#include "../diverge_model.h"
 
 #ifdef __cplusplus
 extern "C" {

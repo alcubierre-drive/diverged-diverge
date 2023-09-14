@@ -7,16 +7,16 @@
 int main( int argc, char** argv ) {
 
     #if INC_TEST
-    diverge_mpi_init( &argc, &argv );
+    diverge_init( &argc, &argv );
     mpi_usr_printf( "Wer testet hat's nötig...\n" );
     int retv = diverge_run_tests( argc, argv );
-    diverge_mpi_finalize();
+    diverge_finalize();
     return retv;
     #endif
 
-    diverge_mpi_init( &argc, &argv );
+    diverge_init( &argc, &argv );
     diverge_compilation_status();
     mpi_usr_printf( "I just don't know what to do with myself. -- White Stripes\n" );
-    diverge_mpi_finalize();
+    diverge_finalize();
     return 42;
 }

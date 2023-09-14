@@ -16,7 +16,7 @@ diverge_model_t* kagome_model( index_t nk, index_t nkf ,
 
 
 int main(int argc, char** argv) {
-    diverge_mpi_init( &argc, &argv );
+    diverge_init( &argc, &argv );
 
     char mode[128] = "tu";
     if (argc > 1) {
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
 
     diverge_flow_step_free( s );
     diverge_model_free( m );
-    diverge_mpi_finalize();
+    diverge_finalize();
 }
 
 

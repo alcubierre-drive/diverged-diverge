@@ -1,6 +1,6 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-#include "find_bandstructure_pts.h"
+#include "kmesh_to_bands.h"
 #include "bitary.h"
 #include "../diverge_Eigen3.hpp"
 #include "../diverge_model.h"
@@ -14,14 +14,14 @@ using std::vector;
 static void find_bandstructure_segment_indices( const double start[3],
         const double stop[3], const double* kfmesh, index_t nktot, index_t**
         indices, index_t* n_indices );
-static index_t* find_bandstructure_pts_both( diverge_model_t* m, index_t**
+static index_t* diverge_kmesh_to_bands_both( diverge_model_t* m, index_t**
         indices, index_t* n_indices, bool fine );
 
-index_t* find_bandstructure_pts( diverge_model_t* m, index_t** indices, index_t* n_indices ) {
-    return find_bandstructure_pts_both( m, indices, n_indices, true );
+index_t* diverge_kmesh_to_bands( diverge_model_t* m, index_t** indices, index_t* n_indices ) {
+    return diverge_kmesh_to_bands_both( m, indices, n_indices, true );
 }
-index_t* find_bandstructure_pts_crs( diverge_model_t* m, index_t** indices, index_t* n_indices ) {
-    return find_bandstructure_pts_both( m, indices, n_indices, false );
+index_t* diverge_kmesh_to_bands_crs( diverge_model_t* m, index_t** indices, index_t* n_indices ) {
+    return diverge_kmesh_to_bands_both( m, indices, n_indices, false );
 }
 
 static void find_bandstructure_segment_indices( const double start_[3], const
@@ -92,7 +92,7 @@ static void find_bandstructure_segment_indices( const double start_[3], const
         (*indices)[i] = k_indices[t_indices[i]];
 }
 
-static index_t* find_bandstructure_pts_both( diverge_model_t* m, index_t**
+static index_t* diverge_kmesh_to_bands_both( diverge_model_t* m, index_t**
         indices, index_t* n_indices, bool fine ) {
     if (m->n_ibz_path <= 1) {
         *n_indices = -1;

@@ -56,21 +56,21 @@ if not _libs["divERGe"] is None:
     index_t = c_int64
 
     # MPI functions
-    mpi_init = _libs["divERGe"].get("diverge_mpi_init", "cdecl")
-    mpi_init.argtypes = [POINTER(c_int), POINTER(POINTER(POINTER(c_char)))]
-    mpi_init.restype = None
+    init = _libs["divERGe"].get("diverge_init", "cdecl")
+    init.argtypes = [POINTER(c_int), POINTER(POINTER(POINTER(c_char)))]
+    init.restype = None
 
-    mpi_finalize = _libs["divERGe"].get("diverge_mpi_finalize", "cdecl")
-    mpi_finalize.argtypes = []
-    mpi_finalize.restype = None
+    finalize = _libs["divERGe"].get("diverge_finalize", "cdecl")
+    finalize.argtypes = []
+    finalize.restype = None
 
-    mpi_embed = _libs["divERGe"].get("diverge_mpi_embed", "cdecl")
-    mpi_embed.argtypes = [c_voidp]
-    mpi_embed.restype = None
+    embed = _libs["divERGe"].get("diverge_embed", "cdecl")
+    embed.argtypes = [c_voidp]
+    embed.restype = None
 
-    mpi_reset = _libs["divERGe"].get("diverge_mpi_reset", "cdecl")
-    mpi_reset.argtypes = []
-    mpi_reset.restype = None
+    reset = _libs["divERGe"].get("diverge_reset", "cdecl")
+    reset.argtypes = []
+    reset.restype = None
 
     mpi_exit = _libs["divERGe"].get("diverge_mpi_exit", "cdecl")
     mpi_exit.argtypes = [c_int]
@@ -473,17 +473,17 @@ if not _libs["divERGe"] is None:
     ]
 
     # function definitions
-    hamilton_generator_default = _libs["divERGe"].get("hamilton_generator_default", "cdecl")
-    hamilton_generator_default.argtypes = [POINTER(model_t), POINTER(complex128_t)]
-    hamilton_generator_default.restype = None
+    diverge_hamilton_generator_default = _libs["divERGe"].get("diverge_hamilton_generator_default", "cdecl")
+    diverge_hamilton_generator_default.argtypes = [POINTER(model_t), POINTER(complex128_t)]
+    diverge_hamilton_generator_default.restype = None
 
-    greensfunc_generator_default = _libs["divERGe"].get("greensfunc_generator_default", "cdecl")
-    greensfunc_generator_default.argtypes = [POINTER(model_t), complex128_t, POINTER(gf_complex_t)]
-    greensfunc_generator_default.restype = greensfunc_op_t
+    diverge_greensfunc_generator_default = _libs["divERGe"].get("diverge_greensfunc_generator_default", "cdecl")
+    diverge_greensfunc_generator_default.argtypes = [POINTER(model_t), complex128_t, POINTER(gf_complex_t)]
+    diverge_greensfunc_generator_default.restype = greensfunc_op_t
 
-    channel_vertex_generator_default = _libs["divERGe"].get("channel_vertex_generator_default", "cdecl")
-    channel_vertex_generator_default.argtypes = [POINTER(model_t), c_char, POINTER(complex128_t)]
-    channel_vertex_generator_default.restype = c_int
+    diverge_channel_vertex_generator_default = _libs["divERGe"].get("diverge_channel_vertex_generator_default", "cdecl")
+    diverge_channel_vertex_generator_default.argtypes = [POINTER(model_t), c_char, POINTER(complex128_t)]
+    diverge_channel_vertex_generator_default.restype = c_int
 
     model_init = _libs["divERGe"].get("diverge_model_init", "cdecl")
     model_init.argtypes = []
@@ -1031,7 +1031,7 @@ if not _libs["divERGe"] is None:
                  mu=None, nu=None ):
 
         errors = 0
-        mpi_init(None, None)
+        init(None, None)
         compilation_status()
 
         if (hoppings is None) or (vertex is None) or (nk is None):
@@ -1173,7 +1173,7 @@ if not _libs["divERGe"] is None:
 
         flow_step_free( step )
         model_free( model )
-        mpi_finalize()
+        finalize()
 
     # Class: mpi_stdout_logger
     # direct output to stdout and a file at the same time. usage:

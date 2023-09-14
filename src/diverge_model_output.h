@@ -136,7 +136,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
 // Function: diverge_model_output_set_npath
 // set the number of points per IBZ segment for the bandstructure calculation.
 // defaults to DIVERGE_MODEL_NBANDSTRUCTURE (300). must be called before
-// <diverge_model_to_file>. If set to -1, use <find_bandstructure_pts> on the
+// <diverge_model_to_file>. If set to -1, use <diverge_kmesh_to_bands> on the
 // internal energy array and do not generate a band structure. requires common
 // internals to be set (due to the energy array).
 void diverge_model_output_set_npath( int npath );

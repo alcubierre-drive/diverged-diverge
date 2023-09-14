@@ -20,7 +20,7 @@ USE_GRID = False
 
 # initialization. takes the C-style argc, argv as arguments, which can be safely
 # ignored (i.e. set to None) in most cases.
-diverge.mpi_init(None, None)
+diverge.init(None, None)
 # we dont need all the verbosity, thus we set the loglevel to 1
 diverge.mpi_loglevel_set(1)
 diverge.compilation_status()
@@ -188,7 +188,7 @@ diverge.postprocess_and_write( step, None, "out.dvg" )
 # clean up all the divERGe internals
 diverge.flow_step_free( step )
 diverge.model_free( model )
-diverge.mpi_finalize()
+diverge.finalize()
 
 # do some plotting, but only if we are rank 0, we dont want mutliple plots. if
 # you don't understand what this means, ignore.

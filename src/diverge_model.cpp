@@ -2,7 +2,7 @@
 
 #include "diverge_model.h"
 #include "diverge_internals_struct.h"
-#include "diverge_interaction_helper.h"
+#include "misc/init_interaction_channels.h"
 #include "diverge_Eigen3.hpp"
 #include "diverge_patching.h"
 #include "diverge_model_internals.h"
@@ -12,9 +12,9 @@
 
 diverge_model_t* diverge_model_init(void) {
     diverge_model_t* result = (diverge_model_t*)calloc(1,sizeof(diverge_model_t));
-    result->hfill = &hamilton_generator_default;
-    result->gfill = &greensfunc_generator_default;
-    result->vfill = &channel_vertex_generator_default;
+    result->hfill = &diverge_hamilton_generator_default;
+    result->gfill = &diverge_greensfunc_generator_default;
+    result->vfill = &diverge_channel_vertex_generator_default;
     result->ffill = NULL;
     result->n_vert_chan[0] = -1;
     result->n_spin = 1;
@@ -41,7 +41,7 @@ void diverge_model_free(diverge_model_t* model) {
     free(model);
 }
 
-void hamilton_generator_default(const diverge_model_t* model, complex128_t* buf) {
+void diverge_hamilton_generator_default(const diverge_model_t* model, complex128_t* buf) {
     const index_t n_hop = model->n_hop;
     const rs_hopping_t* hop = model->hop;
     const index_t n_kx = model->nk[0]*model->nkf[0];
@@ -90,7 +90,7 @@ void hamilton_generator_default(const diverge_model_t* model, complex128_t* buf)
     fftw_free(fftw_buf);
 }
 
-greensfunc_op_t greensfunc_generator_default(const diverge_model_t* model,
+greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* model,
         complex128_t Lambda_, gf_complex_t* buf_) {
     complex128_t Lambda = *(complex128_t*)(&Lambda_);
     gf_complex_t* buf = (gf_complex_t*)(buf_);
@@ -139,7 +139,7 @@ static inline void sort_rs_vertex_elements(diverge_model_t* model) {
     }
 }
 
-int channel_vertex_generator_default(diverge_model_t* model, char channel, complex128_t* buf) {
+int diverge_channel_vertex_generator_default(diverge_model_t* model, char channel, complex128_t* buf) {
     sort_rs_vertex_elements(model);
 
     index_t n_kx = model->nk[0],

@@ -63,12 +63,12 @@ static int diverge_owns_mpi_context = 0;
 
 #define MPICHK() { \
     if ( diverge_mpi_comm == NULL ) { \
-        mpi_err_printf( "MPI context is not initialized. either call diverge_mpi_init() or diverge_mpi_embed()\n" ); \
+        mpi_err_printf( "MPI context is not initialized. either call diverge_init() or diverge_embed()\n" ); \
         assert( diverge_mpi_comm != NULL ); \
     } \
 }
 
-void diverge_mpi_init( int* pargc, char*** pargv ) {
+void diverge_init( int* pargc, char*** pargv ) {
     int argc = 1;
     char arg_[] = "diverge";
     char* arg = arg_;
@@ -83,7 +83,7 @@ void diverge_mpi_init( int* pargc, char*** pargv ) {
     init_internal_libs();
 }
 
-void diverge_mpi_finalize( void ) {
+void diverge_finalize( void ) {
     finalize_internal_libs();
     if (!diverge_owns_mpi_context) {
         mpi_err_printf("cannot call MPI_Finalize when divERGe doesnt own the context\n");
@@ -94,12 +94,12 @@ void diverge_mpi_finalize( void ) {
     MPI_Finalize();
 }
 
-void diverge_mpi_embed( MPI_Comm comm ) {
+void diverge_embed( MPI_Comm comm ) {
     diverge_mpi_comm = comm;
     init_internal_libs();
 }
 
-void diverge_mpi_reset( void ) {
+void diverge_reset( void ) {
     finalize_internal_libs();
     if (diverge_owns_mpi_context) {
         mpi_err_printf("cannot reset owned MPI context\n");
@@ -290,19 +290,19 @@ void diverge_mpi_gather_double( const double* send, int scnt, double* recv, int 
 
 #include <time.h>
 
-void diverge_mpi_init( int* pargc, char*** pargv ) {
+void diverge_init( int* pargc, char*** pargv ) {
     (void)pargc;
     (void)pargv;
     init_internal_libs();
 }
-void diverge_mpi_finalize( void ) {
+void diverge_finalize( void ) {
     finalize_internal_libs();
 }
-void diverge_mpi_embed( MPI_Comm comm ) {
+void diverge_embed( MPI_Comm comm ) {
     (void)comm;
     init_internal_libs();
 }
-void diverge_mpi_reset( void ) {
+void diverge_reset( void ) {
     finalize_internal_libs();
 }
 
@@ -437,7 +437,7 @@ void diverge_mpi_gather_double( const double* send, int scnt, double* recv, int 
 #endif // USE_MPI
 
 void diverge_mpi_exit( int status ) {
-    diverge_mpi_finalize();
+    diverge_finalize();
     exit(status);
 }
 

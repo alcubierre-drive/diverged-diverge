@@ -4,6 +4,6 @@
 import diverge as dvg
 import numpy as np
 
-dvg.mpi_init( None, None )
+dvg.init( None, None )
 dvg.compilation_status()
-dvg.mpi_finalize()
+dvg.finalize()

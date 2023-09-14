@@ -196,7 +196,7 @@ def cleanup( model, step ):
     diverge.model_free( model )
 
 
-diverge.mpi_init(None, None)
+diverge.init(None, None)
 diverge.compilation_status()
 
 model = emery_model( nk=24, nkf = 1, outfile="emery.py_mod.dvg")
@@ -205,4 +205,4 @@ post( step, outfile="emery.py_out.dvg" )
 
 cleanup( model, step )
 
-diverge.mpi_finalize()
+diverge.finalize()

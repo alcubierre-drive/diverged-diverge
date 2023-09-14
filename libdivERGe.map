@@ -1,9 +1,11 @@
-DIVERGE_1.0 {
+DIVERGE_0.3 {
     global:
-        channel_vertex_generator_default;
+        diverge_channel_vertex_generator_default;
         diverge_compilation_status;
+        diverge_embed;
         diverge_euler_defaults_CPP;
         diverge_euler_next;
+        diverge_finalize;
         diverge_flow_step_chanmax;
         diverge_flow_step_dlambda;
         diverge_flow_step_euler;
@@ -23,6 +25,11 @@ DIVERGE_1.0 {
         diverge_flow_step_vertmax;
         diverge_generate_symm_maps;
         diverge_generate_symm_trafo;
+        diverge_greensfunc_generator_default;
+        diverge_hamilton_generator_default;
+        diverge_init;
+        diverge_kmesh_to_bands;
+        diverge_kmesh_to_bands_crs;
         diverge_license;
         diverge_license_print;
         diverge_mem_alloc_complex128_t;
@@ -68,18 +75,14 @@ DIVERGE_1.0 {
         diverge_mpi_comm_rank;
         diverge_mpi_comm_size;
         diverge_mpi_distribute;
-        diverge_mpi_embed;
         diverge_mpi_exit;
-        diverge_mpi_finalize;
         diverge_mpi_gather_double;
         diverge_mpi_gatherv_bytes;
         diverge_mpi_gatherv_cdoub;
         diverge_mpi_get_comm;
-        diverge_mpi_init;
         diverge_mpi_max;
         diverge_mpi_open_file;
         diverge_mpi_recv_double;
-        diverge_mpi_reset;
         diverge_mpi_send_double;
         diverge_mpi_write_byte_to_file;
         diverge_mpi_write_cdoub_to_file;
@@ -91,21 +94,14 @@ DIVERGE_1.0 {
         diverge_patching_symmetrize_refinement;
         diverge_postprocess_and_write;
         diverge_postprocess_config_default_CPP;
-        diverge_read_W90;
         diverge_read_W90_C;
+        diverge_reset;
         diverge_run_tests;
         diverge_symmetrize_2pt_coarse;
         diverge_symmetrize_2pt_fine;
         diverge_symmetrize_greens;
         diverge_symmetrize_mom_coarse;
         diverge_symmetrize_mom_fine;
-        find_bandstructure_pts;
-        find_bandstructure_pts_crs;
-        greensfunc_generator_default;
-        hamilton_generator_default;
-        init_C_channel;
-        init_D_channel;
-        init_P_channel;
         mpi_dbg_printf;
         mpi_dbg_printf_all;
         mpi_eprintf;

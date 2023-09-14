@@ -117,11 +117,11 @@ def cleanup( model, step ):
     diverge.flow_step_free( step )
     diverge.model_free( model )
 
-diverge.mpi_init(None, None)
+diverge.init(None, None)
 diverge.compilation_status()
 
 model = t2g_model( nk=24, nkf = 1, outfile="t2g_model.py_mod.dvg")
 step = flow( model, outfile="emery.py_flow.dat" )
 post( step, outfile="emery.py_out.dvg" )
 cleanup( model, step )
-diverge.mpi_finalize()
+diverge.finalize()

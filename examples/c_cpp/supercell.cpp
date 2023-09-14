@@ -11,7 +11,7 @@ using std::array;
 diverge_model_t* supercell_model( index_t nk, index_t nkf );
 
 int main(int argc, char** argv) {
-    diverge_mpi_init( &argc, &argv );
+    diverge_init( &argc, &argv );
     diverge_compilation_status();
 
     int nkc = 6,
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
 
     diverge_model_free( m );
 
-    diverge_mpi_finalize();
+    diverge_finalize();
 }
 
 // some variables and helper functions

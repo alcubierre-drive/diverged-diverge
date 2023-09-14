@@ -216,17 +216,17 @@ struct diverge_model_t {
     internals_t* internals;
 };
 
-// Function: hamilton_generator_default
+// Function: diverge_hamilton_generator_default
 // <hamiltonian_generator_t>
-void hamilton_generator_default(const diverge_model_t* model,
+void diverge_hamilton_generator_default(const diverge_model_t* model,
         complex128_t* buf);
-// Function: greensfunc_generator_default
+// Function: diverge_greensfunc_generator_default
 // <greensfunc_generator_t>
-greensfunc_op_t greensfunc_generator_default(const diverge_model_t* model,
+greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* model,
         complex128_t Lambda, gf_complex_t* buf);
-// Function: channel_vertex_generator_default
+// Function: diverge_channel_vertex_generator_default
 // <channel_vertex_generator_t>
-int channel_vertex_generator_default(diverge_model_t* model, char channel,
+int diverge_channel_vertex_generator_default(diverge_model_t* model, char channel,
         complex128_t* buf);
 
 // Function: diverge_model_init

@@ -4,7 +4,7 @@
 import diverge as dvg
 import numpy as np
 
-dvg.mpi_init( None, None )
+dvg.init( None, None )
 dvg.compilation_status()
 
 model = dvg.model_init()
@@ -81,4 +81,4 @@ dvg.postprocess_and_write( step, dvg.byref(postconf), "nickelate_post.dvg" )
 dvg.flow_step_free( step )
 
 dvg.model_free( model )
-dvg.mpi_finalize()
+dvg.finalize()

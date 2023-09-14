@@ -11,7 +11,7 @@ extern "C" {
 // forward declaration
 typedef struct diverge_model_t diverge_model_t;
 
-// Function: find_bandstructure_pts
+// Function: diverge_kmesh_to_bands
 // finds fine mesh points (as indices) that lie on the segments that define the
 // irreducible path. Useful for, e.g., generation of the Hamiltonian (or
 // self-energy) along the irreducible path, or outputting a susceptibility.
@@ -31,7 +31,7 @@ typedef struct diverge_model_t diverge_model_t;
 // as the *indices array must be free'd manually.
 //
 // Example:
-// <find_bandstructure_pts> or <find_bandstructure_pts_crs> can be used as
+// <diverge_kmesh_to_bands> or <diverge_kmesh_to_bands_crs> can be used as
 // follows:
 // ---- C/C++ ----
 // diverge_model_t* m;
@@ -39,16 +39,16 @@ typedef struct diverge_model_t diverge_model_t;
 // diverge_model_internals_common( m );
 // index_t* pts;
 // index_t n_pts;
-// index_t* n_per_segment = find_bandstructure_pts( m, &pts, &n_pts );
+// index_t* n_per_segment = diverge_kmesh_to_bands( m, &pts, &n_pts );
 // // do something with pts, n_pts, and n_per_segment.
 // free( pts );
 // free( n_per_segment );
 // ---------------
-index_t* find_bandstructure_pts( diverge_model_t* m, index_t** indices, index_t* n_indices );
+index_t* diverge_kmesh_to_bands( diverge_model_t* m, index_t** indices, index_t* n_indices );
 
-// Function: find_bandstructure_pts_crs
-// same as <find_bandstructure_pts>, but for the coarse mesh.
-index_t* find_bandstructure_pts_crs( diverge_model_t* m, index_t** indices, index_t* n_indices );
+// Function: diverge_kmesh_to_bands_crs
+// same as <diverge_kmesh_to_bands>, but for the coarse mesh.
+index_t* diverge_kmesh_to_bands_crs( diverge_model_t* m, index_t** indices, index_t* n_indices );
 
 // TODO(LK) need to prefix these functions with diverge_ somehow. Don't want
 // incredibly long names, though. ideas?

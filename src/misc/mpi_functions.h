@@ -15,20 +15,20 @@ typedef void* MPI_Comm;
 extern "C" {
 #endif
 
-// Function: diverge_mpi_init
+// Function: diverge_init
 // useful if divERGe is the only MPI component
 // call MPI_Init() and set the internal communicator automatically.
-void diverge_mpi_init( int* pargc, char*** pargv );
-// Function: diverge_mpi_finalize
+void diverge_init( int* pargc, char*** pargv );
+// Function: diverge_finalize
 // call MPI_Finalize().
-void diverge_mpi_finalize( void );
+void diverge_finalize( void );
 
-// Function: diverge_mpi_embed
+// Function: diverge_embed
 // useful if divERGe should be called as a library with an existing MPI context
-void diverge_mpi_embed( MPI_Comm comm );
-// Function: diverge_mpi_reset
+void diverge_embed( MPI_Comm comm );
+// Function: diverge_reset
 // reset the internal context
-void diverge_mpi_reset( void );
+void diverge_reset( void );
 
 // Function: diverge_mpi_exit
 // call MPI_Finalize() and exit(status);

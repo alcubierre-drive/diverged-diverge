@@ -3,7 +3,7 @@
 import diverge
 import numpy as np
 
-diverge.mpi_init(None, None)
+diverge.init(None, None)
 diverge.compilation_status()
 model = diverge.model_init()
 
@@ -103,4 +103,4 @@ while True:
 diverge.postprocess_and_write( step, None, "out.dvg" )
 diverge.flow_step_free( step )
 diverge.model_free( model )
-diverge.mpi_finalize()
+diverge.finalize()

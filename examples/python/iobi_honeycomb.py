@@ -7,7 +7,7 @@ import sys
 import diverge.output as ro
 import matplotlib.pyplot as plt
 
-diverge.mpi_init(None, None)
+diverge.init(None, None)
 diverge.compilation_status()
 model = diverge.model_init()
 model.contents.name = b'honeycomb_p_wave'
@@ -113,5 +113,5 @@ while True:
 
 diverge.flow_step_free( step )
 diverge.model_free( model )
-diverge.mpi_finalize()
+diverge.finalize()
 

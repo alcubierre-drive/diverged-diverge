@@ -1,8 +1,7 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-#include "diverge_model.h"
-#include "diverge_internals_struct.h"
-#include "diverge_interaction_helper.h"
+#include "init_interaction_channels.h"
+#include "../diverge_internals_struct.h"
 #include <assert.h>
 
 static inline void init_P_channel_nonSU2(const diverge_model_t* model, complex128_t* buf);

@@ -65,9 +65,6 @@ ________________________________________________________________________________
 - code: include static self-energies in both grid and npatch, with fourier
   selection and cutoff in npatch
 # TODOs pre 0.4:
-- mpi_init(), mpi_finalize(), mpi_embed(), mpi_ -> diverge_init(),
-  diverge_finalize()...
-- find_bandstructure_pts -> diverge_!
 - model_output no include_common_internals
 - model_output_finegrained use structure
 - postprocessing output -> finegrained & normal

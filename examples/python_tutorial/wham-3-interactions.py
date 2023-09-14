@@ -4,7 +4,7 @@
 import diverge as dvg
 import numpy as np
 
-dvg.mpi_init( None, None )
+dvg.init( None, None )
 dvg.compilation_status()
 
 model = dvg.model_init()
@@ -67,4 +67,4 @@ dvg.model_internals_tu( model, 3.92 * 1.1 )
 dvg.model_to_file( model, "nickelate_model.dvg", True ) # common internals
 
 dvg.model_free( model )
-dvg.mpi_finalize()
+dvg.finalize()

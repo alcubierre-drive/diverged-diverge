@@ -16,7 +16,7 @@ static double coulomb(int x, int y, double U);
 
 int main( int argc, char** argv ) {
     // init
-    diverge_mpi_init( &argc, &argv );
+    diverge_init( &argc, &argv );
 
     // command line arguments
     char mode[128] = "tu";
@@ -117,7 +117,7 @@ int main( int argc, char** argv ) {
     // cleanup
     diverge_flow_step_free(f);
     diverge_model_free(m);
-    diverge_mpi_finalize();
+    diverge_finalize();
 
     return 0;
 }

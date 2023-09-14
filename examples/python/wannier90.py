@@ -4,7 +4,7 @@
 import diverge
 import numpy as np
 
-diverge.mpi_init(None,None)
+diverge.init(None,None)
 
 model = diverge.model_init()
 # define momentum grid
@@ -55,7 +55,7 @@ diverge.model_output_set_npath( npath )
 checksum = diverge.model_to_file( model, "mod.dvg", True )
 
 diverge.model_free( model )
-diverge.mpi_finalize()
+diverge.finalize()
 
 import diverge.output as rd
 model_result = rd.read( "mod.dvg" )

@@ -5,7 +5,7 @@
 #include "diverge_model.h"
 #include "misc/number_repr_checks.h"
 #include "misc/mpi_functions.h"
-#include "misc/find_bandstructure_pts.h"
+#include "misc/kmesh_to_bands.h"
 
 #include "misc/eigen.h"
 #include "misc/md5.h"
@@ -165,7 +165,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
             // bandstructure, including the k coordinates *after* the bands
             if (h_diverge_model_nbandstructure == -1 && mod->internals->has_common_internals) {
                 mpi_vrb_printf( "using fine kmesh data for band structure\n" );
-                n_band_segments = find_bandstructure_pts( mod, &band_indices, &n_band_indices );
+                n_band_segments = diverge_kmesh_to_bands( mod, &band_indices, &n_band_indices );
                 if (band_indices != NULL && n_band_indices > 0) {
                     use_band_indices = true;
                     include_bandstructure = true;

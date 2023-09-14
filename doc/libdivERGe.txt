@@ -17,10 +17,10 @@ directory of <divERGe.tar.gz at
 https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.3/divERGe.tar.gz>
 to understand how C/C++ code using <libdivERGe.so> is compiled and linked.
 
-To initialize the library, you must either call <diverge_mpi_init> or
-<diverge_mpi_embed>.
+To initialize the library, you must either call <diverge_init> or
+<diverge_embed>.
 ---- C/C++ ----
-diverge_mpi_init( NULL, NULL );
+diverge_init( NULL, NULL );
 ---------------
 The central building block is the <diverge_model_t> instance.
 
@@ -218,12 +218,12 @@ We must free the resources allocated during the setup and run. For the
 <diverge_flow_step_t> instance, simply call <diverge_flow_step_free>. For the
 <diverge_model_t> instance and all attached memory, use <diverge_model_free at
 diverge_model_t->diverge_model_free>. Finally, the MPI setup must be teared
-down. To do so, call <diverge_mpi_finalize> – if the library has been
-initialized with <diverge_mpi_embed>, call <diverge_mpi_reset> instead.
+down. To do so, call <diverge_finalize> – if the library has been
+initialized with <diverge_embed>, call <diverge_reset> instead.
 ---- C/C++ ----
 diverge_flow_step_free( st );
 diverge_model_free( mod );
-diverge_mpi_finalize();
+diverge_finalize();
 ---------------
 
 J. B. Hauck and L. Klebl, 2023 ©

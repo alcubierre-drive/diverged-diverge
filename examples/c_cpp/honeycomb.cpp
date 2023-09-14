@@ -12,7 +12,7 @@ const double V2 = 0.0;
 const index_t np = 2;
 
 int main(int argc, char** argv) {
-    diverge_mpi_init( &argc, &argv );
+    diverge_init( &argc, &argv );
     mpi_loglevel_set( 5 );
     diverge_compilation_status();
     diverge_model_t* m = diverge_model_init();
@@ -114,5 +114,5 @@ int main(int argc, char** argv) {
 
     diverge_flow_step_free( s );
     diverge_model_free( m );
-    diverge_mpi_finalize();
+    diverge_finalize();
 }

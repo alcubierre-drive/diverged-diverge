@@ -168,7 +168,7 @@ def cleanup( model, step ):
     diverge.flow_step_free( step )
     diverge.model_free( model )
 
-diverge.mpi_init(None, None)
+diverge.init(None, None)
 diverge.compilation_status()
 
 test_run = True
@@ -235,5 +235,5 @@ for i_tp in range(len(tp_vals)):
         post( step, outfile=prefix+"out.dvg" )
         cleanup( model, step )
 
-diverge.mpi_finalize()
+diverge.finalize()
 

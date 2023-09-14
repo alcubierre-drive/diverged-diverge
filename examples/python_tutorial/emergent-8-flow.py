@@ -5,7 +5,7 @@ import numpy as np
 import sys
 
 # initialization, needed for MPI compiled library
-diverge.mpi_init( None, None )
+diverge.init( None, None )
 
 # some parameters
 params_emery = dict( Ud=3.0, Up=1.0, tdd=0.2, tpp=0.3, tdp=1.0 )
@@ -207,4 +207,4 @@ diverge.model_free( model )
 diverge.flow_step_free( step )
 
 # we need to accept that MPI requires finalization
-diverge.mpi_finalize()
+diverge.finalize()
