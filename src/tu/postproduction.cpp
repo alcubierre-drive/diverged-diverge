@@ -100,12 +100,7 @@ void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
     double* _val = (double*)malloc(linsize*sizeof(double));
     complex128_t* _vec = (complex128_t*)malloc(POW2(linsize)*sizeof(complex128_t));
-    tu_data_t* tu_data = (tu_data_t*)(model -> internals-> tu_data);
-    index_t n_bonds = tu_data->n_bonds;
     index_t n_spin = vertex->n_spin;
-    index_t n_orb = vertex->n_orb;
-    index_t* bond_sizes = tu_data->bond_sizes;
-    index_t* ob_to_orbff = tu_data->ob_to_orbff;
 
     batched_eigen_shut_up( 1 );
     for(index_t q = 0; q < vertex->my_nk;++q) {
@@ -433,7 +428,6 @@ void tu_postproduction::to_file(string filename, bool save_self) {
     }
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
     const index_t n_orb = model->n_orb;
-    const index_t n_bonds = tu_data->n_bonds;
 
     int size_self = 0;
     if(vertex->use_self && save_self)
