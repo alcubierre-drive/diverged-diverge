@@ -1,4 +1,4 @@
-DIVERGE_0.3 {
+DIVERGE_0.4 {
     global:
         diverge_channel_vertex_generator_default;
         diverge_compilation_status;
@@ -88,6 +88,7 @@ DIVERGE_0.3 {
         diverge_mpi_write_byte_to_file;
         diverge_mpi_write_cdoub_to_file;
         diverge_mpi_wtime;
+        diverge_omp_num_threads;
         diverge_patching_autofine;
         diverge_patching_find_fs_pts_C;
         diverge_patching_free;
