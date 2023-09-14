@@ -64,11 +64,6 @@ ________________________________________________________________________________
   symmetries from python (emery)
 - code: include static self-energies in both grid and npatch, with fourier
   selection and cutoff in npatch
-# TODOs pre 0.4:
-- DIVERGE_FFTW_NUM_THREADS, DIVERGE_OMP_NUM_THREADS,
-  DIVERGE_OPENBLAS_NUM_THREADS
-# TODOs post 0.4:
 - checkpointing of flow step
-- c library functions for model files
-
+- c library functions for reading model files
 
