@@ -1,0 +1,30 @@
+INC_TEST := true
+
+CXX := clang++
+CC := clang
+LD := clang++
+
+INCLUDES += -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/ \
+    -I/opt/homebrew/Cellar/fftw/3.3.10_1/include/ \
+    -I/opt/homebrew/Cellar/libomp/16.0.6/include/ \
+    -I/opt/homebrew/Cellar/openblas/0.3.23/include/
+
+LIBS = -L/opt/homebrew/Cellar/fftw/3.3.10_1/lib/ \
+    -L/opt/homebrew/Cellar/libomp/16.0.6/lib/ \
+    -L/opt/homebrew/Cellar/openblas/0.3.23/lib/ \
+    -lopenblas -lfftw3 -lfftw3_omp -lomp
+
+PREFLAGS := -Ofast -march=native
+DEFINES := -DNDEBUG -DEIGEN_NO_DEBUG -DDIVERGE_LOG_GRAYSCALE -DBHK_NK=4 -DBHK_L0=1 -DBHK_NUM=5
+
+CXXFLAGS = $(PREFLAGS) -std=c++17 -fPIC -MMD -Wall -Wextra -pedantic $(DEFINES) $(INCLUDES)
+CFLAGS = $(PREFLAGS) -std=c11 -fPIC -MMD -Wall -Wextra -pedantic $(DEFINES) $(INCLUDES)
+LDFLAGS = -fPIC -Wall -Wextra -pedantic $(LIBS)
+
+SOFLAGS = -shared
+STRIP := echo
+
+DIVERGE_TAR := echo
+DIVERGE_GZIP := echo
+DIVERGE_MV := echo
+DIVERGE_CP := echo
