@@ -66,4 +66,5 @@ ________________________________________________________________________________
   selection and cutoff in npatch
 - checkpointing of flow step
 - c library functions for reading model files
-
+- fix Makefile.local for JURECA!
+- TODOs in separate file?
