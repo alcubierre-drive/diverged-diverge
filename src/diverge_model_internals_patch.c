@@ -19,6 +19,11 @@ static void add_to_npatch_vert_from_qbuf( complex128_t* vbuf,
     index_t np, index_t no, index_t ns, const index_t nk[3], char chan );
 
 void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
+    if (!model->internals->has_common_internals) {
+        mpi_err_printf("model needs common internals before patch internals!\n");
+        diverge_model_internals_common(model);
+    }
+
     int errors = 0;
     if (model->internals->dim > 2) {
         mpi_err_printf("no support for $N$-patch FRG in more than 2D\n");

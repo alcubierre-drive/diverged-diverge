@@ -12,6 +12,10 @@
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 
 void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
+    if (!model->internals->has_common_internals) {
+        mpi_err_printf("model needs common internals before tu internals!\n");
+        diverge_model_internals_common(model);
+    }
     index_t n_frq = 1;
     tu_data_t* info = new tu_data_t;
     info->nk = model->nk[0] * model->nk[1] * model->nk[2];

@@ -99,6 +99,10 @@ static void generate_refinement( const vector<Vec3d>& fine,
 }
 
 void diverge_model_internals_grid( diverge_model_t* model ) {
+    if (!model->internals->has_common_internals) {
+        mpi_err_printf("model needs common internals before grid internals!\n");
+        diverge_model_internals_common(model);
+    }
     internals_t* intls = model->internals;
     const index_t* nk = model->nk;
     const index_t* nkf = model->nkf;
