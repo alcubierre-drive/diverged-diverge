@@ -2,9 +2,9 @@
 
 #include "batched_eigen.h"
 #include "batched_eigen_internals.h"
+#include "mpi_functions.h"
 
 #include <pthread.h>
-#include <omp.h>
 #ifdef USE_CUDA
 #include <cuda_runtime.h>
 #include "../misc/cuda_error.h"
@@ -96,7 +96,7 @@ static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
     }
 
     if (work_on_cpu) {
-        ndevices = omp_get_max_threads();
+        ndevices = diverge_omp_num_threads();
         devices = (int*)calloc(ndevices, sizeof(int));
         should_free_device_array = true;
     }

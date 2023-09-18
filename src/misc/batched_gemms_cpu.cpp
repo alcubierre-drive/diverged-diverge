@@ -2,6 +2,9 @@
 
 #include "batched_gemms.h"
 #include "mpi_functions.h"
+#include <vector>
+
+using std::vector;
 
 #ifdef USE_MKL
 #include <mkl.h>
@@ -116,7 +119,7 @@ void batched_gemm( const complex128_t* Astart, const complex128_t* Bstart,
 
 void batched_gemm_overlapping( const complex128_t* Astart, const complex128_t* Bstart,
         complex128_t* Cstart, index_t N, complex128_t alpha, complex128_t beta, index_t num ) {
-    int nthreads = omp_get_max_threads();
+    int nthreads = diverge_omp_num_threads();
     void* cmemory = calloc(nthreads*N*N,sizeof(complex128_t));
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<num; ++i) {
@@ -180,9 +183,9 @@ void batched_gemm_with_buffers( const complex128_t* Astart, const complex128_t* 
 void batched_gemm_vertex_loop( complex128_t* vertex, const complex128_t* loop, index_t qsize,
         index_t nk, index_t nb ) {
     index_t N = nb*nb;
-    complex128_t* buffers = (complex128_t*)calloc(N*N*omp_get_max_threads(),sizeof(complex128_t));
     complex128_t alpha = 1.0;
     complex128_t beta = 0.0;
+    complex128_t* buffers = (complex128_t*)calloc(N*N*diverge_omp_num_threads(), sizeof(complex128_t));
     #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<qsize; ++q)
     for (index_t k=0; k<nk; ++k)
@@ -190,11 +193,11 @@ void batched_gemm_vertex_loop( complex128_t* vertex, const complex128_t* loop, i
 
         complex128_t* vmatrix = vertex + q*nk*N*nk*N + k*N*nk*N + kp*N;
         const complex128_t* lmatrix = loop + q*nk*N*N + kp*N*N;
-        complex128_t* outmatrix = buffers + omp_get_thread_num()*N*N;
+        complex128_t* buffer = buffers + N*N*omp_get_thread_num();
 
         cblas_zgemm( CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N, &alpha,
-            vmatrix, N*nk, lmatrix, N, &beta, outmatrix, N );
-        batched_gemms_zlacpy( N, outmatrix, vmatrix, N*nk );
+            vmatrix, N*nk, lmatrix, N, &beta, buffer, N );
+        batched_gemms_zlacpy( N, buffer, vmatrix, N*nk );
     }
     free(buffers);
 }
@@ -202,9 +205,9 @@ void batched_gemm_vertex_loop( complex128_t* vertex, const complex128_t* loop, i
 void batched_gemm_loop_vertex( const complex128_t* loop, complex128_t* vertex, index_t qsize,
         index_t nk, index_t nb ) {
     index_t N = nb*nb;
-    complex128_t* buffers = (complex128_t*)calloc(N*N*omp_get_max_threads(),sizeof(complex128_t));
     complex128_t alpha = 1.0;
     complex128_t beta = 0.0;
+    complex128_t* buffers = (complex128_t*)calloc(N*N*diverge_omp_num_threads(), sizeof(complex128_t));
     #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<qsize; ++q)
     for (index_t k=0; k<nk; ++k)
@@ -212,11 +215,11 @@ void batched_gemm_loop_vertex( const complex128_t* loop, complex128_t* vertex, i
 
         complex128_t* vmatrix = vertex + q*nk*N*nk*N + k*N*nk*N + kp*N;
         const complex128_t* lmatrix = loop + q*nk*N*N + k*N*N;
-        complex128_t* outmatrix = buffers + omp_get_thread_num()*N*N;
+        complex128_t* buffer = buffers + N*N*omp_get_thread_num();
 
         cblas_zgemm( CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N, &alpha,
-                lmatrix, N, vmatrix, N*nk, &beta, outmatrix, N );
-        batched_gemms_zlacpy( N, outmatrix, vmatrix, N*nk );
+                lmatrix, N, vmatrix, N*nk, &beta, buffer, N );
+        batched_gemms_zlacpy( N, buffer, vmatrix, N*nk );
     }
     free(buffers);
 }
@@ -227,7 +230,7 @@ template<index_t N_>
 void _batched_gemm_vertex_loop( complex128_t* vertex, const complex128_t* loop, index_t qsize,
         index_t nk, index_t nb ) {
     index_t N = nb*nb;
-    complex128_t* buffers = (complex128_t*)calloc(N*N*omp_get_max_threads(),sizeof(complex128_t));
+    complex128_t* buffers = (complex128_t*)calloc(N*N*diverge_omp_num_threads(),sizeof(complex128_t));
     #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<qsize; ++q)
     for (index_t k=0; k<nk; ++k)
@@ -265,7 +268,7 @@ template<index_t N_>
 void _batched_gemm_loop_vertex( const complex128_t* loop, complex128_t* vertex, index_t qsize,
         index_t nk, index_t nb ) {
     index_t N = nb*nb;
-    complex128_t* buffers = (complex128_t*)calloc(N*N*omp_get_max_threads(),sizeof(complex128_t));
+    complex128_t* buffers = (complex128_t*)calloc(N*N*diverge_omp_num_threads(),sizeof(complex128_t));
     #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<qsize; ++q)
     for (index_t k=0; k<nk; ++k)

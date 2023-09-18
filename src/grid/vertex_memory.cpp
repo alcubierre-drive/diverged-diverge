@@ -562,7 +562,7 @@ void VertexMemory::_change_basis_k123( complex128_t* V, complex128_t* U ) {
 
     const bool use_k3map = k3map != nullptr;
 
-    complex128_t* buffers = (complex128_t*) malloc(sizeof(complex128_t)*bandstuff*omp_get_max_threads());
+    complex128_t* buffers = (complex128_t*) malloc(sizeof(complex128_t)*bandstuff*diverge_omp_num_threads());
     #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (int k1=k1start; k1<k1stop; ++k1)
     for (int k2=0; k2<nk; ++k2)
