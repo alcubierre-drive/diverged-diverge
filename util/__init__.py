@@ -160,6 +160,15 @@ if not _libs["divERGe"] is None:
     mpi_gather_double.argtypes = [POINTER(c_double), c_int, POINTER(c_double), c_int, c_int]
     mpi_gather_double.restype = None
 
+    # Threading
+    omp_num_threads = _libs["divERGe"].get("diverge_omp_num_threads", "cdecl")
+    omp_num_threads.argtypes = None
+    omp_num_threads.restype = c_int
+
+    force_thread_limit = _libs["divERGe"].get("diverge_force_thread_limit", "cdecl")
+    force_thread_limit.argtypes = [c_int]
+    force_thread_limit.restype = None
+
     # MPI logging
     mpi_loglevel_set = _libs["divERGe"].get("mpi_loglevel_set", "cdecl")
     mpi_loglevel_set.argtypes = [c_int]
@@ -172,6 +181,10 @@ if not _libs["divERGe"] is None:
     mpi_log_get_colors = _libs["divERGe"].get("mpi_log_get_colors", "cdecl")
     mpi_log_get_colors.argtypes = None
     mpi_log_get_colors.restype = c_int
+
+    mpi_log_control = _libs["divERGe"].get("mpi_log_control", "cdecl")
+    mpi_log_control.argtypes = [c_int]
+    mpi_log_control.restype = None
 
     mpi_py_print = _libs["divERGe"].get("mpi_py_print", "cdecl")
     mpi_py_print.argtypes = [String]

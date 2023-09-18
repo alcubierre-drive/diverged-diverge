@@ -82,8 +82,14 @@ double diverge_mpi_max( double* send );
 void diverge_mpi_bcast_bytes( void* inout, int size, int root );
 void diverge_mpi_gather_double( const double* send, int scnt, double* recv, int rcnt, int root );
 
-// some OMP stuff, needed for proper environment control
+// Function: diverge_omp_num_threads
+// get the number of threads to use in diverge's OMP loops
 int diverge_omp_num_threads( void );
+
+// Function: diverge_force_thread_limit
+// limit the number of threads for *every* OMP/FFTW parallel region; except for
+// cases where the number is specifically set higher.
+void diverge_force_thread_limit( int nthr );
 
 #ifdef __cplusplus
 }

@@ -69,7 +69,7 @@ void* npatch_cpu_flow_step_##su##_##chan ( void* _params ) { \
             factor; \
     \
     const index_t Nb4 = nb*nb*nb*nb; \
-    complex128_t* mem_per_thread = (complex128_t*)malloc(sizeof(complex128_t)*omp_get_max_threads()*Nb4); \
+    complex128_t* mem_per_thread = (complex128_t*)malloc(sizeof(complex128_t)*diverge_omp_num_threads()*Nb4); \
     \
     const index_t k123start = start/Nb4, \
                   k123stop = stop/Nb4; \

@@ -17,13 +17,45 @@
 
 static int h_diverge_mpi_loglevel = 4;
 static int h_diverge_log_colors = 1;
+static mpi_log_control_t h_diverge_log_ctl = mpi_log_control_standard;
+
+void mpi_log_control( mpi_log_control_t ctl ) {
+    #pragma omp critical
+    h_diverge_log_ctl = ctl;
+}
+
+static FILE* h_mpi_log_stdout( void ) {
+    FILE* result = NULL;
+    switch (h_diverge_log_ctl) {
+        default:
+        case mpi_log_control_standard:
+        case mpi_log_control_modified: result = stdout; break;
+
+        case mpi_log_control_stderr:
+        case mpi_log_control_inverted: result = stderr; break;
+    }
+    return result;
+}
+
+static FILE* h_mpi_log_stderr( void ) {
+    FILE* result = NULL;
+    switch (h_diverge_log_ctl) {
+        default:
+        case mpi_log_control_standard:
+        case mpi_log_control_stderr: result = stderr; break;
+
+        case mpi_log_control_modified:
+        case mpi_log_control_inverted: result = stdout; break;
+    }
+    return result;
+}
 
 void mpi_printf( const char* fmt, ... ) {
     if (diverge_mpi_comm_rank() == 0) {
         va_list ap;
-        va_start(ap, fmt);
-        vprintf( fmt, ap );
-        va_end(ap);
+        va_start( ap, fmt );
+        vfprintf( h_mpi_log_stdout(), fmt, ap );
+        va_end( ap );
     }
 }
 
@@ -31,14 +63,14 @@ void mpi_eprintf( const char* fmt, ... ) {
     if (diverge_mpi_comm_rank() == 0) {
         va_list ap;
         va_start(ap, fmt);
-        vfprintf( stderr, fmt, ap );
+        vfprintf( h_mpi_log_stderr(), fmt, ap );
         va_end(ap);
     }
 }
 
 static void mpi_veprintf( const char* fmt, va_list ap ) {
     if (diverge_mpi_comm_rank() == 0) {
-        vfprintf( stderr, fmt, ap );
+        vfprintf( h_mpi_log_stderr(), fmt, ap );
     }
 }
 
@@ -227,7 +259,7 @@ void mpi_dbg_printf( const char* logname_, int loglevel, const char* fname,
     mpi_eprintf( "%s", h_log_color("RESET") );
 
     mpi_veprintf( fmt, ap );
-    fflush(stderr);
+    fflush(h_mpi_log_stderr());
     va_end(ap);
 }
 
@@ -330,10 +362,10 @@ void mpi_dbg_printf_all( const char* logname, int loglevel, const char* fname, i
     char** strings = mpi_string_gather( buf );
     if (diverge_mpi_comm_rank() == 0) {
         for (char** pstr = strings; *pstr; ++pstr) {
-            fprintf(stderr, "%s", *pstr);
+            fprintf(h_mpi_log_stderr(), "%s", *pstr);
             free(*pstr);
         }
-        fflush(stderr);
+        fflush(h_mpi_log_stderr());
         free(strings);
     }
 }
@@ -342,27 +374,27 @@ void mpi_py_print_all( const char* str ) {
     char** strl = mpi_string_gather( str );
     if (diverge_mpi_comm_rank() != 0) return;
     for (char** pstrl = strl; *pstrl; ++pstrl) {
-        printf( "%s[%s%s%s] ", h_log_color( "user" ),
-                DIVERGE_LOG_PREFIX, DIVERGE_LOG_PREFIX_DIV, py_lg_name );
-        printf( "%s", h_log_color("RESET") );
-        printf( "%s\n", *pstrl );
+        fprintf( h_mpi_log_stdout(), "%s[%s%s%s] ", h_log_color( "user" ),
+                 DIVERGE_LOG_PREFIX, DIVERGE_LOG_PREFIX_DIV, py_lg_name );
+        fprintf( h_mpi_log_stdout(), "%s", h_log_color("RESET") );
+        fprintf( h_mpi_log_stdout(), "%s\n", *pstrl );
         free( *pstrl );
     }
     free(strl);
-    fflush(stdout);
+    fflush(h_mpi_log_stdout());
 }
 
 void mpi_py_eprint_all( const char* str ) {
     char** strl = mpi_string_gather( str );
     if (diverge_mpi_comm_rank() != 0) return;
     for (char** pstrl = strl; *pstrl; ++pstrl) {
-        fprintf( stderr, "%s[%s%s%s] ", h_log_color( "user" ),
+        fprintf( h_mpi_log_stderr(), "%s[%s%s%s] ", h_log_color( "user" ),
              DIVERGE_LOG_PREFIX, DIVERGE_LOG_PREFIX_DIV, py_lg_name );
-        fprintf( stderr, "%s", h_log_color("RESET") );
-        fprintf( stderr, "%s\n", *pstrl );
+        fprintf( h_mpi_log_stderr(), "%s", h_log_color("RESET") );
+        fprintf( h_mpi_log_stderr(), "%s\n", *pstrl );
         free( *pstrl );
     }
     free(strl);
-    fflush(stderr);
+    fflush(h_mpi_log_stderr());
 }
 

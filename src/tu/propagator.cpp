@@ -3,7 +3,6 @@
 #include "propagator.hpp"
 #include "cuda_init.hpp"
 #include "../misc/batched_eigen.h"
-#include <omp.h>
 
 tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 :
@@ -31,8 +30,8 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     for (int i=0; i<3; ++i) nkff[i] = model->nk[i] * model->nkf[i];
     cuda_setup_prop_descr(&cuda_descr,task_spin,tasks_dist, nkff,tu_data->offload_cpu);
 
-    fftPH.resize(omp_get_max_threads());
-    fftPP.resize(omp_get_max_threads());
+    fftPH.resize(diverge_omp_num_threads());
+    fftPP.resize(diverge_omp_num_threads());
 
     GF_fft_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
     GF_fft_conj_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
@@ -41,39 +40,37 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     CUDA_CHECK(cudaHostRegister(GF_fft_conj_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
     #endif
 
+    int fftwnthr = fftw_planner_nthreads();
     fftw_plan_with_nthreads(1);
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;
     int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]),
                                          (int)(vnk[2]*vnkf[2])};
     if(nktot>1) {
-        #pragma omp critical
-        {
-            buffer_ggm.resize(omp_get_max_threads());
-            buffer_ggp.resize(omp_get_max_threads());
-            for(int i = 0; i < omp_get_max_threads();++i) {
-                buffer_ggm[i] = (complex128_t*)fftw_malloc(nktot*sizeof(fftw_complex));
-                buffer_ggp[i] = (complex128_t*)fftw_malloc(nktot*sizeof(fftw_complex));
-                fftPH[i] = fftw_plan_many_dft(3, dims, 1,
-                        (fftw_complex*)buffer_ggm[i],
-                        dims,1,nktot,(fftw_complex*)buffer_ggp[i],
-                        dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-                fftPP[i] = fftw_plan_many_dft(3, dims, 1,
-                        (fftw_complex*)buffer_ggm[i],
-                        dims,1,nktot,(fftw_complex*)buffer_ggp[i],
-                        dims,1,nktot,FFTW_FORWARD, FFTW_MEASURE);
-            }
-            fftGF = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
-                    (fftw_complex*)GF_fft_plus,
-                    dims,1,nktot,(fftw_complex*)GF_fft_plus,
+        buffer_ggm.resize(diverge_omp_num_threads());
+        buffer_ggp.resize(diverge_omp_num_threads());
+        for(int i = 0; i < diverge_omp_num_threads();++i) {
+            buffer_ggm[i] = (complex128_t*)fftw_malloc(nktot*sizeof(fftw_complex));
+            buffer_ggp[i] = (complex128_t*)fftw_malloc(nktot*sizeof(fftw_complex));
+            fftPH[i] = fftw_plan_many_dft(3, dims, 1,
+                    (fftw_complex*)buffer_ggm[i],
+                    dims,1,nktot,(fftw_complex*)buffer_ggp[i],
                     dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-            fftGFconj = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
-                    (fftw_complex*)GF_fft_conj_plus,
-                    dims,1,nktot,(fftw_complex*)GF_fft_conj_plus,
-                    dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
+            fftPP[i] = fftw_plan_many_dft(3, dims, 1,
+                    (fftw_complex*)buffer_ggm[i],
+                    dims,1,nktot,(fftw_complex*)buffer_ggp[i],
+                    dims,1,nktot,FFTW_FORWARD, FFTW_MEASURE);
         }
+        fftGF = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
+                (fftw_complex*)GF_fft_plus,
+                dims,1,nktot,(fftw_complex*)GF_fft_plus,
+                dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
+        fftGFconj = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
+                (fftw_complex*)GF_fft_conj_plus,
+                dims,1,nktot,(fftw_complex*)GF_fft_conj_plus,
+                dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
     }
-    fftw_plan_with_nthreads(omp_get_max_threads());
+    fftw_plan_with_nthreads(fftwnthr);
     c2fmap.resize(my_nk);
     if(tu_data->symm->use_symmetries) {
         for(index_t i = 0; i < my_nk;++i)
@@ -92,7 +89,7 @@ tu_loop_t::~tu_loop_t() {
     if(nktot>1) {
         fftw_destroy_plan(fftGF);
         fftw_destroy_plan(fftGFconj);
-        for(int i = 0; i < omp_get_max_threads();++i) {
+        for(int i = 0; i < diverge_omp_num_threads();++i) {
             fftw_free(buffer_ggm[i]);
             fftw_free(buffer_ggp[i]);
             fftw_destroy_plan(fftPH[i]);

@@ -9,8 +9,7 @@
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <boost/sort/sort.hpp>
 #pragma GCC diagnostic pop
-#include <omp.h>
-#define _CUSTOM_STABLE_SORT_(begin, end, comp) boost::sort::parallel_stable_sort(begin, end, comp, omp_get_max_threads())
+#define _CUSTOM_STABLE_SORT_(begin, end, comp) boost::sort::parallel_stable_sort(begin, end, comp, diverge_omp_num_threads())
 
 #else // USE_BOOST_SORT
 

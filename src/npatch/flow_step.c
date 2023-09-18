@@ -7,7 +7,6 @@
 #include "symmetrize_vertex.h"
 #include "../misc/mpi_functions.h"
 
-#include <omp.h>
 #include <pthread.h>
 
 #include "kernels_cpu.h"

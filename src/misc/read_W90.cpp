@@ -67,7 +67,7 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin ) {
         } else {
             // hoppings
             // r_1, r_2, r_3, o_1, o_2, real(t), imag(t)
-            uint current_elem = 0;
+            unsigned current_elem = 0;
             index_t sp,o;
             assert(n_orb != 0);
             while ( std::getline( iss, s, ' ' ) ) {

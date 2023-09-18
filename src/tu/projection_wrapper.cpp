@@ -3,7 +3,6 @@
 #include "projection_wrapper.hpp"
 #include <set>
 #include <map>
-#include <omp.h>
 
 Projection::~Projection() {
     free(my_prefac_proj);
@@ -209,11 +208,11 @@ void Projection::init_CP_PC_proj(const diverge_model_t* const model) {
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         vector<array<index_t, 2>> my_t;
-        my_t.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_t.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         vector<array<index_t, 2>> my_help_f;
-        my_help_f.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_help_f.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         vector<std::array<index_t,2>> my_rv;
-        my_rv.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_rv.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         Vec3i s1, s2;
         #pragma omp for collapse(3) schedule(dynamic)
         for(index_t o1 = 0; o1 < n_orb; ++o1)
@@ -278,11 +277,11 @@ void Projection::init_CD_DC_proj(const diverge_model_t* const model) {
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         vector<array<index_t, 2>> my_t;
-        my_t.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_t.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         vector<array<index_t, 2>> my_help_f;
-        my_help_f.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_help_f.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         vector<array<index_t, 2>> my_rv;
-        my_rv.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_rv.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         Vec3i s1, s2;
         #pragma omp for collapse(3) schedule(dynamic)
         for(index_t o1 = 0; o1 < n_orb; ++o1)
@@ -347,11 +346,11 @@ void Projection::init_D_to_P_proj(const diverge_model_t* const model) {
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         vector<array<index_t, 2>> my_t;
-        my_t.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_t.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         vector<array<index_t, 2>> my_help_f;
-        my_help_f.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_help_f.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         vector<std::array<index_t,2>> my_rv;
-        my_rv.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_rv.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         Vec3i s1, s2;
         #pragma omp for collapse(3) schedule(dynamic)
         for(index_t o1 = 0; o1 < n_orb; ++o1)
@@ -424,11 +423,11 @@ void Projection::init_P_to_D_proj(const diverge_model_t* const model) {
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         vector<array<index_t, 2>> my_t;
-        my_t.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_t.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         vector<array<index_t, 2>> my_help_f;
-        my_help_f.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_help_f.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         vector<std::array<index_t,2>> my_rv;
-        my_rv.reserve(POW2(n_orbff)/omp_get_max_threads());
+        my_rv.reserve(POW2(n_orbff)/diverge_omp_num_threads());
         Vec3i s1, s2;
         #pragma omp for collapse(3) schedule(dynamic)
         for(index_t o1 = 0; o1 < n_orb; ++o1)

@@ -4,7 +4,6 @@
 #include "../diverge_internals_struct.h"
 #include <omp.h>
 
-
 void tu_loop_t::S_ph_loop_static_simple(complex128_t* loop, index_t ntasks, index_t taskoff, bool rescale) const {
     if(ntasks == -1) ntasks = POW2(n_orbff), taskoff = 0;
     const double prefac = -1.0/(2.0*M_PI);

@@ -23,6 +23,7 @@ DIVERGE_0.4 {
         diverge_flow_step_timing_vec;
         diverge_flow_step_vertex;
         diverge_flow_step_vertmax;
+        diverge_force_thread_limit;
         diverge_generate_symm_maps;
         diverge_generate_symm_trafo;
         diverge_greensfunc_generator_default;
@@ -109,6 +110,7 @@ DIVERGE_0.4 {
         mpi_dbg_printf_all;
         mpi_eprintf;
         mpi_fprintf;
+        mpi_log_control;
         mpi_log_get_colors;
         mpi_log_set_colors;
         mpi_loglevel_set;
