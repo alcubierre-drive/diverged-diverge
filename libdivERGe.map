@@ -109,6 +109,7 @@ DIVERGE_0.4 {
         mpi_dbg_printf_all;
         mpi_eprintf;
         mpi_fprintf;
+        mpi_log_control;
         mpi_log_get_colors;
         mpi_log_set_colors;
         mpi_loglevel_set;

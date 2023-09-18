@@ -64,6 +64,24 @@ void mpi_log_set_colors( int colors );
 // are colors used in logging?
 int mpi_log_get_colors( void );
 
+// Enum: mpi_log_control_t
+//
+// Members:
+// mpi_log_control_standard - logs to stderr, printf() to stdout
+// mpi_log_control_modified - logs to stdout, printf() to stdout
+// mpi_log_control_stderr - logs to stderr, printf() to stderr
+// mpi_log_control_inverted - logs to stdout, printf() to stderr
+typedef enum {
+    mpi_log_control_standard = 0,
+    mpi_log_control_modified,
+    mpi_log_control_stderr,
+    mpi_log_control_inverted,
+} mpi_log_control_t;
+
+// Function: mpi_log_control
+// control the output of diverge using <mpi_log_control_t>
+void mpi_log_control( mpi_log_control_t ctl );
+
 // Function: mpi_py_print
 // print to stdout from python including the diverge log prefix
 void mpi_py_print( const char* str );
