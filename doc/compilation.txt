@@ -8,6 +8,13 @@ Minimal Requirements:::
  - a linux machine is favorable (WSL is expected to work, as is MacOS with some
    tweaks)
 
+To compile the library, navigate into the diverge folder and execute
+=== Code ===
+cd /path/to/diverge/diverge/
+make -jxx
+============
+to compile the code with xx threads.
+
 Changing the defaults:::
 To compile the code with different options/compiler/etc., you can create a file
 'Makefile.local' in the top level directory of the git repository. This file is
