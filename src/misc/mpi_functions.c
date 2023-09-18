@@ -1,7 +1,7 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "mpi_functions.h"
-#include "init_private.h"
+#include "init_internal_libs.h"
 
 #include <assert.h>
 

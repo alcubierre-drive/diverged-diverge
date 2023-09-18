@@ -1,6 +1,6 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-#include "init_private.h"
+#include "init_internal_libs.h"
 
 #include "../diverge_common.h"
 #include <fftw3.h>
