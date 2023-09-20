@@ -22,6 +22,7 @@ int __android_log_write(int prio, const char* tag, const char* text) {
 #endif
 
 int diverge_run_tests(int argc, char** argv ) {
+    mpi_loglevel_set(5);
     Catch::Session session;
     int returnCode = session.applyCommandLine( argc, argv );
     if( returnCode != 0 )
