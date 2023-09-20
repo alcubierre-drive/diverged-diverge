@@ -3,7 +3,6 @@
 #include "propagator.hpp"
 #include "cuda_init.hpp"
 #include "../misc/batched_eigen.h"
-#include "../misc/init_internal_libs.h"
 
 tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 :
