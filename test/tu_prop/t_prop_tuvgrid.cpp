@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
@@ -117,3 +119,5 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     diverge_model_free(mod_tu);
     diverge_model_free(mod_grid);
 }
+
+#endif // DIVERGE_SKIP_TESTS

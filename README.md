@@ -54,17 +54,3 @@ differently licensed software ([OpenBLAS](https://www.openblas.net/),
 
 # Authors
 **Jonas B. Hauck** and **Lennart Klebl**, 2023.
-
-________________________________________________________________________________
-________________________________________________________________________________
-________________________________________________________________________________
-
-# TODOs
-- doc: structured arrays in python (done?), struct datatype usage example
-  symmetries from python (emery)
-- code: include static self-energies in both grid and npatch, with fourier
-  selection and cutoff in npatch
-- checkpointing of flow step
-- c library functions for reading model files
-- fix Makefile.local for JURECA!
-- TODOs in separate file?

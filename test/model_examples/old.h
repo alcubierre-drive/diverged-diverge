@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #pragma once
 
 #ifdef __cplusplus
@@ -15,3 +17,5 @@ diverge_model_t* model_examples_graphene( void );
 #ifdef __cplusplus
 }
 #endif
+
+#endif // DIVERGE_SKIP_TESTS

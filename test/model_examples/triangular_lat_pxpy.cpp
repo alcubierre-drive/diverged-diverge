@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "model_constructor.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_model_internals.h"
@@ -198,3 +200,5 @@ diverge_model_t* gen_triangular_pxpy_sym(index_t nk, bool to_ppm) {
     */
     return model;
 }
+
+#endif // DIVERGE_SKIP_TESTS

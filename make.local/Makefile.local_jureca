@@ -2,7 +2,8 @@
 # module load GCC/11.3.0 \
 #     CUDA/11.7 \
 #     imkl/2022.1.0 \
-#     FFTW/3.3.10
+#     FFTW/3.3.10 \
+#     Eigen/3.4.0
 
 DEFINES := -DUSE_MKL
 
@@ -19,7 +20,8 @@ LDFLAGS += -fno-exceptions
 LIBS = -fopenmp -lfftw3 -lfftw3_omp \
        -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread
 
-DEFINES += -DEIGEN_NO_DEBUG -DNDEBUG
+DEFINES += -DEIGEN_NO_DEBUG -DNDEBUG -DSKIP_EIGEN3_INCLUDE_PREFIX \
+	   -DDIVERGE_LOG_GRAYSCALE
 
 USE_CUDA := true
 INCLUDES += -I$(CUDA_PATH)/include

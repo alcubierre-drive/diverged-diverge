@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #pragma once
 #include "../../src/diverge_model.h"
 
@@ -32,3 +34,5 @@ diverge_model_t* gen_triangular_lat_rashba(index_t nk);
 
 diverge_model_t* gen_honeycomb_lat_rash(index_t nkx, index_t nky, index_t lx=1,
         index_t ly=1, index_t nkxf = 1, index_t nkyf = 1);
+
+#endif // DIVERGE_SKIP_TESTS

@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -68,3 +70,5 @@ const char* gen_graphene_hr_dat( void ) {
     close( fd );
     return graphene_hr_dat_fname;
 }
+
+#endif // DIVERGE_SKIP_TESTS

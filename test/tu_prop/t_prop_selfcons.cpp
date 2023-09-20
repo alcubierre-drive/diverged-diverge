@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
@@ -228,3 +230,5 @@ TEST_CASE("momentum loop variants refine convergence", "[prop][prop_ref]")
 
 
 #endif
+
+#endif // DIVERGE_SKIP_TESTS

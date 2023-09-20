@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
@@ -227,3 +229,5 @@ TEST_CASE("momentum vs mixed projections graphene", "[proj][proj_mixVSrealgr]")
     free(Rvecm);
 }
 #endif
+
+#endif // DIVERGE_SKIP_TESTS

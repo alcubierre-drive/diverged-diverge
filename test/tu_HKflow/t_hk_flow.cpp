@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
@@ -238,3 +240,5 @@ TEST_CASE("two orbital model in 1d mom","[mhk]") {
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
+
+#endif // DIVERGE_SKIP_TESTS

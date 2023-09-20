@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
@@ -65,3 +67,5 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
     diverge_flow_step_free(step1);
     diverge_model_free( mod1 );
 }
+
+#endif // DIVERGE_SKIP_TESTS

@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
@@ -112,3 +114,5 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
     free(r1);
     free(r2);
 }
+
+#endif // DIVERGE_SKIP_TESTS

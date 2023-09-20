@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../../src/diverge_Eigen3.hpp"
@@ -288,3 +290,5 @@ diverge_model_t* gen_honeycomb_lat_rash( index_t nkx, index_t nky, index_t lx,
     diverge_model_internals_common( model );
     return model;
 }
+
+#endif // DIVERGE_SKIP_TESTS

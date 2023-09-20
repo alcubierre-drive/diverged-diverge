@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
@@ -176,3 +178,5 @@ TEST_CASE("symmetry generation spin","[symm_gen]") {
     free(rst);
     free(orb_trafo);
 }
+
+#endif // DIVERGE_SKIP_TESTS

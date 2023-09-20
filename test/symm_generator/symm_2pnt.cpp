@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_momentum_gen.h"
 #include "../../src/diverge_symmetrize.h"
 #include "../../src/diverge_common.h"
@@ -202,3 +204,5 @@ TEST_CASE("symmetrize 2pnt","[symm_2pnt]") {
     diverge_model_free(model);
     diverge_model_free(model2);
 }
+
+#endif // DIVERGE_SKIP_TESTS

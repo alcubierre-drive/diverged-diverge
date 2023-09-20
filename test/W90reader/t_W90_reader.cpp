@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
@@ -52,3 +54,5 @@ TEST_CASE("W90 read in","[W90reader]") {
     free( hop );
     diverge_model_free( model );
 }
+
+#endif // DIVERGE_SKIP_TESTS

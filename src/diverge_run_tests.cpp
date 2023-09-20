@@ -1,9 +1,13 @@
-#include "../src/diverge_run_tests.h"
-#include "../src/misc/compilation_status.h"
-#include <fftw3.h>
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
+#include "diverge_run_tests.h"
+#include "misc/compilation_status.h"
+#include "misc/mpi_log.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 #define CATCH_CONFIG_RUNNER
-#include "catch.hpp"
+#include "../test/catch.hpp"
 
 // for some reason this function is not defined but used in CATCH. Everything
 // seems to work without putting anything useful into this function.
@@ -23,6 +27,17 @@ int diverge_run_tests(int argc, char** argv ) {
     if( returnCode != 0 )
         return returnCode;
     int numFailed = session.run();
-    fftw_cleanup();
     return numFailed;
 }
+
+#else // DIVERGE_SKIP_TESTS
+
+int diverge_run_tests( int argc, char** argv ) {
+    (void)argc;
+    (void)argv;
+    diverge_compilation_status();
+    mpi_wrn_printf("Tests not compiled in. Recompile without DIVERGE_SKIP_TESTS\n");
+    return 1;
+}
+
+#endif // DIVERGE_SKIP_TESTS

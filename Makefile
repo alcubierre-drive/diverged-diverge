@@ -10,8 +10,8 @@ CUCC := nvcc
 AR := ar
 STRIP := strip
 
-CXXFLAGS = $(PREFLAGS) -std=c++17 -fPIC -fopenmp -MMD -Wall -Wextra -pedantic $(DEFINES) $(INCLUDES)
-CFLAGS = $(PREFLAGS) -std=c11 -fPIC -fopenmp -MMD -Wall -Wextra -pedantic $(DEFINES) $(INCLUDES)
+CXXFLAGS = $(FLAGS) -std=c++17 -fPIC -fopenmp -MMD -Wall -Wextra -pedantic $(DEFINES) $(INCLUDES)
+CFLAGS = $(FLAGS) -std=c11 -fPIC -fopenmp -MMD -Wall -Wextra -pedantic $(DEFINES) $(INCLUDES)
 LDFLAGS = -fPIC -fopenmp -Wall -Wextra -pedantic $(LIBS)
 CUFLAGS = $(DEFINES) $(INCLUDES) $(DEVICES) -Xcompiler="-fPIC -fopenmp" -rdc=true
 CULDFLAGS = -Xcompiler="-fPIC"
@@ -24,7 +24,7 @@ EXEFLAGS =
 SOFLAGS = -Wl,--version-script=libdivERGe.map -shared
 LDSOFLAGS = $(LDFLAGS)
 
-PREFLAGS = 
+FLAGS = 
 INCLUDES = 
 DEFINES = 
 LIBS = -llapacke -lcblas -lfftw3 -lfftw3_omp
@@ -37,8 +37,10 @@ DEFINE_VERSION := -DTAG_VERSION=\"$(shell git tag --list "v*.*" | tail -n1)\" \
 		  -DGIT_VERSION=\"$(shell git rev-parse --short HEAD)$(shell (git diff --quiet && git diff --cached --exit-code --quiet) || echo ':dirty')\" \
 		  -DGIT_VERSION_BRANCH=\"$(shell git rev-parse --abbrev-ref HEAD)\"
 
-SRC_C := $(shell find ./src/ -name '*.c')
-SRC_CPP := $(shell find ./src/ -name '*.cpp')
+SRC_C := $(shell find ./src/ -name '*.c') \
+         $(shell find ./test/ -name '*.c')
+SRC_CPP := $(shell find ./src/ -name '*.cpp') \
+           $(shell find ./test/ -name '*.cpp')
 SRC_CU := $(shell find ./src/ -name '*.cu')
 
 IGNORED_DIRS := $(shell find . -type d -name ignore)
@@ -61,36 +63,27 @@ DEP_C := $(patsubst %.c,%.c.d,$(SRC_C))
 DEP_CPP := $(patsubst %.cpp,%.cpp.d,$(SRC_CPP))
 
 HEADERS := $(shell find src/ -name '*.h') \
-           $(shell find src/ -name '*.hpp')
+           $(shell find src/ -name '*.hpp') \
+           $(shell find test/ -name '*.h') \
+           $(shell find test/ -name '*.hpp')
 
 -include Makefile.inc
 -include Makefile.local
 
-.PHONY: all clean types remake $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o distribute todos
+#.PHONY: all clean types remake $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o distribute todos
+.PHONY: lib test clean types dist todos $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
 
 # resolves nasty circular dependency bug for .cu(.o) files
 .SUFFIXES: 
 .SUFFIXES: .cu .cu.o
 
-all: types $(NAME) $(NAME_LIB) distribute todos
+lib: types $(NAME_LIB)
 
+test: types $(NAME)
+
+# TODO make MPI a compilation flag only.
 ifdef USE_MPI
 DEFINES += -DUSE_MPI
-endif
-
-ifdef INC_TEST
-DEFINES += -DINC_TEST
-TEST_CPP := $(shell find test/ -name '*.cpp')
-TEST_C := $(shell find test/ -name '*.c')
-
-OBJ_CPP += $(patsubst %.cpp,%.cpp.o,$(TEST_CPP))
-OBJ_C += $(patsubst %.c,%.c.o,$(TEST_C))
-
-DEP_CPP += $(patsubst %.cpp,%.cpp.d,$(TEST_CPP))
-DEP_C += $(patsubst %.c,%.c.d,$(TEST_C))
-
-HEADERS += $(shell find test/ -name '*.h') \
-           $(shell find test/ -name '*.hpp')
 endif
 
 -include $(DEP_C) $(DEP_CPP)
@@ -105,36 +98,36 @@ $(NAME_GPU_LINK): $(NAME_GPU)
 $(NAME): $(OBJ_C) $(OBJ_CPP) $(NAME_GPU) $(NAME_GPU_LINK)
 	$(LD) $(EXEFLAGS) $^ $(LDFLAGS) -o $@
 $(NAME_LIB): $(OBJ_C) $(OBJ_CPP) $(NAME_GPU) $(NAME_GPU_LINK) libdivERGe.map
-	$(LD) $(SOFLAGS) $(filter-out src/main.cpp.o libdivERGe.map,$^) $(LDSOFLAGS) -o $@
+	$(LD) $(SOFLAGS) $(filter-out src/main.c.o libdivERGe.map,$^) $(LDSOFLAGS) -o $@
 	$(STRIP) $(NAME_LIB)
 else
 $(NAME): $(OBJ_C) $(OBJ_CPP)
 	$(LD) $(EXEFLAGS) $^ $(LDFLAGS) -o $@
 $(NAME_LIB): $(OBJ_C) $(OBJ_CPP) libdivERGe.map
-	$(LD) $(SOFLAGS) $(filter-out src/main.cpp.o libdivERGe.map,$^) $(LDSOFLAGS) -o $@
+	$(LD) $(SOFLAGS) $(filter-out src/main.c.o libdivERGe.map,$^) $(LDSOFLAGS) -o $@
 	$(STRIP) $(NAME_LIB)
 endif
 
 src/misc/version.c.o: src/misc/version.c src/misc/version.h
 	$(CC) -c $< -o $@ $(CFLAGS) $(DEFINE_VERSION)
 
-%.c.o: %.c %.h Makefile
+%.c.o: %.c %.h Makefile $(wildcard Makefile.local Makefile.inc)
 	$(CC) -c $< -o $@ $(CFLAGS)
-%.c.o: %.c Makefile
+%.c.o: %.c Makefile $(wildcard Makefile.local Makefile.inc)
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-%.cpp.o: %.cpp %.h Makefile
+%.cpp.o: %.cpp %.h Makefile $(wildcard Makefile.local Makefile.inc)
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
-%.cpp.o: %.cpp Makefile
+%.cpp.o: %.cpp Makefile $(wildcard Makefile.local Makefile.inc)
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
-%.cu.o: %.cu %.cu.h Makefile
+%.cu.o: %.cu %.cu.h Makefile $(wildcard Makefile.local Makefile.inc)
 	$(CUCC) -c $< -o $@ $(CUFLAGS)
-%.cu.o: %.cu Makefile
+%.cu.o: %.cu Makefile $(wildcard Makefile.local Makefile.inc)
 	$(CUCC) -c $< -o $@ $(CUFLAGS)
 
 types: types.vim
-types.vim: $(SRC_C) $(SRC_CPP) $(HEADERS) Makefile
+types.vim: $(SRC_C) $(SRC_CPP) $(HEADERS) Makefile $(wildcard Makefile.local Makefile.inc)
 	@echo "adding ctypes to vim..."
 	@ctags --c-kinds=t -o- $(SRC_C) $(SRC_CPP) $(HEADERS) |\
 		awk '{print "syntax keyword Type " $$1}' | uniq > $@
@@ -142,16 +135,12 @@ types.vim: $(SRC_C) $(SRC_CPP) $(HEADERS) Makefile
 clean:
 	-@$(RM) -rf $(NAME) $(NAME_GPU) $(NAME_GPU_LINK) $(NAME_LIB) types.vim
 	-@$(RM) -rf $(shell find . -type f -name '*.o') $(shell find . -type f -name '*.d')
-
-remake:
-	-@make $(MFLAGS) clean
-	-@make $(MFLAGS) all
+	-@$(RM) -rf divERGe.tar.gz
 
 $(NAME_GPU): $(OBJ_CU)
 	$(AR) -crs $@ $^
 
-# we want the TODOs to pop up last
-todos: types $(NAME) $(NAME_LIB) distribute
+todos:
 	grep -R TODO src/ test/
 
 DIVERGE_TAR ?= tar
@@ -166,5 +155,5 @@ export DIVERGE_MV
 export DIVERGE_CP
 export DIVERGE_MKDIR
 export DIVERGE_RM
-distribute: divERGe libdivERGe.so
+dist: $(NAME) $(NAME_LIB)
 	$(MAKE) $(MFLAGS) -C util

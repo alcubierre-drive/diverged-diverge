@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
@@ -57,3 +59,5 @@ TEST_CASE("check completness_relations ", "[complete]") {
     free(Rvec);
     diverge_model_free(model);
 }
+
+#endif // DIVERGE_SKIP_TESTS

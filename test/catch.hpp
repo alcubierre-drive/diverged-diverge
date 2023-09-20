@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 /*
  *  Catch v2.13.8
  *  Generated: 2022-01-03 21:20:09.589503
@@ -17976,3 +17978,5 @@ using Catch::Detail::Approx;
 // end catch.hpp
 #endif // TWOBLUECUBES_SINGLE_INCLUDE_CATCH_HPP_INCLUDED
 
+
+#endif // DIVERGE_SKIP_TESTS

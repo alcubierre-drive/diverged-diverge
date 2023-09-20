@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 
 #include "model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
@@ -91,3 +93,5 @@ diverge_model_t* gen_random(index_t nkx, index_t nky) {
     diverge_model_internals_common( mod );
     return mod;
 }
+
+#endif // DIVERGE_SKIP_TESTS

@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
@@ -80,3 +82,5 @@ TEST_CASE("vert_prod", "[vprod]") {
     }
     #endif
 }
+
+#endif // DIVERGE_SKIP_TESTS

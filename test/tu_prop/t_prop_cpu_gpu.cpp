@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
@@ -98,3 +100,5 @@ TEST_CASE("momentum loop cpu gpu offloading", "[prop][prop_offload]")
 #endif
 #endif
 #endif
+
+#endif // DIVERGE_SKIP_TESTS

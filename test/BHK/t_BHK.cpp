@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
@@ -16,20 +18,15 @@
 #include <sys/stat.h>
 
 #ifndef BHK_NK
-#define BHK_NK 6
-#endif
-
-
-#ifndef BHK_NKF
-#define BHK_NKF 3
+#define BHK_NK 4
 #endif
 
 #ifndef BHK_L0
-#define BHK_L0 10.0
+#define BHK_L0 1.0
 #endif
 
 #ifndef BHK_NUM
-#define BHK_NUM 90
+#define BHK_NUM 5
 #endif
 
 #ifdef USE_GF_FLOATS
@@ -308,3 +305,5 @@ create_bhk_test_case( grid, grid, honeycomb_lat_hub )
 create_bhk_test_case( grid, grid, square_lat_rashba )
 create_bhk_test_case( grid, grid, random )
 #endif
+
+#endif // DIVERGE_SKIP_TESTS

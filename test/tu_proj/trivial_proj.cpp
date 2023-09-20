@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "trivial_proj.hpp"
 
 void t_P_projection(complex128_t* proj_vertex,
@@ -335,3 +337,5 @@ void t_D_projection(complex128_t* proj_vertex,
     free(full_channel);
     free(Rvec);
 }
+
+#endif // DIVERGE_SKIP_TESTS

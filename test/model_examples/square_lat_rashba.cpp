@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../../src/diverge_Eigen3.hpp"
@@ -159,3 +161,5 @@ diverge_model_t* gen_square_lat_rashba_sym(index_t nkx, index_t nky,
     return mod;
 }
 
+
+#endif // DIVERGE_SKIP_TESTS

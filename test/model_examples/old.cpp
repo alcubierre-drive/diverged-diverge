@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "old.h"
 #include "../../src/misc/mpi_functions.h"
 #include "../../src/diverge_model.h"
@@ -262,3 +264,5 @@ diverge_model_t* model_examples_graphene( void ) {
     diverge_model_internals_patch( mod, -1 );
     return mod;
 }
+
+#endif // DIVERGE_SKIP_TESTS

@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "helper_functions.hpp"
 #include "../src/misc/mpi_log.h"
 #include "../src/misc/mpi_functions.h"
@@ -107,3 +109,5 @@ bool check_abs_sorted_equal(complex128_t* data1, complex128_t* data2, index_t si
     }
     return max_diff < 1e-10;
 }
+
+#endif // DIVERGE_SKIP_TESTS

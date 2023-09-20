@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #pragma once
 #include "../../src/tu/global.hpp"
 #include "../../src/tu/vertex.hpp"
@@ -16,3 +18,5 @@ void t_C_projection(complex128_t* proj_vertex,
 void t_D_projection(complex128_t* proj_vertex,
                     const Vertex* const vertex,
                     const diverge_model_t* const model);
+
+#endif // DIVERGE_SKIP_TESTS

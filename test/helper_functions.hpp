@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #pragma once
 
 #include "../src/diverge_common.h"
@@ -45,3 +47,5 @@ inline void fill_Rvec_from_vec(const diverge_model_t* model, index_t* R, double*
                             +R[3*i+2] * model->lattice[2][2];
     }
 }
+
+#endif // DIVERGE_SKIP_TESTS
