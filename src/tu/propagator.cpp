@@ -3,6 +3,7 @@
 #include "propagator.hpp"
 #include "cuda_init.hpp"
 #include "../misc/batched_eigen.h"
+#include "../misc/init_internal_libs.h"
 
 tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 :
@@ -40,7 +41,7 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     CUDA_CHECK(cudaHostRegister(GF_fft_conj_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
     #endif
 
-    int fftwnthr = fftw_planner_nthreads();
+    int fftwnthr = diverge_fftw_num_threads();
     fftw_plan_with_nthreads(1);
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;

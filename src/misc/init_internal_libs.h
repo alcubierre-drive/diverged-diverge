@@ -8,4 +8,5 @@ void finalize_internal_libs( void );
 // TODO(LK) move declarations and definitions somewhere else
 void diverge_force_thread_limit( int nthr );
 int diverge_omp_num_threads();
+int diverge_fftw_num_threads();
 

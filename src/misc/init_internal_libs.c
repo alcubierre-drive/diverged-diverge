@@ -58,6 +58,14 @@ int diverge_omp_num_threads( void ) {
         return dvg_omp_num_threads;
 }
 
+
+int diverge_fftw_num_threads( void ) {
+    if (!dvg_has_internal_libs_init)
+        return 1;
+    else
+        return dvg_fftw_num_threads;
+}
+
 void diverge_force_thread_limit( int nthr ) {
     init_internal_libs_omp_diverge( nthr );
     init_internal_libs_omp_implicit( nthr );
