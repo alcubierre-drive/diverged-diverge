@@ -3,6 +3,7 @@
 #include "diverge_run_tests.h"
 #include "misc/compilation_status.h"
 #include "misc/mpi_log.h"
+#include "misc/quotes.h"
 
 #ifndef DIVERGE_SKIP_TESTS
 
@@ -21,7 +22,6 @@ int __android_log_write(int prio, const char* tag, const char* text) {
 #endif
 
 int diverge_run_tests(int argc, char** argv ) {
-    diverge_compilation_status();
     Catch::Session session;
     int returnCode = session.applyCommandLine( argc, argv );
     if( returnCode != 0 )
@@ -35,8 +35,8 @@ int diverge_run_tests(int argc, char** argv ) {
 int diverge_run_tests( int argc, char** argv ) {
     (void)argc;
     (void)argv;
-    diverge_compilation_status();
-    mpi_wrn_printf("Tests not compiled in. Recompile without DIVERGE_SKIP_TESTS\n");
+    mpi_wrn_printf("Tests not compiled in. Here's a nice quote instead:\n%s",
+            random_quote());
     return 1;
 }
 

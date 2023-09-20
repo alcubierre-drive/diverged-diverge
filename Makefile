@@ -81,28 +81,20 @@ lib: types $(NAME_LIB)
 
 test: types $(NAME)
 
-# TODO make MPI a compilation flag only.
-ifdef USE_MPI
-DEFINES += -DUSE_MPI
-endif
-
 -include $(DEP_C) $(DEP_CPP)
+
+$(NAME): src/main.c.o $(NAME_LIB)
+	$(LD) $(EXEFLAGS) $< -L. -l:$(NAME_LIB) -Wl,-rpath=. $(LDFLAGS) -o $@
 
 ifdef USE_CUDA
 DEFINES += -DUSE_CUDA
 LIBS += $(CULIBS)
-
 $(NAME_GPU_LINK): $(NAME_GPU)
 	$(CUCC) $^ -o $@ -dlink $(CULDFLAGS)
-
-$(NAME): $(OBJ_C) $(OBJ_CPP) $(NAME_GPU) $(NAME_GPU_LINK)
-	$(LD) $(EXEFLAGS) $^ $(LDFLAGS) -o $@
 $(NAME_LIB): $(OBJ_C) $(OBJ_CPP) $(NAME_GPU) $(NAME_GPU_LINK) libdivERGe.map
 	$(LD) $(SOFLAGS) $(filter-out src/main.c.o libdivERGe.map,$^) $(LDSOFLAGS) -o $@
 	$(STRIP) $(NAME_LIB)
 else
-$(NAME): $(OBJ_C) $(OBJ_CPP)
-	$(LD) $(EXEFLAGS) $^ $(LDFLAGS) -o $@
 $(NAME_LIB): $(OBJ_C) $(OBJ_CPP) libdivERGe.map
 	$(LD) $(SOFLAGS) $(filter-out src/main.c.o libdivERGe.map,$^) $(LDSOFLAGS) -o $@
 	$(STRIP) $(NAME_LIB)

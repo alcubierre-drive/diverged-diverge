@@ -4,6 +4,7 @@
 
 int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );
+    diverge_compilation_status();
     int r = diverge_run_tests( argc, argv );
     diverge_finalize();
     return r;
