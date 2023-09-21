@@ -75,12 +75,15 @@ to allow for finding the CUDA libraries and inclusion of the right headers.
 
 Namespace: Compilaton-Testing
 The production builds usually include divERGe's test suite (based on
-catch2.hpp). When compiling, be sure to set
+catch2.hpp). If you wish to get an executable usable to run the tests,
+compile using
 === Code ===
-INC_TEST := true
+make test -j
 ============
-in your 'Makefile.local' such that tests are compiled and included in the shared
-object. Notably, the binary ('divERGe') does nothing but running the tests.
+to run the tests call the executable from the command line with
+=== Code ===
+./divERGe
+============
 
 Namespace: Compilaton-Advanced
 Advanced change of defaults:::
