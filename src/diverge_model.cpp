@@ -91,10 +91,7 @@ void diverge_hamilton_generator_default(const diverge_model_t* model, complex128
     fftw_free(fftw_buf);
 }
 
-greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* model,
-        complex128_t Lambda_, gf_complex_t* buf_) {
-    complex128_t Lambda = *(complex128_t*)(&Lambda_);
-    gf_complex_t* buf = (gf_complex_t*)(buf_);
+greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf) {
 
     const index_t nkf = kdimtot(model->nk, model->nkf);
     const index_t nb = model->n_spin * model->n_orb;
