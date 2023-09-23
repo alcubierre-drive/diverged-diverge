@@ -106,9 +106,13 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         }
     }
 
-    mpi_vrb_printf("diagonalizing hamiltonian\n");
-    memcpy( intls->U, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
-    batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
+    if (intls->ignore_eigensolver_in_common) {
+        mpi_vrb_printf("ignoring hamiltonian diag\n");
+    } else {
+        mpi_vrb_printf("diagonalizing hamiltonian\n");
+        memcpy( intls->U, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
+        batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
+    }
 
     merge_rs_orb(model);
 }

@@ -26,6 +26,8 @@ struct internals_t {
     index_t has_common_internals;
     double mu;
 
+    bool ignore_eigensolver_in_common;
+
     // DEVELOPERS
     //
     // this file is for interfacing with the source codes found in
