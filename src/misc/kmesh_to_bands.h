@@ -50,9 +50,6 @@ index_t* diverge_kmesh_to_bands( diverge_model_t* m, index_t** indices, index_t*
 // same as <diverge_kmesh_to_bands>, but for the coarse mesh.
 index_t* diverge_kmesh_to_bands_crs( diverge_model_t* m, index_t** indices, index_t* n_indices );
 
-// TODO(LK) need to prefix these functions with diverge_ somehow. Don't want
-// incredibly long names, though. ideas?
-
 #ifdef __cplusplus
 }
 #endif

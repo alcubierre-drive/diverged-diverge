@@ -19,7 +19,3 @@
 
 - need to adjust documentation accordingly...
 
-# POSSIBLE PITFALLS
-- Hamiltonian is actually in C order, but our Eigensolvers assume F order. ->
-  Eigenvectors are actually their conjugate. GF is also in F order (or, so to
-  say, we effectively always calculate GF^T instead of GF).
