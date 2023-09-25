@@ -27,7 +27,7 @@ double __no_elapsed_time__( T x ) {
 
 void timings(double time_cpyfill, double time_reco, double time_handler_ft, double time_add) {
     if(time_cpyfill > 0.0) {
-        mpi_log_printf("cpy+fill: %3.3fs    reco: %3.3fs \n to_channel: %3.3fs    add: %3.3fs",
+        mpi_log_printf("cpy+fill: %3.3fs    reco: %3.3fs \n to_channel: %3.3fs    add: %3.3fs \n",
                        time_cpyfill,time_reco,time_handler_ft,time_add);
     }
 }

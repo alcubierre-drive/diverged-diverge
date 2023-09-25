@@ -23,7 +23,7 @@ inline void Vertex::reco_ft(complex128_t* const buf,
         mfill(buf_q,rest*my_nk_in_bz,0.);
         const index_t nsq = POW2(n_spin);
         const index_t legdim = nsq*n_orbff;
-        #pragma omp parallel for schedule(static) collapse(5) num_threads(diverge_omp_num_threads())
+        #pragma omp parallel for schedule(dynamic) collapse(7) num_threads(diverge_omp_num_threads())
         for(index_t s4 = 0; s4<(n_spin);++s4)
         for(index_t s3 = 0; s3<(n_spin);++s3)
         for(index_t mo3 = 0; mo3<n_orbff;++mo3)
@@ -89,7 +89,7 @@ inline void Vertex::reco_ft(complex128_t* const buf,
         const double norm = 1./(double)nk;
         gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,norm,0.0);
     }else{
-        #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
+        #pragma omp parallel for schedule(dynamic) collapse(7) num_threads(diverge_omp_num_threads())
         for(index_t s4 = 0; s4<(n_spin);++s4)
         for(index_t s3 = 0; s3<(n_spin);++s3)
         for(index_t mo3 = 0; mo3<n_orbff;++mo3)
