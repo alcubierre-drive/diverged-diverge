@@ -5,6 +5,9 @@
   selection and cutoff in npatch
 - checkpointing of flow step
 - c library functions for reading model files
+- model output: finegrained control as optional parameters from python. maybe
+  just *add* a ```diverge.model_to_file_PY( m, fname, **kwargs )``` function
+  (same goes for other bulky functions)
 
 # CHANGES
 - Makefile now uses targets:
@@ -16,6 +19,4 @@
   source files
 - tests are now toggled with a single DEFINE, i.e. `-DDIVERGE_SKIP_TESTS`
 - BHK defaults changed to something that runs on a laptop with reasonable time
-
-- need to adjust documentation accordingly...
-
+- _need to adjust documentation accordingly..._

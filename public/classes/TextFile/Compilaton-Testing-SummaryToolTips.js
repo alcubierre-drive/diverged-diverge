@@ -1,1 +1,1 @@
-﻿NDSummary.OnToolTipsLoaded("TextFileClass:Compilaton-Testing",{302:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">The production builds usually include divERGe\'s test suite (based on catch2.hpp). When compiling, be sure to set</div></div>"});
+﻿NDSummary.OnToolTipsLoaded("TextFileClass:Compilaton-Testing",{311:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">The production builds usually include divERGe\'s test suite (based on catch2.hpp). If you wish to get an executable usable to run the tests, compile using</div></div>"});

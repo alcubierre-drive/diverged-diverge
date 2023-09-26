@@ -121,6 +121,7 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname );
 // to have fine-grained output control over diverge_model_to_file
 //
 // Members (bool/int):
+//
 // kc - coarse kmesh
 // kf - fine kmesh
 // H - Hamiltonian
