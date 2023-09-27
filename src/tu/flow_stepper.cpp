@@ -57,15 +57,15 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
     if(!tu_selfenergy_flow) {
         if(inout->SU2){
             if(channel_selection[1] || channel_selection[2]){
-                tick = diverge_mpi_wtime();
-                C_projection(internal_vertex->Dch, inout, proj);
-                tock = diverge_mpi_wtime();
-                w_time_projection += tock-tick;
 
                 tick = diverge_mpi_wtime();
                 loop->ph_loop(internal_vertex->ph_bubble_int,internal_vertex->bubble_helper);
                 tock = diverge_mpi_wtime();
                 w_time_loop += tock-tick;
+                tick = diverge_mpi_wtime();
+                C_projection(internal_vertex->Dch, inout, proj);
+                tock = diverge_mpi_wtime();
+                w_time_projection += tock-tick;
 
 
                 tick = diverge_mpi_wtime();
@@ -74,24 +74,26 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
                             internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[1]);
                 tock = diverge_mpi_wtime();
                 w_time_product += tock-tick;
+                
+                if(channel_selection[2]){
+                    tick = diverge_mpi_wtime();
+                    D_projection(inout->projection_helper, inout, proj);
+                    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
+                    for(index_t ii = 0; ii <  inout->full_vert_size;++ii)
+                        internal_vertex->projection_helper[ii] -= 0.5*internal_vertex->Dch[ii];
+                    tock = diverge_mpi_wtime();
+                    w_time_loop += tock-tick;
 
-                tick = diverge_mpi_wtime();
-                D_projection(inout->projection_helper, inout, proj);
-                #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-                for(index_t ii = 0; ii <  inout->full_vert_size;++ii)
-                    internal_vertex->projection_helper[ii] -= 0.5*internal_vertex->Dch[ii];
-                tock = diverge_mpi_wtime();
-                w_time_loop += tock-tick;
-
-                tick = diverge_mpi_wtime();
-                vertex_product(internal_vertex->Dch, internal_vertex->projection_helper,
-                            internal_vertex->ph_bubble_int,inout->product_helper,
-                            internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[2]);
-                #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-                for(index_t ii = 0; ii <  inout->full_vert_size;++ii)
-                    internal_vertex->Dch[ii] += 0.5*internal_vertex->Cch[ii];
-                tock = diverge_mpi_wtime();
-                w_time_product += tock-tick;
+                    tick = diverge_mpi_wtime();
+                    vertex_product(internal_vertex->Dch, internal_vertex->projection_helper,
+                                internal_vertex->ph_bubble_int,inout->product_helper,
+                                internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[2]);
+                    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
+                    for(index_t ii = 0; ii <  inout->full_vert_size;++ii)
+                        internal_vertex->Dch[ii] += 0.5*internal_vertex->Cch[ii];
+                    tock = diverge_mpi_wtime();
+                    w_time_product += tock-tick;
+                }
             }
         }else{
             tick = diverge_mpi_wtime();
