@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("all",["Function"],[["alloc_array",,[["dvg",,,,0,"File:util/__init__.py:dvg.alloc_array","PythonClass:dvg:alloc_array"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("all",["Function"],[["alloc_array",,[["dvg",,,,0,"File:build/lib/diverge/__init__.py:dvg.alloc_array","PythonClass:dvg:alloc_array"]]]]);

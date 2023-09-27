@@ -15,6 +15,7 @@
 
 static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t npath );
 static index_t h_diverge_model_nbandstructure = DIVERGE_MODEL_NBANDSTRUCTURE;
+static void* kmesh_to_bands_serialize( diverge_model_t* mod, bool crs, index_t* psize );
 
 void diverge_model_output_set_npath( int npath ) {
     h_diverge_model_nbandstructure = npath;
@@ -30,11 +31,15 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
     diverge_model_output_conf_t dcfg = diverge_model_output_conf_defaults_CPP();
     if (!cfg) cfg = &dcfg;
 
-    int include_kc = cfg->kc,
-        include_kf = cfg->kf,
-        include_H = cfg->H,
-        include_U = cfg->U,
-        include_E = cfg->E;
+    void* k2b_serial = NULL;
+    index_t k2b_serial_sz = 0;
+    void* kf2b_serial = NULL;
+    index_t kf2b_serial_sz = 0;
+    if (cfg->kc_ibz_path)
+        k2b_serial = kmesh_to_bands_serialize( mod, true, &k2b_serial_sz );
+    if (cfg->kf_ibz_path)
+        kf2b_serial = kmesh_to_bands_serialize( mod, false, &kf2b_serial_sz );
+
     mpi_log_printf( "output model to %s\n", fname );
     char* md5sum = NULL;
     uindex_t lmd5sum = 0;
@@ -134,37 +139,49 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         for (int ll=0; ll<9; ++ll)
             dbuf[idx++] = ((double*)Gvec)[ll];
 
-        if (include_kc) {
+        if (cfg->kc) {
             idx = 80;
             ADD_ARRAY_TO_IBUF(sizeof(double)*3*kdim(mod->nk));
         } else {
             ibuf[80] = displ;
         }
-        if (include_kf) {
+        if (cfg->kf) {
             idx = 82;
             ADD_ARRAY_TO_IBUF(sizeof(double)*3*kdimtot(mod->nk, mod->nkf));
         } else {
             ibuf[82] = displ;
         }
-        if (include_H) {
+        if (cfg->H) {
             idx = 84;
             ADD_ARRAY_TO_IBUF(sizeof(complex128_t)*POW2(mod->n_orb*mod->n_spin)*kdimtot(mod->nk, mod->nkf));
         } else {
             ibuf[84] = displ;
         }
-        if (include_U) {
+        if (cfg->U) {
             idx = 86;
             ADD_ARRAY_TO_IBUF(sizeof(complex128_t)*POW2(mod->n_orb*mod->n_spin)*kdimtot(mod->nk, mod->nkf));
         } else {
             ibuf[86] = displ;
         }
-        if (include_E) {
+        if (cfg->E) {
             idx = 88;
             ADD_ARRAY_TO_IBUF(sizeof(double)*mod->n_orb*mod->n_spin*kdimtot(mod->nk, mod->nkf));
         } else {
             ibuf[88] = displ;
         }
-        idx = 90;
+        if (cfg->kc_ibz_path) {
+            idx = 90;
+            ADD_ARRAY_TO_IBUF(k2b_serial_sz);
+        } else {
+            ibuf[90] = displ;
+        }
+        if (cfg->kf_ibz_path) {
+            idx = 92;
+            ADD_ARRAY_TO_IBUF(kf2b_serial_sz);
+        } else {
+            ibuf[92] = displ;
+        }
+        idx = 94;
 
         idx = 100;
         index_t *band_indices = NULL, n_band_indices = 0, *n_band_segments = NULL;
@@ -281,25 +298,33 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
             COPY_ARY_TO_BUF( mod->data );
         }
 
-        if (include_kc) {
+        if (cfg->kc) {
             idx = 80;
             COPY_ARY_TO_BUF( mod->internals->kmesh );
         }
-        if (include_kf) {
+        if (cfg->kf) {
             idx = 82;
             COPY_ARY_TO_BUF( mod->internals->kfmesh );
         }
-        if (include_H) {
+        if (cfg->H) {
             idx = 84;
             COPY_ARY_TO_BUF( mod->internals->ham );
         }
-        if (include_U) {
+        if (cfg->U) {
             idx = 86;
             COPY_ARY_TO_BUF( mod->internals->U );
         }
-        if (include_E) {
+        if (cfg->E) {
             idx = 88;
             COPY_ARY_TO_BUF( mod->internals->E );
+        }
+        if (cfg->kc_ibz_path) {
+            idx = 90;
+            COPY_ARY_TO_BUF( k2b_serial );
+        }
+        if (cfg->kf_ibz_path) {
+            idx = 92;
+            COPY_ARY_TO_BUF( kf2b_serial );
         }
 
         // and generate the bandstructure array
@@ -344,6 +369,9 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         // and free the buffer
         free(buf);
     }
+
+    free(k2b_serial);
+    free(kf2b_serial);
 
     // broadcast the md5sum to all ranks
     diverge_mpi_bcast_bytes( &lmd5sum, sizeof(uindex_t), 0 );
@@ -409,3 +437,44 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
     free(U);
 }
 
+static void* kmesh_to_bands_serialize( diverge_model_t* mod, bool crs, index_t* psize ) {
+    index_t *ibz_idx, nibz_idx;
+
+    index_t* n_per_segment = crs ? diverge_kmesh_to_bands_crs( mod, &ibz_idx, &nibz_idx ) :
+                                   diverge_kmesh_to_bands( mod, &ibz_idx, &nibz_idx );
+    double* kmesh = crs ? mod->internals->kmesh : mod->internals->kfmesh;
+
+    if (n_per_segment == NULL || ibz_idx == NULL || nibz_idx == -1) {
+        free(n_per_segment);
+        free(ibz_idx);
+        *psize = 0;
+        return NULL;
+    }
+
+    index_t sz = sizeof(index_t) * (1 + (mod->n_ibz_path-1)) +
+                 sizeof(index_t) * (1 + nibz_idx) +
+                 sizeof(double) * 3 * (nibz_idx);
+    void* buf = malloc( sz );
+
+    index_t* header = (index_t*)buf;
+    index_t* path = header + (1 + (mod->n_ibz_path-1));
+    double* vecs = (double*)(path + (1 + nibz_idx));
+
+    header[0] = mod->n_ibz_path-1;
+    for (index_t i=0; i<mod->n_ibz_path-1; ++i)
+        header[i+1] = n_per_segment[i];
+
+    path[0] = nibz_idx;
+    for (index_t i=0; i<nibz_idx; ++i)
+        path[i+1] = ibz_idx[i];
+
+    for (index_t i=0; i<nibz_idx; ++i)
+        for (short d=0; d<3; ++d)
+            vecs[i*3+d] = kmesh[ibz_idx[i]*3+d];
+
+    free(n_per_segment);
+    free(ibz_idx);
+
+    *psize = sz;
+    return buf;
+}

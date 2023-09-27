@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("lic",["Class"],[["LICENSE",,[[,,,,0,"File:doc/license.txt:LICENSE","TextFileClass:LICENSE"]]]]);

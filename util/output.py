@@ -55,6 +55,19 @@ def qmatrices( data, displ, count, nq ):
         result.append( res )
     return result
 
+def k_ibz_path( byte_ary_slice ):
+    if byte_ary_slice.size == 0:
+        return None
+    else:
+        i64 = np.int64
+        i8 = i64().itemsize
+        n_segments = byte_ary_slice[:i8].view(dtype=i64)[0]
+        n_per_segment = byte_ary_slice[i8*1 : i8*(1+n_segments)].view(dtype=i64)
+        n_path = byte_ary_slice[i8*(1+n_segments):i8*(2+n_segments)].view(dtype=i64)[0]
+        path = byte_ary_slice[i8*(2+n_segments):i8*(2+n_segments+n_path)].view(dtype=i64)
+        rest = byte_ary_slice[i8*(2+n_segments+n_path):].view(dtype=np.float64)
+        return (n_per_segment, path, rest.reshape((-1,3)))
+
 # Class: diverge_model
 # documentation found in docstring, i.e., do the following from within python
 # === Python ===
@@ -75,6 +88,9 @@ class diverge_model:
     p_displ: displacement of refined point array for each patch
     p_map: refined indices, indexed by p_count/p_displ
     p_weights: weights of refined indices, indexed by p_count/p_displ
+
+    kc_ibz_path: IBZ path on the coarse momentum mesh as tuple (n_per_segment, path_indices, path_vectors)
+    kf_ibz_path: IBZ path on the fine momentum mesh as tuple (n_per_segment, path_indices, path_vectors)
 
     ibz_path: IBZ path in crystal coordinates
 
@@ -208,6 +224,9 @@ class diverge_model:
         self.U = self._displ_count( 86 ).view( np.complex128 ).reshape(
                 (-1,self.n_spin*self.n_orb,self.n_spin*self.n_orb))
         self.E = self._displ_count( 88 ).view( np.float64 ).reshape((-1,self.n_spin*self.n_orb))
+
+        self.kc_ibz_path = k_ibz_path( self._displ_count( 90 ) )
+        self.kf_ibz_path = k_ibz_path( self._displ_count( 92 ) )
 
         self.bandstructure = self._displ_count( 100 ).view( np.float64 ).reshape(
                 (-1,self.n_spin*self.n_orb + 3))

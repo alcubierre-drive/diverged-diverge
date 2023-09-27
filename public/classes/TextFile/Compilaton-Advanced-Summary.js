@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Compilaton-Advanced","Compilaton-Advanced");NDSummary.OnSummaryLoaded("TextFileClass:Compilaton-Advanced",[["Text File","TextFile"]],[["Classes","Class"]],[[312,0,0,"Compilaton-Advanced"]]);
+﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Compilaton-Advanced","Compilaton-Advanced");NDSummary.OnSummaryLoaded("TextFileClass:Compilaton-Advanced",[["Text File","TextFile"]],[["Classes","Class"]],[[338,0,0,"Compilaton-Advanced"]]);
