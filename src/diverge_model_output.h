@@ -72,6 +72,31 @@ typedef struct diverge_model_t diverge_model_t;
  * header[84-85] - ham [displ, size]
  * header[86-87] - U [displ, size]
  * header[88-89] - E [displ, size]
+ * header[90-91] - kmesh ibz_path [displ, size]
+ * header[92-93] - kfmesh ibz_path [displ, size]
+ *
+ * Both the kmesh and kfmesh ibz_path can only be calculated if ibz_path is set.
+ * These two objects require a bit of internal structure to be read correctly:
+ * The memory layout is:
+ *
+ * - N (number of segments, <index_t>)
+ * - lengh_segment_0 (<index_t>)
+ * - …
+ * - length_segment_N
+ * - M (number of points, <index_t>)
+ * - index_point_0 (<index_t>)
+ * - …
+ * - index_point_M
+ * - point_0_x (double)
+ * - point_0_y
+ * - point_0_z
+ * - …
+ * - point_M_x
+ * - point_M_y
+ * - point_M_z
+ *
+ * Note that [displ, size] accounts for the *full* displacement and size of the
+ * memory layout described above
  *
  * _if ibz_path is set, else all the following are zero_
  *
@@ -120,16 +145,22 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname );
 // Struct: diverge_model_output_conf_t
 // to have fine-grained output control over diverge_model_to_file
 //
-// Members (bool/int):
+// Members (all bool/int):
 //
 // kc - coarse kmesh
 // kf - fine kmesh
-// H - Hamiltonian
-// U - Orbital to band matrices
-// E - energies
+// kc_ibz_path - include the indices on the coarse mesh that describe the ibz
+//               path. must have model->n_ibz_path > 0.
+// kf_ibz_path - include the indices on the fine mesh that describe the ibz
+//               path. must have model->n_ibz_path > 0.
+// H - Hamiltonian on fine mesh
+// U - Orbital to band matrices on fine mesh
+// E - energies on fine mesh
 typedef struct diverge_model_output_conf_t {
     int kc;
     int kf;
+    int kc_ibz_path;
+    int kf_ibz_path;
     int H;
     int U;
     int E;
@@ -140,6 +171,8 @@ typedef struct diverge_model_output_conf_t {
 static const diverge_model_output_conf_t diverge_model_output_conf_defaults = {
     .kc = 0,
     .kf = 0,
+    .kc_ibz_path = 0,
+    .kf_ibz_path = 0,
     .H = 0,
     .U = 0,
     .E = 0,

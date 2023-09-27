@@ -33,9 +33,6 @@ int main( int argc, char** argv ) {
     diverge_compilation_status();
     diverge_model_t* m = diverge_model_init();
 
-    // TODO remove the hack...
-    diverge_model_hack( NULL, "npatch_vertex_resym", "0" );
-
     // misc
     bool patch_mode = !strcmp(mode,"patch"),
          tu_mode = !strcmp(mode,"tu"),
@@ -95,7 +92,9 @@ int main( int argc, char** argv ) {
     if (grid_mode) diverge_model_internals_grid(m);
 
     // output
-    mpi_usr_printf( "model@%s\n", diverge_model_to_file(m, __FILE__ "_mod.dvg") );
+    diverge_model_output_conf_t oc = diverge_model_output_conf_defaults;
+    oc.kc_ibz_path = oc.kf_ibz_path = 1;
+    mpi_usr_printf( "model@%s\n", diverge_model_to_file_finegrained(m, __FILE__ "_mod.dvg", &oc) );
 
     // flow step & integrate
     diverge_flow_step_t* f = diverge_flow_step_init(m, mode, "PCD");

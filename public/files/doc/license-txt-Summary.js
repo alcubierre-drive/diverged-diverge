@@ -1,1 +1,0 @@
-﻿NDFramePage.OnPageTitleLoaded("File:doc/license.txt","license.txt");NDSummary.OnSummaryLoaded("File:doc/license.txt",[["Text File","TextFile"]],[["Classes","Class"]],[[317,0,0,"LICENSE","LICENSE"]]);
