@@ -5,7 +5,7 @@
 #include "../misc/gemm.h"
 
 template<char channel>
-inline void Vertex::reco_ft(complex128_t* const buf,
+void Vertex::reco_ft(complex128_t* const buf,
                     const complex128_t * const existing_r_exp, const uint nr,
                         complex128_t * buf_q) const {
     bool was_null = false;
@@ -15,6 +15,8 @@ inline void Vertex::reco_ft(complex128_t* const buf,
         index_t my_vertsize = mvsq*POW2(n_orbff*POW2(n_spin));
         buf_q = (complex128_t*)calloc(my_vertsize,sizeof(complex128_t));
     }
+    
+    
     const index_t rest = POW2(n_orbff*POW2(n_spin));
     if(symm->use_symmetries) {
         const index_t my_nk_in_bz = symm->my_nk_in_bz;
@@ -127,9 +129,16 @@ inline void Vertex::reco_ft(complex128_t* const buf,
 
 
 template<char channel>
-inline void Vertex::reco(complex128_t* const buf_q) const {
+void Vertex::reco(complex128_t* const buf_q, const complex128_t* inp) const {
     const index_t rest = POW2(n_orbff*POW2(n_spin));
     memset((void*)buf_q,0,sizeof(complex128_t)*rest*nk);
+    if(inp == nullptr) {
+        if(channel == 'P') inp = Pch;
+        if(channel == 'C') inp = Cch;
+        if(channel == 'D') inp = Dch;
+    }
+    const complex128_t* const helper = inp;
+    
     if(symm->use_symmetries) {
 
         const index_t my_nk_in_bz = symm->my_nk_in_bz;
@@ -137,7 +146,7 @@ inline void Vertex::reco(complex128_t* const buf_q) const {
 
         const index_t nsq = POW2(n_spin);
         const index_t legdim = nsq*n_orbff;
-        #pragma omp parallel for schedule(static) collapse(5) num_threads(diverge_omp_num_threads())
+        #pragma omp parallel for schedule(dynamic) collapse(7) num_threads(diverge_omp_num_threads())
         for(index_t s4 = 0; s4<(n_spin);++s4)
         for(index_t s3 = 0; s3<(n_spin);++s3)
         for(index_t mo3 = 0; mo3<n_orbff;++mo3)
@@ -163,7 +172,7 @@ inline void Vertex::reco(complex128_t* const buf_q) const {
 
                     buf_q[idx_TO] +=  symm->prefactor_symmP[l+symm->o2m_map_off[lidx]]*
                             std::conj(symm->prefactor_symmP[r+symm->o2m_map_off[ridx]])*
-                                Pch[idx_FROM];
+                                helper[idx_FROM];
                 }
             }
             if constexpr(channel == 'C') {
@@ -179,7 +188,7 @@ inline void Vertex::reco(complex128_t* const buf_q) const {
 
                     buf_q[idx_TO] +=  symm->prefactor_symmCD[l+symm->o2m_map_off[lidx]]*
                             std::conj(symm->prefactor_symmCD[r+symm->o2m_map_off[ridx]])*
-                                Cch[idx_FROM];
+                                helper[idx_FROM];
                 }
             }
             if constexpr(channel == 'D') {
@@ -195,7 +204,7 @@ inline void Vertex::reco(complex128_t* const buf_q) const {
 
                     buf_q[idx_TO] +=  symm->prefactor_symmCD[l+symm->o2m_map_off[lidx]]*
                             std::conj(symm->prefactor_symmCD[r+symm->o2m_map_off[ridx]])*
-                                Dch[idx_FROM];
+                                helper[idx_FROM];
                 }
             }
         }
@@ -212,17 +221,17 @@ inline void Vertex::reco(complex128_t* const buf_q) const {
                                 (s2+n_spin*(mo3+n_orbff*(s3+n_spin*
                                                     s4)))));
             if constexpr(channel == 'P') {
-                buf_q[idx_TO] = Pch[mo1+n_orbff*(s1+n_spin*
+                buf_q[idx_TO] = helper[mo1+n_orbff*(s1+n_spin*
                                     (s2+n_spin*(mo3+n_orbff*(s3+n_spin*
                                                         (s4+n_spin*q)))))];
             }
             if constexpr(channel == 'C') {
-                buf_q[idx_TO] = Cch[mo1+n_orbff*(s1+n_spin*
+                buf_q[idx_TO] = helper[mo1+n_orbff*(s1+n_spin*
                                     (s4+n_spin*(mo3+n_orbff*(s3+n_spin*
                                                         (s2+n_spin*q)))))];
             }
             if constexpr(channel == 'D') {
-                buf_q[idx_TO] = Dch[mo1+n_orbff*(s1+n_spin*
+                buf_q[idx_TO] = helper[mo1+n_orbff*(s1+n_spin*
                                     (s3+n_spin*(mo3+n_orbff*(s4+n_spin*
                                                         (s2+n_spin*q)))))];
             }

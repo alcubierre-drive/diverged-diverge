@@ -25,10 +25,10 @@ public:
     Vertex& operator=(const Vertex& other);
 
     template<char channel>
-    inline void reco(complex128_t* const buf) const;
+    void reco(complex128_t* const buf, const complex128_t* inp = nullptr) const;
 
     template<char channel>
-    inline void reco_ft(complex128_t* const buf, const complex128_t * const existing_r_exp, const uint nr,
+    void reco_ft(complex128_t* const buf, const complex128_t * const existing_r_exp, const uint nr,
                             complex128_t * bufMPI = nullptr) const;
 
     void init_U_from_fullV(diverge_model_t* model, Projection* proj);
@@ -39,10 +39,7 @@ public:
 
     void init_U(bool enforce_exchange);
     void unset_U();
-
-    void init_selfenergy();
-    void unset_selfenergy();
-
+    
     complex128_t* Pch = nullptr;
     complex128_t* Cch = nullptr;
     complex128_t* Dch = nullptr;
@@ -82,9 +79,9 @@ public:
     char* GPU_gemm_buffer[32][3];
     bool has_gpu_memory = false;
 
-    const bool P_flow;
-    const bool C_flow;
-    const bool D_flow;
+    bool P_flow;
+    bool C_flow;
+    bool D_flow;
     const bool use_self;
 
     // helper arrays

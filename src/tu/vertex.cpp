@@ -1,6 +1,7 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "vertex.hpp"
+#include "projection_handler.hpp"
 
 Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop, 
                 bool P, bool C, bool D, bool self)
@@ -22,23 +23,22 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
     selfenergy_size{self ? POW2(n_orb*n_spin)*n_frq*nkf*nk : 0},
     symm{tu_data->symm},
     P_flow{P},
-    C_flow{C || D},
+    C_flow{C || (!SU2 && D)},
     D_flow{D || (!SU2 && C)},
     use_self{self}
 {
     owns = true;
     index_t memsize = 0;
-    if(P_flow){
-        Pch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
-        pp_bubble_int = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
-        memsize += 2*2*full_vert_size;
-    }
-    if(C_flow){Cch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t)); memsize += 2*full_vert_size;}
-    if(D_flow){Dch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t)); memsize += 2*full_vert_size;}
+    Pch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
+    pp_bubble_int = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
+    memsize += 2*2*full_vert_size;
+    Cch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t)); 
+    memsize += 2*full_vert_size;
+    Dch = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t)); 
+    memsize += 2*full_vert_size;
     if(use_self) {
         self_en = (complex128_t*)calloc(selfenergy_size, sizeof(complex128_t));
         memsize += 2*selfenergy_size;
-        init_selfenergy();
         index_t n = nk;
         bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
         product_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
@@ -59,13 +59,47 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
         ph_bubble_int = (complex128_t*)calloc(full_vert_size, sizeof(complex128_t));
         memsize += 2*full_vert_size;
     }
-    mpi_vrb_printf("TU euler requires %.1f GB\n", memsize * sizeof(complex128_t) / POW3(1024.))
     initialize_GPU_memory(proj, loop);
     if (model->ffill != NULL) {
         init_U_from_fullV(model,proj);
     }else{
         init_U(model -> internals -> enforce_exchange);
+        if(!(P_flow && C_flow && D_flow)) {
+            mpi_wrn_printf("Not all channels included - please ensure a suitable choice of formfactors\n")
+            bool dummy1, dummy2;
+            if(D_flow) {
+                dummy1 = C_flow; dummy2 = P_flow;
+                C_flow = P_flow = true;
+                mpi_vrb_printf("Interactions only in D \n");
+                D_projection(Dch, this,proj);
+                if(C_flow) mfill(Cch,full_vert_size,0.0);
+                if(P_flow) mfill(Pch,full_vert_size,0.0);
+                C_flow = dummy1; P_flow = dummy2;
+            }else if(C_flow) {
+                dummy1 = D_flow; dummy2 = P_flow;
+                P_flow = D_flow = true;
+                mpi_vrb_printf("Interactions only in C \n");
+                C_projection(Cch, this,proj);
+                if(P_flow) mfill(Pch,full_vert_size,0.0);
+                D_flow = dummy1; P_flow = dummy2;
+            }else{
+                dummy1 = D_flow; dummy2 = C_flow;
+                C_flow = D_flow = true;
+                mpi_vrb_printf("Interactions only in P \n");
+                P_projection(Pch, this,proj);
+                D_flow = dummy1; C_flow = dummy2;
+            }
+        }
     }
+    if(!P_flow){
+        free(Pch); Pch = nullptr;
+        free(pp_bubble_int); pp_bubble_int = nullptr;
+        memsize -= 2*2*full_vert_size;
+    }
+    if(!C_flow){free(Cch); Cch = nullptr; memsize -= 2*full_vert_size;}
+    if(!D_flow){free(Dch); Dch = nullptr; memsize -= 2*full_vert_size;}
+    
+    mpi_vrb_printf("TU euler requires %.1f GB\n", memsize * sizeof(complex128_t) / POW3(1024.))
     mpi_vrb_printf("TU vertex size: %.1f GB\n", (double)memsize/ POW3(1024.));
 }
 
@@ -76,85 +110,80 @@ void Vertex::init_U(bool enforce_exchange) {
         mpi_vrb_printf("enforcing exchange \n");
         helper_crossing = (complex128_t*)calloc(POW2(n_orb)*nk*POW4(n_spin), sizeof(complex128_t));
     }
-    if(P_flow) {
-        if(!enforce_exchange) {
-            model->vfill(model,'P',helper);
-            #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
-            for (index_t q=0; q< my_nk; ++q)
-            for (index_t s4=0; s4<n_spin; ++s4)
-            for (index_t s3=0; s3<n_spin; ++s3)
-            for (index_t o3=0; o3<n_orb; ++o3)
-            for (index_t s2=0; s2<n_spin; ++s2)
-            for (index_t s1=0; s1<n_spin; ++s1)
-            for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s21 = IDX2(s2, s1, n_spin),
-                        s43 = IDX2(s4, s3, n_spin);
-                index_t s12 = IDX2(s1, s2, n_spin),
-                        s34 = IDX2(s3, s4, n_spin);
-                complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
-                                s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Pch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
-            }
-        } else {
-            model->vfill(model,'P',helper);
-            #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
-            for (index_t q=0; q < my_nk; ++q)
-            for (index_t s4=0; s4<n_spin; ++s4)
-            for (index_t s3=0; s3<n_spin; ++s3)
-            for (index_t o3=0; o3<n_orb; ++o3)
-            for (index_t s2=0; s2<n_spin; ++s2)
-            for (index_t s1=0; s1<n_spin; ++s1)
-            for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t full_q = symm->idx_ibz_in_fullmesh[q+my_nk_off];
-                index_t r1234 = IDX7(q, s4, s3, o3, s2, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
-                        i1234 = IDX7(full_q, s2, s1, o3, s4, s3, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
-                        i2134 = IDX7(full_q, s1, s2, o3, s4, s3, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
-                        i1243 = IDX7(full_q, s2, s1, o3, s3, s4, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
-                        i2143 = IDX7(full_q, s1, s2, o3, s3, s4, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
-                Pch[r1234] = 0.5 * (helper[i1234] - helper[i1243] +
-                                    helper[i2143] - helper[i2134]);
-            }
+    if(!enforce_exchange) {
+        model->vfill(model,'P',helper);
+        #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
+        for (index_t q=0; q< my_nk; ++q)
+        for (index_t s4=0; s4<n_spin; ++s4)
+        for (index_t s3=0; s3<n_spin; ++s3)
+        for (index_t o3=0; o3<n_orb; ++o3)
+        for (index_t s2=0; s2<n_spin; ++s2)
+        for (index_t s1=0; s1<n_spin; ++s1)
+        for (index_t o1=0; o1<n_orb; ++o1) {
+            index_t s21 = IDX2(s2, s1, n_spin),
+                    s43 = IDX2(s4, s3, n_spin);
+            index_t s12 = IDX2(s1, s2, n_spin),
+                    s34 = IDX2(s3, s4, n_spin);
+            complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
+                            s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
+            Pch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
+        }
+    } else {
+        model->vfill(model,'P',helper);
+        #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
+        for (index_t q=0; q < my_nk; ++q)
+        for (index_t s4=0; s4<n_spin; ++s4)
+        for (index_t s3=0; s3<n_spin; ++s3)
+        for (index_t o3=0; o3<n_orb; ++o3)
+        for (index_t s2=0; s2<n_spin; ++s2)
+        for (index_t s1=0; s1<n_spin; ++s1)
+        for (index_t o1=0; o1<n_orb; ++o1) {
+            index_t full_q = symm->idx_ibz_in_fullmesh[q+my_nk_off];
+            index_t r1234 = IDX7(q, s4, s3, o3, s2, s1, o1,n_spin,n_spin, n_orbff, n_spin,n_spin, n_orbff),
+                    i1234 = IDX7(full_q, s2, s1, o3, s4, s3, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    i2134 = IDX7(full_q, s1, s2, o3, s4, s3, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    i1243 = IDX7(full_q, s2, s1, o3, s3, s4, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb),
+                    i2143 = IDX7(full_q, s1, s2, o3, s3, s4, o1,n_spin,n_spin, n_orb, n_spin,n_spin, n_orb);
+            Pch[r1234] = 0.5 * (helper[i1234] - helper[i1243] +
+                                helper[i2143] - helper[i2134]);
         }
     }
-    if(!enforce_exchange || !(D_flow && C_flow))
+    if(!enforce_exchange)
     {
-        if(C_flow) {
-            model->vfill(model,'C',helper);
-            #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
-            for (index_t q=0; q< my_nk; ++q)
-            for (index_t s4=0; s4<n_spin; ++s4)
-            for (index_t s3=0; s3<n_spin; ++s3)
-            for (index_t o3=0; o3<n_orb; ++o3)
-            for (index_t s2=0; s2<n_spin; ++s2)
-            for (index_t s1=0; s1<n_spin; ++s1)
-            for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s21 = IDX2(s2, s1, n_spin),
-                        s43 = IDX2(s2, s4, n_spin);
-                index_t s12 = IDX2(s1, s2, n_spin),
-                        s34 = IDX2(s3, s4, n_spin);
-                complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
-                                s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Cch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
-            }
+        model->vfill(model,'C',helper);
+        #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
+        for (index_t q=0; q< my_nk; ++q)
+        for (index_t s4=0; s4<n_spin; ++s4)
+        for (index_t s3=0; s3<n_spin; ++s3)
+        for (index_t o3=0; o3<n_orb; ++o3)
+        for (index_t s2=0; s2<n_spin; ++s2)
+        for (index_t s1=0; s1<n_spin; ++s1)
+        for (index_t o1=0; o1<n_orb; ++o1) {
+            index_t s21 = IDX2(s2, s1, n_spin),
+                    s43 = IDX2(s2, s4, n_spin);
+            index_t s12 = IDX2(s1, s2, n_spin),
+                    s34 = IDX2(s3, s4, n_spin);
+            complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off],
+                            s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
+            Cch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
         }
-        if(D_flow) {
-            model->vfill(model,'D',helper);
-            #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
-            for (index_t q=0; q< my_nk; ++q)
-            for (index_t s4=0; s4<n_spin; ++s4)
-            for (index_t s3=0; s3<n_spin; ++s3)
-            for (index_t o3=0; o3<n_orb; ++o3)
-            for (index_t s2=0; s2<n_spin; ++s2)
-            for (index_t s1=0; s1<n_spin; ++s1)
-            for (index_t o1=0; o1<n_orb; ++o1) {
-                index_t s21 = IDX2(s2, s1, n_spin),
-                        s43 = IDX2(s4, s3, n_spin);
-                index_t s12 = IDX2(s1, s2, n_spin),
-                        s34 = IDX2(s3, s4, n_spin);
-                complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off], 
-                                s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
-                Dch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
-            }
+    
+        model->vfill(model,'D',helper);
+        #pragma omp parallel for schedule(static) collapse(4) num_threads(diverge_omp_num_threads())
+        for (index_t q=0; q< my_nk; ++q)
+        for (index_t s4=0; s4<n_spin; ++s4)
+        for (index_t s3=0; s3<n_spin; ++s3)
+        for (index_t o3=0; o3<n_orb; ++o3)
+        for (index_t s2=0; s2<n_spin; ++s2)
+        for (index_t s1=0; s1<n_spin; ++s1)
+        for (index_t o1=0; o1<n_orb; ++o1) {
+            index_t s21 = IDX2(s2, s1, n_spin),
+                    s43 = IDX2(s4, s3, n_spin);
+            index_t s12 = IDX2(s1, s2, n_spin),
+                    s34 = IDX2(s3, s4, n_spin);
+            complex128_t val = helper[IDX5(symm->idx_ibz_in_fullmesh[q+my_nk_off], 
+                            s12, o1, s34, o3, n_spin*n_spin, n_orb, n_spin*n_spin, n_orb)];
+            Dch[IDX5(q, s43, o3, s21, o1,n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)] = val;
         }
     }else{
         auto to_minus_q = [](index_t q, index_t* nk) {
@@ -200,22 +229,6 @@ void Vertex::init_U(bool enforce_exchange) {
     }
     free(helper);
     free(helper_crossing);
-}
-
-
-void Vertex::init_selfenergy() {
-    const index_t hamsize = POW2(n_orb*n_spin)*nkf*nk;
-    mfill(self_en,hamsize*n_frq,0.0);
-}
-
-void Vertex::unset_selfenergy() {
-    const complex128_t* ham = (complex128_t*)model->internals->ham;
-    const index_t hamsize = POW2(n_orb*n_spin)*nkf*nk;
-    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
-    for(index_t b_idx = 0; b_idx < n_frq;++b_idx)
-    for(index_t ii = 0; ii<hamsize;++ii) {
-            self_en[ii+b_idx*hamsize] -= ham[ii];
-    }
 }
 
 Vertex::Vertex(const Vertex& other)
