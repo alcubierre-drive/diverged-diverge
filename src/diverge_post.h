@@ -88,6 +88,9 @@ typedef struct {
     // Variable: tu_selfenergy
     // store the selfenergy if it was included in the calculation
     bool    tu_selfenergy;
+    // Variable: tu_channels
+    // store the vertices in the formfactor basis - Requires a lot of memory
+    bool    tu_full;
 
     // DEVELOPERS
     //
@@ -117,13 +120,14 @@ static const diverge_postprocess_config_t diverge_postprocess_config_default = {
     .grid_vertex_chan = '0',
 
     .tu_which_solver_mode = 'a',
-    .tu_storing_threshold = 25,
+    .tu_storing_threshold = 25.,
     .tu_storing_relative = 0,
     .tu_n_singular_values = 1,
     .tu_lingap = true,
     .tu_susceptibilities_full = false,
     .tu_susceptibilities_ff = false,
-    .tu_selfenergy = false
+    .tu_selfenergy = false,
+    .tu_full = false
 };
 #endif
 

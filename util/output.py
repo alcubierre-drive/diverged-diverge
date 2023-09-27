@@ -549,7 +549,7 @@ class diverge_post_tu:
         self.mi_to_R = get_array_header( iL, np.longlong ).reshape((-1,3))
         self.bond_sizes = get_array_header( iL, np.longlong )
         self.bond_offsets = get_array_header( iL, np.longlong )
-        self.idx_ipz_in_pz = get_array_header( iL, np.longlong )
+        self.idx_ibz_in_bz = get_array_header( iL, np.longlong )
         self.Plen = get_array_header( iL, np.longlong )
         self.Poff = get_array_header( iL, np.longlong )
         self.Ptype = get_array_header( iL, np.byte )
@@ -595,7 +595,7 @@ class diverge_post_tu:
         self.V_charge = get_array_header( iL, np.complex128 )
         self.V_charge = self.V_charge.reshape((self.n_svdD,n_spin,n_spin,n_orbff))
 
-        susc_shape = (self.nkibz,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb)
+        susc_shape = (n_orb,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb,n_spin,self.nk)
         self.Psusc = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Psusc = self.Psusc.reshape(susc_shape)
@@ -606,8 +606,7 @@ class diverge_post_tu:
         if(d_header[iL[0]-1] > 0):
             self.Dsusc = self.Dsusc.reshape(susc_shape)
 
-
-        susc_shape = (self.nkibz,n_spin*n_spin,n_orbff,n_spin*n_spin,n_orbff)
+        susc_shape = (n_orbff,n_spin*n_spin,n_orbff,n_spin*n_spin,self.nk)
         self.Psusc_ff = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Psusc_ff = self.Psusc_ff.reshape(susc_shape)
@@ -623,6 +622,21 @@ class diverge_post_tu:
             self.selfenergy = self.selfenergy.reshape(self.nktot,n_spin,n_orb,n_spin,n_orb)
 
 
+        self.Pchannel = get_array_header( iL, np.complex128 )
+        if(d_header[iL[0]-1] > 0):
+            self.Pchannel = self.Pchannel.reshape(susc_shape)
+        self.Cchannel = get_array_header( iL, np.complex128 )
+        if(d_header[iL[0]-1] > 0):
+            self.Cchannel = self.Cchannel.reshape(susc_shape)
+        self.Dchannel = get_array_header( iL, np.complex128 )
+        if(d_header[iL[0]-1] > 0):
+            self.Dchannel = self.Dchannel.reshape(susc_shape)
+        self.pploop = get_array_header( iL, np.complex128 )
+        if(d_header[iL[0]-1] > 0):
+            self.pploop = self.pploop.reshape(susc_shape)
+        self.phloop = get_array_header( iL, np.complex128 )
+        if(d_header[iL[0]-1] > 0):
+            self.phloop = self.phloop.reshape(susc_shape)
 
 
 

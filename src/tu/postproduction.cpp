@@ -87,11 +87,11 @@ tu_postproduction::~tu_postproduction() {
 }
 
 void tu_postproduction::run_and_save(string filename, bool lingaps, bool susc_ff,
-                                            bool susc_full, bool save_self) {
+                                            bool susc_full, bool save_self, bool save_full) {
     safe_channel_leading_ev();
     if(lingaps) lingap_ff();
     if(susc_ff || susc_full) calc_susc(susc_ff, susc_full);
-    to_file(filename, save_self);
+    to_file(filename, save_self, save_full);
 }
 
 void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
@@ -118,14 +118,13 @@ void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
         vector<index_t> idx;
 
         double cutoff_local = cutoff;
-
+        
         if (cutoff_rel) {
             vector<double> vals_sorted(linsize);
             memcpy( vals_sorted.data(), _val, sizeof(double)*linsize );
             std::sort( vals_sorted.begin(), vals_sorted.end(), [](double a, double b)->bool{return std::abs(a)>std::abs(b);} );
             cutoff_local *= std::abs(vals_sorted[0]);
         }
-
         for(index_t r = 0; r < linsize; ++r) {
             double cur = _val[r];
             if(std::abs(cur) > cutoff_local){
@@ -268,7 +267,7 @@ static void _susc_o14k(const diverge_model_t* const model,
     const index_t n_orb = model->n_orb;
     const index_t n_bonds = tu_data->n_bonds;
     const index_t realsp_size = tu_data->n_orbff;
-    const index_t my_nk = tu_data->my_nk;
+    const index_t nk = tu_data->nk;
 
     const tu_formfactor_t* tu_ff = model->tu_ff;
     const double* kmesh = model->internals->kmesh;
@@ -292,7 +291,7 @@ static void _susc_o14k(const diverge_model_t* const model,
     const index_t norb = n_spin*n_orb;
 
     #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
-    for(index_t k = 0; k< my_nk; ++k)
+    for(index_t k = 0; k< nk; ++k)
     for(index_t s1 = 0; s1 < (n_spin); ++s1)
     for(index_t s2 = 0; s2 < (n_spin); ++s2)
     for(index_t s3 = 0; s3 < (n_spin); ++s3)
@@ -333,39 +332,43 @@ static void vertex_product(complex128_t* result, const complex128_t* const  B,
 }
 
 void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
-    index_t size = POW4(vertex->n_orb*vertex->n_spin)*vertex->my_nk;
+    index_t size = POW4(vertex->n_orb*vertex->n_spin)*vertex->nk;
+    index_t size2 = POW4(vertex->n_spin)*POW2(vertex->n_orbff)*vertex->nk;
     called_suscep_full = susc_full;
     called_suscep_ff = susc_ff;
     if(susc_full) {
-        suscPp = (complex128_t*)malloc(size*sizeof(complex128_t));
-        suscMa = (complex128_t*)malloc(size*sizeof(complex128_t));
-        suscCh = (complex128_t*)malloc(size*sizeof(complex128_t));
+        suscPp = (complex128_t*)calloc(size,sizeof(complex128_t));
+        suscMa = (complex128_t*)calloc(size,sizeof(complex128_t));
+        suscCh = (complex128_t*)calloc(size,sizeof(complex128_t));
     }
-    suscPp_ff = (complex128_t*)malloc(vertex->full_vert_size*sizeof(complex128_t));
-    suscMa_ff = (complex128_t*)malloc(vertex->full_vert_size*sizeof(complex128_t));
-    suscCh_ff = (complex128_t*)malloc(vertex->full_vert_size*sizeof(complex128_t));
+    complex128_t* suscff = (complex128_t*)malloc(vertex->full_vert_size*sizeof(complex128_t));
+    suscPp_ff = (complex128_t*)malloc(size2*sizeof(complex128_t));
+    suscMa_ff = (complex128_t*)malloc(size2*sizeof(complex128_t));
+    suscCh_ff = (complex128_t*)malloc(size2*sizeof(complex128_t));
     if(vertex->P_flow) {
-        tu_suscP = (called_suscep_full) ? POW4(vertex->n_orb*vertex->n_spin) : 0;
-        tu_suscP_ff = (called_suscep_ff) ? POW2(vertex->n_orbff*POW2(vertex->n_spin)) : 0;
+        tu_suscP = (called_suscep_full) ? POW4(vertex->n_orb*vertex->n_spin)*vertex->nk : 0;
+        tu_suscP_ff = (called_suscep_ff) ? POW2(vertex->n_orbff*POW2(vertex->n_spin))*vertex->nk : 0;
         P_projection(vertex->projection_helper, vertex, proj);
-        vertex_product(suscPp_ff, vertex->pp_bubble_int,vertex->projection_helper,
+        vertex_product(suscff, vertex->pp_bubble_int,vertex->projection_helper,
                 vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff, vertex->my_nk,1.0);
+        vertex->template reco<'P'>(suscPp_ff, suscff);
         if(called_suscep_full)
             _susc_o14k(model,suscPp_ff,suscPp);
     }
     if(vertex->C_flow) {
-        tu_suscC = (called_suscep_full) ? POW4(vertex->n_orb*vertex->n_spin) : 0;
-        tu_suscC_ff = (called_suscep_ff) ? POW2(vertex->n_orbff*POW2(vertex->n_spin)) : 0;
+        tu_suscC = (called_suscep_full) ? POW4(vertex->n_orb*vertex->n_spin)*vertex->nk : 0;
+        tu_suscC_ff = (called_suscep_ff) ? POW2(vertex->n_orbff*POW2(vertex->n_spin))*vertex->nk : 0;
         C_projection(vertex->projection_helper, vertex, proj);
-        vertex_product(suscMa_ff, vertex->ph_bubble_int,vertex->projection_helper,
+        vertex_product(suscff, vertex->ph_bubble_int,vertex->projection_helper,
                 vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff, vertex->my_nk,1.0);
+        vertex->template reco<'C'>(suscMa_ff, suscff);
         if(called_suscep_full)
             _susc_o14k(model,suscMa_ff,suscMa);
     }
     if(vertex->D_flow) {
-        tu_suscD = (called_suscep_full) ? POW4(vertex->n_orb*vertex->n_spin) : 0;
-        tu_suscD_ff = (called_suscep_ff) ? POW2(vertex->n_orbff*POW2(vertex->n_spin)) : 0;
-        if(vertex->SU2) {
+        tu_suscD = (called_suscep_full) ? POW4(vertex->n_orb*vertex->n_spin)*vertex->nk : 0;
+        tu_suscD_ff = (called_suscep_ff) ? POW2(vertex->n_orbff*POW2(vertex->n_spin))*vertex->nk : 0;
+        if(vertex->SU2 && vertex->C_flow) {
             complex128_t* helper;
             helper = (complex128_t*)calloc(vertex->full_vert_size,sizeof(complex128_t));
             D_projection(helper, vertex, proj);
@@ -375,8 +378,9 @@ void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
         }else{
             D_projection(vertex->projection_helper, vertex, proj);
         }
-        vertex_product(suscCh_ff, vertex->ph_bubble_int,vertex->projection_helper,
+        vertex_product(suscff, vertex->ph_bubble_int,vertex->projection_helper,
                 vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff, vertex->my_nk,1.0);
+        vertex->template reco<'D'>(suscCh_ff, suscff);
         if(called_suscep_full)
             _susc_o14k(model,suscCh_ff,suscCh);
     }
@@ -385,10 +389,11 @@ void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
         free(suscPp_ff);
         free(suscMa_ff);
     }
+    free(suscff);
 }
 
 
-void tu_postproduction::to_file(string filename, bool save_self) {
+void tu_postproduction::to_file(string filename, bool save_self, bool save_full) {
     index_t* header = (index_t*)calloc(128,sizeof(index_t));
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
     int i = 0;
@@ -514,20 +519,43 @@ void tu_postproduction::to_file(string filename, bool save_self) {
     header[i] = tu_n_singular_valuesD*linsize, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
 
-    header[i] = tu_suscP*tu_data->nkibz,++i;
+    header[i] = tu_suscP,++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
-    header[i] = tu_suscC*tu_data->nkibz,++i;
+    header[i] = tu_suscC,++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
-    header[i] = tu_suscD*tu_data->nkibz,++i;
+    header[i] = tu_suscD,++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
 
-    header[i] = tu_suscP_ff*tu_data->nkibz,++i;
+    header[i] = tu_suscP_ff,++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
-    header[i] = tu_suscC_ff*tu_data->nkibz,++i;
+    header[i] = tu_suscC_ff,++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
-    header[i] = tu_suscD_ff*tu_data->nkibz,++i;
+    header[i] = tu_suscD_ff,++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
     header[i] = size_self,++i;
+    header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+    if(save_full && !tu_data->tu_selfenergy_flow) {
+        header[i] = vertex->P_flow ? POW2(linsize)*vertex->nk: 0,++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = vertex->C_flow ? POW2(linsize)*vertex->nk: 0,++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = vertex->D_flow ? POW2(linsize)*vertex->nk: 0,++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = vertex->P_flow ? POW2(linsize)*vertex->nk: 0,++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = (vertex->C_flow || vertex->D_flow) ? POW2(linsize)*vertex->nk:0, ++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+    } else {
+        header[i] = 0;++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = 0;++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = 0;++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = 0;++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = 0;++i;
+    }
     assert(i < 126);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
     header[127] = header[i-1]*sizeof(complex128_t)+header[i-2];
@@ -539,7 +567,7 @@ void tu_postproduction::to_file(string filename, bool save_self) {
     index_t scdou = sizeof(complex128_t);
     index_t new_off = 0;
 
-    new_off = diverge_mpi_write_byte_to_file(file, header, new_off, 128*sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, header, new_off, 128*sindex);
     index_t n_osff = (my_rank == 0) ? vertex->n_orbff : 0;
     new_off = diverge_mpi_write_byte_to_file(file, tu_data->mi_to_ofrom, new_off, n_osff*sindex);
     new_off = diverge_mpi_write_byte_to_file(file, tu_data->mi_to_oto, new_off, n_osff*sindex);
@@ -571,47 +599,66 @@ void tu_postproduction::to_file(string filename, bool save_self) {
     new_off = diverge_mpi_write_byte_to_file(file, Dval, new_off + offD[0]*sdou, my_cod*sdou);
     new_off = diverge_mpi_write_byte_to_file(file, Dvec, new_off + offD[0]*linsize*scdou, my_cod*linsize*scdou);
     if(called_lingap) {
-        index_t my_nelem = (my_rank == 0) ? tu_n_singular_valuesP : 0;
-        new_off = diverge_mpi_write_byte_to_file(file, Sgap_sc, new_off, sdou*my_nelem);
-        new_off = diverge_mpi_write_byte_to_file(file, Ugap_sc, new_off, scdou*my_nelem*linsize);
-        new_off = diverge_mpi_write_byte_to_file(file, Vgap_sc, new_off, scdou*my_nelem*linsize);
+        new_off = diverge_mpi_write_byte_to_file_master(file, Sgap_sc, new_off, sdou*tu_n_singular_valuesP);
+        new_off = diverge_mpi_write_byte_to_file_master(file, Ugap_sc, new_off, scdou*tu_n_singular_valuesP*linsize);
+        new_off = diverge_mpi_write_byte_to_file_master(file, Vgap_sc, new_off, scdou*tu_n_singular_valuesP*linsize);
 
-        my_nelem = (my_rank == 0) ? tu_n_singular_valuesC : 0;
-        new_off = diverge_mpi_write_byte_to_file(file, Sgap_mag, new_off, sdou*my_nelem);
-        new_off = diverge_mpi_write_byte_to_file(file, Ugap_mag, new_off, scdou*my_nelem*linsize);
-        new_off = diverge_mpi_write_byte_to_file(file, Vgap_mag, new_off, scdou*my_nelem*linsize);
+        new_off = diverge_mpi_write_byte_to_file_master(file, Sgap_mag, new_off, sdou*tu_n_singular_valuesC);
+        new_off = diverge_mpi_write_byte_to_file_master(file, Ugap_mag, new_off, scdou*tu_n_singular_valuesC*linsize);
+        new_off = diverge_mpi_write_byte_to_file_master(file, Vgap_mag, new_off, scdou*tu_n_singular_valuesC*linsize);
 
-        my_nelem = (my_rank == 0) ? tu_n_singular_valuesD : 0;
-        new_off = diverge_mpi_write_byte_to_file(file, Sgap_charge, new_off, sdou*my_nelem);
-        new_off = diverge_mpi_write_byte_to_file(file, Ugap_charge, new_off, scdou*my_nelem*linsize);
-        new_off = diverge_mpi_write_byte_to_file(file, Vgap_charge, new_off, scdou*my_nelem*linsize);
+        new_off = diverge_mpi_write_byte_to_file_master(file, Sgap_charge, new_off, sdou*tu_n_singular_valuesD);
+        new_off = diverge_mpi_write_byte_to_file_master(file, Ugap_charge, new_off, scdou*tu_n_singular_valuesD*linsize);
+        new_off = diverge_mpi_write_byte_to_file_master(file, Vgap_charge, new_off, scdou*tu_n_singular_valuesD*linsize);
     }
 
     if(called_suscep_full) {
-        new_off = diverge_mpi_write_byte_to_file(file, suscPp,
-                            new_off+my_nk_off*tu_suscP*scdou,scdou*tu_suscP*my_nk);
-        new_off = diverge_mpi_write_byte_to_file(file, suscCh,
-                            new_off+my_nk_off*tu_suscC*scdou,scdou*tu_suscC*my_nk);
-        new_off = diverge_mpi_write_byte_to_file(file, suscMa,
-                            new_off+my_nk_off*tu_suscD*scdou,scdou*tu_suscD*my_nk);
+        new_off = diverge_mpi_write_byte_to_file_master(file, suscPp,
+                            new_off,scdou*tu_suscP);
+        new_off = diverge_mpi_write_byte_to_file_master(file, suscCh,
+                            new_off,scdou*tu_suscC);
+        new_off = diverge_mpi_write_byte_to_file_master(file, suscMa,
+                            new_off,scdou*tu_suscD);
 
     }
     if(called_suscep_ff) {
-        new_off = diverge_mpi_write_byte_to_file(file, suscPp_ff,
-                            new_off+my_nk_off*tu_suscP_ff*scdou,scdou*tu_suscP_ff*my_nk);
-        new_off = diverge_mpi_write_byte_to_file(file, suscCh_ff,
-                            new_off+my_nk_off*tu_suscC_ff*scdou,scdou*tu_suscC_ff*my_nk);
-        new_off = diverge_mpi_write_byte_to_file(file, suscMa_ff,
-                            new_off+my_nk_off*tu_suscD_ff*scdou,scdou*tu_suscD_ff*my_nk);
-
+        new_off = diverge_mpi_write_byte_to_file_master(file, suscPp_ff,
+                            new_off,scdou*tu_suscP_ff);
+        new_off = diverge_mpi_write_byte_to_file_master(file, suscCh_ff,
+                            new_off,scdou*tu_suscC_ff);
+        new_off = diverge_mpi_write_byte_to_file_master(file, suscMa_ff,
+                            new_off,scdou*tu_suscD_ff);
     }
 
     if(vertex->use_self && save_self) {
-        if(diverge_mpi_comm_rank() != 0)
-            size_self = 0;
-        new_off = diverge_mpi_write_byte_to_file(file, vertex->self_en,
+        new_off = diverge_mpi_write_byte_to_file_master(file, vertex->self_en,
                         new_off,scdou*size_self);
 
+    }
+    if(save_full && !tu_data->tu_selfenergy_flow) {
+        index_t vsize = POW2(linsize)*vertex->nk*sizeof(complex128_t);
+        complex128_t* helper = (complex128_t*)malloc(vsize);
+        if(vertex->P_flow) {
+            vertex->template reco<'P'>(helper);
+            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+        }
+        if(vertex->C_flow) {
+            vertex->template reco<'C'>(helper);
+            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+        }
+        if(vertex->D_flow) {
+            vertex->template reco<'D'>(helper);
+            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+        }
+        if(vertex->P_flow) {
+            vertex->template reco<'P'>(helper, vertex->pp_bubble_int);
+            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+        }
+        if(vertex->C_flow || vertex->D_flow) {
+            vertex->template reco<'C'>(helper, vertex->ph_bubble_int);
+            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+        }
+        free(helper);
     }
     diverge_mpi_close_file(file);
 }

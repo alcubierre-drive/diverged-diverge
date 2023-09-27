@@ -68,6 +68,7 @@ void diverge_mpi_gatherv_cdoub( const void* send, int count, void* recv, int* co
 void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int displ, int count );
 
 index_t diverge_mpi_write_byte_to_file( void* file, const void* data, index_t displ, index_t count);
+index_t diverge_mpi_write_byte_to_file_master( void* file, const void* data, index_t displ, index_t count);
 void* diverge_mpi_open_file(const char* fname);
 void diverge_mpi_close_file(void* file);
 

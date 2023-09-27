@@ -18,7 +18,7 @@ public:
     tu_postproduction(const diverge_model_t*, Vertex* Vertex, Projection* proj);
     ~tu_postproduction();
 
-    void run_and_save(string filename, bool lingaps, bool susc_ff, bool susc_full, bool save_self);
+    void run_and_save(string filename, bool lingaps, bool susc_ff, bool susc_full, bool save_self, bool save_full);
     void lingap_ff();
     void calc_susc(bool susz_ff, bool susz_full);
     void safe_channel_leading_ev();
@@ -44,7 +44,7 @@ public:
     complex128_t* Cvec;
     complex128_t* Dvec;
 
-    void to_file(string filename, bool save_self);
+    void to_file(string filename, bool save_self, bool save_full);
 
     double* Sgap_sc;
     double* Sgap_mag;

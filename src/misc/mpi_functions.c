@@ -174,6 +174,26 @@ index_t diverge_mpi_write_byte_to_file( void* file, const void* data, index_t di
     return end_data;
 }
 
+
+index_t diverge_mpi_write_byte_to_file_master( void* file, const void* data, index_t displ, index_t count) {
+    if (file == NULL) {
+        mpi_err_printf("got NULL as file argument. returning 0.\n");
+        return 0;
+    }
+    MPICHK();
+    index_t end_data = -1;
+    if(diverge_mpi_comm_rank() == 0) {
+        MPI_File* fh = (MPI_File*)file;
+        MPI_File_set_view( *fh, displ, MPI_BYTE, MPI_BYTE, "native", MPI_INFO_NULL );
+        MPI_File_write_at( *fh, 0, data, count, MPI_BYTE, MPI_STATUS_IGNORE );
+        end_data = displ + count;
+        MPI_Bcast( &end_data, sizeof(index_t), MPI_BYTE, 0, diverge_mpi_comm );
+    }else{
+        MPI_Bcast( &end_data, sizeof(index_t), MPI_BYTE, 0, diverge_mpi_comm );
+    }
+    return end_data;
+}
+
 void* diverge_mpi_open_file(const char* fname) {
     MPICHK();
     MPI_File* fh = malloc(sizeof(MPI_File));
@@ -347,6 +367,10 @@ index_t diverge_mpi_write_byte_to_file( void* file, const void* data, index_t di
     fwrite( (const char*)data, 1, count, (FILE*)file );
     return displ+count;
 }
+index_t diverge_mpi_write_byte_to_file_master( void* file, const void* data, index_t displ, index_t count) {
+    return diverge_mpi_write_byte_to_file(file, data, displ, count);
+}
+
 void* diverge_mpi_open_file(const char* fname) {
     FILE* f = fopen(fname,"w");
     if (!f) {
