@@ -313,9 +313,9 @@ static void _susc_o14k(const diverge_model_t* const model,
         const complex128_t ffv2 = FS_ff[ff2];
 
         susc[IDX5(k,so4,so3,so2,so1, norb,norb,norb,norb)] += std::conj(ffv)*ffv2*
-            inp[ob_to_orbff[b1+n_bonds*o1]+realsp_size
+            inp[k + nk * (ob_to_orbff[b1+n_bonds*o1]+realsp_size
                             *(sp1+n_spin*n_spin*(ob_to_orbff[b3+n_bonds*o3]+realsp_size
-                                *(sp3+n_spin*n_spin*k)))];
+                                *(sp3))))];
     }
     free(FS_ff);
 }

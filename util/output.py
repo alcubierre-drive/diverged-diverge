@@ -614,7 +614,7 @@ class diverge_post_tu:
         self.V_charge = get_array_header( iL, np.complex128 )
         self.V_charge = self.V_charge.reshape((self.n_svdD,n_spin,n_spin,n_orbff))
 
-        susc_shape = (n_orb,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb,n_spin,self.nk)
+        susc_shape = (self.nk,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb)
         self.Psusc = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Psusc = self.Psusc.reshape(susc_shape)
@@ -625,7 +625,7 @@ class diverge_post_tu:
         if(d_header[iL[0]-1] > 0):
             self.Dsusc = self.Dsusc.reshape(susc_shape)
 
-        susc_shape = (n_orbff,n_spin*n_spin,n_orbff,n_spin*n_spin,self.nk)
+        susc_shape = (n_spin*n_spin,n_orbff,n_spin*n_spin,n_orbff,self.nk)
         self.Psusc_ff = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Psusc_ff = self.Psusc_ff.reshape(susc_shape)
