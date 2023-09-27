@@ -253,7 +253,7 @@ void tu_postproduction::lingap_ff() {
 }
 
 static inline void fill_Rvec_from_vec(const diverge_model_t* model, const Vec3i* Rptr, double* Rvec) {
-    const Map<Mat3d> L((double*)(model->lattice));
+    Map<const Mat3d> L(model->lattice[0]);
     index_t nff = ((tu_data_t*)model->internals->tu_data)->existing_ff.size();
     for (index_t i=0; i<nff; ++i)
         Map<Vec3d>(Rvec+3*i) = L * Rptr[i].cast<double>();
@@ -283,9 +283,7 @@ static void _susc_o14k(const diverge_model_t* const model,
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for(index_t ff=0; ff<nff; ++ff)
     for(index_t k=0; k<tu_data->nk; ++k) {
-        FS_ff[ff] += exp(-I128*(R[3*ff+0]*kmesh[3*k+0]
-                               +R[3*ff+1]*kmesh[3*k+1]
-                               +R[3*ff+2]*kmesh[3*k+2]))/((double)tu_data->nk);
+        FS_ff[ff] += exp(-I128*(Map<const Vec3d>(R+3*ff).dot(Map<const Vec3d>(kmesh+3*k)))) / ((double)tu_data->nk);
     }
     free(R);
     const index_t norb = n_spin*n_orb;
@@ -314,8 +312,8 @@ static void _susc_o14k(const diverge_model_t* const model,
         const complex128_t ffv = FS_ff[ff];
         const complex128_t ffv2 = FS_ff[ff2];
 
-        susc[so1+norb*(so2+norb*(so3+norb*(so4+norb*k)))] +=
-            std::conj(ffv)*ffv2*inp[ob_to_orbff[b1+n_bonds*o1]+realsp_size
+        susc[IDX5(k,so4,so3,so2,so1, norb,norb,norb,norb)] += std::conj(ffv)*ffv2*
+            inp[ob_to_orbff[b1+n_bonds*o1]+realsp_size
                             *(sp1+n_spin*n_spin*(ob_to_orbff[b3+n_bonds*o3]+realsp_size
                                 *(sp3+n_spin*n_spin*k)))];
     }
