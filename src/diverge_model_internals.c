@@ -189,7 +189,7 @@ int diverge_model_validate( diverge_model_t* model ) {
     verbose_assert( dim0c ^ dim1c ^ dim2c ^ dim3c, "coarse mesh must be either 0, 1, 2, or 3 dimensional\n" )
 
     verbose_assert( model->n_orb > 0 && model->n_orb < MAX_N_ORBS, "invalid n_orb (%li)\n", model->n_orb )
-    verbose_assert( model->n_sym >= 0 && model->n_sym < MAX_N_SYM, "invalid n_sym (%li)\n", model->n_sym )
+    verbose_assert( abs(model->n_sym) < MAX_N_SYM, "too many symmetries given (%li)\n", model->n_sym )
     verbose_assert( (model->n_sym == 0) || (model->orb_symmetries != NULL), "orbital symmetries must be allocated (found NULL)\n" )
     verbose_assert( model->n_hop >= 0, "invalid n_hop (%li)\n", model->n_hop )
     verbose_assert( (model->n_hop == 0) || (model->hop != NULL), "realspace hoppings must be allocated (found NULL)\n" )
