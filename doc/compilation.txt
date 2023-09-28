@@ -4,16 +4,17 @@ Compilation of libdivERGe.so::
 Minimal Requirements:::
  - up-to-date C/C++ compiler (that can handle c++17 and c11)
  - a BLAS and LAPACK implementation including the CBLAS and LAPACKE interfaces
- - FFTW3, including its parallel (omp) version
+ - FFTW3, including its parallel (OpenMP or (p)threads) version
  - a linux machine is favorable (WSL is expected to work, as is MacOS with some
    tweaks)
 
-To compile the library, navigate into the diverge folder and execute
+To compile the library, navigate into the diverge directory (the git repo's
+root) and execute make:
 === Code ===
-cd /path/to/diverge/diverge/
-make -jxx
+cd /path/to/diverge/
+make -jXX
 ============
-to compile the code with xx threads.
+This will compile <the C library at libdivERGe.so> with XX threads in parallel.
 
 Changing the defaults:::
 To compile the code with different options/compiler/etc., you can create a file
