@@ -89,10 +89,11 @@ typedef struct {
     // store the selfenergy if it was included in the calculation
     bool    tu_selfenergy;
     // Variable: tu_channels
-    // store the vertices in the formfactor basis - Requires a lot of memory
+    // store the vertices in the formfactor basis -- Requires a lot of memory
     bool    tu_channels;
-    // Variable: tu_symmetries
-    // store the symmetry transfromations for the left multiindex - works for eigenvectors
+    // Variable: tu_symmetry_maps
+    // store the symmetry transfromations for the left multiindex -- works for
+    // eigenvectors
     bool    tu_symmetry_maps;
 
     // DEVELOPERS

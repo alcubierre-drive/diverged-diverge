@@ -755,7 +755,8 @@ if not _libs["divERGe"] is None:
         'tu_susceptibilities_full',
         'tu_susceptibilities_ff',
         'tu_selfenergy',
-        'tu_full',
+        'tu_channels',
+        'tu_symmetry_maps',
     ]
     struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
@@ -781,7 +782,8 @@ if not _libs["divERGe"] is None:
         ('tu_susceptibilities_full', c_bool),
         ('tu_susceptibilities_ff', c_bool),
         ('tu_selfenergy', c_bool),
-        ('tu_full', c_bool),
+        ('tu_channels', c_bool),
+        ('tu_symmetry_maps', c_bool),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 
