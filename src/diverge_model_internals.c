@@ -189,11 +189,21 @@ int diverge_model_validate( diverge_model_t* model ) {
     verbose_assert( dim0c ^ dim1c ^ dim2c ^ dim3c, "coarse mesh must be either 0, 1, 2, or 3 dimensional\n" )
 
     verbose_assert( model->n_orb > 0 && model->n_orb < MAX_N_ORBS, "invalid n_orb (%li)\n", model->n_orb )
-    verbose_assert( abs(model->n_sym) < MAX_N_SYM, "too many symmetries given (%li)\n", model->n_sym )
+    verbose_assert( labs(model->n_sym) < MAX_N_SYM, "too many symmetries given (%li)\n", model->n_sym )
     verbose_assert( (model->n_sym == 0) || (model->orb_symmetries != NULL), "orbital symmetries must be allocated (found NULL)\n" )
     verbose_assert( model->n_hop >= 0, "invalid n_hop (%li)\n", model->n_hop )
     verbose_assert( (model->n_hop == 0) || (model->hop != NULL), "realspace hoppings must be allocated (found NULL)\n" )
     verbose_assert( (model->n_vert == 0) || (model->vert != NULL), "realspace vertex must be allocated (found NULL)\n" )
+
+    if (model->n_ibz_path > 0) {
+        int ibz_path_outside_1st_pz = 0;
+        for (index_t i=0; i<model->n_ibz_path; ++i)
+        for (short d=0; d<3; ++d)
+            ibz_path_outside_1st_pz += (model->ibz_path[i][d] > (1.0 + DIVERGE_EPS_MESH)) ||
+                                       (model->ibz_path[i][d] < (0.0 - DIVERGE_EPS_MESH)) ;
+        verbose_assert( ibz_path_outside_1st_pz == 0, "ibz_path not in 1st primitive zone (0<=ibz_path<=1; found %i violations)\n",
+                ibz_path_outside_1st_pz )
+    }
 
     verbose_assert( (model->SU2>0 && model->n_spin == 1) ^ ((model->SU2<=0) && model->n_spin >=1),
             "either (SU2>0 && n_spin==1) or (n_spin>=1), have SU2=%i and n_spin=%li\n", model->SU2, model->n_spin )
