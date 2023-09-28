@@ -196,12 +196,13 @@ int diverge_model_validate( diverge_model_t* model ) {
     verbose_assert( (model->n_vert == 0) || (model->vert != NULL), "realspace vertex must be allocated (found NULL)\n" )
 
     if (model->n_ibz_path > 0) {
-        bool ibz_path_in_1st_pz = true;
+        int ibz_path_outside_1st_pz = 0;
         for (index_t i=0; i<model->n_ibz_path; ++i)
-            for (short d=0; d<3; ++d)
-                if (model->ibz_path[i][d] > 1.0 + DIVERGE_EPS_MESH || model->ibz_path[i][d] < 0.0 - DIVERGE_EPS_MESH)
-                    ibz_path_in_1st_pz = false;
-        verbose_assert( ibz_path_in_1st_pz, "IBZ path must be *within* the 1st primitive zone (0 <= all components <= 1)\n" )
+        for (short d=0; d<3; ++d)
+            ibz_path_outside_1st_pz += (model->ibz_path[i][d] > (1.0 + DIVERGE_EPS_MESH)) ||
+                                       (model->ibz_path[i][d] < (0.0 - DIVERGE_EPS_MESH)) ;
+        verbose_assert( ibz_path_outside_1st_pz == 0, "ibz_path not in 1st primitive zone (0<=ibz_path<=1; found %i violations)\n",
+                ibz_path_outside_1st_pz )
     }
 
     verbose_assert( (model->SU2>0 && model->n_spin == 1) ^ ((model->SU2<=0) && model->n_spin >=1),
