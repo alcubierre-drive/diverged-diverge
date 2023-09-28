@@ -12,7 +12,7 @@ void vertex_product(complex128_t* result, const complex128_t* const  B,
     batched_gemm_with_buffers(helper, B, result, GPUbuffer, productsize,prefac, 0.0, nbatch);
 }
 
-tu_stepper::tu_stepper(bool* channel, Projection* projin,tu_loop_t* loopin, Vertex* vertexin)
+tu_stepper::tu_stepper(Projection* projin,tu_loop_t* loopin, Vertex* vertexin)
 :
     loop{loopin},
     proj{projin},
@@ -21,10 +21,10 @@ tu_stepper::tu_stepper(bool* channel, Projection* projin,tu_loop_t* loopin, Vert
     my_nk{vertexin->my_nk},
     tu_selfenergy_flow{vertexin->tu_data->tu_selfenergy_flow}
 {
-    channel_selection[0] = channel[0];
-    channel_selection[1] = channel[1];
-    channel_selection[2] = channel[2];
-    channel_selection[3] = channel[3];
+    channel_selection[0] = vertexin->P_flow;
+    channel_selection[1] = vertexin->C_flow;
+    channel_selection[2] = vertexin->D_flow;
+    channel_selection[3] = vertexin->use_self;
     if(vertexin->SU2) {
         norm[0] = -1.0;
         norm[1] = -1.0;

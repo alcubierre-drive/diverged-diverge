@@ -100,7 +100,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
             st->tu_loop = new tu_loop_t(mod);
             st->tu_vertex = new Vertex(mod, st->tu_proj,st->tu_loop, st->channel_selection[0],
                     st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
-            st->tu_step = new tu_stepper(st->channel_selection, st->tu_proj, st->tu_loop, st->tu_vertex);
+            st->tu_step = new tu_stepper(st->tu_proj, st->tu_loop, st->tu_vertex);
             break;
         default:
         case diverge_flow_type_invalid:
