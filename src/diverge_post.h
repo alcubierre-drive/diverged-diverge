@@ -88,8 +88,8 @@ typedef struct {
     // Variable: tu_selfenergy
     // store the selfenergy if it was included in the calculation
     bool    tu_selfenergy;
-    // Variable: tu_channels
-    // store the vertices in the formfactor basis - Requires a lot of memory
+    // Variable: tu_full
+    // store the vertices in the formfactor basis – Requires a lot of memory
     bool    tu_full;
 
     // DEVELOPERS

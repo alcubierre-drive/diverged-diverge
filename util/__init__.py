@@ -752,7 +752,10 @@ if not _libs["divERGe"] is None:
         'tu_storing_threshold',
         'tu_n_singular_values',
         'tu_lingap',
-        'tu_susceptibilities',
+        'tu_susceptibilities_full',
+        'tu_susceptibilities_ff',
+        'tu_selfenergy',
+        'tu_full',
     ]
     struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
@@ -775,7 +778,10 @@ if not _libs["divERGe"] is None:
         ('tu_storing_threshold', c_double),
         ('tu_n_singular_values', index_t),
         ('tu_lingap', c_bool),
-        ('tu_susceptibilities', c_bool),
+        ('tu_susceptibilities_full', c_bool),
+        ('tu_susceptibilities_ff', c_bool),
+        ('tu_selfenergy', c_bool),
+        ('tu_full', c_bool),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 
@@ -790,6 +796,30 @@ if not _libs["divERGe"] is None:
     postprocess_and_write_finegrained = _libs["divERGe"].get("diverge_postprocess_and_write_finegrained", "cdecl")
     postprocess_and_write_finegrained.argtypes = [POINTER(flow_step_t), String, POINTER(postprocess_conf_t)]
     postprocess_and_write_finegrained.restype = None
+
+    # Function: postprocess_and_write_PY
+    # wraps <diverge_postprocess_and_write_finegrained at
+    # diverge_postprocess_conf_t.diverge_postprocess_and_write_finegrained> in a
+    # convenient pythonic way.
+    #
+    # Parameters:
+    # step - <diverge_flow_step_t> pointer
+    # filename - string: where to save the postprocessing results
+    # **kwargs - each member of <diverge_postprocess_conf_t> can be passed as
+    #            kwarg (key1 = val1, key2 = val2, …). The defaults are those
+    #            returned by <diverge_postprocess_conf_defaults_CPP at
+    #            diverge_postprocess_conf_t.diverge_postprocess_conf_defaults_CPP>.
+    def postprocess_and_write_PY( step, filename, **kwargs ):
+        cfg = postprocess_conf_defaults_CPP()
+        for s in struct_postprocess_conf_t.__slots__:
+            try:
+                v = kwargs.pop(s)
+                cfg.__setattr__( s, v )
+            except KeyError:
+                pass
+        for k in kwargs.keys():
+            mpi_py_eprint( "postprocess_and_write_PY: unused kwarg '%s'" % k )
+        return postprocess_and_write_finegrained( step, filename, byref(cfg) )
 
     # Model output
     model_output_set_npath = _libs["divERGe"].get("diverge_model_output_set_npath", "cdecl")
@@ -808,11 +838,13 @@ if not _libs["divERGe"] is None:
     class struct_model_output_conf_t(Structure):
         pass
     struct_model_output_conf_t.__slots__ = [
-        'kc', 'kf', 'H', 'U', 'E',
+        'kc', 'kf', 'kc_ibz_path', 'kf_ibz_path', 'H', 'U', 'E',
     ]
     struct_model_output_conf_t._fields_ = [
         ('kc', c_int),
         ('kf', c_int),
+        ('kc_ibz_path', c_int),
+        ('kf_ibz_path', c_int),
         ('H', c_int),
         ('U', c_int),
         ('E', c_int),
@@ -830,6 +862,32 @@ if not _libs["divERGe"] is None:
     else:
         model_to_file_finegrained.restype = String
         model_to_file_finegrained.errcheck = ReturnString
+
+    # Function: model_to_file_PY
+    # writes a <diverge_model_t> to file using the
+    # <diverge_model_to_file_finegrained at
+    # diverge_model_output_conf_t.diverge_model_to_file_finegrained> backend
+    # wrapped in a convenient pythonic way. Returns the md5sum of the model file
+    # as string.
+    #
+    # Parameters:
+    # model - <diverge_model_t> pointer
+    # filename - string: where to save the model
+    # **kwargs - each member of <diverge_model_output_conf_t> can be passed as
+    #            kwarg (key1 = val1, key2 = val2, …). The defaults are those
+    #            returned by <diverge_model_output_conf_defaults_CPP at
+    #            diverge_model_output_conf_t.diverge_model_output_conf_defaults_CPP>.
+    def model_to_file_PY( model, filename, **kwargs ):
+        cfg = model_output_conf_defaults_CPP()
+        for s in struct_model_output_conf_t.__slots__:
+            try:
+                v = kwargs.pop(s)
+                cfg.__setattr__( s, v )
+            except KeyError:
+                pass
+        for k in kwargs.keys():
+            mpi_py_eprint( "model_to_file_PY: unused kwarg '%s'" % k )
+        return model_to_file_finegrained( model, filename, byref(cfg) )
 
     # Momentum generator
     model_generate_meshes = _libs["divERGe"].get("diverge_model_generate_meshes", "cdecl")

@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("PythonClass:Structured_Arrays","Structured Arrays");NDSummary.OnSummaryLoaded("PythonClass:Structured_Arrays",[["Python","Python"]],[["Classes","Class"]],[[317,0,0,"Structured Arrays"]]);
+﻿NDFramePage.OnPageTitleLoaded("PythonClass:Structured_Arrays","Structured Arrays");NDSummary.OnSummaryLoaded("PythonClass:Structured_Arrays",[["Python","Python"]],[["Classes","Class"]],[[311,0,0,"Structured Arrays"]]);
