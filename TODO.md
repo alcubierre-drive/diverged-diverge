@@ -20,3 +20,6 @@
 - tests are now toggled with a single DEFINE, i.e. `-DDIVERGE_SKIP_TESTS`
 - BHK defaults changed to something that runs on a laptop with reasonable time
 - _need to adjust documentation accordingly..._
+
+- diverge_postprocess_config_t -> diverge_postprocess_conf_t
+- diverge_postprocess_config_default -> diverge_postprocess_conf_defaults

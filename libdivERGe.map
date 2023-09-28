@@ -87,6 +87,7 @@ DIVERGE_0.4 {
         diverge_mpi_recv_double;
         diverge_mpi_send_double;
         diverge_mpi_write_byte_to_file;
+        diverge_mpi_write_byte_to_file_master;
         diverge_mpi_write_cdoub_to_file;
         diverge_mpi_wtime;
         diverge_omp_num_threads;
@@ -97,7 +98,7 @@ DIVERGE_0.4 {
         diverge_patching_symmetrize_refinement;
         diverge_postprocess_and_write;
         diverge_postprocess_and_write_finegrained;
-        diverge_postprocess_config_default_CPP;
+        diverge_postprocess_conf_defaults_CPP;
         diverge_read_W90_C;
         diverge_reset;
         diverge_run_tests;

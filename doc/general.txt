@@ -63,7 +63,7 @@ information on chosen defaults and other miscellaneous information (prefixed
 with #): We observe that two files have been written: model.dvg (containing
 everything set in the <diverge_model_t>) and post.dvg (written by
 <diverge_postprocess_and_write at
-diverge_postprocess_config_t.diverge_postprocess_and_write>). To read the .dvg
+diverge_postprocess_conf_t.diverge_postprocess_and_write>). To read the .dvg
 files, we strongly suggest to use the function provided in the python library
 <diverge.output at dvg-output>. Apart from the output files, the values for the
 scale and integration of the flow equations as table with entries Lambda,

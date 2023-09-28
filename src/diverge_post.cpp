@@ -10,11 +10,11 @@
 #include "tu/postproduction.hpp"
 
 static void grid_pp( diverge_flow_step_t* st,
-        const diverge_postprocess_config_t* pc, const char* file );
+        const diverge_postprocess_conf_t* pc, const char* file );
 static void patch_pp( diverge_flow_step_t* st,
-        const diverge_postprocess_config_t* pc, const char* file );
+        const diverge_postprocess_conf_t* pc, const char* file );
 static void tu_pp( diverge_flow_step_t* st,
-        const diverge_postprocess_config_t* pc, const char* file );
+        const diverge_postprocess_conf_t* pc, const char* file );
 
 void diverge_postprocess_and_write( diverge_flow_step_t* st, const char* file ) {
     diverge_postprocess_and_write_finegrained( st, file, NULL );
@@ -26,9 +26,9 @@ void diverge_postprocess_and_write( diverge_flow_step_t* st, const char* file ) 
 // above three and call it in the switch() {} statement below
 
 void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st,
-        const char* file, const diverge_postprocess_config_t* pc ) {
+        const char* file, const diverge_postprocess_conf_t* pc ) {
     mpi_log_printf( "writing postprocessing file %s\n", file );
-    diverge_postprocess_config_t pc_def = diverge_postprocess_config_default_CPP();
+    diverge_postprocess_conf_t pc_def = diverge_postprocess_conf_defaults_CPP();
     if (pc == NULL) pc = &pc_def;
 
     switch (st->type) {
@@ -48,7 +48,7 @@ void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st,
 }
 
 static void grid_pp( diverge_flow_step_t* st,
-        const diverge_postprocess_config_t* pc, const char* file ) {
+        const diverge_postprocess_conf_t* pc, const char* file ) {
 
     grid::VertexMemory* V = (grid::VertexMemory*)st->intls->grid_vertex;
 
@@ -86,7 +86,7 @@ static void grid_pp( diverge_flow_step_t* st,
 }
 
 static void patch_pp( diverge_flow_step_t* st,
-        const diverge_postprocess_config_t* pc, const char* file ) {
+        const diverge_postprocess_conf_t* pc, const char* file ) {
     npatch_output_post_config_t patch_pc;
     patch_pc.q_matrices = pc->patch_q_matrices;
     patch_pc.q_matrices_use_dV = pc->patch_q_matrices_use_dV;
@@ -101,7 +101,7 @@ static void patch_pp( diverge_flow_step_t* st,
 }
 
 static void tu_pp( diverge_flow_step_t* st,
-        const diverge_postprocess_config_t* pc, const char* file ) {
+        const diverge_postprocess_conf_t* pc, const char* file ) {
     tu_postproduction tu_pc(st->tu_vertex->model, st->tu_vertex, st->tu_proj);
     tu_pc.tu_n_singular_values = pc->tu_n_singular_values;
     tu_pc.algo = pc->tu_which_solver_mode;

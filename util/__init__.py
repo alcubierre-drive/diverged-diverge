@@ -729,9 +729,9 @@ if not _libs["divERGe"] is None:
     euler_next.restype = c_bool
 
     # post processing
-    class struct_postprocess_config_t(Structure):
+    class struct_postprocess_conf_t(Structure):
         pass
-    struct_postprocess_config_t.__slots__ = [
+    struct_postprocess_conf_t.__slots__ = [
         'patch_q_matrices',
         'patch_q_matrices_use_dV',
         'patch_q_matrices_nv',
@@ -754,7 +754,7 @@ if not _libs["divERGe"] is None:
         'tu_lingap',
         'tu_susceptibilities',
     ]
-    struct_postprocess_config_t._fields_ = [
+    struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
         ('patch_q_matrices_use_dV', c_bool),
         ('patch_q_matrices_nv', c_int),
@@ -777,18 +777,18 @@ if not _libs["divERGe"] is None:
         ('tu_lingap', c_bool),
         ('tu_susceptibilities', c_bool),
     ]
-    postprocess_config_t = struct_postprocess_config_t
+    postprocess_conf_t = struct_postprocess_conf_t
 
-    postprocess_config_default_CPP = _libs["divERGe"].get("diverge_postprocess_config_default_CPP", "cdecl")
-    postprocess_config_default_CPP.argtypes = []
-    postprocess_config_default_CPP.restype = postprocess_config_t
+    postprocess_conf_defaults_CPP = _libs["divERGe"].get("diverge_postprocess_conf_defaults_CPP", "cdecl")
+    postprocess_conf_defaults_CPP.argtypes = []
+    postprocess_conf_defaults_CPP.restype = postprocess_conf_t
 
     postprocess_and_write = _libs["divERGe"].get("diverge_postprocess_and_write", "cdecl")
     postprocess_and_write.argtypes = [POINTER(flow_step_t), String]
     postprocess_and_write.restype = None
 
     postprocess_and_write_finegrained = _libs["divERGe"].get("diverge_postprocess_and_write_finegrained", "cdecl")
-    postprocess_and_write_finegrained.argtypes = [POINTER(flow_step_t), String, POINTER(postprocess_config_t)]
+    postprocess_and_write_finegrained.argtypes = [POINTER(flow_step_t), String, POINTER(postprocess_conf_t)]
     postprocess_and_write_finegrained.restype = None
 
     # Model output

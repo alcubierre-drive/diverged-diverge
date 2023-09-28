@@ -72,7 +72,7 @@ while dvg.euler_next( dvg.byref(euler), vertmax[0] ):
             (euler.Lambda, euler.dLambda, *loopmax, *chanmax, *vertmax) )
 
 # post process
-postconf = dvg.postprocess_config_default_CPP()
+postconf = dvg.postprocess_conf_defaults_CPP()
 postconf.tu_storing_threshold = 0.8
 postconf.tu_storing_relative = True
 dvg.postprocess_and_write( step, "nickelate_post.dvg", dvg.byref(postconf) )

@@ -107,7 +107,9 @@ int main( int argc, char** argv ) {
     } while (diverge_euler_next(&eu, vmax));
 
     // post-process
-    diverge_postprocess_and_write( f, __FILE__ "_out.dvg" );
+    diverge_postprocess_conf_t pc = diverge_postprocess_conf_defaults;
+    pc.tu_susceptibilities_full = 1;
+    diverge_postprocess_and_write_finegrained( f, __FILE__ "_out.dvg", &pc );
 
     // cleanup
     diverge_flow_step_free(f);

@@ -50,3 +50,5 @@ static/
 build/
 dist/
 diverge_flow.egg-info/
+
+search_and_replace.sh
