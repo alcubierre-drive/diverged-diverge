@@ -90,7 +90,10 @@ typedef struct {
     bool    tu_selfenergy;
     // Variable: tu_channels
     // store the vertices in the formfactor basis - Requires a lot of memory
-    bool    tu_full;
+    bool    tu_channels;
+    // Variable: tu_symmetries
+    // store the symmetry transfromations for the left multiindex - works for eigenvectors
+    bool    tu_symmetry_maps;
 
     // DEVELOPERS
     //
@@ -127,7 +130,8 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_susceptibilities_full = false,
     .tu_susceptibilities_ff = false,
     .tu_selfenergy = false,
-    .tu_full = false
+    .tu_channels = false,
+    .tu_symmetry_maps = false
 };
 #endif
 

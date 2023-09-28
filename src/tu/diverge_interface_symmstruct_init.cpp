@@ -390,8 +390,7 @@ void init_symmetries(diverge_model_t* model) {
     }
     diverge_generate_symm_maps(model);
     init_ibz(model);
-    vector<Vec3d> hi;
-    init_map_for_one_leg(model, hi);
-    init_symmetry_maps_o2m(model, hi);
+    init_map_for_one_leg(model, symm->beyond_UC);
+    init_symmetry_maps_o2m(model, symm->beyond_UC);
 }
 

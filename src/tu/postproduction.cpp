@@ -87,11 +87,12 @@ tu_postproduction::~tu_postproduction() {
 }
 
 void tu_postproduction::run_and_save(string filename, bool lingaps, bool susc_ff,
-                                            bool susc_full, bool save_self, bool save_full) {
+                                            bool susc_full, bool save_self, bool save_full,
+                                            bool save_symmetries) {
     safe_channel_leading_ev();
     if(lingaps) lingap_ff();
     if(susc_ff || susc_full) calc_susc(susc_ff, susc_full);
-    to_file(filename, save_self, save_full);
+    to_file(filename, save_self, save_full,save_symmetries);
 }
 
 void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
@@ -312,7 +313,7 @@ static void _susc_o14k(const diverge_model_t* const model,
         const complex128_t ffv = FS_ff[ff];
         const complex128_t ffv2 = FS_ff[ff2];
 
-        susc[IDX5(k,so4,so3,so2,so1, norb,norb,norb,norb)] += std::conj(ffv)*ffv2*
+        susc[IDX5(so4,so3,so2,so1,k, norb,norb,norb,nk)] += std::conj(ffv)*ffv2*
             inp[k + nk * (ob_to_orbff[b1+n_bonds*o1]+realsp_size
                             *(sp1+n_spin*n_spin*(ob_to_orbff[b3+n_bonds*o3]+realsp_size
                                 *(sp3))))];
@@ -334,38 +335,41 @@ void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
     index_t size2 = POW4(vertex->n_spin)*POW2(vertex->n_orbff)*vertex->nk;
     called_suscep_full = susc_full;
     called_suscep_ff = susc_ff;
-    if(susc_full) {
-        suscPp = (complex128_t*)calloc(size,sizeof(complex128_t));
-        suscMa = (complex128_t*)calloc(size,sizeof(complex128_t));
-        suscCh = (complex128_t*)calloc(size,sizeof(complex128_t));
-    }
+    tu_suscP = 0; tu_suscP_ff = 0;
+    tu_suscC = 0; tu_suscC_ff = 0;
+    tu_suscD = 0; tu_suscD_ff = 0;
+    
     complex128_t* suscff = (complex128_t*)malloc(vertex->full_vert_size*sizeof(complex128_t));
-    suscPp_ff = (complex128_t*)malloc(size2*sizeof(complex128_t));
-    suscMa_ff = (complex128_t*)malloc(size2*sizeof(complex128_t));
-    suscCh_ff = (complex128_t*)malloc(size2*sizeof(complex128_t));
     if(vertex->P_flow) {
         tu_suscP = (called_suscep_full) ? POW4(vertex->n_orb*vertex->n_spin)*vertex->nk : 0;
         tu_suscP_ff = (called_suscep_ff) ? POW2(vertex->n_orbff*POW2(vertex->n_spin))*vertex->nk : 0;
+        suscPp_ff = (complex128_t*)malloc(size2*sizeof(complex128_t));
         P_projection(vertex->projection_helper, vertex, proj);
         vertex_product(suscff, vertex->pp_bubble_int,vertex->projection_helper,
                 vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff, vertex->my_nk,1.0);
         vertex->template reco<'P'>(suscPp_ff, suscff);
-        if(called_suscep_full)
+        if(called_suscep_full) {
+            suscPp = (complex128_t*)calloc(size,sizeof(complex128_t));
             _susc_o14k(model,suscPp_ff,suscPp);
+        }
     }
     if(vertex->C_flow) {
         tu_suscC = (called_suscep_full) ? POW4(vertex->n_orb*vertex->n_spin)*vertex->nk : 0;
         tu_suscC_ff = (called_suscep_ff) ? POW2(vertex->n_orbff*POW2(vertex->n_spin))*vertex->nk : 0;
+        suscMa_ff = (complex128_t*)malloc(size2*sizeof(complex128_t));
         C_projection(vertex->projection_helper, vertex, proj);
         vertex_product(suscff, vertex->ph_bubble_int,vertex->projection_helper,
                 vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff, vertex->my_nk,1.0);
         vertex->template reco<'C'>(suscMa_ff, suscff);
-        if(called_suscep_full)
+        if(called_suscep_full) {
+            suscMa = (complex128_t*)calloc(size,sizeof(complex128_t));
             _susc_o14k(model,suscMa_ff,suscMa);
+        }
     }
     if(vertex->D_flow) {
         tu_suscD = (called_suscep_full) ? POW4(vertex->n_orb*vertex->n_spin)*vertex->nk : 0;
         tu_suscD_ff = (called_suscep_ff) ? POW2(vertex->n_orbff*POW2(vertex->n_spin))*vertex->nk : 0;
+        suscCh_ff = (complex128_t*)malloc(size2*sizeof(complex128_t));
         if(vertex->SU2 && vertex->C_flow) {
             complex128_t* helper;
             helper = (complex128_t*)calloc(vertex->full_vert_size,sizeof(complex128_t));
@@ -379,8 +383,10 @@ void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
         vertex_product(suscff, vertex->ph_bubble_int,vertex->projection_helper,
                 vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff, vertex->my_nk,1.0);
         vertex->template reco<'D'>(suscCh_ff, suscff);
-        if(called_suscep_full)
+        if(called_suscep_full) {
+            suscCh = (complex128_t*)calloc(size,sizeof(complex128_t));
             _susc_o14k(model,suscCh_ff,suscCh);
+        }
     }
     if(!susc_ff) {
         free(suscCh_ff);
@@ -390,10 +396,46 @@ void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
     free(suscff);
 }
 
+typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 
-void tu_postproduction::to_file(string filename, bool save_self, bool save_full) {
+void tu_postproduction::construct_multiindex_maps(const diverge_model_t* model) {
+    mpi_vrb_printf("Generate one-to-many for all q for storing\n");
+    tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
+    if(!tu_data->symm->use_symmetries) {
+        return;
+    }
+    
+    symmstruct_t* symm = tu_data->symm;
+    index_t n_spin = model->n_spin;
+    index_t nkibz = tu_data->nkibz;
+    index_t n_orbff = tu_data->n_orbff;
+    
+    mi_map_pref_in_in.resize(nkibz*symm->mi_maps_to.size());
+    mi_map_pref_in_out.resize(nkibz*symm->mi_maps_to.size());
+    mi_map_idx.resize(nkibz*symm->mi_maps_to.size());
+    
+    #pragma omp parallel for schedule(dynamic) collapse(2)
+    for(index_t idx = 0; idx<n_orbff*POW2(n_spin)*model->n_sym;++idx)
+    for(index_t q = 0; q < nkibz; ++q) {
+        Map<Vec3d> kp(model->internals->kmesh+3*symm->idx_ibz_in_fullmesh[q]);
+        const complex128_t pref_sym =
+                exp(-I128*kp.dot(symm->beyond_UC[idx]));
+
+        for(index_t to = 0; to < symm->mi_map_len[idx]; ++to) {
+            mi_map_idx[q+nkibz*(to+symm->mi_map_off[idx])] = symm->mi_maps_to[to + symm->mi_map_off[idx]]+n_orbff*POW2(n_spin)*q;
+            complex128_t pref_elem = symm->mi_prefac_in_in[to + symm->mi_map_off[idx]];
+            mi_map_pref_in_in[q+nkibz*(to+symm->mi_map_off[idx])] = (pref_elem*pref_sym);
+
+            pref_elem = symm->mi_prefac_in_out[to + symm->mi_map_off[idx]];
+            mi_map_pref_in_out[q+nkibz*(to+symm->mi_map_off[idx])] = (pref_elem*pref_sym);
+        }
+    }
+}
+
+void tu_postproduction::to_file(string filename, bool save_self, bool save_full, bool save_symmetries) {
     index_t* header = (index_t*)calloc(128,sizeof(index_t));
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
+    symmstruct_t* symm = tu_data->symm;
     int i = 0;
     index_t my_rank = diverge_mpi_comm_rank();
     const index_t my_nk = vertex->my_nk;
@@ -447,6 +489,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full)
     header[i] = model->SU2, ++i;
     header[i] = vertex->n_orbff, ++i;
     header[i] = vertex->n_bonds, ++i;
+    header[i] = model->n_sym, ++i;
 
     header[i] = 128*sizeof(index_t), ++i;
     header[i] = vertex->n_orbff, ++i;
@@ -553,6 +596,34 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full)
         header[i] = 0;++i;
         header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
         header[i] = 0;++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+    }
+    
+    if(save_symmetries) {
+        if(tu_data->symm->use_symmetries) {
+            construct_multiindex_maps(model);
+            header[i] = symm->mi_map_len.size();++i;
+            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+            header[i] = symm->mi_map_off.size();++i;
+            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+            header[i] = mi_map_idx.size();++i;
+            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+            header[i] = mi_map_pref_in_in.size();++i;
+            header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+            header[i] = mi_map_pref_in_out.size();++i;
+        }else{
+            mpi_wrn_printf("no symmetries were used in the calculation! \n");
+            header[i] = 0;++i;
+            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+            header[i] = 0;++i;
+            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+            header[i] = 0;++i;
+            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+            header[i] = 0;++i;
+            header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+            header[i] = 0;++i;
+        }
+        
     }
     assert(i < 126);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
@@ -613,18 +684,18 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full)
     if(called_suscep_full) {
         new_off = diverge_mpi_write_byte_to_file_master(file, suscPp,
                             new_off,scdou*tu_suscP);
-        new_off = diverge_mpi_write_byte_to_file_master(file, suscCh,
-                            new_off,scdou*tu_suscC);
         new_off = diverge_mpi_write_byte_to_file_master(file, suscMa,
+                            new_off,scdou*tu_suscC);
+        new_off = diverge_mpi_write_byte_to_file_master(file, suscCh,
                             new_off,scdou*tu_suscD);
 
     }
     if(called_suscep_ff) {
         new_off = diverge_mpi_write_byte_to_file_master(file, suscPp_ff,
                             new_off,scdou*tu_suscP_ff);
-        new_off = diverge_mpi_write_byte_to_file_master(file, suscCh_ff,
-                            new_off,scdou*tu_suscC_ff);
         new_off = diverge_mpi_write_byte_to_file_master(file, suscMa_ff,
+                            new_off,scdou*tu_suscC_ff);
+        new_off = diverge_mpi_write_byte_to_file_master(file, suscCh_ff,
                             new_off,scdou*tu_suscD_ff);
     }
 
@@ -658,5 +729,13 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full)
         }
         free(helper);
     }
+    if(save_symmetries && tu_data->symm->use_symmetries) {
+        new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_len.data(), new_off,sindex*symm->mi_map_len.size());
+        new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_off.data(), new_off,sindex*symm->mi_map_off.size());
+        new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_idx.data(), new_off,sindex*mi_map_idx.size());
+        new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_pref_in_in.data(), new_off,scdou*mi_map_pref_in_in.size());
+        new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_pref_in_out.data(), new_off,scdou*mi_map_pref_in_out.size());
+    }
+    
     diverge_mpi_close_file(file);
 }

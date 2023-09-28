@@ -549,6 +549,7 @@ class diverge_post_tu:
         self.SU2 = int(d_header[6])
         self.n_orbff = int(d_header[7])
         self.n_bonds = int(d_header[8])
+        self.n_sym = int(d_header[9])
         n_spin = self.n_spin
         n_bonds = self.n_bonds
         n_orb = self.n_orb
@@ -562,7 +563,7 @@ class diverge_post_tu:
             iL[0] = iL[0] + 2
             return res
 
-        iL = [9] # can't pass by reference, therefore we need a list... python is stupid after all
+        iL = [10] # can't pass by reference, therefore we need a list... python is stupid after all
         self.mi_to_ofrom = get_array_header( iL, np.int64 )
         self.mi_to_oto = get_array_header( iL, np.longlong )
         self.mi_to_R = get_array_header( iL, np.longlong ).reshape((-1,3))
@@ -614,7 +615,7 @@ class diverge_post_tu:
         self.V_charge = get_array_header( iL, np.complex128 )
         self.V_charge = self.V_charge.reshape((self.n_svdD,n_spin,n_spin,n_orbff))
 
-        susc_shape = (self.nk,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb)
+        susc_shape = (n_spin,n_orb,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb,self.nk)
         self.Psusc = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Psusc = self.Psusc.reshape(susc_shape)
@@ -656,6 +657,18 @@ class diverge_post_tu:
         self.phloop = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.phloop = self.phloop.reshape(susc_shape)
+            
+        
+        symm_shape = (self.n_sym,n_spin,n_spin,n_orbff)
+        self.symm_o2m_len = get_array_header( iL, np.longlong )
+        if(d_header[iL[0]-1] > 0):
+            self.symm_o2m_len = self.symm_o2m_len.reshape(symm_shape)
+        self.symm_o2m_off = get_array_header( iL, np.longlong )
+        if(d_header[iL[0]-1] > 0):
+            self.symm_o2m_off = self.symm_o2m_off.reshape(symm_shape)
+        self.symm_o2m_idx_map = get_array_header( iL, np.longlong )
+        self.symm_o2m_Ppref = get_array_header( iL, np.complex128 )
+        self.symm_o2m_Cpref = get_array_header( iL, np.complex128 )
 
 
 

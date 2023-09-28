@@ -18,7 +18,7 @@ public:
     tu_postproduction(const diverge_model_t*, Vertex* Vertex, Projection* proj);
     ~tu_postproduction();
 
-    void run_and_save(string filename, bool lingaps, bool susc_ff, bool susc_full, bool save_self, bool save_full);
+    void run_and_save(string filename, bool lingaps, bool susc_ff, bool susc_full, bool save_self, bool save_full,bool save_symmetries);
     void lingap_ff();
     void calc_susc(bool susz_ff, bool susz_full);
     void safe_channel_leading_ev();
@@ -44,7 +44,7 @@ public:
     complex128_t* Cvec;
     complex128_t* Dvec;
 
-    void to_file(string filename, bool save_self, bool save_full);
+    void to_file(string filename, bool save_self, bool save_full, bool save_symmetries);
 
     double* Sgap_sc;
     double* Sgap_mag;
@@ -67,6 +67,12 @@ private:
     index_t tu_n_singular_valuesP=0;
     index_t tu_n_singular_valuesC=0;
     index_t tu_n_singular_valuesD=0;
+    
+    void construct_multiindex_maps(const diverge_model_t* model);
+    
+    std::vector<index_t> mi_map_idx;
+    std::vector<complex128_t> mi_map_pref_in_in;
+    std::vector<complex128_t> mi_map_pref_in_out;
 
     index_t tu_suscP=0;
     index_t tu_suscC=0;

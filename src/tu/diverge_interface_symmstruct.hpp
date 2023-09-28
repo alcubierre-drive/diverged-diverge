@@ -21,6 +21,7 @@ struct symmstruct_t{
     vector<index_t> mi_maps_to;
     vector<index_t> mi_map_len;
     vector<index_t> mi_map_off;
+    vector<Vec3d> beyond_UC;
 
     // general properties of the IBZ
     vector<index_t> kmaps_to;
