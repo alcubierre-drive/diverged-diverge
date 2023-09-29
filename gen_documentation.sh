@@ -1,4 +1,11 @@
 #!/bin/bash
+if [ $(uname -o) = "Darwin" ]
+then
+    nd_exe=naturaldocs
+else
+    nd_exe=naturaldocs2
+fi
+
 rm -rf public/{classes/,files/,index.html,menu/,search/,styles/}
 rm -rf nd_conf/Working\ Data
-naturaldocs2 nd_conf/Project.txt
+$nd_exe nd_conf/Project.txt
