@@ -8,6 +8,7 @@ Minimal Requirements:::
  - a linux machine is favorable (WSL is expected to work, as is MacOS with some
    tweaks)
 
+Make:::
 To compile the library, navigate into the diverge directory (the git repo's
 root) and execute make:
 === Code ===
@@ -15,6 +16,21 @@ cd /path/to/diverge/
 make -jXX
 ============
 This will compile <the C library at libdivERGe.so> with XX threads in parallel.
+For installation of <the python library at dvg>, execute
+=== Code ===
+pip install .
+============
+in the git repo's root. Note that you might want to create a virtual environment
+first, or pass "--break-system-packages" to the above pip call.
+
+The makefile exposes several targets to build specific components of divERGe:
+
+lib - build the library, specifically, <libdivERGe.so>.
+test - build an executable (divERGe) that does nothing but running
+       <diverge_run_tests>.
+dist - pack the divERGe.tgz file with the shared library, header files, python
+       library, and examples
+clean - remove all build time files (object files .o, dependency files .d, …)
 
 Changing the defaults:::
 To compile the code with different options/compiler/etc., you can create a file
@@ -178,6 +194,7 @@ DIVERGE_OPENBLAS_LIMIT_THREADS=VAL - limit the number of threads to be used in
                                      OpenBLAS library is compiled for a certain
                                      maximum number of threads that can be
                                      exceeded by modern cluster architectures.
+DIVERGE_SKIP_TESTS - do not compile <tests at diverge_run_tests> into the library
 GIT_VERSION=VAL - set the git version string to VAL
 GIT_VERSION_BRANCH=VAL - set the git branch string to VAL
 GRID_FF_SHELL_DISTANCE=VAL - set the maximum distance of formfactors to be
