@@ -1,5 +1,3 @@
-INC_TEST := true
-
 CXX := clang++
 CC := clang
 LD := clang++
@@ -15,7 +13,7 @@ LIBS = -L/opt/homebrew/Cellar/fftw/3.3.10_1/lib/ \
     -lopenblas -lfftw3 -lfftw3_omp -lomp
 
 PREFLAGS := -Ofast -march=native
-DEFINES := -DNDEBUG -DEIGEN_NO_DEBUG -DDIVERGE_LOG_GRAYSCALE -DBHK_NK=4 -DBHK_L0=1 -DBHK_NUM=5
+DEFINES := -DNDEBUG -DEIGEN_NO_DEBUG -DDIVERGE_LOG_GRAYSCALE
 
 CXXFLAGS = $(PREFLAGS) -std=c++17 -fPIC -MMD -Wall -Wextra -pedantic $(DEFINES) $(INCLUDES)
 CFLAGS = $(PREFLAGS) -std=c11 -fPIC -MMD -Wall -Wextra -pedantic $(DEFINES) $(INCLUDES)
@@ -24,7 +22,3 @@ LDFLAGS = -fPIC -Wall -Wextra -pedantic $(LIBS)
 SOFLAGS = -shared
 STRIP := echo
 
-DIVERGE_TAR := echo
-DIVERGE_GZIP := echo
-DIVERGE_MV := echo
-DIVERGE_CP := echo
