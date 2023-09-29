@@ -5,9 +5,6 @@
   selection and cutoff in npatch
 - checkpointing of flow step
 - c library functions for reading model files
-- model output: finegrained control as optional parameters from python. maybe
-  just *add* a ```diverge.model_to_file_PY( m, fname, **kwargs )``` function
-  (same goes for other bulky functions)
 
 # CHANGES
 - Makefile now uses targets:

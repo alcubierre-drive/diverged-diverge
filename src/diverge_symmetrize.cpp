@@ -22,7 +22,7 @@ static inline bool map_back_to_BZ(Vec3d* k_point, index_t* idx, const diverge_mo
 
     Vec3d a = UC * (*k_point) / (2.*M_PI);
     for (int i=0; i<3; ++i)
-        a[i] += abs(lround(a[i])) + 3;
+        a[i] += labs(lround(a[i])) + 3;
     Vec3d ai = (a.array() * nk.array().cast<double>()).round().matrix();
 
     *idx = IDX3( lround(ai(0))%nk(0), lround(ai(1))%nk(1), lround(ai(2))%nk(2), nk(1), nk(2));
