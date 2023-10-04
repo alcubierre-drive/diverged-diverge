@@ -93,5 +93,5 @@ V - the absolute maximum element of the vertex (for grid/patch) or maximum of
     the channel maxima (tu)
 
 License::
-divERGe is published under the GPLv3. Find the license <here at LICENSE> or in
-the <git repo at https://git.rwth-aachen.de/frg/diverge/-/tree/master/LICENSE.md>
+divERGe is published under the GPLv3. Find the license <here at
+https://git.rwth-aachen.de/frg/diverge/-/tree/master/LICENSE.md>.
