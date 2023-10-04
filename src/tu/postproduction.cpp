@@ -1,5 +1,7 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#include "../misc/version.h"
+
 #include "postproduction.hpp"
 #include "../misc/batched_eigen.h"
 #include "../misc/batched_gemms.h"
@@ -432,8 +434,12 @@ void tu_postproduction::construct_multiindex_maps(const diverge_model_t* model) 
     }
 }
 
+// TODO(@JH) could you include documentation for the file format somehow? I'm
+// not sure where to best put it, but I do think that documenting the header is
+// absolutely necessary.
 void tu_postproduction::to_file(string filename, bool save_self, bool save_full, bool save_symmetries) {
     index_t* header = (index_t*)calloc(128,sizeof(index_t));
+    const char* version = tag_version();
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
     symmstruct_t* symm = tu_data->symm;
     int i = 0;
@@ -598,33 +604,36 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
         header[i] = 0;++i;
         header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
     }
-    
-    if(save_symmetries) {
-        if(tu_data->symm->use_symmetries) {
-            construct_multiindex_maps(model);
-            header[i] = symm->mi_map_len.size();++i;
-            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-            header[i] = symm->mi_map_off.size();++i;
-            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-            header[i] = mi_map_idx.size();++i;
-            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-            header[i] = mi_map_pref_in_in.size();++i;
-            header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
-            header[i] = mi_map_pref_in_out.size();++i;
-        }else{
+
+    if (save_symmetries && tu_data->symm->use_symmetries) {
+        construct_multiindex_maps(model);
+        header[i] = symm->mi_map_len.size();++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+        header[i] = symm->mi_map_off.size();++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+        header[i] = mi_map_idx.size();++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+        header[i] = mi_map_pref_in_in.size();++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = mi_map_pref_in_out.size();++i;
+    } else {
+        if (save_symmetries) {
             mpi_wrn_printf("no symmetries were used in the calculation! \n");
-            header[i] = 0;++i;
-            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-            header[i] = 0;++i;
-            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-            header[i] = 0;++i;
-            header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-            header[i] = 0;++i;
-            header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
-            header[i] = 0;++i;
         }
-        
+        header[i] = 0;++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+        header[i] = 0;++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+        header[i] = 0;++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
+        header[i] = 0;++i;
+        header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+        header[i] = 0;++i;
     }
+
+    header[i] = header[i-2] + header[i-1] * sizeof(complex128_t); ++i;
+    header[i] = strlen(version); ++i;
+
     assert(i < 126);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
     header[127] = header[i-1]*sizeof(complex128_t)+header[i-2];
@@ -730,12 +739,15 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
         free(helper);
     }
     if(save_symmetries && tu_data->symm->use_symmetries) {
+        printf("saving symm!\n");
         new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_len.data(), new_off,sindex*symm->mi_map_len.size());
         new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_off.data(), new_off,sindex*symm->mi_map_off.size());
         new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_idx.data(), new_off,sindex*mi_map_idx.size());
         new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_pref_in_in.data(), new_off,scdou*mi_map_pref_in_in.size());
         new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_pref_in_out.data(), new_off,scdou*mi_map_pref_in_out.size());
     }
-    
+
+    new_off = diverge_mpi_write_byte_to_file_master(file, version, new_off, strlen(version));
+
     diverge_mpi_close_file(file);
 }

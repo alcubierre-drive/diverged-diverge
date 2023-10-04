@@ -31,18 +31,30 @@ class PostProcessing {
         // only call communicate after all calculations!
         void communicate();
 
-        // header consists of 64 index_t specifying the counts and
-        // displacements (in units of doubles) of the channels, i.e.:
-        // nk, nb, nff, SU2, formfactor_displ, formfactor_count,
-        // P_susc_displ, P_susc_count, P_lin_displ, P_lin_count,
-        // C_susc_displ, C_susc_count, C_lin_displ, C_lin_count,
-        // D_susc_displ, D_susc_count, D_lin_displ, D_lin_count
-        // lingap_num_ev, lingap_matrix_size (linear),
-        // ...
-        // file_size
-        // header is followed by data (size*sizeof(double))
-        //
-        // returns total file size.
+        /* header is index_t[64], and all displacement/size information is in
+         * units of 64bit (i.e. double).
+         *
+         * header[0] - MAGIC_NUMBER_POST_PROCESSING
+         * header[60-61] - file format version string [displ, size]. if both are
+         *                 zero, default to v0.4 for diverge.output.read().
+         *
+         * header[1] - nk
+         * header[2] - nb
+         * header[3] - nff
+         * header[4] - SU2
+         * header[5-6] - formfactors [displ, size]
+         * header[7-8] - susc P [displ, size]
+         * header[9-10] - lin gap P [displ, size]
+         * header[11-12] - susc C [displ, size]
+         * header[13-14] - lin gap C [displ, size]
+         * header[15-16] - susc D [displ, size]
+         * header[17-18] - lin gap D [displ, size]
+         * header[19] - lin gap num values/vectors
+         * header[20] - lin gap matrix size (one leg, i.e., nk*nb*nb)
+         *
+         * header[62] - MAGIC_NUMBER_POST_PROCESSING
+         * header[63] - total file size (in 64bit units)
+         */
         index_t* to_file( const string& fname );
     private:
         VertexMemory* _V;

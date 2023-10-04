@@ -7,8 +7,9 @@ CFLAGS = $(PREFLAGS) -std=c11 -fopenmp -MMD -Wall -Wextra -pedantic $(DEFINES) $
 LDFLAGS = $(LIBS)
 
 PREFLAGS = 
-INCLUDES = 
-LIBS = -ldivERGe -lm -lstdc++
+INCLUDES = -I../../src/
+RPATH = $(shell cd ../..; pwd)
+LIBS = -Wl,-rpath=$(RPATH) -L../../ -l:libdivERGe.so -lm -lstdc++
 DEFINES = 
 
 SRC_C := $(shell find ./ -name '*.c')

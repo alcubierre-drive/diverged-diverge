@@ -9,6 +9,7 @@
 
 #include "misc/eigen.h"
 #include "misc/md5.h"
+#include "misc/version.h"
 
 #include "diverge_momentum_gen.h"
 #include "diverge_Eigen3.hpp"
@@ -237,6 +238,11 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         ibuf[123] = offsetof(tu_formfactor_t, ffidx);
         ibuf[124] = sizeof(tu_formfactor_t);
 
+        // file format version
+        idx = 125;
+        const char* version = tag_version();
+        ADD_ARRAY_TO_IBUF( strlen(version) );
+
         // information on whether numerics is OK
         uindex_t checkmask = 0;
         uint8_t one = 1;
@@ -253,7 +259,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         ubuf[127] = checkmask;
 
         // realloc all the memory needed
-        buf = (char*)realloc(buf, ibuf[100] + ibuf[101]);
+        buf = (char*)realloc(buf, ibuf[125] + ibuf[126]);
         ibuf = (index_t*)buf;
         dbuf = (double*)buf;
 
@@ -349,12 +355,15 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
             }
         }
 
+        idx = 125;
+        COPY_ARY_TO_BUF( version );
+
         // free band indices
         if (band_indices != NULL) free(band_indices);
         if (n_band_segments != NULL) free(n_band_segments);
 
         // calculate md5sum
-        md5sum = md5sum_div(buf, ibuf[100]+ibuf[101]);
+        md5sum = md5sum_div(buf, ibuf[125]+ibuf[126]);
         lmd5sum = strlen(md5sum);
 
         // write to file
@@ -362,7 +371,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         if (!f) {
             mpi_err_printf( "could not open file %s. no output.\n", fname );
         } else {
-            fwrite(buf, sizeof(char), ibuf[100]+ibuf[101], f);
+            fwrite(buf, sizeof(char), ibuf[125]+ibuf[126], f);
             fclose(f);
         }
 

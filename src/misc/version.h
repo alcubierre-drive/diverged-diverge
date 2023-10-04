@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+const char* tag_version( void );
 const char* get_version( void );
 int is_version_dirty( void );
 

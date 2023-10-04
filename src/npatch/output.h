@@ -11,31 +11,29 @@ extern "C" {
 typedef struct npatch_vertex_t npatch_vertex_t;
 typedef struct npatch_loop_t npatch_loop_t;
 
-/* header is index_t[128], and contains:
- * VERTEX_FILE_MAGIC_NUMBER
- * vertex_displ
- * vertex_count
- * Lp_displ
- * Lp_count
- * Lm_displ
- * Lm_count
- * dV_displ
- * dV_count
- * chan_1
- * use_dV_1
- * nq_1
- * serial_qmat_displ_1
- * serial_qmat_count_1
- * chan_2
- * use_dV_2
- * nq_2
- * serial_qmat_displ_2
- * serial_qmat_count_2
- * chan_3
- * use_dV_3
- * nq_3
- * serial_qmat_displ_3
- * serial_qmat_count_3
+/* header is index_t[128], with all displ/size information in units of 64bit
+ * (i.e., double). It contains:
+ *
+ * header[0] - VERTEX_FILE_MAGIC_NUMBER
+ * header[125-126] - file format version string [displ, size]. if both are zero,
+ *                   default to v0.4 for diverge.output.read().
+ *
+ * header[1-2] - vertex [displ, size]
+ * header[3-4] - Lp [displ, size]
+ * header[5-6] - Lm [displ, size]
+ * header[7-8] - dV [displ, size]
+ * header[9] - channel 1
+ * header[10] - use dV (channel 1)
+ * header[11] - nq (channel 1)
+ * header[12-13] - serial q matrices (channel 1) [displ, size]
+ * header[14] - channel 2
+ * header[15] - use dV (channel 2)
+ * header[16] - nq (channel 2)
+ * header[17-18] - serial q matrices (channel 2) [displ, size]
+ * header[19] - channel 3
+ * header[20] - use dV (channel 3)
+ * header[21] - nq (channel 3)
+ * header[22-23] - serial q matrices (channel 3) [displ, size]
  * …
  *
  * the serial_qmat data contains (in index_t if not indicated differently):

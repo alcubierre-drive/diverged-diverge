@@ -2,6 +2,8 @@
 
 #include "post_processing.hpp"
 
+#include "../misc/version.h"
+
 #include "../misc/batched_gemms.h"
 #include "vertex_memory.hpp"
 #include "loops.hpp"
@@ -500,6 +502,17 @@ index_t* PostProcessing::to_file( const string& fname ) {
     header[i] = _num_singular_values; i++;
     header[i] = _nk*_nb*_nb; i++;
 
+    // file format version string
+    header[60] = total_size;
+    const char* version = tag_version();
+    // need to find minimal string size in 64bit units... should change in
+    // future version :)
+    index_t version_sz = ceil( (double)strlen(version)/(double)(sizeof(double)) );
+    void* version_mem = calloc( version_sz, sizeof(double) );
+    memcpy( version_mem, version, strlen(version) );
+    header[61] = version_sz;
+    total_size += header[61];
+
     header[62] = MAGIC_NUMBER_POST_PROCESSING;
     header[63] = total_size;
 
@@ -530,6 +543,9 @@ index_t* PostProcessing::to_file( const string& fname ) {
         fwrite( lD, sizeof(double), header[18], outfile );
         free(lD);
     }
+
+    fwrite( version_mem, sizeof(double), version_sz, outfile );
+    free( version_mem );
 
     fclose( outfile );
     return header;

@@ -3,6 +3,7 @@
 #include "output.h"
 #include "vertex.h"
 #include "loop.h"
+#include "../misc/version.h"
 #include "../misc/mpi_functions.h"
 
 #define VERTEX_FILE_MAGIC_NUMBER 'V'
@@ -91,6 +92,15 @@ int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_outpu
         header[i++] = qmat_mem_sz[c];
     }
 
+    const char* version = tag_version();
+    // need to find minimal string size in 64bit units... should change in
+    // future version :)
+    index_t version_sz = ceil( (double)strlen(version)/(double)(sizeof(double)) );
+    void* version_mem = calloc( version_sz, sizeof(double) );
+    memcpy( version_mem, version, strlen(version) );
+    header[125] = header[i-1] + header[i-2];
+    header[126] = version_sz;
+
     fwrite(header, sizeof(header), 1, f);
 
     if (ocfg->V)
@@ -108,6 +118,9 @@ int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_outpu
             free(qmat_mem[c]);
         }
     }
+
+    fwrite( version_mem, sizeof(double), version_sz, f );
+    free( version_mem );
 
     fclose(f);
     return 0;

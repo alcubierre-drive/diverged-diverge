@@ -29,6 +29,8 @@ typedef struct diverge_model_t diverge_model_t;
  * all displacement/length information is in bytes
  *
  * header[0] - DIVERGE_MODEL_MAGIC_NUMBER
+ * header[125-126] - file format version string [displ, size]. if both are zero,
+ *                   default to v0.4 for diverge.output.read().
  * header[1-2] - name [displ, size]
  * header[3] - dim
  * header[4-6] - nk

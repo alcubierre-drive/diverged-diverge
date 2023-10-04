@@ -84,7 +84,7 @@ test: types $(NAME)
 -include $(DEP_C) $(DEP_CPP)
 
 $(NAME): src/main.c.o $(NAME_LIB)
-	$(LD) $(EXEFLAGS) $< -L. -l:$(NAME_LIB) -Wl,-rpath=. $(LDFLAGS) -o $@
+	$(LD) $(EXEFLAGS) $< -L. -l:$(NAME_LIB) -Wl,-rpath=$(shell pwd) $(LDFLAGS) -o $@
 
 ifdef USE_CUDA
 DEFINES += -DUSE_CUDA

@@ -77,6 +77,7 @@ class diverge_model:
     """class to read diverge model files
 
     name: model name
+    version: diverge tag version (serves as file format version)
     dim: dimension
     nk[3]: #kpts
     nkf[3]: #fine kpts
@@ -231,6 +232,8 @@ class diverge_model:
         self.bandstructure = self._displ_count( 100 ).view( np.float64 ).reshape(
                 (-1,self.n_spin*self.n_orb + 3))
 
+        self.version = self._displ_count( 125 ).tobytes().decode()
+
 # Class: diverge_post_patch
 # documentation found in docstring, i.e., do the following from within python
 # === Python ===
@@ -238,6 +241,8 @@ class diverge_model:
 # ==============
 class diverge_post_patch:
     '''class to read diverge postprocessing files for $N$-patch FRG
+
+    version: diverge tag version (serves as file format version)
 
     vertices and loops may be None if not explicitly asked for in the
     postprocessing routines. They all are of shape (np, np, np, nb, nb, nb, nb),
@@ -268,7 +273,7 @@ class diverge_post_patch:
                    with shape: (len(k_kp_descr), nb, nb, len(k_kp_descr), nb, nb).
     '''
     def __init__(self, fname):
-        d_header = numpy_fromfile(fname, dtype=np.longlong, count=64)
+        d_header = numpy_fromfile(fname, dtype=np.longlong, count=128)
 
         if d_header[0] == DIVERGE_POST_PATCH_MAGIC_NUMBER:
             self.valid = True
@@ -327,6 +332,9 @@ class diverge_post_patch:
         else:
             self.D_qV = None
 
+        self.version = d_data[ d_header[125] : d_header[125]+d_header[126] ].view(
+                dtype=np.byte ).tobytes().decode().rstrip('\x00')
+
 # Class: diverge_post_grid
 # documentation found in docstring, i.e., do the following from within python
 # === Python ===
@@ -334,6 +342,8 @@ class diverge_post_patch:
 # ==============
 class diverge_post_grid:
     '''class to read diverge postprocessing files for grid FRG
+
+    version: diverge tag version (serves as file format version)
 
     nk: number of k points
     nb: number of bands
@@ -375,6 +385,9 @@ class diverge_post_grid:
             return
 
         d_data = numpy_fromfile(fname)
+
+        self.version = d_data[d_header[60]:d_header[60]+d_header[61]].view(
+                dtype=np.byte ).tobytes().decode().rstrip('\x00')
 
         self.nk = d_header[1]
         self.nb = d_header[2]
@@ -470,6 +483,9 @@ class diverge_post_grid:
 # ==============
 class diverge_post_tu:
     '''class to read diverge postprocessing files for tu FRG
+
+    version: diverge tag version (serves as file format version)
+
     n_orb: number of orbitals (not spin)
     n_spin: number of spin degrees of freedom
     nk: number of momentum points
@@ -531,6 +547,13 @@ class diverge_post_tu:
 
     SELFENERGY
     selfenergy: Self-energy at the critical scale ([n_orb*n_spin]*2,nktot)
+
+    SYMMETRIES
+    symm_o2m_len: length of symmetry maps
+    symm_o2m_off: offsets of symmetry maps
+    symm_o2m_idx_map: index maps
+    self.symm_o2m_Ppref: complex prefactor for P
+    self.symm_o2m_Cpref: complex prefactor for C
     '''
     def __init__(self, fname):
         d_header = numpy_fromfile(fname, dtype=np.int64, count=128)
@@ -641,7 +664,6 @@ class diverge_post_tu:
         if(d_header[iL[0]-1] > 0):
             self.selfenergy = self.selfenergy.reshape(self.nktot,n_spin,n_orb,n_spin,n_orb)
 
-
         self.Pchannel = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Pchannel = self.Pchannel.reshape(susc_shape)
@@ -657,8 +679,7 @@ class diverge_post_tu:
         self.phloop = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.phloop = self.phloop.reshape(susc_shape)
-            
-        
+
         symm_shape = (self.n_sym,n_spin,n_spin,n_orbff)
         self.symm_o2m_len = get_array_header( iL, np.longlong )
         if(d_header[iL[0]-1] > 0):
@@ -670,7 +691,7 @@ class diverge_post_tu:
         self.symm_o2m_Ppref = get_array_header( iL, np.complex128 )
         self.symm_o2m_Cpref = get_array_header( iL, np.complex128 )
 
-
+        self.version = get_array_header( iL, np.byte ).tobytes().decode()
 
 # Function: diverge_read
 # function to read model files as well as post processing files. returns the
