@@ -10,6 +10,37 @@ DIVERGE_POST_GRID_MAGIC_NUMBER = ord('P')
 DIVERGE_POST_PATCH_MAGIC_NUMBER = ord('V')
 DIVERGE_POST_TU_MAGIC_NUMBER = ord('T')
 
+# return 1 if A>B, -1 if A<B, and 0 if A=B
+def version_compare( A, B ):
+    # special cases
+    if (A == B):
+        return 0
+    if (A == "dev"):
+        return 1
+    if (B == "dev"):
+        return -1
+
+    # equalize lengths
+    A_list = [int(x) for x in A.lstrip('v').split('.')]
+    B_list = [int(x) for x in B.lstrip('v').split('.')]
+    vlen = max( len(A_list), len(B_list) )
+    if (len(A_list) < vlen):
+        A_list += [0] * (vlen - len(A_list))
+    if (len(B_list) < vlen):
+        B_list += [0] * (vlen - len(B_list))
+
+    # and check for larger version
+    for i in range(vlen):
+        if A_list[i] > B_list[i]:
+            return 1
+        elif A_list[i] < B_list[i]:
+            return -1
+        else:
+            pass
+
+    # default: versions are equal
+    return 0
+
 # this is due to some weird numpy version checking for the contents of a buffer
 def numpy_fromfile( fname, **kwargs ):
     return np.frombuffer( open(fname, "rb").read(), **kwargs )
@@ -180,6 +211,7 @@ class diverge_model:
         self._f_bytes = numpy_fromfile(fname, dtype=np.byte)
 
         self.name = self._displ_count( 1 ).tobytes().decode().rstrip('\x00')
+        self.version = self._displ_count( 125 ).tobytes().decode()
         self.dim = self._head(3)
         self.nk = self._head_displ_count(4,3)
         self.nkf = self._head_displ_count(7,3)
@@ -229,10 +261,8 @@ class diverge_model:
         self.kc_ibz_path = k_ibz_path( self._displ_count( 90 ) )
         self.kf_ibz_path = k_ibz_path( self._displ_count( 92 ) )
 
-        self.bandstructure = self._displ_count( 100 ).view( np.float64 ).reshape(
-                (-1,self.n_spin*self.n_orb + 3))
-
-        self.version = self._displ_count( 125 ).tobytes().decode()
+        self.bandstructure = self._displ_count( 100 ).view(
+                np.float64 ).reshape((-1,self.n_spin*self.n_orb + 3))
 
 # Class: diverge_post_patch
 # documentation found in docstring, i.e., do the following from within python
