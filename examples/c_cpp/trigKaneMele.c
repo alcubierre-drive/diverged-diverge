@@ -25,6 +25,9 @@ static double vector_angle2d( vector_t a );
 static const double phi = M_PI/6.0;
 static const double U = 6.0;
 
+#define ISCLOSE_ZERO 1e-3
+#define ISCLOSE( a, b ) (fabs((a)-(b)) < ISCLOSE_ZERO)
+
 int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );
     diverge_compilation_status();
@@ -48,13 +51,14 @@ int main( int argc, char** argv ) {
     m->hop = diverge_mem_alloc_rs_hopping_t(128);
     for (int Rx=-4; Rx<=4; ++Rx)
     for (int Ry=-4; Ry<=4; ++Ry) {
-        vector_t bond = vector_add(vector_scale(vector_map(m->lattice[0]),Rx), vector_scale(vector_map(m->lattice[1]),Ry));
-        if (fabs(vector_norm(bond)-1.0) < 1e-7) {
+        vector_t bond = vector_add(vector_scale(vector_map(m->lattice[0]),Rx),
+                                   vector_scale(vector_map(m->lattice[1]),Ry));
+        if (ISCLOSE(vector_norm(bond),1.0)) {
             double angle_deg = 180./M_PI*vector_angle2d(bond);
-            if (fabs(angle_deg) < 1e-3 || fabs(angle_deg-120) < 1e-3 || fabs(angle_deg+120) < 1e-3) {
+            if (ISCLOSE(angle_deg, 0) || ISCLOSE(angle_deg, 120) || ISCLOSE(angle_deg, -120)) {
                 for (int s=0; s<2; ++s) {
-                    m->hop[m->n_hop++] = (rs_hopping_t){.R={ Rx, Ry,0}, .t=cexp( I*phi*sgn2(s)), .s1=s,.s2=s};
-                    m->hop[m->n_hop++] = (rs_hopping_t){.R={-Rx,-Ry,0}, .t=cexp(-I*phi*sgn2(s)), .s1=s,.s2=s};
+                    m->hop[m->n_hop++] = (rs_hopping_t){.R={ Rx, Ry}, .t=cexp( I*phi*sgn2(s)), .s1=s,.s2=s};
+                    m->hop[m->n_hop++] = (rs_hopping_t){.R={-Rx,-Ry}, .t=cexp(-I*phi*sgn2(s)), .s1=s,.s2=s};
                 }
             }
         }
@@ -85,7 +89,7 @@ int main( int argc, char** argv ) {
     }
     mpi_usr_printf( "model@%s\n", diverge_model_to_file(m, __FILE__ "_mod.dvg") );
 
-    /* diverge_model_internals_common(m); */
+    diverge_model_internals_common(m);
     diverge_model_internals_tu(m, 2.01);
 
     diverge_model_free(m);
