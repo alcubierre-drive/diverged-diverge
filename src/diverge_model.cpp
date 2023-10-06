@@ -15,6 +15,7 @@ diverge_model_t* diverge_model_init(void) {
     diverge_model_t* result = (diverge_model_t*)calloc(1,sizeof(diverge_model_t));
     result->hfill = &diverge_hamilton_generator_default;
     result->gfill = &diverge_greensfunc_generator_default;
+    result->gproj = NULL;
     result->vfill = &diverge_channel_vertex_generator_default;
     result->ffill = NULL;
     result->n_vert_chan[0] = -1;

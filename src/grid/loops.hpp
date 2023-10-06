@@ -60,6 +60,8 @@ class Loops {
         diverge_model_t* _dmod = nullptr;
         complex128_t* _greens_cache_p = nullptr;
         complex128_t* _greens_cache_m = nullptr;
+        complex128_t* _greens_proj_cache_p = nullptr;
+        complex128_t* _greens_proj_cache_m = nullptr;
 
 };
 
