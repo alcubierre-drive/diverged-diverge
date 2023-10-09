@@ -275,9 +275,12 @@ create_bhk_test_case( tu, grid, square_lat_hub )
 create_bhk_test_case( tu, grid, honeycomb_lat_hub )
 create_bhk_test_case( tu, grid, square_lat_rashba )
 create_bhk_test_case( tu, grid, random )
+
 create_bhk_test_case( tu, grid, square_lat_hub_sym )
 create_bhk_test_case( tu, grid, honeycomb_lat_hub_sym )
 create_bhk_test_case( tu, grid, square_lat_rashba_sym )
+
+create_bhk_test_case( grid, patch, square_lat_hub_proj );
 
 create_bhk_test_case_sym( grid, square_lat_hub )
 create_bhk_test_case_sym( grid, square_lat_rashba )
