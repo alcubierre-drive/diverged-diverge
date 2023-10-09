@@ -318,8 +318,8 @@ static vector<spherical_harmonic_t> construct_spherical_harmonic_vector( vector<
             orbital = rotate(orbital,ez,ezdef);
             orbs[o] += orbital_content[o].amplitude[id] * orbital;
         }
-        if(orbs[o].norm() + 1e-10 < 1. ) {
-            mpi_err_printf("orbital at %d not normalized, fix now \n",o);
+        if(std::abs(orbs[o].norm() - 1.0) > 1e-10 ) {
+            mpi_log_printf("orbital at %d not normalized, fix now \n",o);
             orbs[o] /= orbs[o].norm();
         }
     }

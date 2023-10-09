@@ -22,15 +22,14 @@ typedef enum real_harmonics_t {
     // Var: orb_pm1
     // py orbital
     orb_pm1 = 1,
+    orb_py = 1,
     // Var: orb_p_0
     // pz orbital
     orb_p_0 = 2,
+    orb_pz = 2,
     // Var: orb_p_1
     // px orbital
     orb_p_1 = 3,
-
-    orb_py = 1,
-    orb_pz = 2,
     orb_px = 3,
 
     orb_dm2 = 4,
