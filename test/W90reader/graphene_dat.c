@@ -67,7 +67,8 @@ static char graphene_hr_dat_fname[1024] = {0};
 const char* gen_graphene_hr_dat( void ) {
     snprintf(graphene_hr_dat_fname, 1023, "./.graphene_hr_dat.XXXXXX");
     int fd = mkstemp( graphene_hr_dat_fname );
-    if (!write( fd, graphene_dat, graphene_dat_len )) {
+    ssize_t nbytes_written = write( fd, graphene_dat, graphene_dat_len );
+    if (nbytes_written == -1 || nbytes_written < (ssize_t)graphene_dat_len) {
         mpi_err_printf("error writing file '%s'\n", graphene_hr_dat_fname);
     }
     close( fd );
