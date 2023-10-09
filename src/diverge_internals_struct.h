@@ -28,6 +28,10 @@ struct internals_t {
 
     bool ignore_eigensolver_in_common;
 
+    // count how many times this model instance has been used in a
+    // diverge_flow_step (and is still active)
+    index_t num_diverge_flow_step_usages;
+
     // DEVELOPERS
     //
     // this file is for interfacing with the source codes found in

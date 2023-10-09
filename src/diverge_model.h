@@ -204,6 +204,10 @@ struct diverge_model_t {
     // Variable: gfill
     // <greensfunc_generator_t>
     greensfunc_generator_t gfill;
+    // TODO(@JH) implementation of gproj is missing in the TU backend.
+    // Variable: grpoj
+    // <greensfunc_generator_t> used for projected loops, i.e. Lproj = GG - GprojGproj
+    greensfunc_generator_t gproj;
 
     // Variable: data
     // used to add additional information to the struct, useful to "hack"

@@ -8,6 +8,8 @@ diverge_model_t* gen_square_lat_hub(index_t nkx, index_t nky, index_t lx=1,
         index_t ly=1, double t=1, double tp=-0.1, double U=3, double mu=-0.5,
         index_t nkxf = 1, index_t nkyf = 1);
 
+diverge_model_t* gen_square_lat_hub_proj( index_t nk, double scale_tb = -0.5 );
+
 diverge_model_t* gen_random(index_t nkx, index_t nky);
 
 diverge_model_t* gen_square_lat_rashba(index_t nkx=6, index_t nky=6, double t=1,

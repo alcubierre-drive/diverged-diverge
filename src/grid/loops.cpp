@@ -11,9 +11,11 @@
 
 namespace grid {
 
+template<bool isProjectedLoop = false>
 static void frg_loop_calc_P_greens( complex128_t* mem, const complex128_t* greens_p,
         const complex128_t* greens_m, index_t qstart, index_t qstop, index_t nk, index_t nkf,
         index_t nb, const index_t* kfrev, const double* kfweights, const index_t* k1m2 );
+template<bool isProjectedLoop = false>
 static void frg_loop_calc_C_greens( complex128_t* mem, const complex128_t* greens_p,
         const complex128_t* greens_m, index_t qstart, index_t qstop, index_t nk, index_t nkf,
         index_t nb, const index_t*, const double* kfweights, const index_t* k1m2 );
@@ -40,6 +42,11 @@ Loops::Loops( diverge_model_t* dmod ) {
     _kfrev = _dmod->internals->grid_kfrev;
     _kfweights = _dmod->internals->grid_weights;
 
+    if (_dmod->gproj != NULL) {
+        _greens_proj_cache_p = (complex128_t*)calloc(_nk*_nkf*_nb*_nb, sizeof(complex128_t));
+        _greens_proj_cache_m = (complex128_t*)calloc(_nk*_nkf*_nb*_nb, sizeof(complex128_t));
+    }
+
     _qstart = V->get_index_gen()->qstart;
     _qstop = V->get_index_gen()->qstop;
     _qsize = _qstop-_qstart;
@@ -61,6 +68,9 @@ Loops::Loops( diverge_model_t* dmod ) {
 Loops::~Loops() {
     free(_X_P);
     free(_X_C);
+
+    if (_greens_proj_cache_p) free(_greens_proj_cache_p);
+    if (_greens_proj_cache_m) free(_greens_proj_cache_m);
 
     if (_SYM_free)
         delete _SYM;
@@ -87,15 +97,25 @@ void Loops::_greens_cache_fill(double Lambda) {
     if ((*_dmod->gfill)(_dmod, cLam, _dmod->internals->greens) != greensfunc_op_cpu)
         mpi_err_printf("grid FRG does not support GPU Green functions\n");
 
-    transform_to_gbuf( (const gf_complex_t*)_dmod->internals->greens,
-            _greens_cache_p, _greens_cache_m, _dmod->internals->grid_kfmesh,
-            _dmod->internals->grid_nk * _dmod->internals->grid_nkf,
+    transform_to_gbuf( _dmod->internals->greens, _greens_cache_p, _greens_cache_m,
+            _dmod->internals->grid_kfmesh, _dmod->internals->grid_nk * _dmod->internals->grid_nkf,
             kdimtot( _dmod->nk, _dmod->nkf ), _nb );
+
+    if (_dmod->gproj) {
+        if ((*_dmod->gproj)(_dmod, cLam, _dmod->internals->greens) != greensfunc_op_cpu)
+            mpi_err_printf("grid FRG does not support GPU Green functions\n");
+        transform_to_gbuf( _dmod->internals->greens, _greens_proj_cache_p, _greens_proj_cache_m,
+            _dmod->internals->grid_kfmesh, _dmod->internals->grid_nk * _dmod->internals->grid_nkf,
+            kdimtot( _dmod->nk, _dmod->nkf ), _nb );
+    }
 }
 
 complex128_t* Loops::X_P(double Lambda) {
     _greens_cache_fill(Lambda);
     frg_loop_calc_P_greens( _X_P, _greens_cache_p, _greens_cache_m,
+            _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
+    if (_dmod->gproj != NULL)
+        frg_loop_calc_P_greens<true>( _X_P, _greens_proj_cache_p, _greens_proj_cache_m,
             _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     _max_P = absmax( _X_P, _Xsize );
     return _X_P;
@@ -104,6 +124,9 @@ complex128_t* Loops::X_P(double Lambda) {
 complex128_t* Loops::X_C(double Lambda) {
     _greens_cache_fill(Lambda);
     frg_loop_calc_C_greens( _X_C, _greens_cache_p, _greens_cache_m,
+            _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
+    if (_dmod->gproj != NULL)
+        frg_loop_calc_C_greens<true>( _X_C, _greens_proj_cache_p, _greens_proj_cache_m,
             _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     _max_C = absmax( _X_C, _Xsize );
     return _X_C;
@@ -118,13 +141,14 @@ complex128_t* Loops::symmetrize( complex128_t* loop, char chan ) {
     }
 }
 
+template<bool isProjectedLoop>
 static void frg_loop_calc_P_greens( complex128_t* mem, const complex128_t* greens_p,
         const complex128_t* greens_m, index_t qstart, index_t qstop, index_t nk, index_t nkf,
         index_t nb, const index_t* kfrev, const double* kfweights, const index_t* k1m2 ) {
 
     index_t LoopSize = (qstop-qstart)*nk*nb*nb*nb*nb;
 
-    const double norm = 1./2./M_PI;
+    const double norm = 1./2./M_PI * (isProjectedLoop?-1.0:1.0);
 
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t Loopindex=0; Loopindex<LoopSize; ++Loopindex) {
@@ -135,7 +159,8 @@ static void frg_loop_calc_P_greens( complex128_t* mem, const complex128_t* green
               o3 = (Loopindex%(nb*nb))/nb,
               o4 = Loopindex%nb;
 
-        mem[Loopindex] = 0;
+        if constexpr(!isProjectedLoop)
+            mem[Loopindex] = 0;
 
         index_t k1 = k;
         index_t k2 = k1m2[q*nk+k];
@@ -150,13 +175,14 @@ static void frg_loop_calc_P_greens( complex128_t* mem, const complex128_t* green
     }
 }
 
+template<bool isProjectedLoop>
 static void frg_loop_calc_C_greens( complex128_t* mem, const complex128_t* greens_p,
         const complex128_t* greens_m, index_t qstart, index_t qstop, index_t nk, index_t nkf,
         index_t nb, const index_t*, const double* kfweights, const index_t* k1m2 ) {
 
     index_t LoopSize = (qstop-qstart)*nk*nb*nb*nb*nb;
 
-    const double norm = 1./2./M_PI;
+    const double norm = 1./2./M_PI * (isProjectedLoop?-1.0:1.0);
 
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t Loopindex=0; Loopindex<LoopSize; ++Loopindex) {
@@ -167,7 +193,9 @@ static void frg_loop_calc_C_greens( complex128_t* mem, const complex128_t* green
               O3 = (Loopindex%(nb*nb))/nb,
               O4 = Loopindex%nb;
         index_t o1 = O2, o2 = O3, o3 = O4, o4 = O1;
-        mem[Loopindex] = 0;
+
+        if constexpr(!isProjectedLoop)
+            mem[Loopindex] = 0;
 
         index_t k1 = k;
         index_t k2 = k1m2[k*nk+q];

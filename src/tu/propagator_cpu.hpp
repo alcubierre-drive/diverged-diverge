@@ -1,9 +1,8 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-#include "propagator.hpp"
-#include "../diverge_internals_struct.h"
 #include <omp.h>
 
+template<bool subtract>
 void tu_loop_t::S_ph_loop_static_simple(complex128_t* loop, index_t ntasks, index_t taskoff, bool rescale) const {
     if(ntasks == -1) ntasks = POW2(n_orbff), taskoff = 0;
     const double prefac = -1.0/(2.0*M_PI);
@@ -71,7 +70,11 @@ void tu_loop_t::S_ph_loop_static_simple(complex128_t* loop, index_t ntasks, inde
                 index_t idx_to = mo1+n_orbff*(s1+s4*n_spin
                         +POW2(n_spin)*(mo3+n_orbff*
                         (s3 + s2*n_spin+ POW2(n_spin)*q)));
-                loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                if constexpr (subtract) {
+                    loop[idx_to] -= MY_BUFFER_GGp[c2fmap[q]];
+                }else{
+                    loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                }
             }
         }
     }
@@ -79,6 +82,7 @@ void tu_loop_t::S_ph_loop_static_simple(complex128_t* loop, index_t ntasks, inde
 }
 
 
+template<bool subtract>
 void tu_loop_t::S_pp_loop_static_simple(complex128_t* loop, index_t ntasks, index_t taskoff, bool rescale) const {
     if(ntasks == -1) ntasks = POW2(n_orbff), taskoff = 0;
     const double prefac = -1.0/(2.0*M_PI);
@@ -147,7 +151,11 @@ void tu_loop_t::S_pp_loop_static_simple(complex128_t* loop, index_t ntasks, inde
                 index_t idx_to = mo1+n_orbff*(s1+s2*n_spin
                         +POW2(n_spin)*(mo3+n_orbff*
                         (s3 + s4*n_spin+ POW2(n_spin)*q)));
-                loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                if constexpr (subtract) {
+                    loop[idx_to] -= MY_BUFFER_GGp[c2fmap[q]];
+                }else{
+                    loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                }
             }
         }
     }
@@ -155,6 +163,7 @@ void tu_loop_t::S_pp_loop_static_simple(complex128_t* loop, index_t ntasks, inde
 }
 
 
+template<bool subtract>
 void tu_loop_t::S_ph_loop_static_red(complex128_t* loop, index_t ntasks, index_t taskoff, bool rescale) const {
     if(ntasks == -1) ntasks = (index_t)tu_data->unique_mi_l.size(), taskoff = 0;
     const double prefac = -1.0/(2.0*M_PI);
@@ -223,7 +232,11 @@ void tu_loop_t::S_ph_loop_static_red(complex128_t* loop, index_t ntasks, index_t
                 index_t idx_to = mo1+n_orbff*(s1+s4*n_spin
                         +POW2(n_spin)*(mo3+n_orbff*
                         (s3 + s2*n_spin+ POW2(n_spin)*q)));
-                loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                if constexpr (subtract) {
+                    loop[idx_to] -= MY_BUFFER_GGp[c2fmap[q]];
+                }else{
+                    loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                }
             }
         }
     }
@@ -234,6 +247,7 @@ void tu_loop_t::S_ph_loop_static_red(complex128_t* loop, index_t ntasks, index_t
 }
 
 
+template<bool subtract>
 void tu_loop_t::S_pp_loop_static_red(complex128_t* loop, index_t ntasks, index_t taskoff, bool rescale) const {
     if(ntasks == -1) ntasks = (index_t)tu_data->unique_mi_l.size(), taskoff = 0;
     const double prefac = -1.0/(2.0*M_PI);
@@ -304,7 +318,11 @@ void tu_loop_t::S_pp_loop_static_red(complex128_t* loop, index_t ntasks, index_t
                 index_t idx_to = mo1+n_orbff*(s1+s2*n_spin
                         +POW2(n_spin)*(mo3+n_orbff*
                         (s3 + s4*n_spin+ POW2(n_spin)*q)));
-                loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                if constexpr (subtract) {
+                    loop[idx_to] -= MY_BUFFER_GGp[c2fmap[q]];
+                }else{
+                    loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                }
             }
         }
     }
@@ -315,6 +333,7 @@ void tu_loop_t::S_pp_loop_static_red(complex128_t* loop, index_t ntasks, index_t
 }
 
 
+template<bool subtract>
 void tu_loop_t::S_ph_loop_static_rs(complex128_t* L) const {
     const double prefac = -1.0/(2.0*M_PI);
     #pragma omp parallel for collapse(3) schedule(dynamic) num_threads(diverge_omp_num_threads())
@@ -328,15 +347,24 @@ void tu_loop_t::S_ph_loop_static_rs(complex128_t* L) const {
         const index_t ob1 = mi_to_oto[mo1];
         const index_t o3 = mi_to_ofrom[mo3];
         const index_t ob3 = mi_to_oto[mo3];
-        L[mo1 + n_orbff*((s1+n_spin*s4) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s2)))] =
-            prefac*(GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
-                *GF_fft_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]
-                +GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
-                *GF_fft_conj_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]);
+        if constexpr (subtract) {
+            L[mo1 + n_orbff*((s1+n_spin*s4) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s2)))] -=
+                prefac*(GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]
+                    +GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_conj_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]);
+        }else{
+            L[mo1 + n_orbff*((s1+n_spin*s4) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s2)))] =
+                prefac*(GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]
+                    +GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_conj_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]);
+        }
     }
 }
 
 
+template<bool subtract>
 void tu_loop_t::S_pp_loop_static_rs(complex128_t* L) const {
     const double prefac = -1.0/(2.0*M_PI);
     #pragma omp parallel for collapse(3) schedule(dynamic) num_threads(diverge_omp_num_threads())
@@ -350,32 +378,20 @@ void tu_loop_t::S_pp_loop_static_rs(complex128_t* L) const {
         const index_t ob1 = mi_to_oto[mo1];
         const index_t o3 = mi_to_ofrom[mo3];
         const index_t ob3 = mi_to_oto[mo3];
-        L[mo1 + n_orbff*((s1+n_spin*s2) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s4)))] =
+        if constexpr (subtract) {
+            L[mo1 + n_orbff*((s1+n_spin*s2) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s4)))] -=
             prefac*(GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
                 *GF_fft_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]
                 +GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
                 *GF_fft_conj_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]);
-    }
-}
-
-
-void tu_loop_t::reconstruct_from_reduced(complex128_t* loop) const
-{
-    index_t n_unique = (index_t)tu_data->unique_mi_l.size();
-    #pragma omp for collapse(4) schedule(dynamic,1)
-    for(index_t q = 0; q<my_nk;++q)
-    for(index_t sr = 0; sr<POW2(n_spin);++sr)
-    for(index_t sl = 0; sl<POW2(n_spin);++sl)
-    for(index_t m = 0; m<n_unique;++m){
-        index_t gmo1 = tu_data->unique_mi_l[m];
-        index_t gmo3 = tu_data->unique_mi_r[m];
-        complex128_t from = loop[gmo1+n_orbff*(sl +POW2(n_spin)*(gmo3+n_orbff*
-                                (sr + POW2(n_spin)*q)))];
-        for(index_t l = 1; l < tu_data->lmap_len[m];++l){
-            index_t mo1 = tu_data->lmap_l[l+tu_data->lmap_off[m]];
-            index_t mo3 = tu_data->lmap_r[l+tu_data->lmap_off[m]];
-            loop[mo1+n_orbff*(sl +POW2(n_spin)*(mo3+n_orbff*
-                                (sr + POW2(n_spin)*q)))] = from;
+        }else{
+            L[mo1 + n_orbff*((s1+n_spin*s2) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s4)))] =
+                prefac*(GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]
+                    +GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_conj_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]);
         }
     }
 }
+
+

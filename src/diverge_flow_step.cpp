@@ -21,6 +21,11 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
     diverge_flow_step_t* st = (diverge_flow_step_t*)calloc(sizeof(diverge_flow_step_t),1);
     st->mod = mod;
     st->intls = mod->internals;
+
+    // tell the model it is being used by this flow step instance
+    #pragma omp atomic
+    st->intls->num_diverge_flow_step_usages++;
+
     diverge_flow_step_select_channels( st, channels );
 
     // DEVELOPERS
@@ -165,6 +170,11 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
     }
     delete st->timings;
     delete st->timings_descr;
+
+    // tell the model it is no longer used by this flow step instance
+    #pragma omp atomic
+    st->intls->num_diverge_flow_step_usages--;
+
     free(st);
     batched_gemm_cublas_clear();
     batched_gemm_cublas_w_buffer_clear();

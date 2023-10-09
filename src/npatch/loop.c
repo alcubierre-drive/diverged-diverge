@@ -50,8 +50,6 @@ npatch_loop_t* npatch_loop_init( diverge_model_t* dmodel ) {
     r->Gp = r->dint->greens;
     r->Gm = r->dint->greens + r->G_sz;
 
-    r->_free_G = 0;
-
     r->np = r->dpat->n_patches;
     r->p_idx = r->dpat->patches;
     r->p_cnt = r->dpat->p_count;
@@ -75,30 +73,58 @@ npatch_loop_t* npatch_loop_init( diverge_model_t* dmodel ) {
     r->workshare = (npatch_loop_workshare_t*)malloc(sizeof(npatch_loop_workshare_t));
     loop_workshare_setup(r->workshare, r->np);
     loop_workshare_scale(r->workshare, POW4(r->nb) * POW2(r->np));
+
+    r->is_proj_dispatcher = 0;
+    r->is_proj = 0;
+    r->projLoop = NULL;
+
+    if (r->dmod->gproj != NULL) {
+        // set up infrastructure for projection dispatch
+        npatch_loop_t* p = (npatch_loop_t*)malloc(sizeof(npatch_loop_t));
+        memcpy( p, r, sizeof(npatch_loop_t) );
+
+        r->is_proj_dispatcher = 1;
+        p->is_proj = 1;
+        r->projLoop = p;
+
+        // and allocate memory on the dispatched loop
+        p->Lp = (complex128_t*)calloc(p->L_sz, sizeof(complex128_t));
+        p->Lm = (complex128_t*)calloc(p->L_sz, sizeof(complex128_t));
+    }
     return r;
 }
 
 void npatch_loop_free( npatch_loop_t* loop ) {
-    if (loop->_free_G) {
-        free(loop->Gm);
-        free(loop->Gp);
+    if (loop->is_proj_dispatcher) {
+        npatch_loop_free( loop->projLoop );
+    } else {
+        free(loop->workshare->displs);
+        free(loop->workshare->counts);
+        free(loop->workshare);
     }
-    free(loop->Lp);
-    free(loop->Lm);
-    free(loop->workshare->displs);
-    free(loop->workshare->counts);
-    free(loop->workshare);
-    free(loop);
+    free( loop->Lp );
+    free( loop->Lm );
+    free( loop );
 }
 
 void npatch_loop_gen( npatch_loop_t* loop, complex128_t Lambda ) {
+
+    // recurse one level if we are the dispatcher!
+    if (loop->is_proj_dispatcher)
+        npatch_loop_gen( loop->projLoop, Lambda );
+
     bool loop_use_gpu_gf = false;
 
-    switch ((*loop->dmod->gfill)( loop->dmod, Lambda, loop->dint->greens )) {
+    greensfunc_generator_t ggen = loop->is_proj ? loop->dmod->gproj : loop->dmod->gfill;
+    switch ((*ggen)( loop->dmod, Lambda, loop->dint->greens )) {
         case greensfunc_op_gpu:
             loop_use_gpu_gf = (loop->workshare->cpu_start_at_idx == loop->workshare->cpu_stop_at_idx);
             if (!loop_use_gpu_gf)
                 mpi_err_printf("bogus GF. GPU only valid with loop gpu work 100%% (i.e. USE_CUDA=1)\n");
+            if (loop->is_proj)
+                mpi_err_printf("cannot use GPU GF on projected loop\n");
+            if (loop->is_proj_dispatcher)
+                mpi_err_printf("cannot use GPU GF on projected loop dispatcher\n");
             break;
         case greensfunc_op_cpu:
         default:
@@ -155,6 +181,32 @@ void npatch_loop_gen( npatch_loop_t* loop, complex128_t Lambda ) {
     for (int i=0; i<128; ++i) {
         loop->wtime_gpu_list[i] = gpu.wtime_gpus[i];
         loop->wtime_gpu_gf_list[i] = gpu.wtime_gfs[i];
+    }
+
+    // do the accumulation if we are the dispatcher
+    if (loop->is_proj_dispatcher) {
+        tick = diverge_mpi_wtime();
+        complex128_t *Lm_proj = loop->projLoop->Lm,
+                     *Lp_proj = loop->projLoop->Lp,
+                     *Lm = loop->Lm,
+                     *Lp = loop->Lp;
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<loop->L_sz; ++i)
+            Lp[i] -= Lp_proj[i];
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<loop->L_sz; ++i)
+            Lm[i] -= Lm_proj[i];
+        tock = diverge_mpi_wtime();
+
+        // and update the timings a bit
+        npatch_loop_t* dloop = loop->projLoop;
+        loop->wtime_gpu += dloop->wtime_gpu;
+        loop->wtime_cpu += dloop->wtime_cpu;
+        loop->wtime_comm += dloop->wtime_comm + tock-tick;
+        for (int i=0; i<128; ++i) {
+            loop->wtime_gpu_list[i] += dloop->wtime_gpu_list[i];
+            loop->wtime_gpu_gf_list[i] += dloop->wtime_gpu_gf_list[i];
+        }
     }
 }
 
