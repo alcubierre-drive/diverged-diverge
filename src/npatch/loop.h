@@ -21,8 +21,6 @@ struct npatch_loop_t {
     gf_complex_t* Gp;
     index_t nk, nb, G_sz, L_sz;
 
-    int _free_G;
-
     diverge_model_t* dmod;
     internals_t* dint;
     mom_patching_t* dpat;

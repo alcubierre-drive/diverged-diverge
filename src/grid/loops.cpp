@@ -115,7 +115,7 @@ complex128_t* Loops::X_P(double Lambda) {
     frg_loop_calc_P_greens( _X_P, _greens_cache_p, _greens_cache_m,
             _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     if (_dmod->gproj != NULL)
-        frg_loop_calc_P_greens<true>( _X_P, _greens_cache_p, _greens_cache_m,
+        frg_loop_calc_P_greens<true>( _X_P, _greens_proj_cache_p, _greens_proj_cache_m,
             _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     _max_P = absmax( _X_P, _Xsize );
     return _X_P;
@@ -126,7 +126,7 @@ complex128_t* Loops::X_C(double Lambda) {
     frg_loop_calc_C_greens( _X_C, _greens_cache_p, _greens_cache_m,
             _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     if (_dmod->gproj != NULL)
-        frg_loop_calc_C_greens<true>( _X_C, _greens_cache_p, _greens_cache_m,
+        frg_loop_calc_C_greens<true>( _X_C, _greens_proj_cache_p, _greens_proj_cache_m,
             _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     _max_C = absmax( _X_C, _Xsize );
     return _X_C;

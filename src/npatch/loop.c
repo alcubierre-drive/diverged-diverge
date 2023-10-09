@@ -50,8 +50,6 @@ npatch_loop_t* npatch_loop_init( diverge_model_t* dmodel ) {
     r->Gp = r->dint->greens;
     r->Gm = r->dint->greens + r->G_sz;
 
-    r->_free_G = 0;
-
     r->np = r->dpat->n_patches;
     r->p_idx = r->dpat->patches;
     r->p_cnt = r->dpat->p_count;
@@ -90,9 +88,6 @@ npatch_loop_t* npatch_loop_init( diverge_model_t* dmodel ) {
         r->projLoop = p;
 
         // and allocate memory on the dispatched loop
-        p->_free_G = 1;
-        p->Gp = (gf_complex_t*)calloc(r->nk*r->nb*r->nb,sizeof(gf_complex_t));
-        p->Gm = (gf_complex_t*)calloc(r->nk*r->nb*r->nb,sizeof(gf_complex_t));
         p->Lp = (complex128_t*)calloc(p->L_sz, sizeof(complex128_t));
         p->Lm = (complex128_t*)calloc(p->L_sz, sizeof(complex128_t));
     }
@@ -102,21 +97,14 @@ npatch_loop_t* npatch_loop_init( diverge_model_t* dmodel ) {
 void npatch_loop_free( npatch_loop_t* loop ) {
     if (loop->is_proj_dispatcher) {
         npatch_loop_free( loop->projLoop );
-        free( loop->Lp );
-        free( loop->Lm );
-        free( loop );
     } else {
-        if (loop->_free_G) {
-            free(loop->Gm);
-            free(loop->Gp);
-        }
-        free(loop->Lp);
-        free(loop->Lm);
         free(loop->workshare->displs);
         free(loop->workshare->counts);
         free(loop->workshare);
-        free(loop);
     }
+    free( loop->Lp );
+    free( loop->Lm );
+    free( loop );
 }
 
 void npatch_loop_gen( npatch_loop_t* loop, complex128_t Lambda ) {
