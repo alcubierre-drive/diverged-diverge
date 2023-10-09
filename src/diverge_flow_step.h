@@ -59,14 +59,13 @@ double diverge_flow_step_lambda( diverge_flow_step_t* st );
 // get the current dLambda
 double diverge_flow_step_dlambda( diverge_flow_step_t* st );
 
-// TODO(@jh): how do we need to implement the routines to capture both
-// Bogaki-Shampine and Adaptive Euler?
-
 // Function: diverge_flow_step_free
 void diverge_flow_step_free( diverge_flow_step_t* st );
 
 
 // Struct: diverge_flow_step_vertex_t
+// Structure that can hold all vertex objects used in divERGe. depending on the
+// backend and channel, the content differs.
 typedef struct {
     // Var: ary
     // pointer to the raw memory behind the vertex
