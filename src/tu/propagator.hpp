@@ -128,6 +128,7 @@ private:
     fftw_plan cfrg_fftGF;
     fftw_plan cfrg_fftGFconj;
 
+    bool cFRG_loop;
 
     vector<fftw_plan> fftPH;
     vector<fftw_plan> fftPP;

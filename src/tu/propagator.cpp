@@ -24,7 +24,8 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     my_nk{tu_data->my_nk},
     my_nk_off{tu_data->my_nk_off},
     n_frq{tu_data->n_frq},
-    SU2{model->SU2 > 0}
+    SU2{model->SU2 > 0},
+    cFRG_loop{model->gproj!=NULL}
 {
     index_t task_spin = POW4(n_spin);
     index_t tasks_dist = tu_data->use_reduced_loop ? (index_t)tu_data->unique_mi_l.size() : POW2(n_orbff);
@@ -37,7 +38,7 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 
     GF_fft_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
     GF_fft_conj_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
-    if(model->gproj) {
+    if(cFRG_loop) {
         gf_buf_cfrg = (gf_complex_t*)malloc(2 * nktot* POW2(n_spin*n_orb)*sizeof(gf_complex_t));
         cFRG_GF_fft_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
         cFRG_GF_fft_conj_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
@@ -45,7 +46,7 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     #ifdef USE_CUDA
     CUDA_CHECK(cudaHostRegister(GF_fft_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
     CUDA_CHECK(cudaHostRegister(GF_fft_conj_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
-    if(model->gproj) {
+    if(cFRG_loop) {
         CUDA_CHECK(cudaHostRegister(cFRG_GF_fft_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
         CUDA_CHECK(cudaHostRegister(cFRG_GF_fft_conj_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
     }
@@ -80,7 +81,7 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
                 (fftw_complex*)GF_fft_conj_plus,
                 dims,1,nktot,(fftw_complex*)GF_fft_conj_plus,
                 dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-        if(model->gproj) {
+        if(cFRG_loop) {
             cfrg_fftGF = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
                     (fftw_complex*)cFRG_GF_fft_plus,
                     dims,1,nktot,(fftw_complex*)cFRG_GF_fft_plus,
@@ -104,9 +105,34 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 }
 
 tu_loop_t::~tu_loop_t() {
+    #ifdef USE_CUDA
+    if(cuda_descr.prop_memory_set_local) {
+        for(int i = 0; i<tu_num_of_devices;++i) {
+            cudaFree(cuda_descr.mi_to_R[i]);
+            cudaFree(cuda_descr.c_to_f_q[i]);
+            cudaFree(cuda_descr.nkdev[i]);
+            cudaFree(cuda_descr.GF_fft[i]);
+            cudaFree(cuda_descr.GF_fft_conj[i]);
+            cudaFree(cuda_descr.buf_GG[i][0]);
+            cudaFree(cuda_descr.buf_GG[i][1]);
+            cudaFree(cuda_descr.buf_res[i][0]);
+            cudaFree(cuda_descr.buf_res[i][1]);
+            cudaFree(cuda_descr.fft_workspace[i][0]);
+            cudaFree(cuda_descr.fft_workspace[i][1]);
+        }
+    }
+    CUDA_CHECK(cudaHostUnregister(GF_fft_plus));
+    CUDA_CHECK(cudaHostUnregister(GF_fft_conj_plus));
+
+    if(cFRG_loop) {
+        CUDA_CHECK(cudaHostUnregister(cFRG_GF_fft_plus));
+        CUDA_CHECK(cudaHostUnregister(cFRG_GF_fft_conj_plus));
+    }
+    #endif
+
     fftw_free(GF_fft_plus);
     fftw_free(GF_fft_conj_plus);
-    if(model->gproj) {
+    if(cFRG_loop) {
         free(gf_buf_cfrg);
         fftw_free(cFRG_GF_fft_plus);
         fftw_free(cFRG_GF_fft_conj_plus);
@@ -126,25 +152,6 @@ tu_loop_t::~tu_loop_t() {
             fftw_destroy_plan(fftPP[i]);
         }
     }
-    #ifdef USE_CUDA
-    if(cuda_descr.prop_memory_set_local) {
-        for(int i = 0; i<tu_num_of_devices;++i) {
-            cudaFree(cuda_descr.mi_to_R[i]);
-            cudaFree(cuda_descr.c_to_f_q[i]);
-            cudaFree(cuda_descr.nkdev[i]);
-            cudaFree(cuda_descr.GF_fft[i]);
-            cudaFree(cuda_descr.GF_fft_conj[i]);
-            cudaFree(cuda_descr.buf_GG[i][0]);
-            cudaFree(cuda_descr.buf_GG[i][1]);
-            cudaFree(cuda_descr.buf_res[i][0]);
-            cudaFree(cuda_descr.buf_res[i][1]);
-            cudaFree(cuda_descr.fft_workspace[i][0]);
-            cudaFree(cuda_descr.fft_workspace[i][1]);
-        }
-    }
-    CUDA_CHECK(cudaHostUnregister(GF_fft_plus));
-    CUDA_CHECK(cudaHostUnregister(GF_fft_conj_plus));
-    #endif
 }
 
 
@@ -185,7 +192,7 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
         fftw_execute(fftGF);
         fftw_execute(fftGFconj);
     }
-    if(model->gproj) {
+    if(cFRG_loop) {
         greensfunc_op_t res = model->gproj(model, lambda, gf_buf_cfrg);
         if(res != greensfunc_op_cpu)
             mpi_err_printf("Not supported");
@@ -231,7 +238,7 @@ void tu_loop_t::get_GF_for_self(complex128_t* coarseGF) {
     for(index_t k = 0; k < nk; ++k) {
         coarseGF[k+nk*(o+nb*b)] = gf_buf[o+nb*b+nb2*kidxc2f(k,model->nk,model->nkf)];
     }
-    if(model->gproj) {
+    if(cFRG_loop) {
         #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
         for(index_t b = 0; b < nb; ++b)
         for(index_t o = 0; o < nb; ++o)
@@ -278,7 +285,7 @@ void tu_loop_t::reconstruct_from_reduced(complex128_t* loop) const {
 void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
     if(nktot==1){
         S_ph_loop_static_rs(L);
-        if(model->gproj) {
+        if(cFRG_loop) {
             swap_GF_cfrg();
             S_ph_loop_static_rs(L);
             swap_GF_cfrg();
@@ -304,7 +311,7 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
             cpu.join(); gpu.join();
         }
 
-        if(model->gproj) {
+        if(cFRG_loop) {
             swap_GF_cfrg();
             if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1(L, tmpgpu);
             if(tu_data->use_reduced_loop) {
@@ -332,7 +339,7 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
 void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
     if(nktot==1){
         S_pp_loop_static_rs(L);
-        if(model->gproj) {
+        if(cFRG_loop) {
             swap_GF_cfrg();
             S_pp_loop_static_rs(L);
             swap_GF_cfrg();
@@ -357,7 +364,7 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
                 S_pp_loop_static_simple_gpu(tmpgpu);});
             cpu.join(); gpu.join();
         }
-        if(model->gproj) {
+        if(cFRG_loop) {
             swap_GF_cfrg();
             if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1(L, tmpgpu);
             if(tu_data->use_reduced_loop) {
@@ -524,7 +531,7 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
         S_ph_loop_static_rs(L);
     }else{
         bool rescale = !cuda_descr.prop_has_gpu_setup;
-        if(model->gproj) rescale = false;
+        if(cFRG_loop) rescale = false;
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
             S_ph_loop_static_red(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
@@ -532,7 +539,7 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
             S_ph_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
         }
     }
-    if(model->gproj) {
+    if(cFRG_loop) {
         swap_GF_cfrg();
         if(nktot==1){
             S_ph_loop_static_rs<true>(L);
@@ -556,7 +563,7 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
         S_pp_loop_static_rs(L);
     }else{
         bool rescale = !cuda_descr.prop_has_gpu_setup;
-        if(model->gproj) rescale = false;
+        if(cFRG_loop) rescale = false;
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
             S_pp_loop_static_red(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
@@ -564,7 +571,7 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
             S_pp_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
         }
     }
-    if(model->gproj) {
+    if(cFRG_loop) {
         swap_GF_cfrg();
         if(nktot==1){
             S_pp_loop_static_rs<true>(L);
