@@ -66,16 +66,21 @@ public:
     DELETE_CONSTRUCTOR_RULE_OF_FIVE(tu_loop_t);
 
     gf_complex_t* gf_buf;
-
+    template<bool subract = false>
     void S_ph_loop_static_rs(complex128_t* L) const;
+    template<bool subract = false>
     void S_pp_loop_static_rs(complex128_t* L) const;
 
+    template<bool subract = false>
     void S_ph_loop_static_simple(complex128_t* L, index_t ntasks = -1,
                               index_t taskoff = 0, bool rescale = true) const;
+    template<bool subract = false>
     void S_pp_loop_static_simple(complex128_t* L, index_t ntasks = -1,
                               index_t taskoff = 0, bool rescale = true) const;
+    template<bool subract = false>
     void S_ph_loop_static_red(complex128_t* L, index_t ntasks = -1,
                               index_t taskoff = 0, bool rescale = true) const;
+    template<bool subract = false>
     void S_pp_loop_static_red(complex128_t* L, index_t ntasks = -1,
                               index_t taskoff = 0, bool rescale = true) const;
 
@@ -85,6 +90,9 @@ public:
     void S_pp_loop_static_red_gpu(complex128_t* L);
 
     void merge_gpu_cpu_loop(complex128_t* L, complex128_t* tmpgpu) const;
+
+    void merge_gpu_cpu_loop_cfrg_step1(complex128_t* L, complex128_t* tmpgpu) const;
+    void merge_gpu_cpu_loop_cfrg_step2(complex128_t* L, complex128_t* tmpgpu) const;
 
     diverge_model_t* model;
     const tu_data_t* const tu_data;
@@ -117,6 +125,9 @@ public:
 private:
     fftw_plan fftGF;
     fftw_plan fftGFconj;
+    fftw_plan cfrg_fftGF;
+    fftw_plan cfrg_fftGFconj;
+
 
     vector<fftw_plan> fftPH;
     vector<fftw_plan> fftPP;
@@ -124,5 +135,13 @@ private:
     vector<complex128_t*> buffer_ggp;
     complex128_t* GF_fft_plus;
     complex128_t* GF_fft_conj_plus;
+
+    gf_complex_t* gf_buf_cfrg = nullptr;
+    complex128_t* cFRG_GF_fft_plus = nullptr;
+    complex128_t* cFRG_GF_fft_conj_plus = nullptr;
     void allocate_GPU_memory();
+    void swap_GF_cfrg();
 };
+
+
+#include "propagator_cpu.hpp"
