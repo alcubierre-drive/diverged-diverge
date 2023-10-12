@@ -1,6 +1,7 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "init_internal_libs.h"
+#include "dependency_tree.h"
 
 #include "../diverge_common.h"
 #include <fftw3.h>
@@ -36,11 +37,16 @@ void init_internal_libs( void ) {
         mpi_log_set_colors(isatty(STDERR_FILENO));
     #endif
 
+    dependency_tree_init();
+
     dvg_has_internal_libs_init = 1;
 
 }
 
 void finalize_internal_libs( void ) {
+
+    dependency_tree_free();
+
     if (dvg_has_fftw_init) {
         #ifndef USE_SERIAL_FFTW
         fftw_cleanup_threads();

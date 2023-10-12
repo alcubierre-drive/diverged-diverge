@@ -7,6 +7,7 @@
 #include "diverge_Eigen3.hpp"
 #include "diverge_patching.h"
 #include "diverge_model_internals.h"
+#include "misc/dependency_tree.h"
 #include <fftw3.h>
 #include <algorithm>
 #include <cassert>
@@ -23,14 +24,13 @@ diverge_model_t* diverge_model_init(void) {
     result->SU2 = 1;
     result->internals = (internals_t*)calloc(1,sizeof(internals_t));
     result->internals->has_common_internals = 0;
+    dependency_tree_insert_model(result);
     return result;
 }
 
 void diverge_model_free(diverge_model_t* model) {
 
-    if (model->internals->num_diverge_flow_step_usages > 0)
-        mpi_wrn_printf( "detected %li flow step instances using this model (%x)\n",
-                model->internals->num_diverge_flow_step_usages, model );
+    dependency_tree_remove_model(model);
 
     if (model->patching) {
         diverge_patching_free(model->patching);
