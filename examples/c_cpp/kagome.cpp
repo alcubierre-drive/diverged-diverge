@@ -158,6 +158,7 @@ diverge_model_t* kagome_model( index_t nk, index_t nkf , double U , double V) {
             if( (p2-p1+rx*r1+ry*r2).norm() < 1e-7 ) {
                 helperv.o1 = o1;
                 helperv.o2 = o2;
+                helperv.R[0]=rx, helperv.R[1]=ry;
                 helperv.V = U;
                 Rvert.push_back(helperv);
             }
