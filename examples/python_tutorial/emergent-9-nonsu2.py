@@ -214,8 +214,8 @@ checksum = diverge.model_to_file( model, params_frg['model_output'] )
 diverge.mpi_py_eprint( "wrote model to file %s (%s)" % (params_frg['model_output'], checksum) )
 
 # free resources
-diverge.model_free( model )
 diverge.flow_step_free( step )
+diverge.model_free( model )
 
 # we need to accept that MPI requires finalization
 diverge.finalize()

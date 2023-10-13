@@ -6,6 +6,7 @@
 #include "misc/batched_zgemd.h"
 #include "diverge_filling.h"
 #include "diverge_model_internals.h"
+#include "misc/dependency_tree.h"
 
 #include "grid/vertex_memory.hpp"
 
@@ -22,9 +23,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
     st->mod = mod;
     st->intls = mod->internals;
 
-    // tell the model it is being used by this flow step instance
-    #pragma omp atomic
-    st->intls->num_diverge_flow_step_usages++;
+    dependency_tree_insert_flow(st);
 
     diverge_flow_step_select_channels( st, channels );
 
@@ -122,7 +121,8 @@ end_error:
 }
 
 static void diverge_flow_step_select_channels( diverge_flow_step_t* st, const char* chans_ ) {
-    st->channel_selection[0] = st->channel_selection[1] = st->channel_selection[2] = st->channel_selection[3] = false;
+    st->channel_selection[0] = st->channel_selection[1] = st->channel_selection[2] =
+                               st->channel_selection[3] = false;
     for (const char* c = chans_; *c; ++c) {
         switch (*c) {
             case 'P':
@@ -171,9 +171,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
     delete st->timings;
     delete st->timings_descr;
 
-    // tell the model it is no longer used by this flow step instance
-    #pragma omp atomic
-    st->intls->num_diverge_flow_step_usages--;
+    dependency_tree_remove_flow(st);
 
     free(st);
     batched_gemm_cublas_clear();
