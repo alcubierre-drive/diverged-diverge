@@ -148,8 +148,8 @@ diverge_model_t* kagome_model( index_t nk, index_t nkf , double U , double V) {
     for(int ry = -2; ry < 3; ++ry) {
         for(int o1 = 0; o1 < mod->n_orb; ++ o1)
         for(int o2 = 0; o2 < mod->n_orb; ++ o2) {
-            Map<Vec3d> p1 (mod->positions[0], 3);
-            Map<Vec3d> p2 (mod->positions[1], 3);
+            Map<Vec3d> p1 (mod->positions[o1], 3);
+            Map<Vec3d> p2 (mod->positions[o2], 3);
             if( std::abs((p2-p1+rx*r1+ry*r2).norm() - 0.5) < 1e-7 ) {
                 helperv.o1 = o1, helperv.o2 = o2,helperv.R[0]=rx,helperv.R[1]=ry;
                 helperv.V = V;
