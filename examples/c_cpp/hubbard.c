@@ -34,9 +34,7 @@ int main( int argc, char** argv ) {
     diverge_model_t* m = diverge_model_init();
 
     // misc
-    bool patch_mode = !strcmp(mode,"patch"),
-         tu_mode = !strcmp(mode,"tu"),
-         grid_mode = !strcmp(mode,"grid");
+    bool patch_mode = !strcmp(mode,"patch");
     strcpy(m->name, __FILE__ );
     m->nk[0] = m->nk[1] = patch_mode ? 200 : 20;
     m->nkf[0] = m->nkf[1] = patch_mode ? 1 : 15;
@@ -87,9 +85,13 @@ int main( int argc, char** argv ) {
     diverge_model_set_chempot(m, NULL, -1, -4.*tp);
 
     // backend selection
-    if (patch_mode) diverge_model_internals_patch(m, 4);
-    if (tu_mode) diverge_model_internals_tu(m, 2.01);
-    if (grid_mode) diverge_model_internals_grid(m);
+    typedef union {
+        index_t np_ibz;
+        double max_dist;
+    } internals_arg_t;
+    internals_arg_t A = {.np_ibz = 4};
+    if (!patch_mode) A.max_dist = 2.01;
+    diverge_model_internals_any(m, mode, A);
 
     // output
     diverge_model_output_conf_t oc = diverge_model_output_conf_defaults;
@@ -97,7 +99,7 @@ int main( int argc, char** argv ) {
     mpi_usr_printf( "model@%s\n", diverge_model_to_file_finegrained(m, __FILE__ "_mod.dvg", &oc) );
 
     // flow step & integrate
-    diverge_flow_step_t* f = diverge_flow_step_init(m, mode, "PCD");
+    diverge_flow_step_t* f = diverge_flow_step_init_any(m, "PCD");
     diverge_euler_t eu = diverge_euler_defaults;
     double vmax = 0.0;
     do {

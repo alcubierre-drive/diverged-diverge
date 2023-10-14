@@ -16,6 +16,23 @@ int diverge_model_validate( diverge_model_t* model );
 // Prepare the common part of the <internals_t> struct
 void diverge_model_internals_common( diverge_model_t* model );
 
+// Function: diverge_model_internals_any
+// Prepare internal structure for the computation mode specified in mode.
+// Dispatches to either
+// <diverge_model_internals_grid>,
+// <diverge_model_internals_patch>, or
+// <diverge_model_internals_tu>.
+// 
+// For <diverge_model_internals_grid>, no additional parameters are needed.
+//
+// For <diverge_model_internals_patch>, one additional parameter (np_ibz;
+// <index_t>) must be passed. Documentation found in
+// <diverge_model_internals_patch>.
+//
+// For <diverge_model_internals_tu>, one additional parameter (max_dist; double)
+// must be passed. Documentation found in <diverge_model_internals_tu>.
+void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... );
+
 // Function: diverge_model_internals_grid
 // Prepare the grid part of the <internals_t> struct
 void diverge_model_internals_grid( diverge_model_t* model );

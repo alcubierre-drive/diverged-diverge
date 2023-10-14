@@ -39,6 +39,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
         return;
     }
 
+    strcpy(model->internals->backend, "patch");
     model->internals->patch_gpu_workshare = 1.0;
     model->internals->patch_gpu_loop_workshare = 1.0;
     model->internals->patch_gpus = NULL;

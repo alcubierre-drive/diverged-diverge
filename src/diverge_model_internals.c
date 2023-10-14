@@ -9,6 +9,34 @@
 #include "misc/mpi_functions.h"
 #include "misc/merge_orb_w_rs_symm.h"
 #include "diverge_symmetrize.h"
+#include "diverge_flow_type.h"
+
+#include <stdarg.h>
+
+void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... ) {
+    diverge_flow_type t = diverge_flow_type_fromstr( mode );
+    mpi_log_printf("internals mode: %s\n", mode);
+    va_list ap;
+    va_start(ap, mode);
+    switch (t) {
+        case diverge_grid:
+            diverge_model_internals_grid( model );
+            break;
+        case diverge_patch:
+            diverge_model_internals_patch( model, va_arg(ap, index_t) );
+            break;
+        case diverge_tu:
+            diverge_model_internals_tu( model, va_arg(ap, double) );
+            break;
+        case diverge_flow_type_invalid:
+        default:
+            mpi_err_printf("invalid flow type '%s' (use tu, grid, patch)\n", mode);
+            goto EndFunc;
+            break;
+    }
+EndFunc:
+    va_end(ap);
+}
 
 typedef enum {
     default_spin_index_zerolength,

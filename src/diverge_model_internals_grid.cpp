@@ -104,6 +104,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
         diverge_model_internals_common(model);
     }
     internals_t* intls = model->internals;
+    strcpy( intls->backend, "grid" );
     const index_t* nk = model->nk;
     const index_t* nkf = model->nkf;
 

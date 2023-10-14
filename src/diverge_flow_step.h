@@ -19,6 +19,12 @@ typedef struct diverge_flow_step_t diverge_flow_step_t;
 diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* method,
         const char* channels );
 
+// Function: diverge_flow_step_init_any
+// initialize the flow step instance from a model instance that has its
+// internals set to one method. Everything else works as in
+// <diverge_flow_step_init>.
+diverge_flow_step_t* diverge_flow_step_init_any( diverge_model_t* mod, const char* channels );
+
 // Function: diverge_flow_step_vertmax
 void diverge_flow_step_vertmax( diverge_flow_step_t* st, double vertmax[1] );
 // Function: diverge_flow_step_loopmax

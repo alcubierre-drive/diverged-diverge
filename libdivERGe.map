@@ -11,6 +11,7 @@ DIVERGE_0.4 {
         diverge_flow_step_euler;
         diverge_flow_step_free;
         diverge_flow_step_init;
+        diverge_flow_step_init_any;
         diverge_flow_step_lambda;
         diverge_flow_step_loopmax;
         diverge_flow_step_niter;
@@ -44,6 +45,7 @@ DIVERGE_0.4 {
         diverge_model_get_filling;
         diverge_model_hack;
         diverge_model_init;
+        diverge_model_internals_any;
         diverge_model_internals_common;
         diverge_model_internals_get_E;
         diverge_model_internals_get_H;

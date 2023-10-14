@@ -28,6 +28,11 @@ struct internals_t {
 
     bool ignore_eigensolver_in_common;
 
+    // for the flow step to automatically detect the method.
+    // DEVELOPERS must set this in their diverge_model_internals_BACKEND to the
+    // correct string
+    char backend[1024];
+
     // DEVELOPERS
     //
     // this file is for interfacing with the source codes found in

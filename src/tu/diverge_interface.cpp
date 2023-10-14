@@ -16,6 +16,7 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
         mpi_err_printf("model needs common internals before tu internals!\n");
         diverge_model_internals_common(model);
     }
+    strcpy(model->internals->backend, "tu");
     index_t n_frq = 1;
     tu_data_t* info = new tu_data_t;
     info->nk = model->nk[0] * model->nk[1] * model->nk[2];

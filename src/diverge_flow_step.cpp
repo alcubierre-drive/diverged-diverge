@@ -1,6 +1,7 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "diverge_flow_step_internal.hpp"
+#include "diverge_flow_type.h"
 #include "misc/batched_gemms.h"
 #include "misc/batched_eigen.h"
 #include "misc/batched_zgemd.h"
@@ -18,30 +19,19 @@
 
 static void diverge_flow_step_select_channels( diverge_flow_step_t* st, const char* chans_ );
 
-diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* method_, const char* channels ) {
+diverge_flow_step_t* diverge_flow_step_init_any( diverge_model_t* mod, const char* channels ) {
+    return diverge_flow_step_init( mod, mod->internals->backend, channels );
+}
+
+diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* method, const char* channels ) {
     diverge_flow_step_t* st = (diverge_flow_step_t*)calloc(sizeof(diverge_flow_step_t),1);
     st->mod = mod;
     st->intls = mod->internals;
 
     dependency_tree_insert_flow(st);
 
+    st->type = diverge_flow_type_fromstr( method );
     diverge_flow_step_select_channels( st, channels );
-
-    // DEVELOPERS
-    //
-    // For a new backend, you must add a selection to your new flow_type in the
-    // below if statements.
-    char* method = strdup_div(method_);
-    strlwr_div(method);
-    if (!strcmp(method, "grid"))
-        st->type = diverge_grid;
-    else if (!strcmp(method, "patch"))
-        st->type = diverge_patch;
-    else if (!strcmp(method, "tu"))
-        st->type = diverge_tu;
-    else
-        st->type = diverge_flow_type_invalid;
-    free(method);
 
     if (st->type == diverge_patch) {
         npatch_setup_arch( mod->internals->patch_gpus, mod->internals->patch_ngpus,
@@ -108,7 +98,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
             break;
         default:
         case diverge_flow_type_invalid:
-            mpi_err_printf("invalid flow type '%s'. valid choices are 'grid', 'patch', 'tu'.\n", method_);
+            mpi_err_printf("invalid flow type '%s'. valid choices are 'grid', 'patch', 'tu'.\n", method);
             goto end_error;
             break;
     }

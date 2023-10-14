@@ -576,6 +576,23 @@ if not _libs["divERGe"] is None:
     model_internals_tu.argtypes = [POINTER(model_t), c_double]
     model_internals_tu.restype = None
 
+    class ArgUnion(Union):
+        _fields_ = [("np_ibz", index_t),
+                    ("max_dist", c_double)]
+    model_internals_any_ = _libs["divERGe"].get("diverge_model_internals_any", "cdecl")
+    model_internals_any_.argtypes = [POINTER(model_t), String, ArgUnion]
+    model_internals_any_.restype = None
+    # Function: model_internals_any_PY
+    # wraps <diverge_model_internals_any> with varargs substituted by kwargs
+    # np_ibz or max_dist.
+    def model_internals_any_PY( model, mode, np_ibz=None, max_dist=None ):
+        arg = ArgUnion()
+        if not np_ibz is None:
+            arg.np_ibz = np_ibz
+        if not max_dist is None:
+            arg.max_dist = max_dist
+        model_internals_any_( model, mode, arg )
+
     model_internals_get_E = _libs["divERGe"].get("diverge_model_internals_get_E", "cdecl")
     model_internals_get_E.argtypes = [POINTER(model_t)]
     model_internals_get_E.restype = POINTER(c_double)
@@ -617,6 +634,10 @@ if not _libs["divERGe"] is None:
     flow_step_init = _libs["divERGe"].get("diverge_flow_step_init", "cdecl")
     flow_step_init.argtypes = [POINTER(model_t), String, String]
     flow_step_init.restype = POINTER(flow_step_t)
+
+    flow_step_init_any = _libs["divERGe"].get("diverge_flow_step_init_any", "cdecl")
+    flow_step_init_any.argtypes = [POINTER(model_t), String]
+    flow_step_init_any.restype = POINTER(flow_step_t)
 
     flow_step_vertmax = _libs["divERGe"].get("diverge_flow_step_vertmax", "cdecl")
     flow_step_vertmax.argtypes = [POINTER(flow_step_t), c_voidp]

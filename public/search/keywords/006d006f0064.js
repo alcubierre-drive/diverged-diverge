@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("mod",["Function"],[["model_to_file_PY",,[["dvg",,,,0,"File:util/__init__.py:dvg.model_to_file_PY","PythonClass:dvg:model_to_file_PY"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("mod",["Function"],[["model_internals_any_PY",,[["dvg",,,,0,"File:util/__init__.py:dvg.model_internals_any_PY","PythonClass:dvg:model_internals_any_PY"]]],["model_to_file_PY",,[["dvg",,,,0,"File:util/__init__.py:dvg.model_to_file_PY","PythonClass:dvg:model_to_file_PY"]]]]);

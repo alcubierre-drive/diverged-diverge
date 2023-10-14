@@ -3,6 +3,7 @@
 #pragma once
 
 #include "diverge_flow_step.h"
+#include "diverge_flow_type.h"
 #include "diverge_internals_struct.h"
 
 #include "grid/loops.hpp"
@@ -16,18 +17,10 @@
 #include "npatch/loop.h"
 #include "npatch/flow_step.h"
 
-typedef enum {
-    diverge_flow_type_invalid = -1,
-    diverge_patch,
-    diverge_grid,
-    diverge_tu
-} diverge_flow_type;
-
 // DEVELOPERS
 //
-// For a new backend, you must add a new flow_type in the above enum. Moreover,
-// you can add arbitrary C/C++ structs to the diverge_flow_step_t structure
-// defined below
+// For a new backend, you can add arbitrary C/C++ structs to the
+// diverge_flow_step_t structure defined below.
 
 struct diverge_flow_step_t {
     diverge_model_t* mod;
