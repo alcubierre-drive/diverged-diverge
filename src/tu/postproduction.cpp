@@ -468,7 +468,6 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     diverge_mpi_bcast_bytes((void*)(&cop), sizeof(index_t), diverge_mpi_comm_size() - 1);
     diverge_mpi_bcast_bytes((void*)(&coc), sizeof(index_t), diverge_mpi_comm_size() - 1);
     diverge_mpi_bcast_bytes((void*)(&cod), sizeof(index_t), diverge_mpi_comm_size() - 1);
-    // my number of elements per channel
     index_t my_cop = 0;
     index_t my_coc = 0;
     index_t my_cod = 0;
@@ -630,8 +629,6 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
         header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
         header[i] = 0;++i;
     }
-
-    header[i] = header[i-2] + header[i-1] * sizeof(complex128_t); ++i;
     header[i] = strlen(version); ++i;
 
     assert(i < 126);
@@ -646,16 +643,13 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     index_t new_off = 0;
 
     new_off = diverge_mpi_write_byte_to_file_master(file, header, new_off, 128*sindex);
-    index_t n_osff = (my_rank == 0) ? vertex->n_orbff : 0;
-    new_off = diverge_mpi_write_byte_to_file(file, tu_data->mi_to_ofrom, new_off, n_osff*sindex);
-    new_off = diverge_mpi_write_byte_to_file(file, tu_data->mi_to_oto, new_off, n_osff*sindex);
-    new_off = diverge_mpi_write_byte_to_file(file, tu_data->mi_to_R, new_off, 3*n_osff*sindex);
-    n_osff = (my_rank == 0) ? vertex->n_orb : 0;
-    new_off = diverge_mpi_write_byte_to_file(file, tu_data->bond_sizes, new_off, n_osff*sindex);
-    new_off = diverge_mpi_write_byte_to_file(file, tu_data->bond_offsets, new_off, n_osff*sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_ofrom, new_off, vertex->n_orbff*sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_oto, new_off, vertex->n_orbff*sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_R, new_off, 3*vertex->n_orbff*sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->bond_sizes, new_off, vertex->n_orb*sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->bond_offsets, new_off, vertex->n_orb*sindex);
 
-    index_t nibz = (my_rank == 0) ? tu_data->nkibz : 0;
-    new_off = diverge_mpi_write_byte_to_file(file, tu_data->symm->idx_ibz_in_fullmesh.data(), new_off, nibz*sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->symm->idx_ibz_in_fullmesh.data(), new_off, tu_data->nkibz*sindex);
     // P vertex write
     new_off = diverge_mpi_write_byte_to_file(file, lenP, new_off + my_nk_off*sindex, my_nk*sindex);
     new_off = diverge_mpi_write_byte_to_file(file, offP, new_off + my_nk_off*sindex, my_nk*sindex);
