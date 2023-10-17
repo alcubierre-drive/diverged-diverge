@@ -496,3 +496,50 @@ double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* 
         return diverge_model_set_filling( m, Etmp, nb, nu );
     }
 }
+
+
+double diverge_flow_step_get_filling_Hself( diverge_flow_step_t* s, void* workspace ) {
+    if (s->type != diverge_tu) {
+        mpi_err_printf("refill_Hself only possible with TUFRG\n");
+        return 0;
+    }
+    if (!s->channel_selection[3]) {
+        mpi_err_printf("refill_Hself only possible with channel 'S'\n");
+        return 0;
+    }
+
+    diverge_model_t* m = s->mod;
+    // get the data ptrs
+    complex128_t *S = diverge_flow_step_vertex( s, 'S' ).ary,
+                 *U = diverge_model_internals_get_U( m );
+    double* E = diverge_model_internals_get_E( m );
+
+    // and some sizes
+    index_t nb = m->n_orb * m->n_spin;
+    index_t nk = kdimtot(m->nk, m->nkf);
+
+    // workspace to buffers
+    complex128_t* Utmp = (complex128_t*)workspace;
+    double* Etmp = (double*)( Utmp + nk*nb*nb );
+
+    // add S to UEU* (in Utmp)
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t k=0; k<nk; ++k) {
+        Map<MatXcd> UU(U + k*nb*nb, nb, nb);
+        Map<VecXd> EE(E + k*nb, nb);
+        Map<MatXcd> SS(S + k*nb*nb, nb, nb);
+
+        Map<MatXcd>(Utmp + k*nb*nb, nb, nb) = UU * EE.asDiagonal() * UU.adjoint() + SS;
+    }
+    memcpy( Utmp, S, sizeof(complex128_t)*nk*nb*nb );
+    batched_zgemd_r( Utmp, U, E, 1.0, 1.0, nb, nk );
+    // do the eigensolution
+    batched_eigen_shut_up(1);
+    batched_eigen_r( NULL, -2, Utmp, Etmp, nb, nk );
+    batched_eigen_shut_up(0);
+
+    return diverge_model_get_filling( m, Etmp, nb );
+    
+}
+    
+    

@@ -18,6 +18,7 @@ DIVERGE_0.4 {
         diverge_flow_step_ntimings;
         diverge_flow_step_refill;
         diverge_flow_step_refill_Hself;
+        diverge_flow_step_get_filling_Hself;
         diverge_flow_step_timing;
         diverge_flow_step_timing_descr;
         diverge_flow_step_timing_descr_vec;

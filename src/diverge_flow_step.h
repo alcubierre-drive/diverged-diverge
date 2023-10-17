@@ -138,6 +138,12 @@ void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspac
 // returns the chemical potential needed to obtain this filling value
 double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* workspace );
 
+
+// Function: diverge_flow_step_get_filling_Hself
+// generates the Hamiltonian + self-energy and diagonalizes it in the workspace
+// buffer (same size as above, energies after matrices). Calculates the current filling
+double diverge_flow_step_get_filling_Hself( diverge_flow_step_t* s, void* workspace );
+
 #ifdef __cplusplus
 }
 #endif
