@@ -13,6 +13,7 @@
 \definecolor{Fcornflower}{HTML}{bbddff}
 \definecolor{Fcmix}{HTML}{0f4880}
 \definecolor{Faqua}{HTML}{5fbf9f}
+\definecolor{Fmagnifying}{HTML}{303030}
 \newcommand{\bvec}[1]{\boldsymbol{#1}}
 \usetikzlibrary{calc, arrows, arrows.meta, math} %, fpu}
 
@@ -160,19 +161,21 @@
     \draw (cell10.west) -- ++(-0.15,0.0) node {using $\mathrm{d}V$?};
     \bracketOne{11}{$N_q$}
     \bracketTwo{12}{13}{serialized $V(q,k,k')$}
-    
+
     \bracketOne{14}{channel}
     \draw (cell15.west) -- ++(-0.15,0.0) node {using $\mathrm{d}V$?};
     \bracketOne{16}{$N_q$}
     \bracketTwo{17}{18}{serialized $V(q,k,k')$}
-    
+
     \bracketOne{19}{channel}
     \draw (cell20.west) -- ++(-0.15,0.0) node {using $\mathrm{d}V$?};
     \bracketOne{21}{$N_q$}
     \bracketTwo{22}{23}{serialized $V(q,k,k')$}
     }
 
-    \EbracketTwo{125}{126}{\ipd{file format version}}
+    \tikzmath{\coordA = 0.5*(Ecell125.east) + 0.5*(Ecell126.east) + (0.1,0.08);}
+    \draw (Ecell125.east) -- (\coordA);
+    \draw (Ecell126.east) -- (\coordA) node[anchor=west] {\ipd{file format version}};
 
     \tikzmath{\coordA = (cell10.west) + (-0.1,0.023);
               \coordB = (cell13.west) + (-0.1,-0.002);}
@@ -215,25 +218,131 @@
           diagonalized $D$ vertex
         \end{flushright}
       \end{minipage}} (\cbufB) -- (\coordB);
-\begin{comment}
-/* header is index_t[128], with all displ/size information in units of 64bit
- * (i.e., double). It contains:
- *
- * the serial_qmat data contains (in index_t if not indicated differently):
- *      n_k_kp
- *      nb
- *      q
- *      eigen
- *      nv
- *      k_kp_descr[n_k_kp]
- *      IF EIGEN:
- *         values[nv] as (double)
- *         vectors[nv * n_k_kp * nb*nb * 2] as (double), (real, imag)
- *      ELSE:
- *         vertex[POW2(n_k_kp * nb*nb) * 2] as (double), (real, imag)
- */
-\end{comment}
   \end{scope}
+  \begin{scope}[shift={(0.463,0.638)}, x=5pt, y=5pt, rotate=-50, scale=0.9]
+    \tikzmath {
+      coordinate \A;
+      coordinate \B;
+      coordinate \C;
+      coordinate \D;
+      coordinate \E;
+      coordinate \F;
+      real \Rin;
+      real \Rout;
+      \Rin = 1;
+      \Rout = 1.3;
+      % B->A: rect 1
+      \A = (0:\Rout);
+      \B = (\A) + (-0.1,0.15);
+      \A = (\B) + (0.6,-0.3);
+      % C->D rect 2
+      \C = (\A) + (-0.1,0.15) + (0.0, 0.3);
+      \D = (\A) + ( 0.5,0.15) + (0.0,-0.3);
+      % E->F rect 3
+      \E = (\C) + (0.2,0);
+      \F = (\D) + (1.0,0);
+      {
+        \fill[Fmagnifying, even odd rule] (0,0) circle (\Rin) circle (\Rout);
+        \fill[Fmagnifying] (\B) rectangle (\A);
+        \fill[Fmagnifying, rounded corners=0.7] (\C) rectangle (\D);
+        \fill[Fmagnifying, rounded corners=0.1] (\E) rectangle (\F);
+      };
+    }
+    \node[inner sep=0, outer sep=0] (MagBegin) at (90:\Rout) {};
+    \node[inner sep=0, outer sep=0] (MagEnd) at (10:\Rout) {};
+  \end{scope}
+  \begin{scope}[shift={(0.58,0.67)}, xscale=0.98, yscale=0.06, rotate=-90]
+    \foreach \x in {0,1,...,5} {
+      \tikzmath{
+        real \buf;
+        \buf = \x/64.0;
+      }
+      \draw (0,\buf) -- node[midway,inner sep=0,outer sep=0] (mag\x) {} (1,\buf);
+    }
+    \tikzmath{
+      real \a;
+      real \b;
+      \a = 11/64.;
+      \b = 22/64.;
+      {
+        \fill[ForangeRed!20!white] (0.5,\a) rectangle (1.0,\b+1/64.);
+        \node at (0.75,0.5*\a+0.5*\b) {\begin{minipage}{1in}%
+          \centering\tiny%
+          vertex \\
+          $\big((N_k,N_b,N_b),(N_k,N_b,N_b),2\big)$
+        \end{minipage}};
+        \fill[Faqua!20!white] (0.5,\a) rectangle (0.0,\b+1/64.);
+        \node (trueNode) at (0.25,0.5*\a+0.5*\b) {\begin{minipage}{1in}%
+          \centering\tiny%
+          values $(N_v)$\\
+          vectors $(N_v,N_k,N_b,N_b,2)$
+        \end{minipage}};
+        \node[Faqua!70!black,rotate=90] at (0.25,\b+0.5/64) {\tiny{}yes};
+        \node[ForangeRed,rotate=90] at (0.75,\b+0.5/64) {\tiny{}no};
+      };
+    }
+    \foreach \x in {11,23} {
+      \tikzmath{
+        real \buf;
+        \buf = \x/64.0;
+      }
+      \draw (0,\buf) -- node[midway,inner sep=0,outer sep=0] (mag\x) {} (1,\buf);
+    }
+    {
+      \tiny
+      \node[xshift=0.65em,rotate=90] at (mag0) {$N_k$};
+      \node[xshift=0.65em,rotate=90] at (mag1) {$N_b$};
+      \node[xshift=0.65em,rotate=90] at (mag2) {$q$};
+      \node[xshift=0.65em,rotate=90] (eigenmag3) at (mag3) {eigen?};
+      \node[xshift=0.65em,rotate=90] at (mag4) {$N_v$};
+      \node[anchor=center,rotate=0] at ($0.5*(mag5)+0.5*(mag11)$) {\begin{minipage}{0.5in}%
+        \centering%
+        $k$ descriptor\\[0.5em]
+        array of \\
+        $N_k \times \texttt{int64\_t}$
+      \end{minipage}};
+    }
+    \tikzmath{
+      real \buf;
+      \buf = 23.0/64.0;
+      { \node[Fblue,anchor=north,yshift=0.1em] at (1,0.5*23./64.) {\tiny$q_0$}; };
+    }
+    \draw[very thick, Fblue!50!white] (0,0) rectangle (1,\buf);
+    \node[inner sep=0,outer sep=0] (RegionBegin) at (0,0) {};
+    \node[inner sep=0,outer sep=0] (RegionEnd) at (1,0) {};
+    \tikzmath{
+      real \xbuf;
+      int \xidx;
+      \xbuf = 25./64.;
+      for \idx in {25,27} {
+        \xbuf = \idx/64.0;
+        \xidx = (\idx-25)/2+1;
+        { \draw[very thick, Fblue!50!white] (1,\buf) rectangle (0,\xbuf);
+          \node[Fblue,anchor=north,yshift=0.1em] at (1,0.5*\buf+0.5*\xbuf) {\tiny$q_\xidx$};
+        };
+        \buf = \xbuf;
+      };
+    };
+    \node[anchor=south,xshift=0.3em,yshift=-0.5em] (trueNodeLabel) at (trueNode.north)
+    {\tiny contiguous arrays of (shape)${}\times{}$\texttt{double}};
+    \draw[->, >=Latex] (eigenmag3.east) -- ++(-0.8,0) |- ($(trueNodeLabel.north)+(0.08,0)$);
+
+    \tikzmath{
+      {
+        \draw[thick,Fblue!50!white] (1.1,0) -| (1.5,10./64.) |- (1.1,27./64.);
+        \node[Fblue,anchor=north] at (1.5,0.5*27./64.) {\scriptsize$N_q$ blocks
+        ($q_0, q_1, \dots, q_{N_q}$)};
+      };
+    }
+  \end{scope}
+  \draw[thick, Fmagnifying,shorten <= 2pt, shorten >= 2pt] (MagBegin) -- (RegionBegin);
+  \draw[thick, Fmagnifying,shorten <= 2pt, shorten >= 2pt] (MagEnd) -- (RegionEnd);
+  \node[anchor=west, Fmagnifying, xshift=1.2em] at ($0.5*(MagBegin)+0.5*(MagEnd)$)
+  {\tiny{}\begin{minipage}{3in}%
+    $V(q,k,k')$\\
+    serialization
+  \end{minipage}};
+\end{comment}
 \end{tikzpicture}
 \end{document}
 
