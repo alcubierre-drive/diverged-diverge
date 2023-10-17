@@ -21,6 +21,7 @@
 \newcommand{\tp}[1]{\texttt{\color{Firebrick}#1}}
 \newcommand{\tpd}[1]{\tp{#1} [displ,size]}
 \newcommand{\oop}[1]{\oo{#1} [displ,size]}
+\newcommand{\nip}[1]{\nipp{#1} [displ,size]}
 \newcommand{\ipd}[1]{#1 [displ, size]}
 
 \newcommand{\bracketOne}[2]{
@@ -89,14 +90,13 @@
 
   \begin{scope}[shift={(0.41,0.01)}, yscale=0.98, xscale=0.06]
     \colorizeBox{0}{1}{ForangeRed!30!white}
-    \colorizeBox{10}{11}{ForangeRed!30!white}  
     
     \colorizeBox{5}{6}{Fblue!20!white}
     \colorizeBox{7}{9}{Fblue!20!white}
-    \colorizeBox{11}{23}{Fblue!20!white}
+    \colorizeBox{10}{22}{Fblue!20!white}
 
-    \colorizeBox{53}{67}{Faqua!30!white}
-    \foreach \idx in {1,2,...,67} {
+    \colorizeBox{52}{66}{Faqua!30!white}
+    \foreach \idx in {1,2,...,66} {
       \tikzmath{
         \dbuf = 1./64.;
         \ibuf = \idx-1;
@@ -105,21 +105,21 @@
       }
       \draw (\coordA) -- node[midway, above, yshift=-0.29em] (cell\ibuf) {\scriptsize\ibuf} (\coordB);
     }
-    \tikzmath{ \dbuf = -0.01 - 3./64.; }
+    \tikzmath{ \dbuf = -0.01 - 2./64.; }
     \draw[Fblue, ultra thick] (0,\dbuf) -- (0,1) -- (1,1) -- (1,\dbuf);
     \tikzmath{ \dbuf = -0.005 - 3./64; }
     \draw[Fblue, ->, thick] (0.5,\dbuf) -- (0.5,-0.09);
   \end{scope}
   \begin{scope}[shift={(0.48,-0.059)}, yscale=0.98, xscale=0.06]
     \EcolorizeBox{67}{105}{Faqua!30!white}
-    \EcolorizeBox{105}{106}{ForangeRed!30!white}   
+    \EcolorizeBox{105}{107}{ForangeRed!30!white}   
     \EcolorizeBox{116}{118}{ForangeRed!30!white}   
-    \EcolorizeBox{106}{116}{gray!30!white}   
+    \EcolorizeBox{107}{116}{gray!30!white}   
 
     \foreach \idx in {0,1,...,40} {
       \tikzmath{
         \dbuf = 1./64.;
-        \ibuf = \idx+67;
+        \ibuf = \idx+66;
         \coordA = (0,0.84375-\idx/64.0);
         \coordB = (1,0.84375-\idx/64.0);
       }
@@ -157,73 +157,70 @@
     \draw (cell8.west) -- ++(-0.05,0.0) node {\nipp{n\_bonds}};
     \draw (cell9.west) -- ++(-0.3,0.0) node {\tp{n\_sym}};
     
-    
-    \bracketOne{10}{\xp{n\_elem header}}
-    
-    \bracketTwo{11}{12}{\nipp{mi\_to\_ofrom}}
-    \bracketTwo{13}{14}{\nipp{mi\_to\_oto}}
-    \bracketTwo{15}{16}{\nipp{mi\_to\_R}}
-    \bracketTwo{17}{18}{\nipp{bond\_sizes}}
-    \bracketTwo{19}{20}{\nipp{bond\_offsets}}
-    \bracketTwo{21}{22}{\nipp{idx\_ibz\_in\_fullmesh}}
+    \bracketTwo{10}{11}{\nip{mi\_to\_ofrom}}
+    \bracketTwo{12}{13}{\nip{mi\_to\_oto}}
+    \bracketTwo{14}{15}{\nip{mi\_to\_R}}
+    \bracketTwo{16}{17}{\nip{bond\_sizes}}
+    \bracketTwo{18}{19}{\nip{bond\_offsets}}
+    \bracketTwo{20}{21}{\nip{idx\_ibz\_in\_fullmesh}}
 
 
-    \bracketTwo{23}{24}{\ipd{P\_len}}
-    \bracketTwo{25}{26}{\ipd{off\_P}}
-    \bracketTwo{27}{28}{\ipd{P\_type}}
-    \bracketTwo{29}{30}{\ipd{P\_val}}
-    \bracketTwo{31}{32}{\ipd{P\_vec}}
+    \bracketTwo{22}{23}{\ipd{P\_len}}
+    \bracketTwo{24}{25}{\ipd{off\_P}}
+    \bracketTwo{26}{27}{\ipd{P\_type}}
+    \bracketTwo{28}{29}{\ipd{P\_val}}
+    \bracketTwo{30}{31}{\ipd{P\_vec}}
     
-    \bracketTwo{33}{34}{\ipd{C\_len}}
-    \bracketTwo{35}{36}{\ipd{off\_C}}
-    \bracketTwo{37}{38}{\ipd{C\_type}}
-    \bracketTwo{39}{40}{\ipd{C\_val}}
-    \bracketTwo{41}{42}{\ipd{C\_vec}}
+    \bracketTwo{32}{33}{\ipd{C\_len}}
+    \bracketTwo{34}{35}{\ipd{off\_C}}
+    \bracketTwo{36}{37}{\ipd{C\_type}}
+    \bracketTwo{38}{39}{\ipd{C\_val}}
+    \bracketTwo{40}{41}{\ipd{C\_vec}}
     
-    \bracketTwo{43}{44}{\ipd{D\_len}}
-    \bracketTwo{45}{46}{\ipd{off\_D}}
-    \bracketTwo{47}{48}{\ipd{D\_type}}
-    \bracketTwo{49}{50}{\ipd{D\_val}}
-    \bracketTwo{51}{52}{\ipd{D\_vec}}
+    \bracketTwo{42}{43}{\ipd{D\_len}}
+    \bracketTwo{44}{45}{\ipd{off\_D}}
+    \bracketTwo{46}{47}{\ipd{D\_type}}
+    \bracketTwo{48}{49}{\ipd{D\_val}}
+    \bracketTwo{50}{51}{\ipd{D\_vec}}
     
    
-    \bracketTwo{53}{54}{\oop{Sgap\_sc}}
-    \bracketTwo{55}{56}{\oop{Ugap\_sc}}
-    \bracketTwo{57}{58}{\oop{Vgap\_sc}}
+    \bracketTwo{52}{53}{\oop{Sgap\_sc}}
+    \bracketTwo{54}{55}{\oop{Ugap\_sc}}
+    \bracketTwo{56}{57}{\oop{Vgap\_sc}}
     
-    \bracketTwo{59}{60}{\oop{Sgap\_mag}}
-    \bracketTwo{61}{62}{\oop{Ugap\_mag}}
-    \bracketTwo{63}{64}{\oop{Vgap\_mag}}
+    \bracketTwo{58}{59}{\oop{Sgap\_mag}}
+    \bracketTwo{60}{61}{\oop{Ugap\_mag}}
+    \bracketTwo{62}{63}{\oop{Vgap\_mag}}
     
-    \bracketTwo{65}{66}{\oop{Sgap\_charge}}
-    \EbracketTwo{67}{68}{\oop{Ugap\_charge}}
-    \EbracketTwo{69}{70}{\oop{Vgap\_charge}}
-    
-    
-    \EbracketTwo{71}{72}{\oop{suscPp}}
-    \EbracketTwo{73}{74}{\oop{suscMa}}
-    \EbracketTwo{75}{76}{\oop{suscCh}}
-    
-    \EbracketTwo{77}{78}{\oop{suscPp\_ff}}
-    \EbracketTwo{79}{80}{\oop{suscMa\_ff}}
-    \EbracketTwo{81}{82}{\oop{suscCh\_ff}}
-    
-    \EbracketTwo{83}{84}{\oop{self\_energy}}
+    \bracketTwo{64}{65}{\oop{Sgap\_charge}}
+    \EbracketTwo{66}{67}{\oop{Ugap\_charge}}
+    \EbracketTwo{68}{69}{\oop{Vgap\_charge}}
     
     
-    \EbracketTwo{85}{86}{\oop{P\_ch}}
-    \EbracketTwo{87}{88}{\oop{C\_ch}}
-    \EbracketTwo{89}{90}{\oop{D\_ch}}
-    \EbracketTwo{91}{92}{\oop{pp\_bubble}}
-    \EbracketTwo{93}{94}{\oop{ph\_bubble}}
+    \EbracketTwo{70}{71}{\oop{suscPp}}
+    \EbracketTwo{72}{73}{\oop{suscMa}}
+    \EbracketTwo{74}{75}{\oop{suscCh}}
+    
+    \EbracketTwo{76}{77}{\oop{suscPp\_ff}}
+    \EbracketTwo{78}{79}{\oop{suscMa\_ff}}
+    \EbracketTwo{80}{81}{\oop{suscCh\_ff}}
+    
+    \EbracketTwo{82}{84}{\oop{self\_energy}}
     
     
-    \EbracketTwo{95}{96}{\oop{mi\_map\_len}}
-    \EbracketTwo{97}{98}{\oop{mi\_map\_off}}
-    \EbracketTwo{99}{100}{\oop{mi\_map\_idx}}
-    \EbracketTwo{101}{102}{\oop{mi\_map\_pref\_in\_in}}
-    \EbracketTwo{103}{104}{\oop{mi\_map\_pref\_in\_out}}
-    \EbracketOne{105}{\xp{version}}
+    \EbracketTwo{84}{85}{\oop{P\_ch}}
+    \EbracketTwo{86}{87}{\oop{C\_ch}}
+    \EbracketTwo{88}{89}{\oop{D\_ch}}
+    \EbracketTwo{90}{91}{\oop{pp\_bubble}}
+    \EbracketTwo{92}{93}{\oop{ph\_bubble}}
+    
+    
+    \EbracketTwo{94}{95}{\oop{mi\_map\_len}}
+    \EbracketTwo{96}{97}{\oop{mi\_map\_off}}
+    \EbracketTwo{98}{99}{\oop{mi\_map\_idx}}
+    \EbracketTwo{100}{101}{\oop{mi\_map\_pref\_in\_in}}
+    \EbracketTwo{102}{103}{\oop{mi\_map\_pref\_in\_out}}
+    \EbracketTwo{104}{105}{\xp{version}}
 
     \draw (Ecell126.east) -- ++(0.25,0.0) node[anchor=west] {magic number};
     \EbracketOne{127}{\xp{total filesize}}
