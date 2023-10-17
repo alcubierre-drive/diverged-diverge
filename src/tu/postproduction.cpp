@@ -629,6 +629,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
         header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
         header[i] = 0;++i;
     }
+    header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
     header[i] = strlen(version); ++i;
 
     assert(i < 126);
