@@ -118,10 +118,10 @@ void symmetrize_npatch_vertex( diverge_model_t* model, complex128_t* buf, const 
                 double kdotR44 = dot(symm_beyond_UC+3*IDX2(oo4,s,n_sym), kmesh+3*ks4);
                 buf[IDX7(p1,p2,p3, o1,o2,o3,o4, np,np, nb,nb,nb,nb)] +=
                     aux[IDX7(mp1,mp2,mp3, mo1,mo2,mo3,mo4, np,np, nb,nb,nb,nb)] *
-                        (symm_pref[xo1] * (cos(kdotR11) - I * sin(kdotR11))) *
-                        (symm_pref[xo2] * (cos(kdotR22) - I * sin(kdotR22))) *
-                    conj(symm_pref[xo3] * (cos(kdotR33) - I * sin(kdotR33))) *
-                    conj(symm_pref[xo4] * (cos(kdotR44) - I * sin(kdotR44))) * norm;
+                        (symm_pref[xo1] * (cos(kdotR11) + I * sin(kdotR11))) *
+                        (symm_pref[xo2] * (cos(kdotR22) + I * sin(kdotR22))) *
+                    conj(symm_pref[xo3] * (cos(kdotR33) + I * sin(kdotR33))) *
+                    conj(symm_pref[xo4] * (cos(kdotR44) + I * sin(kdotR44))) * norm;
             }
         }
     }
