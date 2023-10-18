@@ -86,8 +86,7 @@ diverge_model_t* gen_kagome_model( index_t nk, index_t nkf , double U , double V
             }
         }
     }
-    // s1 == -1 means that the interaction can be constructed by using the
-    // crossing relations
+
     helperv.s1 = -1, helperv.R[0] = 0, helperv.R[1] = 0, helperv.R[2] = 0;
     for(int rx = -2; rx < 3; ++rx)
     for(int ry = -2; ry < 3; ++ry) {
@@ -100,7 +99,6 @@ diverge_model_t* gen_kagome_model( index_t nk, index_t nkf , double U , double V
                 helperv.V = VC;
                 helperv.chan = 'C';
                 Rvert.push_back(helperv);
-                helperv.o1 = o1, helperv.o2 = o2,helperv.R[0]=rx,helperv.R[1]=ry;
                 helperv.V = VP;
                 helperv.chan = 'P';
                 Rvert.push_back(helperv);
@@ -149,13 +147,6 @@ diverge_model_t* gen_kagome_model( index_t nk, index_t nkf , double U , double V
     curr_symm[2].normal_vector[1] = 0.;curr_symm[2].normal_vector[2] = 1.;
     int cnt;
     // C6
-    curr_symm[0].angle = 0;
-    diverge_generate_symm_trafo(mod->n_spin,sites, mod->n_orb,
-            curr_symm, 1,&(mod->rs_symmetries[0][0][0]),mod->orb_symmetries+0*symsize);
-    curr_symm[0].angle = 180;
-    diverge_generate_symm_trafo(mod->n_spin,sites, mod->n_orb,
-            curr_symm, 1,&(mod->rs_symmetries[1][0][0]),mod->orb_symmetries+1*symsize);
-    /*
     for(cnt = 0; cnt < 6; ++cnt) {
         curr_symm[0].angle = 60*cnt;
         diverge_generate_symm_trafo(mod->n_spin,sites, mod->n_orb,
@@ -177,8 +168,7 @@ diverge_model_t* gen_kagome_model( index_t nk, index_t nkf , double U , double V
         diverge_generate_symm_trafo(mod->n_spin,sites, mod->n_orb,
                 curr_symm, 3,&(mod->rs_symmetries[cnt][0][0]),mod->orb_symmetries+cnt*symsize);
     }
-    */
-    mod->n_sym = 2;
+    mod->n_sym = cnt;
 
     // check that mod is set up properly
     if (diverge_model_validate( mod ))
