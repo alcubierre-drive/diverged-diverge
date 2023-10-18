@@ -83,8 +83,8 @@ diverge_model_t* gen_random(index_t nkx, index_t nky) {
         /* mod->vert[mod->n_vert++] = {'D', {-Rx,-Ry,0}, p,o, -1,0,0,0, std::conj(r_c)}; */
 
         r_c = rand_cmplx();
-        /* mod->vert[mod->n_vert++] = {'P', { Rx, Ry,0}, o,p, -1,0,0,0, r_c}; */
-        /* mod->vert[mod->n_vert++] = {'P', {-Rx,-Ry,0}, o,p, -1,0,0,0, std::conj(r_c)}; */
+        /* mod->vert[mod->n_vert++] = {'P', { Rx, Ry,0}, o,p, -1,0,0,0, std::conj(r_c) + r_c}; */
+        /* mod->vert[mod->n_vert++] = {'P', {-Rx,-Ry,0}, p,o, -1,0,0,0, std::conj(r_c)}; */
     }
 
     diverge_model_internals_common( mod );

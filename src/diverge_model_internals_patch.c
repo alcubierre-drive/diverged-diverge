@@ -169,7 +169,7 @@ static void add_to_npatch_vert_from_qbuf( complex128_t* vbuf,
                     case 'D': s1 = SB; s2 = SC; s3 = SA; s4 = SD; break;
                     default: break;
                 }
-                // XXX HALP
+                // XXX HELP, I am not symmetric if i do this
                 complex128_t vadd = 1.0 * qbuf_in[IDX7( qq_1, SD, SC, OB, SB, SA, OA, ns, ns, no, ns, ns, no )] +
                                     0.0 * qbuf_in[IDX7( qq_2, SD, SC, OB, SB, SA, OA, ns, ns, no, ns, ns, no )];
                 index_t b1 = IDX2(s1, o1, no),
