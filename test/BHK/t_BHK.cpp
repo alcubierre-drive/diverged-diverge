@@ -280,6 +280,10 @@ create_bhk_test_case( tu, grid, square_lat_hub_sym )
 create_bhk_test_case( tu, grid, honeycomb_lat_hub_sym )
 create_bhk_test_case( tu, grid, square_lat_rashba_sym )
 
+create_bhk_test_case( patch, grid, square_lat_hub_sym )
+create_bhk_test_case( patch, grid, honeycomb_lat_hub_sym )
+create_bhk_test_case( patch, grid, square_lat_rashba_sym )
+
 create_bhk_test_case( grid, patch, square_lat_hub_proj )
 create_bhk_test_case( tu, grid, square_lat_hub_proj )
 
