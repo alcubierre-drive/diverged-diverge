@@ -146,7 +146,7 @@
   \end{scope}
   
   \begin{scope}[anchor=east]
-    \bracketOne{0}{magic number}
+    \bracketOne{0}{magic number (\texttt{'T'==84})}
     \draw (cell1.west) -- ++(-0.3,0.0) node {\tp{n\_orb}};
     \draw (cell2.west) -- ++(-0.05,0.0) node {\tp{n\_spin}};
     \draw (cell3.west) -- ++(-0.3,0.0) node {\tp{prod(nk)}};
@@ -220,10 +220,10 @@
     \EbracketTwo{98}{99}{\oop{mi\_map\_idx}}
     \EbracketTwo{100}{101}{\oop{mi\_map\_pref\_in\_in}}
     \EbracketTwo{102}{103}{\oop{mi\_map\_pref\_in\_out}}
-    \EbracketTwo{104}{105}{\ipd{\xp{version}}}
+    \EbracketTwo{104}{105}{\ipd{version}}
 
-    \draw (Ecell126.east) -- ++(0.25,0.0) node[anchor=west] {magic number};
-    \EbracketOne{127}{\xp{total filesize}}
+    \draw (Ecell126.east) -- ++(0.2,0.0) node[anchor=west] {magic number (\texttt{'T'==84})};
+    \EbracketOne{127}{total filesize}
 
     \tikzmath{\coordA = 0.5*(Ecell67.east) + 0.5*(Ecell79.east) + (0.1,0.0);
               \coordB = 0.5*(Ecell94.east) + 0.5*(Ecell99.east) + (0.1,0.0);}
