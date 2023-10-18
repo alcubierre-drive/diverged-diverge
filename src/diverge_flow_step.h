@@ -129,7 +129,14 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
 // energy/hamiltonian/orbital2band arrays.
 //
 // if workspace != NULL, use this space as scratch memory. size must be at least
-// sizeof(complex128_t) * (nktot, nb, nb) + sizeof(double) * (nktot, nb)
+// sizeof(complex128_t) * (nktot, nb, nb) + sizeof(double) * (nktot, nb). On
+// return (if workspace != NULL) workspace contains the Hamiltonian matrices as
+// <complex128_t> array (nktot, nb, nb) followed by the dispersion vectors as
+// double array (nktot, nb), i.e.:
+// === C/C++ ===
+// complex128_t* Utmp = (complex128_t*)workspace;
+// double* Etmp = (double*)( Utmp + nk*nb*nb );
+// =============
 void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspace );
 
 // Function: diverge_flow_step_refill_Hself
