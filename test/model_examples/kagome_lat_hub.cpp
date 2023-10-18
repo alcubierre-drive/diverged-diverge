@@ -140,9 +140,6 @@ diverge_model_t* gen_kagome_model( index_t nk, index_t nkf , double U , double V
     curr_symm[1].type = 'M'; curr_symm[1].normal_vector[0] = 1.;    sites[2].amplitude[0] = 1.;
     sites[2].function[0] = orb_s;
 
-    mod->orb_symmetries = (complex128_t*)calloc(20
-                            *POW2(mod->n_orb*mod->n_spin),sizeof(complex128_t));
-
     curr_symm[0].type = 'R'; curr_symm[0].normal_vector[0] = 0.;
     curr_symm[0].normal_vector[1] = 0.;curr_symm[0].normal_vector[2] = 1.;
     curr_symm[1].type = 'M'; curr_symm[1].normal_vector[0] = 1.;
