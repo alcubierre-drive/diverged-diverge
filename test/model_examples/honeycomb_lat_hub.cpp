@@ -204,6 +204,7 @@ diverge_model_t* gen_honeycomb_lat_hub_sym( index_t nkx, index_t nky,
         diverge_generate_symm_trafo(model->n_spin,sites, model->n_orb,
                 curr_symm, 3,&(model->rs_symmetries[cnt][0][0]),model->orb_symmetries+cnt*symsize);
     }
+    model->n_sym = cnt;
     diverge_model_internals_common( model );
     return model;
 }
