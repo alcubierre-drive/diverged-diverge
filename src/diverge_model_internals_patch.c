@@ -144,9 +144,9 @@ static void add_to_npatch_vert_from_qbuf( complex128_t* vbuf,
                 k4 = patches[k3map[IDX3(p1, p2, p3, np, np)]];
         index_t qq_1 = 0, qq_2 = 0;
         switch (chan) {
-            case 'P': qq_1 = k1p2(k1, k2, nk); qq_2 = k1p2(k3, k4, nk); break;
-            case 'C': qq_1 = k1m2(k3, k2, nk); qq_2 = k1m2(k1, k4, nk); break;
-            case 'D': qq_1 = k1m2(k1, k3, nk); qq_2 = k1m2(k4, k2, nk); break;
+            case 'P': qq_1 = k1m2(0, k1p2(k1, k2, nk), nk); qq_2 = k1m2(0, k1p2(k3, k4, nk), nk); break;
+            case 'C': qq_1 = k1m2(k2, k3, nk); qq_2 = k1m2(k4, k1, nk); break;
+            case 'D': qq_1 = k1m2(k3, k1, nk); qq_2 = k1m2(k2, k4, nk); break;
             default: break;
         }
         for (index_t OA=0; OA<no; ++OA)

@@ -13,6 +13,7 @@
 #include "../../src/tu/vertex.hpp"
 #include "../../src/tu/projection_wrapper.hpp"
 #include "../../src/tu/flow_stepper.hpp"
+#include "../../src/npatch/symmetrize_vertex.h"
 
 #include "../model_examples/model_constructor.hpp"
 #include <sys/stat.h>
@@ -62,62 +63,68 @@ double test_symm_4_pnt( diverge_model_t* model, complex128_t* buf ) {
     index_t* symm_orb_off = model->internals->symm_orb_off;
     index_t* symm_orb_len = model->internals->symm_orb_len;
     complex128_t* symm_pref = model->internals->symm_pref;
-    complex128_t* aux = (complex128_t*) calloc( size, sizeof(complex128_t) );
+    complex128_t* aux = (complex128_t*) calloc( size+kdim(model->nk)+1, sizeof(complex128_t) );
     memcpy( aux, buf, size * sizeof(complex128_t) );
     memset( (void*) buf, 0, size * sizeof(complex128_t) );
-    #pragma omp parallel for schedule(static) collapse(11) num_threads(diverge_omp_num_threads())
-    for (index_t k1=0; k1<nk; ++k1)
-    for (index_t k2=0; k2<nk; ++k2)
-    for (index_t k3=0; k3<nk; ++k3)
-    for (index_t oo1=0; oo1<n_orb; ++oo1)
-    for (index_t ss1=0; ss1<n_spin; ++ss1)
-    for (index_t oo2=0; oo2<n_orb; ++oo2)
-    for (index_t ss2=0; ss2<n_spin; ++ss2)
-    for (index_t oo3=0; oo3<n_orb; ++oo3)
-    for (index_t ss3=0; ss3<n_spin; ++ss3)
-    for (index_t oo4=0; oo4<n_orb; ++oo4)
-    for (index_t ss4=0; ss4<n_spin; ++ss4) {
-        index_t o1 = IDX2( ss1, oo1, n_orb ),
-                o2 = IDX2( ss2, oo2, n_orb ),
-                o3 = IDX2( ss3, oo3, n_orb ),
-                o4 = IDX2( ss4, oo4, n_orb );
-        index_t k4 = k1m2( k1p2( k1, k2, model->nk ), k3, model->nk );
 
-    for (index_t s=0; s<n_sym; ++s) {
-            index_t os1 = IDX2( o1, s, n_sym ),
-                    os2 = IDX2( o2, s, n_sym ),
-                    os3 = IDX2( o3, s, n_sym ),
-                    os4 = IDX2( o4, s, n_sym );
-            index_t ks1 = symm_map_mom[IDX2(k1,s,n_sym)],
-                    ks2 = symm_map_mom[IDX2(k2,s,n_sym)],
-                    ks3 = symm_map_mom[IDX2(k3,s,n_sym)],
-                    ks4 = symm_map_mom[IDX2(k4,s,n_sym)];
-            for (index_t i1=0; i1<symm_orb_len[os1]; ++i1)
-            for (index_t i2=0; i2<symm_orb_len[os2]; ++i2)
-            for (index_t i3=0; i3<symm_orb_len[os3]; ++i3)
-            for (index_t i4=0; i4<symm_orb_len[os4]; ++i4) {
-                index_t xo1 = symm_orb_off[os1] + i1,
-                        xo2 = symm_orb_off[os2] + i2,
-                        xo3 = symm_orb_off[os3] + i3,
-                        xo4 = symm_orb_off[os4] + i4;
-                index_t mo1 = symm_map_orb[xo1],
-                        mo2 = symm_map_orb[xo2],
-                        mo3 = symm_map_orb[xo3],
-                        mo4 = symm_map_orb[xo4];
-                double kdotR11 = dot(symm_beyond_UC+3*IDX2(oo1,s,n_sym), kmesh+3*ks1);
-                double kdotR22 = dot(symm_beyond_UC+3*IDX2(oo2,s,n_sym), kmesh+3*ks2);
-                double kdotR33 = dot(symm_beyond_UC+3*IDX2(oo3,s,n_sym), kmesh+3*ks3);
-                double kdotR44 = dot(symm_beyond_UC+3*IDX2(oo4,s,n_sym), kmesh+3*ks4);
-                complex128_t val = aux[IDX7(ks1,ks2,ks3, mo1,mo2,mo3,mo4, nk,nk, n_os,n_os,n_os,n_os)] *
-                        (symm_pref[xo1] * (cos(kdotR11) - I128 * sin(kdotR11))) *
-                        (symm_pref[xo2] * (cos(kdotR22) - I128 * sin(kdotR22))) *
-                    conj(symm_pref[xo3] * (cos(kdotR33) - I128 * sin(kdotR33))) *
-                    conj(symm_pref[xo4] * (cos(kdotR44) - I128 * sin(kdotR44)));
-                buf[IDX7(k1,k2,k3, o1,o2,o3,o4, nk,nk, n_os,n_os,n_os,n_os)] +=
-                     val * norm;
+    if (!strcmp(model->internals->backend, "patch")) {
+        symmetrize_npatch_vertex( model, buf, model->patching->patches, model->patching->n_patches, aux);
+    } else {
+        #pragma omp parallel for schedule(static) collapse(11) num_threads(diverge_omp_num_threads())
+        for (index_t k1=0; k1<nk; ++k1)
+        for (index_t k2=0; k2<nk; ++k2)
+        for (index_t k3=0; k3<nk; ++k3)
+        for (index_t oo1=0; oo1<n_orb; ++oo1)
+        for (index_t ss1=0; ss1<n_spin; ++ss1)
+        for (index_t oo2=0; oo2<n_orb; ++oo2)
+        for (index_t ss2=0; ss2<n_spin; ++ss2)
+        for (index_t oo3=0; oo3<n_orb; ++oo3)
+        for (index_t ss3=0; ss3<n_spin; ++ss3)
+        for (index_t oo4=0; oo4<n_orb; ++oo4)
+        for (index_t ss4=0; ss4<n_spin; ++ss4) {
+            index_t o1 = IDX2( ss1, oo1, n_orb ),
+                    o2 = IDX2( ss2, oo2, n_orb ),
+                    o3 = IDX2( ss3, oo3, n_orb ),
+                    o4 = IDX2( ss4, oo4, n_orb );
+            index_t k4 = k1m2( k1p2( k1, k2, model->nk ), k3, model->nk );
+
+        for (index_t s=0; s<n_sym; ++s) {
+                index_t os1 = IDX2( o1, s, n_sym ),
+                        os2 = IDX2( o2, s, n_sym ),
+                        os3 = IDX2( o3, s, n_sym ),
+                        os4 = IDX2( o4, s, n_sym );
+                index_t ks1 = symm_map_mom[IDX2(k1,s,n_sym)],
+                        ks2 = symm_map_mom[IDX2(k2,s,n_sym)],
+                        ks3 = symm_map_mom[IDX2(k3,s,n_sym)],
+                        ks4 = symm_map_mom[IDX2(k4,s,n_sym)];
+                for (index_t i1=0; i1<symm_orb_len[os1]; ++i1)
+                for (index_t i2=0; i2<symm_orb_len[os2]; ++i2)
+                for (index_t i3=0; i3<symm_orb_len[os3]; ++i3)
+                for (index_t i4=0; i4<symm_orb_len[os4]; ++i4) {
+                    index_t xo1 = symm_orb_off[os1] + i1,
+                            xo2 = symm_orb_off[os2] + i2,
+                            xo3 = symm_orb_off[os3] + i3,
+                            xo4 = symm_orb_off[os4] + i4;
+                    index_t mo1 = symm_map_orb[xo1],
+                            mo2 = symm_map_orb[xo2],
+                            mo3 = symm_map_orb[xo3],
+                            mo4 = symm_map_orb[xo4];
+                    double kdotR11 = dot(symm_beyond_UC+3*IDX2(oo1,s,n_sym), kmesh+3*ks1);
+                    double kdotR22 = dot(symm_beyond_UC+3*IDX2(oo2,s,n_sym), kmesh+3*ks2);
+                    double kdotR33 = dot(symm_beyond_UC+3*IDX2(oo3,s,n_sym), kmesh+3*ks3);
+                    double kdotR44 = dot(symm_beyond_UC+3*IDX2(oo4,s,n_sym), kmesh+3*ks4);
+                    complex128_t val = aux[IDX7(ks1,ks2,ks3, mo1,mo2,mo3,mo4, nk,nk, n_os,n_os,n_os,n_os)] *
+                            (symm_pref[xo1] * (cos(kdotR11) - I128 * sin(kdotR11))) *
+                            (symm_pref[xo2] * (cos(kdotR22) - I128 * sin(kdotR22))) *
+                        conj(symm_pref[xo3] * (cos(kdotR33) - I128 * sin(kdotR33))) *
+                        conj(symm_pref[xo4] * (cos(kdotR44) - I128 * sin(kdotR44)));
+                    buf[IDX7(k1,k2,k3, o1,o2,o3,o4, nk,nk, n_os,n_os,n_os,n_os)] +=
+                         val * norm;
+                }
             }
         }
-    }
+    } // end else
+
     double max_diff = 0.;
     #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
     for (index_t idx=0; idx<size; ++idx)
@@ -271,10 +278,12 @@ create_bhk_test_case( grid, patch, square_lat_hub )
 create_bhk_test_case( grid, patch, honeycomb_lat_hub )
 create_bhk_test_case( grid, patch, square_lat_rashba )
 create_bhk_test_case( grid, patch, random )
+create_bhk_test_case( grid, patch, kagome_model )
 create_bhk_test_case( tu, grid, square_lat_hub )
 create_bhk_test_case( tu, grid, honeycomb_lat_hub )
 create_bhk_test_case( tu, grid, square_lat_rashba )
 create_bhk_test_case( tu, grid, random )
+create_bhk_test_case( tu, grid, kagome_model )
 
 create_bhk_test_case( tu, grid, square_lat_hub_sym )
 create_bhk_test_case( tu, grid, honeycomb_lat_hub_sym )

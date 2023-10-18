@@ -80,9 +80,9 @@ void VertexMemory::init_from_qbuf( const complex128_t* qbuf_in, char chan_in, in
         index_t k1 = k1list[k1i];
         index_t qq = 0;
         switch (chan_in) {
-            case 'P': qq = k1p2[k1*_nk+k2]; break;
-            case 'C': qq = k1m2[k3*_nk+k2]; break;
-            case 'D': qq = k1m2[k1*_nk+k3]; break;
+            case 'P': qq = k1m2[k1p2[k1*_nk+k2]]; break;
+            case 'C': qq = k1m2[k2*_nk+k3]; break;
+            case 'D': qq = k1m2[k3*_nk+k1]; break;
             default: break;
         }
         for (index_t OA=0; OA<no; ++OA)

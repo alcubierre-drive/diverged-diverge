@@ -6,13 +6,16 @@
 
 #include <vector>
 
-diverge_model_t* gen_kagome_model( index_t nk, index_t nkf , double U , double V , double VC , double VP) {
+diverge_model_t* gen_kagome_model( index_t nkx, index_t nky, double U ,
+        double V , double VC , double VP, index_t nsym ) {
     diverge_model_t* mod = diverge_model_init();
     sprintf(mod->name, "Kagome");
 
+    assert(nkx == nky);
+    (void)nky;
     // initialize lattice and number of momentum points - is 2d
-    mod->nk[0] = mod->nk[1] = nk;
-    mod->nkf[0] = mod->nkf[1] = nkf;
+    mod->nk[0] = mod->nk[1] = nkx;
+    mod->nkf[0] = mod->nkf[1] = 1;
     mod->lattice[0][0] = 0.5*sqrt(3.);
     mod->lattice[0][1] = -0.5;
     mod->lattice[1][0] = 0.5*sqrt(3.);
@@ -169,6 +172,8 @@ diverge_model_t* gen_kagome_model( index_t nk, index_t nkf , double U , double V
                 curr_symm, 3,&(mod->rs_symmetries[cnt][0][0]),mod->orb_symmetries+cnt*symsize);
     }
     mod->n_sym = cnt;
+    if (nsym == 0)
+        mod->n_sym = 0;
 
     // check that mod is set up properly
     if (diverge_model_validate( mod ))
