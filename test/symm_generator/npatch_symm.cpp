@@ -14,7 +14,7 @@
 
 
 TEST_CASE("npatch vertex symmetrization", "[npatch_symm]") {
-    diverge_model_t* m = gen_kagome_model(12,1,3.0,1.0,-0.7,0.5);
+    diverge_model_t* m = gen_kagome_model(12,12);
     diverge_model_internals_patch( m, 6 );
     diverge_flow_step_t* s = diverge_flow_step_init( m, "patch", "PCD" );
     index_t size = ((npatch_vertex_t*)(m->internals->patch_vertex))->size;
