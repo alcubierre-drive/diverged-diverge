@@ -36,9 +36,9 @@ We use a slightly modified version of
 health from python, run
 ```
 import diverge
-diverge.mpi_init(None, None)
+diverge.init(None, None)
 diverge.run_tests()
-diverge.mpi_finalize()
+diverge.finalize()
 ```
 
 # Citation
