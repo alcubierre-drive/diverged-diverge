@@ -726,7 +726,11 @@ class diverge_post_tu:
 # Function: diverge_read
 # function to read model files as well as post processing files. returns the
 # corresponding class (<diverge_model>, <diverge_post_patch>, or
-# <diverge_post_grid>)
+# <diverge_post_grid>). Makes use of to the file format specifications given in
+# <diverge_postprocess_and_write at
+# diverge_postprocess_conf_t.diverge_postprocess_and_write> and
+# <diverge_model_to_file>; discerning the different file types by their magic
+# numbers
 #
 # Parameters:
 # fname - file name to read from (typically ....dvg)

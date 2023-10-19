@@ -141,7 +141,23 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
 diverge_postprocess_conf_t diverge_postprocess_conf_defaults_CPP( void );
 
 // Function: diverge_postprocess_and_write
-// post-processing and output to disk
+// Post-processing and output to disk. File format specification depends on the
+// chosen backend. In general, the header (shown in the figures) is followed by
+// data. For the TUFRG backend, displacements are _in bytes_ while sizes are in
+// units of the respective datatype. For the other backends, all units are
+// <index_t> (i.e. 64bit)
+//
+// Grid-FRG:
+//
+// (see diverge_grid_output.png)
+//
+// Patch-FRG:
+//
+// (see diverge_patch_output.png)
+//
+// TUFRG:
+//
+// (see diverge_tu_output.png)
 void diverge_postprocess_and_write( diverge_flow_step_t* st, const char* file );
 
 // Function: diverge_postprocess_and_write_finegrained

@@ -43,7 +43,8 @@ Symmetry Generators::
 
 Since symmetries can be complex to construct by hand in general models, with
 potentially many orbitals and non-SU2 symmetries we offer a tool to
-automatically generate symmetries, the symmetry trafo generator.
+automatically generate symmetries, the <symmetry trafo generator at
+site_descr_t.diverge_generate_symm_trafo>.
 === C/C++ ===
 void diverge_generate_symm_trafo( index_t n_spin, const site_descr_t* orbs, 
                                   index_t n_orbs, const sym_op_t* syms, 
