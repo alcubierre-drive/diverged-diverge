@@ -20,7 +20,7 @@ CULDFLAGS = -Xcompiler="-fPIC"
 # EXEFLAGS: linking of the main executable
 # SOFLAGS: linking of the library
 # LDSOFLAGS: LDFLAGS used for linking of the library
-EXEFLAGS = 
+EXEFLAGS = -L. -l:$(NAME_LIB) -Wl,-rpath=$(shell pwd)
 SOFLAGS = -Wl,--version-script=libdivERGe.map -shared
 LDSOFLAGS = $(LDFLAGS)
 
@@ -83,7 +83,7 @@ test: types $(NAME)
 -include $(DEP_C) $(DEP_CPP)
 
 $(NAME): src/main.c.o $(NAME_LIB)
-	$(LD) $(EXEFLAGS) $< -L. -l:$(NAME_LIB) -Wl,-rpath=$(shell pwd) $(LDFLAGS) -o $@
+	$(LD) $(EXEFLAGS) $< $(LDFLAGS) -o $@
 
 ifdef USE_CUDA
 DEFINES += -DUSE_CUDA

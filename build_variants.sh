@@ -4,6 +4,7 @@ Makefile_local_CPU='
 DEFINES := -DNDEBUG -DEIGEN_NO_DEBUG -DDIVERGE_OPENBLAS_LIMIT_THREADS=40
 DEFINES += -DDIVERGE_LOG_GRAYSCALE
 
+EXEFLAGS := -L. -Wl,-rpath=. -l:libdivERGe.so
 DEFINE_VERSION := -DTAG_VERSION=\"$(shell git tag --list "v*.*" | tail -n1)\"
 INCLUDES += -Istatic/include -Istatic/include/openblas
 PREFLAGS = -include static/include/force_link_glibc_2.17.h
@@ -221,6 +222,7 @@ version="$(git tag | tail -n1)"
 prefix="public/releases/${version}/"
 build_variant CPU "${prefix}cpu/"
 cp divERGe.tar.gz ${prefix}
+cp divERGe_src.tar.gz ${prefix}
 
 if [ $1 = 'CPU' ]
 then
