@@ -23,6 +23,8 @@ static int npatch_nblocks[3];
 static int npatch_gpu_weights[128];
 static int npatch_loop_gpu_weights[128];
 
+extern double npatch_average_factor;
+
 static int parse_vector_int( int* vec, int len, const char* str );
 
 static set<string> hacking_keys;
@@ -90,6 +92,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("npatch_vertex_resym") {
         npatch_flow_step_set_vertex_resym( atoi(val) );
+    }
+    CHECKKEY("npatch_average_factor") {
+        npatch_average_factor = atof(val);
     }
     CHECKKEY("dkm_random_seed") {
         dkm_set_use_random_seed( atoi(val) );

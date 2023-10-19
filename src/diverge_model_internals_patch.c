@@ -129,6 +129,8 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
     model->internals->patch_vertex_destructor = &patch_vertex_destructor;
 }
 
+double npatch_average_factor = 1.0;
+
 static void add_to_npatch_vert_from_qbuf( complex128_t* vbuf,
     const complex128_t* qbuf_in, const index_t* patches, const index_t* k3map,
     index_t np, index_t no, index_t ns, const index_t nk[3], char chan ) {
@@ -170,8 +172,8 @@ static void add_to_npatch_vert_from_qbuf( complex128_t* vbuf,
                     default: break;
                 }
                 // XXX HELP, I am not symmetric if i do this
-                complex128_t vadd = 1.0 * qbuf_in[IDX7( qq_1, SD, SC, OB, SB, SA, OA, ns, ns, no, ns, ns, no )] +
-                                    0.0 * qbuf_in[IDX7( qq_2, SD, SC, OB, SB, SA, OA, ns, ns, no, ns, ns, no )];
+                complex128_t vadd = npatch_average_factor * qbuf_in[IDX7( qq_1, SD, SC, OB, SB, SA, OA, ns, ns, no, ns, ns, no )] +
+                                    (1.0 - npatch_average_factor) * qbuf_in[IDX7( qq_2, SD, SC, OB, SB, SA, OA, ns, ns, no, ns, ns, no )];
                 index_t b1 = IDX2(s1, o1, no),
                         b2 = IDX2(s2, o2, no),
                         b3 = IDX2(s3, o3, no),
