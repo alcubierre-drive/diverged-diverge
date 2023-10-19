@@ -6,6 +6,7 @@
 #include "../../src/diverge_Eigen3.hpp"
 #include "../../src/misc/generate_symmetries.h"
 #include <random>
+#include "../../src/diverge_internals_struct.h"
 diverge_model_t* gen_random(index_t nkx, index_t nky) {
     diverge_model_t* mod = diverge_model_init();
     mod->n_orb = 2;
@@ -78,13 +79,11 @@ diverge_model_t* gen_random(index_t nkx, index_t nky) {
         complex128_t r_c;
         r_c = rand_cmplx();
         mod->vert[mod->n_vert++] = {'D', { Rx, Ry,0}, o,p, -1,0,0,0, r_c};
-        mod->vert[mod->n_vert++] = {'D', {-Rx,-Ry,0}, p,o, -1,0,0,0, std::conj(r_c)};
-
-        r_c = (rand_cmplx());
-        /*mod->vert[mod->n_vert++] = {'P', { Rx, Ry,0}, o,p, -1,0,0,0, r_c};
-        mod->vert[mod->n_vert++] = {'P', { -Rx, -Ry,0}, o,p, -1,0,0,0, std::conj(r_c)};*/
+        r_c = rand_cmplx();
+        mod->vert[mod->n_vert++] = {'C', { Rx, Ry, 0}, o,p, -1,0,0,0, r_c};
+        r_c = rand_cmplx();
+        mod->vert[mod->n_vert++] = {'P', { Rx, Ry, 0}, o,p, -1,0,0,0, r_c};
     }
-
     diverge_model_internals_common( mod );
     return mod;
 }

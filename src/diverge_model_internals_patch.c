@@ -146,9 +146,9 @@ static void add_to_npatch_vert_from_qbuf( complex128_t* vbuf,
                 k4 = patches[k3map[IDX3(p1, p2, p3, np, np)]];
         index_t qq_1 = 0, qq_2 = 0;
         switch (chan) {
-            case 'P': qq_1 = k1m2(0, k1p2(k1, k2, nk), nk); qq_2 = k1m2(0, k1p2(k3, k4, nk), nk); break;
-            case 'C': qq_1 = k1m2(k2, k3, nk); qq_2 = k1m2(k4, k1, nk); break;
-            case 'D': qq_1 = k1m2(k3, k1, nk); qq_2 = k1m2(k2, k4, nk); break;
+            case 'P': qq_1 = k1p2(k1, k2, nk); qq_2 = k1p2(k3, k4, nk); break;
+            case 'C': qq_1 = k1m2(k3, k2, nk); qq_2 = k1m2(k1, k4, nk); break;
+            case 'D': qq_1 = k1m2(k1, k3, nk); qq_2 = k1m2(k4, k2, nk); break;
             default: break;
         }
         for (index_t OA=0; OA<no; ++OA)
@@ -167,13 +167,12 @@ static void add_to_npatch_vert_from_qbuf( complex128_t* vbuf,
                 index_t s1 = 0, s2 = 0, s3 = 0, s4 = 0;
                 switch (chan) {
                     case 'P': s1 = SA; s2 = SB; s3 = SC; s4 = SD; break;
-                    case 'C': s1 = SB; s2 = SC; s3 = SD; s4 = SA; break;
-                    case 'D': s1 = SB; s2 = SC; s3 = SA; s4 = SD; break;
+                    case 'C': s1 = SA; s2 = SD; s3 = SC; s4 = SB; break;
+                    case 'D': s1 = SA; s2 = SD; s3 = SB; s4 = SC; break;
                     default: break;
                 }
-                // XXX HELP, I am not symmetric if i do this
-                complex128_t vadd = npatch_average_factor * qbuf_in[IDX7( qq_1, SD, SC, OB, SB, SA, OA, ns, ns, no, ns, ns, no )] +
-                                    (1.0 - npatch_average_factor) * qbuf_in[IDX7( qq_2, SD, SC, OB, SB, SA, OA, ns, ns, no, ns, ns, no )];
+                complex128_t vadd = npatch_average_factor * qbuf_in[IDX7( qq_1, SA, SB, OA, SC, SD, OB, ns, ns, no, ns, ns, no )] +
+                                    (1.0 - npatch_average_factor) * qbuf_in[IDX7( qq_2, SA, SB, OA, SC, SD, OB, ns, ns, no, ns, ns, no )];
                 index_t b1 = IDX2(s1, o1, no),
                         b2 = IDX2(s2, o2, no),
                         b3 = IDX2(s3, o3, no),

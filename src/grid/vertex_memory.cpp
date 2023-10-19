@@ -80,9 +80,9 @@ void VertexMemory::init_from_qbuf( const complex128_t* qbuf_in, char chan_in, in
         index_t k1 = k1list[k1i];
         index_t qq = 0;
         switch (chan_in) {
-            case 'P': qq = k1m2[k1p2[k1*_nk+k2]]; break;
-            case 'C': qq = k1m2[k2*_nk+k3]; break;
-            case 'D': qq = k1m2[k3*_nk+k1]; break;
+            case 'P': qq = k1p2[k1*_nk+k2]; break;
+            case 'C': qq = k1m2[k3*_nk+k2]; break;
+            case 'D': qq = k1m2[k1*_nk+k3]; break;
             default: break;
         }
         for (index_t OA=0; OA<no; ++OA)
@@ -99,67 +99,13 @@ void VertexMemory::init_from_qbuf( const complex128_t* qbuf_in, char chan_in, in
             for (index_t SC=0; SC<ns; ++SC)
             for (index_t SD=0; SD<ns; ++SD) {
                 index_t s1 = 0, s2 = 0, s3 = 0, s4 = 0;
-                // TODO it is unclear which formulation should be used. to pass
-                // the BHK test, the selection below must be taken.
-                const int h_C_idx = 9;
-                const int h_D_idx = 8;
                 switch (chan_in) {
                     case 'P': s1 = SA; s2 = SB; s3 = SC; s4 = SD; break;
-                    case 'C':
-                        if (h_C_idx == 0) {s1 = SA; s2 = SB; s3 = SC; s4 = SD;}
-                        if (h_C_idx == 1) {s1 = SA; s2 = SB; s3 = SD; s4 = SC;}
-                        if (h_C_idx == 2) {s1 = SA; s2 = SC; s3 = SB; s4 = SD;}
-                        if (h_C_idx == 3) {s1 = SA; s2 = SC; s3 = SD; s4 = SB;}
-                        if (h_C_idx == 4) {s1 = SA; s2 = SD; s3 = SB; s4 = SC;}
-                        if (h_C_idx == 5) {s1 = SA; s2 = SD; s3 = SC; s4 = SB;}
-                        if (h_C_idx == 6) {s1 = SB; s2 = SA; s3 = SC; s4 = SD;}
-                        if (h_C_idx == 7) {s1 = SB; s2 = SA; s3 = SD; s4 = SC;}
-                        if (h_C_idx == 8) {s1 = SB; s2 = SC; s3 = SA; s4 = SD;}
-                        if (h_C_idx == 9) {s1 = SB; s2 = SC; s3 = SD; s4 = SA;}
-                        if (h_C_idx == 10) {s1 = SB; s2 = SD; s3 = SA; s4 = SC;}
-                        if (h_C_idx == 11) {s1 = SB; s2 = SD; s3 = SC; s4 = SA;}
-                        if (h_C_idx == 12) {s1 = SC; s2 = SA; s3 = SB; s4 = SD;}
-                        if (h_C_idx == 13) {s1 = SC; s2 = SA; s3 = SD; s4 = SB;}
-                        if (h_C_idx == 14) {s1 = SC; s2 = SB; s3 = SA; s4 = SD;}
-                        if (h_C_idx == 15) {s1 = SC; s2 = SB; s3 = SD; s4 = SA;}
-                        if (h_C_idx == 16) {s1 = SC; s2 = SD; s3 = SA; s4 = SB;}
-                        if (h_C_idx == 17) {s1 = SC; s2 = SD; s3 = SB; s4 = SA;}
-                        if (h_C_idx == 18) {s1 = SD; s2 = SA; s3 = SB; s4 = SC;}
-                        if (h_C_idx == 19) {s1 = SD; s2 = SA; s3 = SC; s4 = SB;}
-                        if (h_C_idx == 20) {s1 = SD; s2 = SB; s3 = SA; s4 = SC;}
-                        if (h_C_idx == 21) {s1 = SD; s2 = SB; s3 = SC; s4 = SA;}
-                        if (h_C_idx == 22) {s1 = SD; s2 = SC; s3 = SA; s4 = SB;}
-                        if (h_C_idx == 23) {s1 = SD; s2 = SC; s3 = SB; s4 = SA;}
-                        break;
-                    case 'D':
-                        if (h_D_idx == 0) {s1 = SA; s2 = SB; s3 = SC; s4 = SD;}
-                        if (h_D_idx == 1) {s1 = SA; s2 = SB; s3 = SD; s4 = SC;}
-                        if (h_D_idx == 2) {s1 = SA; s2 = SC; s3 = SB; s4 = SD;}
-                        if (h_D_idx == 3) {s1 = SA; s2 = SC; s3 = SD; s4 = SB;}
-                        if (h_D_idx == 4) {s1 = SA; s2 = SD; s3 = SB; s4 = SC;}
-                        if (h_D_idx == 5) {s1 = SA; s2 = SD; s3 = SC; s4 = SB;}
-                        if (h_D_idx == 6) {s1 = SB; s2 = SA; s3 = SC; s4 = SD;}
-                        if (h_D_idx == 7) {s1 = SB; s2 = SA; s3 = SD; s4 = SC;}
-                        if (h_D_idx == 8) {s1 = SB; s2 = SC; s3 = SA; s4 = SD;}
-                        if (h_D_idx == 9) {s1 = SB; s2 = SC; s3 = SD; s4 = SA;}
-                        if (h_D_idx == 10) {s1 = SB; s2 = SD; s3 = SA; s4 = SC;}
-                        if (h_D_idx == 11) {s1 = SB; s2 = SD; s3 = SC; s4 = SA;}
-                        if (h_D_idx == 12) {s1 = SC; s2 = SA; s3 = SB; s4 = SD;}
-                        if (h_D_idx == 13) {s1 = SC; s2 = SA; s3 = SD; s4 = SB;}
-                        if (h_D_idx == 14) {s1 = SC; s2 = SB; s3 = SA; s4 = SD;}
-                        if (h_D_idx == 15) {s1 = SC; s2 = SB; s3 = SD; s4 = SA;}
-                        if (h_D_idx == 16) {s1 = SC; s2 = SD; s3 = SA; s4 = SB;}
-                        if (h_D_idx == 17) {s1 = SC; s2 = SD; s3 = SB; s4 = SA;}
-                        if (h_D_idx == 18) {s1 = SD; s2 = SA; s3 = SB; s4 = SC;}
-                        if (h_D_idx == 19) {s1 = SD; s2 = SA; s3 = SC; s4 = SB;}
-                        if (h_D_idx == 20) {s1 = SD; s2 = SB; s3 = SA; s4 = SC;}
-                        if (h_D_idx == 21) {s1 = SD; s2 = SB; s3 = SC; s4 = SA;}
-                        if (h_D_idx == 22) {s1 = SD; s2 = SC; s3 = SA; s4 = SB;}
-                        if (h_D_idx == 23) {s1 = SD; s2 = SC; s3 = SB; s4 = SA;}
-                        break;
+                    case 'C': s1 = SA; s2 = SD; s3 = SC; s4 = SB; break;
+                    case 'D': s1 = SA; s2 = SD; s3 = SB; s4 = SC; break;
                     default: break;
                 }
-                complex128_t vadd = qbuf_in[IDX7( qq, SD, SC, OB, SB, SA, OA, ns, ns, no, ns, ns, no )];
+                complex128_t vadd = qbuf_in[IDX7( qq, SA, SB, OA, SC, SD, OB, ns, ns, no, ns, ns, no )];
                 index_t b1 = IDX2(s1, o1, no),
                         b2 = IDX2(s2, o2, no),
                         b3 = IDX2(s3, o3, no),
