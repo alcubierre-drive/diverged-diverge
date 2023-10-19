@@ -1,1 +1,1 @@
-﻿NDSummary.OnToolTipsLoaded("File:doc/patching.txt",{321:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">Advanced npatch setup in divERGe</div></div>"});
+﻿NDSummary.OnToolTipsLoaded("File:doc/patching.txt",{299:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">Advanced npatch setup in divERGe</div></div>"});
