@@ -1,13 +1,8 @@
 #!/bin/bash
 
 Makefile_local_CPU='
-INC_TEST := true
-
 DEFINES := -DNDEBUG -DEIGEN_NO_DEBUG -DDIVERGE_OPENBLAS_LIMIT_THREADS=40
-# DEFINES += -DDIVERGE_LOG_COLORLESS
 DEFINES += -DDIVERGE_LOG_GRAYSCALE
-
-DEFINES += -DBHK_NK=4 -DBHK_NUM=5 -DBHK_L0=2
 
 DEFINE_VERSION := -DTAG_VERSION=\"$(shell git tag --list "v*.*" | tail -n1)\"
 INCLUDES += -Istatic/include -Istatic/include/openblas
@@ -215,8 +210,9 @@ function build_variant() {
     mkdir -p "$2"
     gen_Makefile_local "$1" > Makefile.local
     make clean
-    make -j $(nproc)
-    mv libdivERGe.so divERGe "$2"
+    make -j $(nproc) dist
+    make -j $(npric) dist-src
+    cp libdivERGe.so divERGe "$2"
 
     mv Makefile.local.bak Makefile.local
 }
@@ -233,7 +229,7 @@ then
 fi
 
 # build_variant CUDA10_1 "${prefix}/cuda10-1/"
-build_variant CUDA10_2 "${prefix}/cuda10-2/"
+# build_variant CUDA10_2 "${prefix}/cuda10-2/"
 # build_variant CUDA11_0 "${prefix}/cuda11-0/"
-build_variant CUDA11_8 "${prefix}/cuda11-8/"
+# build_variant CUDA11_8 "${prefix}/cuda11-8/"
 # build_variant CUDA12_2 "${prefix}/cuda12-2/"
