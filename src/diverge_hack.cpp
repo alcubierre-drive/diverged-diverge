@@ -24,6 +24,10 @@ static int npatch_gpu_weights[128];
 static int npatch_loop_gpu_weights[128];
 
 extern double npatch_average_factor;
+extern int autofine_ngroups;
+extern double autofine_alpha;
+extern double autofine_beta;
+extern double autofine_gamma;
 
 static int parse_vector_int( int* vec, int len, const char* str );
 
@@ -95,6 +99,18 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("npatch_average_factor") {
         npatch_average_factor = atof(val);
+    }
+    CHECKKEY("autofine_ngroups") {
+        autofine_ngroups = atoi(val);
+    }
+    CHECKKEY("autofine_alpha") {
+        autofine_alpha = atof(val);
+    }
+    CHECKKEY("autofine_beta") {
+        autofine_beta = atof(val);
+    }
+    CHECKKEY("autofine_gamma") {
+        autofine_gamma = atof(val);
     }
     CHECKKEY("dkm_random_seed") {
         dkm_set_use_random_seed( atoi(val) );

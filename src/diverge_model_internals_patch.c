@@ -9,6 +9,11 @@
 #include "diverge_patching.h"
 #include "misc/mpi_functions.h"
 
+int autofine_ngroups = 40;
+double autofine_alpha = 0.1;
+double autofine_beta = 2.0;
+double autofine_gamma = 0.5;
+
 static void patch_vertex_destructor( void* vvert ) {
     npatch_vertex_t* vert = (npatch_vertex_t*)vvert;
     npatch_vertex_free( vert );
@@ -55,7 +60,8 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
         diverge_patching_find_fs_pts_C( model, NULL, model->n_orb * model->n_spin, np_ibz, np_ibz > 100 ? np_ibz : 100, &pts, &npts );
         mom_patching_t* patch = diverge_patching_from_indices( model, pts, npts );
         free(pts);
-        diverge_patching_autofine( model, patch, NULL, model->n_orb * model->n_spin, 40, 0.1, 2.0, 0.5 );
+        diverge_patching_autofine( model, patch, NULL, model->n_orb * model->n_spin,
+                autofine_ngroups, autofine_alpha, autofine_beta, autofine_gamma );
         diverge_patching_symmetrize_refinement( model, patch );
         model->patching = patch;
     } else {
