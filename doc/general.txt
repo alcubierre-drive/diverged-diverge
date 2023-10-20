@@ -1,6 +1,42 @@
 Title: divERGe
 Diverge Implements Various Exact Renormalization Group Examples::
 
+Table Of Contents::
+
+- <Introduction at divERGe>
+    - <Compilation>
+        - the <divERGe at main> executable
+    - <Examples>
+- <C interface at libdivERGe.so>
+    - <library initalization and finalization at diverge_init>
+        - <allocators at diverge_mem_alloc_rs_hopping_t>
+        - <license at diverge_license> and <status at
+          diverge_compilation_status>
+        - <logging at mpi_loglevel_set>
+        - <common datatypes at complex128_t>
+    - <model at diverge_model_t>
+        - <symmetry setup at Symmetries>
+        - <generate a patching at Patching>
+        - <initializing internal structures at diverge_model_internals_common>
+        - <reading Wannier90 files at diverge_read_W90_C>
+        - <output to file at diverge_model_to_file>
+        - <momentum meshes at diverge_model_generate_meshes>
+            - <generate IBZ paths from meshes at diverge_kmesh_to_bands>
+        - <symmetrizing 2pt functions at diverge_symmetrize_2pt_coarse>
+        - <adjusting the filling at diverge_model_get_filling>
+
+    - <flow step at diverge_flow_step_t>
+        - <integrating the flow at diverge_euler_t>
+        - <postprocessing at diverge_postprocess_conf_t>
+
+    - <running tests at diverge_run_tests>
+- <Python interface at dvg>
+    - <autoflow at dvg.autoflow>
+    - <mpi/file output at mpi_stdout_logger>
+    - <Structured Arrays>
+- <Simulation output at dvg-output>
+
+
 Getting Started::
 For an easy start with the <divERGe python interface at dvg>, install divERGe
 from pip:
@@ -8,7 +44,7 @@ from pip:
 pip install diverge-flow
 ============
 You can further download <divERGe.tar.gz at
-https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.3/divERGe.tar.gz>
+https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.4/divERGe.tar.gz>
 to obtain a pre-compiled copy of divERGe that additionally contains the <C
 library at libdivERGe.so> and <some examples at Examples>. For all more pre-built
 versions, see <releases at
@@ -46,7 +82,7 @@ You should now see output as below:
 Troubleshooting::
 If the pip installation fails, you can navigate to the folder where you
 extracted <diverge.tar.gz at
-https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.3/divERGe.tar.gz>
+https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.4/divERGe.tar.gz>
 and execute
 === Code ===
 python3 setup.py install

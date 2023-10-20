@@ -1,0 +1,12 @@
+# module purge
+# module load eigen
+# module load fftw
+# module load mkl
+
+DEFINES += -DNDEBUG -DEIGEN_NO_DEBUG
+DEFINES += -DSKIP_EIGEN3_INCLUDE_PREFIX -DUSE_MKL
+INCLUDES += -I${FFTW_ROOT}/include \
+	    -I${MKLROOT}/include -m64
+LIBS := -L${FFTW_ROOT}/lib -lfftw3 -lfftw3_threads \
+ 	-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+FLAGS += -Ofast -mtune=native

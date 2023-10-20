@@ -20,7 +20,7 @@ CULDFLAGS = -Xcompiler="-fPIC"
 # EXEFLAGS: linking of the main executable
 # SOFLAGS: linking of the library
 # LDSOFLAGS: LDFLAGS used for linking of the library
-EXEFLAGS = 
+EXEFLAGS = -L. -l:$(NAME_LIB) -Wl,-rpath=$(shell pwd)
 SOFLAGS = -Wl,--version-script=libdivERGe.map -shared
 LDSOFLAGS = $(LDFLAGS)
 
@@ -70,8 +70,7 @@ HEADERS := $(shell find src/ -name '*.h') \
 -include Makefile.inc
 -include Makefile.local
 
-#.PHONY: all clean types remake $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o distribute todos
-.PHONY: lib test clean types dist todos $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
+.PHONY: lib test clean types dist dist-src todos $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
 
 # resolves nasty circular dependency bug for .cu(.o) files
 .SUFFIXES: 
@@ -84,7 +83,7 @@ test: types $(NAME)
 -include $(DEP_C) $(DEP_CPP)
 
 $(NAME): src/main.c.o $(NAME_LIB)
-	$(LD) $(EXEFLAGS) $< -L. -l:$(NAME_LIB) -Wl,-rpath=$(shell pwd) $(LDFLAGS) -o $@
+	$(LD) $(EXEFLAGS) $< $(LDFLAGS) -o $@
 
 ifdef USE_CUDA
 DEFINES += -DUSE_CUDA
@@ -127,7 +126,7 @@ types.vim: $(SRC_C) $(SRC_CPP) $(HEADERS) Makefile $(wildcard Makefile.local Mak
 clean:
 	-@$(RM) -rf $(NAME) $(NAME_GPU) $(NAME_GPU_LINK) $(NAME_LIB) types.vim
 	-@$(RM) -rf $(shell find . -type f -name '*.o') $(shell find . -type f -name '*.d')
-	-@$(RM) -rf divERGe.tar.gz
+	-@$(RM) -rf divERGe.tar.gz divERGe_src.tar
 
 $(NAME_GPU): $(OBJ_CU)
 	$(AR) -crs $@ $^
@@ -149,3 +148,13 @@ export DIVERGE_MKDIR
 export DIVERGE_RM
 dist: $(NAME) $(NAME_LIB)
 	$(MAKE) $(MFLAGS) -C util
+
+EXAMPLES := $(shell find examples/ -iname "*.cpp") \
+	$(shell find examples/ -iname "*.c") \
+	$(shell find examples/ -iname "*.py") \
+	$(shell find examples/ -iname Makefile)
+UTIL := $(shell find util/ -iname "*.py") \
+	setup.py setup.cfg libdivERGe.map LICENSE.md README.md TODO.md
+dist-src: $(SRC_C) $(SRC_CPP) $(SRC_CU) $(HEADERS) Makefile make.local/ $(EXAMPLES) $(UTIL)
+	$(DIVERGE_TAR) -c util/libdivERGe.so $^ -f divERGe_src.tar
+	$(DIVERGE_GZIP) -f divERGe_src.tar

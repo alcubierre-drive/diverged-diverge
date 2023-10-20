@@ -22,7 +22,9 @@ typedef struct diverge_model_t diverge_model_t;
  * returns a checksum of the model as a string (must not be free'd as it is
  * statically owned by libdivERGe)
  *
- * file format specification
+ * file format specification info graphic (text below)
+ *
+ * (see diverge_model_output.png)
  *
  * header is 128 elements of type index_t (64 bit signed integers)
  *

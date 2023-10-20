@@ -402,10 +402,10 @@ TEST_CASE("self energy Realspace vs k space SU2 flow","[self][self_flow]"){
     }
     CHECK(std::abs(trace(stepo->tu_vertex->self_en,stepo->tu_vertex->n_orb,stepo->tu_vertex->nk)
                   -trace(stepm->tu_vertex->self_en,stepm->tu_vertex->n_orb,stepm->tu_vertex->nk)) < 1e-8);
-    diverge_model_free(orb);
-    diverge_model_free(mom);
     diverge_flow_step_free(stepo);
     diverge_flow_step_free(stepm);
+    diverge_model_free(orb);
+    diverge_model_free(mom);
 }
 
 TEST_CASE("pure selfenergy flow","[self][self_flow]"){
@@ -422,8 +422,8 @@ TEST_CASE("pure selfenergy flow","[self][self_flow]"){
         diverge_flow_step_euler( step, Lambda, dLambda );
         Lambda += dLambda;
     }
-    diverge_model_free(mom);
     diverge_flow_step_free(step);
+    diverge_model_free(mom);
 }
 
 TEST_CASE("P+self","[self][self_flow]"){
@@ -439,8 +439,8 @@ TEST_CASE("P+self","[self][self_flow]"){
         diverge_flow_step_euler( step, Lambda, dLambda );
         Lambda += dLambda;
     }
-    diverge_model_free(mom);
     diverge_flow_step_free(step);
+    diverge_model_free(mom);
 }
 
 TEST_CASE("D+self","[self][self_flow]"){
@@ -456,8 +456,8 @@ TEST_CASE("D+self","[self][self_flow]"){
         diverge_flow_step_euler( step, Lambda, dLambda );
         Lambda += dLambda;
     }
-    diverge_model_free(mom);
     diverge_flow_step_free(step);
+    diverge_model_free(mom);
 }
 
 #endif // MPI

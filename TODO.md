@@ -5,4 +5,3 @@
   selection and cutoff in npatch
 - checkpointing of flow step
 - c library functions for reading model files
-- doc: make chapters in general
