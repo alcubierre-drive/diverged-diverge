@@ -4,6 +4,7 @@
 #include "../../src/diverge.h"
 #include "../../src/diverge_Eigen3.hpp"
 
+#include <cassert>
 #include <vector>
 
 diverge_model_t* gen_kagome_model( index_t nkx, index_t nky, double U ,
