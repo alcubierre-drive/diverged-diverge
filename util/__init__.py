@@ -710,6 +710,14 @@ if not _libs["divERGe"] is None:
     flow_step_vertex.argtypes = [POINTER(flow_step_t), c_char]
     flow_step_vertex.restype = struct_flow_step_vertex_t
 
+    flow_step_refill = _libs["divERGe"].get("diverge_flow_step_refill")
+    flow_step_refill.argtypes = [POINTER(flow_step_t), c_double, c_void_p]
+    flow_step_refill.restype = None
+    flow_step_refill_Hself = _libs["divERGe"].get("diverge_flow_step_refill_Hself")
+    flow_step_refill_Hself.argtypes = [POINTER(flow_step_t), c_double, c_void_p]
+    flow_step_refill_Hself.restype = c_double
+
+
     # Euler integrator
     class struct_euler_t(Structure):
         pass
