@@ -184,13 +184,17 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         }
         idx = 94;
 
-        idx = 100;
         index_t *band_indices = NULL, n_band_indices = 0, *n_band_segments = NULL;
         bool use_band_indices = false;
         bool include_bandstructure = false;
+        // precedence behavior: using config value only if it is *not* zero:
+        int npath = cfg->npath == 0 ? h_diverge_model_nbandstructure : cfg->npath;
+        ibuf[idx++] = npath; // 94
+
+        idx = 100;
         if (mod->n_ibz_path > 0) {
             // bandstructure, including the k coordinates *after* the bands
-            if (h_diverge_model_nbandstructure == -1 && mod->internals->has_common_internals) {
+            if (npath == -1 && mod->internals->has_common_internals) {
                 mpi_vrb_printf( "using fine kmesh data for band structure\n" );
                 n_band_segments = diverge_kmesh_to_bands( mod, &band_indices, &n_band_indices );
                 if (band_indices != NULL && n_band_indices > 0) {
@@ -201,13 +205,13 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
                     mpi_err_printf( "could not find band structure indices, skipping\n" );
                     ADD_ARRAY_TO_IBUF( 0 );
                 }
-            } else if (h_diverge_model_nbandstructure < -1) {
-                mpi_wrn_printf( "invalid value %li for npath\n", h_diverge_model_nbandstructure );
+            } else if (npath < -1) {
+                mpi_wrn_printf( "invalid value %li for npath\n", npath );
                 ADD_ARRAY_TO_IBUF( 0 );
             } else {
                 include_bandstructure = true;
                 ADD_ARRAY_TO_IBUF( sizeof(double) * (mod->n_orb*mod->n_spin + 3) *
-                        ((mod->n_ibz_path-1)*h_diverge_model_nbandstructure + 1) );
+                        ((mod->n_ibz_path-1)*npath + 1) );
             }
         } else {
             ADD_ARRAY_TO_IBUF( 0 );
@@ -349,9 +353,8 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
                         out[cnt++] = kf[band_indices[i]*3+d];
                 }
             } else {
-                mpi_vrb_printf("generating bandstructure with %li points per segment\n",
-                        h_diverge_model_nbandstructure );
-                generate_bandstructure( mod, (double*)(buf+ibuf[100]), h_diverge_model_nbandstructure );
+                mpi_vrb_printf("generating bandstructure with %li points per segment\n", npath );
+                generate_bandstructure( mod, (double*)(buf+ibuf[100]), npath );
             }
         }
 

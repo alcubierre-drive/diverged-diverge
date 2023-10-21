@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import numpy as np
+import math
 
 # Namespace: dvg-output
 # python library to read diverge output files
@@ -44,7 +45,6 @@ def version_compare( A, B ):
 # this is due to some weird numpy version checking for the contents of a buffer
 def numpy_fromfile( fname, **kwargs ):
     return np.frombuffer( open(fname, "rb").read(), **kwargs )
-    #return np.fromfile( fname, **kwargs )
 
 def qmatrices( data, displ, count, nq ):
     data_d = data[displ:displ+count]
@@ -155,11 +155,14 @@ class diverge_model:
     U: eigenvectors on fine kmesh (kfmesh.shape[0], n_spin*n_orb, n_spin*n_orb)
     E: eigenvalues on fine kmesh (kfmesh.shape[0], n_spin*n_orb)
 
+    npath: configuration for bandstructure (nonzero after v0.4.x) if -1, used
+           kf_ibz_path indices. otherwise, bandstructure array is shaped as
+           below
     bandstructure: banstructure along irreducible path, with irreducible path
-                   in last three indices ((ibz_path.size-1)*300+1, n_spin*n_orb + 3)
+                   in last three indices. shape usually given as
+                   ((ibz_path.size-1)*300+1, n_spin*n_orb + 3) if not specified
+                   differently in model output call.
     """
-
-    # TODO(lk) need to update model once model in code is finished
 
     def _displ_count( self, i_d ):
         return self._f_bytes[self._f_header[i_d]:self._f_header[i_d]+self._f_header[i_d+1]]
@@ -261,6 +264,7 @@ class diverge_model:
         self.kc_ibz_path = k_ibz_path( self._displ_count( 90 ) )
         self.kf_ibz_path = k_ibz_path( self._displ_count( 92 ) )
 
+        self.npath = self._head(94) # to see what the config actually is
         self.bandstructure = self._displ_count( 100 ).view(
                 np.float64 ).reshape((-1,self.n_spin*self.n_orb + 3))
 
@@ -747,6 +751,74 @@ def read( fname ):
     else:
         print(f"magic number {magic} ('{chr(magic)}') unknown")
         return None
+
+# Function: bandstructure_bands
+# return the bands array (nk,nb) from the band  structure obtained from a
+# <diverge_model>. Useful for plotting (for example see <bandstructure_xvals>).
+def bandstructure_bands( model ):
+    return model.bandstructure[:,:-3]
+
+# Function: bandstructure_kpts
+# return the momentum points (nk,3) from the band structure obtained from a
+# <diverge_model>. Useful for plotting and post-processing.
+def bandstructure_kpts( model ):
+    return model.bandstructure[:,-3:]
+
+# Function: bandstructure_xvals
+# calculate the differential distance between the momentum points from the band
+# structure obtained from a <diverge_model>. Useful for plotting in conjuction
+# with <bandstructure_bands> and <bandstructure_ticks>.
+# === Python ===
+# import diverge.output as do
+# import matplotlib.pyplot as plt
+# M = do.read("model.dvg")
+# b = do.bandstructure_bands(M)
+# x = do.bandstructure_xvals(M)
+# plt.plot( x, b, color='black' )
+# plt.xticks( do.bandstructure_ticks(M) )
+# # need to set the labels manually as they are not known to the model
+# plt.show()
+# ==============
+def bandstructure_xvals( model ):
+    K = bandstructure_kpts(model)
+    return np.concatenate( [[0], np.cumsum(np.sqrt((np.diff(K,axis=0)**2).sum(axis=1)))] )
+
+# Function: bandstructure_ticks
+# returns the xticks used for band structure plots from a <diverge_model>.
+# Useful in conjuction with <bandstructure_xvals>.
+def bandstructure_ticks( model ):
+    x = bandstructure_xvals( model )
+    n_bandstruct = x.shape[0]
+    n_ibz_path = model.ibz_path.shape[0]
+
+    if n_ibz_path <= 1:
+        return None
+
+    ticks = []
+
+    if model.npath == 0: # we don't know what the call was. trying to guess.
+        n_per_tick_float = (n_bandstruct - 1)/(n_ibz_path-1)
+        n_per_tick_int = (n_bandstruct - 1)//(n_ibz_path-1)
+        if math.isclose(n_per_tick_int, n_per_tick_float):
+            ticks += list( x[ np.arange(n_ibz_path) * n_per_tick_int ] )
+        else:
+            if not model.kf_ibz_path is None:
+                n_per_segment = model.kf_ibz_path[0]
+                ticks += list( x[np.cumsum( np.concatenate( [[0], n_per_segment-1] ) )] )
+
+    elif model.npath >= 1:
+        ticks += list( x[ np.arange(n_ibz_path) * model.npath ] )
+    elif model.npath == -1:
+        if not model.kf_ibz_path is None:
+            n_per_segment = model.kf_ibz_path[0]
+            ticks += list( x[np.cumsum( np.concatenate( [[0], n_per_segment-1] ) )] )
+
+    if len(ticks) == n_ibz_path:
+        return ticks
+    else:
+        return None
+
+
 
 if __name__ == "__main__":
     # mod = read('post.dvg')

@@ -149,7 +149,7 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname );
 // Struct: diverge_model_output_conf_t
 // to have fine-grained output control over diverge_model_to_file
 //
-// Members (all bool/int):
+// Members (all integers interpreted as bool if not specified else):
 //
 // kc - coarse kmesh
 // kf - fine kmesh
@@ -160,6 +160,10 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname );
 // H - Hamiltonian on fine mesh
 // U - Orbital to band matrices on fine mesh
 // E - energies on fine mesh
+// npath - *integer*. use this as the number of points on the IBZ path (cf.
+//         <diverge_model_output_set_npath>). Only used when nonzero; but then
+//         _with precedence_ over what is/has been set in
+//         <diverge_model_output_set_npath>. possible nonzero values: -1, >=1.
 typedef struct diverge_model_output_conf_t {
     int kc;
     int kf;
@@ -168,6 +172,7 @@ typedef struct diverge_model_output_conf_t {
     int H;
     int U;
     int E;
+    int npath;
 } diverge_model_output_conf_t;
 
 #if !defined(__cplusplus) && !defined(CTYPESGEN)
@@ -180,6 +185,7 @@ static const diverge_model_output_conf_t diverge_model_output_conf_defaults = {
     .H = 0,
     .U = 0,
     .E = 0,
+    .npath = 0,
 };
 #endif // __cplusplus
 
@@ -203,8 +209,6 @@ diverge_model_output_conf_t diverge_model_output_conf_defaults_CPP( void );
 char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname,
         const diverge_model_output_conf_t* cfg );
 
-// TODO(LK) add this to the output config; as additional parameter that doesn't
-// have precedence over sth that's set by the function?
 // Function: diverge_model_output_set_npath
 // set the number of points per IBZ segment for the bandstructure calculation.
 // defaults to DIVERGE_MODEL_NBANDSTRUCTURE (300). must be called before

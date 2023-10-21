@@ -111,10 +111,10 @@
 
     \EcolorizeBox{100}{102}{Fblue!20!white}
 
-    \EcolorizeBox{80}{94}{Faqua!30!white}
+    \EcolorizeBox{80}{95}{Faqua!30!white}
 
     \EcolorizeBox{67}{80}{gray!30!white}
-    \EcolorizeBox{94}{100}{gray!30!white}
+    \EcolorizeBox{95}{100}{gray!30!white}
 
     \foreach \idx in {0,1,...,60} {
       \tikzmath{
@@ -216,8 +216,9 @@
     \EbracketTwo{88}{89}{\ipd{eigenvalues}}
     \EbracketTwo{90}{91}{\ipd{k-mesh IBZ path}}
     \EbracketTwo{92}{93}{\ipd{kf-mesh IBZ path}}
+    \EbracketOne{94}{bandstructure config (\texttt{npath})}
     \tikzmath{\coordA = (Ecell80.east) + (0.1,0.007);
-              \coordB = (Ecell93.east) + (0.1,-0.007);}
+              \coordB = (Ecell94.east) + (0.1,-0.012);}
     \tikzmath{coordinate \cbufA;
               coordinate \cbufB;
               \cbufA = (\coordA) + (0.3,0);
