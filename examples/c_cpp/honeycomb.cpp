@@ -3,13 +3,13 @@
 
 #include <iostream>
 
-const index_t nk = 120;
+const index_t nk = 1200;
 const double t = 1.0;
-const double tp = 0.2;
-const double U = 3.0;
+const double tp = 0.1;
+const double U = 3.6;
 const double V = 0.0;
 const double V2 = 0.0;
-const index_t np = 2;
+const index_t np = 4;
 
 int main(int argc, char** argv) {
     diverge_init( &argc, &argv );
@@ -88,12 +88,12 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
 
     diverge_model_internals_common(m);
-    // in order to initialize symmetries correctly
-    diverge_symmetrize_2pt_fine( m, diverge_model_internals_get_H(m), NULL );
-    diverge_model_set_filling( m, NULL, -1, 0.7 );
+    diverge_model_set_filling( m, NULL, -1, 0.6 );
     diverge_model_internals_patch( m, np );
     diverge_model_output_conf_t cfg = diverge_model_output_conf_defaults_CPP();
     cfg.kc = true;
+    cfg.npath = -1;
+    cfg.kc_ibz_path = 1;
     char* md5 = diverge_model_to_file_finegrained(m, __FILE__ ".mod.dvg", &cfg);
     mpi_usr_printf( "md5sum: %s\n", md5 );
 
@@ -106,10 +106,12 @@ int main(int argc, char** argv) {
     eu.dLambda_fac = 1.0;
     eu.dLambda_fac_scale = 0.1;
     double maxvert = 0;
+    double chanmax[3] = {0};
     do {
         diverge_flow_step_euler( s, eu.Lambda, eu.dLambda );
         diverge_flow_step_vertmax( s, &maxvert );
-        printf( "%.5e %.5e\n", eu.Lambda, maxvert );
+        diverge_flow_step_chanmax( s, chanmax );
+        printf( "%.5e %.5e %.5e %.5e %.5e\n", eu.Lambda, chanmax[0], chanmax[1], chanmax[2], maxvert );
     } while (diverge_euler_next( &eu, maxvert ));
 
     diverge_postprocess_and_write( s, __FILE__ ".out.dvg" );
