@@ -804,14 +804,14 @@ def bandstructure_ticks( model ):
         else:
             if not model.kf_ibz_path is None:
                 n_per_segment = model.kf_ibz_path[0]
-                ticks += list( x[np.cumsum( np.concatenate( [[0], n_per_segment-1] ) )] )
+                ticks += list( x[np.concatenate( [[0], np.cumsum( n_per_segment ) - 1] )] )
 
     elif model.npath >= 1:
         ticks += list( x[ np.arange(n_ibz_path) * model.npath ] )
     elif model.npath == -1:
         if not model.kf_ibz_path is None:
             n_per_segment = model.kf_ibz_path[0]
-            ticks += list( x[np.cumsum( np.concatenate( [[0], n_per_segment-1] ) )] )
+            ticks += list( x[np.concatenate( [[0], np.cumsum( n_per_segment ) - 1] )] )
 
     if len(ticks) == n_ibz_path:
         return ticks
