@@ -1,8 +1,6 @@
 #include <diverge.h>
 #include <diverge_Eigen3.hpp>
 
-#include <iostream>
-
 const index_t nk = 1200;
 const double t = 1.0;
 const double tp = 0.1;
@@ -12,11 +10,13 @@ const double V2 = 0.0;
 const index_t np = 4;
 
 int main(int argc, char** argv) {
+    // init
     diverge_init( &argc, &argv );
     mpi_loglevel_set( 5 );
     diverge_compilation_status();
     diverge_model_t* m = diverge_model_init();
 
+    // set up honeycomb lattice
     m->lattice[0][0] = m->lattice[1][0] = sin(M_PI/3.);
     m->lattice[0][1] = m->lattice[1][1] = cos(M_PI/3.);
     m->lattice[0][1] *= -1.0;
@@ -36,9 +36,9 @@ int main(int argc, char** argv) {
     m->ibz_path[2][1] = 1./3.;
     strcpy( m->name, __FILE__ );
 
+    // find hopping parameters
     double t_norm = pos.col(0).norm();
     double tp_norm = 1.0;
-
     m->hop = (rs_hopping_t*)calloc(sizeof(rs_hopping_t), 1024);
     m->vert = (rs_vertex_t*)calloc(sizeof(rs_vertex_t), 1024);
     m->vert[m->n_vert++] = rs_vertex_t{ 'D', {0,0,0}, 0,0, -1,0,0,0, U };
@@ -58,6 +58,7 @@ int main(int argc, char** argv) {
         }
     }
 
+    // set up symmetries
     m->orb_symmetries = (complex128_t*)malloc(sizeof(complex128_t)*12*4);
     site_descr_t sites[2];
     for (int s=0; s<2; ++s) {
@@ -84,9 +85,11 @@ int main(int argc, char** argv) {
         m->n_sym++;
     }
 
+    // check!
     if (diverge_model_validate(m))
-        return EXIT_FAILURE;
+        diverge_mpi_exit(EXIT_FAILURE);
 
+    // internals, patching, and saving the model to disk
     diverge_model_internals_common(m);
     diverge_model_set_filling( m, NULL, -1, 0.6 );
     diverge_model_internals_patch( m, np );
@@ -97,12 +100,12 @@ int main(int argc, char** argv) {
     char* md5 = diverge_model_to_file_finegrained(m, __FILE__ ".mod.dvg", &cfg);
     mpi_usr_printf( "md5sum: %s\n", md5 );
 
+    // flow
     diverge_flow_step_t* s = diverge_flow_step_init( m, "patch", "PCD" );
     diverge_euler_t eu = diverge_euler_defaults_CPP();
     eu.Lambda = 10.0;
     eu.dLambda = -1.0;
     eu.maxvert = 10.0;
-    /* eu.maxiter = 10; */
     eu.dLambda_fac = 1.0;
     eu.dLambda_fac_scale = 0.1;
     double maxvert = 0;
@@ -114,8 +117,10 @@ int main(int argc, char** argv) {
         printf( "%.5e %.5e %.5e %.5e %.5e\n", eu.Lambda, chanmax[0], chanmax[1], chanmax[2], maxvert );
     } while (diverge_euler_next( &eu, maxvert ));
 
+    // post processing
     diverge_postprocess_and_write( s, __FILE__ ".out.dvg" );
 
+    // cleanup
     diverge_flow_step_free( s );
     diverge_model_free( m );
     diverge_finalize();

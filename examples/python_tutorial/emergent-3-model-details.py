@@ -89,7 +89,7 @@ ibz_path[:,:] = np.array( [ [0,0,0], [0,0.5,0], [0.5,0.5,0], [0,0,0] ] )
 # validate the model
 if diverge.model_validate( model ):
     diverge.mpi_py_eprint( "invalid model!" )
-    exit(1)
+    diverge.mpi_exit(1)
 
 # and initialize internal structures
 diverge.model_internals_common( model )
