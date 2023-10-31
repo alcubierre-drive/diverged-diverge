@@ -494,8 +494,10 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
         double gamma ) {
 
     // set energies to internal ptr if NULL
-    if (energies == NULL)
+    if (energies == NULL) {
         energies = mod->internals->E;
+        nb = mod->n_orb * mod->n_spin;
+    }
 
     mpi_vrb_printf("starting autofine using the $k$-means Lloyd algorithm\n");
 
