@@ -60,6 +60,8 @@ vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double
     // reset energy to automatic energy if not passed as parameter
     if (E == NULL)
         E = mod->internals->E;
+    if (nb == -1)
+        nb = mod->n_orb * mod->n_spin;
 
     // find IBZ
     vector<index_t> ibz_to_bz = find_ibz_pts( mod );
