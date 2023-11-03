@@ -1,4 +1,7 @@
 #!/bin/bash
+
+./build_python_packages.sh clean
+
 if [ $(uname -o) = "Darwin" ]
 then
     nd_exe=naturaldocs
