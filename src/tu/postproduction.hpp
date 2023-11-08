@@ -15,7 +15,7 @@
 class tu_postproduction
 {
 public:
-    tu_postproduction(const diverge_model_t*, Vertex* Vertex, Projection* proj);
+    tu_postproduction(const diverge_model_t*, Vertex* Vertex, Projection* proj, bool tu_skip_channel_calc);
     ~tu_postproduction();
 
     void run_and_save(string filename, bool lingaps, bool susc_ff, bool susc_full, bool save_self, bool save_full,bool save_symmetries);
@@ -84,6 +84,7 @@ private:
     bool called_lingap = false;
     bool called_suscep_ff = false;
     bool called_suscep_full = false;
+    bool skip_channel_calc;
     Vertex* vertex;
     Projection* proj;
     const diverge_model_t* model;

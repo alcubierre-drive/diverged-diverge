@@ -18,8 +18,10 @@ static bool check_hermicity(complex128_t* data, index_t linsize){
     return err_max < 1e-11;
 }
 
-tu_postproduction::tu_postproduction(const diverge_model_t* mod, Vertex* Vertexin, Projection* projin)
+tu_postproduction::tu_postproduction(const diverge_model_t* mod, Vertex* Vertexin,
+                                        Projection* projin, bool tu_skip_channel_calc)
 :
+    skip_channel_calc{tu_skip_channel_calc},
     vertex{Vertexin},
     proj{projin},
     model{mod}
@@ -30,41 +32,45 @@ tu_postproduction::tu_postproduction(const diverge_model_t* mod, Vertex* Vertexi
     tu_n_singular_values = 1;
 
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
-    Pval = (double*)calloc(linsize*vertex->my_nk,sizeof(double));
-    Cval = (double*)calloc(linsize*vertex->my_nk,sizeof(double));
-    Dval = (double*)calloc(linsize*vertex->my_nk,sizeof(double));
-    Ptype = (char*)calloc(vertex->my_nk,sizeof(char));
-    Ctype = (char*)calloc(vertex->my_nk,sizeof(char));
-    Dtype = (char*)calloc(vertex->my_nk,sizeof(char));
-    Pvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)*vertex->my_nk,sizeof(complex128_t));
-    Cvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)*vertex->my_nk,sizeof(complex128_t));
-    Dvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)*vertex->my_nk,sizeof(complex128_t));
+    if(!skip_channel_calc){
+        Pval = (double*)calloc(linsize*vertex->my_nk,sizeof(double));
+        Cval = (double*)calloc(linsize*vertex->my_nk,sizeof(double));
+        Dval = (double*)calloc(linsize*vertex->my_nk,sizeof(double));
+        Ptype = (char*)calloc(vertex->my_nk,sizeof(char));
+        Ctype = (char*)calloc(vertex->my_nk,sizeof(char));
+        Dtype = (char*)calloc(vertex->my_nk,sizeof(char));
+        Pvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)*vertex->my_nk,sizeof(complex128_t));
+        Cvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)*vertex->my_nk,sizeof(complex128_t));
+        Dvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)*vertex->my_nk,sizeof(complex128_t));
 
-    lenP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
-    lenC = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
-    lenD = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
-    offP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
-    offC = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
-    offD = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
+        lenP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
+        lenC = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
+        lenD = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
+        offP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
+        offC = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
+        offD = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
+    }
 }
 
 
 tu_postproduction::~tu_postproduction() {
-    free(Pval);
-    free(Cval);
-    free(Dval);
-    free(Ptype);
-    free(Ctype);
-    free(Dtype);
-    free(Pvec);
-    free(Cvec);
-    free(Dvec);
-    free(lenP);
-    free(lenC);
-    free(lenD);
-    free(offP);
-    free(offC);
-    free(offD);
+    if(!skip_channel_calc){
+        free(Pval);
+        free(Cval);
+        free(Dval);
+        free(Ptype);
+        free(Ctype);
+        free(Dtype);
+        free(Pvec);
+        free(Cvec);
+        free(Dvec);
+        free(lenP);
+        free(lenC);
+        free(lenD);
+        free(offP);
+        free(offC);
+        free(offD);
+    }
     if(called_lingap && diverge_mpi_comm_rank() == 0){
         free(Sgap_sc);
         free(Sgap_mag);
@@ -91,7 +97,7 @@ tu_postproduction::~tu_postproduction() {
 void tu_postproduction::run_and_save(string filename, bool lingaps, bool susc_ff,
                                             bool susc_full, bool save_self, bool save_full,
                                             bool save_symmetries) {
-    safe_channel_leading_ev();
+    if(!skip_channel_calc)safe_channel_leading_ev();
     if(lingaps) lingap_ff();
     if(susc_ff || susc_full) calc_susc(susc_ff, susc_full);
     to_file(filename, save_self, save_full,save_symmetries);
@@ -434,9 +440,7 @@ void tu_postproduction::construct_multiindex_maps(const diverge_model_t* model) 
     }
 }
 
-// TODO(@JH) could you include documentation for the file format somehow? I'm
-// not sure where to best put it, but I do think that documenting the header is
-// absolutely necessary.
+
 void tu_postproduction::to_file(string filename, bool save_self, bool save_full, bool save_symmetries) {
     index_t* header = (index_t*)calloc(128,sizeof(index_t));
     const char* version = tag_version();
@@ -445,39 +449,47 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     int i = 0;
     index_t my_rank = diverge_mpi_comm_rank();
     const index_t my_nk = vertex->my_nk;
-    index_t cop,coc,cod;
-    for(index_t rank = 0; rank < diverge_mpi_comm_size();++rank){
-        cop = lenP[my_nk-1]+offP[my_nk-1];
-        coc = lenC[my_nk-1]+offC[my_nk-1];
-        cod = lenD[my_nk-1]+offD[my_nk-1];
-        diverge_mpi_bcast_bytes((void*)(&cop), sizeof(index_t), rank);
-        diverge_mpi_bcast_bytes((void*)(&coc), sizeof(index_t), rank);
-        diverge_mpi_bcast_bytes((void*)(&cod), sizeof(index_t), rank);
-        if(my_rank > rank) {
-            for(index_t k = 0; k < my_nk; ++k) {
-                offP[k] += cop;
-                offC[k] += coc;
-                offD[k] += cod;
-            }
-        }
-    }
-    // total numer of elements per channel
-    cop = lenP[my_nk-1]+offP[my_nk-1];
-    coc = lenC[my_nk-1]+offC[my_nk-1];
-    cod = lenD[my_nk-1]+offD[my_nk-1];
-    diverge_mpi_bcast_bytes((void*)(&cop), sizeof(index_t), diverge_mpi_comm_size() - 1);
-    diverge_mpi_bcast_bytes((void*)(&coc), sizeof(index_t), diverge_mpi_comm_size() - 1);
-    diverge_mpi_bcast_bytes((void*)(&cod), sizeof(index_t), diverge_mpi_comm_size() - 1);
+    index_t cop = 0;
+    index_t coc = 0;
+    index_t cod = 0;
     index_t my_cop = 0;
     index_t my_coc = 0;
     index_t my_cod = 0;
-    for(index_t k = 0; k < my_nk; ++k) {
-        my_cop += lenP[k];
-        my_coc += lenC[k];
-        my_cod += lenD[k];
+    index_t nk_channel = 0;
+    if(!skip_channel_calc) {
+        nk_channel = tu_data->nkibz;
+        for(index_t rank = 0; rank < diverge_mpi_comm_size();++rank){
+            cop = lenP[my_nk-1]+offP[my_nk-1];
+            coc = lenC[my_nk-1]+offC[my_nk-1];
+            cod = lenD[my_nk-1]+offD[my_nk-1];
+            diverge_mpi_bcast_bytes((void*)(&cop), sizeof(index_t), rank);
+            diverge_mpi_bcast_bytes((void*)(&coc), sizeof(index_t), rank);
+            diverge_mpi_bcast_bytes((void*)(&cod), sizeof(index_t), rank);
+            if(my_rank > rank) {
+                for(index_t k = 0; k < my_nk; ++k) {
+                    offP[k] += cop;
+                    offC[k] += coc;
+                    offD[k] += cod;
+                }
+            }
+        }
+        // total numer of elements per channel
+        cop = lenP[my_nk-1]+offP[my_nk-1];
+        coc = lenC[my_nk-1]+offC[my_nk-1];
+        cod = lenD[my_nk-1]+offD[my_nk-1];
+        diverge_mpi_bcast_bytes((void*)(&cop), sizeof(index_t), diverge_mpi_comm_size() - 1);
+        diverge_mpi_bcast_bytes((void*)(&coc), sizeof(index_t), diverge_mpi_comm_size() - 1);
+        diverge_mpi_bcast_bytes((void*)(&cod), sizeof(index_t), diverge_mpi_comm_size() - 1);
+        for(index_t k = 0; k < my_nk; ++k) {
+            my_cop += lenP[k];
+            my_coc += lenC[k];
+            my_cod += lenD[k];
+        }
     }
+
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
     const index_t n_orb = model->n_orb;
+
 
     int size_self = 0;
     if(vertex->use_self && save_self)
@@ -511,33 +523,33 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
     // store vertex diagonalizations first
     // P channel
-    header[i] = tu_data->nkibz, ++i;
+    header[i] = nk_channel, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-    header[i] = tu_data->nkibz, ++i;
+    header[i] = nk_channel, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-    header[i] = tu_data->nkibz, ++i;
+    header[i] = nk_channel, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(char), ++i;
     header[i] = cop, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(double), ++i;
     header[i] = cop*linsize, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
     // C channel
-    header[i] = tu_data->nkibz, ++i;
+    header[i] = nk_channel, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-    header[i] = tu_data->nkibz, ++i;
+    header[i] = nk_channel, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-    header[i] = tu_data->nkibz, ++i;
+    header[i] = nk_channel, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(char), ++i;
     header[i] = coc, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(double), ++i;
     header[i] = coc*linsize, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
     // D channel
-    header[i] = tu_data->nkibz, ++i;
+    header[i] = nk_channel, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-    header[i] = tu_data->nkibz, ++i;
+    header[i] = nk_channel, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-    header[i] = tu_data->nkibz, ++i;
+    header[i] = nk_channel, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(char), ++i;
     header[i] = cod, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(double), ++i;
@@ -652,25 +664,27 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
 
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->symm->idx_ibz_in_fullmesh.data(), new_off, tu_data->nkibz*sindex);
     // P vertex write
-    new_off = diverge_mpi_write_byte_to_file(file, lenP, new_off + my_nk_off*sindex, my_nk*sindex);
-    new_off = diverge_mpi_write_byte_to_file(file, offP, new_off + my_nk_off*sindex, my_nk*sindex);
-    new_off = diverge_mpi_write_byte_to_file(file, Ptype, new_off + my_nk_off*schar, my_nk*schar);
-    new_off = diverge_mpi_write_byte_to_file(file, Pval, new_off + offP[0]*sdou, my_cop*sdou);
-    new_off = diverge_mpi_write_byte_to_file(file, Pvec, new_off + offP[0]*linsize*scdou, my_cop*linsize*scdou);
+    if(!skip_channel_calc) {
+        new_off = diverge_mpi_write_byte_to_file(file, lenP, new_off + my_nk_off*sindex, my_nk*sindex);
+        new_off = diverge_mpi_write_byte_to_file(file, offP, new_off + my_nk_off*sindex, my_nk*sindex);
+        new_off = diverge_mpi_write_byte_to_file(file, Ptype, new_off + my_nk_off*schar, my_nk*schar);
+        new_off = diverge_mpi_write_byte_to_file(file, Pval, new_off + offP[0]*sdou, my_cop*sdou);
+        new_off = diverge_mpi_write_byte_to_file(file, Pvec, new_off + offP[0]*linsize*scdou, my_cop*linsize*scdou);
 
-    // C vertex write
-    new_off = diverge_mpi_write_byte_to_file(file, lenC, new_off + my_nk_off*sindex, my_nk*sindex);
-    new_off = diverge_mpi_write_byte_to_file(file, offC, new_off + my_nk_off*sindex, my_nk*sindex);
-    new_off = diverge_mpi_write_byte_to_file(file, Ctype, new_off + my_nk_off*schar, my_nk*schar);
-    new_off = diverge_mpi_write_byte_to_file(file, Cval, new_off + offC[0]*sdou, my_coc*sdou);
-    new_off = diverge_mpi_write_byte_to_file(file, Cvec, new_off + offC[0]*linsize*scdou, my_coc*linsize*scdou);
+        // C vertex write
+        new_off = diverge_mpi_write_byte_to_file(file, lenC, new_off + my_nk_off*sindex, my_nk*sindex);
+        new_off = diverge_mpi_write_byte_to_file(file, offC, new_off + my_nk_off*sindex, my_nk*sindex);
+        new_off = diverge_mpi_write_byte_to_file(file, Ctype, new_off + my_nk_off*schar, my_nk*schar);
+        new_off = diverge_mpi_write_byte_to_file(file, Cval, new_off + offC[0]*sdou, my_coc*sdou);
+        new_off = diverge_mpi_write_byte_to_file(file, Cvec, new_off + offC[0]*linsize*scdou, my_coc*linsize*scdou);
 
-    // D vertex write
-    new_off = diverge_mpi_write_byte_to_file(file, lenD, new_off + my_nk_off*sindex, my_nk*sindex);
-    new_off = diverge_mpi_write_byte_to_file(file, offD, new_off + my_nk_off*sindex, my_nk*sindex);
-    new_off = diverge_mpi_write_byte_to_file(file, Dtype, new_off + my_nk_off*schar, my_nk*schar);
-    new_off = diverge_mpi_write_byte_to_file(file, Dval, new_off + offD[0]*sdou, my_cod*sdou);
-    new_off = diverge_mpi_write_byte_to_file(file, Dvec, new_off + offD[0]*linsize*scdou, my_cod*linsize*scdou);
+        // D vertex write
+        new_off = diverge_mpi_write_byte_to_file(file, lenD, new_off + my_nk_off*sindex, my_nk*sindex);
+        new_off = diverge_mpi_write_byte_to_file(file, offD, new_off + my_nk_off*sindex, my_nk*sindex);
+        new_off = diverge_mpi_write_byte_to_file(file, Dtype, new_off + my_nk_off*schar, my_nk*schar);
+        new_off = diverge_mpi_write_byte_to_file(file, Dval, new_off + offD[0]*sdou, my_cod*sdou);
+        new_off = diverge_mpi_write_byte_to_file(file, Dvec, new_off + offD[0]*linsize*scdou, my_cod*linsize*scdou);
+    }
     if(called_lingap) {
         new_off = diverge_mpi_write_byte_to_file_master(file, Sgap_sc, new_off, sdou*tu_n_singular_valuesP);
         new_off = diverge_mpi_write_byte_to_file_master(file, Ugap_sc, new_off, scdou*tu_n_singular_valuesP*linsize);

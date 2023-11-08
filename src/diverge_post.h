@@ -67,6 +67,9 @@ typedef struct {
     // choose how to handle non hermitian entries of the channels options
     // 'a'(utomatic), 's'(vd), 'e'(igen)
     char    tu_which_solver_mode;
+    // Variable: tu_skip_channel_calc
+    // if true, the eigenvectors of each channel are not calculated - usefull for RPA
+    bool  tu_skip_channel_calc;
     // Variable: tu_storing_threshold
     // sets a theshold above which all eigen/singular vectors will be stored (magnitude)
     double  tu_storing_threshold;
@@ -124,6 +127,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .grid_vertex_chan = '0',
 
     .tu_which_solver_mode = 'a',
+    .tu_skip_channel_calc = false,
     .tu_storing_threshold = 25.,
     .tu_storing_relative = 0,
     .tu_n_singular_values = 1,
