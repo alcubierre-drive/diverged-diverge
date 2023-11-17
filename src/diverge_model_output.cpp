@@ -432,7 +432,7 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
             for (index_t h=0; h<mod->n_hop; ++h) {
                 rs_hopping_t* hh = mod->hop+h;
                 Vec3d Rvec = Lvec * Map<Vec3idx>( hh->R ).cast<double>();
-                H[IDX4(hh->s2, hh->o2, hh->s1, hh->o1, no, ns, no)] +=
+                H[IDX4(hh->s1, hh->o1, hh->s2, hh->o2, no, ns, no)] +=
                     std::exp(-complex128_t(0,1) * Rvec.dot(kvec)) * hh->t;
             }
             double* here_buf = buf + (nb+3) * running_idx;
