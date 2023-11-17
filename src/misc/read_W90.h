@@ -31,5 +31,8 @@ rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* le
 #ifdef __cplusplus
 } // extern "C"
 
+// Function: diverge_read_W90
+// C++ function corresponding to <diverge_read_W90_C> that facilitates the usage
+// by returning an std::vector< <rs_hopping_t> > instead of messing with pointers.
 vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin );
 #endif

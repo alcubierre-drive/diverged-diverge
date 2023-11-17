@@ -58,31 +58,43 @@ typedef void (*full_vertex_generator_t)(const diverge_model_t* model,
         index_t k1, index_t k2, index_t k3, complex128_t* buf);
 
 // Struct: rs_hopping_t
+// Hopping parameters in the spirit of Wannier90.
 struct rs_hopping_t {
     // Variable: R[3]
+    // oriented distance in units of lattice vectors.
     index_t R[3];
     // Variable: o1, o2, s1, s2
+    // orbital/spin configuration. For SU(2) symmetric models, s1 and s2 are
+    // ignored.
     index_t o1, o2, s1, s2;
     // Variable: t
+    // value of the hopping element.
     complex128_t t;
 };
 
 // Struct: rs_vertex_t
-// when setting s1 == -1, use this as if it were the full SU2 description of the
-// real space vertex component
+// when setting s1 == -1 and SU(2) symmetry is not present in the model, use
+// this as if it were the full SU2 description of the real space vertex
+// component
 struct rs_vertex_t {
     // Variable: chan
+    // channel. can be 'P', 'C', or 'D'.
     char chan;
     // Variable: R[3]
+    // real space indices corresponding to the oriented distance of the real
+    // space vertex element in units of lattice vectors
     index_t R[3];
     // Variable: o1, o2, s1, s2, s3, s4
+    // orbital and spin configuration, channel specific.
     index_t o1, o2, s1, s2, s3, s4;
     // Variable: V
+    // value of the interaction element.
     complex128_t V;
 };
 
 // Struct: mom_patching_t
-// all index_t* are referencing the kmesh indices
+// all index_t* are referencing the kmesh indices. See <Patching> and the arXiv
+// artcle for how to use this structure.
 struct mom_patching_t {
     // Variable: n_patches
     index_t n_patches;
@@ -106,15 +118,21 @@ struct mom_patching_t {
 };
 
 // Struct: tu_formfactor_t
+// usually filled automatically when calling <diverge_model_internals_tu>. Can
+// be filled manually, consult the arXiv article
 struct tu_formfactor_t {
     // Variable: R[3]
+    // integer lattice vector distance
     index_t R[3];
     // Variable: ofrom, oto
+    // orbitals corresponding to the bond (going from ofrom to oto)
     index_t ofrom, oto;
     // Variable: d
+    // cartesian bond length
     double d;
-    // Variable ffidx
-    // generated automatically, no need to worry about it!
+    // Variable: ffidx
+    // generated automatically (used internally to associate integer lattice
+    // vector distances with formfactors), no need to worry about it!
     index_t ffidx;
 };
 
@@ -123,71 +141,109 @@ struct tu_formfactor_t {
 // the corresponding lengths are then set by the code
 struct diverge_model_t {
     // Variable: name
+    // optionally, you can name your model (also useful to, e.g., uniquely
+    // identify a model).
     char name[MAX_NAME_LENGTH];
 
     // momentum space
-    // Variable: nk
+
+    // Variable: nk[3]
+    // number of k points in each direction. set to 0 to skip dimension.
+    // *required*.
     index_t nk[3];
-    // Variable: nkf
+    // Variable: nkf[3]
+    // number of refined k points (total k points in each direction
+    // nk[i]*nkf[i]). dimension must match <nk[3]>. *required*.
     index_t nkf[3];
     // Variable: patching
+    // structure that holds the Fermi surface patching. Usually allocated with
+    // the help of other routines (e.g. <diverge_patching_from_indices>), but in
+    // principle the user's responsibility. Free'd by <diverge_model_free> if
+    // set.
     mom_patching_t* patching;
 
     // Variable: n_ibz_path
-    // can be left unset. if not, the band structure routine uses the hopping
-    // parameters to generate a band structure along the path. path in crystal
-    // (relative to reciprocal lattice vectors) coordinates.
+    // The band structure routine uses the hopping parameters to generate a band
+    // structure along the path.
     index_t n_ibz_path;
     // Variable: ibz_path[MAX_N_ORBS][3]
+    // path in crystal (relative to reciprocal lattice vectors) coordinates.
     double ibz_path[MAX_N_ORBS][3];
 
+    // lattice
+
     // Variable: n_orb
-    // lattice setup
+    // number of orbitals & sites. *required*
     index_t n_orb;
     // Variable: lattice
+    // lattice vectors, given in cartesian coordinates. lattice[i][0,1,2] is the
+    // ith lattice vector (C ordering). *required*.
     double lattice[3][3];
     // Variable: positions
+    // given in cartesian coordinates (_not in crystal/relative coordinates!_).
+    // *required*.
     double positions[MAX_N_ORBS][3];
+
+    // symmetries
 
     // Variable: n_sym
     // symmetry setup. use helper functions to generate meaningful symmetry
-    // operations. if n_sym is negative, the Hamiltonian will be resymmetrized
-    // before the diagonalisation
+    // operations (see <Symmetries>). if <n_sym> is negative, the Hamiltonian
+    // will be resymmetrized before diagonalization.
     index_t n_sym;
     // Variable: orb_symmetries
-    complex128_t* orb_symmetries; // shape (n_sym, ns*no, ns*no)
+    // orbital/site/spin space symmetry matrices in C ordering. Must be
+    // user-allocated. Free'd by <diverge_model_free>.
+    // shape: (n_sym, n_spin*n_orb, n_spin*n_orb)
+    complex128_t* orb_symmetries;
     // Variable: rs_symmetries
-    double rs_symmetries[MAX_N_SYM][3][3]; // shape (n_sym,3,3)
+    // real space symmetry matrices in C ordering.
+    // shape: (n_sym, 3, 3)
+    double rs_symmetries[MAX_N_SYM][3][3];
+
+    // hopping parameters
 
     // Variable: n_hop
-    // hopping parameters
+    // number of hopping parameters. *required*.
     index_t n_hop;
     // Variable: hop
-    rs_hopping_t* hop; // must not be NULL
+    // hopping parameters. user-allocated, free'd by <diverge_model_free>. _Must
+    // not be NULL (i.e. uninitialized)_. *required*.
+    rs_hopping_t* hop;
+
     // Variable: hfill
-    // <hamiltonian_generator_t>
+    // <hamiltonian_generator_t> that can be used to overwrite the default
+    // Hamiltonian generation.
     hamiltonian_generator_t hfill;
 
     // Variable: SU2
-    // determines which flow equations are used. if SU2 > 0, use SU2 symmetric
-    // flow equations. if SU2 == 0, use nonSU2 flow equations *and enforce
-    // exchange symmetric vertices*. if SU2 < 0, use nonSU2 flow equations *and
-    // do not enforce exchange symmetric vertices*.
+    // determines which flow equations are used. If SU2 > 0, use SU(2) symmetric
+    // flow equations. If SU2 == 0, use non-SU(2) flow equations and enforce
+    // exchange symmetric vertices. If SU2 < 0, use nonSU2 flow equations and
+    // do *not* enforce exchange symmetric vertices. *required*.
     int SU2;
     // Variable: n_spin
-    // must be set to 1 for SU2 symmetric models (i.e. iff SU2 > 0).
+    // must be set to 1 for SU(2) symmetric models (i.e. if SU2 > 0).
+    // *required*.
     index_t n_spin;
 
+    // vertex
+
     // Variable: n_vert
-    // vertex in real space for all channels
+    // number of real space vertex elements. *required*.
     index_t n_vert;
     // Variable: vert
+    // real space vertex elements. user-allocated, free'd by
+    // <diverge_model_free>. *required*.
     rs_vertex_t* vert;
 
     // tu code formfactors to include in calculation
+
     // Variable: tu_ff
+    // formfactor array. If allocated (!=NULL), do not auto-generate formfactors.
     tu_formfactor_t* tu_ff;
     // Variable: n_tu_ff
+    // number of formfactors.
     index_t n_tu_ff;
 
     // Variable: n_vert_chan[3]
@@ -196,45 +252,54 @@ struct diverge_model_t {
     index_t n_vert_chan[3];
 
     // Variable: vfill
-    // <channel_vertex_generator_t>
+    // <channel_vertex_generator_t> for custom channel vertex generation.
     channel_vertex_generator_t vfill;
     // Variable: ffill
-    // <full_vertex_generator_t>
+    // <full_vertex_generator_t> for full vertex generation.
     full_vertex_generator_t ffill;
     // Variable: gfill
-    // <greensfunc_generator_t>
+    // <greensfunc_generator_t> for custom Green's function generation.
     greensfunc_generator_t gfill;
     // Variable: grpoj
-    // <greensfunc_generator_t> used for projected loops, i.e. Lproj = GG – GprojGproj
+    // <greensfunc_generator_t> used for projected loops, i.e. Lproj = G×G –
+    // Gproj×Gproj (cFRG).
     greensfunc_generator_t gproj;
 
     // Variable: data
-    // used to add additional information to the struct, useful to "hack"
+    // used to add additional information to the struct, useful to "hack" or
+    // pass user data to function calls like <greensfunc_generator_t>.
     char* data;
     // Variable: nbytes_data
+    // specify how much data is actually added to the struct.
     index_t nbytes_data;
 
     // Variable: internals
-    // handled by code itself please do not alter
+    // handled by code itself. please do not alter.
     internals_t* internals;
 };
 
 // Function: diverge_hamilton_generator_default
-// <hamiltonian_generator_t>
+// The standard <hamiltonian_generator_t> used by
+// <diverge_model_internals_common>. It takes the hopping elements
+// <diverge_model_t.hop> and Fourier transforms them to momentum space.
 void diverge_hamilton_generator_default(const diverge_model_t* model,
         complex128_t* buf);
 // Function: diverge_greensfunc_generator_default
-// <greensfunc_generator_t>
+// The standard <greensfunc_generator_t>.
 greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* model,
         complex128_t Lambda, gf_complex_t* buf);
 // Function: diverge_channel_vertex_generator_default
-// <channel_vertex_generator_t>
+// The standard <channel_vertex_generator_t> that reads real space vertex
+// elements <diverge_model_t.vert> and Fourier transforms them to momentum
+// space.
 int diverge_channel_vertex_generator_default(diverge_model_t* model, char channel,
         complex128_t* buf);
 
 // Function: diverge_model_init
+// initialize a <diverge_model_t> with sane defaults. Usage *required*.
 diverge_model_t* diverge_model_init(void);
 // Function: diverge_model_free
+// clean up a <diverge_model_t> instance and all the attached arrays.
 void diverge_model_free(diverge_model_t* model);
 
 #ifdef __cplusplus
