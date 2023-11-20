@@ -26,6 +26,17 @@ typedef struct rs_hopping_t rs_hopping_t;
 //         one which increases memory slowly (negative) or fast (positive) in
 //         the W90 file. Note that the divERGe convention is always (s,o), i.e.
 //         spin indices increasing memory fast ('outer indices').
+//
+// Example:
+// ===C/C++===
+// diverge_model_t* model = diverge_model_init();
+// // set some model parameters...
+// model->SU2 = 1;
+// model->n_spin = 1;
+// model->hop = diverge_read_W90_C( "/path/to/material_hr.dat",
+//                                  0, &model->n_hop );
+// // do something with the hoppings here!
+// ===========
 rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len );
 
 #ifdef __cplusplus
