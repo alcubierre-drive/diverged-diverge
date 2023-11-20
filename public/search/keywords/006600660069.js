@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("ffi",["Variable"],[["ffill",,[["diverge_model_t",,,,0,"File:src/diverge_model.h:diverge_model_t.ffill","CClass:diverge_model_t:ffill"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("ffi",["Variable"],[["ffidx",,[["tu_formfactor_t",,,,0,"File:src/diverge_model.h:tu_formfactor_t.ffidx","CClass:tu_formfactor_t:ffidx"]]],["ffill",,[["diverge_model_t",,,,0,"File:src/diverge_model.h:diverge_model_t.ffill","CClass:diverge_model_t:ffill"]]]]);
