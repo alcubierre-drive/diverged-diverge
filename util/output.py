@@ -582,6 +582,14 @@ class diverge_post_tu:
     SELFENERGY
     selfenergy: Self-energy at the critical scale ([n_orb*n_spin]*2,nktot)
 
+
+    FULL channels
+    Pchannel: P channel on full PZ
+    Cchannel: C channel on full PZ
+    Dchannel: D channel on full PZ
+    pploop: non interacting PP-loop channel on full PZ
+    phloop: non interacting PH-loop channel on full PZ
+
     SYMMETRIES
     symm_o2m_len: length of symmetry maps
     symm_o2m_off: offsets of symmetry maps
