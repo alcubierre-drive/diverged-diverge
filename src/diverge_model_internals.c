@@ -38,6 +38,17 @@ EndFunc:
     va_end(ap);
 }
 
+static index_t find_zero_array_elements( void* array_, index_t sz, index_t num ) {
+    unsigned char* array = array_;
+    unsigned char* testblock = calloc(1, sz);
+    index_t num_nonzero = 0;
+    for (index_t i=0; i<num; ++i)
+        if (memcmp( testblock, array+i*sz, sz ) == 0)
+            num_nonzero++;
+    free(testblock);
+    return num_nonzero;
+}
+
 typedef enum {
     default_spin_index_zerolength,
     default_spin_index_all,
@@ -266,11 +277,32 @@ int diverge_model_validate( diverge_model_t* model ) {
             break;
     }
 
+    index_t num_zero = 0;
+
+    num_zero = find_zero_array_elements( model->hop, sizeof(rs_hopping_t), model->n_hop );
+    verbose_assert( num_zero == 0, "found %li hopping elements that are all zero bytes\n", num_zero );
+    num_zero = find_zero_array_elements( model->vert, sizeof(rs_vertex_t), model->n_vert );
+    verbose_assert( num_zero == 0, "found %li vertex elements that are all zero bytes\n", num_zero );
+
+    num_zero = find_zero_array_elements( model->rs_symmetries, sizeof(double)*9, model->n_sym );
+    verbose_assert( num_zero == 0, "found %li rs symmetry elements that are all zero bytes\n", num_zero );
+    num_zero = find_zero_array_elements( model->orb_symmetries, sizeof(complex128_t)
+            *POW2(model->n_orb*model->n_spin), model->n_sym );
+    verbose_assert( num_zero == 0, "found %li orbital symmetry elements that are all zero bytes\n", num_zero );
+
+    num_zero = find_zero_array_elements( model->positions, sizeof(double)*3, model->n_orb );
+    if (num_zero != 0 && model->n_orb > 1) mpi_wrn_printf( "found only zero positions and n_orb > 1. INTENDED?\n" );
+
+    num_zero = find_zero_array_elements( model->lattice, sizeof(double)*3, 3 );
+    if (num_zero != 0) mpi_wrn_printf( "found %li zero lattice vectors. INTENDED?\n", num_zero );
+
     verbose_assert( model->n_vert >= 0, "invalid n_vert (%li)\n", model->n_vert )
     verbose_assert( model->gfill != NULL, "must provide gfill (found NULL)\n" )
-    verbose_assert( model->vfill != NULL || model->ffill != NULL, "must provide either vfill or ffill (found NULL)\n" )
+    verbose_assert( model->vfill != NULL || model->ffill != NULL,
+            "must provide either vfill or ffill (found NULL)\n" )
     if (model->data != NULL)
-        verbose_assert( model->nbytes_data > 0, "additional data set, nbytes_data>0 required, found nbytes_data=%li\n", model->nbytes_data )
+        verbose_assert( model->nbytes_data > 0, "additional data set, nbytes_data>0 required, "
+                "found nbytes_data=%li\n", model->nbytes_data )
     if (error)
         mpi_err_printf( "encountered %i errors…\n", error );
     return error;

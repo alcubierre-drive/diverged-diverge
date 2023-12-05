@@ -620,7 +620,7 @@ if not _libs["divERGe"] is None:
 
     model_set_filling = _libs["divERGe"].get("diverge_model_set_filling", "cdecl")
     model_set_filling.argtypes = [POINTER(model_t), POINTER(c_double), index_t, c_double]
-    model_set_filling.restype = None
+    model_set_filling.restype = c_double
 
     model_set_chempot = _libs["divERGe"].get("diverge_model_set_chempot", "cdecl")
     model_set_chempot.argtypes = [POINTER(model_t), POINTER(c_double), index_t, c_double]

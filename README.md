@@ -42,7 +42,7 @@ diverge.finalize()
 ```
 
 # Citation
-Please cite [arXiv.XXXX.XXXXX](https://doi.org/XX.XXXXX/arXiv.XXXX.XXXXX) when
+Please cite [arXiv.2311.07667](https://doi.org/10.48550/arXiv.2311.07667) when
 using divERGe.
 
 # License

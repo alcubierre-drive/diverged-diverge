@@ -149,7 +149,7 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname );
 // Struct: diverge_model_output_conf_t
 // to have fine-grained output control over diverge_model_to_file
 //
-// Members (all integers interpreted as bool if not specified else):
+// Members (*all integers interpreted as bool if not specified else*):
 //
 // kc - coarse kmesh
 // kf - fine kmesh
