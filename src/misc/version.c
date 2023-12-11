@@ -2,6 +2,8 @@
 
 #include "version.h"
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 static char h_git_version[512];
 static char h_tag_version[512];
@@ -52,7 +54,11 @@ const char* tag_version( void ) {
 
 int is_version_dirty( void ) {
     #ifndef NO_GIT_VERSION
-    return strlen( GIT_VERSION ) != 7;
+    char* sv = calloc(1, strlen(GIT_VERSION)+1);
+    int nread = sscanf( GIT_VERSION, "%[0-9,a-f]", sv );
+    int versions_equal = nread == 0 ? 0 : !strcmp( sv, GIT_VERSION );
+    free( sv );
+    return !versions_equal;
     #else
 
     #ifdef TAG_VERSION
