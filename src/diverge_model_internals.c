@@ -291,7 +291,8 @@ int diverge_model_validate( diverge_model_t* model ) {
     verbose_assert( num_zero == 0, "found %li orbital symmetry elements that are all zero bytes\n", num_zero );
 
     num_zero = find_zero_array_elements( model->positions, sizeof(double)*3, model->n_orb );
-    if (num_zero != 0 && model->n_orb > 1) mpi_wrn_printf( "found only zero positions and n_orb > 1. INTENDED?\n" );
+    if (num_zero == model->n_orb && model->n_orb > 1)
+        mpi_wrn_printf( "found only zero positions and n_orb > 1. INTENDED?\n" );
 
     num_zero = find_zero_array_elements( model->lattice, sizeof(double)*3, 3 );
     if (num_zero != 0) mpi_wrn_printf( "found %li zero lattice vectors. INTENDED?\n", num_zero );
