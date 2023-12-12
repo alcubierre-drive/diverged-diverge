@@ -35,8 +35,8 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
     complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
 
     PropMom.GF_zero_T(I128*0.1);
-    PropMom.S_ph_loop_static_simple(lm);
-    PropMom.S_ph_loop_static_red(lmr);
+    PropMom.S_loop_static_simple<false>(lm);
+    PropMom.S_loop_static_red<false>(lmr);
     PropMom.S_ph_loop_static_red_gpu(helper);
     PropMom.merge_gpu_cpu_loop(lmrg, helper);
 
@@ -48,8 +48,8 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
     CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom.nk));
     CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom.nk));
-    PropMom.S_pp_loop_static_simple(lm);
-    PropMom.S_pp_loop_static_red(lmr);
+    PropMom.S_loop_static_simple<true>(lm);
+    PropMom.S_loop_static_red<true>(lmr);
     memset((void*)lmg,0,POW2(n_orbffm*mom->n_spin)*PropMom.nk*sizeof(complex128_t));
     memset((void*)lmrg,0,POW2(n_orbffm*mom->n_spin)*PropMom.nk*sizeof(complex128_t));
     PropMom.S_pp_loop_static_simple_gpu(helper);
@@ -85,11 +85,11 @@ TEST_CASE("momentum loop cpu gpu offloading", "[prop][prop_offload]")
 
     PropMom.GF_zero_T(I128*0.1);
 
-    PropMom.S_ph_loop_static_simple(lmr);
+    PropMom.S_loop_static_simple<false>(lmr);
     PropMom.ph_loop(lmrg);
     CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
 
-    PropMom.S_pp_loop_static_simple(lmr);
+    PropMom.S_loop_static_simple<true>(lmr);
     PropMom.pp_loop(lmrg);
     CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
 
