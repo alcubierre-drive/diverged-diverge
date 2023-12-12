@@ -28,9 +28,9 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     cFRG_loop{model->gproj!=NULL},
     which_fft_simple{tu_data->which_fft_simple},
     which_fft_red{tu_data->which_fft_red},
-    which_fft_greens{tu_data->which_fft_greens},
-    chunksize_max{tu_data->mpi_fft_chunksize < 0 ? diverge_omp_num_threads() : tu_data->mpi_fft_chunksize}
+    which_fft_greens{tu_data->which_fft_greens}
 {
+    chunksize_max = tu_data->mpi_fft_chunksize < 0 ? diverge_omp_num_threads() : tu_data->mpi_fft_chunksize;
     index_t task_spin = POW4(n_spin);
     index_t tasks_dist = tu_data->use_reduced_loop ? (index_t)tu_data->unique_mi_l.size() : POW2(n_orbff);
     index_t nkff[3];
@@ -147,13 +147,11 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
             fftw_plan_with_nthreads(1);
             if (buffer_ggm.size() == 0u) {
                 buffer_ggm.resize(diverge_omp_num_threads());
-                for (int i=0; i<diverge_omp_num_threads(); ++i)
-                    buffer_ggm[i] = (complex128_t*)fftw_alloc_complex(nktot);
+                for (auto& buf: buffer_ggm) buf = (complex128_t*)fftw_alloc_complex(nktot);
             }
             if (buffer_ggp.size() == 0u) {
-                for (int i=0; i<diverge_omp_num_threads(); ++i)
                 buffer_ggp.resize(diverge_omp_num_threads());
-                    buffer_ggp[i] = (complex128_t*)fftw_alloc_complex(nktot);
+                for (auto& buf: buffer_ggp) buf = (complex128_t*)fftw_alloc_complex(nktot);
             }
             if (!fft_single_backward)
                 fft_single_backward = fftw_plan_many_dft( 3, dims, 1,

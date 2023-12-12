@@ -216,7 +216,7 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
     int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]), (int)(vnk[2]*vnkf[2])};
 
     // XXX algorithm choice: greedy XXX
-    if (which_fft_simple == tu_fft_algorithm_greedy) {
+    if (which_fft_red == tu_fft_algorithm_greedy) {
 
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
@@ -367,7 +367,7 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
 
         // execute DFTs
         fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
-        if (which_fft_simple == tu_fft_algorithm_mpi)
+        if (which_fft_red == tu_fft_algorithm_mpi)
             p->execute( buffer_ggm_many, buffer_ggp_many );
         else
             fftw_execute_dft( pp ? fft_many_forward : fft_many_backward,
