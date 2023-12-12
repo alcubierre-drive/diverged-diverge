@@ -36,12 +36,12 @@ void diverge_init( int* pargc, char*** pargv ) {
         pargc = &argc;
         pargv = &argv;
     }
-    int provided = MPI_THREAD_FUNNELED;
-    MPI_Init_thread( pargc, pargv, MPI_THREAD_FUNNELED, &provided );
+    int provided = 0;
+    MPI_Init_thread( pargc, pargv, MPI_THREAD_SERIALIZED, &provided );
     diverge_mpi_comm = MPI_COMM_WORLD;
     diverge_owns_mpi_context = 1;
 
-    if (provided < MPI_THREAD_FUNNELED)
+    if (provided < MPI_THREAD_SERIALIZED)
         mpi_wrn_printf( "MPI thread implementation is non optimal\n" );
 
     init_internal_libs();
