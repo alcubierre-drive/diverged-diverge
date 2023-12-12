@@ -245,7 +245,7 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
         GF_fft_conj_plus[k+nktot*(b+nb*o)] = gf_buf[o+nb*b+nb2*k + nb2*nktot]*weight;
     }
     if(nktot > 1) {
-        if (fft_nons2_backward_mpi) {
+        if (which_fft_greens == tu_fft_algorithm_mpi) {
             fft_nons2_backward_mpi->execute( GF_fft_plus, GF_fft_plus );
             fft_nons2_backward_mpi->execute( GF_fft_conj_plus, GF_fft_conj_plus );
         } else {
@@ -284,7 +284,7 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
         }
 
         if(nktot > 1) {
-            if (fft_nons2_backward_mpi) {
+            if (which_fft_greens == tu_fft_algorithm_mpi) {
                 fft_nons2_backward_mpi->execute( cFRG_GF_fft_plus, cFRG_GF_fft_plus );
                 fft_nons2_backward_mpi->execute( cFRG_GF_fft_conj_plus, cFRG_GF_fft_conj_plus );
             } else {
