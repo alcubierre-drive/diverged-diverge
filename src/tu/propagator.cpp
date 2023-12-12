@@ -25,7 +25,11 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     my_nk_off{tu_data->my_nk_off},
     n_frq{tu_data->n_frq},
     SU2{model->SU2 > 0},
-    cFRG_loop{model->gproj!=NULL}
+    cFRG_loop{model->gproj!=NULL},
+    which_fft_simple{tu_data->which_fft_simple},
+    which_fft_red{tu_data->which_fft_red},
+    which_fft_greens{tu_data->which_fft_greens},
+    chunksize_max{tu_data->mpi_fft_chunksize < 0 ? diverge_omp_num_threads() : tu_data->mpi_fft_chunksize}
 {
     index_t task_spin = POW4(n_spin);
     index_t tasks_dist = tu_data->use_reduced_loop ? (index_t)tu_data->unique_mi_l.size() : POW2(n_orbff);
@@ -49,33 +53,8 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     }
     #endif
 
-    int fftwnthr = diverge_fftw_num_threads();
-    fftw_plan_with_nthreads(1);
-    const index_t* vnk = model->nk;
-    const index_t* vnkf = model->nkf;
-    int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]),
-                                         (int)(vnk[2]*vnkf[2])};
-    if(nktot>1) {
-        buffer_ggm.resize(diverge_omp_num_threads());
-        buffer_ggp.resize(diverge_omp_num_threads());
-        for (int i=0; i<diverge_omp_num_threads(); ++i) {
-            buffer_ggm[i] = (complex128_t*)fftw_alloc_complex(nktot);
-            buffer_ggp[i] = (complex128_t*)fftw_alloc_complex(nktot);
-        }
-        fft_single_backward = fftw_plan_many_dft( 3, dims, 1,
-                (fftw_complex*)buffer_ggm[0], dims, 1, nktot,
-                (fftw_complex*)buffer_ggp[0], dims, 1, nktot,
-                FFTW_BACKWARD, FFTW_MEASURE );
-        fft_single_forward = fftw_plan_many_dft( 3, dims, 1,
-                (fftw_complex*)buffer_ggm[0], dims, 1, nktot,
-                (fftw_complex*)buffer_ggp[0], dims, 1, nktot,
-                FFTW_FORWARD, FFTW_MEASURE );
-        fft_nons2_backward = fftw_plan_many_dft( 3, dims, POW2(n_spin*n_orb),
-                (fftw_complex*)GF_fft_plus, dims, 1, nktot,
-                (fftw_complex*)GF_fft_plus, dims, 1, nktot,
-                FFTW_BACKWARD, FFTW_MEASURE );
-    }
-    fftw_plan_with_nthreads(fftwnthr);
+    cpu_fft_algorithm_init( which_fft_greens, which_fft_simple, which_fft_red );
+
     c2fmap.resize(my_nk);
     if(tu_data->symm->use_symmetries) {
         for(index_t i = 0; i < my_nk;++i)
@@ -86,6 +65,112 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
             c2fmap[i] = kidxc2f(i+my_nk_off,model->nk,model->nkf);
     }
 }
+
+void tu_loop_t::cpu_fft_algorithm_cleanup( void ) {
+    if (nktot <= 1) return;
+
+    if (fft_single_forward) fftw_destroy_plan(fft_single_forward);
+    if (fft_single_backward) fftw_destroy_plan(fft_single_backward);
+    if (fft_nons2_backward) fftw_destroy_plan(fft_nons2_backward);
+    if (fft_many_forward) fftw_destroy_plan(fft_many_forward);
+    if (fft_many_backward) fftw_destroy_plan(fft_many_backward);
+    if (buffer_ggm_many) fftw_free(buffer_ggm_many);
+    if (buffer_ggp_many) fftw_free(buffer_ggp_many);
+
+    for (complex128_t* buf : buffer_ggm) fftw_free(buf);
+    for (complex128_t* buf : buffer_ggp) fftw_free(buf);
+
+    if (fft_many_backward_mpi) delete fft_many_backward_mpi;
+    if (fft_many_forward_mpi) delete fft_many_forward_mpi;
+    if (fft_nons2_backward_mpi) delete fft_nons2_backward_mpi;
+}
+
+void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
+        tu_fft_algorithm_t simple, tu_fft_algorithm_t red ) {
+
+    if (nktot <= 1) return;
+
+    int fftwnthr = diverge_fftw_num_threads();
+    const index_t* vnk = model->nk;
+    const index_t* vnkf = model->nkf;
+    int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]), (int)(vnk[2]*vnkf[2])};
+
+    switch (greens) {
+        case tu_fft_algorithm_mpi:
+            if (!fft_nons2_backward_mpi)
+                fft_nons2_backward_mpi = new fftw_mpi_plan( dims, POW2(n_spin*n_orb),
+                    GF_fft_plus, GF_fft_plus, FFTW_BACKWARD );
+            break;
+        case tu_fft_algorithm_split:
+        case tu_fft_algorithm_greedy:
+        default:
+            if (!fft_nons2_backward)
+                fft_nons2_backward = fftw_plan_many_dft( 3, dims, POW2(n_spin*n_orb),
+                    (fftw_complex*)GF_fft_plus, dims, 1, nktot,
+                    (fftw_complex*)GF_fft_plus, dims, 1, nktot,
+                    FFTW_BACKWARD, FFTW_MEASURE );
+            break;
+    }
+
+    tu_fft_algorithm_t simple_red_algos[] = {simple, red};
+    for (int i=0; i<2; ++i) switch (simple_red_algos[i]) {
+        case tu_fft_algorithm_mpi:
+            if (!buffer_ggm_many)
+                buffer_ggm_many = (complex128_t*)fftw_alloc_complex(nktot * chunksize_max);
+            if (!buffer_ggp_many)
+                buffer_ggp_many = (complex128_t*)fftw_alloc_complex(nktot * chunksize_max);
+            if (!fft_many_backward_mpi)
+                fft_many_backward_mpi = new fftw_mpi_plan( dims, chunksize_max,
+                    buffer_ggm_many, buffer_ggp_many, FFTW_BACKWARD );
+            if (!fft_many_forward_mpi)
+                fft_many_forward_mpi = new fftw_mpi_plan( dims, chunksize_max,
+                    buffer_ggm_many, buffer_ggp_many, FFTW_FORWARD );
+            break;
+        case tu_fft_algorithm_split:
+            if (!buffer_ggm_many)
+                buffer_ggm_many = (complex128_t*)fftw_alloc_complex(nktot * chunksize_max);
+            if (!buffer_ggp_many)
+                buffer_ggp_many = (complex128_t*)fftw_alloc_complex(nktot * chunksize_max);
+            if (!fft_many_backward)
+                fft_many_backward = fftw_plan_many_dft( 3, dims, chunksize_max,
+                    (fftw_complex*)buffer_ggm_many, dims, 1, nktot,
+                    (fftw_complex*)buffer_ggp_many, dims, 1, nktot,
+                    FFTW_BACKWARD, FFTW_MEASURE );
+            if (!fft_many_forward)
+                fft_many_forward = fftw_plan_many_dft( 3, dims, chunksize_max,
+                    (fftw_complex*)buffer_ggm_many, dims, 1, nktot,
+                    (fftw_complex*)buffer_ggp_many, dims, 1, nktot,
+                    FFTW_FORWARD, FFTW_MEASURE );
+            break;
+        case tu_fft_algorithm_greedy:
+        default:
+            fftw_plan_with_nthreads(1);
+            if (buffer_ggm.size() == 0u) {
+                buffer_ggm.resize(diverge_omp_num_threads());
+                for (int i=0; i<diverge_omp_num_threads(); ++i)
+                    buffer_ggm[i] = (complex128_t*)fftw_alloc_complex(nktot);
+            }
+            if (buffer_ggp.size() == 0u) {
+                for (int i=0; i<diverge_omp_num_threads(); ++i)
+                buffer_ggp.resize(diverge_omp_num_threads());
+                    buffer_ggp[i] = (complex128_t*)fftw_alloc_complex(nktot);
+            }
+            if (!fft_single_backward)
+                fft_single_backward = fftw_plan_many_dft( 3, dims, 1,
+                    (fftw_complex*)buffer_ggm[0], dims, 1, nktot,
+                    (fftw_complex*)buffer_ggp[0], dims, 1, nktot,
+                    FFTW_BACKWARD, FFTW_MEASURE );
+            if (!fft_single_forward)
+                fft_single_forward = fftw_plan_many_dft( 3, dims, 1,
+                    (fftw_complex*)buffer_ggm[0], dims, 1, nktot,
+                    (fftw_complex*)buffer_ggp[0], dims, 1, nktot,
+                    FFTW_FORWARD, FFTW_MEASURE );
+            fftw_plan_with_nthreads(fftwnthr);
+            break;
+    }
+}
+
+
 
 tu_loop_t::~tu_loop_t() {
     #ifdef USE_CUDA
@@ -121,15 +206,8 @@ tu_loop_t::~tu_loop_t() {
         fftw_free(cFRG_GF_fft_conj_plus);
     }
     cuda_delete_prop_descr(&cuda_descr);
-    if(nktot>1) {
-        fftw_destroy_plan(fft_single_forward);
-        fftw_destroy_plan(fft_single_backward);
-        fftw_destroy_plan(fft_nons2_backward);
-        for(int i = 0; i < diverge_omp_num_threads();++i) {
-            fftw_free(buffer_ggm[i]);
-            fftw_free(buffer_ggp[i]);
-        }
-    }
+
+    cpu_fft_algorithm_cleanup();
 }
 
 
@@ -167,8 +245,13 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
         GF_fft_conj_plus[k+nktot*(b+nb*o)] = gf_buf[o+nb*b+nb2*k + nb2*nktot]*weight;
     }
     if(nktot > 1) {
-        fftw_execute_dft( fft_nons2_backward, (fftw_complex*)GF_fft_plus, (fftw_complex*)GF_fft_plus );
-        fftw_execute_dft( fft_nons2_backward, (fftw_complex*)GF_fft_conj_plus, (fftw_complex*)GF_fft_conj_plus );
+        if (fft_nons2_backward_mpi) {
+            fft_nons2_backward_mpi->execute( GF_fft_plus, GF_fft_plus );
+            fft_nons2_backward_mpi->execute( GF_fft_conj_plus, GF_fft_conj_plus );
+        } else {
+            fftw_execute_dft( fft_nons2_backward,(fftw_complex*)GF_fft_plus,(fftw_complex*)GF_fft_plus );
+            fftw_execute_dft( fft_nons2_backward,(fftw_complex*)GF_fft_conj_plus,(fftw_complex*)GF_fft_conj_plus );
+        }
     }
     if(cFRG_loop) {
         greensfunc_op_t res = model->gproj(model, lambda, gf_buf_cfrg);
@@ -201,8 +284,15 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
         }
 
         if(nktot > 1) {
-            fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_plus, (fftw_complex*)cFRG_GF_fft_plus );
-            fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_conj_plus, (fftw_complex*)cFRG_GF_fft_conj_plus );
+            if (fft_nons2_backward_mpi) {
+                fft_nons2_backward_mpi->execute( cFRG_GF_fft_plus, cFRG_GF_fft_plus );
+                fft_nons2_backward_mpi->execute( cFRG_GF_fft_conj_plus, cFRG_GF_fft_conj_plus );
+            } else {
+                fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_plus,
+                    (fftw_complex*)cFRG_GF_fft_plus );
+                fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_conj_plus,
+                    (fftw_complex*)cFRG_GF_fft_conj_plus );
+            }
         }
     }
 }

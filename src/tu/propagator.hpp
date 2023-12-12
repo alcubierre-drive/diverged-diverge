@@ -5,6 +5,7 @@
 #include "../diverge_common.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
+#include "../misc/mpifft.hpp"
 #include "diverge_interface.hpp"
 #include "global.hpp"
 #include "cuda_init.hpp"
@@ -114,12 +115,35 @@ public:
 private:
     bool cFRG_loop;
 
-    fftw_plan fft_nons2_backward,
-              fft_single_backward,
-              fft_single_forward;
+    tu_fft_algorithm_t which_fft_simple, which_fft_red, which_fft_greens;
+    index_t chunksize_max;
 
-    vector<complex128_t*> buffer_ggm;
-    vector<complex128_t*> buffer_ggp;
+    // tu_fft_algorithm_greedy
+    // greens
+    fftw_plan fft_nons2_backward = NULL;
+    // simple & red
+    fftw_plan fft_single_backward = NULL,
+              fft_single_forward = NULL;
+    vector<complex128_t*> buffer_ggm,
+                          buffer_ggp;
+
+    // tu_fft_algorithm_split
+    // simple & red
+    fftw_plan fft_many_backward = NULL,
+              fft_many_forward = NULL;
+    complex128_t *buffer_ggm_many = NULL,
+                 *buffer_ggp_many = NULL;
+
+    // tu_fft_algorithm_mpi
+    // simple & red
+    fftw_mpi_plan *fft_many_backward_mpi = NULL,
+                  *fft_many_forward_mpi = NULL;
+    // greens
+    fftw_mpi_plan *fft_nons2_backward_mpi = NULL;
+
+    void cpu_fft_algorithm_init( tu_fft_algorithm_t greens, tu_fft_algorithm_t simple, tu_fft_algorithm_t red );
+    void cpu_fft_algorithm_cleanup( void );
+
     complex128_t* GF_fft_plus;
     complex128_t* GF_fft_conj_plus;
 

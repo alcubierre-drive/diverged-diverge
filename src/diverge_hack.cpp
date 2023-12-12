@@ -53,13 +53,25 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         if(TU_INTERNALS->offload_cpu > 1.0)
             TU_INTERNALS->offload_cpu = 0.0;
     }
-    CHECKKEY("tu_cpu_offload") {
+    CHECKKEY("tu_percent_mem_GPU_blocked") {
         TU_INTERNALS->percent_mem_GPU_blocked = atof(val);
         if(TU_INTERNALS->percent_mem_GPU_blocked > 1.0)
             TU_INTERNALS->percent_mem_GPU_blocked = 0.9;
     }
     CHECKKEY("tu_selfenergy_flow") {
         TU_INTERNALS->tu_selfenergy_flow = (bool)atoi(val);
+    }
+    CHECKKEY("tu_mpifft_chunksize") {
+        TU_INTERNALS->mpi_fft_chunksize = atoi(val);
+    }
+    CHECKKEY("tu_which_fft_greens") {
+        TU_INTERNALS->which_fft_greens = (tu_fft_algorithm_t)atoi(val);
+    }
+    CHECKKEY("tu_which_fft_simple") {
+        TU_INTERNALS->which_fft_simple = (tu_fft_algorithm_t)atoi(val);
+    }
+    CHECKKEY("tu_which_fft_red") {
+        TU_INTERNALS->which_fft_red = (tu_fft_algorithm_t)atoi(val);
     }
     CHECKKEY("npatch_gpu_workshare") {
         INTERNALS->patch_gpu_workshare = atof(val);

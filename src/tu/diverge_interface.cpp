@@ -26,6 +26,12 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
     info->symm = new symmstruct_t;
     info->use_reduced_loop = true;
     info->tu_selfenergy_flow = false;
+    info->mpi_fft_chunksize = -1; // auto
+    #if defined(USE_MPI) && defined(USE_MPI_FFTW)
+    info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_mpi;
+    #else
+    info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_greedy;
+    #endif
     model->internals->tu_data = (void*) info;
     model->internals->tu_data_destructor = tu_data_destructor;
     info->n_frq = n_frq;

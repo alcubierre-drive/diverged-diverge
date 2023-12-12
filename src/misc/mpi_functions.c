@@ -148,6 +148,11 @@ void diverge_mpi_recv_double( void* data, int num, int source, int tag ) {
     MPI_Recv( data, num, MPI_DOUBLE, source, tag, diverge_mpi_comm, &result );
 }
 
+void diverge_mpi_gatherv_index( const void* send, int count, void* recv, int* counts, int* displs, int root ) {
+    MPICHK();
+    MPI_Gatherv( send, count, MPI_LONG_LONG, recv, counts, displs, MPI_LONG_LONG, root, diverge_mpi_comm );
+}
+
 void diverge_mpi_gatherv_bytes( const void* send, int count, void* recv, int* counts, int* displs, int root ) {
     MPICHK();
     MPI_Gatherv( send, count, MPI_BYTE, recv, counts, displs, MPI_BYTE, root, diverge_mpi_comm );
@@ -258,6 +263,11 @@ void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rds
     MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_DOUBLE_COMPLEX, recv, rcnt, rdsp, MPI_DOUBLE_COMPLEX, diverge_mpi_comm );
 }
 
+void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp ) {
+    MPICHK();
+    MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_LONG_LONG, recv, rcnt, rdsp, MPI_LONG_LONG, diverge_mpi_comm );
+}
+
 double diverge_mpi_max( double* send ) {
     MPICHK();
     double recv;
@@ -346,6 +356,13 @@ void diverge_mpi_recv_index_t( void* data, int num, int source, int tag ) {
     (void)data; (void)num; (void)source; (void)tag;
 }
 
+void diverge_mpi_gatherv_index( const void* send, int count, void* recv, int* counts, int* displs, int root ) {
+    (void)counts;
+    (void)displs;
+    (void)root;
+    if (send != recv) memcpy( recv, send, sizeof(index_t)*count );
+}
+
 void diverge_mpi_gatherv_bytes( const void* send, int count, void* recv, int* counts, int* displs, int root ) {
     (void)counts;
     (void)displs;
@@ -417,6 +434,9 @@ void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcou
 }
 
 void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rdsp ) {
+    (void)recv; (void)rcnt; (void)rdsp;
+}
+void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp ) {
     (void)recv; (void)rcnt; (void)rdsp;
 }
 double diverge_mpi_max( double* send ) { return *send; }

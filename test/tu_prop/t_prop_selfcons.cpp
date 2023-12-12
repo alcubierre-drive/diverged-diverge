@@ -189,14 +189,15 @@ TEST_CASE("momentum loop variants refine", "[prop][prop_ref]")
     PropMom.GF_zero_T(I128*0.1);
     PropMom.S_loop_static_simple<false>(lm);
     PropMom.S_loop_static_red<false>(lmr);
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
+    bool PH_equal = check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk);
     PropMom.S_loop_static_simple<true>(lm);
     PropMom.S_loop_static_red<true>(lmr);
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
+    bool PP_equal = check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk);
 
     diverge_model_free(mom);
     free(lmr);
     free(lm);
+    CHECK( (PH_equal && PP_equal) );
 }
 
 TEST_CASE("momentum loop variants refine convergence", "[prop][prop_ref]")

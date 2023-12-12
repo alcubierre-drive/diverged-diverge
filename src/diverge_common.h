@@ -110,8 +110,8 @@ typedef uint64_t uindex_t;
 #define IDX8( i, j, k, l, m, n, o, p, nj, nk, nl, nm, nn, no, np ) \
     ( (i)*(nj)*(nk)*(nl)*(nm)*(nn)*(no)*(np) + IDX7(j, k, l, m, n, o, p, nk, nl, nm, nn, no, np) )
 
-#define MAX(x,y) (x) > (y) ? (x) : (y)
-#define MIN(x,y) (x) < (y) ? (x) : (y)
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
 
 #ifndef BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB
 #define BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB 4ul

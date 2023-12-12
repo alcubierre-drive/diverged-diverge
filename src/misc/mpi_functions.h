@@ -64,6 +64,7 @@ void diverge_mpi_allgather_double( const void* sendbuf, void* recvbuf, int num )
 void diverge_mpi_send_double( void* data, int num, int destination, int tag );
 void diverge_mpi_recv_double( void* data, int num, int source, int tag );
 
+void diverge_mpi_gatherv_index( const void* send, int count, void* recv, int* counts, int* displs, int root );
 void diverge_mpi_gatherv_bytes( const void* send, int count, void* recv, int* counts, int* displs, int root );
 void diverge_mpi_gatherv_cdoub( const void* send, int count, void* recv, int* counts, int* displs, int root );
 void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int displ, int count );
@@ -80,6 +81,7 @@ void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcou
                                           complex128_t* recv, const int* recvcounts, const int* recvdispls );
 
 void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rdsp );
+void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp );
 double diverge_mpi_max( double* send );
 void diverge_mpi_bcast_bytes( void* inout, int size, int root );
 void diverge_mpi_gather_double( const double* send, int scnt, double* recv, int rcnt, int root );

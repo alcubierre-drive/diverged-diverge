@@ -11,6 +11,12 @@
 #include "diverge_interface_symmstruct.hpp"
 #include <cassert>
 
+typedef enum {
+    tu_fft_algorithm_greedy,
+    tu_fft_algorithm_split,
+    tu_fft_algorithm_mpi,
+} tu_fft_algorithm_t;
+
 struct tu_data_t {
     bool use_reduced_loop;
     index_t nk;
@@ -24,6 +30,11 @@ struct tu_data_t {
     double offload_cpu;
     double percent_mem_GPU_blocked;
     bool tu_selfenergy_flow;
+
+    index_t mpi_fft_chunksize;
+    tu_fft_algorithm_t which_fft_simple,
+                       which_fft_greens,
+                       which_fft_red;
 
     // reduction of computational cost of the loop
     vector<Vec3i> existing_ff;
