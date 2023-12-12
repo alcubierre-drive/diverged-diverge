@@ -57,6 +57,7 @@ void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int n
 void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num );
 
+void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num );
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allgather_double( const void* sendbuf, void* recvbuf, int num );
 

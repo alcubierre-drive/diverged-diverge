@@ -8,9 +8,14 @@
 #include <omp.h>
 #include <unistd.h>
 
+#if defined(USE_MPI) && defined(USE_MPI_FFTW)
+#include <fftw3-mpi.h>
+#endif
+
 static int dvg_has_internal_libs_init = 0;
 
 static int dvg_has_fftw_init = 0;
+static int dvg_has_mpi_fftw_init = 0;
 static int dvg_previous_log_color = -1;
 
 static int dvg_omp_num_threads = -1;
@@ -46,6 +51,13 @@ void init_internal_libs( void ) {
 void finalize_internal_libs( void ) {
 
     dependency_tree_free();
+
+    if (dvg_has_mpi_fftw_init) {
+        #if defined(USE_MPI_FFTW) && defined(USE_MPI)
+        fftw_mpi_cleanup();
+        #endif
+        dvg_has_mpi_fftw_init = 0;
+    }
 
     if (dvg_has_fftw_init) {
         #ifndef USE_SERIAL_FFTW
@@ -114,6 +126,12 @@ static void init_internal_libs_fftw( int nthr ) {
     dvg_fftw_num_threads = 1;
     #endif
     dvg_has_fftw_init = 1;
+
+    #if defined(USE_MPI_FFTW) && defined(USE_MPI)
+    if (!dvg_has_mpi_fftw_init)
+        fftw_mpi_init();
+    #endif
+    dvg_has_mpi_fftw_init = 1;
 }
 
 static void init_internal_libs_omp_implicit( int nthr ) {

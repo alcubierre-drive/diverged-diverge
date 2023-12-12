@@ -35,7 +35,7 @@ TEST_CASE("momentum vs realspace tu_loop_t", "[prop][prop_orbVSreal]")
     complex128_t* lo = (complex128_t*)calloc(POW2(n_orbffo*orb->n_spin)*PropOrb.nk,sizeof(complex128_t));
     complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
     complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    
+
     PropOrb.GF_zero_T(I128*0.1);
     PropMom.GF_zero_T(I128*0.1);
 
@@ -43,8 +43,8 @@ TEST_CASE("momentum vs realspace tu_loop_t", "[prop][prop_orbVSreal]")
                   -trace(PropOrb.gf_buf,PropOrb.n_orb,PropOrb.nk)) < 1e-10);
 
     PropOrb.S_pp_loop_static_rs(lo);
-    PropMom.S_pp_loop_static_simple(lm);
-    PropMom.S_pp_loop_static_red(lmr);
+    PropMom.S_loop_static_simple<true>(lm);
+    PropMom.S_loop_static_red<true>(lmr);
     CHECK(std::abs(trace(lm,n_orbffm,PropMom.nk)
                   -trace(lo,n_orbffo,PropOrb.nk)) < 1e-10);
 
@@ -53,9 +53,9 @@ TEST_CASE("momentum vs realspace tu_loop_t", "[prop][prop_orbVSreal]")
 
     CHECK(std::abs(trace(lmr,n_orbffm,PropMom.nk)
                   -trace(lm,n_orbffm,PropMom.nk)) < 1e-10);
-    
-    PropMom.S_ph_loop_static_simple(lm);
-    PropMom.S_ph_loop_static_red(lmr);
+
+    PropMom.S_loop_static_simple<false>(lm);
+    PropMom.S_loop_static_red<false>(lmr);
     PropOrb.S_ph_loop_static_rs(lo);
 
     CHECK(std::abs(trace(lm,n_orbffm,PropMom.nk)
@@ -113,8 +113,8 @@ TEST_CASE("momentum vs realspace basis tu_loop_t", "[prop][prop_basis]")
                   -trace(orb->internals->greens,PropOrb.n_orb,PropOrb.nk)) < 1e-10);
 
     PropOrb.S_pp_loop_static_rs(lo);
-    PropMom.S_pp_loop_static_simple(lm);
-    PropMom.S_pp_loop_static_red(lmr);
+    PropMom.S_loop_static_simple<true>(lm);
+    PropMom.S_loop_static_red<true>(lmr);
     CHECK(std::abs(trace(lm,n_orbffm,PropMom.nk)
                   -trace(lo,n_orbffo,PropOrb.nk)) < 1e-9);
 
@@ -124,8 +124,8 @@ TEST_CASE("momentum vs realspace basis tu_loop_t", "[prop][prop_basis]")
     CHECK(std::abs(trace(lmr,n_orbffm,PropMom.nk)
                   -trace(lm,n_orbffm,PropMom.nk)) < 1e-9);
 
-    PropMom.S_ph_loop_static_simple(lm);
-    PropMom.S_ph_loop_static_red(lmr);
+    PropMom.S_loop_static_simple<false>(lm);
+    PropMom.S_loop_static_red<false>(lmr);
     PropOrb.S_ph_loop_static_rs(lo);
 
     CHECK(std::abs(trace(lm,n_orbffm,PropMom.nk)
@@ -159,11 +159,11 @@ TEST_CASE("momentum loop variants", "[prop][prop_var]")
     complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
 
     PropMom.GF_zero_T(I128*0.1);
-    PropMom.S_ph_loop_static_simple(lm);
-    PropMom.S_ph_loop_static_red(lmr);
+    PropMom.S_loop_static_simple<false>(lm);
+    PropMom.S_loop_static_red<false>(lmr);
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
-    PropMom.S_pp_loop_static_simple(lm);
-    PropMom.S_pp_loop_static_red(lmr);
+    PropMom.S_loop_static_simple<true>(lm);
+    PropMom.S_loop_static_red<true>(lmr);
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
 
     diverge_model_free(mom);
@@ -187,11 +187,11 @@ TEST_CASE("momentum loop variants refine", "[prop][prop_ref]")
     complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
 
     PropMom.GF_zero_T(I128*0.1);
-    PropMom.S_ph_loop_static_simple(lm);
-    PropMom.S_ph_loop_static_red(lmr);
+    PropMom.S_loop_static_simple<false>(lm);
+    PropMom.S_loop_static_red<false>(lmr);
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
-    PropMom.S_pp_loop_static_simple(lm);
-    PropMom.S_pp_loop_static_red(lmr);
+    PropMom.S_loop_static_simple<true>(lm);
+    PropMom.S_loop_static_red<true>(lmr);
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
 
     diverge_model_free(mom);
@@ -215,11 +215,11 @@ TEST_CASE("momentum loop variants refine convergence", "[prop][prop_ref]")
 
     PropMom.GF_zero_T(I128*0.1);
     PropMom2.GF_zero_T(I128*0.1);
-    PropMom.S_ph_loop_static_simple(lm);
-    PropMom2.S_ph_loop_static_simple(lmr);
+    PropMom.S_loop_static_simple<false>(lm);
+    PropMom2.S_loop_static_simple<false>(lmr);
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk, 0.1));
-    PropMom.S_pp_loop_static_simple(lm);
-    PropMom2.S_pp_loop_static_simple(lmr);
+    PropMom.S_loop_static_simple<true>(lm);
+    PropMom2.S_loop_static_simple<true>(lmr);
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk, 0.1));
 
     diverge_model_free(mom);

@@ -36,9 +36,14 @@ void diverge_init( int* pargc, char*** pargv ) {
         pargc = &argc;
         pargv = &argv;
     }
-    MPI_Init( pargc, pargv );
+    int provided = MPI_THREAD_FUNNELED;
+    MPI_Init_thread( pargc, pargv, MPI_THREAD_FUNNELED, &provided );
     diverge_mpi_comm = MPI_COMM_WORLD;
     diverge_owns_mpi_context = 1;
+
+    if (provided < MPI_THREAD_FUNNELED)
+        mpi_wrn_printf( "MPI thread implementation is non optimal\n" );
+
     init_internal_libs();
 }
 
@@ -115,6 +120,11 @@ void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int 
 void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num ) {
     MPICHK();
     MPI_Allreduce( MPI_IN_PLACE, sendrecvbuf, num, MPI_C_DOUBLE_COMPLEX, MPI_SUM, diverge_mpi_comm);
+}
+
+void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num ) {
+    MPICHK();
+    MPI_Allgather( sendbuf, num, MPI_INT, recvbuf, num, MPI_INT, diverge_mpi_comm );
 }
 
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num ) {
@@ -313,7 +323,9 @@ void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int 
 void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num ) {
     (void)sendrecvbuf; (void) num;}
 
-
+void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num ) {
+    memcpy( recvbuf, sendbuf, sizeof(int)*num );
+}
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num ) {
     memcpy( recvbuf, sendbuf, sizeof(index_t)*num );
 }

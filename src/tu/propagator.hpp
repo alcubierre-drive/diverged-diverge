@@ -11,9 +11,6 @@
 #include <fftw3.h>
 #include <thread>
 
-
-
-
 inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t idx = 0; idx < len; ++idx) {
@@ -71,17 +68,11 @@ public:
     template<bool subract = false>
     void S_pp_loop_static_rs(complex128_t* L) const;
 
-    template<bool subract = false>
-    void S_ph_loop_static_simple(complex128_t* L, index_t ntasks = -1,
+    template<bool pp, bool subract = false>
+    void S_loop_static_simple(complex128_t* L, index_t ntasks = -1,
                               index_t taskoff = 0, bool rescale = true) const;
-    template<bool subract = false>
-    void S_pp_loop_static_simple(complex128_t* L, index_t ntasks = -1,
-                              index_t taskoff = 0, bool rescale = true) const;
-    template<bool subract = false>
-    void S_ph_loop_static_red(complex128_t* L, index_t ntasks = -1,
-                              index_t taskoff = 0, bool rescale = true) const;
-    template<bool subract = false>
-    void S_pp_loop_static_red(complex128_t* L, index_t ntasks = -1,
+    template<bool pp, bool subract = false>
+    void S_loop_static_red(complex128_t* L, index_t ntasks = -1,
                               index_t taskoff = 0, bool rescale = true) const;
 
     void S_ph_loop_static_simple_gpu(complex128_t* L);
@@ -123,15 +114,12 @@ public:
 
 
 private:
-    fftw_plan fftGF;
-    fftw_plan fftGFconj;
-    fftw_plan cfrg_fftGF;
-    fftw_plan cfrg_fftGFconj;
-
     bool cFRG_loop;
 
-    vector<fftw_plan> fftPH;
-    vector<fftw_plan> fftPP;
+    fftw_plan fft_nons2_backward,
+              fft_single_backward,
+              fft_single_forward;
+
     vector<complex128_t*> buffer_ggm;
     vector<complex128_t*> buffer_ggp;
     complex128_t* GF_fft_plus;

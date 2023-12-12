@@ -33,15 +33,12 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     for (int i=0; i<3; ++i) nkff[i] = model->nk[i] * model->nkf[i];
     cuda_setup_prop_descr(&cuda_descr,task_spin,tasks_dist, nkff,tu_data->offload_cpu);
 
-    fftPH.resize(diverge_omp_num_threads());
-    fftPP.resize(diverge_omp_num_threads());
-
-    GF_fft_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
-    GF_fft_conj_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
+    GF_fft_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
+    GF_fft_conj_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
     if(cFRG_loop) {
         gf_buf_cfrg = (gf_complex_t*)malloc(2 * nktot* POW2(n_spin*n_orb)*sizeof(gf_complex_t));
-        cFRG_GF_fft_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
-        cFRG_GF_fft_conj_plus = (complex128_t*)fftw_malloc(nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex));
+        cFRG_GF_fft_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
+        cFRG_GF_fft_conj_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
     }
     #ifdef USE_CUDA
     CUDA_CHECK(cudaHostRegister(GF_fft_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
@@ -61,36 +58,22 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     if(nktot>1) {
         buffer_ggm.resize(diverge_omp_num_threads());
         buffer_ggp.resize(diverge_omp_num_threads());
-        for(int i = 0; i < diverge_omp_num_threads();++i) {
-            buffer_ggm[i] = (complex128_t*)fftw_malloc(nktot*sizeof(fftw_complex));
-            buffer_ggp[i] = (complex128_t*)fftw_malloc(nktot*sizeof(fftw_complex));
-            fftPH[i] = fftw_plan_many_dft(3, dims, 1,
-                    (fftw_complex*)buffer_ggm[i],
-                    dims,1,nktot,(fftw_complex*)buffer_ggp[i],
-                    dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-            fftPP[i] = fftw_plan_many_dft(3, dims, 1,
-                    (fftw_complex*)buffer_ggm[i],
-                    dims,1,nktot,(fftw_complex*)buffer_ggp[i],
-                    dims,1,nktot,FFTW_FORWARD, FFTW_MEASURE);
+        for (int i=0; i<diverge_omp_num_threads(); ++i) {
+            buffer_ggm[i] = (complex128_t*)fftw_alloc_complex(nktot);
+            buffer_ggp[i] = (complex128_t*)fftw_alloc_complex(nktot);
         }
-        fftGF = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
-                (fftw_complex*)GF_fft_plus,
-                dims,1,nktot,(fftw_complex*)GF_fft_plus,
-                dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-        fftGFconj = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
-                (fftw_complex*)GF_fft_conj_plus,
-                dims,1,nktot,(fftw_complex*)GF_fft_conj_plus,
-                dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-        if(cFRG_loop) {
-            cfrg_fftGF = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
-                    (fftw_complex*)cFRG_GF_fft_plus,
-                    dims,1,nktot,(fftw_complex*)cFRG_GF_fft_plus,
-                    dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-            cfrg_fftGFconj = fftw_plan_many_dft(3, dims, POW2(n_spin*n_orb),
-                    (fftw_complex*)cFRG_GF_fft_conj_plus,
-                    dims,1,nktot,(fftw_complex*)cFRG_GF_fft_conj_plus,
-                    dims,1,nktot,FFTW_BACKWARD, FFTW_MEASURE);
-        }
+        fft_single_backward = fftw_plan_many_dft( 3, dims, 1,
+                (fftw_complex*)buffer_ggm[0], dims, 1, nktot,
+                (fftw_complex*)buffer_ggp[0], dims, 1, nktot,
+                FFTW_BACKWARD, FFTW_MEASURE );
+        fft_single_forward = fftw_plan_many_dft( 3, dims, 1,
+                (fftw_complex*)buffer_ggm[0], dims, 1, nktot,
+                (fftw_complex*)buffer_ggp[0], dims, 1, nktot,
+                FFTW_FORWARD, FFTW_MEASURE );
+        fft_nons2_backward = fftw_plan_many_dft( 3, dims, POW2(n_spin*n_orb),
+                (fftw_complex*)GF_fft_plus, dims, 1, nktot,
+                (fftw_complex*)GF_fft_plus, dims, 1, nktot,
+                FFTW_BACKWARD, FFTW_MEASURE );
     }
     fftw_plan_with_nthreads(fftwnthr);
     c2fmap.resize(my_nk);
@@ -136,20 +119,15 @@ tu_loop_t::~tu_loop_t() {
         free(gf_buf_cfrg);
         fftw_free(cFRG_GF_fft_plus);
         fftw_free(cFRG_GF_fft_conj_plus);
-        if(nktot>1) {
-            fftw_destroy_plan(cfrg_fftGF);
-            fftw_destroy_plan(cfrg_fftGFconj);
-        }
     }
     cuda_delete_prop_descr(&cuda_descr);
     if(nktot>1) {
-        fftw_destroy_plan(fftGF);
-        fftw_destroy_plan(fftGFconj);
+        fftw_destroy_plan(fft_single_forward);
+        fftw_destroy_plan(fft_single_backward);
+        fftw_destroy_plan(fft_nons2_backward);
         for(int i = 0; i < diverge_omp_num_threads();++i) {
             fftw_free(buffer_ggm[i]);
             fftw_free(buffer_ggp[i]);
-            fftw_destroy_plan(fftPH[i]);
-            fftw_destroy_plan(fftPP[i]);
         }
     }
 }
@@ -189,8 +167,8 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
         GF_fft_conj_plus[k+nktot*(b+nb*o)] = gf_buf[o+nb*b+nb2*k + nb2*nktot]*weight;
     }
     if(nktot > 1) {
-        fftw_execute(fftGF);
-        fftw_execute(fftGFconj);
+        fftw_execute_dft( fft_nons2_backward, (fftw_complex*)GF_fft_plus, (fftw_complex*)GF_fft_plus );
+        fftw_execute_dft( fft_nons2_backward, (fftw_complex*)GF_fft_conj_plus, (fftw_complex*)GF_fft_conj_plus );
     }
     if(cFRG_loop) {
         greensfunc_op_t res = model->gproj(model, lambda, gf_buf_cfrg);
@@ -223,8 +201,8 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
         }
 
         if(nktot > 1) {
-            fftw_execute(cfrg_fftGF);
-            fftw_execute(cfrg_fftGFconj);
+            fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_plus, (fftw_complex*)cFRG_GF_fft_plus );
+            fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_conj_plus, (fftw_complex*)cFRG_GF_fft_conj_plus );
         }
     }
 }
@@ -299,13 +277,13 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
             std::thread cpu = std::thread([&](){
-                S_ph_loop_static_red(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
+                S_loop_static_red<false>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
             std::thread gpu = std::thread([&](){
                 S_ph_loop_static_red_gpu(tmpgpu);});
             cpu.join(); gpu.join();
         } else {
             std::thread cpu = std::thread([&](){
-                S_ph_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
+                S_loop_static_simple<false>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
             std::thread gpu = std::thread([&](){
                 S_ph_loop_static_simple_gpu(tmpgpu);});
             cpu.join(); gpu.join();
@@ -316,13 +294,13 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
             if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1(L, tmpgpu);
             if(tu_data->use_reduced_loop) {
                 std::thread cpu = std::thread([&](){
-                    S_ph_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
+                    S_loop_static_red<false,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
                 std::thread gpu = std::thread([&](){
                     S_ph_loop_static_red_gpu(tmpgpu);});
                 cpu.join(); gpu.join();
             } else {
                 std::thread cpu = std::thread([&](){
-                    S_ph_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
+                    S_loop_static_simple<false,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
                 std::thread gpu = std::thread([&](){
                     S_ph_loop_static_simple_gpu(tmpgpu);});
                 cpu.join(); gpu.join();
@@ -353,13 +331,13 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
             std::thread cpu = std::thread([&](){
-                S_pp_loop_static_red(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
+                S_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
             std::thread gpu = std::thread([&](){
                 S_pp_loop_static_red_gpu(tmpgpu);});
             cpu.join(); gpu.join();
         }else{
             std::thread cpu = std::thread([&](){
-                S_pp_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
+                S_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
             std::thread gpu = std::thread([&](){
                 S_pp_loop_static_simple_gpu(tmpgpu);});
             cpu.join(); gpu.join();
@@ -369,13 +347,13 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
             if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1(L, tmpgpu);
             if(tu_data->use_reduced_loop) {
                 std::thread cpu = std::thread([&](){
-                    S_pp_loop_static_red(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
+                    S_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
                 std::thread gpu = std::thread([&](){
                     S_pp_loop_static_red_gpu(tmpgpu);});
                 cpu.join(); gpu.join();
             }else{
                 std::thread cpu = std::thread([&](){
-                    S_pp_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
+                    S_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
                 std::thread gpu = std::thread([&](){
                     S_pp_loop_static_simple_gpu(tmpgpu);});
                 cpu.join(); gpu.join();
@@ -534,9 +512,9 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
         if(cFRG_loop) rescale = false;
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
-            S_ph_loop_static_red(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
+            S_loop_static_red<false>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
         }else{
-            S_ph_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
+            S_loop_static_simple<false>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
         }
     }
     if(cFRG_loop) {
@@ -545,10 +523,10 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
             S_ph_loop_static_rs<true>(L);
         }else{
             if(tu_data->use_reduced_loop) {
-                S_ph_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
+                S_loop_static_red<false,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
                                     !cuda_descr.prop_has_gpu_setup);
             }else{
-                S_ph_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
+                S_loop_static_simple<false,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
                                         !cuda_descr.prop_has_gpu_setup);
             }
         }
@@ -566,9 +544,9 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
         if(cFRG_loop) rescale = false;
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
-            S_pp_loop_static_red(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
+            S_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
         }else{
-            S_pp_loop_static_simple(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
+            S_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, rescale);
         }
     }
     if(cFRG_loop) {
@@ -577,10 +555,10 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
             S_pp_loop_static_rs<true>(L);
         }else{
             if(tu_data->use_reduced_loop) {
-                S_pp_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
+                S_loop_static_red<true,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
                                     !cuda_descr.prop_has_gpu_setup);
             }else{
-                S_pp_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
+                S_loop_static_simple<true,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
                                         !cuda_descr.prop_has_gpu_setup);
             }
         }

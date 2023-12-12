@@ -20,12 +20,13 @@ TEST_CASE("loopgrid symmcheck", "[grid_symm]") {
     diverge_model_internals_grid(mod_grid);
     index_t nb = mod_grid->n_orb*mod_grid->n_spin;
     index_t nk = 36;
-    index_t fsize = POW4(nb)*POW2(nk);
 
     complex128_t* Lgrid;
     complex128_t* Lreco;
 
-    grid::Loops grid_loop (mod_grid);
+    grid::Loops grid_loop(mod_grid);
+    index_t fsize = POW4(nb)*grid_loop.get_qsize()*nk;
+
     Lgrid = grid_loop.X_C(0.1);
     Lreco = grid_loop.symmetrize(Lgrid,'C');
     for(index_t i = 0; i < fsize; ++i)
