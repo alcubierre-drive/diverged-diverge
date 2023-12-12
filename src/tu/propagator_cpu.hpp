@@ -173,8 +173,8 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
     }
 }
 
-template<bool subtract>
-void tu_loop_t::S_ph_loop_static_rs(complex128_t* L) const {
+template<bool pp, bool subtract>
+void tu_loop_t::S_loop_static_rs(complex128_t* L) const {
     const double prefac = -1.0/(2.0*M_PI);
     #pragma omp parallel for collapse(3) schedule(dynamic) num_threads(diverge_omp_num_threads())
     for(index_t s3 = 0; s3<(n_spin);++s3)
@@ -187,51 +187,33 @@ void tu_loop_t::S_ph_loop_static_rs(complex128_t* L) const {
         const index_t ob1 = mi_to_oto[mo1];
         const index_t o3 = mi_to_ofrom[mo3];
         const index_t ob3 = mi_to_oto[mo3];
-        if constexpr (subtract) {
-            L[mo1 + n_orbff*((s1+n_spin*s4) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s2)))] -=
-                prefac*(GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
-                    *GF_fft_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]
-                    +GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
-                    *GF_fft_conj_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]);
-        }else{
-            L[mo1 + n_orbff*((s1+n_spin*s4) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s2)))] =
-                prefac*(GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
-                    *GF_fft_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]
-                    +GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
-                    *GF_fft_conj_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]);
-        }
-    }
-}
-
-
-template<bool subtract>
-void tu_loop_t::S_pp_loop_static_rs(complex128_t* L) const {
-    const double prefac = -1.0/(2.0*M_PI);
-    #pragma omp parallel for collapse(3) schedule(dynamic) num_threads(diverge_omp_num_threads())
-    for(index_t s3 = 0; s3<(n_spin);++s3)
-    for(index_t s4 = 0; s4<(n_spin);++s4)
-    for(index_t mo3 = 0; mo3<n_orbff;++mo3)
-    for(index_t s1 = 0; s1<(n_spin);++s1)
-    for(index_t s2 = 0; s2<(n_spin);++s2)
-    for(index_t mo1 = 0; mo1<n_orbff;++mo1) {
-        const index_t o1 = mi_to_ofrom[mo1];
-        const index_t ob1 = mi_to_oto[mo1];
-        const index_t o3 = mi_to_ofrom[mo3];
-        const index_t ob3 = mi_to_oto[mo3];
-        if constexpr (subtract) {
-            L[mo1 + n_orbff*((s1+n_spin*s2) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s4)))] -=
-            prefac*(GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
-                *GF_fft_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]
-                +GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
-                *GF_fft_conj_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]);
-        }else{
-            L[mo1 + n_orbff*((s1+n_spin*s2) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s4)))] =
-                prefac*(GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+        if constexpr(pp) {
+            if constexpr(subtract)
+                L[mo1 + n_orbff*((s1+n_spin*s2) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s4)))] -=
+                    prefac*(GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
                     *GF_fft_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]
                     +GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
                     *GF_fft_conj_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]);
+            else
+                L[mo1 + n_orbff*((s1+n_spin*s2) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s4)))] =
+                    prefac*(GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]
+                    +GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_conj_plus[ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4))]);
+        } else {
+            if constexpr(subtract)
+                L[mo1 + n_orbff*((s1+n_spin*s4) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s2)))] -=
+                    prefac*(GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]
+                    +GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_conj_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]);
+            else
+                L[mo1 + n_orbff*((s1+n_spin*s4) + POW2(n_spin)*(mo3+n_orbff*(s3+n_spin*s2)))] =
+                    prefac*(GF_fft_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]
+                    +GF_fft_conj_plus[o1+n_orb*(s1+n_spin*(o3+n_orb*s3))]
+                    *GF_fft_conj_plus[ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4))]);
         }
     }
 }
-
 

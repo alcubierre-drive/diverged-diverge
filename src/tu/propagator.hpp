@@ -63,10 +63,8 @@ public:
     DELETE_CONSTRUCTOR_RULE_OF_FIVE(tu_loop_t);
 
     gf_complex_t* gf_buf;
-    template<bool subract = false>
-    void S_ph_loop_static_rs(complex128_t* L) const;
-    template<bool subract = false>
-    void S_pp_loop_static_rs(complex128_t* L) const;
+    template<bool pp, bool subract = false>
+    void S_loop_static_rs(complex128_t* L) const;
 
     template<bool pp, bool subract = false>
     void S_loop_static_simple(complex128_t* L, index_t ntasks = -1,

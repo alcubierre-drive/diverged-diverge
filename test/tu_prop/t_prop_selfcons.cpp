@@ -42,7 +42,7 @@ TEST_CASE("momentum vs realspace tu_loop_t", "[prop][prop_orbVSreal]")
     CHECK(std::abs(trace(PropMom.gf_buf,PropMom.n_orb,PropMom.nk)
                   -trace(PropOrb.gf_buf,PropOrb.n_orb,PropOrb.nk)) < 1e-10);
 
-    PropOrb.S_pp_loop_static_rs(lo);
+    PropOrb.S_loop_static_rs<true>(lo);
     PropMom.S_loop_static_simple<true>(lm);
     PropMom.S_loop_static_red<true>(lmr);
     CHECK(std::abs(trace(lm,n_orbffm,PropMom.nk)
@@ -56,7 +56,7 @@ TEST_CASE("momentum vs realspace tu_loop_t", "[prop][prop_orbVSreal]")
 
     PropMom.S_loop_static_simple<false>(lm);
     PropMom.S_loop_static_red<false>(lmr);
-    PropOrb.S_ph_loop_static_rs(lo);
+    PropOrb.S_loop_static_rs<false>(lo);
 
     CHECK(std::abs(trace(lm,n_orbffm,PropMom.nk)
                   -trace(lo,n_orbffo,PropOrb.nk)) < 1e-10);
@@ -112,7 +112,7 @@ TEST_CASE("momentum vs realspace basis tu_loop_t", "[prop][prop_basis]")
     CHECK(std::abs(trace(mom->internals->greens,PropMom.n_orb,PropMom.nk)
                   -trace(orb->internals->greens,PropOrb.n_orb,PropOrb.nk)) < 1e-10);
 
-    PropOrb.S_pp_loop_static_rs(lo);
+    PropOrb.S_loop_static_rs<true>(lo);
     PropMom.S_loop_static_simple<true>(lm);
     PropMom.S_loop_static_red<true>(lmr);
     CHECK(std::abs(trace(lm,n_orbffm,PropMom.nk)
@@ -126,7 +126,7 @@ TEST_CASE("momentum vs realspace basis tu_loop_t", "[prop][prop_basis]")
 
     PropMom.S_loop_static_simple<false>(lm);
     PropMom.S_loop_static_red<false>(lmr);
-    PropOrb.S_ph_loop_static_rs(lo);
+    PropOrb.S_loop_static_rs<false>(lo);
 
     CHECK(std::abs(trace(lm,n_orbffm,PropMom.nk)
                   -trace(lo,n_orbffo,PropOrb.nk)) < 1e-9);

@@ -262,10 +262,10 @@ void tu_loop_t::reconstruct_from_reduced(complex128_t* loop) const {
 #ifdef USE_CUDA
 void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
     if(nktot==1){
-        S_ph_loop_static_rs(L);
+        S_loop_static_rs<false>(L);
         if(cFRG_loop) {
             swap_GF_cfrg();
-            S_ph_loop_static_rs(L);
+            S_loop_static_rs<false>(L);
             swap_GF_cfrg();
         }
     }else{
@@ -316,10 +316,10 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
 
 void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
     if(nktot==1){
-        S_pp_loop_static_rs(L);
+        S_loop_static_rs<true>(L);
         if(cFRG_loop) {
             swap_GF_cfrg();
-            S_pp_loop_static_rs(L);
+            S_loop_static_rs<true>(L);
             swap_GF_cfrg();
         }
     }else{
@@ -506,7 +506,7 @@ void tu_loop_t::allocate_GPU_memory() {
 void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
     (void)tmpgpu;
     if(nktot==1){
-        S_ph_loop_static_rs(L);
+        S_loop_static_rs<false>(L);
     }else{
         bool rescale = !cuda_descr.prop_has_gpu_setup;
         if(cFRG_loop) rescale = false;
@@ -520,7 +520,7 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
     if(cFRG_loop) {
         swap_GF_cfrg();
         if(nktot==1){
-            S_ph_loop_static_rs<true>(L);
+            S_loop_static_rs<false,true>(L);
         }else{
             if(tu_data->use_reduced_loop) {
                 S_loop_static_red<false,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
@@ -538,7 +538,7 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
 void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
     (void)tmpgpu;
     if(nktot==1){
-        S_pp_loop_static_rs(L);
+        S_loop_static_rs<true>(L);
     }else{
         bool rescale = !cuda_descr.prop_has_gpu_setup;
         if(cFRG_loop) rescale = false;
@@ -552,7 +552,7 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
     if(cFRG_loop) {
         swap_GF_cfrg();
         if(nktot==1){
-            S_pp_loop_static_rs<true>(L);
+            S_loop_static_rs<true,true>(L);
         }else{
             if(tu_data->use_reduced_loop) {
                 S_loop_static_red<true,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu,
