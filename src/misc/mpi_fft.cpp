@@ -1,4 +1,4 @@
-#include "mpifft.hpp"
+#include "mpi_fft.hpp"
 #include "mpi_functions.h"
 
 fftw_mpi_plan::fftw_mpi_plan( int dims_[3], index_t howmany, complex128_t* in, complex128_t* out, int dir ) {

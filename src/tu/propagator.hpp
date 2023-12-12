@@ -5,7 +5,7 @@
 #include "../diverge_common.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
-#include "../misc/mpifft.hpp"
+#include "../misc/mpi_fft.hpp"
 #include "diverge_interface.hpp"
 #include "global.hpp"
 #include "cuda_init.hpp"
