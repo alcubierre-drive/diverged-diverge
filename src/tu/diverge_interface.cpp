@@ -32,6 +32,7 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
     #else
     info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_greedy;
     #endif
+    info->propagator_extra_cpu_timings = false;
     model->internals->tu_data = (void*) info;
     model->internals->tu_data_destructor = tu_data_destructor;
     info->n_frq = n_frq;

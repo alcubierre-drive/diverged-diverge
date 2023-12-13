@@ -37,11 +37,16 @@ public:
     Vertex* internal_vertex;
 
     vector<double> get_timings( void ) const {
-        return { w_time_GF, w_time_loop, w_time_projection,
-                    w_time_product, w_time_add_find_max, w_time_self, w_time_full};
+        vector<double> result = { w_time_GF, w_time_loop, w_time_projection,
+            w_time_product, w_time_add_find_max, w_time_self, w_time_full};
+        for (const double& t: loop->extra_timings()) result.push_back(t);
+        return result;
     }
     vector<string> get_timings_descr( void ) const {
-        return { "Greens function", "loop", "projection", "contract", "max and add", "self", "full step" };
+        vector<string> result = { "Greens function", "loop", "projection",
+            "contract", "max and add", "self", "full step" };
+        for (const string& s: loop->extra_timings_descr()) result.push_back(s);
+        return result;
     }
     index_t get_num_calls( void ) const {
         return num_calls;

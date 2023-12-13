@@ -176,9 +176,14 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
         fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
         if (which_fft_simple == tu_fft_algorithm_mpi)
             p->execute( buffer_ggm_many, buffer_ggp_many );
-        else
+        else {
+            double tick = 0, tock = 0;
+            if (extra_timings_enabled) tick = diverge_mpi_wtime();
             fftw_execute_dft( pp ? fft_many_forward : fft_many_backward,
                 (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many );
+            if (extra_timings_enabled) tock = diverge_mpi_wtime();
+            extra_tvec->at(4) += tock - tick;
+        }
 
         // put into loop
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
@@ -369,9 +374,14 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
         fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
         if (which_fft_red == tu_fft_algorithm_mpi)
             p->execute( buffer_ggm_many, buffer_ggp_many );
-        else
+        else {
+            double tick = 0, tock = 0;
+            if (extra_timings_enabled) tick = diverge_mpi_wtime();
             fftw_execute_dft( pp ? fft_many_forward : fft_many_backward,
                 (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many );
+            if (extra_timings_enabled) tock = diverge_mpi_wtime();
+            extra_tvec->at(4) += tock-tick;
+        }
 
         // put into loop
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)

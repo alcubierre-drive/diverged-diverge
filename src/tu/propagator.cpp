@@ -31,6 +31,8 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     which_fft_greens{tu_data->which_fft_greens}
 {
     chunksize_max = tu_data->mpi_fft_chunksize < 0 ? diverge_omp_num_threads() : tu_data->mpi_fft_chunksize;
+    extra_timings_enabled = tu_data->propagator_extra_cpu_timings;
+    extra_tvec = new vector<double>( 11, 0.0 );
     index_t task_spin = POW4(n_spin);
     index_t tasks_dist = tu_data->use_reduced_loop ? (index_t)tu_data->unique_mi_l.size() : POW2(n_orbff);
     index_t nkff[3];
@@ -64,6 +66,51 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
         for(index_t i = 0; i < my_nk;++i)
             c2fmap[i] = kidxc2f(i+my_nk_off,model->nk,model->nkf);
     }
+}
+
+vector<double> tu_loop_t::extra_timings( void ) {
+    if (!extra_timings_enabled) return vector<double>();
+    if (fft_nons2_backward_mpi) {
+        array<double,3> t = fft_nons2_backward_mpi->timings();
+        extra_tvec->at(1) = t[0];
+        extra_tvec->at(2) = t[1];
+        extra_tvec->at(3) = t[2];
+    }
+    if (fft_many_backward_mpi) {
+        array<double,3> t = fft_many_backward_mpi->timings();
+        extra_tvec->at(5) = t[0];
+        extra_tvec->at(6) = t[1];
+        extra_tvec->at(7) = t[2];
+    }
+    if (fft_many_forward_mpi) {
+        array<double,3> t = fft_many_forward_mpi->timings();
+        extra_tvec->at(8) = t[0];
+        extra_tvec->at(9) = t[1];
+        extra_tvec->at(10) = t[2];
+    }
+    return *extra_tvec;
+}
+
+vector<string> tu_loop_t::extra_timings_descr( void ) {
+    if (!extra_timings_enabled) return vector<string>();
+    return { "loop-fft GF serial",
+             "loop-fft GF mpi reorder",
+             "loop-fft GF mpi fft",
+             "loop-fft GF mpi comm",
+             "loop-fft many serial",
+             "loop-fft many mpi+ reorder",
+             "loop-fft many mpi+ fft",
+             "loop-fft many mpi+ comm",
+             "loop-fft many mpi- reorder",
+             "loop-fft many mpi- fft",
+             "loop-fft many mpi- comm" };
+}
+
+void tu_loop_t::extra_timings_set( bool enabled ) {
+    if (fft_many_backward_mpi) fft_many_backward_mpi->timings_enabled = enabled;
+    if (fft_many_forward_mpi) fft_many_forward_mpi->timings_enabled = enabled;
+    if (fft_nons2_backward_mpi) fft_nons2_backward_mpi->timings_enabled = enabled;
+    this->extra_timings_enabled = enabled;
 }
 
 void tu_loop_t::cpu_fft_algorithm_cleanup( void ) {
@@ -206,6 +253,8 @@ tu_loop_t::~tu_loop_t() {
     cuda_delete_prop_descr(&cuda_descr);
 
     cpu_fft_algorithm_cleanup();
+
+    delete extra_tvec;
 }
 
 
@@ -247,8 +296,12 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
             fft_nons2_backward_mpi->execute( GF_fft_plus, GF_fft_plus );
             fft_nons2_backward_mpi->execute( GF_fft_conj_plus, GF_fft_conj_plus );
         } else {
+            double tick = 0, tock = 0;
+            if (extra_timings_enabled) tick = diverge_mpi_wtime();
             fftw_execute_dft( fft_nons2_backward,(fftw_complex*)GF_fft_plus,(fftw_complex*)GF_fft_plus );
             fftw_execute_dft( fft_nons2_backward,(fftw_complex*)GF_fft_conj_plus,(fftw_complex*)GF_fft_conj_plus );
+            if (extra_timings_enabled) tock = diverge_mpi_wtime();
+            extra_tvec->at(0) += tock - tick;
         }
     }
     if(cFRG_loop) {
@@ -286,10 +339,14 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
                 fft_nons2_backward_mpi->execute( cFRG_GF_fft_plus, cFRG_GF_fft_plus );
                 fft_nons2_backward_mpi->execute( cFRG_GF_fft_conj_plus, cFRG_GF_fft_conj_plus );
             } else {
+                double tick = 0, tock = 0;
+                if (extra_timings_enabled) tick = diverge_mpi_wtime();
                 fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_plus,
                     (fftw_complex*)cFRG_GF_fft_plus );
                 fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_conj_plus,
                     (fftw_complex*)cFRG_GF_fft_conj_plus );
+                if (extra_timings_enabled) tock = diverge_mpi_wtime();
+                extra_tvec->at(0) += tock - tick;
             }
         }
     }

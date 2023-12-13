@@ -35,6 +35,7 @@ struct tu_data_t {
     tu_fft_algorithm_t which_fft_simple,
                        which_fft_greens,
                        which_fft_red;
+    bool propagator_extra_cpu_timings;
 
     // reduction of computational cost of the loop
     vector<Vec3i> existing_ff;

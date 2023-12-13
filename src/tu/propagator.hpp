@@ -111,8 +111,14 @@ public:
     vector<index_t> c2fmap;
     cuda_prop_descr_t cuda_descr;
 
+    // only CPU timings
+    vector<double> extra_timings( void );
+    vector<string> extra_timings_descr( void );
+    void extra_timings_set( bool enabled );
 
 private:
+    bool extra_timings_enabled;
+    vector<double>* extra_tvec;
     bool cFRG_loop;
 
     tu_fft_algorithm_t which_fft_simple, which_fft_red, which_fft_greens;
