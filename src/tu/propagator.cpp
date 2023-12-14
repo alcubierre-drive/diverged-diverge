@@ -6,6 +6,18 @@
 #include "../misc/init_internal_libs.h"
 #include <iostream>
 
+static fftw_plan plan_inplace_transpose( int rows, int cols, complex128_t* in_out ) {
+    fftw_iodim howmany_dims[2];
+    howmany_dims[0].n  = rows;
+    howmany_dims[0].is = cols;
+    howmany_dims[0].os = 1;
+    howmany_dims[1].n  = cols;
+    howmany_dims[1].is = 1;
+    howmany_dims[1].os = rows;
+    return fftw_plan_guru_dft( 0, NULL, 2, howmany_dims, (fftw_complex*)in_out,
+            (fftw_complex*)in_out, 0, FFTW_MEASURE);
+}
+
 tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 :
     gf_buf{modelin->internals->greens},
@@ -129,6 +141,8 @@ void tu_loop_t::cpu_fft_algorithm_cleanup( void ) {
 
     if (fft_many_backward_mpi) delete fft_many_backward_mpi;
     if (fft_many_forward_mpi) delete fft_many_forward_mpi;
+    if (fft_inplace_T_to) fftw_destroy_plan(fft_inplace_T_to);
+    if (fft_inplace_T_from) fftw_destroy_plan(fft_inplace_T_from);
     if (fft_nons2_backward_mpi) delete fft_nons2_backward_mpi;
 }
 
@@ -172,6 +186,10 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
             if (!fft_many_forward_mpi)
                 fft_many_forward_mpi = new fftw_mpi_plan( dims, chunksize_max,
                     buffer_ggm_many, buffer_ggp_many, FFTW_FORWARD );
+            if (!fft_inplace_T_to)
+                fft_inplace_T_to = plan_inplace_transpose( chunksize_max, nktot, buffer_ggm_many );
+            if (!fft_inplace_T_from)
+                fft_inplace_T_from = plan_inplace_transpose( nktot, chunksize_max, buffer_ggp_many );
             break;
         case tu_fft_algorithm_split:
             if (!buffer_ggm_many)

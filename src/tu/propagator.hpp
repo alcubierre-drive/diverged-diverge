@@ -144,6 +144,9 @@ private:
     // simple & red
     fftw_mpi_plan *fft_many_backward_mpi = NULL,
                   *fft_many_forward_mpi = NULL;
+    // transpose a matrix (size: many)
+    fftw_plan fft_inplace_T_to = NULL,
+              fft_inplace_T_from = NULL;
     // greens
     fftw_mpi_plan *fft_nons2_backward_mpi = NULL;
 
