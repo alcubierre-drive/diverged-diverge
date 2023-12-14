@@ -44,50 +44,80 @@ void fftw_mpi_plan::constructor( index_t dims_[3], index_t howmany_, complex128_
     diverge_mpi_allgather_int( &displ, displs, 1 );
 }
 
-void fftw_mpi_plan::execute( complex128_t* in, complex128_t* out ) {
+void fftw_mpi_plan::execute( complex128_t* in, complex128_t* out, bool input_transposed ) {
     double tick = 0, tock = 0;
 
-    if (timings_enabled) tick = diverge_mpi_wtime();
-    #pragma omp parallel for collapse(3)
-    for (index_t h=0; h<howmany; ++h)
-    for (index_t i=0; i<local_n0; ++i)
-    for (index_t j=0; j<dims[1]*dims[2]; ++j)
-        in_mpi[IDX3( i, j, h, dims[1]*dims[2], howmany )] =
-            in[IDX3( h, i+local_0_start, j, dims[0], dims[1]*dims[2] )];
-    if (timings_enabled) tock = diverge_mpi_wtime();
-    tvec[0] += tock-tick;
+    if (!input_transposed) {
+
+        if (timings_enabled) tick = diverge_mpi_wtime();
+        // reorder from (h,i+l0,j) to (i,j,h)
+        #pragma omp parallel for collapse(3)
+        for (index_t h=0; h<howmany; ++h)
+        for (index_t i=0; i<local_n0; ++i)
+        for (index_t j=0; j<dims[1]*dims[2]; ++j)
+            in_mpi[IDX3( i, j, h, dims[1]*dims[2], howmany )] =
+                in[IDX3( h, i+local_0_start, j, dims[0], dims[1]*dims[2] )];
+        if (timings_enabled) tock = diverge_mpi_wtime();
+        tvec[0] += tock-tick;
+
+    } else {
+
+        if (timings_enabled) tick = diverge_mpi_wtime();
+        memcpy( in_mpi, in + local_0_start * dims[1] * dims[2] * howmany,
+                sizeof(complex128_t) * local_n0 * dims[1] * dims[2] * howmany );
+        if (timings_enabled) tock = diverge_mpi_wtime();
+        tvec[0] += tock-tick;
+
+    }
 
     if (timings_enabled) tick = diverge_mpi_wtime();
     fftw_mpi_execute_dft( p, (fftw_complex*)in_mpi, (fftw_complex*)out_mpi );
     if (timings_enabled) tock = diverge_mpi_wtime();
     tvec[1] += tock-tick;
 
-    if (timings_enabled) tick = diverge_mpi_wtime();
-    memcpy( buf+displs[rank], out_mpi, counts[rank]*sizeof(complex128_t) );
-    if (timings_enabled) tock = diverge_mpi_wtime();
-    tvec[0] += tock-tick;
+    if (!input_transposed) {
 
-    if (timings_enabled) tick = diverge_mpi_wtime();
-    diverge_mpi_allgatherv( buf, counts, displs );
-    if (timings_enabled) tock = diverge_mpi_wtime();
-    tvec[2] += tock-tick;
+        if (timings_enabled) tick = diverge_mpi_wtime();
+        memcpy( buf+displs[rank], out_mpi, counts[rank]*sizeof(complex128_t) );
+        if (timings_enabled) tock = diverge_mpi_wtime();
+        tvec[0] += tock-tick;
 
-    if (timings_enabled) tick = diverge_mpi_wtime();
-    #pragma omp parallel for collapse(2)
-    for (index_t h=0; h<howmany; ++h)
-    for (index_t r=0; r<nranks; ++r) {
-        complex128_t* start = buf+displs[r];
-        index_t _local_0_start = displs[r]/howmany/dims[1]/dims[2],
-                _local_n0 = counts[r]/howmany/dims[1]/dims[2];
+        if (timings_enabled) tick = diverge_mpi_wtime();
+        diverge_mpi_allgatherv( buf, counts, displs );
+        if (timings_enabled) tock = diverge_mpi_wtime();
+        tvec[2] += tock-tick;
 
-        for (index_t i=0; i<_local_n0; ++i)
-        for (index_t j=0; j<dims[1]*dims[2]; ++j) {
-            out[IDX3( h, _local_0_start+i, j, dims[0], dims[1]*dims[2] )] =
-                start[IDX3( i, j, h, dims[1]*dims[2], howmany )];
+        if (timings_enabled) tick = diverge_mpi_wtime();
+        // reorder from (i,j,h) to (h,i+l0,j)
+        #pragma omp parallel for collapse(2)
+        for (index_t h=0; h<howmany; ++h)
+        for (index_t r=0; r<nranks; ++r) {
+            complex128_t* start = buf+displs[r];
+            index_t _local_0_start = displs[r]/howmany/dims[1]/dims[2],
+                    _local_n0 = counts[r]/howmany/dims[1]/dims[2];
+
+            for (index_t i=0; i<_local_n0; ++i)
+            for (index_t j=0; j<dims[1]*dims[2]; ++j) {
+                out[IDX3( h, _local_0_start+i, j, dims[0], dims[1]*dims[2] )] =
+                    start[IDX3( i, j, h, dims[1]*dims[2], howmany )];
+            }
         }
+        if (timings_enabled) tock = diverge_mpi_wtime();
+        tvec[0] += tock-tick;
+
+    } else {
+
+        if (timings_enabled) tick = diverge_mpi_wtime();
+        memcpy( out+displs[rank], out_mpi, counts[rank]*sizeof(complex128_t) );
+        if (timings_enabled) tock = diverge_mpi_wtime();
+        tvec[0] += tock-tick;
+
+        if (timings_enabled) tick = diverge_mpi_wtime();
+        diverge_mpi_allgatherv( out, counts, displs );
+        if (timings_enabled) tock = diverge_mpi_wtime();
+        tvec[2] += tock-tick;
+
     }
-    if (timings_enabled) tock = diverge_mpi_wtime();
-    tvec[0] += tock-tick;
 }
 
 fftw_mpi_plan::~fftw_mpi_plan() {
@@ -100,19 +130,47 @@ fftw_mpi_plan::~fftw_mpi_plan() {
     free(displs);
 }
 #else // USE_MPI_FFTW && USE_MPI
-void fftw_mpi_plan::constructor( index_t dims_[3], index_t howmany, complex128_t* in,
+void fftw_mpi_plan::constructor( index_t dims_[3], index_t howmany_, complex128_t* in,
         complex128_t* out, int dir ) {
     tvec[0] = tvec[1] = tvec[2] = 0.0;
     timings_enabled = true;
-    int dims[3] = { static_cast<int>(dims_[0]), static_cast<int>(dims_[1]), static_cast<int>(dims_[2]) };
-    p = fftw_plan_many_dft( 3, dims, howmany, (fftw_complex*)in, dims, 1, dims[0]*dims[1]*dims[2],
-            (fftw_complex*)out, dims, 1, dims[0]*dims[1]*dims[2], dir, FFTW_MEASURE );
+    dims[0] = dims_[0];
+    dims[1] = dims_[1];
+    dims[2] = dims_[2];
+    howmany = howmany_;
+    int mydims[3] = { static_cast<int>(dims_[0]), static_cast<int>(dims_[1]), static_cast<int>(dims_[2]) };
+    p = fftw_plan_many_dft( 3, mydims, howmany, (fftw_complex*)in, mydims, 1, mydims[0]*mydims[1]*mydims[2],
+            (fftw_complex*)out, mydims, 1, mydims[0]*mydims[1]*mydims[2], dir, FFTW_MEASURE );
 }
 
-void fftw_mpi_plan::execute( complex128_t* in, complex128_t* out ) {
+void fftw_mpi_plan::execute( complex128_t* in, complex128_t* out, bool input_transposed ) {
     double tick = 0, tock = 0;
     if (timings_enabled) tick = diverge_mpi_wtime();
-    fftw_execute_dft( p, (fftw_complex*)in, (fftw_complex*)out );
+    if (!input_transposed) {
+        fftw_execute_dft( p, (fftw_complex*)in, (fftw_complex*)out );
+    } else {
+        complex128_t* buf = (complex128_t*)fftw_alloc_complex( dims[0]*dims[1]*dims[2]*howmany );
+
+        // transpose
+        for (index_t i=0; i<dims[0]*dims[1]*dims[2]; ++i)
+        for (index_t h=0; h<howmany; ++h)
+            buf[IDX2( h, i, dims[0]*dims[1]*dims[2] )] = in[IDX2( i, h, howmany )];
+
+        // fft
+        if (in == out) {
+            fftw_execute_dft( p, (fftw_complex*)buf, (fftw_complex*)buf );
+        } else {
+            fftw_execute_dft( p, (fftw_complex*)buf, (fftw_complex*)out );
+            memcpy( buf, out, sizeof(complex128_t)*dims[0]*dims[1]*dims[2]*howmany );
+        }
+
+        // transpose
+        for (index_t i=0; i<dims[0]*dims[1]*dims[2]; ++i)
+        for (index_t h=0; h<howmany; ++h)
+            out[IDX2( i, h, howmany )] = buf[IDX2( h, i, dims[0]*dims[1]*dims[2] )];
+
+        fftw_free( (fftw_complex*)buf );
+    }
     if (timings_enabled) tock = diverge_mpi_wtime();
     tvec[1] += tock-tick;
 }

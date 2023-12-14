@@ -114,11 +114,19 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
             stack.pop_back();
         }
 
+#ifdef TRANSPOSE_MPI_FFT_BUFFERS
+#define TRANSPOSE_MPI_FFT_BUFFERS_ARG true
+#define MY_BUFFER_GGM_IDX( i__, kff__ ) buffer_ggm_many[ kff__ * chunksize_max + i__ ]
+#define MY_BUFFER_GGP_IDX( i__, kff__ ) buffer_ggp_many[ kff__ * chunksize_max + i__ ]
+#else
+#define TRANSPOSE_MPI_FFT_BUFFERS_ARG false
+#define MY_BUFFER_GGM_IDX( i__, kff__ ) buffer_ggm_many[ i__ * nktot + kff__ ]
+#define MY_BUFFER_GGP_IDX( i__, kff__ ) buffer_ggp_many[ i__ * nktot + kff__ ]
+#endif
+
         // fill buffers
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t i=0; i<chunksize; ++i) {
-            complex128_t* MY_BUFFER_GGm = buffer_ggm_many + i*nktot;
-            complex128_t* MY_BUFFER_GGp = buffer_ggp_many + i*nktot;
             const index_t& s1 = tasks[i].s1, s2 = tasks[i].s2, s3 = tasks[i].s3, s4 = tasks[i].s4, m = tasks[i].m;
 
             index_t mo3 = (taskoff+m)/n_orbff;
@@ -137,12 +145,12 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
                 index_t kx = ((pp?1:-1)*kffx - off1[0] + off3[0]+4*dims[0])%dims[0];
                 index_t kid = kz + dims[2] * (ky + dims[1] *kx);
                 index_t kff = kffz + dims[2] * (kffy + dims[1] *kffx);
-                MY_BUFFER_GGm[kff] = pp ?
+                MY_BUFFER_GGM_IDX( i, kff ) = pp ?
                     GF_fft_conj_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))] :
                     GF_fft_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))];
             }
             for(index_t kff = 0; kff<nktot;++kff){
-                MY_BUFFER_GGm[kff] *= pp ?
+                MY_BUFFER_GGM_IDX( i, kff ) *= pp ?
                     GF_fft_plus[kff+nktot*(ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4)))] :
                     GF_fft_plus[kff+nktot*(ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4)))];
             }
@@ -158,24 +166,24 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
                                   (-kffx - off1[0] + off3[0]+4*dims[0])%dims[0];
                 index_t kid = kz + dims[2] * (ky + dims[1] *kx);
                 index_t kff = kffz + dims[2] * (kffy + dims[1] *kffx);
-                MY_BUFFER_GGp[kff] = pp ?
+                MY_BUFFER_GGP_IDX( i, kff ) = pp ?
                     GF_fft_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))] :
                     GF_fft_conj_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))];
             }
             for(index_t kff = 0; kff<nktot;++kff){
-                MY_BUFFER_GGp[kff] *= pp ?
+                MY_BUFFER_GGP_IDX( i, kff ) *= pp ?
                     GF_fft_conj_plus[kff+nktot*(ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4)))] :
                     GF_fft_conj_plus[kff+nktot*(ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4)))];
             }
             for(index_t kff = 0; kff<nktot;++kff){
-                MY_BUFFER_GGm[kff] += MY_BUFFER_GGp[kff];
+                MY_BUFFER_GGM_IDX( i, kff ) += MY_BUFFER_GGP_IDX( i, kff );
             }
         }
 
         // execute DFTs
         fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
         if (which_fft_simple == tu_fft_algorithm_mpi)
-            p->execute( buffer_ggm_many, buffer_ggp_many );
+            p->execute( buffer_ggm_many, buffer_ggp_many, TRANSPOSE_MPI_FFT_BUFFERS_ARG );
         else {
             double tick = 0, tock = 0;
             if (extra_timings_enabled) tick = diverge_mpi_wtime();
@@ -188,7 +196,6 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
         // put into loop
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t i=0; i<chunksize; ++i) {
-            complex128_t* MY_BUFFER_GGp = buffer_ggp_many + i*nktot;
             const index_t& s1 = tasks[i].s1, s2 = tasks[i].s2, s3 = tasks[i].s3, s4 = tasks[i].s4, m = tasks[i].m;
 
             index_t mo3 = (taskoff+m)/n_orbff;
@@ -198,9 +205,9 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
                     mo1+n_orbff*(s1+s2*n_spin+POW2(n_spin)*(mo3+n_orbff*(s3 + s4*n_spin+ POW2(n_spin)*q))) :
                     mo1+n_orbff*(s1+s4*n_spin+POW2(n_spin)*(mo3+n_orbff*(s3 + s2*n_spin+ POW2(n_spin)*q)));
                 if constexpr(subtract)
-                    loop[idx_to] -= MY_BUFFER_GGp[c2fmap[q]];
+                    loop[idx_to] -= MY_BUFFER_GGP_IDX( i, c2fmap[q] );
                 else
-                    loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                    loop[idx_to] = MY_BUFFER_GGP_IDX( i, c2fmap[q] );
             }
         }
     }
@@ -319,8 +326,6 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
         // fill buffers
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t i=0; i<chunksize; ++i) {
-            complex128_t* MY_BUFFER_GGm = buffer_ggm_many + i*nktot;
-            complex128_t* MY_BUFFER_GGp = buffer_ggp_many + i*nktot;
             const index_t& s1 = tasks[i].s1, s2 = tasks[i].s2, s3 = tasks[i].s3, s4 = tasks[i].s4, m = tasks[i].m;
             index_t mo1 = tu_data->unique_mi_l[m+taskoff];
             index_t mo3 = tu_data->unique_mi_r[m+taskoff];
@@ -338,12 +343,12 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
                 index_t kx = ((pp ? 1:-1)*kffx - off1[0] + off3[0]+4*dims[0])%dims[0];
                 index_t kid = kz + dims[2] * (ky + dims[1] *kx);
                 index_t kff = kffz + dims[2] * (kffy + dims[1] *kffx);
-                MY_BUFFER_GGm[kff] = pp ?
+                MY_BUFFER_GGM_IDX( i, kff ) = pp ?
                     GF_fft_conj_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))] :
                     GF_fft_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))];
             }
             for(index_t kff = 0; kff<nktot;++kff){
-                MY_BUFFER_GGm[kff] *= pp ?
+                MY_BUFFER_GGM_IDX( i, kff ) *= pp ?
                     GF_fft_plus[kff+nktot*(ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4)))] :
                     GF_fft_plus[kff+nktot*(ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4)))];
             }
@@ -356,24 +361,24 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
                 index_t kx = ((pp?1:-1)*kffx - off1[0] + off3[0]+4*dims[0])%dims[0];
                 index_t kid = kz + dims[2] * (ky + dims[1] *kx);
                 index_t kff = kffz + dims[2] * (kffy + dims[1] *kffx);
-                MY_BUFFER_GGp[kff] = pp ?
+                MY_BUFFER_GGP_IDX( i, kff ) = pp ?
                     GF_fft_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))] :
                     GF_fft_conj_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))];
             }
             for(index_t kff = 0; kff<nktot;++kff){
-                MY_BUFFER_GGp[kff] *= pp ?
+                MY_BUFFER_GGP_IDX( i, kff ) *= pp ?
                     GF_fft_conj_plus[kff+nktot*(ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4)))] :
                     GF_fft_conj_plus[kff+nktot*(ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4)))];
             }
             for(index_t kff = 0; kff<nktot;++kff){
-                MY_BUFFER_GGm[kff] += MY_BUFFER_GGp[kff];
+                MY_BUFFER_GGM_IDX( i, kff ) += MY_BUFFER_GGP_IDX( i, kff );
             }
         }
 
         // execute DFTs
         fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
         if (which_fft_red == tu_fft_algorithm_mpi)
-            p->execute( buffer_ggm_many, buffer_ggp_many );
+            p->execute( buffer_ggm_many, buffer_ggp_many, TRANSPOSE_MPI_FFT_BUFFERS_ARG );
         else {
             double tick = 0, tock = 0;
             if (extra_timings_enabled) tick = diverge_mpi_wtime();
@@ -386,7 +391,6 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
         // put into loop
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t i=0; i<chunksize; ++i) {
-            complex128_t* MY_BUFFER_GGp = buffer_ggp_many + i*nktot;
             const index_t& s1 = tasks[i].s1, s2 = tasks[i].s2, s3 = tasks[i].s3, s4 = tasks[i].s4, m = tasks[i].m;
             index_t mo1 = tu_data->unique_mi_l[m+taskoff];
             index_t mo3 = tu_data->unique_mi_r[m+taskoff];
@@ -395,9 +399,9 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
                     mo1+n_orbff*(s1+s2*n_spin+POW2(n_spin)*(mo3+n_orbff*(s3 + s4*n_spin+ POW2(n_spin)*q))) :
                     mo1+n_orbff*(s1+s4*n_spin+POW2(n_spin)*(mo3+n_orbff*(s3 + s2*n_spin+ POW2(n_spin)*q)));
                 if constexpr(subtract)
-                    loop[idx_to] -= MY_BUFFER_GGp[c2fmap[q]];
+                    loop[idx_to] -= MY_BUFFER_GGP_IDX( i, c2fmap[q] );
                 else
-                    loop[idx_to] = MY_BUFFER_GGp[c2fmap[q]];
+                    loop[idx_to] = MY_BUFFER_GGP_IDX( i, c2fmap[q] );
             }
         }
     }

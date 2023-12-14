@@ -12,7 +12,7 @@ class fftw_mpi_plan {
         fftw_mpi_plan( index_t dims[3], index_t howmany, complex128_t* in, complex128_t* out, int dir );
         fftw_mpi_plan( int dims[3], index_t howmany, complex128_t* in, complex128_t* out, int dir );
         ~fftw_mpi_plan();
-        void execute( complex128_t* in, complex128_t* out );
+        void execute( complex128_t* in, complex128_t* out, bool input_transposed = false );
         bool timings_enabled;
         array<double,3> timings( void ) { return tvec; } // reorder, fft, comm
     private:
