@@ -117,6 +117,13 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
 #define MY_BUFFER_GGM_IDX( i__, kff__ ) buffer_ggm_many[ i__ * nktot + kff__ ]
 #define MY_BUFFER_GGP_IDX( i__, kff__ ) buffer_ggp_many[ i__ * nktot + kff__ ]
 
+        index_t kx_start = 0, kx_stop = dims[0];
+        if (which_fft_simple == tu_fft_algorithm_mpi) {
+            fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
+            kx_start = p->get_local_0_start();
+            kx_stop = p->get_local_0_start() + p->get_local_n0();
+        }
+
         // fill buffers
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t i=0; i<chunksize; ++i) {
@@ -130,7 +137,7 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
             const index_t o3 = mi_to_ofrom[mo3];
             const index_t ob3 = mi_to_oto[mo3];
             const index_t* off3 = mi_to_R+3*mo3;
-            for(index_t kffx = 0; kffx<dims[0];++kffx)
+            for(index_t kffx = kx_start; kffx<kx_stop;++kffx)
             for(index_t kffy = 0; kffy<dims[1];++kffy)
             for(index_t kffz = 0; kffz<dims[2];++kffz){
                 index_t kz = ((pp?1:-1)*kffz - off1[2] + off3[2]+4*dims[2])%dims[2];
@@ -141,14 +148,12 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
                 MY_BUFFER_GGM_IDX( i, kff ) = pp ?
                     GF_fft_conj_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))] :
                     GF_fft_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))];
-            }
-            for(index_t kff = 0; kff<nktot;++kff){
                 MY_BUFFER_GGM_IDX( i, kff ) *= pp ?
                     GF_fft_plus[kff+nktot*(ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4)))] :
                     GF_fft_plus[kff+nktot*(ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4)))];
             }
 
-            for(index_t kffx = 0; kffx<dims[0];++kffx)
+            for(index_t kffx = kx_start; kffx<kx_stop;++kffx)
             for(index_t kffy = 0; kffy<dims[1];++kffy)
             for(index_t kffz = 0; kffz<dims[2];++kffz){
                 index_t kz = pp ? (kffz - off1[2] + off3[2]+3*dims[2])%dims[2] :
@@ -162,20 +167,21 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
                 MY_BUFFER_GGP_IDX( i, kff ) = pp ?
                     GF_fft_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))] :
                     GF_fft_conj_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))];
-            }
-            for(index_t kff = 0; kff<nktot;++kff){
                 MY_BUFFER_GGP_IDX( i, kff ) *= pp ?
                     GF_fft_conj_plus[kff+nktot*(ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4)))] :
                     GF_fft_conj_plus[kff+nktot*(ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4)))];
             }
-            for(index_t kff = 0; kff<nktot;++kff){
+            for(index_t kffx = kx_start; kffx<kx_stop;++kffx)
+            for(index_t kffy = 0; kffy<dims[1];++kffy)
+            for(index_t kffz = 0; kffz<dims[2];++kffz){
+                index_t kff = kffz + dims[2] * (kffy + dims[1] *kffx);
                 MY_BUFFER_GGM_IDX( i, kff ) += MY_BUFFER_GGP_IDX( i, kff );
             }
         }
 
         // execute DFTs
-        fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
         if (which_fft_simple == tu_fft_algorithm_mpi) {
+            fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
             #ifdef TRANSPOSE_MPI_FFT_BUFFERS
             fftw_execute_dft( fft_inplace_T_to, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggm_many );
             p->execute( buffer_ggm_many, buffer_ggp_many, true );
@@ -322,6 +328,13 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
             stack.pop_back();
         }
 
+        index_t kx_start = 0, kx_stop = dims[0];
+        if (which_fft_red == tu_fft_algorithm_mpi) {
+            fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
+            kx_start = p->get_local_0_start();
+            kx_stop = p->get_local_0_start() + p->get_local_n0();
+        }
+
         // fill buffers
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t i=0; i<chunksize; ++i) {
@@ -334,7 +347,7 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
             const index_t o3 = mi_to_ofrom[mo3];
             const index_t ob3 = mi_to_oto[mo3];
             const index_t* off3 = mi_to_R+3*mo3;
-            for(index_t kffx = 0; kffx<dims[0];++kffx)
+            for(index_t kffx = kx_start; kffx<kx_stop;++kffx)
             for(index_t kffy = 0; kffy<dims[1];++kffy)
             for(index_t kffz = 0; kffz<dims[2];++kffz){
                 index_t kz = ((pp ? 1:-1)*kffz - off1[2] + off3[2]+4*dims[2])%dims[2];
@@ -345,14 +358,12 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
                 MY_BUFFER_GGM_IDX( i, kff ) = pp ?
                     GF_fft_conj_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))] :
                     GF_fft_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))];
-            }
-            for(index_t kff = 0; kff<nktot;++kff){
                 MY_BUFFER_GGM_IDX( i, kff ) *= pp ?
                     GF_fft_plus[kff+nktot*(ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4)))] :
                     GF_fft_plus[kff+nktot*(ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4)))];
             }
 
-            for(index_t kffx = 0; kffx<dims[0];++kffx)
+            for(index_t kffx = kx_start; kffx<kx_stop;++kffx)
             for(index_t kffy = 0; kffy<dims[1];++kffy)
             for(index_t kffz = 0; kffz<dims[2];++kffz){
                 index_t kz = ((pp?1:-1)*kffz - off1[2] + off3[2]+4*dims[2])%dims[2];
@@ -363,20 +374,21 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
                 MY_BUFFER_GGP_IDX( i, kff ) = pp ?
                     GF_fft_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))] :
                     GF_fft_conj_plus[kid + nktot*(o1+n_orb*(s1+n_spin*(o3+n_orb*s3)))];
-            }
-            for(index_t kff = 0; kff<nktot;++kff){
                 MY_BUFFER_GGP_IDX( i, kff ) *= pp ?
                     GF_fft_conj_plus[kff+nktot*(ob1+n_orb*(s2+n_spin*(ob3+n_orb*s4)))] :
                     GF_fft_conj_plus[kff+nktot*(ob3+n_orb*(s2+n_spin*(ob1+n_orb*s4)))];
             }
-            for(index_t kff = 0; kff<nktot;++kff){
+            for(index_t kffx = kx_start; kffx<kx_stop;++kffx)
+            for(index_t kffy = 0; kffy<dims[1];++kffy)
+            for(index_t kffz = 0; kffz<dims[2];++kffz){
+                index_t kff = kffz + dims[2] * (kffy + dims[1] *kffx);
                 MY_BUFFER_GGM_IDX( i, kff ) += MY_BUFFER_GGP_IDX( i, kff );
             }
         }
 
         // execute DFTs
-        fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
         if (which_fft_red == tu_fft_algorithm_mpi) {
+            fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
             #ifdef TRANSPOSE_MPI_FFT_BUFFERS
             fftw_execute_dft( fft_inplace_T_to, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggm_many );
             p->execute( buffer_ggm_many, buffer_ggp_many, true );

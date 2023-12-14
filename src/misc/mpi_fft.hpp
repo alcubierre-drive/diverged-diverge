@@ -15,6 +15,8 @@ class fftw_mpi_plan {
         void execute( complex128_t* in, complex128_t* out, bool input_transposed = false );
         bool timings_enabled;
         array<double,3> timings( void ) { return tvec; } // reorder, fft, comm
+        index_t get_local_n0( void ) { return local_n0; }
+        index_t get_local_0_start( void ) { return local_0_start; }
     private:
         ptrdiff_t local_n0;
         ptrdiff_t local_0_start;

@@ -138,6 +138,8 @@ void fftw_mpi_plan::constructor( index_t dims_[3], index_t howmany_, complex128_
     dims[1] = dims_[1];
     dims[2] = dims_[2];
     howmany = howmany_;
+    local_0_start = 0;
+    local_n0 = dims[0];
     int mydims[3] = { static_cast<int>(dims_[0]), static_cast<int>(dims_[1]), static_cast<int>(dims_[2]) };
     p = fftw_plan_many_dft( 3, mydims, howmany, (fftw_complex*)in, mydims, 1, mydims[0]*mydims[1]*mydims[2],
             (fftw_complex*)out, mydims, 1, mydims[0]*mydims[1]*mydims[2], dir, FFTW_MEASURE );
