@@ -17,6 +17,8 @@ class fftw_mpi_plan {
         array<double,3> timings( void ) { return tvec; } // reorder, fft, comm
         index_t get_local_n0( void ) { return local_n0; }
         index_t get_local_0_start( void ) { return local_0_start; }
+        complex128_t* get_in( void ) { return in_mpi; }
+        complex128_t* get_out( void ) { return out_mpi; }
     private:
         ptrdiff_t local_n0;
         ptrdiff_t local_0_start;
