@@ -268,6 +268,14 @@ void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rd
     MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_LONG_LONG, recv, rcnt, rdsp, MPI_LONG_LONG, diverge_mpi_comm );
 }
 
+void diverge_mpi_allgatherv_bytes( void* recv, int elementsz, const int* rcnt, const int* rdsp ) {
+    MPICHK();
+    MPI_Datatype dt_bytes;
+    MPI_Type_contiguous(elementsz, MPI_BYTE, &dt_bytes);
+    MPI_Type_commit(&dt_bytes);
+    MPI_Allgatherv( MPI_IN_PLACE, 0, dt_bytes, recv, rcnt, rdsp, dt_bytes, diverge_mpi_comm );
+}
+
 double diverge_mpi_max( double* send ) {
     MPICHK();
     double recv;
@@ -438,6 +446,9 @@ void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rds
 }
 void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp ) {
     (void)recv; (void)rcnt; (void)rdsp;
+}
+void diverge_mpi_allgatherv_bytes( void* recv, int elementsz, const int* rcnt, const int* rdsp ) {
+    (void)recv; (void)rcnt; (void)rdsp; (void)elementsz;
 }
 double diverge_mpi_max( double* send ) { return *send; }
 void diverge_mpi_bcast_bytes( void* inout, int size, int root ) {

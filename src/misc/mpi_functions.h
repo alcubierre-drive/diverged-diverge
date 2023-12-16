@@ -82,6 +82,7 @@ void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcou
 
 void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rdsp );
 void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp );
+void diverge_mpi_allgatherv_bytes( void* recv, int elementsz, const int* rcnt, const int* rdsp );
 double diverge_mpi_max( double* send );
 void diverge_mpi_bcast_bytes( void* inout, int size, int root );
 void diverge_mpi_gather_double( const double* send, int scnt, double* recv, int rcnt, int root );
