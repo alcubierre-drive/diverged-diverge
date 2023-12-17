@@ -1,20 +1,32 @@
 #include "mpi_fft.hpp"
 #include "mpi_functions.h"
 
-fftw_mpi_plan::fftw_mpi_plan( int dims_[3], index_t howmany, complex128_t* in, complex128_t* out, int dir ) {
+fftw_mpi_plan::fftw_mpi_plan( int dims_[3], index_t howmany, complex128_t* in,
+        complex128_t* out, int dir, complex128_t* buf ) {
     index_t dims[3] = {dims_[0], dims_[1], dims_[2]};
-    constructor( dims, howmany, in, out, dir );
+    constructor( dims, howmany, in, out, dir, buf );
 }
 
-fftw_mpi_plan::fftw_mpi_plan( index_t dims[3], index_t howmany, complex128_t* in, complex128_t* out, int dir ) {
-    constructor( dims, howmany, in, out, dir );
+fftw_mpi_plan::fftw_mpi_plan( index_t dims[3], index_t howmany, complex128_t* in,
+        complex128_t* out, int dir, complex128_t* buf ) {
+    constructor( dims, howmany, in, out, dir, buf );
 }
 
 #if defined(USE_MPI_FFTW) && defined(USE_MPI)
 #include <fftw3-mpi.h>
 
+// TODO checking allocations for some simulations before removing this...
+static inline complex128_t* fftw_alloc_complex_wrap_( size_t sz, const char* f, int l ) {
+    complex128_t* result = (complex128_t*)fftw_alloc_complex( sz );
+    mpi_vrb_printf( "allocating %.2fGiB (%s:%i)\n",
+            (double)(sz*sizeof(complex128_t)) / (double)(1024.*1024.*1024.), f, l );
+    return result;
+}
+#define fftw_alloc_complex_wrap( sz ) fftw_alloc_complex_wrap_( sz, __FILE__, __LINE__ )
+
+
 void fftw_mpi_plan::constructor( index_t dims_[3], index_t howmany_, complex128_t* in_,
-        complex128_t* out_, int dir ) {
+        complex128_t* out_, int dir, complex128_t* buf_ ) {
     in = in_;
     out = out_;
     howmany = howmany_;
@@ -27,12 +39,19 @@ void fftw_mpi_plan::constructor( index_t dims_[3], index_t howmany_, complex128_
     timings_enabled = true;
     ptrdiff_t alloc = fftw_mpi_local_size_many( 3, dims, howmany, FFTW_MPI_DEFAULT_BLOCK,
             diverge_mpi_get_comm(), &local_n0, &local_0_start );
-    in_mpi = (complex128_t*)fftw_alloc_complex(alloc);
+    in_mpi = (complex128_t*)fftw_alloc_complex_wrap(alloc);
     if (in != out)
-        out_mpi = (complex128_t*)fftw_alloc_complex(alloc);
+        out_mpi = (complex128_t*)fftw_alloc_complex_wrap(alloc);
     else
         out_mpi = in_mpi;
-    buf = (complex128_t*)fftw_alloc_complex(howmany*dims[0]*dims[1]*dims[2]);
+
+    if (buf_) {
+        buf = buf_;
+        free_buf = false;
+    } else {
+        buf = (complex128_t*)fftw_alloc_complex_wrap(howmany*dims[0]*dims[1]*dims[2]);
+    }
+
     p = fftw_mpi_plan_many_dft( 3, dims, howmany, FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK,
             (fftw_complex*)in_mpi, (fftw_complex*)out_mpi, diverge_mpi_get_comm(), dir, FFTW_MEASURE );
 
@@ -124,14 +143,15 @@ fftw_mpi_plan::~fftw_mpi_plan() {
     if (in_mpi != out_mpi)
         fftw_free(out_mpi);
     fftw_free(in_mpi);
-    fftw_free(buf);
+    if (free_buf) fftw_free(buf);
     fftw_destroy_plan(p);
     free(counts);
     free(displs);
 }
 #else // USE_MPI_FFTW && USE_MPI
 void fftw_mpi_plan::constructor( index_t dims_[3], index_t howmany_, complex128_t* in,
-        complex128_t* out, int dir ) {
+        complex128_t* out, int dir, complex128_t* buf_ ) {
+    (void)buf_;
     tvec[0] = tvec[1] = tvec[2] = 0.0;
     timings_enabled = true;
     dims[0] = dims_[0];

@@ -7,6 +7,10 @@ void tu_loop_reconstruct_from_reduced( void* handle, complex128_t* loop );
 
 #if defined(USE_MPI) && defined(USE_MPI_FFTW)
 
+// TODO checking allocations for some simulations before removing this...
+#define alloc_print( sz ) mpi_vrb_printf( "allocating %.2fGiB (%s:%i)\n", \
+        (double)(sz)/(double)(1024.*1024.*1024), __FILE__, __LINE__ )
+
 #include <fftw3-mpi.h>
 
 static fftw_plan plan_transpose( int rows, int cols, complex128_t* in, complex128_t* out ) {
@@ -74,6 +78,7 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
 
     tick = diverge_mpi_wtime();
     tu_mpi_loop_t* t = calloc(1, sizeof(tu_mpi_loop_t));
+    alloc_print( sizeof(tu_mpi_loop_t) );
     t->enable_timings = 1;
     t->rank = diverge_mpi_comm_rank(),
     t->size = diverge_mpi_comm_size();
@@ -106,7 +111,9 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     t->alloc = fftw_mpi_local_size_many( 3, t->dims, t->chunksize_max,
             FFTW_MPI_DEFAULT_BLOCK, t->comm, &t->kx_count, &t->kx_displ );
     t->ggm_buf = fftw_alloc_complex(t->alloc);
+    alloc_print( sizeof(complex128_t)*t->alloc );
     t->ggp_buf = fftw_alloc_complex(t->alloc);
+    alloc_print( sizeof(complex128_t)*t->alloc );
 
     t->fft_forward = fftw_mpi_plan_many_dft( 3, t->dims, t->chunksize_max,
             FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->ggm_buf, t->ggp_buf,
@@ -121,7 +128,9 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
 
     tick = diverge_mpi_wtime();
     t->kx_counts = (int*)calloc(t->size, sizeof(int));
+    alloc_print( sizeof(int)*t->size );
     t->kx_displs = (int*)calloc(t->size, sizeof(int));
+    alloc_print( sizeof(int)*t->size );
     int kx_count_i = t->kx_count;
     int kx_displ_i = t->kx_displ;
     diverge_mpi_allgather_int( &kx_count_i, t->kx_counts, 1 );
@@ -131,6 +140,7 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     kmap_t* kcomms = calloc(t->my_nk, sizeof(kmap_t));
     index_t kcomms_size = 0;
     t->c2fmap_local = calloc(t->my_nk, sizeof(int));
+    alloc_print( sizeof(int)*t->my_nk );
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
     for (index_t q=0; q<t->my_nk; ++q) {
         index_t k_want = t->c2fmap[q];
@@ -177,7 +187,9 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
             t->kc_send_count++;
     }
     t->kc_send = calloc(t->kc_send_count, sizeof(kmap_t));
+    alloc_print( t->kc_send_count * sizeof(kmap_t) );
     t->kc_recv = calloc(t->kc_recv_count, sizeof(kmap_t));
+    alloc_print( t->kc_recv_count * sizeof(kmap_t) );
     t->kc_send_count = 0;
     t->kc_recv_count = 0;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -285,6 +297,7 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
 
     index_t stack_size = POW4(t->n_spin)*ntasks;
     ptask_t* stack = calloc( stack_size, sizeof(ptask_t) );
+    alloc_print( stack_size * sizeof(ptask_t) );
     index_t idx = stack_size;
     for(index_t s3 = 0; s3<t->n_spin;++s3)
     for(index_t s2 = 0; s2<t->n_spin;++s2)

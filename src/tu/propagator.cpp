@@ -190,7 +190,7 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
         case tu_fft_algorithm_mpi:
             if (!fft_nons2_backward_mpi)
                 fft_nons2_backward_mpi = new fftw_mpi_plan( dims, POW2(n_spin*n_orb),
-                    GF_fft_plus, GF_fft_plus, FFTW_BACKWARD );
+                    GF_fft_plus, GF_fft_plus, FFTW_BACKWARD, (complex128_t*)gf_buf );
             break;
         case tu_fft_algorithm_split:
         case tu_fft_algorithm_greedy:

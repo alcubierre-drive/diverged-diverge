@@ -9,8 +9,8 @@ using std::array;
 
 class fftw_mpi_plan {
     public:
-        fftw_mpi_plan( index_t dims[3], index_t howmany, complex128_t* in, complex128_t* out, int dir );
-        fftw_mpi_plan( int dims[3], index_t howmany, complex128_t* in, complex128_t* out, int dir );
+        fftw_mpi_plan( index_t dims[3], index_t howmany, complex128_t* in, complex128_t* out, int dir, complex128_t* buf = NULL );
+        fftw_mpi_plan( int dims[3], index_t howmany, complex128_t* in, complex128_t* out, int dir, complex128_t* buf = NULL );
         ~fftw_mpi_plan();
         void execute( complex128_t* in, complex128_t* out, bool input_transposed = false );
         bool timings_enabled;
@@ -28,6 +28,7 @@ class fftw_mpi_plan {
         complex128_t* in_mpi = NULL;
         complex128_t* out_mpi = NULL;
         complex128_t* buf = NULL;
+        bool free_buf = true;
         index_t dims[3];
         index_t howmany;
 
@@ -35,6 +36,6 @@ class fftw_mpi_plan {
         int* counts;
         int* displs;
 
-        void constructor( index_t dims[3], index_t howmany, complex128_t* in, complex128_t* out, int dir );
+        void constructor( index_t dims[3], index_t howmany, complex128_t* in, complex128_t* out, int dir, complex128_t* buf );
         array<double,3> tvec;
 };
