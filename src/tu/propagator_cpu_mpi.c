@@ -59,8 +59,11 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         void* handle ) {
 
     diverge_mpi_barrier();
-    tu_mpi_loop_t* t = calloc(1, sizeof(tu_mpi_loop_t));
+    double tick = 0, tock = 0;
 
+    tick = diverge_mpi_wtime();
+    tu_mpi_loop_t* t = calloc(1, sizeof(tu_mpi_loop_t));
+    t->enable_timings = 1;
     t->rank = diverge_mpi_comm_rank(),
     t->size = diverge_mpi_comm_size();
     t->comm = diverge_mpi_get_comm();
@@ -85,7 +88,10 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     t->p_GF_fft_plus =  p_GF_fft_plus;
     t->p_GF_fft_conj_plus =  p_GF_fft_conj_plus;
     t->tu_loop_handle = handle;
+    tock = diverge_mpi_wtime();
+    mpi_vrb_printf( "TU-MPI prop: %.2fs for data\n", tock-tick );
 
+    tick = diverge_mpi_wtime();
     t->alloc = fftw_mpi_local_size_many( 3, t->dims, t->chunksize_max,
             FFTW_MPI_DEFAULT_BLOCK, t->comm, &t->kx_count, &t->kx_displ );
     t->ggm_buf = fftw_alloc_complex(t->alloc);
@@ -97,7 +103,10 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     t->fft_backward = fftw_mpi_plan_many_dft( 3, t->dims, t->chunksize_max,
             FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->ggm_buf, t->ggp_buf,
             t->comm, FFTW_BACKWARD, FFTW_MEASURE );
+    tock = diverge_mpi_wtime();
+    mpi_vrb_printf( "TU-MPI prop: %.2fs for FFT plans\n", tock-tick );
 
+    tick = diverge_mpi_wtime();
     t->kx_counts = (int*)calloc(t->size, sizeof(int));
     t->kx_displs = (int*)calloc(t->size, sizeof(int));
     int kx_count_i = t->kx_count;
@@ -106,8 +115,8 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     diverge_mpi_allgather_int( &kx_displ_i, t->kx_displs, 1 );
 
     // kcomms contains the missing indices on *this rank*
-    t->kcomms = calloc(t->my_nk, sizeof(kmap_t));
-    t->kcomms_size = 0;
+    kmap_t* kcomms = calloc(t->my_nk, sizeof(kmap_t));
+    index_t kcomms_size = 0;
     t->c2fmap_local = calloc(t->my_nk, sizeof(int));
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
     for (index_t q=0; q<t->my_nk; ++q) {
@@ -115,27 +124,27 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         int r = find_rank( t, k_want );
         if (r != t->rank) {
             #pragma omp critical
-            t->kcomms[t->kcomms_size++] = (kmap_t){.k=k_want, .q=q, .source_rank=r, .target_rank=t->rank};
+            kcomms[kcomms_size++] = (kmap_t){.k=k_want, .q=q, .source_rank=r, .target_rank=t->rank};
         } else {
             t->c2fmap_local[q] = 1;
         }
     }
     // shrink kcomms
-    t->kcomms = realloc( t->kcomms, sizeof(kmap_t)*t->kcomms_size );
+    kcomms = realloc( kcomms, sizeof(kmap_t)*kcomms_size );
 
     // prepare for communication of kcomms indices
     int *kcommcounts = calloc(t->size, sizeof(int)),
         *kcommdispls = calloc(t->size, sizeof(int));
-    int kcommcount = t->kcomms_size;
+    int kcommcount = kcomms_size;
     diverge_mpi_allgather_int( &kcommcount, kcommcounts, 1 );
     for (int i=1; i<t->size; ++i) kcommdispls[i] = kcommdispls[i-1] + kcommcounts[i-1];
 
-    t->kcomms_size = kcommcounts[t->size-1]+kcommdispls[t->size-1];
-    t->kcomms = realloc( t->kcomms, sizeof(kmap_t)*t->kcomms_size );
+    kcomms_size = kcommcounts[t->size-1]+kcommdispls[t->size-1];
+    kcomms = realloc( kcomms, sizeof(kmap_t)*kcomms_size );
     // move our share to the right location before gathering everything
-    memmove( t->kcomms + kcommdispls[t->rank], t->kcomms, sizeof(kmap_t)*kcommcounts[t->rank] );
+    memmove( kcomms + kcommdispls[t->rank], kcomms, sizeof(kmap_t)*kcommcounts[t->rank] );
     // and now kcomms contains *all indices that must be communicated*
-    diverge_mpi_allgatherv_bytes( t->kcomms, sizeof(kmap_t), kcommcounts, kcommdispls );
+    diverge_mpi_allgatherv_bytes( kcomms, sizeof(kmap_t), kcommcounts, kcommdispls );
 
     // free auxiliary arrays
     free( kcommcounts );
@@ -146,11 +155,11 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     t->kc_send_count = 0,
     t->kc_recv_count = 0;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t kc=0; kc<t->kcomms_size; ++kc) {
-        if (t->kcomms[kc].target_rank == t->rank)
+    for (index_t kc=0; kc<kcomms_size; ++kc) {
+        if (kcomms[kc].target_rank == t->rank)
             #pragma omp atomic
             t->kc_recv_count++;
-        if (t->kcomms[kc].source_rank == t->rank)
+        if (kcomms[kc].source_rank == t->rank)
             #pragma omp atomic
             t->kc_send_count++;
     }
@@ -159,14 +168,15 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     t->kc_send_count = 0;
     t->kc_recv_count = 0;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t kc=0; kc<t->kcomms_size; ++kc) {
-        if (t->kcomms[kc].target_rank == t->rank)
+    for (index_t kc=0; kc<kcomms_size; ++kc) {
+        if (kcomms[kc].target_rank == t->rank)
             #pragma omp critical
-            t->kc_recv[t->kc_recv_count++] = t->kcomms[kc];
-        if (t->kcomms[kc].source_rank == t->rank)
+            t->kc_recv[t->kc_recv_count++] = kcomms[kc];
+        if (kcomms[kc].source_rank == t->rank)
             #pragma omp critical
-            t->kc_send[t->kc_send_count++] = t->kcomms[kc];
+            t->kc_send[t->kc_send_count++] = kcomms[kc];
     }
+    free( kcomms );
 
     // stupid realloc
     index_t realloc_size = MAX(t->kc_recv_count, t->kc_send_count) * t->chunksize_max;
@@ -179,10 +189,15 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         fftw_free(t->ggm_buf);
         t->ggm_buf = fftw_alloc_complex(realloc_size);
     }
+    tock = diverge_mpi_wtime();
+    mpi_vrb_printf( "TU-MPI prop: %.2fs for kcomms\n", tock-tick );
 
     // sort the send and receive descriptors
+    tick = diverge_mpi_wtime();
     qsort( t->kc_send, t->kc_send_count, sizeof(kmap_t), &sort_send );
     qsort( t->kc_recv, t->kc_recv_count, sizeof(kmap_t), &sort_recv );
+    tock = diverge_mpi_wtime();
+    mpi_vrb_printf( "TU-MPI prop: %.2fs for sort\n", tock-tick );
 
     // TODO verbose printing
     /* for (int i=0; i<t->kc_send_count; ++i) */
@@ -192,6 +207,7 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     /*     printf( "(%i) recv %i<-%i: k%li(q%li)\n", t->rank, t->kc_recv[i].target_rank, */
     /*             t->kc_recv[i].source_rank, t->kc_recv[i].k, t->kc_recv[i].q ); */
 
+    tick = diverge_mpi_wtime();
     t->sendcounts = calloc(t->size, sizeof(int));
     t->senddispls = calloc(t->size, sizeof(int));
     t->recvcounts = calloc(t->size, sizeof(int));
@@ -212,6 +228,8 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         t->xrecvc[i] = t->recvcounts[i] * t->chunksize_max;
         t->xrecvd[i] = t->recvdispls[i] * t->chunksize_max;
     }
+    tock = diverge_mpi_wtime();
+    mpi_vrb_printf( "TU-MPI prop: %.2fs for finalize\n", tock-tick );
 
     diverge_mpi_barrier();
     return t;
@@ -228,7 +246,6 @@ void tu_mpi_loop_destroy( tu_mpi_loop_t* t ) {
     free( t->c2fmap_local );
     free( t->kc_send );
     free( t->kc_recv );
-    free( t->kcomms );
     free( t->sendcounts );
     free( t->senddispls );
     free( t->recvcounts );
@@ -242,6 +259,8 @@ void tu_mpi_loop_destroy( tu_mpi_loop_t* t ) {
 
 void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
         index_t taskoff, bool rescale, bool pp, bool simple, bool subtract ) {
+    double tick = 0, tock = 0;
+    if (t->enable_timings) tick = diverge_mpi_wtime();
     if (ntasks == -1) {
         ntasks = simple ? POW2(t->n_orbff) : t->unique_mi_l_size;
         taskoff = 0;
@@ -267,8 +286,11 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
 
     complex128_t* GF_fft_plus = *t->p_GF_fft_plus;
     complex128_t* GF_fft_conj_plus = *t->p_GF_fft_conj_plus;
+    if (t->enable_timings) tock = diverge_mpi_wtime();
+    t->timings[tu_mpi_loop_timing_prepare] += tock-tick;
 
     while (stack_size > 0) {
+        tick = tock;
         index_t chunksize = MIN((index_t)stack_size, t->chunksize_max);
         for (index_t i=0; i<chunksize; ++i)
             tasks[i] = stack[--stack_size];
@@ -335,14 +357,20 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
                 MY_BUFFER_GGM_IDX( i, kff_local ) += MY_BUFFER_GGP_IDX( i, kff_local );
             }
         }
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_loop_timing_reorder] += tock-tick;
 
+        tick = tock;
         // TODO it might be faster to swap the indexing and do a transpose here
         /* fftw_execute_dft( fft_T_to, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many ); */
         /* p->execute( buffer_ggp_many, buffer_ggm_many, true ); */
         // maybe do the transformation
         /* fftw_execute_dft( fft_T_from, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many ); */
         fftw_mpi_execute_dft( p, t->ggm_buf, t->ggp_buf );
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_loop_timing_fft] += tock-tick;
 
+        tick = tock;
         // TODO it might be faster to somehow swap the indexing
         // put into loop
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
@@ -370,7 +398,10 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
                 }
             }
         }
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_loop_timing_insert] += tock-tick;
 
+        tick = tock;
         // communicate missing
         index_t elemsize = t->chunksize_max;
         complex128_t *send_buf = t->ggm_buf,
@@ -385,10 +416,16 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
             for (index_t j=0; j<chunksize; ++j)
                 send_buf[IDX2(i,j,elemsize)] = MY_BUFFER_GGP_IDX( j, kidx );
         }
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_loop_timing_mpibufprep] += tock-tick;
 
+        tick = tock;
         // send from send_buf to result_buf
         diverge_mpi_alltoallv_complex( send_buf, t->xsendc, t->xsendd, result_buf, t->xrecvc, t->xrecvd );
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_loop_timing_comm] += tock-tick;
 
+        tick = tock;
         // TODO it might be faster to somehow swap the indexing
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t j=0; j<chunksize; ++j) {
@@ -415,16 +452,19 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
                 }
             }
         }
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_loop_timing_insert_missing] += tock-tick;
     }
 
+    tick = tock;
     if (rescale) {
         if (!simple) tu_loop_reconstruct_from_reduced( t->tu_loop_handle, loop );
         scale_loop(loop, prefac, t->my_nk*POW4(t->n_spin)*POW2(t->n_orbff)*t->n_frq);
     }
-
     free(stack);
     free(tasks);
-
+    if (t->enable_timings) tock = diverge_mpi_wtime();
+    t->timings[tu_mpi_loop_timing_postproc] += tock-tick;
 }
 
 #else

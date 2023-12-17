@@ -21,6 +21,18 @@ typedef struct {
     int target_rank;
 } kmap_t;
 
+enum {
+    tu_mpi_loop_timing_prepare = 0,
+    tu_mpi_loop_timing_reorder,
+    tu_mpi_loop_timing_fft,
+    tu_mpi_loop_timing_insert,
+    tu_mpi_loop_timing_mpibufprep,
+    tu_mpi_loop_timing_comm,
+    tu_mpi_loop_timing_insert_missing,
+    tu_mpi_loop_timing_postproc,
+    TU_MPI_LOOP_TIMING_NUM
+};
+
 typedef struct {
     int rank;
     int size;
@@ -58,6 +70,9 @@ typedef struct {
 
     int *xsendc, *xsendd,
         *xrecvc, *xrecvd;
+
+    double timings[TU_MPI_LOOP_TIMING_NUM];
+    int enable_timings;
 
     // boolean array that tracks whether c2fmap content is local
     int* c2fmap_local;

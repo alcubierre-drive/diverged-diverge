@@ -93,34 +93,54 @@ vector<double> tu_loop_t::extra_timings( void ) {
         extra_tvec->at(2) = t[1];
         extra_tvec->at(3) = t[2];
     }
-    if (fft_many_backward_mpi) {
-        array<double,3> t = fft_many_backward_mpi->timings();
-        extra_tvec->at(5) = t[0];
-        extra_tvec->at(6) = t[1];
-        extra_tvec->at(7) = t[2];
-    }
-    if (fft_many_forward_mpi) {
-        array<double,3> t = fft_many_forward_mpi->timings();
-        extra_tvec->at(8) = t[0];
-        extra_tvec->at(9) = t[1];
-        extra_tvec->at(10) = t[2];
+    if (!mpi_loop) {
+        if (fft_many_backward_mpi) {
+            array<double,3> t = fft_many_backward_mpi->timings();
+            extra_tvec->at(5) = t[0];
+            extra_tvec->at(6) = t[1];
+            extra_tvec->at(7) = t[2];
+        }
+        if (fft_many_forward_mpi) {
+            array<double,3> t = fft_many_forward_mpi->timings();
+            extra_tvec->at(8) = t[0];
+            extra_tvec->at(9) = t[1];
+            extra_tvec->at(10) = t[2];
+        }
+    } else {
+        extra_tvec->resize(4);
+        for (int i=0; i<TU_MPI_LOOP_TIMING_NUM; ++i)
+            extra_tvec->push_back( mpi_loop->timings[i] );
     }
     return *extra_tvec;
 }
 
 vector<string> tu_loop_t::extra_timings_descr( void ) {
     if (!extra_timings_enabled) return vector<string>();
-    return { "loop-fft GF serial",
-             "loop-fft GF mpi reorder",
-             "loop-fft GF mpi fft",
-             "loop-fft GF mpi comm",
-             "loop-fft many serial",
-             "loop-fft many mpi+ reorder",
-             "loop-fft many mpi+ fft",
-             "loop-fft many mpi+ comm",
-             "loop-fft many mpi- reorder",
-             "loop-fft many mpi- fft",
-             "loop-fft many mpi- comm" };
+    if (!mpi_loop)
+        return { "loop-fft GF serial",
+                 "loop-fft GF mpi reorder",
+                 "loop-fft GF mpi fft",
+                 "loop-fft GF mpi comm",
+                 "loop-fft many serial",
+                 "loop-fft many mpi+ reorder",
+                 "loop-fft many mpi+ fft",
+                 "loop-fft many mpi+ comm",
+                 "loop-fft many mpi- reorder",
+                 "loop-fft many mpi- fft",
+                 "loop-fft many mpi- comm" };
+    else
+        return { "loop-fft GF serial",
+                 "loop-fft GF mpi reorder",
+                 "loop-fft GF mpi fft",
+                 "loop-fft GF mpi comm",
+                 "tu_mpi_loop_timing_prepare",
+                 "tu_mpi_loop_timing_reorder",
+                 "tu_mpi_loop_timing_fft",
+                 "tu_mpi_loop_timing_insert",
+                 "tu_mpi_loop_timing_mpibufprep",
+                 "tu_mpi_loop_timing_comm",
+                 "tu_mpi_loop_timing_insert_missing",
+                 "tu_mpi_loop_timing_postproc" };
 }
 
 void tu_loop_t::extra_timings_set( bool enabled ) {
@@ -184,7 +204,7 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
     tu_fft_algorithm_t simple_red_algos[] = {simple, red};
     for (int i=0; i<2; ++i) switch (simple_red_algos[i]) {
         case tu_fft_algorithm_mpi_new:
-            mpi_loop = tu_mpi_loop_init( model->nk, model->nkf,
+            if (!mpi_loop) mpi_loop = tu_mpi_loop_init( model->nk, model->nkf,
                     chunksize_max, c2fmap.data(), my_nk, n_spin, n_orb, n_orbff, n_frq,
                     tu_data->unique_mi_l.data(), tu_data->unique_mi_l.size(),
                     tu_data->unique_mi_r.data(), mi_to_ofrom, mi_to_oto, mi_to_R,

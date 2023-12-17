@@ -31,11 +31,12 @@ static const double U = 6.0;
 int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );
     diverge_compilation_status();
+    mpi_loglevel_set( 5 );
     diverge_model_t* m = diverge_model_init();
 
     strcpy(m->name, __FILE__ );
     m->nk[0] = m->nk[1] = 20;
-    m->nkf[0] = m->nkf[1] = 15;
+    m->nkf[0] = m->nkf[1] = 25;
     m->lattice[0][0] = m->lattice[2][2] = 1.0;
     m->lattice[1][0] = cos(M_PI/3.0);
     m->lattice[1][1] = sin(M_PI/3.0);
@@ -89,8 +90,18 @@ int main( int argc, char** argv ) {
     }
     mpi_usr_printf( "model@%s\n", diverge_model_to_file(m, __FILE__ "_mod.dvg") );
 
-    diverge_model_internals_common(m);
-    diverge_model_internals_tu(m, 2.01);
+    diverge_model_internals_common( m );
+    diverge_model_internals_any( m, "tu", 2.01 );
+    // TODO some algorithm testing
+    diverge_model_hack( m, "tu_extra_propagator_timings", "1" );
+    diverge_model_hack( m, "tu_mpifft_chunksize", "32" );
+
+    diverge_flow_step_t* st = diverge_flow_step_init_any(m, "PCD");
+    diverge_flow_step_euler( st, 10, -1 );
+    for (int t=0; t<diverge_flow_step_ntimings(st); ++t)
+        mpi_tim_printf( "used %.2fs for '%s'\n", diverge_flow_step_timing(st, t),
+                diverge_flow_step_timing_descr(st, t) );
+    diverge_flow_step_free( st );
 
     diverge_model_free(m);
     diverge_finalize();
