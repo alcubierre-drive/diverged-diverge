@@ -11,6 +11,7 @@
 #include "cuda_init.hpp"
 #include <fftw3.h>
 #include <thread>
+#include "propagator_cpu_mpi.h"
 
 inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
@@ -152,6 +153,8 @@ private:
 
     void cpu_fft_algorithm_init( tu_fft_algorithm_t greens, tu_fft_algorithm_t simple, tu_fft_algorithm_t red );
     void cpu_fft_algorithm_cleanup( void );
+
+    tu_mpi_loop_t* mpi_loop = NULL;
 
     complex128_t* GF_fft_plus;
     complex128_t* GF_fft_conj_plus;

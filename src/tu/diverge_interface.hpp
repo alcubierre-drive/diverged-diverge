@@ -15,6 +15,7 @@ typedef enum {
     tu_fft_algorithm_greedy,
     tu_fft_algorithm_split,
     tu_fft_algorithm_mpi,
+    tu_fft_algorithm_mpi_new,
 } tu_fft_algorithm_t;
 
 struct tu_data_t {

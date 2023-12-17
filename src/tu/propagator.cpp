@@ -6,6 +6,12 @@
 #include "../misc/init_internal_libs.h"
 #include <iostream>
 
+// this function is needed for the C MPI kernel
+extern "C" void tu_loop_reconstruct_from_reduced( void* handle, complex128_t* loop ) {
+    tu_loop_t* t = (tu_loop_t*)handle;
+    t->reconstruct_from_reduced( loop );
+}
+
 static fftw_plan plan_transpose( int rows, int cols, complex128_t* in, complex128_t* out ) {
     fftw_iodim howmany_dims[2];
     howmany_dims[0].n  = rows;
@@ -66,8 +72,6 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     }
     #endif
 
-    cpu_fft_algorithm_init( which_fft_greens, which_fft_simple, which_fft_red );
-
     c2fmap.resize(my_nk);
     if(tu_data->symm->use_symmetries) {
         for(index_t i = 0; i < my_nk;++i)
@@ -77,6 +81,8 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
         for(index_t i = 0; i < my_nk;++i)
             c2fmap[i] = kidxc2f(i+my_nk_off,model->nk,model->nkf);
     }
+
+    cpu_fft_algorithm_init( which_fft_greens, which_fft_simple, which_fft_red );
 }
 
 vector<double> tu_loop_t::extra_timings( void ) {
@@ -143,6 +149,8 @@ void tu_loop_t::cpu_fft_algorithm_cleanup( void ) {
     if (fft_T_to) fftw_destroy_plan(fft_T_to);
     if (fft_T_from) fftw_destroy_plan(fft_T_from);
     if (fft_nons2_backward_mpi) delete fft_nons2_backward_mpi;
+
+    if (mpi_loop) tu_mpi_loop_destroy( mpi_loop );
 }
 
 void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
@@ -156,6 +164,7 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
     int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]), (int)(vnk[2]*vnkf[2])};
 
     switch (greens) {
+        case tu_fft_algorithm_mpi_new:
         case tu_fft_algorithm_mpi:
             if (!fft_nons2_backward_mpi)
                 fft_nons2_backward_mpi = new fftw_mpi_plan( dims, POW2(n_spin*n_orb),
@@ -174,6 +183,13 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
 
     tu_fft_algorithm_t simple_red_algos[] = {simple, red};
     for (int i=0; i<2; ++i) switch (simple_red_algos[i]) {
+        case tu_fft_algorithm_mpi_new:
+            mpi_loop = tu_mpi_loop_init( model->nk, model->nkf,
+                    chunksize_max, c2fmap.data(), my_nk, n_spin, n_orb, n_orbff, n_frq,
+                    tu_data->unique_mi_l.data(), tu_data->unique_mi_l.size(),
+                    tu_data->unique_mi_r.data(), mi_to_ofrom, mi_to_oto, mi_to_R,
+                    &GF_fft_plus, &GF_fft_conj_plus, this );
+            break;
         case tu_fft_algorithm_mpi:
             if (!buffer_ggm_many)
                 buffer_ggm_many = (complex128_t*)fftw_alloc_complex(nktot * chunksize_max);
@@ -309,7 +325,8 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
         GF_fft_conj_plus[k+nktot*(b+nb*o)] = gf_buf[o+nb*b+nb2*k + nb2*nktot]*weight;
     }
     if(nktot > 1) {
-        if (which_fft_greens == tu_fft_algorithm_mpi) {
+        if (which_fft_greens == tu_fft_algorithm_mpi ||
+            which_fft_greens == tu_fft_algorithm_mpi_new) {
             fft_nons2_backward_mpi->execute( GF_fft_plus, GF_fft_plus );
             fft_nons2_backward_mpi->execute( GF_fft_conj_plus, GF_fft_conj_plus );
         } else {
@@ -352,7 +369,8 @@ void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) 
         }
 
         if(nktot > 1) {
-            if (which_fft_greens == tu_fft_algorithm_mpi) {
+            if (which_fft_greens == tu_fft_algorithm_mpi ||
+                which_fft_greens == tu_fft_algorithm_mpi_new) {
                 fft_nons2_backward_mpi->execute( cFRG_GF_fft_plus, cFRG_GF_fft_plus );
                 fft_nons2_backward_mpi->execute( cFRG_GF_fft_conj_plus, cFRG_GF_fft_conj_plus );
             } else {

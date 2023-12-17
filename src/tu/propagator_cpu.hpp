@@ -8,6 +8,12 @@ typedef struct {
 
 template<bool pp, bool subtract>
 void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t taskoff, bool rescale) const {
+
+    if (which_fft_simple == tu_fft_algorithm_mpi_new) {
+        tu_mpi_loop_calc( mpi_loop, loop, ntasks, taskoff, rescale, pp, true, subtract );
+        return;
+    }
+
     if(ntasks == -1) ntasks = POW2(n_orbff), taskoff = 0;
     const double prefac = -1.0/(2.0*M_PI);
     const index_t* vnk = model->nk;
@@ -226,6 +232,12 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
 
 template<bool pp, bool subtract>
 void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t taskoff, bool rescale) const {
+
+    if (which_fft_red == tu_fft_algorithm_mpi_new) {
+        tu_mpi_loop_calc( mpi_loop, loop, ntasks, taskoff, rescale, pp, false, subtract );
+        return;
+    }
+
     if(ntasks == -1) ntasks = (index_t)tu_data->unique_mi_l.size(), taskoff = 0;
     const double prefac = -1.0/(2.0*M_PI);
     const index_t* vnk = model->nk;

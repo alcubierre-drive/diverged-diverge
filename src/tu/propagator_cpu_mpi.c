@@ -1,0 +1,480 @@
+/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
+#include "propagator_cpu_mpi.h"
+
+// this function resides in propagator.cpp
+void tu_loop_reconstruct_from_reduced( void* handle, complex128_t* loop );
+
+#if defined(USE_MPI) && defined(USE_MPI_FFTW)
+
+#include <fftw3-mpi.h>
+
+static inline void scale_loop(complex128_t* loop, double pref, index_t len) {
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t idx = 0; idx<len; ++idx)
+        loop[idx] *= pref;
+}
+
+static inline int find_rank( const tu_mpi_loop_t* t, index_t k ) {
+    for (int r=0; r<t->size; ++r)
+        if ((t->kx_displs[r]*t->dims[1]*t->dims[2] <= k) &&
+            ((t->kx_displs[r]*t->dims[1]*t->dims[2] + t->kx_counts[r]*t->dims[1]*t->dims[2]) > k))
+                return r;
+    return -1;
+}
+
+static inline index_t kidx_to_local( const tu_mpi_loop_t* t, index_t k ) {
+    index_t kx = k / (t->dims[1]*t->dims[2]),
+            kyz = k % (t->dims[1]*t->dims[2]);
+    return (kx - t->kx_displ) * t->dims[1]*t->dims[2] + kyz;
+}
+
+static inline int sort_send( const void* pa, const void* pb ) {
+    const kmap_t* a = (const kmap_t*)(pa);
+    const kmap_t* b = (const kmap_t*)(pb);
+    int result = 0;
+    if ((result = (a->target_rank - b->target_rank))) return result;
+    if ((result = (a->q - b->q))) return result;
+    if ((result = (a->k - b->k))) return result;
+    return result;
+}
+
+static inline int sort_recv( const void* pa, const void* pb ) {
+    const kmap_t* a = (const kmap_t*)(pa);
+    const kmap_t* b = (const kmap_t*)(pb);
+    int result = 0;
+    if ((result = (a->source_rank - b->source_rank))) return result;
+    if ((result = (a->q - b->q))) return result;
+    if ((result = (a->k - b->k))) return result;
+    return result;
+}
+
+tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
+        index_t chunksize_max, const index_t* c2fmap, index_t my_nk,
+        index_t n_spin, index_t n_orb, index_t n_orbff, index_t n_frq,
+        const index_t* unique_mi_l, index_t unique_mi_l_size,
+        const index_t* unique_mi_r, const index_t* mi_to_ofrom,
+        const index_t* mi_to_oto, const index_t* mi_to_R,
+        complex128_t** p_GF_fft_plus, complex128_t** p_GF_fft_conj_plus,
+        void* handle ) {
+
+    diverge_mpi_barrier();
+    tu_mpi_loop_t* t = calloc(1, sizeof(tu_mpi_loop_t));
+
+    t->rank = diverge_mpi_comm_rank(),
+    t->size = diverge_mpi_comm_size();
+    t->comm = diverge_mpi_get_comm();
+    for (int i=0; i<3; ++i) {
+        t->vnk[i] = nk[i];
+        t->vnkf[i] = nkf[i];
+        t->dims[i] = nk[i]*nkf[i];
+    }
+    t->chunksize_max = chunksize_max;
+    t->my_nk = my_nk;
+    t->c2fmap = c2fmap;
+    t->n_spin = n_spin;
+    t->n_orb =  n_orb;
+    t->n_orbff =  n_orbff;
+    t->n_frq =  n_frq;
+    t->unique_mi_l =  unique_mi_l;
+    t->unique_mi_l_size =  unique_mi_l_size;
+    t->unique_mi_r =  unique_mi_r;
+    t->mi_to_ofrom =  mi_to_ofrom;
+    t->mi_to_oto =  mi_to_oto;
+    t->mi_to_R =  mi_to_R;
+    t->p_GF_fft_plus =  p_GF_fft_plus;
+    t->p_GF_fft_conj_plus =  p_GF_fft_conj_plus;
+    t->tu_loop_handle = handle;
+
+    t->alloc = fftw_mpi_local_size_many( 3, t->dims, t->chunksize_max,
+            FFTW_MPI_DEFAULT_BLOCK, t->comm, &t->kx_count, &t->kx_displ );
+    t->ggm_buf = fftw_alloc_complex(t->alloc);
+    t->ggp_buf = fftw_alloc_complex(t->alloc);
+
+    t->fft_forward = fftw_mpi_plan_many_dft( 3, t->dims, t->chunksize_max,
+            FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->ggm_buf, t->ggp_buf,
+            t->comm, FFTW_FORWARD, FFTW_MEASURE );
+    t->fft_backward = fftw_mpi_plan_many_dft( 3, t->dims, t->chunksize_max,
+            FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->ggm_buf, t->ggp_buf,
+            t->comm, FFTW_BACKWARD, FFTW_MEASURE );
+
+    t->kx_counts = (int*)calloc(t->size, sizeof(int));
+    t->kx_displs = (int*)calloc(t->size, sizeof(int));
+    int kx_count_i = t->kx_count;
+    int kx_displ_i = t->kx_displ;
+    diverge_mpi_allgather_int( &kx_count_i, t->kx_counts, 1 );
+    diverge_mpi_allgather_int( &kx_displ_i, t->kx_displs, 1 );
+
+    // kcomms contains the missing indices on *this rank*
+    t->kcomms = calloc(t->my_nk, sizeof(kmap_t));
+    t->kcomms_size = 0;
+    t->c2fmap_local = calloc(t->my_nk, sizeof(int));
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
+    for (index_t q=0; q<t->my_nk; ++q) {
+        index_t k_want = t->c2fmap[q];
+        int r = find_rank( t, k_want );
+        if (r != t->rank) {
+            #pragma omp critical
+            t->kcomms[t->kcomms_size++] = (kmap_t){.k=k_want, .q=q, .source_rank=r, .target_rank=t->rank};
+        } else {
+            t->c2fmap_local[q] = 1;
+        }
+    }
+    // shrink kcomms
+    t->kcomms = realloc( t->kcomms, sizeof(kmap_t)*t->kcomms_size );
+
+    // prepare for communication of kcomms indices
+    int *kcommcounts = calloc(t->size, sizeof(int)),
+        *kcommdispls = calloc(t->size, sizeof(int));
+    int kcommcount = t->kcomms_size;
+    diverge_mpi_allgather_int( &kcommcount, kcommcounts, 1 );
+    for (int i=1; i<t->size; ++i) kcommdispls[i] = kcommdispls[i-1] + kcommcounts[i-1];
+
+    t->kcomms_size = kcommcounts[t->size-1]+kcommdispls[t->size-1];
+    t->kcomms = realloc( t->kcomms, sizeof(kmap_t)*t->kcomms_size );
+    // move our share to the right location before gathering everything
+    memmove( t->kcomms + kcommdispls[t->rank], t->kcomms, sizeof(kmap_t)*kcommcounts[t->rank] );
+    // and now kcomms contains *all indices that must be communicated*
+    diverge_mpi_allgatherv_bytes( t->kcomms, sizeof(kmap_t), kcommcounts, kcommdispls );
+
+    // free auxiliary arrays
+    free( kcommcounts );
+    free( kcommdispls );
+
+    // have all the information, i.e., which elements to send where and what to
+    // receive from where. starting communication (i.e. send/recv) setup
+    t->kc_send_count = 0,
+    t->kc_recv_count = 0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t kc=0; kc<t->kcomms_size; ++kc) {
+        if (t->kcomms[kc].target_rank == t->rank)
+            #pragma omp atomic
+            t->kc_recv_count++;
+        if (t->kcomms[kc].source_rank == t->rank)
+            #pragma omp atomic
+            t->kc_send_count++;
+    }
+    t->kc_send = calloc(t->kc_send_count, sizeof(kmap_t));
+    t->kc_recv = calloc(t->kc_recv_count, sizeof(kmap_t));
+    t->kc_send_count = 0;
+    t->kc_recv_count = 0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t kc=0; kc<t->kcomms_size; ++kc) {
+        if (t->kcomms[kc].target_rank == t->rank)
+            #pragma omp critical
+            t->kc_recv[t->kc_recv_count++] = t->kcomms[kc];
+        if (t->kcomms[kc].source_rank == t->rank)
+            #pragma omp critical
+            t->kc_send[t->kc_send_count++] = t->kcomms[kc];
+    }
+
+    // stupid realloc
+    index_t realloc_size = MAX(t->kc_recv_count, t->kc_send_count) * t->chunksize_max;
+    if (realloc_size > t->alloc) {
+        mpi_wrn_printf( "more memory for recv (%.2fGiB) than for FFT (%.2fGiB)\n",
+                (double)(realloc_size*sizeof(complex128_t))/(double)(1024*1024*1024),
+                (double)(t->alloc*sizeof(complex128_t))/(double)(1024*1024*1024) );
+        fftw_free(t->ggp_buf);
+        t->ggp_buf = fftw_alloc_complex(realloc_size);
+        fftw_free(t->ggm_buf);
+        t->ggm_buf = fftw_alloc_complex(realloc_size);
+    }
+
+    // sort the send and receive descriptors
+    qsort( t->kc_send, t->kc_send_count, sizeof(kmap_t), &sort_send );
+    qsort( t->kc_recv, t->kc_recv_count, sizeof(kmap_t), &sort_recv );
+
+    // TODO verbose printing
+    /* for (int i=0; i<t->kc_send_count; ++i) */
+    /*     printf( "(%i) send %i->%i: k%li(q%li)\n", t->rank, t->kc_send[i].source_rank, */
+    /*             t->kc_send[i].target_rank, t->kc_send[i].k, t->kc_send[i].q ); */
+    /* for (int i=0; i<t->kc_recv_count; ++i) */
+    /*     printf( "(%i) recv %i<-%i: k%li(q%li)\n", t->rank, t->kc_recv[i].target_rank, */
+    /*             t->kc_recv[i].source_rank, t->kc_recv[i].k, t->kc_recv[i].q ); */
+
+    t->sendcounts = calloc(t->size, sizeof(int));
+    t->senddispls = calloc(t->size, sizeof(int));
+    t->recvcounts = calloc(t->size, sizeof(int));
+    t->recvdispls = calloc(t->size, sizeof(int));
+    for (index_t m=0; m<t->kc_send_count; ++m) t->sendcounts[t->kc_send[m].target_rank]++;
+    for (index_t m=0; m<t->kc_recv_count; ++m) t->recvcounts[t->kc_recv[m].source_rank]++;
+    for (int i=1; i<t->size; ++i) {
+        t->senddispls[i] = t->senddispls[i-1] + t->sendcounts[i-1];
+        t->recvdispls[i] = t->recvdispls[i-1] + t->recvcounts[i-1];
+    }
+    t->xsendc = calloc(t->size, sizeof(int));
+    t->xsendd = calloc(t->size, sizeof(int));
+    t->xrecvc = calloc(t->size, sizeof(int));
+    t->xrecvd = calloc(t->size, sizeof(int));
+    for (int i=0; i<t->size; ++i) {
+        t->xsendc[i] = t->sendcounts[i] * t->chunksize_max;
+        t->xsendd[i] = t->senddispls[i] * t->chunksize_max;
+        t->xrecvc[i] = t->recvcounts[i] * t->chunksize_max;
+        t->xrecvd[i] = t->recvdispls[i] * t->chunksize_max;
+    }
+
+    diverge_mpi_barrier();
+    return t;
+}
+
+void tu_mpi_loop_destroy( tu_mpi_loop_t* t ) {
+    diverge_mpi_barrier();
+    free( t->kx_counts );
+    free( t->kx_displs );
+    fftw_destroy_plan( t->fft_forward );
+    fftw_destroy_plan( t->fft_backward );
+    fftw_free( t->ggp_buf );
+    fftw_free( t->ggm_buf );
+    free( t->c2fmap_local );
+    free( t->kc_send );
+    free( t->kc_recv );
+    free( t->kcomms );
+    free( t->sendcounts );
+    free( t->senddispls );
+    free( t->recvcounts );
+    free( t->recvdispls );
+    free( t->xsendc );
+    free( t->xsendd );
+    free( t->xrecvc );
+    free( t->xrecvd );
+    free( t );
+}
+
+void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
+        index_t taskoff, bool rescale, bool pp, bool simple, bool subtract ) {
+    if (ntasks == -1) {
+        ntasks = simple ? POW2(t->n_orbff) : t->unique_mi_l_size;
+        taskoff = 0;
+    }
+    const double prefac = -1.0/(2.0*M_PI);
+    const index_t* dims = t->dims;
+    const index_t nktot = dims[0]*dims[1]*dims[2];
+
+    index_t stack_size = POW4(t->n_spin)*ntasks;
+    ptask_t* stack = calloc( stack_size, sizeof(ptask_t) );
+    index_t idx = stack_size;
+    for(index_t s3 = 0; s3<t->n_spin;++s3)
+    for(index_t s2 = 0; s2<t->n_spin;++s2)
+    for(index_t s4 = 0; s4<t->n_spin;++s4)
+    for(index_t s1 = 0; s1<t->n_spin;++s1)
+    for(index_t m = 0; m<ntasks;++m)
+        stack[--idx] = (ptask_t){.s1=s1, .s2=s2, .s3=s3, .s4=s4, .m=m};
+    ptask_t* tasks = calloc( t->chunksize_max, sizeof(ptask_t) );
+
+    fftw_plan p = pp ? t->fft_forward : t->fft_backward;
+    const index_t kx_start = t->kx_displ;
+    const index_t kx_stop = t->kx_count + t->kx_displ;
+
+    complex128_t* GF_fft_plus = *t->p_GF_fft_plus;
+    complex128_t* GF_fft_conj_plus = *t->p_GF_fft_conj_plus;
+
+    while (stack_size > 0) {
+        index_t chunksize = MIN((index_t)stack_size, t->chunksize_max);
+        for (index_t i=0; i<chunksize; ++i)
+            tasks[i] = stack[--stack_size];
+
+#define MY_BUFFER_GGM_IDX( i__, kff__ ) t->ggm_buf[ kff__ * t->chunksize_max + i__ ]
+#define MY_BUFFER_GGP_IDX( i__, kff__ ) t->ggp_buf[ kff__ * t->chunksize_max + i__ ]
+
+        // fill buffers
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
+        for (index_t i=0; i<chunksize; ++i) {
+            const index_t s1 = tasks[i].s1,
+                          s2 = tasks[i].s2,
+                          s3 = tasks[i].s3,
+                          s4 = tasks[i].s4,
+                          m = tasks[i].m;
+
+            index_t mo3 = simple ? ((taskoff+m)/t->n_orbff) : t->unique_mi_r[m+taskoff];
+            index_t mo1 = simple ? ((taskoff+m)-mo3*t->n_orbff) : t->unique_mi_l[m+taskoff];
+            const index_t o1 = t->mi_to_ofrom[mo1];
+            const index_t ob1 = t->mi_to_oto[mo1];
+            const index_t* off1 = t->mi_to_R+3*mo1;
+            const index_t o3 = t->mi_to_ofrom[mo3];
+            const index_t ob3 = t->mi_to_oto[mo3];
+            const index_t* off3 = t->mi_to_R+3*mo3;
+
+            for (index_t kffx=kx_start; kffx<kx_stop; ++kffx)
+            for (index_t kffy=0; kffy<dims[1]; ++kffy)
+            for (index_t kffz=0; kffz<dims[2]; ++kffz) {
+                index_t kz = ((pp ? 1:-1)*kffz - off1[2] + off3[2]+4*dims[2])%dims[2];
+                index_t ky = ((pp ? 1:-1)*kffy - off1[1] + off3[1]+4*dims[1])%dims[1];
+                index_t kx = ((pp ? 1:-1)*kffx - off1[0] + off3[0]+4*dims[0])%dims[0];
+                index_t kid = kz + dims[2] * (ky + dims[1] *kx);
+                index_t kff = kffz + dims[2] * (kffy + dims[1] *kffx),
+                        kff_local = kffz + dims[2] * (kffy + dims[1] * (kffx - kx_start));
+                MY_BUFFER_GGM_IDX( i, kff_local ) = pp ?
+                    GF_fft_conj_plus[kid + nktot*(o1+t->n_orb*(s1+t->n_spin*(o3+t->n_orb*s3)))] :
+                    GF_fft_plus[kid + nktot*(o1+t->n_orb*(s1+t->n_spin*(o3+t->n_orb*s3)))];
+                MY_BUFFER_GGM_IDX( i, kff_local ) *= pp ?
+                    GF_fft_plus[kff+nktot*(ob1+t->n_orb*(s2+t->n_spin*(ob3+t->n_orb*s4)))] :
+                    GF_fft_plus[kff+nktot*(ob3+t->n_orb*(s2+t->n_spin*(ob1+t->n_orb*s4)))];
+            }
+
+            for (index_t kffx=kx_start; kffx<kx_stop; ++kffx)
+            for (index_t kffy=0; kffy<dims[1]; ++kffy)
+            for (index_t kffz=0; kffz<dims[2]; ++kffz) {
+                index_t kz = ((pp?1:-1)*kffz - off1[2] + off3[2]+4*dims[2])%dims[2];
+                index_t ky = ((pp?1:-1)*kffy - off1[1] + off3[1]+4*dims[1])%dims[1];
+                index_t kx = ((pp?1:-1)*kffx - off1[0] + off3[0]+4*dims[0])%dims[0];
+                index_t kid = kz + dims[2] * (ky + dims[1] *kx);
+                index_t kff = kffz + dims[2] * (kffy + dims[1] *kffx),
+                        kff_local = kffz + dims[2] * (kffy + dims[1] * (kffx - kx_start));
+                MY_BUFFER_GGP_IDX( i, kff_local ) = pp ?
+                    GF_fft_plus[kid + nktot*(o1+t->n_orb*(s1+t->n_spin*(o3+t->n_orb*s3)))] :
+                    GF_fft_conj_plus[kid + nktot*(o1+t->n_orb*(s1+t->n_spin*(o3+t->n_orb*s3)))];
+                MY_BUFFER_GGP_IDX( i, kff_local ) *= pp ?
+                    GF_fft_conj_plus[kff+nktot*(ob1+t->n_orb*(s2+t->n_spin*(ob3+t->n_orb*s4)))] :
+                    GF_fft_conj_plus[kff+nktot*(ob3+t->n_orb*(s2+t->n_spin*(ob1+t->n_orb*s4)))];
+            }
+
+            for (index_t kffx=kx_start; kffx<kx_stop; ++kffx)
+            for (index_t kffy=0; kffy<dims[1]; ++kffy)
+            for (index_t kffz=0; kffz<dims[2]; ++kffz) {
+                index_t kff_local = kffz + dims[2] * (kffy + dims[1] * (kffx - kx_start));
+                MY_BUFFER_GGM_IDX( i, kff_local ) += MY_BUFFER_GGP_IDX( i, kff_local );
+            }
+        }
+
+        // TODO it might be faster to swap the indexing and do a transpose here
+        /* fftw_execute_dft( fft_T_to, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many ); */
+        /* p->execute( buffer_ggp_many, buffer_ggm_many, true ); */
+        // maybe do the transformation
+        /* fftw_execute_dft( fft_T_from, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many ); */
+        fftw_mpi_execute_dft( p, t->ggm_buf, t->ggp_buf );
+
+        // TODO it might be faster to somehow swap the indexing
+        // put into loop
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
+        for (index_t i=0; i<chunksize; ++i) {
+            const index_t s1 = tasks[i].s1,
+                          s2 = tasks[i].s2,
+                          s3 = tasks[i].s3,
+                          s4 = tasks[i].s4,
+                          m = tasks[i].m;
+
+            index_t mo3 = simple ? ((taskoff+m)/t->n_orbff) : t->unique_mi_r[m+taskoff];
+            index_t mo1 = simple ? ((taskoff+m)-mo3*t->n_orbff) : t->unique_mi_l[m+taskoff];
+            for (index_t q=0; q<t->my_nk; ++q) {
+                if (t->c2fmap_local[q]) {
+                    index_t idx_to = pp ?
+                        mo1+t->n_orbff*(s1+s2*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(
+                                        s3+s4*t->n_spin+POW2(t->n_spin)*q))) :
+                        mo1+t->n_orbff*(s1+s4*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(
+                                        s3+s2*t->n_spin+POW2(t->n_spin)*q)));
+                    index_t qff_local = kidx_to_local( t, t->c2fmap[q] );
+                    if (subtract)
+                        loop[idx_to] -= MY_BUFFER_GGP_IDX( i, qff_local );
+                    else
+                        loop[idx_to] = MY_BUFFER_GGP_IDX( i, qff_local );
+                }
+            }
+        }
+
+        // communicate missing
+        index_t elemsize = t->chunksize_max;
+        complex128_t *send_buf = t->ggm_buf,
+                     *result_buf = t->ggp_buf;
+
+        // put from result_buf into send_buf
+        for (index_t i=0; i<t->kc_send_count; ++i) {
+            index_t kidx = kidx_to_local( t, t->kc_send[i].k );
+            if (find_rank( t, t->kc_send[i].k ) != t->rank) {
+                printf( "rank of k index (%i) not me (%i) :(\n", find_rank( t, t->kc_send[i].k ), t->rank );
+            }
+            for (index_t j=0; j<chunksize; ++j)
+                send_buf[IDX2(i,j,elemsize)] = MY_BUFFER_GGP_IDX( j, kidx );
+        }
+
+        // send from send_buf to result_buf
+        diverge_mpi_alltoallv_complex( send_buf, t->xsendc, t->xsendd, result_buf, t->xrecvc, t->xrecvd );
+
+        // TODO it might be faster to somehow swap the indexing
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
+        for (index_t j=0; j<chunksize; ++j) {
+            const index_t s1 = tasks[j].s1,
+                          s2 = tasks[j].s2,
+                          s3 = tasks[j].s3,
+                          s4 = tasks[j].s4,
+                          m = tasks[j].m;
+            index_t mo3 = simple ? ((taskoff+m)/t->n_orbff) : t->unique_mi_r[m+taskoff];
+            index_t mo1 = simple ? ((taskoff+m)-mo3*t->n_orbff) : t->unique_mi_l[m+taskoff];
+            // put from result_buf into loop
+            for (index_t i=0; i<t->kc_recv_count; ++i) {
+                index_t q = t->kc_recv[i].q;
+                if (!t->c2fmap_local[q]) {
+                    index_t idx_to = pp ?
+                        mo1+t->n_orbff*(s1+s2*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(
+                                        s3+s4*t->n_spin+POW2(t->n_spin)*q))) :
+                        mo1+t->n_orbff*(s1+s4*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(
+                                        s3+s2*t->n_spin+POW2(t->n_spin)*q)));
+                    if (subtract)
+                        loop[idx_to] -= result_buf[IDX2(i,j,elemsize)];
+                    else
+                        loop[idx_to] = result_buf[IDX2(i,j,elemsize)];
+                }
+            }
+        }
+    }
+
+    if (rescale) {
+        if (!simple) tu_loop_reconstruct_from_reduced( t->tu_loop_handle, loop );
+        scale_loop(loop, prefac, t->my_nk*POW4(t->n_spin)*POW2(t->n_orbff)*t->n_frq);
+    }
+
+    free(stack);
+    free(tasks);
+
+}
+
+#else
+
+tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
+        index_t chunksize_max, const index_t* c2fmap, index_t my_nk,
+        index_t n_spin, index_t n_orb, index_t n_orbff, index_t n_frq,
+        const index_t* unique_mi_l, index_t unique_mi_l_size,
+        const index_t* unique_mi_r, const index_t* mi_to_ofrom,
+        const index_t* mi_to_oto, const index_t* mi_to_R,
+        complex128_t** GF_fft_plus, complex128_t** GF_fft_conj_plus,
+        void* handle ) {
+    (void)nk;
+    (void)nkf;
+    (void)chunksize_max;
+    (void)c2fmap;
+    (void)my_nk;
+    (void)n_spin;
+    (void)n_orb;
+    (void)n_orbff;
+    (void)n_frq;
+    (void)unique_mi_l;
+    (void)unique_mi_l_size;
+    (void)unique_mi_r;
+    (void)mi_to_ofrom;
+    (void)mi_to_oto;
+    (void)mi_to_R;
+    (void)GF_fft_plus;
+    (void)GF_fft_conj_plus;
+    mpi_err_printf( "new MPI loop not compiled in\n" );
+    return handle;
+}
+
+void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop,
+        index_t ntasks, index_t taskoff, bool rescale, bool pp, bool simple,
+        bool subtract ) {
+    (void)t;
+    (void)loop;
+    (void)ntasks;
+    (void)taskoff;
+    (void)rescale;
+    (void)pp;
+    (void)simple;
+    (void)subtract;
+    mpi_err_printf( "new MPI loop not compiled in\n" );
+}
+
+void tu_mpi_loop_destroy( tu_mpi_loop_t* t ) {
+    (void)t;
+    mpi_err_printf( "new MPI loop not compiled in\n" );
+}
+
+#endif
