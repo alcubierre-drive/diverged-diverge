@@ -116,7 +116,7 @@ vector<double> tu_loop_t::extra_timings( void ) {
 
 vector<string> tu_loop_t::extra_timings_descr( void ) {
     if (!extra_timings_enabled) return vector<string>();
-    if (!mpi_loop)
+    if (!mpi_loop) {
         return { "loop-fft GF serial",
                  "loop-fft GF mpi reorder",
                  "loop-fft GF mpi fft",
@@ -128,19 +128,21 @@ vector<string> tu_loop_t::extra_timings_descr( void ) {
                  "loop-fft many mpi- reorder",
                  "loop-fft many mpi- fft",
                  "loop-fft many mpi- comm" };
-    else
+    } else {
         return { "loop-fft GF serial",
                  "loop-fft GF mpi reorder",
                  "loop-fft GF mpi fft",
                  "loop-fft GF mpi comm",
                  "tu_mpi_loop_timing_prepare",
                  "tu_mpi_loop_timing_reorder",
+                 "tu_mpi_loop_timing_transpose",
                  "tu_mpi_loop_timing_fft",
                  "tu_mpi_loop_timing_insert",
                  "tu_mpi_loop_timing_mpibufprep",
                  "tu_mpi_loop_timing_comm",
                  "tu_mpi_loop_timing_insert_missing",
                  "tu_mpi_loop_timing_postproc" };
+    }
 }
 
 void tu_loop_t::extra_timings_set( bool enabled ) {

@@ -24,6 +24,7 @@ typedef struct {
 enum {
     tu_mpi_loop_timing_prepare = 0,
     tu_mpi_loop_timing_reorder,
+    tu_mpi_loop_timing_transpose,
     tu_mpi_loop_timing_fft,
     tu_mpi_loop_timing_insert,
     tu_mpi_loop_timing_mpibufprep,
@@ -51,7 +52,8 @@ typedef struct {
     index_t alloc;
 
     fftw_plan fft_forward,
-              fft_backward;
+              fft_backward,
+              fft_transpose;
 
     int* kx_counts;
     int* kx_displs;

@@ -9,6 +9,17 @@ void tu_loop_reconstruct_from_reduced( void* handle, complex128_t* loop );
 
 #include <fftw3-mpi.h>
 
+static fftw_plan plan_transpose( int rows, int cols, complex128_t* in, complex128_t* out ) {
+    fftw_iodim howmany_dims[2];
+    howmany_dims[0].n  = rows;
+    howmany_dims[0].is = cols;
+    howmany_dims[0].os = 1;
+    howmany_dims[1].n  = cols;
+    howmany_dims[1].is = 1;
+    howmany_dims[1].os = rows;
+    return fftw_plan_guru_dft( 0, NULL, 2, howmany_dims, (fftw_complex*)in, (fftw_complex*)out, 0, FFTW_MEASURE);
+}
+
 static inline void scale_loop(complex128_t* loop, double pref, index_t len) {
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t idx = 0; idx<len; ++idx)
@@ -103,6 +114,8 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     t->fft_backward = fftw_mpi_plan_many_dft( 3, t->dims, t->chunksize_max,
             FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->ggm_buf, t->ggp_buf,
             t->comm, FFTW_BACKWARD, FFTW_MEASURE );
+    t->fft_transpose = plan_transpose( t->chunksize_max,
+            t->kx_count*t->dims[1]*t->dims[2], t->ggm_buf, t->ggp_buf );
     tock = diverge_mpi_wtime();
     mpi_vrb_printf( "TU-MPI prop: %.2fs for FFT plans\n", tock-tick );
 
@@ -241,6 +254,7 @@ void tu_mpi_loop_destroy( tu_mpi_loop_t* t ) {
     free( t->kx_displs );
     fftw_destroy_plan( t->fft_forward );
     fftw_destroy_plan( t->fft_backward );
+    fftw_destroy_plan( t->fft_transpose );
     fftw_free( t->ggp_buf );
     fftw_free( t->ggm_buf );
     free( t->c2fmap_local );
@@ -295,8 +309,10 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
         for (index_t i=0; i<chunksize; ++i)
             tasks[i] = stack[--stack_size];
 
-#define MY_BUFFER_GGM_IDX( i__, kff__ ) t->ggm_buf[ kff__ * t->chunksize_max + i__ ]
-#define MY_BUFFER_GGP_IDX( i__, kff__ ) t->ggp_buf[ kff__ * t->chunksize_max + i__ ]
+#define MY_BUFFER_GGM_IDX( i__, kff__ ) t->ggm_buf[ i__ * t->kx_count*dims[1]*dims[2] + kff__ ]
+#define MY_BUFFER_GGP_IDX( i__, kff__ ) t->ggp_buf[ i__ * t->kx_count*dims[1]*dims[2] + kff__ ]
+#define MY_BUFFER_GGM_IDX_POST( i__, kff__ ) t->ggm_buf[ kff__ * t->chunksize_max + i__ ]
+#define MY_BUFFER_GGP_IDX_POST( i__, kff__ ) t->ggp_buf[ kff__ * t->chunksize_max + i__ ]
 
         // fill buffers
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
@@ -361,18 +377,16 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
         t->timings[tu_mpi_loop_timing_reorder] += tock-tick;
 
         tick = tock;
-        // TODO it might be faster to swap the indexing and do a transpose here
-        /* fftw_execute_dft( fft_T_to, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many ); */
-        /* p->execute( buffer_ggp_many, buffer_ggm_many, true ); */
-        // maybe do the transformation
-        /* fftw_execute_dft( fft_T_from, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many ); */
-        fftw_mpi_execute_dft( p, t->ggm_buf, t->ggp_buf );
+        fftw_execute_dft( t->fft_transpose, t->ggm_buf, t->ggp_buf );
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_loop_timing_transpose] += tock-tick;
+
+        tick = tock;
+        fftw_mpi_execute_dft( p, t->ggp_buf, t->ggm_buf );
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_loop_timing_fft] += tock-tick;
 
         tick = tock;
-        // TODO it might be faster to somehow swap the indexing
-        // put into loop
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t i=0; i<chunksize; ++i) {
             const index_t s1 = tasks[i].s1,
@@ -392,9 +406,9 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
                                         s3+s2*t->n_spin+POW2(t->n_spin)*q)));
                     index_t qff_local = kidx_to_local( t, t->c2fmap[q] );
                     if (subtract)
-                        loop[idx_to] -= MY_BUFFER_GGP_IDX( i, qff_local );
+                        loop[idx_to] -= MY_BUFFER_GGM_IDX_POST( i, qff_local );
                     else
-                        loop[idx_to] = MY_BUFFER_GGP_IDX( i, qff_local );
+                        loop[idx_to] = MY_BUFFER_GGM_IDX_POST( i, qff_local );
                 }
             }
         }
@@ -404,8 +418,8 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
         tick = tock;
         // communicate missing
         index_t elemsize = t->chunksize_max;
-        complex128_t *send_buf = t->ggm_buf,
-                     *result_buf = t->ggp_buf;
+        complex128_t *send_buf = t->ggp_buf,
+                     *result_buf = t->ggm_buf;
 
         // put from result_buf into send_buf
         for (index_t i=0; i<t->kc_send_count; ++i) {
@@ -414,7 +428,7 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
                 printf( "rank of k index (%i) not me (%i) :(\n", find_rank( t, t->kc_send[i].k ), t->rank );
             }
             for (index_t j=0; j<chunksize; ++j)
-                send_buf[IDX2(i,j,elemsize)] = MY_BUFFER_GGP_IDX( j, kidx );
+                send_buf[IDX2(i,j,elemsize)] = MY_BUFFER_GGM_IDX_POST( j, kidx );
         }
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_loop_timing_mpibufprep] += tock-tick;
@@ -426,7 +440,6 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
         t->timings[tu_mpi_loop_timing_comm] += tock-tick;
 
         tick = tock;
-        // TODO it might be faster to somehow swap the indexing
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t j=0; j<chunksize; ++j) {
             const index_t s1 = tasks[j].s1,

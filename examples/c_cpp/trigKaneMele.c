@@ -35,8 +35,8 @@ int main( int argc, char** argv ) {
     diverge_model_t* m = diverge_model_init();
 
     strcpy(m->name, __FILE__ );
-    m->nk[0] = m->nk[1] = 20;
-    m->nkf[0] = m->nkf[1] = 25;
+    m->nk[0] = m->nk[1] = argc > 1 ? atoi(argv[1]) : 20;
+    m->nkf[0] = m->nkf[1] = argc > 2 ? atoi(argv[2]) : 15;
     m->lattice[0][0] = m->lattice[2][2] = 1.0;
     m->lattice[1][0] = cos(M_PI/3.0);
     m->lattice[1][1] = sin(M_PI/3.0);
@@ -92,9 +92,8 @@ int main( int argc, char** argv ) {
 
     diverge_model_internals_common( m );
     diverge_model_internals_any( m, "tu", 2.01 );
-    // TODO some algorithm testing
+    // some algorithm testing
     diverge_model_hack( m, "tu_extra_propagator_timings", "1" );
-    diverge_model_hack( m, "tu_mpifft_chunksize", "32" );
 
     diverge_flow_step_t* st = diverge_flow_step_init_any(m, "PCD");
     diverge_flow_step_euler( st, 10, -1 );
