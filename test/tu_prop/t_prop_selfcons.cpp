@@ -173,7 +173,7 @@ TEST_CASE("momentum loop variants", "[prop][prop_var]")
 #endif
 
 
-TEST_CASE("momentum loop variants refine", "[prop][prop_ref]")
+TEST_CASE("momentum loop variants refine", "[prop][prop_ref][cmp]")
 {
     diverge_model_t* mom = gen_square_lat_hub(12, 12,1,1,1,-0.1, 3, -0.4,15, 15);
     diverge_model_internals_tu(mom, 1.1);
@@ -197,10 +197,11 @@ TEST_CASE("momentum loop variants refine", "[prop][prop_ref]")
     diverge_model_free(mom);
     free(lmr);
     free(lm);
-    CHECK( (PH_equal && PP_equal) );
+    CHECK( PH_equal );
+    CHECK( PP_equal );
 }
 
-TEST_CASE("momentum loop variants refine convergence", "[prop][prop_ref]")
+TEST_CASE("momentum loop variants refine convergence", "[prop][prop_ref][conv]")
 {
     diverge_model_t* mom = gen_square_lat_hub(90, 90,1,1,1,-0.1, 3, -0.4,3, 3);
     diverge_model_t* mom2 = gen_square_lat_hub(90, 90,1,1,1,-0.1, 3, -0.4,1, 1);
