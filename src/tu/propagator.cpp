@@ -58,6 +58,8 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 
     GF_fft_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
     GF_fft_conj_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
+    mpi_vrb_printf( "TU-loop: allocated %.2fGiB for Green's functions\n",
+            (double)(sizeof(complex128_t) * 2 * nktot * POW2(n_spin*n_orb)) / (1024.*1024.*1024.) );
     if(cFRG_loop) {
         gf_buf_cfrg = (gf_complex_t*)malloc(2 * nktot* POW2(n_spin*n_orb)*sizeof(gf_complex_t));
         cFRG_GF_fft_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
