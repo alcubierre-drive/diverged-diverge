@@ -58,9 +58,9 @@ public:
     tu_loop_t(diverge_model_t*);
     ~tu_loop_t();
 
-    void GF_zero_T(const complex128_t lambda, complex128_t* self_energy = nullptr);
-    void ph_loop(complex128_t* L, complex128_t* tmpgpu = nullptr);
-    void pp_loop(complex128_t* L, complex128_t* tmpgpu = nullptr);
+    void GF_zero_T( complex128_t lambda, complex128_t* self_energy = nullptr );
+    void ph_loop( complex128_t* L, complex128_t* tmpgpu = nullptr );
+    void pp_loop( complex128_t* L, complex128_t* tmpgpu = nullptr );
 
     DELETE_CONSTRUCTOR_RULE_OF_FIVE(tu_loop_t);
 
@@ -154,8 +154,11 @@ private:
     void cpu_fft_algorithm_init( tu_fft_algorithm_t greens, tu_fft_algorithm_t simple, tu_fft_algorithm_t red );
     void cpu_fft_algorithm_cleanup( void );
 
+    // new MPI algorithms
     tu_mpi_loop_t* mpi_loop = NULL;
+    tu_mpi_gf_t* mpi_gf = NULL;
 
+    bool do_GF_fft_allocs = true;
     complex128_t* GF_fft_plus;
     complex128_t* GF_fft_conj_plus;
 
@@ -164,6 +167,9 @@ private:
     complex128_t* cFRG_GF_fft_conj_plus = nullptr;
     void allocate_GPU_memory();
     void swap_GF_cfrg();
+
+    void GF_zero_T_any( greensfunc_generator_t gf, complex128_t lambda, complex128_t* self_energy, gf_complex_t* buf );
+    void GF_zero_T_FFT_any( complex128_t* gfft_plus, complex128_t* gfft_conj_plus, gf_complex_t* gbuf );
 };
 
 

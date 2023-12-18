@@ -47,10 +47,14 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
     double tick, tock;
     num_calls += 1;
     tick = diverge_mpi_wtime();
-    if(channel_selection[3])
+    // create GF buffers here s.t. the buffers can be used in
+    // loop->p?_loop *and* be overwritten
+    if (channel_selection[3]) {
         loop->GF_zero_T(lambda*I128, inout->self_en);
-    else
+        loop->get_GF_for_self(coarseGF);
+    } else {
         loop->GF_zero_T(lambda*I128);
+    }
     tock = diverge_mpi_wtime();
     w_time_GF += tock-tick;
     if(!tu_selfenergy_flow) {
@@ -72,7 +76,7 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
                                 internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[1]);
                     tock = diverge_mpi_wtime();
                     w_time_product += tock-tick;
-                    
+
                     tick = diverge_mpi_wtime();
                     D_projection(inout->projection_helper, inout, proj);
                     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
@@ -179,9 +183,8 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
         if(channel_selection[2])
             memset((void*)(internal_vertex->Cch),0,sizeof(complex128_t)*internal_vertex->full_vert_size);
     }
-    if(channel_selection[3]) {
+    if (channel_selection[3]) {
         tick = diverge_mpi_wtime();
-        loop->get_GF_for_self(coarseGF);
         self->selfenergy_flow(internal_vertex->self_en, inout->Pch,
                         inout->Cch, inout->Dch, coarseGF, 1.);
         tock = diverge_mpi_wtime();

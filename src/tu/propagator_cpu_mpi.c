@@ -1,15 +1,19 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "propagator_cpu_mpi.h"
+#include <omp.h>
 
 // this function resides in propagator.cpp
 void tu_loop_reconstruct_from_reduced( void* handle, complex128_t* loop );
 
 #if defined(USE_MPI) && defined(USE_MPI_FFTW)
 
-// TODO checking allocations for some simulations before removing this...
+#ifdef MPI_VERBOSE_ALLOCATION_PRINT
 #define alloc_print( sz ) mpi_vrb_printf( "allocating %.2fGiB (%s:%i)\n", \
         (double)(sz)/(double)(1024.*1024.*1024), __FILE__, __LINE__ )
+#else
+#define alloc_print( sz ) {}
+#endif
 
 #include <fftw3-mpi.h>
 
@@ -23,6 +27,18 @@ static fftw_plan plan_transpose( int rows, int cols, complex128_t* in, complex12
     howmany_dims[1].os = rows;
     return fftw_plan_guru_dft( 0, NULL, 2, howmany_dims, (fftw_complex*)in, (fftw_complex*)out, 0, FFTW_MEASURE);
 }
+
+static GF_FFTW(plan) GF_plan_transpose( int rows, int cols, gf_complex_t* in_out ) {
+    GF_FFTW(iodim) howmany_dims[2];
+    howmany_dims[0].n  = rows;
+    howmany_dims[0].is = cols;
+    howmany_dims[0].os = 1;
+    howmany_dims[1].n  = cols;
+    howmany_dims[1].is = 1;
+    howmany_dims[1].os = rows;
+    return GF_FFTW(plan_guru_dft)( 0, NULL, 2, howmany_dims, in_out, in_out, 0, FFTW_MEASURE );
+}
+
 
 static inline void scale_loop(complex128_t* loop, double pref, index_t len) {
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -311,8 +327,8 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
     const index_t kx_start = t->kx_displ;
     const index_t kx_stop = t->kx_count + t->kx_displ;
 
-    complex128_t* GF_fft_plus = *t->p_GF_fft_plus;
-    complex128_t* GF_fft_conj_plus = *t->p_GF_fft_conj_plus;
+    gf_complex_t* GF_fft_plus = (gf_complex_t*)(*t->p_GF_fft_plus);
+    gf_complex_t* GF_fft_conj_plus = (gf_complex_t*)(*t->p_GF_fft_conj_plus);
     if (t->enable_timings) tock = diverge_mpi_wtime();
     t->timings[tu_mpi_loop_timing_prepare] += tock-tick;
 
@@ -493,6 +509,99 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
     t->timings[tu_mpi_loop_timing_postproc] += tock-tick;
 }
 
+tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t nb, gf_complex_t* gf_buf ) {
+    tu_mpi_gf_t* t = calloc(1, sizeof(tu_mpi_gf_t));
+    for (int i=0; i<3; ++i) t->dims[i] = (t->nk[i] = nk[i]) * (t->nkf[i] = nkf[i]);
+    t->nb = nb;
+    t->enable_timings = 1;
+    t->comm = diverge_mpi_get_comm();
+    t->rank = diverge_mpi_comm_rank();
+    t->size = diverge_mpi_comm_size();
+    index_t alloc = GF_FFTW(mpi_local_size_many)( 3, t->dims, POW2(t->nb),
+            FFTW_MPI_DEFAULT_BLOCK, t->comm, &t->kx_count, &t->kx_displ );
+    // make buffer large enough to also be used for transposition
+    alloc = MAX( alloc, POW2(t->nb)*diverge_omp_num_threads() );
+    t->fft_buf = GF_FFTW(alloc_complex)( alloc );
+    alloc_print( sizeof(gf_complex_t)*alloc );
+    t->fft = GF_FFTW(mpi_plan_many_dft)( 3, t->dims, POW2(t->nb),
+            FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->fft_buf,
+            t->fft_buf, t->comm, FFTW_BACKWARD, FFTW_MEASURE );
+
+    int displ = t->kx_displ * t->dims[1] * t->dims[2] * POW2(t->nb);
+    int count = t->kx_count * t->dims[1] * t->dims[2] * POW2(t->nb);
+    t->counts = calloc(t->size, sizeof(int));
+    t->displs = calloc(t->size, sizeof(int));
+    diverge_mpi_allgather_int( &count, t->counts, 1 );
+    diverge_mpi_allgather_int( &displ, t->displs, 1 );
+
+    t->transpose[0] = GF_plan_transpose( t->dims[0]*t->dims[1]*t->dims[2], POW2(t->nb), gf_buf );
+    t->transpose[1] = GF_plan_transpose( t->dims[0]*t->dims[1]*t->dims[2], POW2(t->nb), gf_buf +
+                                         t->dims[0]*t->dims[1]*t->dims[2]*POW2(t->nb) );
+    return t;
+}
+
+void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
+    double tick = 0, tock = 0;
+
+    index_t kdimtot = t->dims[0] * t->dims[1] * t->dims[2];
+    index_t scale = t->dims[1]*t->dims[2]*POW2(t->nb);
+    gf_complex_t weight = 1./(double)kdimtot;
+    gf_complex_t* gf_bufs[2] = { gf_buf_, gf_buf_ + kdimtot * POW2(t->nb) };
+
+    for (int gf_idx=0; gf_idx<2; ++gf_idx) {
+        gf_complex_t* gf_buf = gf_bufs[gf_idx];
+        if (t->enable_timings) tick = diverge_mpi_wtime();
+        memcpy( t->fft_buf, gf_buf+t->kx_displ*scale, sizeof(gf_complex_t)*t->kx_count*scale );
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_gf_timing_trans] += tock-tick;
+
+        if (t->enable_timings) tick = diverge_mpi_wtime();
+        GF_FFTW(mpi_execute_dft)( t->fft, t->fft_buf, t->fft_buf );
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_gf_timing_fft] += tock-tick;
+
+        if (t->enable_timings) tick = diverge_mpi_wtime();
+        memcpy( gf_buf+t->kx_displ*scale, t->fft_buf, sizeof(gf_complex_t)*t->kx_count*scale );
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_gf_timing_trans] += tock-tick;
+
+        if (t->enable_timings) tick = diverge_mpi_wtime();
+        diverge_mpi_allgatherv_bytes( gf_buf, sizeof(gf_complex_t), t->counts, t->displs );
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_gf_timing_comm] += tock-tick;
+
+        // we transpose o/b first
+        if (t->enable_timings) tick = diverge_mpi_wtime();
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t k=0; k<kdimtot; ++k) {
+            gf_complex_t* scratch = t->fft_buf + omp_get_thread_num()*POW2(t->nb);
+            gf_complex_t* tgf_buf = gf_buf + k*POW2(t->nb);
+            memcpy( scratch, tgf_buf, sizeof(gf_complex_t)*POW2(t->nb) );
+            for (index_t b1=0; b1<t->nb; ++b1)
+            for (index_t b2=0; b2<t->nb; ++b2)
+                tgf_buf[IDX2(b1,b2,t->nb)] = scratch[IDX2(b2,b1,t->nb)] * weight;
+        }
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_gf_timing_trans] += tock-tick;
+
+        // and then ob/k
+        if (t->enable_timings) tick = diverge_mpi_wtime();
+        GF_FFTW(execute_dft)( t->transpose[gf_idx], gf_buf, gf_buf );
+        if (t->enable_timings) tock = diverge_mpi_wtime();
+        t->timings[tu_mpi_gf_timing_ffttrans] += tock-tick;
+    }
+}
+
+void tu_mpi_gf_destroy( tu_mpi_gf_t* t ) {
+    GF_FFTW(destroy_plan)( t->fft );
+    GF_FFTW(destroy_plan)( t->transpose[0] );
+    GF_FFTW(destroy_plan)( t->transpose[1] );
+    GF_FFTW(free)( t->fft_buf );
+    free( t->counts );
+    free( t->displs );
+    free( t );
+}
+
 #else
 
 tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
@@ -541,6 +650,26 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop,
 void tu_mpi_loop_destroy( tu_mpi_loop_t* t ) {
     (void)t;
     mpi_err_printf( "new MPI loop not compiled in\n" );
+}
+
+tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t nb, gf_complex_t* gf_buf ) {
+    (void)nk;
+    (void)nkf;
+    (void)nb;
+    (void)gf_buf;
+    mpi_err_printf( "new MPI GF not compiled in\n" );
+    return NULL;
+}
+
+void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf ) {
+    (void)t;
+    (void)gf_buf;
+    mpi_err_printf( "new MPI GF not compiled in\n" );
+}
+
+void tu_mpi_gf_destroy( tu_mpi_gf_t* t ) {
+    (void)t;
+    mpi_err_printf( "new MPI GF not compiled in\n" );
 }
 
 #endif

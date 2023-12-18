@@ -112,6 +112,45 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop,
         bool subtract );
 void tu_mpi_loop_destroy( tu_mpi_loop_t* t );
 
+enum {
+    tu_mpi_gf_timing_trans = 0,
+    tu_mpi_gf_timing_ffttrans,
+    tu_mpi_gf_timing_fft,
+    tu_mpi_gf_timing_comm,
+    TU_MPI_GF_TIMING_NUM
+};
+
+#ifdef USE_GF_FLOATS
+#define GF_FFTW( name ) fftwf_##name
+#else
+#define GF_FFTW( name ) fftw_##name
+#endif
+
+typedef struct {
+    index_t nk[3];
+    index_t nkf[3];
+    index_t nb;
+
+    index_t dims[3];
+    index_t kx_count, kx_displ;
+    GF_FFTW(plan) fft;
+    GF_FFTW(plan) transpose[2]; // gf_buf[0] and gf_buf[nk*nb*nb]
+    gf_complex_t* fft_buf;
+
+    double timings[TU_MPI_GF_TIMING_NUM];
+    int enable_timings;
+
+    MPI_Comm comm;
+    int size;
+    int rank;
+    int* counts;
+    int* displs;
+} tu_mpi_gf_t;
+
+tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t nb, gf_complex_t* gf_buf );
+void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf );
+void tu_mpi_gf_destroy( tu_mpi_gf_t* t );
+
 #ifdef __cplusplus
 }
 #endif

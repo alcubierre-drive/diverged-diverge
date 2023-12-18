@@ -47,6 +47,23 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     which_fft_red{tu_data->which_fft_red},
     which_fft_greens{tu_data->which_fft_greens}
 {
+
+    if (which_fft_greens == tu_fft_algorithm_mpi_new && nktot == 1)
+        which_fft_greens = tu_fft_algorithm_mpi;
+    #ifdef USE_CUDA
+    if (which_fft_greens == tu_fft_algorithm_mpi_new) {
+        which_fft_greens = tu_fft_algorithm_mpi;
+        mpi_wrn_printf( "TU-loop: cannot use new MPI GF algo with CUDA\n" );
+    }
+    #endif
+    if (sizeof(complex128_t) != sizeof(gf_complex_t) &&
+        (which_fft_simple != tu_fft_algorithm_mpi_new ||
+         which_fft_red != tu_fft_algorithm_mpi_new)) {
+        which_fft_greens = tu_fft_algorithm_mpi;
+        mpi_wrn_printf( "TU-loop: can only use entirely new MPI algorithms with USE_GF_FLOATS\n" );
+    }
+    do_GF_fft_allocs = !(which_fft_greens == tu_fft_algorithm_mpi_new);
+
     chunksize_max = tu_data->mpi_fft_chunksize < 0 ? diverge_omp_num_threads() : tu_data->mpi_fft_chunksize;
     extra_timings_enabled = tu_data->propagator_extra_cpu_timings;
     extra_tvec = new vector<double>( 11, 0.0 );
@@ -56,14 +73,24 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     for (int i=0; i<3; ++i) nkff[i] = model->nk[i] * model->nkf[i];
     cuda_setup_prop_descr(&cuda_descr,task_spin,tasks_dist, nkff,tu_data->offload_cpu);
 
-    GF_fft_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
-    GF_fft_conj_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
-    mpi_vrb_printf( "TU-loop: allocated %.2fGiB for Green's functions\n",
-            (double)(sizeof(complex128_t) * 2 * nktot * POW2(n_spin*n_orb)) / (1024.*1024.*1024.) );
+    mpi_vrb_printf( "TU-loop: using GF of %.2fGiB\n",
+            (double)(sizeof(complex128_t)*nktot*POW2(n_spin*n_orb)) / (1024.*1024.*1024.) );
+    if (do_GF_fft_allocs) {
+        GF_fft_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
+        GF_fft_conj_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
+    } else {
+        GF_fft_plus = (complex128_t*)gf_buf;
+        GF_fft_conj_plus = (complex128_t*)(gf_buf + nktot*POW2(n_spin*n_orb));
+    }
     if(cFRG_loop) {
-        gf_buf_cfrg = (gf_complex_t*)malloc(2 * nktot* POW2(n_spin*n_orb)*sizeof(gf_complex_t));
-        cFRG_GF_fft_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
-        cFRG_GF_fft_conj_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
+        gf_buf_cfrg = (gf_complex_t*)calloc(2*nktot*POW2(n_spin*n_orb),sizeof(gf_complex_t));
+        if (do_GF_fft_allocs) {
+            cFRG_GF_fft_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
+            cFRG_GF_fft_conj_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
+        } else {
+            cFRG_GF_fft_plus = (complex128_t*)gf_buf_cfrg;
+            cFRG_GF_fft_conj_plus = (complex128_t*)(gf_buf_cfrg + nktot*POW2(n_spin*n_orb));
+        }
     }
     #ifdef USE_CUDA
     CUDA_CHECK(cudaHostRegister(GF_fft_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
@@ -113,38 +140,45 @@ vector<double> tu_loop_t::extra_timings( void ) {
         for (int i=0; i<TU_MPI_LOOP_TIMING_NUM; ++i)
             extra_tvec->push_back( mpi_loop->timings[i] );
     }
+    // overwrite first couple of timings of GF is the MPI one
+    if (mpi_gf)
+        for (int i=0; i<TU_MPI_GF_TIMING_NUM; ++i)
+            extra_tvec->at(i) = mpi_gf->timings[i];
     return *extra_tvec;
 }
 
 vector<string> tu_loop_t::extra_timings_descr( void ) {
     if (!extra_timings_enabled) return vector<string>();
-    if (!mpi_loop) {
-        return { "loop-fft GF serial",
-                 "loop-fft GF mpi reorder",
-                 "loop-fft GF mpi fft",
-                 "loop-fft GF mpi comm",
-                 "loop-fft many serial",
-                 "loop-fft many mpi+ reorder",
-                 "loop-fft many mpi+ fft",
-                 "loop-fft many mpi+ comm",
-                 "loop-fft many mpi- reorder",
-                 "loop-fft many mpi- fft",
-                 "loop-fft many mpi- comm" };
-    } else {
-        return { "loop-fft GF serial",
-                 "loop-fft GF mpi reorder",
-                 "loop-fft GF mpi fft",
-                 "loop-fft GF mpi comm",
-                 "tu_mpi_loop_timing_prepare",
-                 "tu_mpi_loop_timing_reorder",
-                 "tu_mpi_loop_timing_transpose",
-                 "tu_mpi_loop_timing_fft",
-                 "tu_mpi_loop_timing_insert",
-                 "tu_mpi_loop_timing_mpibufprep",
-                 "tu_mpi_loop_timing_comm",
-                 "tu_mpi_loop_timing_insert_missing",
-                 "tu_mpi_loop_timing_postproc" };
-    }
+    vector<string> descr;
+    if (!mpi_gf)
+        descr = { "loop-fft GF serial",
+                  "loop-fft GF mpi reorder",
+                  "loop-fft GF mpi fft",
+                  "loop-fft GF mpi comm", };
+    else
+        descr = { "tu_mpi_gf_timing_trans",
+                  "tu_mpi_gf_timing_ffttrans",
+                  "tu_mpi_gf_timing_fft",
+                  "tu_mpi_gf_timing_comm" };
+    if (!mpi_loop)
+        for (const auto& s: { "loop-fft many serial",
+                              "loop-fft many mpi+ reorder",
+                              "loop-fft many mpi+ fft",
+                              "loop-fft many mpi+ comm",
+                              "loop-fft many mpi- reorder",
+                              "loop-fft many mpi- fft",
+                              "loop-fft many mpi- comm" }) descr.push_back(s);
+    else
+        for (const auto& s: { "tu_mpi_loop_timing_prepare",
+                              "tu_mpi_loop_timing_reorder",
+                              "tu_mpi_loop_timing_transpose",
+                              "tu_mpi_loop_timing_fft",
+                              "tu_mpi_loop_timing_insert",
+                              "tu_mpi_loop_timing_mpibufprep",
+                              "tu_mpi_loop_timing_comm",
+                              "tu_mpi_loop_timing_insert_missing",
+                              "tu_mpi_loop_timing_postproc" }) descr.push_back(s);
+    return descr;
 }
 
 void tu_loop_t::extra_timings_set( bool enabled ) {
@@ -189,6 +223,9 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
 
     switch (greens) {
         case tu_fft_algorithm_mpi_new:
+            if (!mpi_gf)
+                mpi_gf = tu_mpi_gf_init( vnk, vnkf, model->n_orb*model->n_spin, gf_buf );
+            break;
         case tu_fft_algorithm_mpi:
             if (!fft_nons2_backward_mpi)
                 fft_nons2_backward_mpi = new fftw_mpi_plan( dims, POW2(n_spin*n_orb),
@@ -300,12 +337,16 @@ tu_loop_t::~tu_loop_t() {
     }
     #endif
 
-    fftw_free(GF_fft_plus);
-    fftw_free(GF_fft_conj_plus);
+    if (do_GF_fft_allocs) {
+        fftw_free(GF_fft_plus);
+        fftw_free(GF_fft_conj_plus);
+    }
     if(cFRG_loop) {
         free(gf_buf_cfrg);
-        fftw_free(cFRG_GF_fft_plus);
-        fftw_free(cFRG_GF_fft_conj_plus);
+        if (do_GF_fft_allocs) {
+            fftw_free(cFRG_GF_fft_plus);
+            fftw_free(cFRG_GF_fft_conj_plus);
+        }
     }
     cuda_delete_prop_descr(&cuda_descr);
 
@@ -314,99 +355,67 @@ tu_loop_t::~tu_loop_t() {
     delete extra_tvec;
 }
 
+void tu_loop_t::GF_zero_T( complex128_t lambda, complex128_t* self_energy ) {
+    GF_zero_T_any( model->gfill, lambda, self_energy, gf_buf );
+    GF_zero_T_FFT_any( GF_fft_plus, GF_fft_conj_plus, gf_buf );
+    if (cFRG_loop) {
+        GF_zero_T_any( model->gproj, lambda, self_energy, gf_buf_cfrg );
+        GF_zero_T_FFT_any( cFRG_GF_fft_plus, cFRG_GF_fft_conj_plus, gf_buf_cfrg );
+    }
+}
 
-void tu_loop_t::GF_zero_T(const complex128_t lambda, complex128_t* self_energy) {
-    greensfunc_op_t res = model->gfill(model, lambda, gf_buf);
-    if(res != greensfunc_op_cpu)
-        mpi_err_printf("Not supported");
+void tu_loop_t::GF_zero_T_any( greensfunc_generator_t gf, complex128_t lambda, complex128_t* self_energy, gf_complex_t* gbuf ) {
+    greensfunc_op_t res = gf( model, lambda, gbuf );
+    if (res != greensfunc_op_cpu) mpi_err_printf( "GPU GFs not supported\n" );
     index_t nb = n_spin*n_orb;
     index_t nb2 = POW2(n_spin*n_orb);
 
     typedef Matrix<gf_complex_t,-1,-1> MatXgfct;
-    if(self_energy != nullptr) {
+    if (self_energy != nullptr) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for(index_t k=0; k<nktot*2; ++k) {
             index_t kk = k >= nktot ? k - nktot : k;
             Map<MatXcd> S(self_energy+nb2*kk,nb,nb);
-            Map<MatXgfct> GF0(gf_buf+nb2*k,nb,nb);
+            Map<MatXgfct> GF0(gbuf+nb2*k,nb,nb);
             GF0 = GF0.inverse() - S.cast<gf_complex_t>();
             GF0 = GF0.inverse();
         }
     }
+}
+
+void tu_loop_t::GF_zero_T_FFT_any( complex128_t* gfft_plus, complex128_t* gfft_conj_plus, gf_complex_t* gbuf ) {
+
+    if (which_fft_greens == tu_fft_algorithm_mpi_new) {
+        tu_mpi_gf_fft_and_transpose( mpi_gf, gbuf );
+        return;
+    }
 
     const gf_complex_t weight = 1./(double)nktot;
-    #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
-    for(index_t b = 0; b < nb; ++b)
-    for(index_t o = 0; o < nb; ++o)
-    for(index_t k = 0; k < nktot; ++k) {
-        GF_fft_plus[k+nktot*(b+nb*o)] = gf_buf[o+nb*b+nb2*k]*weight;
-    }
+    index_t nb = n_spin*n_orb;
+    index_t nb2 = POW2(n_spin*n_orb);
+
+    #pragma omp parallel for collapse(2) schedule(static) num_threads(diverge_omp_num_threads())
+    for (index_t o=0; o<nb; ++o)
+    for (index_t b=0; b<nb; ++b)
+    for (index_t k=0; k<nktot; ++k)
+        gfft_plus[IDX3(o,b,k,nb,nktot)] = gbuf[IDX3(k,b,o,nb,nb)] * weight;
 
     #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
-    for(index_t b = 0; b < nb; ++b)
-    for(index_t o = 0; o < nb; ++o)
-    for(index_t k = 0; k < nktot; ++k) {
-        GF_fft_conj_plus[k+nktot*(b+nb*o)] = gf_buf[o+nb*b+nb2*k + nb2*nktot]*weight;
-    }
-    if(nktot > 1) {
-        if (which_fft_greens == tu_fft_algorithm_mpi ||
-            which_fft_greens == tu_fft_algorithm_mpi_new) {
-            fft_nons2_backward_mpi->execute( GF_fft_plus, GF_fft_plus );
-            fft_nons2_backward_mpi->execute( GF_fft_conj_plus, GF_fft_conj_plus );
+    for (index_t b=0; b<nb; ++b)
+    for (index_t o=0; o<nb; ++o)
+    for (index_t k=0; k<nktot; ++k)
+        gfft_conj_plus[IDX3(o,b,k,nb,nktot)] = gbuf[IDX3(k,b,o,nb,nb) + nb2*nktot] * weight;
+    if (nktot > 1) {
+        if (which_fft_greens == tu_fft_algorithm_mpi) {
+            fft_nons2_backward_mpi->execute( gfft_plus, gfft_plus );
+            fft_nons2_backward_mpi->execute( gfft_conj_plus, gfft_conj_plus );
         } else {
             double tick = 0, tock = 0;
             if (extra_timings_enabled) tick = diverge_mpi_wtime();
-            fftw_execute_dft( fft_nons2_backward,(fftw_complex*)GF_fft_plus,(fftw_complex*)GF_fft_plus );
-            fftw_execute_dft( fft_nons2_backward,(fftw_complex*)GF_fft_conj_plus,(fftw_complex*)GF_fft_conj_plus );
+            fftw_execute_dft( fft_nons2_backward,(fftw_complex*)gfft_plus,(fftw_complex*)gfft_plus );
+            fftw_execute_dft( fft_nons2_backward,(fftw_complex*)gfft_conj_plus,(fftw_complex*)gfft_conj_plus );
             if (extra_timings_enabled) tock = diverge_mpi_wtime();
             extra_tvec->at(0) += tock - tick;
-        }
-    }
-    if(cFRG_loop) {
-        greensfunc_op_t res = model->gproj(model, lambda, gf_buf_cfrg);
-        if(res != greensfunc_op_cpu)
-            mpi_err_printf("Not supported");
-
-        if(self_energy != nullptr) {
-            #pragma omp parallel for num_threads(diverge_omp_num_threads())
-            for(index_t k=0; k<nktot*2; ++k) {
-                index_t kk = k >= nktot ? k - nktot : k;
-                Map<MatXcd> S(self_energy+nb2*kk,nb,nb);
-                Map<MatXgfct> GF0(gf_buf_cfrg+nb2*k,nb,nb);
-                GF0 = GF0.inverse() - S.cast<gf_complex_t>();
-                GF0 = GF0.inverse();
-            }
-        }
-
-        #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t b = 0; b < nb; ++b)
-        for(index_t o = 0; o < nb; ++o)
-        for(index_t k = 0; k < nktot; ++k) {
-            cFRG_GF_fft_plus[k+nktot*(b+nb*o)] = gf_buf_cfrg[o+nb*b+nb2*k]*weight;
-        }
-
-        #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t b = 0; b < nb; ++b)
-        for(index_t o = 0; o < nb; ++o)
-        for(index_t k = 0; k < nktot; ++k) {
-            cFRG_GF_fft_conj_plus[k+nktot*(b+nb*o)] = gf_buf_cfrg[o+nb*b+nb2*k + nb2*nktot]*weight;
-        }
-
-        if(nktot > 1) {
-            if (which_fft_greens == tu_fft_algorithm_mpi ||
-                which_fft_greens == tu_fft_algorithm_mpi_new) {
-                fft_nons2_backward_mpi->execute( cFRG_GF_fft_plus, cFRG_GF_fft_plus );
-                fft_nons2_backward_mpi->execute( cFRG_GF_fft_conj_plus, cFRG_GF_fft_conj_plus );
-            } else {
-                double tick = 0, tock = 0;
-                if (extra_timings_enabled) tick = diverge_mpi_wtime();
-                fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_plus,
-                    (fftw_complex*)cFRG_GF_fft_plus );
-                fftw_execute_dft( fft_nons2_backward, (fftw_complex*)cFRG_GF_fft_conj_plus,
-                    (fftw_complex*)cFRG_GF_fft_conj_plus );
-                if (extra_timings_enabled) tock = diverge_mpi_wtime();
-                extra_tvec->at(0) += tock - tick;
-            }
         }
     }
 }
