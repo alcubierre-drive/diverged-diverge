@@ -1033,6 +1033,23 @@ if not _libs["divERGe"] is None:
     model_print_hacks.argtypes = None
     model_print_hacks.restype = None
 
+    # shared memory...
+    shared_malloc = _libs['divERGe'].get('shared_malloc', 'cdecl')
+    shared_malloc.argtypes = [c_int64]
+    shared_malloc.restype = c_voidp
+    shared_calloc = _libs['divERGe'].get('shared_calloc', 'cdecl')
+    shared_calloc.argtypes = [c_int64, c_int64]
+    shared_calloc.restype = c_voidp
+    shared_free = _libs['divERGe'].get('shared_free', 'cdecl')
+    shared_free.argtypes = [c_voidp]
+    shared_free.restype = None
+    shared_exclusive_enter = _libs['divERGe'].get('shared_exclusive_enter', 'cdecl')
+    shared_exclusive_enter.argtypes = [c_voidp]
+    shared_exclusive_enter.restype = c_int
+    shared_exclusive_wait = _libs['divERGe'].get('shared_exclusive_wait', 'cdecl')
+    shared_exclusive_wait.argtypes = [c_voidp]
+    shared_exclusive_wait.restype = None
+
     # some more typedefs.
     # TODO are they needed?
     rs_hopping_t = struct_rs_hopping_t

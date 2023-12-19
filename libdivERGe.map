@@ -10,6 +10,7 @@ DIVERGE_0.4 {
         diverge_flow_step_dlambda;
         diverge_flow_step_euler;
         diverge_flow_step_free;
+        diverge_flow_step_get_filling_Hself;
         diverge_flow_step_init;
         diverge_flow_step_init_any;
         diverge_flow_step_lambda;
@@ -18,7 +19,6 @@ DIVERGE_0.4 {
         diverge_flow_step_ntimings;
         diverge_flow_step_refill;
         diverge_flow_step_refill_Hself;
-        diverge_flow_step_get_filling_Hself;
         diverge_flow_step_timing;
         diverge_flow_step_timing_descr;
         diverge_flow_step_timing_descr_vec;
@@ -67,7 +67,10 @@ DIVERGE_0.4 {
         diverge_model_validate;
         diverge_mpi_allgather_double;
         diverge_mpi_allgather_index;
+        diverge_mpi_allgather_int;
         diverge_mpi_allgatherv;
+        diverge_mpi_allgatherv_bytes;
+        diverge_mpi_allgatherv_index;
         diverge_mpi_allreduce_complex_sum;
         diverge_mpi_allreduce_complex_sum_inplace;
         diverge_mpi_allreduce_double_max;
@@ -84,6 +87,7 @@ DIVERGE_0.4 {
         diverge_mpi_gather_double;
         diverge_mpi_gatherv_bytes;
         diverge_mpi_gatherv_cdoub;
+        diverge_mpi_gatherv_index;
         diverge_mpi_get_comm;
         diverge_mpi_max;
         diverge_mpi_open_file;
@@ -123,6 +127,11 @@ DIVERGE_0.4 {
         mpi_py_eprint_all;
         mpi_py_print;
         mpi_py_print_all;
+        shared_calloc;
+        shared_exclusive_enter;
+        shared_exclusive_wait;
+        shared_free;
+        shared_malloc;
         extern "C++" {
             "diverge_patching_find_fs_pts(diverge_model_t*, double const*, long, long, long)";
             "diverge_read_W90(char const*, long)";

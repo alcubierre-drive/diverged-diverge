@@ -2,6 +2,7 @@
 
 #include "init_internal_libs.h"
 #include "dependency_tree.h"
+#include "shared_mem.h"
 
 #include "../diverge_common.h"
 #include <fftw3.h>
@@ -43,6 +44,7 @@ void init_internal_libs( void ) {
     #endif
 
     dependency_tree_init();
+    shared_malloc_init();
 
     dvg_has_internal_libs_init = 1;
 
@@ -51,6 +53,7 @@ void init_internal_libs( void ) {
 void finalize_internal_libs( void ) {
 
     dependency_tree_free();
+    shared_malloc_finalize();
 
     if (dvg_has_mpi_fftw_init) {
         #if defined(USE_MPI_FFTW) && defined(USE_MPI)

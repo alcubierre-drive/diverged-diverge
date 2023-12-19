@@ -10,6 +10,7 @@
 #include "misc/merge_orb_w_rs_symm.h"
 #include "diverge_symmetrize.h"
 #include "diverge_flow_type.h"
+#include "misc/shared_mem.h"
 
 #include <stdarg.h>
 
@@ -124,33 +125,42 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     }
 
     mpi_vrb_printf("allocating/generating meshes\n");
-    intls->kmesh = (double*)malloc(sizeof(double)*nk*3);
-    intls->kfmesh = (double*)malloc(sizeof(double)*nktot*3);
-    diverge_model_generate_meshes( intls->kmesh, intls->kfmesh, model->nk,
-            model->nkf, model->lattice );
+    intls->kmesh = shared_malloc(sizeof(double)*nk*3);
+    intls->kfmesh = shared_malloc(sizeof(double)*nktot*3);
+    if (shared_exclusive_enter(intls->kmesh) == 1)
+        diverge_model_generate_meshes( intls->kmesh, intls->kfmesh, model->nk, model->nkf, model->lattice );
+    shared_exclusive_wait(intls->kmesh);
 
     mpi_vrb_printf("allocating internal common buffers\n");
-    intls->ham = (complex128_t*)calloc(nktot*nb*nb,sizeof(complex128_t));
-    intls->U = (complex128_t*)calloc(nktot*nb*nb,sizeof(complex128_t));
-    intls->E = (double*)calloc(nktot*nb,sizeof(double));
+    intls->ham = shared_calloc(nktot*nb*nb,sizeof(complex128_t));
+    intls->U = shared_calloc(nktot*nb*nb,sizeof(complex128_t));
+    intls->E = shared_calloc(nktot*nb,sizeof(double));
+
+    // the GF cannot be shared, as it is used in MPI algorithms r+w
     intls->greens = (gf_complex_t*)calloc(nktot*nb*nb*2,sizeof(gf_complex_t));
 
     mpi_vrb_printf("filling hamiltonian buffer\n");
-    (*(model->hfill))( model, intls->ham );
-    if (model->n_sym < 0) {
-        model->n_sym *= -1;
-        double err = diverge_symmetrize_2pt_fine( model, intls->ham, intls->U );
-        if (err > DIVERGE_EPS_MESH) {
-            mpi_wrn_printf("resymmetrize hamiltonian->large error: %.5e\n", err);
+    if (shared_exclusive_enter(intls->ham) == 1) {
+        (*(model->hfill))( model, intls->ham );
+        if (model->n_sym < 0) {
+            model->n_sym *= -1;
+            double err = diverge_symmetrize_2pt_fine( model, intls->ham, intls->U );
+            if (err > DIVERGE_EPS_MESH) {
+                mpi_wrn_printf("resymmetrize hamiltonian->large error: %.5e\n", err);
+            }
         }
     }
+    shared_exclusive_wait(intls->ham);
 
     if (intls->ignore_eigensolver_in_common) {
         mpi_vrb_printf("ignoring hamiltonian diag\n");
     } else {
         mpi_vrb_printf("diagonalizing hamiltonian\n");
-        memcpy( intls->U, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
-        batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
+        if (shared_exclusive_enter( intls->U ) == 1) {
+            memcpy( intls->U, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
+            batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
+        }
+        shared_exclusive_wait( intls->U );
     }
 
     merge_rs_orb(model);
@@ -161,11 +171,12 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
         mpi_err_printf("cannot reset internals, ptr==NULL\n");
         return;
     }
-    free(model->internals->kmesh);
-    free(model->internals->kfmesh);
-    free(model->internals->ham);
-    free(model->internals->E);
-    free(model->internals->U);
+    shared_free(model->internals->kmesh);
+    shared_free(model->internals->kfmesh);
+    shared_free(model->internals->ham);
+    shared_free(model->internals->E);
+    shared_free(model->internals->U);
+
     free(model->internals->greens);
 
     free(model->internals->grid_kfmesh);

@@ -25,6 +25,7 @@
 #include "misc/generate_symmetries.h"
 #include "misc/kmesh_to_bands.h"
 #include "misc/license.h"
+#include "misc/shared_mem.h"
 
 #include "diverge_common.h"
 #include "diverge_model.h"
