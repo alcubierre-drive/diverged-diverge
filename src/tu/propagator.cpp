@@ -224,7 +224,7 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
     switch (greens) {
         case tu_fft_algorithm_mpi_new:
             if (!mpi_gf)
-                mpi_gf = tu_mpi_gf_init( vnk, vnkf, model->n_orb*model->n_spin, gf_buf );
+                mpi_gf = tu_mpi_gf_init( vnk, vnkf, model->n_orb*model->n_spin, gf_buf, model );
             break;
         case tu_fft_algorithm_mpi:
             if (!fft_nons2_backward_mpi)
@@ -249,7 +249,7 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
                     chunksize_max, c2fmap.data(), my_nk, n_spin, n_orb, n_orbff, n_frq,
                     tu_data->unique_mi_l.data(), tu_data->unique_mi_l.size(),
                     tu_data->unique_mi_r.data(), mi_to_ofrom, mi_to_oto, mi_to_R,
-                    &GF_fft_plus, &GF_fft_conj_plus, this );
+                    &GF_fft_plus, &GF_fft_conj_plus, this, model );
             break;
         case tu_fft_algorithm_mpi:
             if (!buffer_ggm_many)

@@ -15,6 +15,9 @@ void shared_free( void* ptr );
 
 int shared_exclusive_enter( void* ptr );
 void shared_exclusive_wait( void* ptr );
+int shared_malloc_rank( void );
+int shared_malloc_size( void );
+void shared_malloc_barrier( void );
 
 #ifdef __cplusplus
 }

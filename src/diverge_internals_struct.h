@@ -20,6 +20,8 @@ struct internals_t {
     double* E;
     gf_complex_t* greens; // 2*nk*nkf*nb*nb
 
+    int greens_shared;
+
     int periodic_direction[3];
     index_t dim;
     bool enforce_exchange;

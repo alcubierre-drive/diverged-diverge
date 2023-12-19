@@ -2,6 +2,9 @@
 
 #include "propagator_cpu_mpi.h"
 #include <omp.h>
+#include "../diverge_model.h"
+#include "../diverge_internals_struct.h"
+#include "../misc/shared_mem.h"
 
 // this function resides in propagator.cpp
 void tu_loop_reconstruct_from_reduced( void* handle, complex128_t* loop );
@@ -87,7 +90,7 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         const index_t* unique_mi_r, const index_t* mi_to_ofrom,
         const index_t* mi_to_oto, const index_t* mi_to_R,
         complex128_t** p_GF_fft_plus, complex128_t** p_GF_fft_conj_plus,
-        void* handle ) {
+        void* handle, diverge_model_t* model ) {
 
     diverge_mpi_barrier();
     double tick = 0, tock = 0;
@@ -120,6 +123,7 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     t->p_GF_fft_plus =  p_GF_fft_plus;
     t->p_GF_fft_conj_plus =  p_GF_fft_conj_plus;
     t->tu_loop_handle = handle;
+    t->model = model;
     tock = diverge_mpi_wtime();
     mpi_vrb_printf( "TU-MPI prop: %.2fs for data\n", tock-tick );
 
@@ -509,7 +513,8 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
     t->timings[tu_mpi_loop_timing_postproc] += tock-tick;
 }
 
-tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t nb, gf_complex_t* gf_buf ) {
+tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t nb,
+        gf_complex_t* gf_buf, diverge_model_t* model ) {
     tu_mpi_gf_t* t = calloc(1, sizeof(tu_mpi_gf_t));
     for (int i=0; i<3; ++i) t->dims[i] = (t->nk[i] = nk[i]) * (t->nkf[i] = nkf[i]);
     t->nb = nb;
@@ -517,6 +522,7 @@ tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t 
     t->comm = diverge_mpi_get_comm();
     t->rank = diverge_mpi_comm_rank();
     t->size = diverge_mpi_comm_size();
+    t->model = model;
     index_t alloc = GF_FFTW(mpi_local_size_many)( 3, t->dims, POW2(t->nb),
             FFTW_MPI_DEFAULT_BLOCK, t->comm, &t->kx_count, &t->kx_displ );
     // make buffer large enough to also be used for transposition
@@ -540,6 +546,14 @@ tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t 
     return t;
 }
 
+static inline index_t* displ_count_gen( index_t total_size, index_t nranks ) {
+    index_t* counts = calloc(2*nranks, sizeof(index_t));
+    index_t* displs = counts + nranks;
+    for (index_t s=0; s<total_size; ++s) counts[s%nranks]++;
+    for (index_t r=1; r<nranks; ++r) displs[r] = displs[r-1] + counts[r-1];
+    return counts;
+}
+
 void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
     double tick = 0, tock = 0;
 
@@ -547,6 +561,20 @@ void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
     index_t scale = t->dims[1]*t->dims[2]*POW2(t->nb);
     gf_complex_t weight = 1./(double)kdimtot;
     gf_complex_t* gf_bufs[2] = { gf_buf_, gf_buf_ + kdimtot * POW2(t->nb) };
+
+    index_t* shm_counts = calloc(2, sizeof(index_t));
+    shm_counts[0] = kdimtot;
+    index_t* shm_displs = shm_counts+1;
+    int shm_size = 1, shm_rank = 0;
+    const int use_shm = t->model->internals->greens_shared;
+
+    if (use_shm) {
+        free( shm_counts );
+        shm_size = shared_malloc_size();
+        shm_rank = shared_malloc_rank();
+        shm_counts = displ_count_gen( kdimtot, shm_size );
+        shm_displs = shm_counts + shm_size;
+    }
 
     for (int gf_idx=0; gf_idx<2; ++gf_idx) {
         gf_complex_t* gf_buf = gf_bufs[gf_idx];
@@ -573,7 +601,8 @@ void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
         // we transpose o/b first
         if (t->enable_timings) tick = diverge_mpi_wtime();
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (index_t k=0; k<kdimtot; ++k) {
+        for (index_t krel=0; krel<shm_counts[shm_rank]; ++krel) {
+            index_t k = krel + shm_displs[shm_rank];
             gf_complex_t* scratch = t->fft_buf + omp_get_thread_num()*POW2(t->nb);
             gf_complex_t* tgf_buf = gf_buf + k*POW2(t->nb);
             memcpy( scratch, tgf_buf, sizeof(gf_complex_t)*POW2(t->nb) );
@@ -581,12 +610,19 @@ void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
             for (index_t b2=0; b2<t->nb; ++b2)
                 tgf_buf[IDX2(b1,b2,t->nb)] = scratch[IDX2(b2,b1,t->nb)] * weight;
         }
+        if (use_shm) shared_malloc_barrier();
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_gf_timing_trans] += tock-tick;
 
         // and then ob/k
         if (t->enable_timings) tick = diverge_mpi_wtime();
-        GF_FFTW(execute_dft)( t->transpose[gf_idx], gf_buf, gf_buf );
+        if (use_shm) {
+            if (shared_exclusive_enter(gf_buf_) == 1)
+                GF_FFTW(execute_dft)( t->transpose[gf_idx], gf_buf, gf_buf );
+            shared_exclusive_wait(gf_buf_);
+        } else {
+            GF_FFTW(execute_dft)( t->transpose[gf_idx], gf_buf, gf_buf );
+        }
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_gf_timing_ffttrans] += tock-tick;
     }
@@ -611,7 +647,7 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         const index_t* unique_mi_r, const index_t* mi_to_ofrom,
         const index_t* mi_to_oto, const index_t* mi_to_R,
         complex128_t** GF_fft_plus, complex128_t** GF_fft_conj_plus,
-        void* handle ) {
+        void* handle, diverge_model_t* model ) {
     (void)nk;
     (void)nkf;
     (void)chunksize_max;
@@ -629,8 +665,10 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     (void)mi_to_R;
     (void)GF_fft_plus;
     (void)GF_fft_conj_plus;
+    (void)handle;
+    (void)model;
     mpi_err_printf( "new MPI loop not compiled in\n" );
-    return handle;
+    return NULL;
 }
 
 void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop,
@@ -652,11 +690,13 @@ void tu_mpi_loop_destroy( tu_mpi_loop_t* t ) {
     mpi_err_printf( "new MPI loop not compiled in\n" );
 }
 
-tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t nb, gf_complex_t* gf_buf ) {
+tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t nb,
+        gf_complex_t* gf_buf, diverge_model_t* model ) {
     (void)nk;
     (void)nkf;
     (void)nb;
     (void)gf_buf;
+    (void)model;
     mpi_err_printf( "new MPI GF not compiled in\n" );
     return NULL;
 }

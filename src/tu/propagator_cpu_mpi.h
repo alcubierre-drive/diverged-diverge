@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+typedef struct diverge_model_t diverge_model_t;
+
 typedef struct {
     index_t s1, s2, s3, s4, m;
 } ptask_t;
@@ -97,6 +99,8 @@ typedef struct {
     complex128_t** p_GF_fft_plus;
     complex128_t** p_GF_fft_conj_plus;
     void* tu_loop_handle;
+
+    diverge_model_t* model;
 } tu_mpi_loop_t;
 
 tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
@@ -106,7 +110,7 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         const index_t* unique_mi_r, const index_t* mi_to_ofrom,
         const index_t* mi_to_oto, const index_t* mi_to_R,
         complex128_t** GF_fft_plus, complex128_t** GF_fft_conj_plus,
-        void* handle );
+        void* handle, diverge_model_t* model );
 void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop,
         index_t ntasks, index_t taskoff, bool rescale, bool pp, bool simple,
         bool subtract );
@@ -145,9 +149,12 @@ typedef struct {
     int rank;
     int* counts;
     int* displs;
+
+    diverge_model_t* model;
 } tu_mpi_gf_t;
 
-tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t nb, gf_complex_t* gf_buf );
+tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t nb, gf_complex_t* gf_buf,
+        diverge_model_t* model );
 void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf );
 void tu_mpi_gf_destroy( tu_mpi_gf_t* t );
 

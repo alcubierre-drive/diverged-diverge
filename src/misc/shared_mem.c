@@ -157,6 +157,17 @@ void* shared_malloc( long long sz ) {
     return memptr->ptr;
 }
 
+void shared_free( void* ptr ) {
+    if (!shared_mem_pool) return;
+    if (!ptr) return;
+    int64_t id = (int64_t)ptr;
+    shmem_t* memptr = NULL;
+    HASH_FIND_INT( shared_mem_pool->pool, &id, memptr );
+    if (!memptr) return;
+    HASH_DEL( shared_mem_pool->pool, memptr );
+    shmem_free( memptr );
+}
+
 int shared_exclusive_enter( void* ptr ) {
     if (!shared_mem_pool) return -1;
     if (!ptr) return -1;
@@ -183,15 +194,19 @@ void shared_exclusive_wait( void* ptr ) {
     sem_wait( memptr->sem );
 }
 
-void shared_free( void* ptr ) {
+int shared_malloc_rank( void ) {
+    if (!shared_mem_pool) return -1;
+    return shared_mem_pool->shrank;
+}
+
+int shared_malloc_size( void ) {
+    if (!shared_mem_pool) return -1;
+    return shared_mem_pool->shsize;
+}
+
+void shared_malloc_barrier( void ) {
     if (!shared_mem_pool) return;
-    if (!ptr) return;
-    int64_t id = (int64_t)ptr;
-    shmem_t* memptr = NULL;
-    HASH_FIND_INT( shared_mem_pool->pool, &id, memptr );
-    if (!memptr) return;
-    HASH_DEL( shared_mem_pool->pool, memptr );
-    shmem_free( memptr );
+    MPICALL(Barrier, shared_mem_pool->shcomm);
 }
 
 #else
@@ -206,6 +221,9 @@ void shared_free( void* ptr ) { free(ptr); }
 
 int shared_exclusive_enter( void* ptr ) { (void)ptr; return 1; }
 void shared_exclusive_wait( void* ptr ) { (void)ptr; }
+int shared_malloc_rank( void ) { return 0; }
+int shared_malloc_size( void ) { return 1; }
+void shared_malloc_barrier( void ) {}
 
 #endif
 

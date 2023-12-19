@@ -10,6 +10,7 @@
 #include "npatch/flow_step.h"
 #include "grid/vertex_memory.hpp"
 #include "misc/kmeans_lloyd.h"
+#include "misc/shared_mem.h"
 
 #include <string>
 #include <set>
@@ -30,6 +31,7 @@ extern double autofine_beta;
 extern double autofine_gamma;
 
 static int parse_vector_int( int* vec, int len, const char* str );
+static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf);
 
 static set<string> hacking_keys;
 
@@ -131,8 +133,18 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         dkm_set_use_random_seed( atoi(val) );
     }
     CHECKKEY("model_free_hamiltonian") {
-        free(m->internals->ham);
+        shared_free(m->internals->ham);
         m->internals->ham = NULL;
+    }
+    CHECKKEY("model_shared_gf") {
+        if (m->gfill != &diverge_greensfunc_generator_default) {
+            mpi_wrn_printf( "shared GF buffer for custom GF generator must be taken care of manually\n" );
+        }
+        m->gfill = &diverge_shared_gf;
+        free(m->internals->greens);
+        m->internals->greens = (gf_complex_t*)shared_malloc(sizeof(gf_complex_t) *
+                kdimtot(m->nk, m->nkf) * POW2(m->n_orb*m->n_spin) * 2);
+        m->internals->greens_shared = 1;
     }
     CHECKKEY("model_internals_eigensolve_ignore") {
         m->internals->ignore_eigensolver_in_common = 1;
@@ -175,3 +187,48 @@ static int parse_vector_int( int* vec, int len, const char* str_ ) {
         vec[j] = 0;
     return parsed_len;
 }
+
+static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf) {
+    const index_t nkf = kdimtot(model->nk, model->nkf);
+    const index_t nb = model->n_spin * model->n_orb;
+    const complex128_t* U = (const complex128_t*) model->internals->U;
+    const double* E = model->internals->E;
+
+    // calc displs/counts
+    index_t kcount = 0, kdispl = 0;
+    {
+        int nchnk = shared_malloc_size();
+        int chnk = shared_malloc_rank();
+        if (nchnk == -1 || chnk == -1) {
+            mpi_err_printf( "shared memory not initialized\n" );
+            return diverge_greensfunc_generator_default(model, Lambda, buf);
+        }
+        vector<index_t> counts( nchnk, 0 );
+        for (index_t k=0; k<nkf; ++k) counts[k%nchnk]++;
+        vector<index_t> displs( nchnk, 0 );
+        for (int c=1; c<nchnk; ++c) displs[c] = displs[c-1] + counts[c-1];
+        kcount = counts[chnk];
+        kdispl = displs[chnk];
+    }
+
+    // do loop
+    for (int sign=0; sign<2; ++sign) {
+        complex128_t L = sign ? Lambda : std::conj(Lambda);
+        #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
+        for (index_t krel=0; krel<kcount; ++krel)
+        for (index_t o=0; o<nb; ++o)
+        for (index_t p=0; p<nb; ++p) {
+            index_t k = krel + kdispl;
+            complex128_t tmp = 0.0;
+            for (index_t b=0; b<nb; ++b)
+                tmp += U[IDX3(k,b,o,nb,nb)] * std::conj(U[IDX3(k,b,p,nb,nb)]) / (L - E[IDX2(k,b,nb)]);
+            buf[IDX4(sign, k, o, p, nkf, nb, nb)] = tmp;
+        }
+    }
+
+    // synchronize memory
+    shared_malloc_barrier();
+
+    return greensfunc_op_cpu;
+}
+

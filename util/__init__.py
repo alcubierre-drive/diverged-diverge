@@ -1049,6 +1049,15 @@ if not _libs["divERGe"] is None:
     shared_exclusive_wait = _libs['divERGe'].get('shared_exclusive_wait', 'cdecl')
     shared_exclusive_wait.argtypes = [c_voidp]
     shared_exclusive_wait.restype = None
+    shared_malloc_rank = _libs['divERGe'].get('shared_malloc_rank', 'cdecl')
+    shared_malloc_rank.argtypes = []
+    shared_malloc_rank.restype = c_int
+    shared_malloc_size = _libs['divERGe'].get('shared_malloc_size', 'cdecl')
+    shared_malloc_size.argtypes = []
+    shared_malloc_size.restype = c_int
+    shared_malloc_barrier = _libs['divERGe'].get('shared_malloc_barrier', 'cdecl')
+    shared_malloc_barrier.argtypes = []
+    shared_malloc_barrier.restype = None
 
     # some more typedefs.
     # TODO are they needed?

@@ -177,7 +177,10 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     shared_free(model->internals->E);
     shared_free(model->internals->U);
 
-    free(model->internals->greens);
+    if (model->internals->greens_shared)
+        shared_free(model->internals->greens);
+    else
+        free(model->internals->greens);
 
     free(model->internals->grid_kfmesh);
     free(model->internals->grid_weights);
