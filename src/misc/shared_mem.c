@@ -70,8 +70,11 @@ typedef struct {
 static shmem_pool_t* shmem_pool_init( void ) {
     shmem_pool_t* p = calloc(1, sizeof(shmem_pool_t));
     p->comm = diverge_mpi_get_comm();
-    MPICALL(Comm_rank, p->comm, &p->rank);
-    MPICALL(Comm_size, p->comm, &p->size);
+    p->rank = diverge_mpi_comm_rank();
+    p->size = diverge_mpi_comm_size();
+
+    MPICALL(Barrier, p->comm);
+    // color setup
     mpi_proc_info* procnams = calloc(p->size, sizeof(mpi_proc_info));
     int len = -1;
     MPICALL(Get_processor_name, procnams[p->rank].name, &len);
@@ -79,12 +82,15 @@ static shmem_pool_t* shmem_pool_init( void ) {
     MPICALL(Allgather, MPI_IN_PLACE, 0, 0, procnams, sizeof(mpi_proc_info), MPI_BYTE, MPI_COMM_WORLD);
     qsort( procnams, p->size, sizeof(mpi_proc_info), mpi_proc_info_compar );
     int color = 0;
-    for (int r=1; r<p->rank; ++r)
+    for (int r=1; r<=p->rank; ++r)
         if (strcmp( procnams[r-1].name, procnams[r].name )) color++;
     free( procnams );
+
+    // split the communicator according to color
     MPICALL(Comm_split, p->comm, color, 0, &p->shcomm);
     MPICALL(Comm_rank, p->shcomm, &p->shrank);
     MPICALL(Comm_size, p->shcomm, &p->shsize);
+    MPICALL(Barrier, p->comm);
     return p;
 }
 
