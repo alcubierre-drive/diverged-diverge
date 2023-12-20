@@ -1,1 +1,1 @@
-﻿NDSummary.OnToolTipsLoaded("File:doc/libdivERGe.txt",{310:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">libdivERGe.so</div></div>"});
+﻿NDSummary.OnToolTipsLoaded("File:doc/libdivERGe.txt",{319:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">libdivERGe.so</div></div>"});

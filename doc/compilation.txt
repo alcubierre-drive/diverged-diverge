@@ -73,13 +73,53 @@ Namespace: Compilation-MPI
 Enabling MPI (multi-node parallelism)::
 in your 'Makefile.local', put
 === Code ===
-USE_MPI := true
+DEFINES += -DUSE_MPI
 CC := mpicc
 CXX := mpicxx
 LD := mpicxx
 ============
-You might need to set other names for the compilers. Note how defining the
-'make' variable 'USE_MPI' switches behavior of the Makefile.
+Further optimizations for MPI parallelism can be enabled, they are toggled via
+DEFINE keys (i.e. adding DEFINES += -DKEY to Makefile.local, see
+<Compilation-DEFINES>)
+
+- USE_SHARED_MEM: experimental support for putting some objects (Hamiltonian,
+  Orbital/Band matrices) into node-global shared memory, i.e., creating a shared
+  memory pool that is used by all MPI ranks on a single node. This flag
+  requires the uthash.h library somewhere in your include path as well as some
+  more recent linux kernel features (memfd_create, mmap).
+- USE_MPI_FFTW: use the MPI backend for FFTW in the TU propagator calculation.
+  this usually comes with an enormeous speedup
+- MPI_VERBOSE_ALLOCATION_PRINT: be extra verbose on TU propagator allocations in
+  the new CPU MPI algorithm
+- TRANSPOSE_MPI_FFT_BUFFERS: try to optimize memory access and usage by defining
+  some tensors in different ordering. Only enabled when switching the
+  (undocumented) tu_which_fft_{greens,simple,red} to the old MPI FFT algorithm
+  (see below...)
+
+Some other experimental (*UNSUPPORTED*) MPI-related features are not enabled at
+compile time but rather at runtime; and steered using <diverge_model_hack>. This
+includes the following config keys:
+
+- tu_which_fft_greens(int): swap the FFT algorithm for Green's function
+  generation in the TU propagator (int values see enumeration in source)
+- tu_which_fft_simple(int): swap the FFT algorithm for the simple TU propagator
+  generation
+- tu_which_fft_red(int): swap the FFT algorithm for the reduced TU propagator
+  generation
+- model_shared_gf: put the Green's function in node-global shared memory and
+  overwrite the <Green's function generator at diverge_model_t.gfill> with a
+  node-global shared memory variant. Look at the source code if you want to
+  extend on this feature. We are not willing to properly support this feature
+  (reasons: self-energy, consistency between backends, user-defined Green's
+  function generators, …) but see the potential benefits in terms of memory when
+  using many MPI ranks on a single node (looking at you, AMD EPYC...)
+- model_free_hamiltonian: free the hamiltonian array s.t. it doesn't consume
+  valuable RAM. Most meaningful when, again, using many ranks.
+- tu_extra_propagator_timings(int): if !0, enable verbose timing of the
+  (CPU/MPI) algorithms in the TU propagator
+- tu_mpifft_chunksize(int): set the number of FFTs executed in parallel in the
+  CPU+MPI algorithm of the TU propagator to the given value; default is
+  OMP_NUM_THREADS.
 
 Namespace: Compilation-CUDA
 Enabling CUDA (GPUs)::
@@ -243,10 +283,30 @@ USE_GF_FLOATS - save Green's function in single point precision. should work for
                 the npatch backend.
 USE_MKL - use #include<mkl.h> instead of #include<lapacke.h> and
           #include<cblas.h>
+USE_MPI - enable MPI parallelization (<Compilation-MPI>). Not
+          recommended in conjunction with GPUs (<USE_CUDA at Compilation-CUDA>)
+          as GPU/MPI algorithms are scarcely available and therefore not
+          implemented.
 USE_NO_BLAS_VERTEX_LOOP - in the vertex/loop batched GEMMs of the grid FRG code,
                           skip BLAS calls and do the multiplication by hand.
 USE_NO_LAPACKE - do not use LAPACK functions (or, their C wrappers) but Eigen.
 USE_SERIAL_FFTW - do not enable multithreaded FFTW.
+USE_SHARED_MEM - experimental support for putting some objects (Hamiltonian,
+                 Orbital/Band matrices) into node-global shared memory, i.e.,
+                 creating a shared memory pool that is used by all MPI ranks on
+                 a single node. This flag requires the uthash.h library
+                 somewhere in your include path as well as some more recent
+                 linux kernel features (memfd_create, mmap).
+USE_MPI_FFTW - use the MPI backend for FFTW in the TU propagator calculation.
+               this usually comes with an enormeous speedup. Users are
+               responsible for adding the corresponding linker flags to the
+               Makefile.local.
+MPI_VERBOSE_ALLOCATION_PRINT - be extra verbose on TU propagator allocations in
+                               the new CPU/MPI algorithms
+TRANSPOSE_MPI_FFT_BUFFERS - try to optimize memory access and usage by defining
+                            some tensors in different ordering. Only enabled
+                            when switching the TU propagator algorithms via
+                            <diverge_model_hack> (*UNSUPPORTED*)
 
 Namespace: Runtime-Tuning
 Besides the obvious tuning parameters exposed through the compile time options

@@ -1,0 +1,1 @@
+﻿NDFramePage.OnPageTitleLoaded("File:src/diverge_hack.h","diverge_hack.h");NDSummary.OnSummaryLoaded("File:src/diverge_hack.h",[["C/C++","C"]],[["Functions","Function"],["Groups","Group"]],[[86,0,1,"Functions","Functions"],[87,0,0,"diverge_model_hack","diverge_model_hack"],[88,0,0,"diverge_model_print_hacks","diverge_model_print_hacks"]]);
