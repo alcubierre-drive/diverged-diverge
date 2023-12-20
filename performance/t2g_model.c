@@ -1,5 +1,12 @@
 #include <diverge.h>
+
+#ifdef USE_MPI
 #include <fftw3-mpi.h>
+#else
+#define fftw_mpi_broadcast_wisdom( ... ) {}
+#define fftw_mpi_gather_wisdom( ... ) {}
+#endif
+
 #include <fftw3.h>
 #define LINALG_NO_LAPACKE
 #include "linalg.h/linalg.h"
