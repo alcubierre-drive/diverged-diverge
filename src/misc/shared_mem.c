@@ -10,8 +10,19 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 #include <semaphore.h>
+
+#ifdef MEMFD_NOT_SUPPORTED
+#include <sys/syscall.h>
+#include <err.h>
+static int memfd_create_(const char* fname, unsigned flags) {
+    int fd;
+    if ( (fd = syscall(SYS_memfd_create, fname, flags)) == -1 )
+        err(1, "memfd_create");
+    return fd;
+}
+#define memfd_create memfd_create_
+#endif // MEMFD_NOT_SUPPORTED
 
 #include <mpi.h>
 #include <stdio.h>
