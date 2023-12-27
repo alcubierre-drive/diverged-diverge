@@ -1,5 +1,7 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+// TODO(LK) append an interface to this MPI shared memory to the memory pool
+
 #include "shared_mem.h"
 
 #if defined(USE_SHARED_MEM) && defined(USE_MPI)
@@ -34,9 +36,15 @@ static int memfd_create_(const char* fname, unsigned flags) {
 #include "mpi_functions.h"
 
 static int status = 0;
+static char error[MPI_MAX_ERROR_STRING+1] = {0};
+static int errorlen = 0;
 
 #define MPICALL( fun, ... ) { \
-    if ((status = MPI_##fun( __VA_ARGS__ ))) printf( __FILE__ ":%i MPIERROR %i\n", __LINE__, status ); \
+    if ((status = MPI_##fun( __VA_ARGS__ )) != MPI_SUCCESS) { \
+        MPI_Error_string( status, error, &errorlen ); \
+        error[errorlen] = '\0'; \
+        printf( __FILE__ ":%i MPIERROR: %s\n", __LINE__, error ); \
+    } \
 }
 
 typedef struct {
