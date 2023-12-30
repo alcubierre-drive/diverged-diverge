@@ -272,6 +272,10 @@ struct diverge_model_t {
     // Variable: nbytes_data
     // specify how much data is actually added to the struct.
     index_t nbytes_data;
+    // Variable: data_destructor
+    // set a nontrivial destructor for the optional data attached to the struct.
+    // ignored if left untouched (NULL)
+    void (*data_destructor)( char* );
 
     // Variable: internals
     // handled by code itself. please do not alter.

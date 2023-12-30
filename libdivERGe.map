@@ -132,6 +132,9 @@ DIVERGE_0.4 {
         shared_exclusive_wait;
         shared_free;
         shared_malloc;
+        shared_malloc_barrier;
+        shared_malloc_rank;
+        shared_malloc_size;
         extern "C++" {
             "diverge_patching_find_fs_pts(diverge_model_t*, double const*, long, long, long)";
             "diverge_read_W90(char const*, long)";

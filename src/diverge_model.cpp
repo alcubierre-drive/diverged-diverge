@@ -41,7 +41,12 @@ void diverge_model_free(diverge_model_t* model) {
     free(model->internals);
     free(model->tu_ff);
     free(model->orb_symmetries);
-    free(model->data);
+
+    if (model->data_destructor)
+        (*model->data_destructor)(model->data);
+    else
+        free(model->data);
+
     free(model->hop);
     free(model->vert);
 

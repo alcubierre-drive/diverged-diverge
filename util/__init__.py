@@ -453,6 +453,7 @@ if not _libs["divERGe"] is None:
         'gproj',
         'data',
         'nbytes_data',
+        'data_destructor',
         'internals',
     ]
     struct_model_t._fields_ = [
@@ -484,6 +485,7 @@ if not _libs["divERGe"] is None:
         ('grpoj', greensfunc_generator_t),
         ('data', String),
         ('nbytes_data', index_t),
+        ('data_destructor', CFUNCTYPE(UNCHECKED(None), POINTER(c_char))),
         ('internals', POINTER(internals_t)),
     ]
 
