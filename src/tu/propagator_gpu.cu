@@ -107,8 +107,8 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
                 
                 GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                    cp->buf_GG[dev][0],GF_fft,GF_fft_conj,
-                                    off_orb1, off_orb2, R1,R2,
+                                    cp->buf_GG[dev][0],GF_fft+off_orb1,GF_fft+off_orb2,
+                                    GF_fft_conj+off_orb1,GF_fft_conj+off_orb2, R1, R2,
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
                                 
                 cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev][0];
@@ -199,11 +199,18 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
                                                     *(mi_to_oto[mo3]+n_orb*(s4))));
                 const index_t* R1 = mi_to_R+3*mo1;
                 const index_t* R2 = mi_to_R+3*mo3;
+
+                CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)GF+off_orb1, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault,down));
+                CUDA_CHECK(cudaMemcpyAsync(GF_fft+nktot,(cuDoubleComplex*)GF+off_orb2, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault,down));
+                CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)GFconj+off_orb1, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault,down));
+                CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+nktot,(cuDoubleComplex*)GFconj+off_orb2, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault,down));
+
                 GF_prod_pp<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                    cp->buf_GG[dev][0],GF_fft,GF_fft_conj,
-                                    off_orb1, off_orb2, R1,R2,
+                                    cp->buf_GG[dev][0],GF_fft,GF_fft+nktot,
+                                    GF_fft_conj,GF_fft_conj+nktot,R1,R2,
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
+
                 cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev][0];
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_FORWARD));
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
@@ -291,8 +298,8 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
 
                 GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                    cp->buf_GG[dev][0],GF_fft,GF_fft_conj,
-                                    off_orb1, off_orb2, R1,R2,
+                                    cp->buf_GG[dev][0],GF_fft+off_orb1,GF_fft+off_orb2,
+                                    GF_fft_conj+off_orb1,GF_fft_conj+off_orb2,R1,R2,
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
 
                 cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev][0];
@@ -382,10 +389,16 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                                                     *(mi_to_oto[mo3]+n_orb*(s4))));
                 const index_t* R1 = mi_to_R+3*mo1;
                 const index_t* R2 = mi_to_R+3*mo3;
+
+                CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)GF+off_orb1, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault));
+                CUDA_CHECK(cudaMemcpyAsync(GF_fft+nktot,(cuDoubleComplex*)GF+off_orb2, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault));
+                CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)GFconj+off_orb1, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault));
+                CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+nktot,(cuDoubleComplex*)GFconj+off_orb2, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault));
+
                 GF_prod_pp<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                    cp->buf_GG[dev][0],GF_fft,GF_fft_conj,
-                                    off_orb1, off_orb2, R1,R2,
+                                    cp->buf_GG[dev][0],GF_fft,GF_fft+nktot,
+                                    GF_fft_conj,GF_fft_conj+nktot,R1,R2,
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
                 cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev][0];
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_FORWARD));
@@ -415,9 +428,10 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
 
 
 __global__ void GF_prod_pp(__restrict__ cuDoubleComplex* const buf,
-                    __restrict__ const cuDoubleComplex* const GF,
-                    __restrict__ const cuDoubleComplex* const GFconj,
-                    const index_t off_orb1, const index_t off_orb2, 
+                    __restrict__ const cuDoubleComplex* const GF_off_1,
+                    __restrict__ const cuDoubleComplex* const GF_off_2,
+                    __restrict__ const cuDoubleComplex* const GFconj_off_1,
+                    __restrict__ const cuDoubleComplex* const GFconj_off_2,
                     __restrict__ const index_t* const R1,
                     __restrict__ const index_t* const R2,
                     __restrict__ const index_t* const nk,
@@ -438,8 +452,8 @@ __global__ void GF_prod_pp(__restrict__ cuDoubleComplex* const buf,
     while(ky >= nk[1]) ky -= nk[1];
     while(kz >= nk[2]) kz -= nk[2];
     for(index_t k = kbegin; k < kbegin + nk_per_thread;++k) {
-        buf[k] = cuCmul(GFconj[kz + nk[2]*(ky+nk[1]*kx)+off_orb1],GF[k+off_orb2]);
-        buf[k] = cuCadd(buf[k],cuCmul(GF[kz + nk[2]*(ky+nk[1]*kx)+off_orb1],GFconj[k+off_orb2]));
+        buf[k] = cuCmul(GFconj_off_1[kz + nk[2]*(ky+nk[1]*kx)],GF_off_2[k]);
+        buf[k] = cuCadd(buf[k],cuCmul(GF_off_1[kz + nk[2]*(ky+nk[1]*kx)],GFconj_off_2[k]));
         ++kz;
         if (kz >= nk[2]) { kz -= nk[2],++ky;
             if(ky >= nk[1]) { ky-=nk[1], ++kx;
@@ -449,9 +463,10 @@ __global__ void GF_prod_pp(__restrict__ cuDoubleComplex* const buf,
 
 
 __global__ void GF_prod_ph(__restrict__ cuDoubleComplex* const buf,
-                    __restrict__ const cuDoubleComplex* const GF,
-                    __restrict__ const cuDoubleComplex* const GFconj,
-                    const index_t off_orb1, const index_t off_orb2,
+                    __restrict__ const cuDoubleComplex* const GF_off_1,
+                    __restrict__ const cuDoubleComplex* const GF_off_2,
+                    __restrict__ const cuDoubleComplex* const GFconj_off_1,
+                    __restrict__ const cuDoubleComplex* const GFconj_off_2,
                     __restrict__ const index_t* const R1,
                     __restrict__ const index_t* const R2,
                     __restrict__ const index_t* const nk,
@@ -472,8 +487,8 @@ __global__ void GF_prod_ph(__restrict__ cuDoubleComplex* const buf,
     while(ky >= nk[1]) ky -= nk[1];
     while(kz >= nk[2]) kz -= nk[2];
     for(index_t k = kbegin; k < kbegin+nk_per_thread; ++k) {
-        buf[k] = cuCmul(GF[kz + nk[2]*(ky+nk[1]*kx)+off_orb1],GF[k+off_orb2]);
-        buf[k] = cuCadd(buf[k], cuCmul(GFconj[kz + nk[2]*(ky+nk[1]*kx)+off_orb1],GFconj[k+off_orb2]));
+        buf[k] = cuCmul(GF_off_1[kz + nk[2]*(ky+nk[1]*kx)],GF_off_2[k]);
+        buf[k] = cuCadd(buf[k], cuCmul(GFconj_off_1[kz + nk[2]*(ky+nk[1]*kx)],GFconj_off_2[k]));
         ++kz;
         if (kz >= nk[2]) { kz -= nk[2],++ky;
             if(ky >= nk[1]) { ky-=nk[1], ++kx;

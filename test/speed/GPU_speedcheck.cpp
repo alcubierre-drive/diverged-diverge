@@ -28,10 +28,15 @@ TEST_CASE("loop speed", "[.][loopspeed]") {
     double tick = diverge_mpi_wtime();
     for(index_t i = 0; i < 3; ++i){
         PropMom.S_ph_loop_static_red_gpu(lm);
+    }
+    double tock = diverge_mpi_wtime();
+    mpi_log_printf("time 3 times ph loop reduced %4.4f \n", tock -tick);
+    double tick = diverge_mpi_wtime();
+    for(index_t i = 0; i < 3; ++i){
         PropMom.S_pp_loop_static_red_gpu(lm);
     }
     double tock = diverge_mpi_wtime();
-    mpi_log_printf("time 3 times ph and pp loop reduced %4.4f \n", tock -tick);
+    mpi_log_printf("time 3 times pp loop reduced %4.4f \n", tock -tick);
 
     diverge_model_free(mom);
     free(lm);
