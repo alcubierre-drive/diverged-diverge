@@ -111,7 +111,7 @@ void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
         memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
         bool hermitian = check_hermicity(_vec,linsize);
         if(algo == 'e' || (algo == 'a' && hermitian)) {
-            batched_eigen_r( NULL, -2, _vec, _val, linsize, 1 );
+            eigen_solve( NULL, _vec, _val, linsize);
             type[q] = 'e';
         }else{
             singular_value_decomp( NULL, _vec, vertex->bubble_helper, _val, linsize);
