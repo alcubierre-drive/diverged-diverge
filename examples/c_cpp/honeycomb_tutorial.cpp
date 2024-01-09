@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     double t1_dist = positions.col(0).norm(),
            t2_dist = latt_vecs.col(0).norm();
     double t1 = 1.0, t2 = 0.1;
-    model->hop = diverge_mem_alloc_rs_hopping_t( 1024 );
+    model->hop = (rs_hopping_t*) calloc( 1024, sizeof(rs_hopping_t) );
     for (int Rx=-5; Rx<=5; ++Rx) for (int Ry=-5; Ry<=5; ++Ry)
     for (int o=0; o<2; ++o) for (int p=0; p<2; ++p) {
         assert( model->n_hop < 1024 );
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     double V1_dist = positions.col(0).norm(),
            V2_dist = latt_vecs.col(0).norm();
     double V0 = 3.6, V1 = 0.1, V2 = 0.05;
-    model->vert = diverge_mem_alloc_rs_vertex_t( 1024 );
+    model->vert = (rs_vertex_t*) calloc( 1024, sizeof(rs_vertex_t) );
     model->vert[model->n_vert++] = rs_vertex_t{ 'D', {0,0,0}, 0,0, -1,0,0,0, V0 };
     model->vert[model->n_vert++] = rs_vertex_t{ 'D', {0,0,0}, 1,1, -1,0,0,0, V0 };
     for (int Rx=-5; Rx<=5; ++Rx) for (int Ry=-5; Ry<=5; ++Ry)
@@ -75,15 +75,15 @@ int main(int argc, char** argv) {
     // flow
     double vmax = 0;
     double cmax[3] = {0};
-    diverge_flow_step_t* flowstep = diverge_flow_step_init_any( model, "PCD" );
+    diverge_flow_step_t* step = diverge_flow_step_init_any( model, "PCD" );
     diverge_euler_t eu = diverge_euler_defaults_CPP();
     eu.Lambda = 10.0;
     eu.dLambda = -1.0;
     eu.maxvert = 10.0;
     do {
-        diverge_flow_step_euler( flowstep, eu.Lambda, eu.dLambda );
-        diverge_flow_step_vertmax( flowstep, &vmax );
-        diverge_flow_step_chanmax( flowstep, cmax );
+        diverge_flow_step_euler( step, eu.Lambda, eu.dLambda );
+        diverge_flow_step_vertmax( step, &vmax );
+        diverge_flow_step_chanmax( step, cmax );
         mpi_printf( "%.5e %.5e %.5e %.5e %.5e\n", eu.Lambda, cmax[0], cmax[1], cmax[2], vmax );
     } while (diverge_euler_next( &eu, vmax ));
     // post processing
@@ -91,9 +91,9 @@ int main(int argc, char** argv) {
     out.tu_storing_relative = true;
     out.tu_storing_threshold = 0.8;
     out.tu_which_solver_mode = 's';
-    diverge_postprocess_and_write_finegrained( flowstep, "graphene_post.dvg", &out );
+    diverge_postprocess_and_write_finegrained( step, "graphene_post.dvg", &out );
     // cleanup
-    diverge_flow_step_free( flowstep );
+    diverge_flow_step_free( step );
     diverge_model_free( model );
     diverge_finalize();
 }
