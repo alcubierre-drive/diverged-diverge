@@ -116,6 +116,12 @@ double*       diverge_model_internals_get_kmesh(  const diverge_model_t* model )
 // <diverge_model_internals_common> must have been called, otherwise NULL is
 // returned.
 double*       diverge_model_internals_get_kfmesh( const diverge_model_t* model );
+// Function: diverge_model_internals_get_greens
+// returns the internal Green's function buffer (2, nk*nkf, nb, nb)
+//
+// <diverge_model_internals_common> must have been called, otherwise NULL is
+// returned.
+gf_complex_t* diverge_model_internals_get_greens( const diverge_model_t* model );
 #ifdef __cplusplus
 }
 #endif

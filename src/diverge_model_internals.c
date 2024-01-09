@@ -338,3 +338,6 @@ double*       diverge_model_internals_get_kmesh(  const diverge_model_t* model )
 double*       diverge_model_internals_get_kfmesh( const diverge_model_t* model ) {
     return model->internals->has_common_internals ? model->internals->kfmesh : NULL;
 }
+gf_complex_t* diverge_model_internals_get_greens( const diverge_model_t* model ) {
+    return model->internals->has_common_internals ? model->internals->greens : NULL;
+}
