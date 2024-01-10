@@ -41,6 +41,9 @@ static greensfunc_op_t subspace_gf( const diverge_model_t* model, complex128_t L
                             model->nkf[0] * model->nkf[1] * model->nkf[2];
         const index_t nb = model->n_spin * model->n_orb;
 
+        // shared_exclusive_enter() and shared_exclusive_wait() not needed for
+        // standard compilation flags. ensures that only one process per node
+        // fills the buffer in case shared mem GFs are activated (not default!)
         if (shared_exclusive_enter(buf)) {
             #pragma omp parallel for collapse(4) num_threads(diverge_omp_num_threads())
             for (int sign=0; sign<2; ++sign)
