@@ -1,41 +1,62 @@
 /* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-// TODO(LK) the batched zgemd in its 'smart' version is not working the way we'd
-// want it to. In case anyone spots the bug: It should be as fast/faster than
-// what's written below...
-#if 0
-#include "batched_zgemd.h"
-#include "batched_gemms.h"
-#include "../diverge_Eigen3.hpp"
-
-void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
-        complex128_t alpha, complex128_t beta, index_t N, index_t num ) {
-
-    complex128_t* buf = (complex128_t*)malloc(sizeof(complex128_t)*N*N*num);
-
-    const double E_add = *std::min_element( E, E+N*num ) + DIVERGE_EPS_MESH;
-
-    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
-    for (index_t i=0; i<num; ++i)
-    for (index_t b=0; b<N; ++b)
-    for (index_t o=0; o<N; ++o)
-        buf[IDX3(i,b,o,N,N)] = U[IDX3(i,b,o,N,N)] * sqrt(E[IDX2(i,b,N)]+E_add);
-
-    batched_gemm_N_ll_num( buf, buf, S, N, alpha, beta, num, false, true );
-
-    free( buf );
-
-    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
-    for (index_t i=0; i<num; ++i)
-    for (index_t b=0; b<N; ++b)
-        S[IDX3(i,b,b,N,N)] -= alpha * E_add;
-
-}
-#endif
-
 #include "batched_zgemd.h"
 #include "mpi_functions.h"
 #include "../diverge_Eigen3.hpp"
+
+#ifdef FORCE_HANDWRITTEN_ZGEMD
+
+#ifndef USE_MKL
+#include <cblas.h>
+#else
+#include <mkl.h>
+#endif
+
+static void batched_gemm_cblas( const complex128_t* A, const complex128_t* B,
+        complex128_t* C, index_t N, complex128_t alpha, complex128_t beta,
+        index_t num, bool Aconj, bool Bconj ) {
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<num; ++i)
+        cblas_zgemm( CblasColMajor, Aconj?CblasConjTrans:CblasNoTrans,
+                Bconj?CblasConjTrans:CblasNoTrans, N, N, N, &alpha, A+N*N*i, N,
+                B+N*N*i, N, &beta, C+N*N*i, N);
+}
+
+static void batched_zgemd_r_smart( complex128_t* S, complex128_t* U, double* E,
+        complex128_t alpha, complex128_t beta, index_t N, index_t num,
+        complex128_t* buf = NULL ) {
+
+    bool free_aux = false;
+    if (!buf) {
+        free_aux = true;
+        buf = (complex128_t*)malloc(sizeof(complex128_t)*N*N*num);
+    }
+
+    const double E_add = *std::min_element( E, E+N*num );
+
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<num; ++i)
+    for (index_t b=0; b<N; ++b)
+    for (index_t o=0; o<N; ++o)
+        buf[IDX3(i,b,o,N,N)] = U[IDX3(i,b,o,N,N)] * sqrt(E[IDX2(i,b,N)] - E_add + DIVERGE_EPS_MESH);
+
+    batched_gemm_N_ll_num( buf, buf, S, N, alpha, beta, num, false, true );
+
+    if (free_aux) free( buf );
+
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<num; ++i)
+    for (index_t b=0; b<N; ++b)
+        S[IDX3(i,b,b,N,N)] -= alpha * ( DIVERGE_EPS_MESH-E_add );
+
+}
+
+void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
+        complex128_t alpha, complex128_t beta, index_t N, index_t num ) {
+    batched_zgemd_r_smart( S, U, E, alpha, beta, N, num );
+}
+
+#else // FORCE_HANDWRITTEN_ZGEMD
 
 void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
         complex128_t alpha, complex128_t beta, index_t N, index_t num ) {
@@ -48,3 +69,5 @@ void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
         SS = UU * EE.asDiagonal() * UU.adjoint() * alpha + SS * beta;
     }
 }
+
+#endif // FORCE_HANDWRITTEN_ZGEMD
