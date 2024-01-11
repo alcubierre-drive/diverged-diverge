@@ -312,12 +312,10 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
             cudaFree(loop->cuda_descr.nkdev[i]);
             cudaFree(loop->cuda_descr.GF_fft[i]);
             cudaFree(loop->cuda_descr.GF_fft_conj[i]);
-            cudaFree(loop->cuda_descr.buf_GG[i][0]);
-            cudaFree(loop->cuda_descr.buf_GG[i][1]);
+            cudaFree(loop->cuda_descr.buf_GG[i]);
             cudaFree(loop->cuda_descr.buf_res[i][0]);
             cudaFree(loop->cuda_descr.buf_res[i][1]);
-            cudaFree(loop->cuda_descr.fft_workspace[i][0]);
-            cudaFree(loop->cuda_descr.fft_workspace[i][1]);
+            cudaFree(loop->cuda_descr.fft_workspace[i]);
         }
     }
     has_gpu_memory = true;
