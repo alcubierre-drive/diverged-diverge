@@ -6,9 +6,9 @@ int main(int argc, char** argv) {
     diverge_compilation_status();
     diverge_model_t* model = diverge_model_init();
     // lattice & sites
-    model->lattice[0][0] = model->lattice[1][0] = sin(M_PI/3.);
-    model->lattice[0][1] = model->lattice[1][1] = cos(M_PI/3.);
-    model->lattice[0][1] *= -1.0;
+    model->lattice[0][0] = 1.0;
+    model->lattice[1][0] = cos(M_PI/3.);
+    model->lattice[1][1] = sin(M_PI/3.);
     model->lattice[2][2] = 1.0;
     Map<Mat3d> positions(model->positions[0]);
     Map<Mat3d> latt_vecs(model->lattice[0]);
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
     diverge_model_set_filling( model, NULL, -1, filling );
     diverge_model_internals_tu( model, ffdist );
     diverge_model_output_conf_t cfg = diverge_model_output_conf_defaults_CPP();
-    cfg.kc = true;
+    cfg.E = true;
     cfg.npath = -1;
     cfg.kf_ibz_path = 1;
     diverge_model_to_file_finegrained( model, "graphene_model.dvg", &cfg );
