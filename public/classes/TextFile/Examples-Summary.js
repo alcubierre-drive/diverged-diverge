@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Examples","Examples");NDSummary.OnSummaryLoaded("TextFileClass:Examples",[["Text File","TextFile"]],[["Classes","Class"]],[[322,0,0,"Examples"]]);
+﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Examples","Examples");NDSummary.OnSummaryLoaded("TextFileClass:Examples",[["Text File","TextFile"]],[["Classes","Class"]],[[345,0,0,"Examples"]]);
