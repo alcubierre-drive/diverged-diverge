@@ -71,19 +71,19 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
             cudaStream_t down = tu_gpu_downstream[dev];
             cudaStream_t swap;
 
-            const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
+            const index_t nkbyte = sizeof(cuDoubleComplex)*nktot;
             
             CUDA_CHECK(cudaMemcpyAsync(nkdev,nkref, sizeof(index_t)*3,cudaMemcpyDefault,down));
             CUDA_CHECK(cudaMemcpyAsync(mi_to_R,mi_to_Rin, sizeof(index_t)*n_orbff*3,cudaMemcpyDefault,down));
             CUDA_CHECK(cudaMemcpyAsync(c_to_f_q,c2f_map,sizeof(index_t)*my_nk,cudaMemcpyDefault,down));
-            CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)GF, _GF_size,cudaMemcpyDefault,down));
-            CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)GFconj, _GF_size,cudaMemcpyDefault,down));
+            cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
             
-            CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev][0]));
-            CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));
-
+            CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft, (void*)cp->fft_workspace[0]));
+            CUFFT_CHECK(cufftSetStream(cp->gpu_fft, up));
+            index_t off_old1 = -1;
+            index_t off_old2 = -1;
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
-                index_t offmq = block +cp->_off_prop[dev];
+                index_t offmq = block + cp->_off_prop[dev];
                 const index_t s2 = offmq/(n_orbff*n_orbff*n_spin*n_spin*n_spin);
                 offmq-=s2*(n_orbff*n_orbff*n_spin*n_spin*n_spin);
 
@@ -103,35 +103,40 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
                                                     *(mi_to_ofrom[mo3]+n_orb*(s3))));
                 const index_t off_orb2 = nktot*(mi_to_oto[mo3]+n_orb*(s2+n_spin
                                                     *(mi_to_oto[mo1]+n_orb*(s4))));
-                
+
+                if(off_old1 != off_orb1) {
+                    CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)(GF+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
+                    CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)(GFconj+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
+                }
+                if(off_old2 != off_orb2) {
+                    CUDA_CHECK(cudaMemcpyAsync(GF_fft+nktot,(cuDoubleComplex*)(GF+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
+                    CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+nktot,(cuDoubleComplex*)(GFconj+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
+                }
+
+                off_old1 = off_orb1;
+                off_old2 = off_orb2;
                 const index_t* R1 = mi_to_R+3*mo1;
                 const index_t* R2 = mi_to_R+3*mo3;
                 
                 GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                             dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                    cp->buf_GG[dev][0],GF_fft+off_orb1,GF_fft+off_orb2,
-                                    GF_fft_conj+off_orb1,GF_fft_conj+off_orb2, R1, R2,
+                             dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
+                                    cp->buf_GG[dev],GF_fft,GF_fft+nktot,
+                                    GF_fft_conj,GF_fft_conj+nktot, R1, R2,
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
+                CUDA_CHECK( cudaStreamSynchronize( up ) );
                                 
-                cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev][0];
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_INVERSE));
+
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                                  dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                            cp->buf_res[dev][0], cp->buf_GG[dev][0],my_nk,c_to_f_q);
+                                            cp->buf_res[dev][0], cp->buf_GG[dev],my_nk,c_to_f_q);
+
                 const index_t loop_idx = mo1+n_orbff*(s1+s4*n_spin
                                     +POW2(n_spin)*(mo3+n_orbff*
                                     (s3 + s2*n_spin)));
                 cudaMemcpyAsync((cuDoubleComplex*)(L+(loop_idx)*my_nk),cp->buf_res[dev][0], my_nk*sizeof(cuDoubleComplex),
-                                    cudaMemcpyDefault,down);
-
-                swap = up; up = down; down = swap;
-                cp->buf_res[dev][2] = cp->buf_res[dev][0];cp->buf_res[dev][0] = cp->buf_res[dev][1]; cp->buf_res[dev][1] = cp->buf_res[dev][2];
-                cp->buf_GG[dev][2] = cp->buf_GG[dev][0];cp->buf_GG[dev][0] = cp->buf_GG[dev][1]; cp->buf_GG[dev][1] = cp->buf_GG[dev][2];
-                cp->fft_workspace[dev][2] = cp->fft_workspace[dev][0];
-                cp->fft_workspace[dev][0] = cp->fft_workspace[dev][1];
-                cp->fft_workspace[dev][1] = cp->fft_workspace[dev][2];
-                CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev][0]));
-                CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));
+                                    cudaMemcpyDeviceToHost,down);
             }
             cudaDeviceSynchronize();
         },dev);
@@ -167,7 +172,7 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
 
             const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
             CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));
-            CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev][0]));
+            CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev]));
 
             cudaDeviceSynchronize();
             CUDA_CHECK(cudaMemcpy(nkdev,nkref, sizeof(index_t)*3,cudaMemcpyDefault));
@@ -202,35 +207,23 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
                 const index_t* R1 = mi_to_R+3*mo1;
                 const index_t* R2 = mi_to_R+3*mo3;
 
-                CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)GF+off_orb1, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault,down));
-                CUDA_CHECK(cudaMemcpyAsync(GF_fft+nktot,(cuDoubleComplex*)GF+off_orb2, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault,down));
-                CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)GFconj+off_orb1, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault,down));
-                CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+nktot,(cuDoubleComplex*)GFconj+off_orb2, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault,down));
 
                 GF_prod_pp<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                    cp->buf_GG[dev][0],GF_fft,GF_fft+nktot,
-                                    GF_fft_conj,GF_fft_conj+nktot,R1,R2,
-                                    nkdev,cp->n_kblocks, cp->nk_per_thread);
+                                cp->buf_GG[dev],GF_fft+off_orb1,GF_fft+off_orb2,
+                                GF_fft_conj+off_orb1,GF_fft_conj+off_orb2,R1,R2,
+                                nkdev,cp->n_kblocks, cp->nk_per_thread);
 
-                cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev][0];
+                cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_FORWARD));
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                            cp->buf_res[dev][0], cp->buf_GG[dev][0],my_nk,c_to_f_q);
+                                            cp->buf_res[dev][0], cp->buf_GG[dev],my_nk,c_to_f_q);
                 const index_t loop_idx = mo1+n_orbff*(s1+s2*n_spin
                                     +POW2(n_spin)*(mo3+n_orbff*
                                     (s3 + s4*n_spin)));
                 cudaMemcpyAsync((cuDoubleComplex*)(L+(loop_idx)*my_nk),cp->buf_res[dev][0], my_nk*sizeof(cuDoubleComplex),
-                                    cudaMemcpyDefault,down);
-                swap = up; up = down; down = swap;
-                cp->buf_res[dev][2] = cp->buf_res[dev][0];cp->buf_res[dev][0] = cp->buf_res[dev][1]; cp->buf_res[dev][1] = cp->buf_res[dev][2];
-                cp->buf_GG[dev][2] = cp->buf_GG[dev][0];cp->buf_GG[dev][0] = cp->buf_GG[dev][1]; cp->buf_GG[dev][1] = cp->buf_GG[dev][2];
-                cp->fft_workspace[dev][2] = cp->fft_workspace[dev][0];
-                cp->fft_workspace[dev][0] = cp->fft_workspace[dev][1];
-                cp->fft_workspace[dev][1] = cp->fft_workspace[dev][2];
-                CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev][0]));
-                CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));
+                                    cudaMemcpyDeviceToHost,down);
             }
             cudaDeviceSynchronize();
         },dev);
@@ -266,13 +259,11 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
             cudaStream_t swap;
 
             const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
-            CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev][0]));
+            CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev]));
             CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));
             CUDA_CHECK(cudaMemcpy(nkdev,nkref, sizeof(index_t)*3,cudaMemcpyDefault));
             CUDA_CHECK(cudaMemcpy(mi_to_R,mi_to_Rin, sizeof(index_t)*n_orbff*3,cudaMemcpyDefault));
             CUDA_CHECK(cudaMemcpy(c_to_f_q,c2f_map,sizeof(index_t)*my_nk,cudaMemcpyDefault));
-            CUDA_CHECK(cudaMemcpy(GF_fft,(cuDoubleComplex*)GF, _GF_size,cudaMemcpyDefault));
-            CUDA_CHECK(cudaMemcpy(GF_fft_conj,(cuDoubleComplex*)GFconj, _GF_size,cudaMemcpyDefault));
 
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
                 index_t offmq = block +cp->_off_prop[dev];
@@ -298,30 +289,38 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                 const index_t* R1 = mi_to_R+3*mo1;
                 const index_t* R2 = mi_to_R+3*mo3;
 
-                GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                             dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                    cp->buf_GG[dev][0],GF_fft+off_orb1,GF_fft+off_orb2,
-                                    GF_fft_conj+off_orb1,GF_fft_conj+off_orb2,R1,R2,
-                                    nkdev,cp->n_kblocks, cp->nk_per_thread);
+                if(off_old1 != off_orb1) {
+                    CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)(GF+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
+                    CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)(GFconj+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
+                }
+                if(off_old2 != off_orb2) {
+                    CUDA_CHECK(cudaMemcpyAsync(GF_fft+nktot,(cuDoubleComplex*)(GF+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
+                    CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+nktot,(cuDoubleComplex*)(GFconj+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
+                }
 
-                cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev][0];
+                off_old1 = off_orb1;
+                off_old2 = off_orb2;
+                const index_t* R1 = mi_to_R+3*mo1;
+                const index_t* R2 = mi_to_R+3*mo3;
+
+                GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
+                             dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
+                                    cp->buf_GG[dev],GF_fft,GF_fft+nktot,
+                                    GF_fft_conj,GF_fft_conj+nktot, R1, R2,
+                                    nkdev,cp->n_kblocks, cp->nk_per_thread);
+                CUDA_CHECK( cudaStreamSynchronize( up ) );
+
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_INVERSE));
+
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                            cp->buf_res[dev][0], cp->buf_GG[dev][0],my_nk,c_to_f_q);
+                                            cp->buf_res[dev][0], cp->buf_GG[dev],my_nk,c_to_f_q);
                 const index_t loop_idx = mo1+n_orbff*(s1+s4*n_spin
                                         +POW2(n_spin)*(mo3+n_orbff*(s3 + s2*n_spin)));
                 cudaMemcpyAsync((cuDoubleComplex*)(L+loop_idx*my_nk),cp->buf_res[dev][0], my_nk*sizeof(cuDoubleComplex),
-                                    cudaMemcpyDefault,down);
+                                    cudaMemcpyDeviceToHost,down);
 
-                swap = up; up = down; down = swap;
-                cp->buf_res[dev][2] = cp->buf_res[dev][0];cp->buf_res[dev][0] = cp->buf_res[dev][1]; cp->buf_res[dev][1] = cp->buf_res[dev][2];
-                cp->buf_GG[dev][2] = cp->buf_GG[dev][0];cp->buf_GG[dev][0] = cp->buf_GG[dev][1]; cp->buf_GG[dev][1] = cp->buf_GG[dev][2];
-                cp->fft_workspace[dev][2] = cp->fft_workspace[dev][0];
-                cp->fft_workspace[dev][0] = cp->fft_workspace[dev][1];
-                cp->fft_workspace[dev][1] = cp->fft_workspace[dev][2];
-                CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev][0]));
-                CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));
             }
             cudaDeviceSynchronize();
         },dev);
@@ -392,34 +391,21 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                 const index_t* R1 = mi_to_R+3*mo1;
                 const index_t* R2 = mi_to_R+3*mo3;
 
-                CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)GF+off_orb1, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault));
-                CUDA_CHECK(cudaMemcpyAsync(GF_fft+nktot,(cuDoubleComplex*)GF+off_orb2, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault));
-                CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)GFconj+off_orb1, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault));
-                CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+nktot,(cuDoubleComplex*)GFconj+off_orb2, sizeof(cuDoubleComplex)*nktot,cudaMemcpyDefault));
-
                 GF_prod_pp<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                    cp->buf_GG[dev][0],GF_fft,GF_fft+nktot,
-                                    GF_fft_conj,GF_fft_conj+nktot,R1,R2,
+                                    cp->buf_GG[dev],GF_fft+off_orb1,GF_fft+off_orb2,
+                                    GF_fft_conj+off_orb1,GF_fft_conj+off_orb2,R1,R2,
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
-                cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev][0];
+                cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_FORWARD));
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                            cp->buf_res[dev][0], cp->buf_GG[dev][0],my_nk,c_to_f_q);
+                                            cp->buf_res[dev][0], cp->buf_GG[dev],my_nk,c_to_f_q);
                 const index_t loop_idx = mo1+n_orbff*(s1+s2*n_spin
                                     +POW2(n_spin)*(mo3+n_orbff*
                                     (s3 + s4*n_spin)));
                 cudaMemcpyAsync((cuDoubleComplex*)(L+loop_idx*my_nk),cp->buf_res[dev][0], my_nk*sizeof(cuDoubleComplex),
-                                    cudaMemcpyDefault,down);
-                swap = up; up = down; down = swap;
-                cp->buf_res[dev][2] = cp->buf_res[dev][0];cp->buf_res[dev][0] = cp->buf_res[dev][1]; cp->buf_res[dev][1] = cp->buf_res[dev][2];
-                cp->buf_GG[dev][2] = cp->buf_GG[dev][0];cp->buf_GG[dev][0] = cp->buf_GG[dev][1]; cp->buf_GG[dev][1] = cp->buf_GG[dev][2];
-                cp->fft_workspace[dev][2] = cp->fft_workspace[dev][0];
-                cp->fft_workspace[dev][0] = cp->fft_workspace[dev][1];
-                cp->fft_workspace[dev][1] = cp->fft_workspace[dev][2];
-                CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev][0]));
-                CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));
+                                    cudaMemcpyDeviceToHost,down);
             }
             cudaDeviceSynchronize();
         },dev);

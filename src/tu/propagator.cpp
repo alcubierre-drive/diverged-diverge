@@ -320,12 +320,10 @@ tu_loop_t::~tu_loop_t() {
             cudaFree(cuda_descr.nkdev[i]);
             cudaFree(cuda_descr.GF_fft[i]);
             cudaFree(cuda_descr.GF_fft_conj[i]);
-            cudaFree(cuda_descr.buf_GG[i][0]);
-            cudaFree(cuda_descr.buf_GG[i][1]);
+            cudaFree(cuda_descr.buf_GG[i]);
             cudaFree(cuda_descr.buf_res[i][0]);
             cudaFree(cuda_descr.buf_res[i][1]);
-            cudaFree(cuda_descr.fft_workspace[i][0]);
-            cudaFree(cuda_descr.fft_workspace[i][1]);
+            cudaFree(cuda_descr.fft_workspace[i]);
         }
     }
     CUDA_CHECK(cudaHostUnregister(GF_fft_plus));
@@ -692,24 +690,20 @@ void tu_loop_t::allocate_GPU_memory() {
         prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev
         prop_memsize[3] = ensure_align(_GF_size); // GF_fft
         prop_memsize[4] = ensure_align(_GF_size); // GF_fft_conj
-        prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 0
-        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 1
-        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
-        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 1
-        prop_memsize[9] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 0
-        prop_memsize[10] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 1
+        prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG
+        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
+        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 1
+        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 0
 
         cudaMalloc(&(cuda_descr.mi_to_R[i]), prop_memsize[0]);
         cudaMalloc(&(cuda_descr.c_to_f_q[i]), prop_memsize[1]);
         cudaMalloc(&(cuda_descr.nkdev[i]), prop_memsize[2]);
         cudaMalloc(&(cuda_descr.GF_fft[i]), prop_memsize[3]);
         cudaMalloc(&(cuda_descr.GF_fft_conj[i]), prop_memsize[4]);
-        cudaMalloc(&(cuda_descr.buf_GG[i][0]), prop_memsize[5]);
-        cudaMalloc(&(cuda_descr.buf_GG[i][1]), prop_memsize[6]);
-        cudaMalloc(&(cuda_descr.buf_res[i][0]), prop_memsize[7]);
-        cudaMalloc(&(cuda_descr.buf_res[i][1]), prop_memsize[8]);
-        cudaMalloc(&(cuda_descr.fft_workspace[i][0]), prop_memsize[9]);
-        cudaMalloc(&(cuda_descr.fft_workspace[i][1]), prop_memsize[10]);
+        cudaMalloc(&(cuda_descr.buf_GG[i]), prop_memsize[5]);
+        cudaMalloc(&(cuda_descr.buf_res[i][0]), prop_memsize[6]);
+        cudaMalloc(&(cuda_descr.buf_res[i][1]), prop_memsize[7]);
+        cudaMalloc(&(cuda_descr.fft_workspace[i]), prop_memsize[8]);
     }
 }
 

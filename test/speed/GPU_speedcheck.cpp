@@ -17,7 +17,7 @@
 #ifdef USE_CUDA
 TEST_CASE("loop speed", "[.][loopspeed]") {
     mpi_loglevel_set(5);
-    diverge_model_t* mom = gen_square_lat_hub(30, 30,1,1,1,-0.1, 3, -0.4,45, 45);
+    diverge_model_t* mom = gen_square_lat_hub(30, 30,1,1,1,-0.1, 3, -0.4,25, 25);
     diverge_model_internals_tu(mom, 2.1);
     tu_loop_t PropMom (mom);
 

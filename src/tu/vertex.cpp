@@ -373,12 +373,10 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev
         prop_memsize[3] = ensure_align(_GF_size); // GF_fft
         prop_memsize[4] = ensure_align(_GF_size); // GF_fft_conj
-        prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 0
-        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 1
-        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
-        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 1
-        prop_memsize[9] = ensure_align(sizeof(cuDoubleComplex)*loop->cuda_descr.worksize_fft[i]); // fft_workspace 0
-        prop_memsize[10] = ensure_align(sizeof(cuDoubleComplex)*loop->cuda_descr.worksize_fft[i]); // fft_workspace 1
+        prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG
+        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
+        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 1
+        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*loop->cuda_descr.worksize_fft[i]); // fft_workspace
 
         for (index_t mem = 0; mem < 11; ++mem) {
             prop_memtype[mem] = (prop_memsize[mem] < (index_t)available_memory[i] - prop_mem) ? 0:1;
@@ -439,18 +437,14 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
                                                                      : GPU_memory_pool_managed[i] + prop_memoffset_managed[3]);
         cloop->GF_fft_conj[i] = (cuDoubleComplex*)((prop_memtype[4] == 0) ? GPU_memory_pool[i] + prop_memoffset[4]
                                                                           : GPU_memory_pool_managed[i] + prop_memoffset_managed[4]);
-        cloop->buf_GG[i][0] = (cuDoubleComplex*)((prop_memtype[5] == 0) ? GPU_memory_pool[i] + prop_memoffset[5]
+        cloop->buf_GG[i] = (cuDoubleComplex*)((prop_memtype[5] == 0) ? GPU_memory_pool[i] + prop_memoffset[5]
                                                                         : GPU_memory_pool_managed[i] + prop_memoffset_managed[5]);
-        cloop->buf_GG[i][1] = (cuDoubleComplex*)((prop_memtype[6] == 0) ? GPU_memory_pool[i] + prop_memoffset[6]
-                                                                        : GPU_memory_pool_managed[i] + prop_memoffset_managed[6]);
-        cloop->buf_res[i][0] = (cuDoubleComplex*)((prop_memtype[7] == 0) ? GPU_memory_pool[i] + prop_memoffset[7]
+        cloop->buf_res[i][0] = (cuDoubleComplex*)((prop_memtype[6] == 0) ? GPU_memory_pool[i] + prop_memoffset[6]
+                                                                         : GPU_memory_pool_managed[i] + prop_memoffset_managed[6]);
+        cloop->buf_res[i][1] = (cuDoubleComplex*)((prop_memtype[7] == 0) ? GPU_memory_pool[i] + prop_memoffset[7]
                                                                          : GPU_memory_pool_managed[i] + prop_memoffset_managed[7]);
-        cloop->buf_res[i][1] = (cuDoubleComplex*)((prop_memtype[8] == 0) ? GPU_memory_pool[i] + prop_memoffset[8]
-                                                                         : GPU_memory_pool_managed[i] + prop_memoffset_managed[8]);
-        cloop->fft_workspace[i][0] = (cuDoubleComplex*)((prop_memtype[9] == 0) ? GPU_memory_pool[i] + prop_memoffset[9]
-                                                                               : GPU_memory_pool_managed[i] + prop_memoffset_managed[9]);
-        cloop->fft_workspace[i][1] = (cuDoubleComplex*)((prop_memtype[10] == 0) ? GPU_memory_pool[i] + prop_memoffset[10]
-                                                                                : GPU_memory_pool_managed[i] + prop_memoffset_managed[10]);
+        cloop->fft_workspace[i] = (cuDoubleComplex*)((prop_memtype[8] == 0) ? GPU_memory_pool[i] + prop_memoffset[8]
+                                                                               : GPU_memory_pool_managed[i] + prop_memoffset_managed[8]);
 
         cuda_proj_descr_t* cproj = &(proj->proj_descr);
         cproj->prefacs[i] = (cuDoubleComplex*)((proj_memtype[0] == 0) ? GPU_memory_pool[i] + proj_memoffset[0]

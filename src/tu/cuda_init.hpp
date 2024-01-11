@@ -42,9 +42,9 @@ struct cuda_prop_descr_t {
     index_t* nkdev[32];
     cuDoubleComplex* GF_fft[32];
     cuDoubleComplex* GF_fft_conj[32];
-    cuDoubleComplex* buf_GG[32][3];
+    cuDoubleComplex* buf_GG[32];
     cuDoubleComplex* buf_res[32][3];
-    cuDoubleComplex* fft_workspace[32][3];
+    cuDoubleComplex* fft_workspace[32];
 };
 
 struct cuda_proj_descr_t {
