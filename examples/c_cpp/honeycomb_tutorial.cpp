@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
     diverge_model_output_conf_t cfg = diverge_model_output_conf_defaults_CPP();
     cfg.kc = true;
     cfg.npath = -1;
-    cfg.kc_ibz_path = 1;
+    cfg.kf_ibz_path = 1;
     diverge_model_to_file_finegrained( model, "graphene_model.dvg", &cfg );
     // flow
     double vmax = 0;
