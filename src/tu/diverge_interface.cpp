@@ -351,6 +351,30 @@ void sort_loopmaps(diverge_model_t* model) {
                          return tu_data->mi_to_oto[mo3a] < tu_data->mi_to_oto[mo3b];
                      }
     });
+    vector<index_t> uswl( n_unique_p );
+    vector<index_t> uswr( n_unique_p );
+    vector<index_t> uswoff( n_unique_p );
+    uswoff[0] = 0;
+    vector<index_t> uswlen( n_unique_p );
+    vector<index_t> uswmapl( tu_data->lmap_l.size() );
+    vector<index_t> uswmapr( tu_data->lmap_l.size() );
+    for (index_t m=0; m<n_unique_p; ++m) {
+        uswl[m] = tu_data->unique_mi_l[idx[m]];
+        uswr[m] = tu_data->unique_mi_r[idx[m]];
+        uswlen[m] = tu_data->lmap_len[idx[m]];
+        if(m > 0)
+            uswoff[m] = uswoff[m-1] + uswlen[m-1];
+        for(index_t l = 0; l < uswlen[m]; ++l) {
+            uswmapl[l+uswoff[m]] = tu_data->lmap_l[tu_data->lmap_off[idx[m]]+l];
+            uswmapr[l+uswoff[m]] = tu_data->lmap_r[tu_data->lmap_off[idx[m]]+l];
+        }
+    }
+    tu_data->unique_mi_l = uswl;
+    tu_data->unique_mi_r = uswr;
+    tu_data->lmap_len = uswlen;
+    tu_data->lmap_off = uswoff;
+    tu_data->lmap_l = uswmapl;
+    tu_data->lmap_r = uswmapr;
 }
 
 void generate_reduced_loop_maps(diverge_model_t* model) {
