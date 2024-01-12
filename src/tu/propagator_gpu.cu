@@ -112,8 +112,8 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
 
                 if(b1 < bond_sizes[o1] && b3 < bond_sizes[o3]) {
 
-                    index_t mo1 = ob_to_orbff[b1 + tu_data->n_bonds * o1];
-                    index_t mo3 = ob_to_orbff[b3 + tu_data->n_bonds * o3];
+                    index_t mo1 = ob_to_orbff[b1 + n_bonds * o1];
+                    index_t mo3 = ob_to_orbff[b3 + n_bonds * o3];
                     index_t oto1 = mi_to_oto[mo1];
                     index_t oto2 = mi_to_oto[mo3];
 
@@ -332,8 +332,8 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
 
             index_t off_old1 = -1;
             index_t off_old2 = -1;
-
             cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
+            std::cout << dev << "begin\n ";
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
                 index_t offmq = block +cp->_off_prop[dev];
                 const index_t s2 = offmq/(n_unique_pairs*n_spin*n_spin*n_spin);
@@ -374,15 +374,22 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                     off_old1 = off_orb1;
                     off_old2 = off_orb2;
                 }
-
                 GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
                                     cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
                                     GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
                 CUDA_CHECK( cudaStreamSynchronize( up ) );
-
+                tock = diverge_mpi_wtime();
+                kernel_times += tock - tick;
+                tick = diverge_mpi_wtime();
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_INVERSE));
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
+                tock = diverge_mpi_wtime();
+
+                kernel_times += tock - tick;
+                tick = diverge_mpi_wtime();
+
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
                                             cp->buf_res[dev], cp->buf_GG[dev],my_nk,c_to_f_q);
