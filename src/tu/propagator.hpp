@@ -106,7 +106,6 @@ public:
     const index_t nktot;
     const index_t my_nk;
     const index_t my_nk_off;
-    const index_t n_frq;
     const bool SU2;
     const double* bos_frq;
 

@@ -40,7 +40,6 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     nktot{nk*nkf},
     my_nk{tu_data->my_nk},
     my_nk_off{tu_data->my_nk_off},
-    n_frq{tu_data->n_frq},
     SU2{model->SU2 > 0},
     cFRG_loop{model->gproj!=NULL},
     which_fft_simple{tu_data->which_fft_simple},
@@ -115,7 +114,7 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     cpu_fft_algorithm_init( which_fft_greens, which_fft_simple, which_fft_red );
 }
 
-void fill_mi_remap_gpu() {
+void tu_loop_t::fill_mi_remap_gpu() {
     reshuffeled_orbff = (index_t*)calloc(n_orbff,sizeof(index_t));
     reshuffeled_oto = (index_t*)calloc(n_orbff,sizeof(index_t));
     for(index_t o = 0; o < model->n_orb; ++o) {
