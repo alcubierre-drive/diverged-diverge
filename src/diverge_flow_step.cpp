@@ -539,7 +539,5 @@ double diverge_flow_step_get_filling_Hself( diverge_flow_step_t* s, void* worksp
     batched_eigen_shut_up(0);
 
     return diverge_model_get_filling( m, Etmp, nb );
-    
 }
-    
-    
+
