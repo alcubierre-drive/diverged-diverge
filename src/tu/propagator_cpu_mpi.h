@@ -88,7 +88,6 @@ typedef struct {
     index_t n_spin;
     index_t n_orb;
     index_t n_orbff;
-    index_t n_frq;
     const index_t* unique_mi_l;
     index_t unique_mi_l_size;
     const index_t* unique_mi_r;
@@ -105,7 +104,7 @@ typedef struct {
 
 tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         index_t chunksize_max, const index_t* c2fmap, index_t my_nk,
-        index_t n_spin, index_t n_orb, index_t n_orbff, index_t n_frq,
+        index_t n_spin, index_t n_orb, index_t n_orbff,
         const index_t* unique_mi_l, index_t unique_mi_l_size,
         const index_t* unique_mi_r, const index_t* mi_to_ofrom,
         const index_t* mi_to_oto, const index_t* mi_to_R,

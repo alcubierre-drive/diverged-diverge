@@ -227,7 +227,7 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
     }
 
     if (rescale)
-        scale_loop(loop, prefac, my_nk*POW4(n_spin)*POW2(n_orbff)*n_frq);
+        scale_loop(loop, prefac, my_nk*POW4(n_spin)*POW2(n_orbff));
 }
 
 template<bool pp, bool subtract>
@@ -440,7 +440,7 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
 
     if(rescale) {
         reconstruct_from_reduced(loop);
-        scale_loop(loop, prefac, my_nk*POW4(n_spin)*POW2(n_orbff)*n_frq);
+        scale_loop(loop, prefac, my_nk*POW4(n_spin)*POW2(n_orbff));
     }
 }
 

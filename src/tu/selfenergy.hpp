@@ -86,7 +86,6 @@ private:
     const index_t n_orb;
     const index_t n_spin;
     const index_t ns;
-    const index_t n_frq;
     const index_t n_orbff;
     const index_t n_bonds;
     const index_t nk;

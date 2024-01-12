@@ -67,7 +67,6 @@ public:
     const index_t nkf;
     const index_t my_nk;
     const index_t my_nk_off;
-    const index_t n_frq;
     const bool SU2;
     const index_t full_vert_size;
     const index_t full_bubble_size;

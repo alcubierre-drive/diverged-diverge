@@ -102,9 +102,9 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
                 const index_t o1 = offmq/(n_bonds*n_bonds);
                 offmq-=o1*(n_bonds*n_bonds);
                 const index_t b3 = (offmq/(n_bonds));
-                const index_t b1 = offmq - b*n_bonds;
+                const index_t b1 = offmq - b3*n_bonds;
 
-                if(b1 < tu_data->bond_sizes[o1] && b3 < tu_data->bond_sizes[o3]) {
+                if(b1 < bond_sizes[o1] && b3 < bond_sizes[o3]) {
 
                     index_t mo1 = resh_mi[b1 + bond_offsets[o1]];
                     index_t mo3 = resh_mi[b3 + bond_offsets[o3]];
@@ -273,6 +273,7 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
             cudaStream_t swap;
             const index_t nkbyte = sizeof(cuDoubleComplex)*nktot;
 
+            const index_t off_GF = (n_spin*n_orb > 1) ? nktot : 0;
             const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
             CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev]));
             CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));

@@ -123,8 +123,8 @@ void tu_loop_t::fill_mi_remap_gpu() {
         vector<index_t> idx( tu_data->bond_sizes[o] );
 
         for(index_t b = 0; b < tu_data->bond_sizes[o]; ++b) {
-            assert(tu_ff[b+tu_data->bond_offsets[o]].ofrom == o);
-            oto[b] = tu_ff[b+tu_data->bond_offsets[o]].oto;
+            assert(model->tu_ff[b+tu_data->bond_offsets[o]].ofrom == o);
+            oto[b] = model->tu_ff[b+tu_data->bond_offsets[o]].oto;
             mi[b] = tu_data->ob_to_orbff[b + tu_data->n_bonds * o];
             idx[b] = b;
         }
@@ -271,7 +271,7 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
     for (int i=0; i<2; ++i) switch (simple_red_algos[i]) {
         case tu_fft_algorithm_mpi_new:
             if (!mpi_loop) mpi_loop = tu_mpi_loop_init( model->nk, model->nkf,
-                    chunksize_max, c2fmap.data(), my_nk, n_spin, n_orb, n_orbff, n_frq,
+                    chunksize_max, c2fmap.data(), my_nk, n_spin, n_orb, n_orbff,
                     tu_data->unique_mi_l.data(), tu_data->unique_mi_l.size(),
                     tu_data->unique_mi_r.data(), mi_to_ofrom, mi_to_oto, mi_to_R,
                     &GF_fft_plus, &GF_fft_conj_plus, this, model );
@@ -615,9 +615,10 @@ void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L) {
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
                                          (vnk[2]*vnkf[2])};
     ph_bubble_momenta_handler_fft(&cuda_descr, L, GF_fft_plus,GF_fft_conj_plus,
-                            n_orb, n_bonds, tu_data->bond_sizes, tu_data->bond_offsets
+                            n_orb, n_bonds, tu_data->bond_sizes,
+                            tu_data->bond_offsets,
                             n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
-                            dims, resh_oto, resh_mi, mi_to_R);
+                            dims, reshuffeled_oto, reshuffeled_orbff, mi_to_R);
 }
 
 void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
@@ -679,7 +680,7 @@ void tu_loop_t::merge_gpu_cpu_loop_cfrg_step2(complex128_t* L, complex128_t* tmp
     Map<MatXcd> tmpmap(tmpgpu,my_nk,blocksize);
     Lmap -= tmpmap.transpose();
     if(tu_data->use_reduced_loop) reconstruct_from_reduced(L);
-    scale_loop(L, -1./(2.*M_PI), my_nk*POW4(n_spin)*POW2(n_orbff)*n_frq);
+    scale_loop(L, -1./(2.*M_PI), my_nk*POW4(n_spin)*POW2(n_orbff));
 }
 
 void tu_loop_t::merge_gpu_cpu_loop(complex128_t* L, complex128_t* tmpgpu) const {
@@ -688,7 +689,7 @@ void tu_loop_t::merge_gpu_cpu_loop(complex128_t* L, complex128_t* tmpgpu) const 
     Map<MatXcd> tmpmap(tmpgpu,my_nk,blocksize);
     Lmap += tmpmap.transpose();
     if(tu_data->use_reduced_loop) reconstruct_from_reduced(L);
-    scale_loop(L, -1./(2.*M_PI), my_nk*POW4(n_spin)*POW2(n_orbff)*n_frq);
+    scale_loop(L, -1./(2.*M_PI), my_nk*POW4(n_spin)*POW2(n_orbff));
 }
 
 #ifndef CUDA_MEM_ALIGN
