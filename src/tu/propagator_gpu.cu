@@ -212,14 +212,14 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
             index_t off_old2 = -1;
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
                 index_t offmq = block + cp->_off_prop[dev];
-                const index_t s2 = offmq/(POW2(n_orb*n_bonds)*n_spin*n_spin*n_spin);
-                offmq-=s2*(POW2(n_orb*n_bonds)*n_spin*n_spin*n_spin);
+                const index_t s4 = offmq/(POW2(n_orb*n_bonds)*n_spin*n_spin*n_spin);
+                offmq-=s4*(POW2(n_orb*n_bonds)*n_spin*n_spin*n_spin);
 
                 const index_t s3 = offmq/(POW2(n_orb*n_bonds)*n_spin*n_spin);
                 offmq-=s3*(POW2(n_orb*n_bonds)*n_spin*n_spin);
 
-                const index_t s4 = offmq/(POW2(n_orb*n_bonds)*n_spin);
-                offmq-=s4*(POW2(n_orb*n_bonds)*n_spin);
+                const index_t s2 = offmq/(POW2(n_orb*n_bonds)*n_spin);
+                offmq-=s2*(POW2(n_orb*n_bonds)*n_spin);
 
                 const index_t s1 = offmq/(POW2(n_orb*n_bonds));
                 offmq-=s1*(POW2(n_orb*n_bonds));
@@ -264,6 +264,7 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
                                         cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
                                         GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
                                         nkdev,cp->n_kblocks, cp->nk_per_thread);
+                    CUDA_CHECK( cudaStreamSynchronize( up ) );
 
                     CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_FORWARD));
                     to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),

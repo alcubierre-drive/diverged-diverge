@@ -67,7 +67,7 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     extra_timings_enabled = tu_data->propagator_extra_cpu_timings;
     extra_tvec = new vector<double>( 11, 0.0 );
     index_t task_spin = POW4(n_spin);
-    index_t tasks_dist = tu_data->use_reduced_loop ? (index_t)tu_data->unique_mi_l.size() : POW2(n_orbff);
+    index_t tasks_dist = tu_data->use_reduced_loop ? (index_t)tu_data->unique_mi_l.size() : POW2(n_orb*n_bonds);
     index_t nkff[3];
     for (int i=0; i<3; ++i) nkff[i] = model->nk[i] * model->nkf[i];
     cuda_setup_prop_descr(&cuda_descr,task_spin,tasks_dist, nkff,tu_data->offload_cpu);
