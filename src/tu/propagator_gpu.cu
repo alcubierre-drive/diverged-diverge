@@ -283,7 +283,10 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
             index_t off_old1 = -1;
             index_t off_old2 = -1;
             index_t uploads = 0;
+            double tick, tock;
+            double kernel_times = 0.0;
             cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
+            std::cout << dev << "begin\n ";
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
                 index_t offmq = block +cp->_off_prop[dev];
                 const index_t s2 = offmq/(n_unique_pairs*n_spin*n_spin*n_spin);
@@ -307,7 +310,6 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
 
                 const index_t* R1 = mi_to_R+3*mo1;
                 const index_t* R2 = mi_to_R+3*mo3;
-                
 
                 if(off_old1 != off_orb1) {
                     uploads+=1;
@@ -322,18 +324,30 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
 
                 off_old1 = off_orb1;
                 off_old2 = off_orb2;
-
+                tick = diverge_mpi_wtime();
                 GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
                                     cp->buf_GG[dev],GF_fft,GF_fft+off_GF,
                                     GF_fft_conj,GF_fft_conj+off_GF, R1, R2,
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
                 CUDA_CHECK( cudaStreamSynchronize( up ) );
-
+                tock = diverge_mpi_wtime();
+                kernel_times += tock - tick;
+                tick = diverge_mpi_wtime();
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_INVERSE));
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
+                tock = diverge_mpi_wtime();
+
+                kernel_times += tock - tick;
+                tick = diverge_mpi_wtime();
+
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
                                             cp->buf_res[dev][0], cp->buf_GG[dev],my_nk,c_to_f_q);
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
+                tock = diverge_mpi_wtime();
+                //kernel_times += tock - tick;
+
                 const index_t loop_idx = mo1+n_orbff*(s1+s4*n_spin
                                         +POW2(n_spin)*(mo3+n_orbff*(s3 + s2*n_spin)));
                 cudaMemcpyAsync((cuDoubleComplex*)(L+loop_idx*my_nk),cp->buf_res[dev][0], my_nk*sizeof(cuDoubleComplex),
@@ -341,6 +355,7 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
 
             }
             cudaDeviceSynchronize();
+            std::cout << dev << "   end kernels took " << kernel_times << "\n ";
             std::cout << uploads << std::endl;
         },dev);
     }
