@@ -685,7 +685,7 @@ void tu_loop_t::allocate_GPU_memory() {
     const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
 
     for(int i = 0; i<tu_num_of_devices;++i) {
-        cudaSetDevice(dev);
+        cudaSetDevice(i);
         prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R
         prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk); // c_to_f_q
         prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev
