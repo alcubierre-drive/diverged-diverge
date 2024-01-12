@@ -53,7 +53,7 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
     const index_t n_orbff, const index_t n_spin, const index_t nktot,
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
     const index_t* mi_to_from,
-    const index_t* mi_to_oto, const index_t* ob_to_orbff,
+    const index_t* mi_to_oto,
     const index_t* const mi_to_Rin) {
     cuda_setup();
 
@@ -91,73 +91,63 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
             index_t off_old1 = -1;
             index_t off_old2 = -1;
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
-                index_t offmq = block + cp->_off_prop[dev];
-                const index_t s2 = offmq/(POW2(n_orb*n_bonds)*n_spin*n_spin*n_spin);
-                offmq-=s2*(POW2(n_orb*n_bonds)*n_spin*n_spin*n_spin);
+                index_t offmq = block +cp->_off_prop[dev];
+                const index_t s4 = offmq/(n_orbff*n_orbff*n_spin*n_spin*n_spin);
+                offmq-=s4*(n_orbff*n_orbff*n_spin*n_spin*n_spin);
 
-                const index_t s3 = offmq/(POW2(n_orb*n_bonds)*n_spin*n_spin);
-                offmq-=s3*(POW2(n_orb*n_bonds)*n_spin*n_spin);
+                const index_t s2 = offmq/(n_orbff*n_orbff*n_spin*n_spin);
+                offmq-=s2*(n_orbff*n_orbff*n_spin*n_spin);
 
-                const index_t s4 = offmq/(POW2(n_orb*n_bonds)*n_spin);
-                offmq-=s4*(POW2(n_orb*n_bonds)*n_spin);
+                const index_t mo3 = (offmq/(n_orbff*n_spin*n_spin));
+                offmq-=mo3*(n_orbff*n_spin*n_spin);
 
-                const index_t s1 = offmq/(POW2(n_orb*n_bonds));
-                offmq-=s1*(POW2(n_orb*n_bonds));
+                const index_t s3 = offmq/(n_orbff*n_spin);
+                offmq-=s3*(n_orbff*n_spin);
 
-                const index_t o3 = (offmq/(n_orb*n_bonds*n_bonds));
-                offmq -= o3*(n_orb*n_bonds*n_bonds);
-                const index_t o1 = offmq/(n_bonds*n_bonds);
-                offmq -= o1*(n_bonds*n_bonds);
-                const index_t b3 = (offmq/(n_bonds));
-                const index_t b1 = offmq - b3*n_bonds;
+                const index_t s1 = offmq/(n_orbff);
+                const index_t mo1 = offmq - s1*(n_orbff);
 
-                if(b1 < bond_sizes[o1] && b3 < bond_sizes[o3]) {
+                const index_t off_orb1 = nktot*(mi_to_from[mo1]+n_orb*(s1+n_spin
+                                                    *(mi_to_from[mo3]+n_orb*(s3))));
+                const index_t off_orb2 = nktot*(mi_to_oto[mo3]+n_orb*(s2+n_spin
+                                                    *(mi_to_oto[mo1]+n_orb*(s4))));
 
-                    index_t mo1 = ob_to_orbff[b1 + n_bonds * o1];
-                    index_t mo3 = ob_to_orbff[b3 + n_bonds * o3];
+                const index_t* R1 = mi_to_R+3*mo1;
+                const index_t* R2 = mi_to_R+3*mo3;
 
-                    const index_t off_orb1 = nktot*(mi_to_from[mo1]+n_orb*(s1+n_spin
-                                                        *(mi_to_from[mo3]+n_orb*(s3))));
-                    const index_t off_orb2 = nktot*(mi_to_oto[mo3]+n_orb*(s2+n_spin
-                                                        *(mi_to_oto[mo1]+n_orb*(s4))));
-
-                    const index_t* R1 = mi_to_R+3*mo1;
-                    const index_t* R2 = mi_to_R+3*mo3;
-
-                    if(cp->prop_preload_full_gf) {
-                        off_GF1 = off_orb1;
-                        off_GF2 = off_orb2;
-                    }else{
-                        if(off_old1 != off_orb1) {
-                            CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)(GF+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
-                            CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)(GFconj+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
-                        }
-                        if(off_old2 != off_orb2 && n_spin*n_orb > 1) {
-                            CUDA_CHECK(cudaMemcpyAsync(GF_fft+off_GF2,(cuDoubleComplex*)(GF+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
-                            CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+off_GF2,(cuDoubleComplex*)(GFconj+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
-                        }
-                        off_old1 = off_orb1;
-                        off_old2 = off_orb2;
+                if(cp->prop_preload_full_gf) {
+                    off_GF1 = off_orb1;
+                    off_GF2 = off_orb2;
+                }else{
+                    if(off_old1 != off_orb1) {
+                        CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)(GF+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
+                        CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)(GFconj+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
                     }
-                    CUDA_CHECK( cudaStreamSynchronize( down ) );
-                    GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                                dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
-                                        cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
-                                        GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
-                                        nkdev,cp->n_kblocks, cp->nk_per_thread);
-                    CUDA_CHECK( cudaStreamSynchronize( up ) );
-
-                    CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_INVERSE));
-                    to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                                    dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                                cp->buf_res[dev], cp->buf_GG[dev],my_nk,c_to_f_q);
-
-                    const index_t loop_idx = mo1+n_orbff*(s1+s4*n_spin
-                                        +POW2(n_spin)*(mo3+n_orbff*
-                                        (s3 + s2*n_spin)));
-                    cudaMemcpyAsync((cuDoubleComplex*)(L+(loop_idx)*my_nk),cp->buf_res[dev], my_nk*sizeof(cuDoubleComplex),
-                                        cudaMemcpyDeviceToHost,down);
+                    if(off_old2 != off_orb2 && n_spin*n_orb > 1) {
+                        CUDA_CHECK(cudaMemcpyAsync(GF_fft+off_GF2,(cuDoubleComplex*)(GF+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
+                        CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+off_GF2,(cuDoubleComplex*)(GFconj+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
+                    }
+                    off_old1 = off_orb1;
+                    off_old2 = off_orb2;
                 }
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
+                GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
+                            dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
+                                    cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
+                                    GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
+                                    nkdev,cp->n_kblocks, cp->nk_per_thread);
+                CUDA_CHECK( cudaStreamSynchronize( up ) );
+
+                CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_INVERSE));
+                to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
+                                dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
+                                            cp->buf_res[dev], cp->buf_GG[dev],my_nk,c_to_f_q);
+
+                const index_t loop_idx = mo1+n_orbff*(s1+s4*n_spin
+                                    +POW2(n_spin)*(mo3+n_orbff*
+                                    (s3 + s2*n_spin)));
+                cudaMemcpyAsync((cuDoubleComplex*)(L+(loop_idx)*my_nk),cp->buf_res[dev], my_nk*sizeof(cuDoubleComplex),
+                                    cudaMemcpyDeviceToHost,down);
             }
             cudaDeviceSynchronize();
         },dev);
@@ -173,7 +163,7 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
     const index_t n_orbff, const index_t n_spin, const index_t nktot,
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
     const index_t* mi_to_from,
-    const index_t* mi_to_oto, const index_t* ob_to_orbff,
+    const index_t* mi_to_oto,
     const index_t* const mi_to_Rin) {
     cuda_setup();
 
@@ -211,72 +201,62 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
             index_t off_old1 = -1;
             index_t off_old2 = -1;
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
-                index_t offmq = block + cp->_off_prop[dev];
-                const index_t s4 = offmq/(POW2(n_orb*n_bonds)*n_spin*n_spin*n_spin);
-                offmq-=s4*(POW2(n_orb*n_bonds)*n_spin*n_spin*n_spin);
+                index_t offmq = block +cp->_off_prop[dev];
+                const index_t s4 = offmq/(n_orbff*n_orbff*n_spin*n_spin*n_spin);
+                offmq-=s4*(n_orbff*n_orbff*n_spin*n_spin*n_spin);
 
-                const index_t s3 = offmq/(POW2(n_orb*n_bonds)*n_spin*n_spin);
-                offmq-=s3*(POW2(n_orb*n_bonds)*n_spin*n_spin);
+                const index_t s3 = offmq/(n_orbff*n_orbff*n_spin*n_spin);
+                offmq-=s3*(n_orbff*n_orbff*n_spin*n_spin);
 
-                const index_t s2 = offmq/(POW2(n_orb*n_bonds)*n_spin);
-                offmq-=s2*(POW2(n_orb*n_bonds)*n_spin);
+                const index_t mo3 = (offmq/(n_orbff*n_spin*n_spin));
+                offmq-=mo3*(n_orbff*n_spin*n_spin);
 
-                const index_t s1 = offmq/(POW2(n_orb*n_bonds));
-                offmq-=s1*(POW2(n_orb*n_bonds));
+                const index_t s2 = offmq/(n_orbff*n_spin);
+                offmq-=s2*(n_orbff*n_spin);
 
-                const index_t o3 = (offmq/(n_orb*n_bonds*n_bonds));
-                offmq -= o3*(n_orb*n_bonds*n_bonds);
-                const index_t o1 = offmq/(n_bonds*n_bonds);
-                offmq -= o1*(n_bonds*n_bonds);
-                const index_t b3 = (offmq/(n_bonds));
-                const index_t b1 = offmq - b3*n_bonds;
+                const index_t s1 = offmq/(n_orbff);
+                const index_t mo1 = offmq - s1*(n_orbff);
 
-                if(b1 < bond_sizes[o1] && b3 < bond_sizes[o3]) {
+                const index_t off_orb1 = nktot*(mi_to_from[mo1]+n_orb*(s1+n_spin
+                                                    *(mi_to_from[mo3]+n_orb*(s3))));
+                const index_t off_orb2 = nktot*(mi_to_oto[mo1]+n_orb*(s2+n_spin
+                                                    *(mi_to_oto[mo3]+n_orb*(s4))));
+                const index_t* R1 = mi_to_R+3*mo1;
+                const index_t* R2 = mi_to_R+3*mo3;
 
-                    index_t mo1 = ob_to_orbff[b1 + n_bonds * o1];
-                    index_t mo3 = ob_to_orbff[b3 + n_bonds * o3];
-
-                    const index_t off_orb1 = nktot*(mi_to_from[mo1]+n_orb*(s1+n_spin
-                                                        *(mi_to_from[mo3]+n_orb*(s3))));
-                    const index_t off_orb2 = nktot*(mi_to_oto[mo1]+n_orb*(s2+n_spin
-                                                        *(mi_to_oto[mo3]+n_orb*(s4))));
-                    const index_t* R1 = mi_to_R+3*mo1;
-                    const index_t* R2 = mi_to_R+3*mo3;
-
-                    if(cp->prop_preload_full_gf) {
-                        off_GF1 = off_orb1;
-                        off_GF2 = off_orb2;
-                    }else{
-                        if(off_old1 != off_orb1) {
-                            CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)(GF+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
-                            CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)(GFconj+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
-                        }
-                        if(off_old2 != off_orb2 && n_spin*n_orb > 1) {
-                            CUDA_CHECK(cudaMemcpyAsync(GF_fft+off_GF2,(cuDoubleComplex*)(GF+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
-                            CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+off_GF2,(cuDoubleComplex*)(GFconj+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
-                        }
-                        off_old1 = off_orb1;
-                        off_old2 = off_orb2;
+                if(cp->prop_preload_full_gf) {
+                    off_GF1 = off_orb1;
+                    off_GF2 = off_orb2;
+                }else{
+                    if(off_old1 != off_orb1) {
+                        CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)(GF+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
+                        CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)(GFconj+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
                     }
-
-                    CUDA_CHECK( cudaStreamSynchronize( down ) );
-                    GF_prod_pp<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                                dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
-                                        cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
-                                        GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
-                                        nkdev,cp->n_kblocks, cp->nk_per_thread);
-                    CUDA_CHECK( cudaStreamSynchronize( up ) );
-
-                    CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_FORWARD));
-                    to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                                dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                                cp->buf_res[dev], cp->buf_GG[dev],my_nk,c_to_f_q);
-                    const index_t loop_idx = mo1+n_orbff*(s1+s2*n_spin
-                                        +POW2(n_spin)*(mo3+n_orbff*
-                                        (s3 + s4*n_spin)));
-                    cudaMemcpyAsync((cuDoubleComplex*)(L+(loop_idx)*my_nk),cp->buf_res[dev], my_nk*sizeof(cuDoubleComplex),
-                                        cudaMemcpyDeviceToHost,down);
+                    if(off_old2 != off_orb2 && n_spin*n_orb > 1) {
+                        CUDA_CHECK(cudaMemcpyAsync(GF_fft+off_GF2,(cuDoubleComplex*)(GF+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
+                        CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+off_GF2,(cuDoubleComplex*)(GFconj+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
+                    }
+                    off_old1 = off_orb1;
+                    off_old2 = off_orb2;
                 }
+
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
+                GF_prod_pp<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
+                            dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
+                                    cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
+                                    GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
+                                    nkdev,cp->n_kblocks, cp->nk_per_thread);
+                CUDA_CHECK( cudaStreamSynchronize( up ) );
+
+                CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_FORWARD));
+                to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
+                            dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
+                                            cp->buf_res[dev], cp->buf_GG[dev],my_nk,c_to_f_q);
+                const index_t loop_idx = mo1+n_orbff*(s1+s2*n_spin
+                                    +POW2(n_spin)*(mo3+n_orbff*
+                                    (s3 + s4*n_spin)));
+                cudaMemcpyAsync((cuDoubleComplex*)(L+(loop_idx)*my_nk),cp->buf_res[dev], my_nk*sizeof(cuDoubleComplex),
+                                    cudaMemcpyDeviceToHost,down);
             }
             cudaDeviceSynchronize();
         },dev);

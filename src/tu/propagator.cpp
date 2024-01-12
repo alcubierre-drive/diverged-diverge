@@ -589,7 +589,7 @@ void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L) {
                             n_orb, n_bonds, tu_data->bond_sizes,
                             n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
                             dims,  mi_to_ofrom, 
-                            mi_to_oto, tu_data->ob_to_orbff, mi_to_R);
+                            mi_to_oto, mi_to_R);
 }
 
 void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
@@ -604,7 +604,7 @@ void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
     pp_bubble_momenta_handler_fft(&cuda_descr, L, GF_fft_plus,GF_fft_conj_plus,
                             n_orb, n_bonds, tu_data->bond_sizes,
                             n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
-                            dims, mi_to_ofrom, mi_to_oto, tu_data->ob_to_orbff, mi_to_R);
+                            dims, mi_to_ofrom, mi_to_oto, mi_to_R);
 }
 
 void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L) {
