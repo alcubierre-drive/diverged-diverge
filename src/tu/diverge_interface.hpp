@@ -64,7 +64,6 @@ struct tu_data_t {
     index_t* mi_to_ffidx;
     index_t* mi_to_R;
 
-    index_t n_frq;
     vector<double> bosonic_freq;
     double doping_per_UC = 0.0;
 };
@@ -75,7 +74,6 @@ void init_MPI_dist(diverge_model_t* model);
 void init_ff_struct(const double max_dist, diverge_model_t* model);
 void init_symmetries(diverge_model_t* model);
 void generate_reduced_loop_maps(diverge_model_t* model);
-void init_bos_freqs(tu_data_t* tu_data, index_t n_frq);
 // helper function for fixed particle number flows
 void init_doping_per_UC(diverge_model_t* model);
 

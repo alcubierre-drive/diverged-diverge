@@ -17,7 +17,6 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
         diverge_model_internals_common(model);
     }
     strcpy(model->internals->backend, "tu");
-    index_t n_frq = 1;
     tu_data_t* info = new tu_data_t;
     info->nk = model->nk[0] * model->nk[1] * model->nk[2];
     info->nkf = model->nkf[0] * model->nkf[1] * model->nkf[2];
@@ -35,8 +34,6 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
     info->propagator_extra_cpu_timings = false;
     model->internals->tu_data = (void*) info;
     model->internals->tu_data_destructor = tu_data_destructor;
-    info->n_frq = n_frq;
-    init_bos_freqs(info,n_frq);
     init_ff_struct(max_dist, model);
     generate_reduced_loop_maps(model);
     init_symmetries(model);
@@ -59,16 +56,6 @@ void tu_data_destructor(void* tu_da) {
     delete tu_data;
 }
 
-void init_bos_freqs(tu_data_t* tu_data, index_t n_frq){
-    const double first_freq = 1e-2;
-    const double base_increment = 1.2;
-    tu_data->bosonic_freq.resize(n_frq);
-    tu_data->bosonic_freq[0] = 0.;
-    for(int n = 1; n<n_frq; n++){
-        tu_data->bosonic_freq[n] = first_freq*(cmath_pow(base_increment,n)-1.0)
-                                            /(base_increment-1.0);
-    }
-}
 
 static index_t map_to_fine(index_t val, index_t nc) {
     if (std::abs(nc - val) < (nc / 2) + 1) val = val - nc;

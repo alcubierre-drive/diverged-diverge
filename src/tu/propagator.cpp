@@ -93,6 +93,7 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
         }
     }
     #ifdef USE_CUDA
+    fill_mi_remap_gpu();
     CUDA_CHECK(cudaHostRegister(GF_fft_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
     CUDA_CHECK(cudaHostRegister(GF_fft_conj_plus,nktot* POW2(n_spin*n_orb)*sizeof(fftw_complex), cudaHostRegisterDefault));
     if(cFRG_loop) {
@@ -113,6 +114,31 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 
     cpu_fft_algorithm_init( which_fft_greens, which_fft_simple, which_fft_red );
 }
+
+void fill_mi_remap_gpu() {
+    reshuffeled_orbff = (index_t*)calloc(n_orbff,sizeof(index_t));
+    reshuffeled_oto = (index_t*)calloc(n_orbff,sizeof(index_t));
+    for(index_t o = 0; o < model->n_orb; ++o) {
+        vector<index_t> oto( tu_data->bond_sizes[o] );
+        vector<index_t> mi( tu_data->bond_sizes[o] );
+        vector<index_t> idx( tu_data->bond_sizes[o] );
+
+        for(index_t b = 0; b < tu_data->bond_sizes[o]; ++b) {
+            assert(tu_ff[b+tu_data->bond_offsets[o]].ofrom == o);
+            oto[b] = tu_ff[b+tu_data->bond_offsets[o]].oto;
+            mi[b] = tu_data->ob_to_orbff[b + tu_data->n_bonds * o];
+            idx[b] = b;
+        }
+        std::sort(idx.begin(), idx.end(), [oto](index_t a, index_t b) {
+                    return oto[a] < oto[b];
+                });
+        for(index_t b = 0; b < tu_data->bond_sizes[o]; ++b) {
+            reshuffeled_orbff[b+tu_data->bond_offsets[o]] = mi[idx[b]];
+            reshuffeled_oto[b+tu_data->bond_offsets[o]] = oto[idx[b]];
+        }
+    }
+}
+
 
 vector<double> tu_loop_t::extra_timings( void ) {
     if (!extra_timings_enabled) return vector<double>();
@@ -328,6 +354,8 @@ tu_loop_t::~tu_loop_t() {
     }
     CUDA_CHECK(cudaHostUnregister(GF_fft_plus));
     CUDA_CHECK(cudaHostUnregister(GF_fft_conj_plus));
+    free(reshuffeled_orbff);
+    free(reshuffeled_oto);
 
     if(cFRG_loop) {
         CUDA_CHECK(cudaHostUnregister(cFRG_GF_fft_plus));
@@ -588,8 +616,9 @@ void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L) {
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
                                          (vnk[2]*vnkf[2])};
     ph_bubble_momenta_handler_fft(&cuda_descr, L, GF_fft_plus,GF_fft_conj_plus,
-                            n_orb, n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
-                            dims, mi_to_ofrom, mi_to_oto, mi_to_R);
+                            n_orb, n_bonds, tu_data->bond_sizes, tu_data->bond_offsets
+                            n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
+                            dims, resh_oto, resh_mi, mi_to_R);
 }
 
 void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
