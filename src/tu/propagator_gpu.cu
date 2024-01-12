@@ -105,8 +105,8 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
 
                 if(b1 < bond_sizes[o1] && b3 < bond_sizes[o3]) {
 
-                    index_t mo1 = ob_to_orbff[b1 + tu_data->n_bonds * o1];
-                    index_t mo3 = ob_to_orbff[b3 + tu_data->n_bonds * o3];
+                    index_t mo1 = ob_to_orbff[b1 + n_bonds * o1];
+                    index_t mo3 = ob_to_orbff[b3 + n_bonds * o3];
                     index_t oto1 = mi_to_oto[mo1];
                     index_t oto2 = mi_to_oto[mo3];
 
