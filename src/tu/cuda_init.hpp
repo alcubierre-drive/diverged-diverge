@@ -24,6 +24,7 @@ struct cuda_prop_descr_t {
     bool prop_has_gpu_setup = false;
     bool prop_memory_set_local = false;
     bool prop_memory_set_vertex = false;
+    bool prop_preload_full_gf = true;
     int _tasks_prop[32] = {0};
     int _off_prop[32] = {0};
     int _tasks_cpu = 0;
@@ -43,7 +44,7 @@ struct cuda_prop_descr_t {
     cuDoubleComplex* GF_fft[32];
     cuDoubleComplex* GF_fft_conj[32];
     cuDoubleComplex* buf_GG[32];
-    cuDoubleComplex* buf_res[32][3];
+    cuDoubleComplex* buf_res[32];
     cuDoubleComplex* fft_workspace[32];
 };
 
