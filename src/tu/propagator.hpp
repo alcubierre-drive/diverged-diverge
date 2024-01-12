@@ -93,10 +93,6 @@ public:
     index_t* mi_to_oto;
     index_t* mi_to_R;
 
-    index_t* reshuffeled_orbff;
-    index_t* reshuffeled_oto;
-    void fill_mi_remap_gpu();
-
     const index_t n_orbff;
     const index_t n_orb;
     const index_t n_bonds;
