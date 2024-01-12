@@ -320,8 +320,7 @@ tu_loop_t::~tu_loop_t() {
             cudaFree(cuda_descr.GF_fft[i]);
             cudaFree(cuda_descr.GF_fft_conj[i]);
             cudaFree(cuda_descr.buf_GG[i]);
-            cudaFree(cuda_descr.buf_res[i][0]);
-            cudaFree(cuda_descr.buf_res[i][1]);
+            cudaFree(cuda_descr.buf_res[i]);
             cudaFree(cuda_descr.fft_workspace[i]);
         }
     }
@@ -589,7 +588,8 @@ void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L) {
     ph_bubble_momenta_handler_fft(&cuda_descr, L, GF_fft_plus,GF_fft_conj_plus,
                             n_orb, n_bonds, tu_data->bond_sizes,
                             n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
-                            dims, tu_data->mi_to_oto, tu_data->ob_to_orbff, mi_to_R);
+                            dims,  mi_to_ofrom, 
+                            mi_to_oto, tu_data->ob_to_orbff, mi_to_R);
 }
 
 void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
@@ -602,8 +602,9 @@ void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
                                          (vnk[2]*vnkf[2])};
     pp_bubble_momenta_handler_fft(&cuda_descr, L, GF_fft_plus,GF_fft_conj_plus,
-                            n_orb, n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
-                            dims, mi_to_ofrom, mi_to_oto, mi_to_R);
+                            n_orb, n_bonds, tu_data->bond_sizes,
+                            n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
+                            dims, mi_to_ofrom, mi_to_oto, tu_data->ob_to_orbff, mi_to_R);
 }
 
 void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L) {
@@ -702,8 +703,7 @@ void tu_loop_t::allocate_GPU_memory() {
         cudaMalloc(&(cuda_descr.GF_fft[i]), prop_memsize[3]);
         cudaMalloc(&(cuda_descr.GF_fft_conj[i]), prop_memsize[4]);
         cudaMalloc(&(cuda_descr.buf_GG[i]), prop_memsize[5]);
-        cudaMalloc(&(cuda_descr.buf_res[i][0]), prop_memsize[6]);
-        cudaMalloc(&(cuda_descr.buf_res[i][1]), prop_memsize[7]);
+        cudaMalloc(&(cuda_descr.buf_res[i]), prop_memsize[6]);
         cudaMalloc(&(cuda_descr.fft_workspace[i]), prop_memsize[8]);
         cudaSetDevice(0);
     }

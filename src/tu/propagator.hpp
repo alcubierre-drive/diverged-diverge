@@ -26,14 +26,14 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
     const index_t n_orb, const index_t n_bonds, const index_t* const bond_sizes,
     const index_t n_orbff, const index_t n_spin, const index_t nktot,
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
-    const index_t* resh_oto, const index_t* resh_mi,
+    const index_t* ofrom, const index_t* oto, const index_t* mi,
     const index_t* const mi_to_Rin);
 void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp, complex128_t* const L,
     const complex128_t* const GF, const complex128_t* const GFconj,
-    const index_t n_orb,
+    const index_t n_orb,const index_t n_bonds, const index_t* const bond_sizes,
     const index_t n_orbff, const index_t n_spin, const index_t nktot,
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
-    const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
+    const index_t* ofrom, const index_t* oto, const index_t* mi,
     const index_t* const mi_to_Rin);
 
 void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* const L,

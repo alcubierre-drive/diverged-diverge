@@ -312,8 +312,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
             cudaFree(loop->cuda_descr.GF_fft[i]);
             cudaFree(loop->cuda_descr.GF_fft_conj[i]);
             cudaFree(loop->cuda_descr.buf_GG[i]);
-            cudaFree(loop->cuda_descr.buf_res[i][0]);
-            cudaFree(loop->cuda_descr.buf_res[i][1]);
+            cudaFree(loop->cuda_descr.buf_res[i]);
             cudaFree(loop->cuda_descr.fft_workspace[i]);
         }
     }
@@ -377,17 +376,17 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*loop->cuda_descr.worksize_fft[i]); // fft_workspace
         index_t all_propmem = 0;
         for (index_t mem = 0; mem < 8; ++mem) {
-            all_propmem += prop_memsize[mem]
+            all_propmem += prop_memsize[mem];
         }
 
         if(all_propmem > (index_t)(available_memory[i])) {
             mpi_vrb_printf("Fallback to shuffeling algorithm");
-            prop_memsize[3] = ensure_align(sizeof(cuDoubleComplex)*nktot); // GF_fft
-            prop_memsize[4] = ensure_align(sizeof(cuDoubleComplex)*nktot); // GF_fft_conj
+            prop_memsize[3] = ensure_align(sizeof(cuDoubleComplex)*nktot*2); // GF_fft
+            prop_memsize[4] = ensure_align(sizeof(cuDoubleComplex)*nktot*2); // GF_fft_conj
             cloop->prop_preload_full_gf = false;
             all_propmem = 0;
             for (index_t mem = 0; mem < 8; ++mem) {
-                all_propmem += prop_memsize[mem]
+                all_propmem += prop_memsize[mem];
             }
             if(all_propmem > (index_t)(available_memory[i])) {
                 mpi_wrn_printf("Unified Memory usage required - massively slows down code!");
