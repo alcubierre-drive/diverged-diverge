@@ -108,8 +108,8 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
 
                     index_t mo1 = resh_mi[b1 + bond_offsets[o1]];
                     index_t mo3 = resh_mi[b3 + bond_offsets[o3]];
-                    index_t oto1 = resh_obo[b1 + bond_offsets[o1]];
-                    index_t oto2 = resh_obo[b3 + bond_offsets[o3]];
+                    index_t oto1 = resh_oto[b1 + bond_offsets[o1]];
+                    index_t oto2 = resh_oto[b3 + bond_offsets[o3]];
 
 
                     const index_t off_orb1 = nktot*(o1+n_orb*(s1+n_spin

@@ -336,10 +336,10 @@ void sort_loopmaps(diverge_model_t* model) {
         idx[d] = d;
 
     std::sort(idx.begin(), idx.end(), [tu_data](index_t a, index_t b) {
-                     mo1a = tu_data->unique_mi_l[a];
-                     mo1b = tu_data->unique_mi_l[b];
-                     mo3a = tu_data->unique_mi_r[a];
-                     mo3b = tu_data->unique_mi_r[b];
+                     index_t mo1a = tu_data->unique_mi_l[a];
+                     index_t mo1b = tu_data->unique_mi_l[b];
+                     index_t mo3a = tu_data->unique_mi_r[a];
+                     index_t mo3b = tu_data->unique_mi_r[b];
 
                      if(tu_data->mi_to_ofrom[mo1a] != tu_data->mi_to_ofrom[mo1b]) {
                          return tu_data->mi_to_ofrom[mo1a] < tu_data->mi_to_ofrom[mo1b];
@@ -350,8 +350,7 @@ void sort_loopmaps(diverge_model_t* model) {
                      }else {
                          return tu_data->mi_to_oto[mo3a] < tu_data->mi_to_oto[mo3b];
                      }
-    };
-
+    });
 }
 
 void generate_reduced_loop_maps(diverge_model_t* model) {
