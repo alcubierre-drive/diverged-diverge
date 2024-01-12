@@ -139,7 +139,7 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
                         off_old1 = off_orb1;
                         off_old2 = off_orb2;
                     }
-
+                    CUDA_CHECK( cudaStreamSynchronize( down ) );
                     GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                                 dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
                                         cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
@@ -259,6 +259,7 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
                         off_old2 = off_orb2;
                     }
 
+                    CUDA_CHECK( cudaStreamSynchronize( down ) );
                     GF_prod_pp<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                                 dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
                                         cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
@@ -364,6 +365,7 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                     off_old1 = off_orb1;
                     off_old2 = off_orb2;
                 }
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
                 GF_prod_ph<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
                                     cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
@@ -371,7 +373,6 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
                 CUDA_CHECK( cudaStreamSynchronize( up ) );
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_INVERSE));
-                CUDA_CHECK( cudaStreamSynchronize( down ) );
 
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
@@ -471,15 +472,15 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                     off_old2 = off_orb2;
                 }
 
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
                 GF_prod_pp<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,up>>>(
                                     cp->buf_GG[dev],GF_fft+off_GF1,GF_fft+off_GF2,
                                     GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
                                     nkdev,cp->n_kblocks, cp->nk_per_thread);
                 CUDA_CHECK( cudaStreamSynchronize( up ) );
-
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_FORWARD));
-                CUDA_CHECK( cudaStreamSynchronize( down ) );
+
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
                                             cp->buf_res[dev], cp->buf_GG[dev],my_nk,c_to_f_q);
