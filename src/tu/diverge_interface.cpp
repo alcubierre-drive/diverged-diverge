@@ -5,7 +5,6 @@
 #include <cassert>
 #include <set>
 #include <map>
-#include <iostream>
 
 #include "../diverge_model_internals.h"
 #include "../misc/cmath_helpers.h"
@@ -376,13 +375,6 @@ void sort_loopmaps(diverge_model_t* model) {
     tu_data->lmap_off = uswoff;
     tu_data->lmap_l = uswmapl;
     tu_data->lmap_r = uswmapr;
-
-    for (index_t a=0; a<n_unique_p; ++a) {
-        index_t mo1 = tu_data->unique_mi_l[a];
-        index_t mo3 = tu_data->unique_mi_r[a];
-        std::cout << tu_data->mi_to_ofrom[mo1] << "    " << tu_data->mi_to_ofrom[mo3] << "    " <<
-                        tu_data->mi_to_oto[mo1] << "    " << tu_data->mi_to_oto[mo3] << std::endl;
-    }
 }
 
 void generate_reduced_loop_maps(diverge_model_t* model) {
