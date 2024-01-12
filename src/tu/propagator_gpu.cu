@@ -399,7 +399,6 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
     const index_t n_unique_pairs) {
     cuda_setup();
-    
     memset(L,0,POW4(n_spin)*POW2(n_orbff)*my_nk*sizeof(complex128_t));
 
     std::vector<std::thread> allthreads(tu_num_of_devices);
@@ -414,31 +413,27 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
 
             cudaStream_t up = tu_gpu_stream[dev];
             cudaStream_t down = tu_gpu_downstream[dev];
+            const index_t nkbyte = sizeof(cuDoubleComplex)*nktot;
 
-            cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
             index_t off_GF1 = 0;
             index_t off_GF2 = (n_spin*n_orb > 1) ? nktot : 0;
             const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
-            const index_t nkbyte = sizeof(cuDoubleComplex)*nktot;
             CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], (void*)cp->fft_workspace[dev]));
             CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));
-
             CUDA_CHECK(cudaMemcpy(nkdev,nkref, sizeof(index_t)*3,cudaMemcpyDefault));
             CUDA_CHECK(cudaMemcpy(mi_to_R,mi_to_Rin, sizeof(index_t)*n_orbff*3,cudaMemcpyDefault));
             CUDA_CHECK(cudaMemcpy(c_to_f_q,c2f_map,sizeof(index_t)*my_nk,cudaMemcpyDefault));
-            if(cp->prop_preload_full_gf){
+            if(cp->prop_preload_full_gf) {
                 CUDA_CHECK(cudaMemcpy(GF_fft,(cuDoubleComplex*)GF, _GF_size,cudaMemcpyDefault));
                 CUDA_CHECK(cudaMemcpy(GF_fft_conj,(cuDoubleComplex*)GFconj, _GF_size,cudaMemcpyDefault));
             }
             cudaDeviceSynchronize();
+
             index_t off_old1 = -1;
             index_t off_old2 = -1;
-
-
+            cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
-
                 index_t offmq = block+cp->_off_prop[dev];
-
                 const index_t s4 = offmq/(n_unique_pairs*n_spin*n_spin*n_spin);
                 offmq-=s4*(n_unique_pairs*n_spin*n_spin*n_spin);
 
@@ -484,6 +479,7 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                 CUDA_CHECK( cudaStreamSynchronize( up ) );
 
                 CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft[dev], loopfft, loopfft, CUFFT_FORWARD));
+                CUDA_CHECK( cudaStreamSynchronize( down ) );
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
                                             cp->buf_res[dev], cp->buf_GG[dev],my_nk,c_to_f_q);
