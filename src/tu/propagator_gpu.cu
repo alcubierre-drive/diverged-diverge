@@ -328,14 +328,14 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
             cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
                 index_t offmq = block +cp->_off_prop[dev];
-                const index_t s2 = offmq/(n_unique_pairs*n_spin*n_spin*n_spin);
-                offmq-=s2*(n_unique_pairs*n_spin*n_spin*n_spin);
+                const index_t s4 = offmq/(n_unique_pairs*n_spin*n_spin*n_spin);
+                offmq-=s4*(n_unique_pairs*n_spin*n_spin*n_spin);
 
-                const index_t s3 = offmq/(n_unique_pairs*n_spin*n_spin);
-                offmq-=s3*(n_unique_pairs*n_spin*n_spin);
+                const index_t s2 = offmq/(n_unique_pairs*n_spin*n_spin);
+                offmq-=s2*(n_unique_pairs*n_spin*n_spin);
 
-                const index_t s4 = offmq/(n_unique_pairs*n_spin);
-                offmq-=s4*(n_unique_pairs*n_spin);
+                const index_t s3 = offmq/(n_unique_pairs*n_spin);
+                offmq-=s3*(n_unique_pairs*n_spin);
 
                 const index_t s1 = offmq/(n_unique_pairs);
                 const index_t m = offmq - s1*(n_unique_pairs);
@@ -487,8 +487,8 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                 to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                              dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
                                             cp->buf_res[dev], cp->buf_GG[dev],my_nk,c_to_f_q);
-                const index_t loop_idx = mo1+n_orbff*(s1+s4*n_spin
-                                        +POW2(n_spin)*(mo3+n_orbff*(s3 + s2*n_spin)));
+                const index_t loop_idx = mo1+n_orbff*(s1+s2*n_spin
+                                        +POW2(n_spin)*(mo3+n_orbff*(s3 + s4*n_spin)));
                 cudaMemcpyAsync((cuDoubleComplex*)(L+loop_idx*my_nk),cp->buf_res[dev], my_nk*sizeof(cuDoubleComplex),
                                     cudaMemcpyDeviceToHost,down);
             }
