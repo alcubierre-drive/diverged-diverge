@@ -328,6 +328,32 @@ static void fill_unique_ff(diverge_model_t* model){
     }
 }
 
+void sort_loopmaps(diverge_model_t* model) {
+    tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
+    index_t n_unique_p = tu_data->unique_mi_l.size();
+    vector<index_t> idx( n_unique_p );
+    for (index_t d=0; d<n_unique_p; ++d)
+        idx[d] = d;
+
+    std::sort(idx.begin(), idx.end(), [tu_data](index_t a, index_t b) {
+                     mo1a = tu_data->unique_mi_l[a];
+                     mo1b = tu_data->unique_mi_l[b];
+                     mo3a = tu_data->unique_mi_r[a];
+                     mo3b = tu_data->unique_mi_r[b];
+
+                     if(tu_data->mi_to_ofrom[mo1a] != tu_data->mi_to_ofrom[mo1b]) {
+                         return tu_data->mi_to_ofrom[mo1a] < tu_data->mi_to_ofrom[mo1b];
+                     }else if(tu_data->mi_to_ofrom[mo3a] != tu_data->mi_to_ofrom[mo3b]) {
+                         return tu_data->mi_to_ofrom[mo3a] < tu_data->mi_to_ofrom[mo3b];
+                     }else if(tu_data->mi_to_oto[mo1a] != tu_data->mi_to_oto[mo1b]) {
+                         return tu_data->mi_to_oto[mo1a] < tu_data->mi_to_oto[mo1b];
+                     }else {
+                         return tu_data->mi_to_oto[mo3a] < tu_data->mi_to_oto[mo3b];
+                     }
+    };
+
+}
+
 void generate_reduced_loop_maps(diverge_model_t* model) {
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
 
@@ -396,6 +422,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     }
     tu_data->lmap_l.shrink_to_fit();
     tu_data->lmap_r.shrink_to_fit();
+    sort_loopmaps(model);
     mpi_vrb_printf("#unique orbff=%lu (with %lu unique ff from %li)\n",
                 tu_data->unique_mi_l.size(), tu_data->unique_ff_combi.size(), POW2(tu_data->n_orbff));
 }

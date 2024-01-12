@@ -98,9 +98,9 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
                 offmq-=s1*(POW2(n_orb*n_bonds));
 
                 const index_t o3 = (offmq/(n_orb*n_bonds*n_bonds));
-                offmq-=o3*(n_orb*n_bonds*n_bonds);
+                offmq -= o3*(n_orb*n_bonds*n_bonds);
                 const index_t o1 = offmq/(n_bonds*n_bonds);
-                offmq-=o1*(n_bonds*n_bonds);
+                offmq -= o1*(n_bonds*n_bonds);
                 const index_t b3 = (offmq/(n_bonds));
                 const index_t b1 = offmq - b3*n_bonds;
 
@@ -108,8 +108,8 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
 
                     index_t mo1 = resh_mi[b1 + bond_offsets[o1]];
                     index_t mo3 = resh_mi[b3 + bond_offsets[o3]];
-                    index_t oto1 = resh_mi[b1 + bond_offsets[o1]];
-                    index_t oto2 = resh_mi[b3 + bond_offsets[o3]];
+                    index_t oto1 = resh_obo[b1 + bond_offsets[o1]];
+                    index_t oto2 = resh_obo[b3 + bond_offsets[o3]];
 
 
                     const index_t off_orb1 = nktot*(o1+n_orb*(s1+n_spin
@@ -282,7 +282,7 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
             CUDA_CHECK(cudaMemcpy(c_to_f_q,c2f_map,sizeof(index_t)*my_nk,cudaMemcpyDefault));
             index_t off_old1 = -1;
             index_t off_old2 = -1;
-
+            index_t uploads = 0;
             cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
             for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
                 index_t offmq = block +cp->_off_prop[dev];
@@ -310,10 +310,12 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                 
 
                 if(off_old1 != off_orb1) {
+                    uploads+=1;
                     CUDA_CHECK(cudaMemcpyAsync(GF_fft,(cuDoubleComplex*)(GF+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
                     CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj,(cuDoubleComplex*)(GFconj+off_orb1), nkbyte,cudaMemcpyHostToDevice,up));
                 }
                 if(off_old2 != off_orb2 && n_spin*n_orb > 1) {
+                    uploads+=1;
                     CUDA_CHECK(cudaMemcpyAsync(GF_fft+off_GF,(cuDoubleComplex*)(GF+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
                     CUDA_CHECK(cudaMemcpyAsync(GF_fft_conj+off_GF,(cuDoubleComplex*)(GFconj+off_orb2), nkbyte,cudaMemcpyHostToDevice,up));
                 }
@@ -339,6 +341,7 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
 
             }
             cudaDeviceSynchronize();
+            std::cout << uploads << std::endl;
         },dev);
     }
     for (std::thread& t: allthreads) t.join();
