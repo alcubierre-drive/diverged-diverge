@@ -55,144 +55,140 @@ static inline index_t sub_mom(index_t k1, index_t k2, const index_t* nkd){
 void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* full_V,
                             const double * frq) const {
     (void)frq;
-    if(n_frq == 1) {
-        double* Rvec = (double*)calloc(3*model->n_tu_ff,sizeof(double));
-        double* kmesh = model->internals->kmesh;
-        fill_Rvec(model,Rvec);
-        const index_t full_size = POW4(n_spin*n_orb)*POW3(nk);
-        const tu_formfactor_t* tu_ff = model->tu_ff;
-        const index_t* bond_sizes = tu_data->bond_sizes;
-        const index_t* bond_offsets = tu_data->bond_offsets;
-        const index_t* ob_to_orbff = tu_data->ob_to_orbff;
-        const index_t n_bonds = tu_data->n_bonds;
+    double* Rvec = (double*)calloc(3*model->n_tu_ff,sizeof(double));
+    double* kmesh = model->internals->kmesh;
+    fill_Rvec(model,Rvec);
+    const index_t full_size = POW4(n_spin*n_orb)*POW3(nk);
+    const tu_formfactor_t* tu_ff = model->tu_ff;
+    const index_t* bond_sizes = tu_data->bond_sizes;
+    const index_t* bond_offsets = tu_data->bond_offsets;
+    const index_t* ob_to_orbff = tu_data->ob_to_orbff;
+    const index_t n_bonds = tu_data->n_bonds;
 
-        const index_t* nkd = model->nk;
-        mfill(full_V, full_size, 0.);
-        complex128_t* buffer;
-        buffer = (complex128_t*)calloc(nk*POW2(n_orbff*POW2(n_spin)),sizeof(complex128_t));
+    const index_t* nkd = model->nk;
+    mfill(full_V, full_size, 0.);
+    complex128_t* buffer;
+    buffer = (complex128_t*)calloc(nk*POW2(n_orbff*POW2(n_spin)),sizeof(complex128_t));
 
-        index_t no = n_orb*n_spin;
-        // unproject P
-        if(P_flow) {
-            reco<'P'>(buffer);
-            #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
-            for(index_t s1 = 0; s1<n_spin;++s1)
-            for(index_t s2 = 0; s2<n_spin;++s2)
-            for(index_t s3 = 0; s3<n_spin;++s3)
-            for(index_t s4 = 0; s4<n_spin;++s4)
-            for(index_t o1 = 0; o1<n_orb; ++o1)
-            for(index_t o3 = 0; o3<n_orb; ++o3)
-            for(index_t k2 = 0; k2<nk;++k2)
-            for(index_t k1 = 0; k1<nk;++k1)
+    index_t no = n_orb*n_spin;
+    // unproject P
+    if(P_flow) {
+        reco<'P'>(buffer);
+        #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
+        for(index_t s1 = 0; s1<n_spin;++s1)
+        for(index_t s2 = 0; s2<n_spin;++s2)
+        for(index_t s3 = 0; s3<n_spin;++s3)
+        for(index_t s4 = 0; s4<n_spin;++s4)
+        for(index_t o1 = 0; o1<n_orb; ++o1)
+        for(index_t o3 = 0; o3<n_orb; ++o3)
+        for(index_t k2 = 0; k2<nk;++k2)
+        for(index_t k1 = 0; k1<nk;++k1)
+        {
+            index_t q_P = add_mom(k1,k2,nkd);
+
+            for(index_t b1 = 0; b1<bond_sizes[o1];++b1)
+            for(index_t b3 = 0; b3<bond_sizes[o3];++b3)
             {
-                index_t q_P = add_mom(k1,k2,nkd);
-
-                for(index_t b1 = 0; b1<bond_sizes[o1];++b1)
-                for(index_t b3 = 0; b3<bond_sizes[o3];++b3)
+                const index_t so1 = tu_ff[bond_offsets[o1]+b1].ofrom+n_orb*s1;
+                const index_t so2 = tu_ff[bond_offsets[o1]+b1].oto+n_orb*s2;
+                const index_t so3 = tu_ff[bond_offsets[o3]+b3].ofrom+n_orb*s3;
+                const index_t so4 = tu_ff[bond_offsets[o3]+b3].oto+n_orb*s4;
+                for(index_t k3 = 0; k3<nk;++k3)
                 {
-                    const index_t so1 = tu_ff[bond_offsets[o1]+b1].ofrom+n_orb*s1;
-                    const index_t so2 = tu_ff[bond_offsets[o1]+b1].oto+n_orb*s2;
-                    const index_t so3 = tu_ff[bond_offsets[o3]+b3].ofrom+n_orb*s3;
-                    const index_t so4 = tu_ff[bond_offsets[o3]+b3].oto+n_orb*s4;
-                    for(index_t k3 = 0; k3<nk;++k3)
-                    {
-                        index_t idxV = IDX7(k1,k2,k3,so1,so2,so3,so4, nk,nk,no,no,no,no);
-                        index_t idxP =  q_P+nk*(ob_to_orbff[b1+n_bonds*o1]
-                                    +n_orbff*(s1+n_spin*(s2+n_spin*(
-                                ob_to_orbff[b3+n_bonds*o3]+n_orbff*(s3+n_spin*
-                                    s4)))));
-
-                        full_V[idxV] += std::conj(ff(kmesh+3*k1,Rvec+3*(bond_offsets[o1]+b1)))*
-                                        ff(kmesh+3*k3,Rvec+3*(bond_offsets[o3]+b3))*
-                                            buffer[idxP];
-                    }
-                }
-            }
-        }
-        // unproject C
-        if(C_flow) {
-            reco<'C'>(buffer);
-            #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
-            for(index_t s1 = 0; s1<n_spin;++s1)
-            for(index_t s2 = 0; s2<n_spin;++s2)
-            for(index_t s3 = 0; s3<n_spin;++s3)
-            for(index_t s4 = 0; s4<n_spin;++s4)
-            for(index_t o1 = 0; o1 < n_orb; ++o1)
-            for(index_t o3 = 0; o3 < n_orb; ++o3)
-            for(index_t k2 = 0; k2<nk;++k2)
-            for(index_t k1 = 0; k1<nk;++k1)
-            {
-                for(index_t b1 = 0; b1<bond_sizes[o1];++b1)
-                for(index_t b3 = 0; b3<bond_sizes[o3];++b3)
-                {
-                    const index_t so1 = o1+n_orb*s1;
-                    const index_t so2 = tu_ff[bond_offsets[o3]+b3].oto+n_orb*s2;
-                    const index_t so3 = o3+n_orb*s3;
-                    const index_t so4 = tu_ff[bond_offsets[o1]+b1].oto+n_orb*s4;
-
-                    for(index_t k3 = 0; k3<nk;++k3)
-                    {
-                        index_t idxV = IDX7(k1,k2,k3,so1,so2,so3,so4, nk,nk,no,no,no,no);
-                        index_t idxC = sub_mom(k3,k2,nkd)
-                            +nk*(ob_to_orbff[b1+n_bonds*o1]
-                                    +n_orbff*(s1+n_spin*(s2+n_spin*(
-                                ob_to_orbff[b3+n_bonds*o3]+n_orbff*(s3+n_spin*
-                                    s4)))));
-
-                        full_V[idxV] += std::conj(ff(kmesh+3*k1,Rvec+3*(bond_offsets[o1]+b1)))*
-                                            ff(kmesh+3*k3,Rvec+3*(bond_offsets[o3]+b3))*
-                                            buffer[idxC];
-
-                    }
-                }
-            }
-        }
-        // unproject D
-        if(D_flow) {
-            reco<'D'>(buffer);
-            #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
-            for(index_t s1 = 0; s1<n_spin;++s1)
-            for(index_t s2 = 0; s2<n_spin;++s2)
-            for(index_t s3 = 0; s3<n_spin;++s3)
-            for(index_t s4 = 0; s4<n_spin;++s4)
-            for(index_t o1 = 0; o1 < n_orb; ++o1)
-            for(index_t o4 = 0; o4 < n_orb; ++o4)
-            for(index_t k2 = 0; k2<nk;++k2)
-            for(index_t k1 = 0; k1<nk;++k1)
-            {
-                for(index_t b1 = 0; b1<bond_sizes[o1];++b1)
-                for(index_t b4 = 0; b4<bond_sizes[o4];++b4)
-                {
-                    const index_t so1 = o1+n_orb*s1;
-                    const index_t so2 = tu_ff[bond_offsets[o4]+b4].oto+n_orb*s2;
-                    const index_t so3 = tu_ff[bond_offsets[o1]+b1].oto+n_orb*s3;
-                    const index_t so4 = o4+n_orb*s4;
-
-                    for(index_t k3 = 0; k3<nk;++k3)
-                    {
-                        index_t idxV = IDX7(k1,k2,k3,so1,so2,so3,so4, nk,nk,no,no,no,no);
-                        index_t idxD = sub_mom(k1,k3,nkd)
-                            +nk*(ob_to_orbff[b1+n_bonds*o1]
+                    index_t idxV = IDX7(k1,k2,k3,so1,so2,so3,so4, nk,nk,no,no,no,no);
+                    index_t idxP =  q_P+nk*(ob_to_orbff[b1+n_bonds*o1]
                                 +n_orbff*(s1+n_spin*(s2+n_spin*(
-                                ob_to_orbff[b4+n_bonds*o4]+n_orbff*(s3+n_spin*
-                                    (s4))))));
+                            ob_to_orbff[b3+n_bonds*o3]+n_orbff*(s3+n_spin*
+                                s4)))));
 
-                        double uidx[3] = {kmesh[3*k1]+kmesh[3*k2]-kmesh[3*k3],
-                                        kmesh[3*k1+1]+kmesh[3*k2+1]-kmesh[3*k3+1],
-                                        kmesh[3*k1+2]+kmesh[3*k2+2]-kmesh[3*k3+2]};
-
-                        full_V[idxV] +=  std::conj(ff(kmesh+3*k1,Rvec+3*(bond_offsets[o1]+b1)))*
-                                            ff(uidx,Rvec+3*(bond_offsets[o4]+b4))*
-                                            buffer[idxD];
-                    }
+                    full_V[idxV] += std::conj(ff(kmesh+3*k1,Rvec+3*(bond_offsets[o1]+b1)))*
+                                    ff(kmesh+3*k3,Rvec+3*(bond_offsets[o3]+b3))*
+                                        buffer[idxP];
                 }
             }
         }
-        free(Rvec);
-        free(buffer);
-    }else{
-        mpi_err_printf("not implemented\n");
     }
+    // unproject C
+    if(C_flow) {
+        reco<'C'>(buffer);
+        #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
+        for(index_t s1 = 0; s1<n_spin;++s1)
+        for(index_t s2 = 0; s2<n_spin;++s2)
+        for(index_t s3 = 0; s3<n_spin;++s3)
+        for(index_t s4 = 0; s4<n_spin;++s4)
+        for(index_t o1 = 0; o1 < n_orb; ++o1)
+        for(index_t o3 = 0; o3 < n_orb; ++o3)
+        for(index_t k2 = 0; k2<nk;++k2)
+        for(index_t k1 = 0; k1<nk;++k1)
+        {
+            for(index_t b1 = 0; b1<bond_sizes[o1];++b1)
+            for(index_t b3 = 0; b3<bond_sizes[o3];++b3)
+            {
+                const index_t so1 = o1+n_orb*s1;
+                const index_t so2 = tu_ff[bond_offsets[o3]+b3].oto+n_orb*s2;
+                const index_t so3 = o3+n_orb*s3;
+                const index_t so4 = tu_ff[bond_offsets[o1]+b1].oto+n_orb*s4;
+
+                for(index_t k3 = 0; k3<nk;++k3)
+                {
+                    index_t idxV = IDX7(k1,k2,k3,so1,so2,so3,so4, nk,nk,no,no,no,no);
+                    index_t idxC = sub_mom(k3,k2,nkd)
+                        +nk*(ob_to_orbff[b1+n_bonds*o1]
+                                +n_orbff*(s1+n_spin*(s2+n_spin*(
+                            ob_to_orbff[b3+n_bonds*o3]+n_orbff*(s3+n_spin*
+                                s4)))));
+
+                    full_V[idxV] += std::conj(ff(kmesh+3*k1,Rvec+3*(bond_offsets[o1]+b1)))*
+                                        ff(kmesh+3*k3,Rvec+3*(bond_offsets[o3]+b3))*
+                                        buffer[idxC];
+
+                }
+            }
+        }
+    }
+    // unproject D
+    if(D_flow) {
+        reco<'D'>(buffer);
+        #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
+        for(index_t s1 = 0; s1<n_spin;++s1)
+        for(index_t s2 = 0; s2<n_spin;++s2)
+        for(index_t s3 = 0; s3<n_spin;++s3)
+        for(index_t s4 = 0; s4<n_spin;++s4)
+        for(index_t o1 = 0; o1 < n_orb; ++o1)
+        for(index_t o4 = 0; o4 < n_orb; ++o4)
+        for(index_t k2 = 0; k2<nk;++k2)
+        for(index_t k1 = 0; k1<nk;++k1)
+        {
+            for(index_t b1 = 0; b1<bond_sizes[o1];++b1)
+            for(index_t b4 = 0; b4<bond_sizes[o4];++b4)
+            {
+                const index_t so1 = o1+n_orb*s1;
+                const index_t so2 = tu_ff[bond_offsets[o4]+b4].oto+n_orb*s2;
+                const index_t so3 = tu_ff[bond_offsets[o1]+b1].oto+n_orb*s3;
+                const index_t so4 = o4+n_orb*s4;
+
+                for(index_t k3 = 0; k3<nk;++k3)
+                {
+                    index_t idxV = IDX7(k1,k2,k3,so1,so2,so3,so4, nk,nk,no,no,no,no);
+                    index_t idxD = sub_mom(k1,k3,nkd)
+                        +nk*(ob_to_orbff[b1+n_bonds*o1]
+                            +n_orbff*(s1+n_spin*(s2+n_spin*(
+                            ob_to_orbff[b4+n_bonds*o4]+n_orbff*(s3+n_spin*
+                                (s4))))));
+
+                    double uidx[3] = {kmesh[3*k1]+kmesh[3*k2]-kmesh[3*k3],
+                                    kmesh[3*k1+1]+kmesh[3*k2+1]-kmesh[3*k3+1],
+                                    kmesh[3*k1+2]+kmesh[3*k2+2]-kmesh[3*k3+2]};
+
+                    full_V[idxV] +=  std::conj(ff(kmesh+3*k1,Rvec+3*(bond_offsets[o1]+b1)))*
+                                        ff(uidx,Rvec+3*(bond_offsets[o4]+b4))*
+                                        buffer[idxD];
+                }
+            }
+        }
+    }
+    free(Rvec);
+    free(buffer);
 }
 
 void Vertex::init_U_from_fullV(diverge_model_t* model, Projection* proj) {

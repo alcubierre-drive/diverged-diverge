@@ -11,7 +11,6 @@ selfEnergy::selfEnergy(Vertex* vertex)
     n_orb{vertex->n_orb},
     n_spin{vertex->n_spin},
     ns{POW2(n_spin)},
-    n_frq{vertex->n_frq},
     n_orbff{vertex->n_orbff},
     n_bonds{tu_data->n_bonds},
     nk{vertex->nk},
@@ -34,7 +33,7 @@ selfEnergy::selfEnergy(Vertex* vertex)
 {
     reco_helper = vertex->product_helper;
     interpol_helper = vertex->bubble_helper;
-    ff_helper = (complex128_t*)calloc(POW2(n_orb*n_spin)*nktot*n_frq,sizeof(complex128_t));
+    ff_helper = (complex128_t*)calloc(POW2(n_orb*n_spin)*nktot,sizeof(complex128_t));
     if (nk!=1) {
         greensfkt_helper = (complex128_t*)calloc(POW2(n_spin*n_orb)*nktot,sizeof(complex128_t));
         generate_fftw_plans();
@@ -96,13 +95,13 @@ void selfEnergy::generate_fftw_plans() {
 
 
     ifft_fullself_ip = fftw_plan_many_dft(3, dims,
-        POW2(n_spin*n_orb)*n_frq,
+        POW2(n_spin*n_orb),
         reinterpret_cast<fftw_complex*>(ff_helper),
         dims,1,nk,
         reinterpret_cast<fftw_complex*>(ff_helper),
         dims,1,nk,FFTW_BACKWARD, FFTW_ESTIMATE);
     fft_fullself_ip = fftw_plan_many_dft(3, dims,
-        POW2(n_spin*n_orb)*n_frq,
+        POW2(n_spin*n_orb),
         reinterpret_cast<fftw_complex*>(ff_helper),
         dims,1,nk,
         reinterpret_cast<fftw_complex*>(ff_helper),

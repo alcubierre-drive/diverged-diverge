@@ -85,7 +85,7 @@ static inline int sort_recv( const void* pa, const void* pb ) {
 
 tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         index_t chunksize_max, const index_t* c2fmap, index_t my_nk,
-        index_t n_spin, index_t n_orb, index_t n_orbff, index_t n_frq,
+        index_t n_spin, index_t n_orb, index_t n_orbff,
         const index_t* unique_mi_l, index_t unique_mi_l_size,
         const index_t* unique_mi_r, const index_t* mi_to_ofrom,
         const index_t* mi_to_oto, const index_t* mi_to_R,
@@ -113,7 +113,6 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     t->n_spin = n_spin;
     t->n_orb =  n_orb;
     t->n_orbff =  n_orbff;
-    t->n_frq =  n_frq;
     t->unique_mi_l =  unique_mi_l;
     t->unique_mi_l_size =  unique_mi_l_size;
     t->unique_mi_r =  unique_mi_r;
@@ -505,7 +504,7 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
     tick = tock;
     if (rescale) {
         if (!simple) tu_loop_reconstruct_from_reduced( t->tu_loop_handle, loop );
-        scale_loop(loop, prefac, t->my_nk*POW4(t->n_spin)*POW2(t->n_orbff)*t->n_frq);
+        scale_loop(loop, prefac, t->my_nk*POW4(t->n_spin)*POW2(t->n_orbff));
     }
     free(stack);
     free(tasks);
@@ -642,7 +641,7 @@ void tu_mpi_gf_destroy( tu_mpi_gf_t* t ) {
 
 tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         index_t chunksize_max, const index_t* c2fmap, index_t my_nk,
-        index_t n_spin, index_t n_orb, index_t n_orbff, index_t n_frq,
+        index_t n_spin, index_t n_orb, index_t n_orbff,
         const index_t* unique_mi_l, index_t unique_mi_l_size,
         const index_t* unique_mi_r, const index_t* mi_to_ofrom,
         const index_t* mi_to_oto, const index_t* mi_to_R,
@@ -656,7 +655,6 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     (void)n_spin;
     (void)n_orb;
     (void)n_orbff;
-    (void)n_frq;
     (void)unique_mi_l;
     (void)unique_mi_l_size;
     (void)unique_mi_r;

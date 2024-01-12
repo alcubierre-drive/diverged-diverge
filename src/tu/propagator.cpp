@@ -40,7 +40,6 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     nktot{nk*nkf},
     my_nk{tu_data->my_nk},
     my_nk_off{tu_data->my_nk_off},
-    n_frq{tu_data->n_frq},
     SU2{model->SU2 > 0},
     cFRG_loop{model->gproj!=NULL},
     which_fft_simple{tu_data->which_fft_simple},
@@ -68,7 +67,7 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     extra_timings_enabled = tu_data->propagator_extra_cpu_timings;
     extra_tvec = new vector<double>( 11, 0.0 );
     index_t task_spin = POW4(n_spin);
-    index_t tasks_dist = tu_data->use_reduced_loop ? (index_t)tu_data->unique_mi_l.size() : POW2(n_orbff);
+    index_t tasks_dist = tu_data->use_reduced_loop ? (index_t)tu_data->unique_mi_l.size() : POW2(n_orb*n_bonds);
     index_t nkff[3];
     for (int i=0; i<3; ++i) nkff[i] = model->nk[i] * model->nkf[i];
     cuda_setup_prop_descr(&cuda_descr,task_spin,tasks_dist, nkff,tu_data->offload_cpu);
@@ -110,9 +109,9 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
         for(index_t i = 0; i < my_nk;++i)
             c2fmap[i] = kidxc2f(i+my_nk_off,model->nk,model->nkf);
     }
-
     cpu_fft_algorithm_init( which_fft_greens, which_fft_simple, which_fft_red );
 }
+
 
 vector<double> tu_loop_t::extra_timings( void ) {
     if (!extra_timings_enabled) return vector<double>();
@@ -246,7 +245,7 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
     for (int i=0; i<2; ++i) switch (simple_red_algos[i]) {
         case tu_fft_algorithm_mpi_new:
             if (!mpi_loop) mpi_loop = tu_mpi_loop_init( model->nk, model->nkf,
-                    chunksize_max, c2fmap.data(), my_nk, n_spin, n_orb, n_orbff, n_frq,
+                    chunksize_max, c2fmap.data(), my_nk, n_spin, n_orb, n_orbff,
                     tu_data->unique_mi_l.data(), tu_data->unique_mi_l.size(),
                     tu_data->unique_mi_r.data(), mi_to_ofrom, mi_to_oto, mi_to_R,
                     &GF_fft_plus, &GF_fft_conj_plus, this, model );
@@ -320,12 +319,9 @@ tu_loop_t::~tu_loop_t() {
             cudaFree(cuda_descr.nkdev[i]);
             cudaFree(cuda_descr.GF_fft[i]);
             cudaFree(cuda_descr.GF_fft_conj[i]);
-            cudaFree(cuda_descr.buf_GG[i][0]);
-            cudaFree(cuda_descr.buf_GG[i][1]);
-            cudaFree(cuda_descr.buf_res[i][0]);
-            cudaFree(cuda_descr.buf_res[i][1]);
-            cudaFree(cuda_descr.fft_workspace[i][0]);
-            cudaFree(cuda_descr.fft_workspace[i][1]);
+            cudaFree(cuda_descr.buf_GG[i]);
+            cudaFree(cuda_descr.buf_res[i]);
+            cudaFree(cuda_descr.fft_workspace[i]);
         }
     }
     CUDA_CHECK(cudaHostUnregister(GF_fft_plus));
@@ -590,8 +586,10 @@ void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L) {
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
                                          (vnk[2]*vnkf[2])};
     ph_bubble_momenta_handler_fft(&cuda_descr, L, GF_fft_plus,GF_fft_conj_plus,
-                            n_orb, n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
-                            dims, mi_to_ofrom, mi_to_oto, mi_to_R);
+                            n_orb, n_bonds, tu_data->bond_sizes,
+                            n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
+                            dims,  mi_to_ofrom, 
+                            mi_to_oto, mi_to_R);
 }
 
 void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
@@ -604,7 +602,8 @@ void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
                                          (vnk[2]*vnkf[2])};
     pp_bubble_momenta_handler_fft(&cuda_descr, L, GF_fft_plus,GF_fft_conj_plus,
-                            n_orb, n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
+                            n_orb, n_bonds, tu_data->bond_sizes,
+                            n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
                             dims, mi_to_ofrom, mi_to_oto, mi_to_R);
 }
 
@@ -653,7 +652,7 @@ void tu_loop_t::merge_gpu_cpu_loop_cfrg_step2(complex128_t* L, complex128_t* tmp
     Map<MatXcd> tmpmap(tmpgpu,my_nk,blocksize);
     Lmap -= tmpmap.transpose();
     if(tu_data->use_reduced_loop) reconstruct_from_reduced(L);
-    scale_loop(L, -1./(2.*M_PI), my_nk*POW4(n_spin)*POW2(n_orbff)*n_frq);
+    scale_loop(L, -1./(2.*M_PI), my_nk*POW4(n_spin)*POW2(n_orbff));
 }
 
 void tu_loop_t::merge_gpu_cpu_loop(complex128_t* L, complex128_t* tmpgpu) const {
@@ -662,7 +661,7 @@ void tu_loop_t::merge_gpu_cpu_loop(complex128_t* L, complex128_t* tmpgpu) const 
     Map<MatXcd> tmpmap(tmpgpu,my_nk,blocksize);
     Lmap += tmpmap.transpose();
     if(tu_data->use_reduced_loop) reconstruct_from_reduced(L);
-    scale_loop(L, -1./(2.*M_PI), my_nk*POW4(n_spin)*POW2(n_orbff)*n_frq);
+    scale_loop(L, -1./(2.*M_PI), my_nk*POW4(n_spin)*POW2(n_orbff));
 }
 
 #ifndef CUDA_MEM_ALIGN
@@ -687,29 +686,26 @@ void tu_loop_t::allocate_GPU_memory() {
     const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
 
     for(int i = 0; i<tu_num_of_devices;++i) {
+        cudaSetDevice(i);
         prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R
         prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk); // c_to_f_q
         prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev
         prop_memsize[3] = ensure_align(_GF_size); // GF_fft
         prop_memsize[4] = ensure_align(_GF_size); // GF_fft_conj
-        prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 0
-        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 1
-        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
-        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 1
-        prop_memsize[9] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 0
-        prop_memsize[10] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 1
+        prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG
+        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
+        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 1
+        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 0
 
         cudaMalloc(&(cuda_descr.mi_to_R[i]), prop_memsize[0]);
         cudaMalloc(&(cuda_descr.c_to_f_q[i]), prop_memsize[1]);
         cudaMalloc(&(cuda_descr.nkdev[i]), prop_memsize[2]);
         cudaMalloc(&(cuda_descr.GF_fft[i]), prop_memsize[3]);
         cudaMalloc(&(cuda_descr.GF_fft_conj[i]), prop_memsize[4]);
-        cudaMalloc(&(cuda_descr.buf_GG[i][0]), prop_memsize[5]);
-        cudaMalloc(&(cuda_descr.buf_GG[i][1]), prop_memsize[6]);
-        cudaMalloc(&(cuda_descr.buf_res[i][0]), prop_memsize[7]);
-        cudaMalloc(&(cuda_descr.buf_res[i][1]), prop_memsize[8]);
-        cudaMalloc(&(cuda_descr.fft_workspace[i][0]), prop_memsize[9]);
-        cudaMalloc(&(cuda_descr.fft_workspace[i][1]), prop_memsize[10]);
+        cudaMalloc(&(cuda_descr.buf_GG[i]), prop_memsize[5]);
+        cudaMalloc(&(cuda_descr.buf_res[i]), prop_memsize[6]);
+        cudaMalloc(&(cuda_descr.fft_workspace[i]), prop_memsize[8]);
+        cudaSetDevice(0);
     }
 }
 

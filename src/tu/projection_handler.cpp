@@ -4,11 +4,10 @@
 #include "cuda_init.hpp"
 
 inline void add_to_all_frq(complex128_t* const to, const complex128_t* const inc,
-                           index_t nb, index_t rest) {
-    #pragma omp parallel for collapse(2) schedule(static) num_threads(diverge_omp_num_threads())
-    for(index_t i = 0; i < nb; ++i)
+                           index_t rest) {
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t r = 0; r < rest; ++r) {
-        to[r+rest*i] += inc[r];
+        to[r] += inc[r];
     }
 }
 
@@ -58,7 +57,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
                 vertex->n_spin,vertex->my_nk,
                 proj->get_nr()));
 
-            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                 vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         if(vertex->D_flow) {
@@ -72,7 +71,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
                 vertex->n_spin,vertex->my_nk,
                 proj->get_nr()));
 
-            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         timings(time_cpyfill,time_reco,time_handler_ft,time_add);
@@ -89,7 +88,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
             vertex->n_spin,vertex->nk,vertex->my_nk,
             proj->get_nr()));
 
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->D_flow) {
@@ -101,7 +100,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
             proj->get_my_prefac_proj(), vertex->n_orbff,
             vertex->n_spin,vertex->nk, vertex->my_nk,
             proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
             vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
@@ -129,7 +128,7 @@ void D_projection(complex128_t* proj_vertex,
                     proj->get_my_prefac_proj(), vertex->n_orbff,
                     vertex->n_spin,vertex->my_nk,
                     proj->get_nr()));
-            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         if(vertex->P_flow) {
@@ -141,7 +140,7 @@ void D_projection(complex128_t* proj_vertex,
                     proj->get_my_prefac_proj(), vertex->n_orbff,
                     vertex->n_spin,vertex->my_nk,
                     proj->get_nr()));
-             time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+             time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         timings(time_cpyfill,time_reco,time_handler_ft,time_add);
@@ -157,7 +156,7 @@ void D_projection(complex128_t* proj_vertex,
                 proj->get_my_prefac_proj(), vertex->n_orbff,
                 vertex->n_spin,vertex->nk,vertex->my_nk,
                 proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->P_flow) {
@@ -169,7 +168,7 @@ void D_projection(complex128_t* proj_vertex,
                 proj->get_my_prefac_proj(), vertex->n_orbff,
                 vertex->n_spin,vertex->nk,vertex->my_nk,
                 proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
@@ -198,7 +197,7 @@ void C_projection(complex128_t* proj_vertex,
                     proj->get_my_prefac_proj(), vertex->n_orbff,
                     vertex->n_spin,vertex->my_nk,
                     proj->get_nr()));
-            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         if(vertex->D_flow) {
@@ -210,7 +209,7 @@ void C_projection(complex128_t* proj_vertex,
                         proj->get_my_prefac_proj(), vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk,
                         proj->get_nr()));
-            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+            time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         timings(time_cpyfill,time_reco,time_handler_ft,time_add);
@@ -227,7 +226,7 @@ void C_projection(complex128_t* proj_vertex,
                 proj->get_my_prefac_proj(), vertex->n_orbff,
                 vertex->n_spin,vertex->nk,vertex->my_nk,
                 proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->P_flow) {
@@ -239,7 +238,7 @@ void C_projection(complex128_t* proj_vertex,
                 proj->get_my_prefac_proj(), vertex->n_orbff,
                 vertex->n_spin,vertex->nk, vertex->my_nk,
                 proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
@@ -264,7 +263,7 @@ void P_projection_no_GPU(complex128_t* proj_vertex,
             vertex->n_spin,vertex->nk,vertex->my_nk,
             proj->get_nr()));
 
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->D_flow) {
@@ -276,7 +275,7 @@ void P_projection_no_GPU(complex128_t* proj_vertex,
             proj->get_my_prefac_proj(), vertex->n_orbff,
             vertex->n_spin,vertex->nk, vertex->my_nk,
             proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
             vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
@@ -301,7 +300,7 @@ void D_projection_no_GPU(complex128_t* proj_vertex,
                 proj->get_my_prefac_proj(), vertex->n_orbff,
                 vertex->n_spin,vertex->nk,vertex->my_nk,
                 proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->P_flow) {
@@ -313,7 +312,7 @@ void D_projection_no_GPU(complex128_t* proj_vertex,
                 proj->get_my_prefac_proj(), vertex->n_orbff,
                 vertex->n_spin,vertex->nk,vertex->my_nk,
                 proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
@@ -338,7 +337,7 @@ void C_projection_no_GPU(complex128_t* proj_vertex,
                 proj->get_my_prefac_proj(), vertex->n_orbff,
                 vertex->n_spin,vertex->nk,vertex->my_nk,
                 proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->P_flow) {
@@ -350,7 +349,7 @@ void C_projection_no_GPU(complex128_t* proj_vertex,
                 proj->get_my_prefac_proj(), vertex->n_orbff,
                 vertex->n_spin,vertex->nk, vertex->my_nk,
                 proj->get_nr()));
-        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,vertex->n_frq,
+        time_add+=elapsed_time(add_to_all_frq(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);

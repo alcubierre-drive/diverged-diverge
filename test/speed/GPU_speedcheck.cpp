@@ -17,7 +17,7 @@
 #ifdef USE_CUDA
 TEST_CASE("loop speed", "[.][loopspeed]") {
     mpi_loglevel_set(5);
-    diverge_model_t* mom = gen_square_lat_hub(30, 30,1,1,1,-0.1, 3, -0.4,45, 45);
+    diverge_model_t* mom = gen_square_lat_hub(30, 30,2,2,1,-0.1, 3, -0.4,45,45);
     diverge_model_internals_tu(mom, 2.1);
     tu_loop_t PropMom (mom);
 
@@ -26,13 +26,18 @@ TEST_CASE("loop speed", "[.][loopspeed]") {
 
     PropMom.GF_zero_T(I128*0.1);
     double tick = diverge_mpi_wtime();
-    for(index_t i = 0; i < 3; ++i){
+    for(index_t i = 0; i < 2; ++i){
         PropMom.S_ph_loop_static_red_gpu(lm);
-        PropMom.S_pp_loop_static_red_gpu(lm);
     }
     double tock = diverge_mpi_wtime();
-    mpi_log_printf("time 3 times ph and pp loop reduced %4.4f \n", tock -tick);
-
+    mpi_log_printf("time 2 times ph loop reduced %4.4f \n", tock -tick);
+    tick = diverge_mpi_wtime();
+    for(index_t i = 0; i < 2; ++i){
+        PropMom.S_pp_loop_static_red_gpu(lm);
+    }
+    tock = diverge_mpi_wtime();
+    mpi_log_printf("time 2 times pp loop reduced %4.4f \n", tock -tick);
+    
     diverge_model_free(mom);
     free(lm);
 }

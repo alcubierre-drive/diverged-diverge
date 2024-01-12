@@ -17,7 +17,6 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
         diverge_model_internals_common(model);
     }
     strcpy(model->internals->backend, "tu");
-    index_t n_frq = 1;
     tu_data_t* info = new tu_data_t;
     info->nk = model->nk[0] * model->nk[1] * model->nk[2];
     info->nkf = model->nkf[0] * model->nkf[1] * model->nkf[2];
@@ -35,8 +34,6 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
     info->propagator_extra_cpu_timings = false;
     model->internals->tu_data = (void*) info;
     model->internals->tu_data_destructor = tu_data_destructor;
-    info->n_frq = n_frq;
-    init_bos_freqs(info,n_frq);
     init_ff_struct(max_dist, model);
     generate_reduced_loop_maps(model);
     init_symmetries(model);
@@ -59,16 +56,6 @@ void tu_data_destructor(void* tu_da) {
     delete tu_data;
 }
 
-void init_bos_freqs(tu_data_t* tu_data, index_t n_frq){
-    const double first_freq = 1e-2;
-    const double base_increment = 1.2;
-    tu_data->bosonic_freq.resize(n_frq);
-    tu_data->bosonic_freq[0] = 0.;
-    for(int n = 1; n<n_frq; n++){
-        tu_data->bosonic_freq[n] = first_freq*(cmath_pow(base_increment,n)-1.0)
-                                            /(base_increment-1.0);
-    }
-}
 
 static index_t map_to_fine(index_t val, index_t nc) {
     if (std::abs(nc - val) < (nc / 2) + 1) val = val - nc;
@@ -341,6 +328,55 @@ static void fill_unique_ff(diverge_model_t* model){
     }
 }
 
+void sort_loopmaps(diverge_model_t* model) {
+    tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
+    index_t n_unique_p = tu_data->unique_mi_l.size();
+    vector<index_t> idx( n_unique_p );
+    for (index_t d=0; d<n_unique_p; ++d)
+        idx[d] = d;
+
+    std::sort(idx.begin(), idx.end(), [tu_data](index_t a, index_t b) {
+                     index_t mo1a = tu_data->unique_mi_l[a];
+                     index_t mo1b = tu_data->unique_mi_l[b];
+                     index_t mo3a = tu_data->unique_mi_r[a];
+                     index_t mo3b = tu_data->unique_mi_r[b];
+
+                     if(tu_data->mi_to_ofrom[mo1a] != tu_data->mi_to_ofrom[mo1b]) {
+                         return tu_data->mi_to_ofrom[mo1a] < tu_data->mi_to_ofrom[mo1b];
+                     }else if(tu_data->mi_to_ofrom[mo3a] != tu_data->mi_to_ofrom[mo3b]) {
+                         return tu_data->mi_to_ofrom[mo3a] < tu_data->mi_to_ofrom[mo3b];
+                     }else if(tu_data->mi_to_oto[mo1a] != tu_data->mi_to_oto[mo1b]) {
+                         return tu_data->mi_to_oto[mo1a] < tu_data->mi_to_oto[mo1b];
+                     }else {
+                         return tu_data->mi_to_oto[mo3a] < tu_data->mi_to_oto[mo3b];
+                     }
+    });
+    vector<index_t> uswl( n_unique_p );
+    vector<index_t> uswr( n_unique_p );
+    vector<index_t> uswoff( n_unique_p );
+    uswoff[0] = 0;
+    vector<index_t> uswlen( n_unique_p );
+    vector<index_t> uswmapl( tu_data->lmap_l.size() );
+    vector<index_t> uswmapr( tu_data->lmap_l.size() );
+    for (index_t m=0; m<n_unique_p; ++m) {
+        uswl[m] = tu_data->unique_mi_l[idx[m]];
+        uswr[m] = tu_data->unique_mi_r[idx[m]];
+        uswlen[m] = tu_data->lmap_len[idx[m]];
+        if(m > 0)
+            uswoff[m] = uswoff[m-1] + uswlen[m-1];
+        for(index_t l = 0; l < uswlen[m]; ++l) {
+            uswmapl[l+uswoff[m]] = tu_data->lmap_l[tu_data->lmap_off[idx[m]]+l];
+            uswmapr[l+uswoff[m]] = tu_data->lmap_r[tu_data->lmap_off[idx[m]]+l];
+        }
+    }
+    tu_data->unique_mi_l = uswl;
+    tu_data->unique_mi_r = uswr;
+    tu_data->lmap_len = uswlen;
+    tu_data->lmap_off = uswoff;
+    tu_data->lmap_l = uswmapl;
+    tu_data->lmap_r = uswmapr;
+}
+
 void generate_reduced_loop_maps(diverge_model_t* model) {
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
 
@@ -409,6 +445,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     }
     tu_data->lmap_l.shrink_to_fit();
     tu_data->lmap_r.shrink_to_fit();
+    sort_loopmaps(model);
     mpi_vrb_printf("#unique orbff=%lu (with %lu unique ff from %li)\n",
                 tu_data->unique_mi_l.size(), tu_data->unique_ff_combi.size(), POW2(tu_data->n_orbff));
 }

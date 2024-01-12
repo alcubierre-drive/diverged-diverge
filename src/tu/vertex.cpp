@@ -16,11 +16,10 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
     nkf{tu_data->nkf},
     my_nk{tu_data->my_nk},
     my_nk_off{tu_data->my_nk_off},
-    n_frq{tu_data->n_frq},
     SU2{model->SU2 > 0},
-    full_vert_size{POW2(n_orbff)*my_nk*POW4(n_spin)*n_frq},
+    full_vert_size{POW2(n_orbff)*my_nk*POW4(n_spin)},
     full_bubble_size{full_vert_size},
-    selfenergy_size{self ? POW2(n_orb*n_spin)*n_frq*nkf*nk : 0},
+    selfenergy_size{self ? POW2(n_orb*n_spin)*nkf*nk : 0},
     symm{tu_data->symm},
     P_flow{P},
     C_flow{C || (!SU2 && D)},
@@ -238,7 +237,7 @@ Vertex::Vertex(const Vertex& other)
     model{other.model},tu_data{other.tu_data},n_orbff{other.n_orbff},
     n_orb{other.n_orb}, n_bonds{other.n_bonds},n_spin{other.n_spin},
     nk{other.nk}, nkf{other.nkf}, my_nk{other.my_nk}, my_nk_off{other.my_nk_off},
-    n_frq{other.n_frq}, SU2{other.SU2}, full_vert_size{other.full_vert_size},
+    SU2{other.SU2}, full_vert_size{other.full_vert_size},
     full_bubble_size{other.full_bubble_size},
     selfenergy_size{other.selfenergy_size}, symm{other.symm},P_flow{other.P_flow},
     C_flow{other.C_flow},D_flow{other.D_flow},use_self{other.use_self}
@@ -312,12 +311,9 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
             cudaFree(loop->cuda_descr.nkdev[i]);
             cudaFree(loop->cuda_descr.GF_fft[i]);
             cudaFree(loop->cuda_descr.GF_fft_conj[i]);
-            cudaFree(loop->cuda_descr.buf_GG[i][0]);
-            cudaFree(loop->cuda_descr.buf_GG[i][1]);
-            cudaFree(loop->cuda_descr.buf_res[i][0]);
-            cudaFree(loop->cuda_descr.buf_res[i][1]);
-            cudaFree(loop->cuda_descr.fft_workspace[i][0]);
-            cudaFree(loop->cuda_descr.fft_workspace[i][1]);
+            cudaFree(loop->cuda_descr.buf_GG[i]);
+            cudaFree(loop->cuda_descr.buf_res[i]);
+            cudaFree(loop->cuda_descr.fft_workspace[i]);
         }
     }
     has_gpu_memory = true;
@@ -362,25 +358,42 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
             }
         }
 
-        index_t prop_memsize[11] = {0};
-        index_t prop_memoffset[11] = {0};
-        index_t prop_memoffset_managed[11] = {0};
-        index_t prop_memtype[11] = {0};
+        index_t prop_memsize[8] = {0};
+        index_t prop_memoffset[8] = {0};
+        index_t prop_memoffset_managed[8] = {0};
+        index_t prop_memtype[8] = {0};
         const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
+        cuda_prop_descr_t* cloop = &(loop->cuda_descr);
+
 
         prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R
         prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk); // c_to_f_q
         prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev
         prop_memsize[3] = ensure_align(_GF_size); // GF_fft
         prop_memsize[4] = ensure_align(_GF_size); // GF_fft_conj
-        prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 0
-        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG 1
-        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
-        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 1
-        prop_memsize[9] = ensure_align(sizeof(cuDoubleComplex)*loop->cuda_descr.worksize_fft[i]); // fft_workspace 0
-        prop_memsize[10] = ensure_align(sizeof(cuDoubleComplex)*loop->cuda_descr.worksize_fft[i]); // fft_workspace 1
+        prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG
+        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
+        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*loop->cuda_descr.worksize_fft[i]); // fft_workspace
+        index_t all_propmem = 0;
+        for (index_t mem = 0; mem < 8; ++mem) {
+            all_propmem += prop_memsize[mem];
+        }
 
-        for (index_t mem = 0; mem < 11; ++mem) {
+        if(all_propmem > (index_t)(available_memory[i])) {
+            mpi_vrb_printf("Fallback to shuffeling algorithm");
+            prop_memsize[3] = ensure_align(sizeof(cuDoubleComplex)*nktot*2); // GF_fft
+            prop_memsize[4] = ensure_align(sizeof(cuDoubleComplex)*nktot*2); // GF_fft_conj
+            cloop->prop_preload_full_gf = false;
+            all_propmem = 0;
+            for (index_t mem = 0; mem < 8; ++mem) {
+                all_propmem += prop_memsize[mem];
+            }
+            if(all_propmem > (index_t)(available_memory[i])) {
+                mpi_wrn_printf("Unified Memory usage required - massively slows down code!");
+            }
+        }
+
+        for (index_t mem = 0; mem < 8; ++mem) {
             prop_memtype[mem] = (prop_memsize[mem] < (index_t)available_memory[i] - prop_mem) ? 0:1;
             prop_mem += (prop_memtype[mem] == 0) ? prop_memsize[mem] : 0;
             prop_mem_managed += (prop_memtype[mem] == 1) ? prop_memsize[mem] : 0;
@@ -428,7 +441,6 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         GPU_gemm_buffer[i][2] = (gemm_memtype[2] == 0) ? GPU_memory_pool[i] + gemm_memoffset[2]
                                                        : GPU_memory_pool_managed[i] + gemm_memoffset_managed[2];
 
-        cuda_prop_descr_t* cloop = &(loop->cuda_descr);
         cloop->mi_to_R[i] = (index_t*)((prop_memtype[0] == 0) ? GPU_memory_pool[i] + prop_memoffset[0]
                                                               : GPU_memory_pool_managed[i] + prop_memoffset_managed[0]);
         cloop->c_to_f_q[i] = (index_t*)((prop_memtype[1] == 0) ? GPU_memory_pool[i] + prop_memoffset[1]
@@ -439,18 +451,12 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
                                                                      : GPU_memory_pool_managed[i] + prop_memoffset_managed[3]);
         cloop->GF_fft_conj[i] = (cuDoubleComplex*)((prop_memtype[4] == 0) ? GPU_memory_pool[i] + prop_memoffset[4]
                                                                           : GPU_memory_pool_managed[i] + prop_memoffset_managed[4]);
-        cloop->buf_GG[i][0] = (cuDoubleComplex*)((prop_memtype[5] == 0) ? GPU_memory_pool[i] + prop_memoffset[5]
+        cloop->buf_GG[i] = (cuDoubleComplex*)((prop_memtype[5] == 0) ? GPU_memory_pool[i] + prop_memoffset[5]
                                                                         : GPU_memory_pool_managed[i] + prop_memoffset_managed[5]);
-        cloop->buf_GG[i][1] = (cuDoubleComplex*)((prop_memtype[6] == 0) ? GPU_memory_pool[i] + prop_memoffset[6]
-                                                                        : GPU_memory_pool_managed[i] + prop_memoffset_managed[6]);
-        cloop->buf_res[i][0] = (cuDoubleComplex*)((prop_memtype[7] == 0) ? GPU_memory_pool[i] + prop_memoffset[7]
-                                                                         : GPU_memory_pool_managed[i] + prop_memoffset_managed[7]);
-        cloop->buf_res[i][1] = (cuDoubleComplex*)((prop_memtype[8] == 0) ? GPU_memory_pool[i] + prop_memoffset[8]
-                                                                         : GPU_memory_pool_managed[i] + prop_memoffset_managed[8]);
-        cloop->fft_workspace[i][0] = (cuDoubleComplex*)((prop_memtype[9] == 0) ? GPU_memory_pool[i] + prop_memoffset[9]
-                                                                               : GPU_memory_pool_managed[i] + prop_memoffset_managed[9]);
-        cloop->fft_workspace[i][1] = (cuDoubleComplex*)((prop_memtype[10] == 0) ? GPU_memory_pool[i] + prop_memoffset[10]
-                                                                                : GPU_memory_pool_managed[i] + prop_memoffset_managed[10]);
+        cloop->buf_res[i] = (cuDoubleComplex*)((prop_memtype[6] == 0) ? GPU_memory_pool[i] + prop_memoffset[6]
+                                                                         : GPU_memory_pool_managed[i] + prop_memoffset_managed[6]);
+        cloop->fft_workspace[i] = (cuDoubleComplex*)((prop_memtype[7] == 0) ? GPU_memory_pool[i] + prop_memoffset[7]
+                                                                               : GPU_memory_pool_managed[i] + prop_memoffset_managed[7]);
 
         cuda_proj_descr_t* cproj = &(proj->proj_descr);
         cproj->prefacs[i] = (cuDoubleComplex*)((proj_memtype[0] == 0) ? GPU_memory_pool[i] + proj_memoffset[0]
