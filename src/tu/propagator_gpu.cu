@@ -115,14 +115,11 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
 
                     index_t mo1 = ob_to_orbff[b1 + n_bonds * o1];
                     index_t mo3 = ob_to_orbff[b3 + n_bonds * o3];
-                    index_t oto1 = mi_to_oto[mo1];
-                    index_t oto2 = mi_to_oto[mo3];
-
 
                     const index_t off_orb1 = nktot*(mi_to_from[mo1]+n_orb*(s1+n_spin
                                                         *(mi_to_from[mo3]+n_orb*(s3))));
-                    const index_t off_orb2 = nktot*(oto2+n_orb*(s2+n_spin
-                                                        *(oto1+n_orb*(s4))));
+                    const index_t off_orb2 = nktot*(mi_to_oto[mo3]+n_orb*(s2+n_spin
+                                                        *(mi_to_oto[mo1]+n_orb*(s4))));
 
                     const index_t* R1 = mi_to_R+3*mo1;
                     const index_t* R2 = mi_to_R+3*mo3;
@@ -238,13 +235,11 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
 
                     index_t mo1 = ob_to_orbff[b1 + n_bonds * o1];
                     index_t mo3 = ob_to_orbff[b3 + n_bonds * o3];
-                    index_t oto1 = mi_to_oto[mo1];
-                    index_t oto2 = mi_to_oto[mo3];
 
                     const index_t off_orb1 = nktot*(mi_to_from[mo1]+n_orb*(s1+n_spin
                                                         *(mi_to_from[mo3]+n_orb*(s3))));
-                    const index_t off_orb2 = nktot*(oto1+n_orb*(s2+n_spin
-                                                        *(oto2+n_orb*(s4))));
+                    const index_t off_orb2 = nktot*(mi_to_oto[mo1]+n_orb*(s2+n_spin
+                                                        *(mi_to_oto[mo3]+n_orb*(s4))));
                     const index_t* R1 = mi_to_R+3*mo1;
                     const index_t* R2 = mi_to_R+3*mo3;
 
@@ -459,8 +454,8 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
 
                 const index_t off_orb1 = nktot*(mi_to_ofrom[mo1]+n_orb*(s1+n_spin
                                                     *(mi_to_ofrom[mo3]+n_orb*(s3))));
-                const index_t off_orb2 = nktot*(mi_to_oto[mo3]+n_orb*(s2+n_spin
-                                                    *(mi_to_oto[mo1]+n_orb*(s4))));
+                const index_t off_orb2 = nktot*(mi_to_oto[mo1]+n_orb*(s2+n_spin
+                                                    *(mi_to_oto[mo3]+n_orb*(s4))));
 
                 const index_t* R1 = mi_to_R+3*mo1;
                 const index_t* R2 = mi_to_R+3*mo3;
