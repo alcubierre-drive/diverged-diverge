@@ -56,9 +56,11 @@ if not _libs["divERGe"] is None:
     index_t = c_int64
 
     # MPI functions
-    init = _libs["divERGe"].get("diverge_init", "cdecl")
-    init.argtypes = [POINTER(c_int), POINTER(POINTER(POINTER(c_char)))]
-    init.restype = None
+    init_ = _libs["divERGe"].get("diverge_init", "cdecl")
+    init_.argtypes = [POINTER(c_int), POINTER(POINTER(POINTER(c_char)))]
+    init_.restype = None
+    def init( p_argc=None, p_argv=None ):
+        init_( p_argc, p_argv )
 
     finalize = _libs["divERGe"].get("diverge_finalize", "cdecl")
     finalize.argtypes = []
