@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("File:src/main.c","main.c");NDSummary.OnSummaryLoaded("File:src/main.c",[["C/C++","C"]],[["Classes","Class"]],[[245,0,0,"main","main"]]);
+﻿NDFramePage.OnPageTitleLoaded("File:src/main.c","main.c");NDSummary.OnSummaryLoaded("File:src/main.c",[["C/C++","C"]],[["Classes","Class"]],[[238,0,0,"main","main"]]);
