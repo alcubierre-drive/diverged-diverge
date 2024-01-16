@@ -1,1 +1,1 @@
-﻿NDContentPage.OnToolTipsLoaded({149:"<div class=\"NDToolTip TType LC\"><div class=\"TTSummary\">128bit complex number (two 64bit floating point numbers)</div></div>",152:"<div class=\"NDToolTip TType LC\"><div class=\"TTSummary\">64bit signed integer</div></div>"});
+﻿NDContentPage.OnToolTipsLoaded({116:"<div class=\"NDToolTip TType LC\"><div class=\"TTSummary\">128bit complex number (two 64bit floating point numbers)</div></div>",119:"<div class=\"NDToolTip TType LC\"><div class=\"TTSummary\">64bit signed integer</div></div>"});

@@ -14,7 +14,7 @@ the diverge.h header:
 ---------------
 We refer the reader to the Makefile and Makefile.local in the examples/
 directory of <divERGe.tar.gz at
-https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.4/divERGe.tar.gz>
+https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.5/divERGe.tar.gz>
 to understand how C/C++ code using <libdivERGe.so> is compiled and linked.
 
 To initialize the library, you must either call <diverge_init> or
