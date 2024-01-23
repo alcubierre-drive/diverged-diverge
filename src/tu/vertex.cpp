@@ -380,7 +380,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         }
 
         if(all_propmem > (index_t)(available_memory[i])) {
-            mpi_vrb_printf("Fallback to shuffeling algorithm");
+            mpi_vrb_printf("Fallback to shuffeling algorithm\n");
             prop_memsize[3] = ensure_align(sizeof(cuDoubleComplex)*nktot*2); // GF_fft
             prop_memsize[4] = ensure_align(sizeof(cuDoubleComplex)*nktot*2); // GF_fft_conj
             cloop->prop_preload_full_gf = false;
@@ -389,7 +389,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
                 all_propmem += prop_memsize[mem];
             }
             if(all_propmem > (index_t)(available_memory[i])) {
-                mpi_wrn_printf("Unified Memory usage required - massively slows down code!");
+                mpi_wrn_printf("Unified Memory usage required - massively slows down code!\n");
             }
         }
 
