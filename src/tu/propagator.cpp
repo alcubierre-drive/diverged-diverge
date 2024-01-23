@@ -210,10 +210,25 @@ void tu_loop_t::cpu_fft_algorithm_cleanup( void ) {
     if (mpi_loop) tu_mpi_loop_destroy( mpi_loop );
 }
 
+static std::string tu_fft_algorithm_name( tu_fft_algorithm_t algo ) {
+    switch (algo) {
+        case tu_fft_algorithm_greedy: return "greedy";
+        case tu_fft_algorithm_split: return "split";
+        case tu_fft_algorithm_mpi: return "mpi";
+        case tu_fft_algorithm_mpi_new: return "mpi_new";
+    }
+    return "invalid";
+}
+
 void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
         tu_fft_algorithm_t simple, tu_fft_algorithm_t red ) {
 
     if (nktot <= 1) return;
+
+    mpi_vrb_printf( "TU loop algorithm choice: GF: %s, simple: %s, reduced: %s\n",
+            tu_fft_algorithm_name( greens ).c_str(),
+            tu_fft_algorithm_name( simple ).c_str(),
+            tu_fft_algorithm_name( red ).c_str() );
 
     int fftwnthr = diverge_fftw_num_threads();
     const index_t* vnk = model->nk;
