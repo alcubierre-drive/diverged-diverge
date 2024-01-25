@@ -68,7 +68,6 @@ double diverge_flow_step_dlambda( diverge_flow_step_t* st );
 // Function: diverge_flow_step_free
 void diverge_flow_step_free( diverge_flow_step_t* st );
 
-
 // Struct: diverge_flow_step_vertex_t
 // Structure that can hold all vertex objects used in divERGe. depending on the
 // backend and channel, the content differs.
