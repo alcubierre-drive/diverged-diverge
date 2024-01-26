@@ -464,7 +464,12 @@ void tu_loop_t::swap_GF_cfrg() {
 
 void tu_loop_t::reconstruct_from_reduced(complex128_t* loop) const {
     index_t n_unique = (index_t)tu_data->unique_mi_l.size();
-    #pragma omp for collapse(4) schedule(dynamic,1)
+
+#ifndef USE_DYNAMIC_RECONSTRUCT_SCHEDULE
+    #pragma omp parallel for collapse(4) num_threads(diverge_omp_num_threads())
+#else // USE_DYNAMIC_RECONSTRUCT_SCHEDULE
+    #pragma omp parallel for collapse(4) schedule(dynamic,1) num_threads(diverge_omp_num_threads())
+#endif // USE_DYNAMIC_RECONSTRUCT_SCHEDULE
     for(index_t q = 0; q<my_nk;++q)
     for(index_t sr = 0; sr<POW2(n_spin);++sr)
     for(index_t sl = 0; sl<POW2(n_spin);++sl)
