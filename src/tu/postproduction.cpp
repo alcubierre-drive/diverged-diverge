@@ -39,9 +39,13 @@ tu_postproduction::tu_postproduction(const diverge_model_t* mod, Vertex* Vertexi
         Ptype = (char*)calloc(vertex->my_nk,sizeof(char));
         Ctype = (char*)calloc(vertex->my_nk,sizeof(char));
         Dtype = (char*)calloc(vertex->my_nk,sizeof(char));
-        Pvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)*vertex->my_nk,sizeof(complex128_t));
-        Cvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)*vertex->my_nk,sizeof(complex128_t));
-        Dvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)*vertex->my_nk,sizeof(complex128_t));
+        // TODO(@jp) is this n_orb * n_bonds a bug?
+        Pvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)
+                *vertex->my_nk,sizeof(complex128_t));
+        Cvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)
+                *vertex->my_nk,sizeof(complex128_t));
+        Dvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)
+                *vertex->my_nk,sizeof(complex128_t));
 
         lenP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
         lenC = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
@@ -97,13 +101,13 @@ tu_postproduction::~tu_postproduction() {
 void tu_postproduction::run_and_save(string filename, bool lingaps, bool susc_ff,
                                             bool susc_full, bool save_self, bool save_full,
                                             bool save_symmetries) {
-    if(!skip_channel_calc)safe_channel_leading_ev();
-    if(lingaps) lingap_ff();
-    if(susc_ff || susc_full) calc_susc(susc_ff, susc_full);
+    if (!skip_channel_calc) save_channel_leading_ev();
+    if (lingaps) lingap_ff();
+    if (susc_ff || susc_full) calc_susc(susc_ff, susc_full);
     to_file(filename, save_self, save_full,save_symmetries);
 }
 
-void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
+void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
                 complex128_t* vec, double* val, char* type, index_t* len, index_t* off){
 
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
@@ -111,30 +115,42 @@ void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
     complex128_t* _vec = (complex128_t*)malloc(POW2(linsize)*sizeof(complex128_t));
     index_t n_spin = vertex->n_spin;
 
-    batched_eigen_shut_up( 1 );
-    for(index_t q = 0; q < vertex->my_nk;++q) {
-        if(q > 0) off[q] = off[q-1] + len[q-1];
+    double* allval = NULL;
+    if (algo == 'b') {
+        allval = (double*) calloc(linsize*vertex->my_nk, sizeof(double));
+        batched_eigen_r( NULL, -2, channel, allval, linsize, vertex->my_nk );
+    }
+    index_t wrong_algo_count = 0;
+
+    for (index_t q = 0; q < vertex->my_nk;++q) {
+        if (q > 0) off[q] = off[q-1] + len[q-1];
         memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
         bool hermitian = check_hermicity(_vec,linsize);
-        if(algo == 'e' || (algo == 'a' && hermitian)) {
+        if (algo == 'e' || (algo == 'a' && hermitian)) {
             eigen_solve( NULL, _vec, _val, linsize);
             type[q] = 'e';
-        }else{
+        } else if (algo == 's') {
             singular_value_decomp( NULL, _vec, vertex->bubble_helper, _val, linsize);
             type[q] = 's';
+        } else if (allval) {
+            type[q] = 'b';
+            memcpy(_val, allval+q*linsize, sizeof(double)*linsize);
+        } else {
+            wrong_algo_count++;
         }
         vector<double> vals;
         vector<index_t> idx;
 
         double cutoff_local = cutoff;
-        
+
         if (cutoff_rel) {
             vector<double> vals_sorted(linsize);
             memcpy( vals_sorted.data(), _val, sizeof(double)*linsize );
-            std::sort( vals_sorted.begin(), vals_sorted.end(), [](double a, double b)->bool{return std::abs(a)>std::abs(b);} );
+            std::sort( vals_sorted.begin(), vals_sorted.end(),
+                    [](double a, double b)->bool{return std::abs(a)>std::abs(b);} );
             cutoff_local *= std::abs(vals_sorted[0]);
         }
-        for(index_t r = 0; r < linsize; ++r) {
+        for (index_t r = 0; r < linsize; ++r) {
             double cur = _val[r];
             if(std::abs(cur) > cutoff_local){
                 len[q] += 1;
@@ -142,7 +158,7 @@ void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
                 idx.push_back(r);
             }
         }
-        if(len[q]>0) {
+        if (len[q]>0) {
             auto p = sort_permutation(vals);
             apply_permutation_in_place(vals, p);
             apply_permutation_in_place(idx, p);
@@ -157,20 +173,23 @@ void tu_postproduction::_safe_channel_leading_ev(complex128_t* channel,
             }
         }
     }
-    batched_eigen_shut_up( 0 );
+
+    if (wrong_algo_count)
+        mpi_wrn_printf( "%li qpts have invalid TU vertex decomp algo\n", wrong_algo_count );
     free(_val);
     free(_vec);
+    if (allval) free(allval);
 }
 
-void tu_postproduction::safe_channel_leading_ev() {
+void tu_postproduction::save_channel_leading_ev() {
     if(vertex->P_flow)
-        _safe_channel_leading_ev(vertex->Pch,
+        _save_channel_leading_ev(vertex->Pch,
             Pvec, Pval, Ptype, lenP, offP);
     if(vertex->C_flow)
-        _safe_channel_leading_ev(vertex->Cch,
+        _save_channel_leading_ev(vertex->Cch,
             Cvec, Cval, Ctype, lenC, offC);
     if(vertex->D_flow)
-        _safe_channel_leading_ev(vertex->Dch,
+        _save_channel_leading_ev(vertex->Dch,
             Dvec, Dval, Dtype, lenD, offD);
 }
 

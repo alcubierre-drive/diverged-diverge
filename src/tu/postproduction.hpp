@@ -18,10 +18,11 @@ public:
     tu_postproduction(const diverge_model_t*, Vertex* Vertex, Projection* proj, bool tu_skip_channel_calc);
     ~tu_postproduction();
 
-    void run_and_save(string filename, bool lingaps, bool susc_ff, bool susc_full, bool save_self, bool save_full,bool save_symmetries);
+    void run_and_save(string filename, bool lingaps, bool susc_ff, bool susc_full,
+            bool save_self, bool save_full,bool save_symmetries);
     void lingap_ff();
     void calc_susc(bool susz_ff, bool susz_full);
-    void safe_channel_leading_ev();
+    void save_channel_leading_ev();
 
     index_t tu_n_singular_values;
     char algo;
@@ -67,9 +68,9 @@ private:
     index_t tu_n_singular_valuesP=0;
     index_t tu_n_singular_valuesC=0;
     index_t tu_n_singular_valuesD=0;
-    
+
     void construct_multiindex_maps(const diverge_model_t* model);
-    
+
     std::vector<index_t> mi_map_idx;
     std::vector<complex128_t> mi_map_pref_in_in;
     std::vector<complex128_t> mi_map_pref_in_out;
@@ -88,7 +89,7 @@ private:
     Vertex* vertex;
     Projection* proj;
     const diverge_model_t* model;
-    void _safe_channel_leading_ev(complex128_t* channel, complex128_t* vec,
+    void _save_channel_leading_ev(complex128_t* channel, complex128_t* vec,
                     double* val, char* type, index_t* len, index_t* off);
 };
 

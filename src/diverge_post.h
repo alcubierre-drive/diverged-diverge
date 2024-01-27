@@ -65,11 +65,11 @@ typedef struct {
 
     // Variable: tu_which_solver_mode
     // choose how to handle non hermitian entries of the channels options
-    // 'a'(utomatic), 's'(vd), 'e'(igen)
+    // 'a'(utomatic), 's'(vd), 'e'(igen), 'b'(atched eigen)
     char    tu_which_solver_mode;
     // Variable: tu_skip_channel_calc
     // if true, the eigenvectors of each channel are not calculated - usefull for RPA
-    bool  tu_skip_channel_calc;
+    bool    tu_skip_channel_calc;
     // Variable: tu_storing_threshold
     // sets a theshold above which all eigen/singular vectors will be stored (magnitude)
     double  tu_storing_threshold;
