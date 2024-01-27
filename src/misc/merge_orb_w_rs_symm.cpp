@@ -14,6 +14,7 @@ void merge_rs_orb(diverge_model_t* model) {
     index_t n_orb = model->n_orb;
     index_t n_spin = model->n_spin;
     index_t n_sym = model->n_sym;
+    if (n_sym < 0) n_sym *= -1;
     index_t n_mi = n_orb * n_spin;
 
     complex128_t* orb_cpy = (complex128_t*)malloc(n_mi*n_mi*n_sym*sizeof(complex128_t));

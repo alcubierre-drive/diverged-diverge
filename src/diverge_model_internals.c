@@ -139,6 +139,8 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     // node-shared mem is a bit complicated (see diverge_hack.cpp)
     intls->greens = (gf_complex_t*)calloc(nktot*nb*nb*2,sizeof(gf_complex_t));
 
+    merge_rs_orb(model);
+
     mpi_vrb_printf("filling hamiltonian buffer\n");
     if (shared_exclusive_enter(intls->ham) == 1) {
         (*(model->hfill))( model, intls->ham );
@@ -162,8 +164,6 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         }
         shared_exclusive_wait( intls->U );
     }
-
-    merge_rs_orb(model);
 }
 
 void diverge_model_internals_reset( diverge_model_t* model ) {
