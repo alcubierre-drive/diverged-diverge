@@ -23,6 +23,7 @@
 #include "misc/alloc.h"
 #include "misc/read_W90.h"
 #include "misc/generate_symmetries.h"
+#include "misc/merge_orb_w_rs_symm.h"
 #include "misc/kmesh_to_bands.h"
 #include "misc/license.h"
 #include "misc/shared_mem.h"

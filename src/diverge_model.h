@@ -288,6 +288,13 @@ struct diverge_model_t {
 // <diverge_model_t.hop> and Fourier transforms them to momentum space.
 void diverge_hamilton_generator_default(const diverge_model_t* model,
         complex128_t* buf);
+// Function: diverge_hamilton_generator_add
+// A slightly modified <hamiltonian_generator_t> that works in exactly the same
+// way as <diverge_hamilton_generator_default> except for the fact that it
+// *adds* the generated elements to 'buf' instead of overwriting them. Useful
+// for custom Hamiltonian generation.
+void diverge_hamilton_generator_add(const diverge_model_t* model,
+        complex128_t* buf);
 // Function: diverge_greensfunc_generator_default
 // The standard <greensfunc_generator_t>.
 greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* model,

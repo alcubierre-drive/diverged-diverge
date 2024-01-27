@@ -496,6 +496,10 @@ if not _libs["divERGe"] is None:
     diverge_hamilton_generator_default.argtypes = [POINTER(model_t), POINTER(complex128_t)]
     diverge_hamilton_generator_default.restype = None
 
+    diverge_hamilton_generator_add = _libs["divERGe"].get("diverge_hamilton_generator_add", "cdecl")
+    diverge_hamilton_generator_add.argtypes = [POINTER(model_t), POINTER(complex128_t)]
+    diverge_hamilton_generator_add.restype = None
+
     diverge_greensfunc_generator_default = _libs["divERGe"].get("diverge_greensfunc_generator_default", "cdecl")
     diverge_greensfunc_generator_default.argtypes = [POINTER(model_t), complex128_t, POINTER(gf_complex_t)]
     diverge_greensfunc_generator_default.restype = greensfunc_op_t
@@ -1010,6 +1014,11 @@ if not _libs["divERGe"] is None:
     symmetrize_mom_fine = _libs["divERGe"].get("diverge_symmetrize_mom_fine", "cdecl")
     symmetrize_mom_fine.argtypes = [POINTER(model_t), POINTER(c_double), index_t, POINTER(c_double)]
     symmetrize_mom_fine.restype = c_double
+
+    # Additional symmetry related stuff
+    merge_rs_orb = _libs["divERGe"].get("merge_rs_orb", "cdecl")
+    merge_rs_orb.argtypes = [POINTER(model_t)]
+    merge_rs_orb.restype = None
 
     # Testing
     run_tests_ = _libs["divERGe"].get("diverge_run_tests", "cdecl")

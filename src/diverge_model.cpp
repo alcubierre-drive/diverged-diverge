@@ -53,7 +53,7 @@ void diverge_model_free(diverge_model_t* model) {
     free(model);
 }
 
-void diverge_hamilton_generator_default(const diverge_model_t* model, complex128_t* buf) {
+void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* buf) {
     const index_t n_hop = model->n_hop;
     const rs_hopping_t* hop = model->hop;
     const index_t n_kx = model->nk[0]*model->nkf[0];
@@ -98,8 +98,15 @@ void diverge_hamilton_generator_default(const diverge_model_t* model, complex128
         fftw_execute(p);
     fftw_destroy_plan(p);
 
-    memcpy(buf, (void*)fftw_buf, buf_sz);
+    for (index_t i=0; i<n_kpts*POW2(n_orb*n_spin); ++i)
+        buf[i] += fftw_cbuf[i];
     fftw_free(fftw_buf);
+}
+
+void diverge_hamilton_generator_default(const diverge_model_t* model, complex128_t* buf) {
+    memset( (void*)buf, 0, sizeof(complex128_t)*
+            POW2(model->n_orb*model->n_spin)*kdimtot(model->nk, model->nkf) );
+    diverge_hamilton_generator_add( model, buf );
 }
 
 greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf) {
