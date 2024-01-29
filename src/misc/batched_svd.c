@@ -13,6 +13,11 @@
 void batched_svd( int* dev, int n_dev, complex128_t* A, complex128_t* U,
         complex128_t* V, double* S, index_t dim, index_t cnt ) {
 
+    if (!S || !A) {
+        mpi_err_printf( "batched SVD A or Sigma cannot be NULL\n" );
+        return;
+    }
+
     batched_svd_cfg_t cfg_parent = { .idx=-1, .A=A, .U=U, .V=V, .S=S, .dim=dim, .cnt=cnt };
     int use_gpu_fun = 0;
 

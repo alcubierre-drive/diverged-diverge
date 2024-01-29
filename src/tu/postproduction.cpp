@@ -122,7 +122,7 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
         if (algo == 'b')
             batched_eigen_r( NULL, -2, channel, allval, linsize, vertex->my_nk );
         else
-            batched_svd( NULL, -1, channel, NULL, channel, NULL, linsize, vertex->my_nk );
+            batched_svd( NULL, -1, channel, NULL, channel, allval, linsize, vertex->my_nk );
     }
     index_t wrong_algo_count = 0;
 
