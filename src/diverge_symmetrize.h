@@ -3,6 +3,7 @@
 #pragma once
 
 #include "diverge_common.h"
+#include "misc/merge_orb_w_rs_symm.h"
 
 #ifdef __cplusplus
 extern "C" {

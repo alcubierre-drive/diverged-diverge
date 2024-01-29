@@ -201,4 +201,6 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
 
     memcpy(symm_map_orb, orbmaps_to.data(), total_length * sizeof(index_t));
     memcpy(symm_pref, orbmaps_to_prefac.data(), total_length * sizeof(complex128_t));
+
+    merge_rs_orb(model);
 }

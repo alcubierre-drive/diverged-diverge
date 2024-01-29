@@ -7,7 +7,6 @@
 #include "diverge_symmetrize.h"
 #include "misc/batched_eigen.h"
 #include "misc/mpi_functions.h"
-#include "misc/merge_orb_w_rs_symm.h"
 #include "diverge_flow_type.h"
 #include "misc/shared_mem.h"
 
@@ -138,8 +137,6 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     // the GF does not default to shared, as writing GF generators for
     // node-shared mem is a bit complicated (see diverge_hack.cpp)
     intls->greens = (gf_complex_t*)calloc(nktot*nb*nb*2,sizeof(gf_complex_t));
-
-    merge_rs_orb(model);
 
     mpi_vrb_printf("filling hamiltonian buffer\n");
     if (shared_exclusive_enter(intls->ham) == 1) {
