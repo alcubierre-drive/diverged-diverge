@@ -47,7 +47,9 @@ struct single_cusolver_solution_t {
 
 void* single_cusolver_thread( void* data ) {
     single_cusolver_solution_t* cfg = (single_cusolver_solution_t*)data;
+    if (cfg->n_indices <= 0) return NULL;
 
+    CUDA_CHECK( cudaSetDevice( cfg->dev ) );
     for (index_t ii=0; ii<cfg->n_indices; ++ii) {
         index_t i = cfg->indices[ii];
         transpose_memcpy_128( cfg->dA, cfg->A + i*POW2(cfg->dim), cfg->dim );
@@ -57,8 +59,8 @@ void* single_cusolver_thread( void* data ) {
         // those are exclusive
         sem_wait( cfg->sem );
         CUSOLVER_CHECK( cusolverDnXgesvd( cfg->handle, NULL, 'A', 'A',
-                    cfg->dim, cfg->dim, CUDA_C_64F, cfg->dA, cfg->dim, CUDA_C_64F,
-                    cfg->dS, CUDA_R_64F, cfg->dU, cfg->dim, CUDA_C_64F,
+                    cfg->dim, cfg->dim, CUDA_C_64F, cfg->dA, cfg->dim, CUDA_R_64F,
+                    cfg->dS, CUDA_C_64F, cfg->dU, cfg->dim, CUDA_C_64F,
                     cfg->dV, cfg->dim, CUDA_C_64F, cfg->dwork, cfg->nbytes_dwork,
                     cfg->work, cfg->nbytes_work, cfg->dinfo) );
         CUDA_CHECK( cudaStreamSynchronize( cfg->stream ) );
@@ -105,8 +107,8 @@ void* batched_svd_gpu( void* data ) {
         CUSOLVER_CHECK( cusolverDnGetStream( sol[i].handle, &sol[i].stream ) );
 
         CUSOLVER_CHECK( cusolverDnXgesvd_bufferSize( sol[i].handle, NULL, 'A', 'A',
-                cfg->dim, cfg->dim, CUDA_C_64F, sol[i].dA, cfg->dim, CUDA_C_64F,
-                sol[i].dS, CUDA_R_64F, sol[i].dU, cfg->dim, CUDA_C_64F,
+                cfg->dim, cfg->dim, CUDA_C_64F, sol[i].dA, cfg->dim, CUDA_R_64F,
+                sol[i].dS, CUDA_C_64F, sol[i].dU, cfg->dim, CUDA_C_64F,
                 sol[i].dV, cfg->dim, CUDA_C_64F, &sol[i].nbytes_dwork, &sol[i].nbytes_work ) );
 
         CUDA_CHECK( cudaMalloc( (void**)&sol[i].dinfo, sizeof(int) ) );
