@@ -12,13 +12,18 @@ void* batched_svd_cpu( void* data ) {
             Eigen::DecompositionOptions::ComputeFullV );
 
     for (index_t i=0; i<cfg->cnt; ++i) {
-        Map<MatXcd> A(cfg->A + POW2(cfg->dim)*i, cfg->dim, cfg->dim),
-                    U(cfg->U + POW2(cfg->dim)*i, cfg->dim, cfg->dim),
-                    V(cfg->V + POW2(cfg->dim)*i, cfg->dim, cfg->dim);
+        Map<MatXcd> A(cfg->A + POW2(cfg->dim)*i, cfg->dim, cfg->dim);
+
         Map<VecXd> S(cfg->S + cfg->dim*i, cfg->dim);
         SVD.compute( A.transpose() ); // Row/Column
-        U = SVD.matrixU().transpose();
-        V = SVD.matrixV();
+        if (cfg->U != NULL) {
+            Map<MatXcd> U(cfg->U + POW2(cfg->dim)*i, cfg->dim, cfg->dim);
+            U = SVD.matrixU().transpose();
+        }
+        if (cfg->V != NULL) {
+            Map<MatXcd> V(cfg->V + POW2(cfg->dim)*i, cfg->dim, cfg->dim);
+            V = SVD.matrixV();
+        }
         S = SVD.singularValues();
     }
     return NULL;

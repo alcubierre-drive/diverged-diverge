@@ -66,8 +66,10 @@ void* single_cusolver_thread( void* data ) {
         CUDA_CHECK( cudaStreamSynchronize( cfg->stream ) );
         sem_post( cfg->sem );
 
-        transpose_memcpy_128( cfg->U + i*POW2(cfg->dim), cfg->dU, cfg->dim );
-        memcpy( cfg->V + i*POW2(cfg->dim), cfg->dV, sizeof(complex128_t)*POW2(cfg->dim) );
+        if (cfg->U)
+            transpose_memcpy_128( cfg->U + i*POW2(cfg->dim), cfg->dU, cfg->dim );
+        if (cfg->V)
+            memcpy( cfg->V + i*POW2(cfg->dim), cfg->dV, sizeof(complex128_t)*POW2(cfg->dim) );
         memcpy( cfg->S + i*cfg->dim, cfg->dS, sizeof(double)*cfg->dim );
     }
 

@@ -57,8 +57,13 @@ void batched_svd( int* dev, int n_dev, complex128_t* A, complex128_t* U,
 
         configs[d].cnt = counts[d];
         configs[d].A = cfg_parent.A + POW2(cfg_parent.dim) * displs[d];
-        configs[d].U = cfg_parent.U + POW2(cfg_parent.dim) * displs[d];
-        configs[d].V = cfg_parent.V + POW2(cfg_parent.dim) * displs[d];
+
+        if (cfg_parent.U) configs[d].U = cfg_parent.U + POW2(cfg_parent.dim) * displs[d];
+        else configs[d].U = NULL;
+
+        if (cfg_parent.V) configs[d].V = cfg_parent.V + POW2(cfg_parent.dim) * displs[d];
+        else configs[d].V = NULL;
+
         configs[d].S = cfg_parent.S + cfg_parent.dim * displs[d];
     }
 

@@ -4,6 +4,7 @@
 
 #include "postproduction.hpp"
 #include "../misc/batched_eigen.h"
+#include "../misc/batched_svd.h"
 #include "../misc/batched_gemms.h"
 #include "../misc/eigen.h"
 
@@ -116,9 +117,12 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
     index_t n_spin = vertex->n_spin;
 
     double* allval = NULL;
-    if (algo == 'b') {
+    if (algo == 'b' || algo == 'B') {
         allval = (double*) calloc(linsize*vertex->my_nk, sizeof(double));
-        batched_eigen_r( NULL, -2, channel, allval, linsize, vertex->my_nk );
+        if (algo == 'b')
+            batched_eigen_r( NULL, -2, channel, allval, linsize, vertex->my_nk );
+        else
+            batched_svd( NULL, -1, channel, NULL, channel, NULL, linsize, vertex->my_nk );
     }
     index_t wrong_algo_count = 0;
 
@@ -133,7 +137,7 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
             singular_value_decomp( NULL, _vec, vertex->bubble_helper, _val, linsize);
             type[q] = 's';
         } else if (allval) {
-            type[q] = 'b';
+            type[q] = algo;
             memcpy(_val, allval+q*linsize, sizeof(double)*linsize);
         } else {
             wrong_algo_count++;
