@@ -535,8 +535,8 @@ if not _libs["divERGe"] is None:
         return pts_cpy
 
     rs_hopping_to_supercell = _libs["divERGe"].get("rs_hopping_to_supercell", "cdecl")
-    rs_hopping_to_supercell.argtypes = [POINTER(rs_hopping_t), POINTER(index_t), index_t, POINTER(index_t)]
-    rs_hopping_to_supercell.restype = POINTER(rs_hopping_t)
+    rs_hopping_to_supercell.argtypes = [c_voidp, c_voidp, index_t, c_voidp]
+    rs_hopping_to_supercell.restype = c_voidp
 
     model_free = _libs["divERGe"].get("diverge_model_free", "cdecl")
     model_free.argtypes = [POINTER(model_t)]
