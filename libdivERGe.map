@@ -130,6 +130,7 @@ DIVERGE_0.5 {
         mpi_py_eprint_all;
         mpi_py_print;
         mpi_py_print_all;
+        rs_hopping_to_supercell;
         shared_calloc;
         shared_exclusive_enter;
         shared_exclusive_wait;
