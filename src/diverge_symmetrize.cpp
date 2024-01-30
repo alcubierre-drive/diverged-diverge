@@ -6,6 +6,7 @@
 #include "diverge_momentum_gen.h"
 #include "diverge_Eigen3.hpp"
 #include "misc/mpi_functions.h"
+#include "misc/merge_orb_w_rs_symm.h"
 #include <vector>
 #include <cassert>
 
