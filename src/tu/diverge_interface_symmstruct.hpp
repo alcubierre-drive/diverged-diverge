@@ -6,10 +6,6 @@
 #include "../diverge_Eigen3.hpp"
 #include "global.hpp"
 
-extern "C" {
-void merge_rs_orb(diverge_model_t* model);
-}
-
 struct symmstruct_t{
     // if true, the vectors are filled
     bool use_symmetries;

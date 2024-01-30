@@ -7,7 +7,6 @@
 #include "diverge_symmetrize.h"
 #include "misc/batched_eigen.h"
 #include "misc/mpi_functions.h"
-#include "misc/merge_orb_w_rs_symm.h"
 #include "diverge_flow_type.h"
 #include "misc/shared_mem.h"
 
@@ -162,8 +161,6 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         }
         shared_exclusive_wait( intls->U );
     }
-
-    merge_rs_orb(model);
 }
 
 void diverge_model_internals_reset( diverge_model_t* model ) {
