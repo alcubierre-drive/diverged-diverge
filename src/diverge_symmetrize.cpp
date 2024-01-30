@@ -106,6 +106,9 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     Map<Vec3d> UC2(model->lattice[1]);
     Map<Vec3d> UC3(model->lattice[2]);
 
+    // TODO the symmetrizer fails if multiple orbitals are on the same position,
+    // but the position is shifted by a lattice vector (i.e. +A1/2 and -A1/2)
+
     #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for(index_t s = 0; s < n_sym; ++s)
     for(index_t o1 = 0; o1 < n_orb; ++o1) {
