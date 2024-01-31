@@ -820,6 +820,8 @@ def bandstructure_ticks( model ):
         if not model.kf_ibz_path is None:
             n_per_segment = model.kf_ibz_path[0]
             ticks += list( x[np.concatenate( [[0], np.cumsum( n_per_segment ) - 1] )] )
+        else:
+            print( "missing kf_ibz_path in model file" )
 
     if len(ticks) == n_ibz_path:
         return ticks
