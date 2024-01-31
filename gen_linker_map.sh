@@ -31,3 +31,29 @@ echo "$exported_cpp_symbols" >> $OUTFILE
 echo "local:
         *;
 };" >> $OUTFILE
+
+exported_unstable_symbols=$(cat << EOF
+DIVERGE_UNSTABLE {
+    global:
+        batched_eigen;
+        batched_eigen_r;
+        batched_svd;
+        batched_zgemd_r;
+        eigen_solve;
+        singular_value_decomp;
+        eigensolution_sort;
+        batched_gemm_overlapping;
+        batched_gemm;
+        batched_gemm_with_buffers;
+        batched_gemm_vertex_loop;
+        batched_gemm_loop_vertex;
+        batched_gemm_cublas_init;
+        batched_gemm_cublas_clear;
+        batched_gemm_cublas_w_buffer_clear;
+        batched_gemm_N_ll_num;
+        gemm;
+};
+EOF
+)
+
+echo "$exported_unstable_symbols" >> $OUTFILE
