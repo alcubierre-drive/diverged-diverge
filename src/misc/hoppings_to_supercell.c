@@ -114,7 +114,14 @@ void supercell_map( supercell_t* s, claV3i_t R, claV3i_t* S, index_t* idx ) {
 
 void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
     assert(m->hop != NULL || m->n_hop == 0);
+
     supercell_t* s = supercell_gen( N1, N2, N3 );
+
+    mpi_vrb_printf( "model to supercell (%i,%i,%i) (%i,%i,%i), (%i,%i,%i)\n",
+            N1[0], N1[1], N1[2],
+            N2[0], N2[1], N2[2],
+            N3[0], N3[1], N3[2] );
+    mpi_vrb_printf( "with N=%i unit cells per supercell\n", s->N );
 
     claV3d_t L1 = claV3d_map(m->lattice[0]),
              L2 = claV3d_map(m->lattice[1]),
