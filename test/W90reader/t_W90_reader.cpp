@@ -28,7 +28,7 @@ TEST_CASE("W90 read in","[W90reader]") {
     mpi_fil_printf( "generated file '%s' as W90 file for testing. Content:\n%s",
             fname.c_str(), fcontent );
     rs_hopping_t* cmp = model->hop;
-    rs_hopping_t* hop = diverge_read_W90_C(fname.c_str(),n_spin,&len);
+    rs_hopping_t* hop = diverge_read_W90_C(fname.c_str(),n_spin,&len,NULL);
     remove( fname.c_str() );
     // check all hoppings exist and are equal
     CHECK(len > 0);
