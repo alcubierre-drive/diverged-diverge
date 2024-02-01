@@ -265,6 +265,10 @@ NPATCH_ALMOST_ZERO=VAL - define VAL that is seen to be zero for floating point
 NPATCH_PERIODIC_NORM_NG=VAL - for momentum additions/subtractions that extend
                               over more than one primitive zone, define the
                               range in G vectors that is searched
+SKIP_BATCHED_EIGEN_GPU_CONJ - do not conjugate eigenvectors when using the
+                              batched_eigen_gpu version. slightly faster and
+                              doesn't matter for TRS and other nicely behaved
+                              models.
 SKIP_EIGEN3_INCLUDE_PREFIX - some clusters install eigen3 in a way equivalent to
                              /usr/include/Eigen instead of
                              /usr/include/eigen3/Eigen. This flag is there to
