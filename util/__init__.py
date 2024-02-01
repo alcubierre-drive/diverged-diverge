@@ -513,7 +513,7 @@ if not _libs["divERGe"] is None:
     model_init.restype = POINTER(model_t)
 
     read_W90 = _libs["divERGe"].get("diverge_read_W90_C", "cdecl")
-    read_W90.argtypes = [c_char_p,index_t,POINTER(index_t)]
+    read_W90.argtypes = [c_char_p,index_t,POINTER(index_t),POINTER(index_t)]
     read_W90.restype = c_void_p
     # Function: read_W90_PY
     # returns a numpy array of <rs_hopping_t> with the hoppings from W90 file
@@ -527,8 +527,9 @@ if not _libs["divERGe"] is None:
     #         one which increases memory slowly (negative) for fast (positive)
     def read_W90_PY( fname, nspin ):
         length = index_t()
+        n_orb = index_t(0)
         ptr = POINTER(rs_hopping_t)
-        ptr = read_W90( fname.encode('utf-8'), nspin, byref(length) )
+        ptr = read_W90( fname.encode('utf-8'), nspin, byref(length), byref(n_orb) )
         pts_ary = view_array( ptr, dtype=rs_hopping_t, shape=(np.array(length),) )
         pts_cpy = np.copy( pts_ary )
         mem_free( ptr )

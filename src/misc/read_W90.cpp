@@ -17,7 +17,7 @@ static void unravel(index_t no, index_t ns, index_t idx, index_t* o, index_t* s,
 }
 
 
-vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin ) {
+vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_t* n_orb_out ) {
     std::ifstream input(fname, std::ios::in);
     if(!(input.is_open())) {
         mpi_err_printf("failed to open W90 file at %s \n", fname)
@@ -114,11 +114,15 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin ) {
         i+=1;
     }
     input.close();
+
+    if (n_orb_out != NULL)
+        *n_orb_out = n_orb;
+
     return hop_elem;
 }
 
-rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len ) {
-    vector<rs_hopping_t> res = diverge_read_W90( fname, n_spin );
+rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len, index_t* n_orb ) {
+    vector<rs_hopping_t> res = diverge_read_W90( fname, n_spin, n_orb );
     *len = res.size();
     rs_hopping_t* result = (rs_hopping_t*)malloc(sizeof(rs_hopping_t)*res.size());
     memcpy( result, res.data(), sizeof(rs_hopping_t)*res.size() );

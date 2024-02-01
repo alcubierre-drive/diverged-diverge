@@ -26,6 +26,8 @@ typedef struct rs_hopping_t rs_hopping_t;
 //         one which increases memory slowly (negative) or fast (positive) in
 //         the W90 file. Note that the divERGe convention is always (s,o), i.e.
 //         spin indices increasing memory fast ('outer indices').
+// n_orb - output for the maximum number of orbitals that were found in the
+//         hr.dat file. not considered if NULL.
 //
 // Example:
 // ===C/C++===
@@ -37,7 +39,7 @@ typedef struct rs_hopping_t rs_hopping_t;
 //                                  0, &model->n_hop );
 // // do something with the hoppings here!
 // ===========
-rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len );
+rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len, index_t* n_orb );
 
 #ifdef __cplusplus
 } // extern "C"
@@ -45,5 +47,5 @@ rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* le
 // Function: diverge_read_W90
 // C++ function corresponding to <diverge_read_W90_C> that facilitates the usage
 // by returning an std::vector< <rs_hopping_t> > instead of messing with pointers.
-vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin );
+vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_t* n_orb );
 #endif
