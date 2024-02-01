@@ -1,3 +1,0 @@
-[submodule "performance/linalg.h"]
-	path = performance/linalg.h
-	url = https://github.com/alcubierre-drive/linalg.h.git

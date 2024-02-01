@@ -9,7 +9,8 @@
 
 #include <fftw3.h>
 #define LINALG_NO_LAPACKE
-#include "linalg.h/linalg.h"
+#define LINALG_EXPORT static inline
+#include <misc/linalg.h>
 LINALG_IMPLEMENT
 
 static const double tdd = 1.0,
