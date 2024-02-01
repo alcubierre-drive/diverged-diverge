@@ -69,9 +69,9 @@ supercell_t* supercell_gen( int* N1, int* N2, int* N3 ) {
         }
     }
 
-    for (int n1=n_lower[0]; n1<=n_upper[0]; ++n1)
-    for (int n2=n_lower[1]; n2<=n_upper[1]; ++n2)
-    for (int n3=n_lower[2]; n3<=n_upper[2]; ++n3) {
+    for (int n1=n_lower[0]-1; n1<=n_upper[0]+1; ++n1)
+    for (int n2=n_lower[1]-1; n2<=n_upper[1]+1; ++n2)
+    for (int n3=n_lower[2]-1; n3<=n_upper[2]+1; ++n3) {
         claV3i_t R = {{n1, n2, n3}};
         int RB1 = claV3i_dot( R, s->B1 ),
             RB2 = claV3i_dot( R, s->B2 ),
@@ -85,8 +85,11 @@ supercell_t* supercell_gen( int* N1, int* N2, int* N3 ) {
 }
 
 
-static inline int py_div(int a, int b) { return (a - (((a % b) + b) % b)) / b; }
-static inline int py_mod(int a, int b) { return ((a % b) + b) % b; }
+static inline index_t py_mod( index_t i, index_t n ) { return (n + (i % n)) % n; }
+static inline index_t py_div( index_t i, index_t n ) { return (i - py_mod(i,n))/n; }
+
+/* static inline int py_div(int a, int b) { return (a - (((a % b) + b) % b)) / b; } */
+/* static inline int py_mod(int a, int b) { return ((a % b) + b) % b; } */
 
 // maps unit cell lattice vector R to supercell s.
 // returning supercell lattice vector S and supercell index idx
@@ -129,6 +132,7 @@ void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
 
     index_t n_orb_mini = m->n_orb;
 
+    double pos_cpy[sizeof(m->positions)/24][3];
     // update positions
     for (index_t c=0; c<s->n_cells; ++c) {
         for (index_t i=0; i<n_orb_mini; ++i) {
@@ -136,9 +140,10 @@ void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
             pos = claV3d_add( pos, claV3d_scale( L1, s->cells[c].v[0] ) );
             pos = claV3d_add( pos, claV3d_scale( L2, s->cells[c].v[1] ) );
             pos = claV3d_add( pos, claV3d_scale( L3, s->cells[c].v[2] ) );
-            claV3d_rmap(pos, m->positions[IDX2(c, i, n_orb_mini)]);
+            claV3d_rmap(pos, pos_cpy[IDX2(c, i, n_orb_mini)]);
         }
     }
+    memcpy( m->positions[0], pos_cpy[0], sizeof(m->positions) );
 
     // update #orbs
     m->n_orb *= s->N;
