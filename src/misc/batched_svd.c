@@ -3,6 +3,7 @@
 #include "batched_svd.h"
 #include "batched_svd_private.h"
 #include "mpi_functions.h"
+#include <limits.h>
 
 #ifdef USE_CUDA
 #include <cuda_runtime.h>
