@@ -53,7 +53,9 @@ void* single_cusolver_thread( void* data ) {
     CUDA_CHECK( cudaSetDevice( cfg->dev ) );
     for (index_t ii=0; ii<cfg->n_indices; ++ii) {
         index_t i = cfg->indices[ii];
-        transpose_memcpy_128( cfg->dA, cfg->A + i*POW2(cfg->dim), cfg->dim );
+        // TODO do we actually need to do this??
+        if (!cfg->do_eigen) transpose_memcpy_128( cfg->dA, cfg->A + i*POW2(cfg->dim), cfg->dim );
+        else                memcpy( cfg->dA, cfg->A + i*POW2(cfg->dim), sizeof(complex128_t)*POW2(cfg->dim) );
         CUDA_CHECK( cudaMemPrefetchAsync( cfg->dA, sizeof(complex128_t)*POW2(cfg->dim), cfg->dev, cfg->stream ) );
         CUDA_CHECK( cudaStreamSynchronize( cfg->stream ) );
 

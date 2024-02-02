@@ -28,7 +28,7 @@ void* batched_svd_cpu( void* data ) {
 
         Map<VecXd> S(cfg->S + cfg->dim*i, cfg->dim);
 
-        if (cfg->do_eigen) eig->compute( A ); // no transpose here to be consistent
+        if (cfg->do_eigen) eig->compute( A.transpose() );
         else               svd->compute( A.transpose() ); // Row/Column
 
         if (cfg->U != NULL) {
