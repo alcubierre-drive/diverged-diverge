@@ -29,6 +29,7 @@ struct internals_t {
     double mu;
 
     bool ignore_eigensolver_in_common;
+    bool use_batched_svd_algo_in_common;
 
     // for the flow step to automatically detect the method.
     // DEVELOPERS must set this in their diverge_model_internals_BACKEND to the

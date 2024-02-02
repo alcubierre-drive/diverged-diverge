@@ -149,6 +149,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("model_internals_eigensolve_ignore") {
         m->internals->ignore_eigensolver_in_common = 1;
     }
+    CHECKKEY("model_internals_eigensolve_svd_algo") {
+        m->internals->use_batched_svd_algo_in_common = 1;
+    }
 
     if (key_) {
         if (key_set) {

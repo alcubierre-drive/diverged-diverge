@@ -6,11 +6,13 @@
 #include "diverge_momentum_gen.h"
 #include "diverge_symmetrize.h"
 #include "misc/batched_eigen.h"
+#include "misc/batched_svd.h"
 #include "misc/mpi_functions.h"
 #include "diverge_flow_type.h"
 #include "misc/shared_mem.h"
 
 #include <stdarg.h>
+#include <limits.h>
 
 void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... ) {
     diverge_flow_type t = diverge_flow_type_fromstr( mode );
@@ -157,7 +159,12 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         mpi_vrb_printf("diagonalizing hamiltonian\n");
         if (shared_exclusive_enter( intls->U ) == 1) {
             memcpy( intls->U, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
-            batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
+            if (!intls->use_batched_svd_algo_in_common)
+                batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
+            else {
+                mpi_vrb_printf( "doing eigensolution via the SVD module\n" );
+                batched_svd( NULL, INT_MIN, intls->ham, intls->U, NULL, intls->E, nb, nktot );
+            }
         }
         shared_exclusive_wait( intls->U );
     }

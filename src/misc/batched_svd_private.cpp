@@ -28,12 +28,15 @@ void* batched_svd_cpu( void* data ) {
 
         Map<VecXd> S(cfg->S + cfg->dim*i, cfg->dim);
 
-        if (cfg->do_eigen) eig->compute( A.transpose() );
+        if (cfg->do_eigen) eig->compute( A ); // no transpose here to be consistent
         else               svd->compute( A.transpose() ); // Row/Column
 
         if (cfg->U != NULL) {
             Map<MatXcd> U(cfg->U + POW2(cfg->dim)*i, cfg->dim, cfg->dim);
-            U = cfg->do_eigen ? eig->eigenvectors().transpose() : svd->matrixU().transpose();
+            if (!cfg->do_eigen)
+                U = svd->matrixU().transpose();
+            else
+                U = eig->eigenvectors(); // no transpose here to be consistent
         }
         if (cfg->V != NULL) {
             Map<MatXcd> V(cfg->V + POW2(cfg->dim)*i, cfg->dim, cfg->dim);
