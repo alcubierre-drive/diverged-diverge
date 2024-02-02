@@ -30,6 +30,8 @@ struct batched_svd_cfg_t {
 
     index_t dim;
     index_t cnt;
+
+    int do_eigen;
 };
 
 void* batched_svd_gpu( void* data );

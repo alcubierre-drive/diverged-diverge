@@ -173,8 +173,8 @@ void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
 
             memcpy( Hnew, H, sizeof(rs_hopping_t) );
             for (int i=0; i<3; ++i) Hnew->R[i] = R.v[i];
-            Hnew->o1 += n_orb_mini * c;
-            Hnew->o2 += n_orb_mini * r;
+            Hnew->o1 += n_orb_mini * r;
+            Hnew->o2 += n_orb_mini * c;
         }
     }
     free(m->hop);

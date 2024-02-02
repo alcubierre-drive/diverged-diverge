@@ -26,6 +26,7 @@ struct single_cusolver_solution_t {
     cusolverDnHandle_t handle;
     cudaStream_t stream;
     int dev;
+    int do_eigen;
 
     cuDoubleComplex *dA, *dU, *dV;
     double *dS;
@@ -58,16 +59,24 @@ void* single_cusolver_thread( void* data ) {
 
         // those are exclusive
         sem_wait( cfg->sem );
-        CUSOLVER_CHECK( cusolverDnXgesvd( cfg->handle, NULL, 'A', 'A',
+        if (!cfg->do_eigen) {
+            CUSOLVER_CHECK( cusolverDnXgesvd( cfg->handle, NULL, 'A', 'A',
                     cfg->dim, cfg->dim, CUDA_C_64F, cfg->dA, cfg->dim, CUDA_R_64F,
                     cfg->dS, CUDA_C_64F, cfg->dU, cfg->dim, CUDA_C_64F,
                     cfg->dV, cfg->dim, CUDA_C_64F, cfg->dwork, cfg->nbytes_dwork,
                     cfg->work, cfg->nbytes_work, cfg->dinfo) );
+        } else {
+            CUSOLVER_CHECK( cusolverDnXsyevd( cfg->handle, NULL,
+                        CUSOLVER_EIG_MODE_VECTOR, CUBLAS_FILL_MODE_UPPER,
+                        cfg->dim, CUDA_C_64F, cfg->dA, cfg->dim, CUDA_R_64F,
+                        cfg->dS, CUDA_C_64F, cfg->dwork, cfg->nbytes_dwork,
+                        cfg->work, cfg->nbytes_work, cfg->dinfo ) );
+        }
         CUDA_CHECK( cudaStreamSynchronize( cfg->stream ) );
         sem_post( cfg->sem );
 
         if (cfg->U)
-            transpose_memcpy_128( cfg->U + i*POW2(cfg->dim), cfg->dU, cfg->dim );
+            transpose_memcpy_128( cfg->U + i*POW2(cfg->dim), cfg->do_eigen ? cfg->dA : cfg->dU, cfg->dim );
         if (cfg->V)
             memcpy( cfg->V + i*POW2(cfg->dim), cfg->dV, sizeof(complex128_t)*POW2(cfg->dim) );
         memcpy( cfg->S + i*cfg->dim, cfg->dS, sizeof(double)*cfg->dim );
@@ -98,20 +107,28 @@ void* batched_svd_gpu( void* data ) {
         CUDA_CHECK( cudaMallocManaged( (void**)&sol[i].dS, sz_vec, cudaMemAttachGlobal ) );
         sol[i].A = cfg->A;
         sol[i].U = cfg->U;
-        sol[i].V = cfg->V;
+        sol[i].V = cfg->do_eigen ? NULL : cfg->V;
         sol[i].S = cfg->S;
         sol[i].dim = cfg->dim;
         sol[i].dev = dev;
         sol[i].sem = &sol_sem;
         sol[i].indices = malloc(sizeof(index_t) * cfg->cnt);
         sol[i].n_indices = 0;
+        sol[i].do_eigen = cfg->do_eigen;
         CUSOLVER_CHECK( cusolverDnCreate( &sol[i].handle ) );
         CUSOLVER_CHECK( cusolverDnGetStream( sol[i].handle, &sol[i].stream ) );
 
-        CUSOLVER_CHECK( cusolverDnXgesvd_bufferSize( sol[i].handle, NULL, 'A', 'A',
-                cfg->dim, cfg->dim, CUDA_C_64F, sol[i].dA, cfg->dim, CUDA_R_64F,
-                sol[i].dS, CUDA_C_64F, sol[i].dU, cfg->dim, CUDA_C_64F,
-                sol[i].dV, cfg->dim, CUDA_C_64F, &sol[i].nbytes_dwork, &sol[i].nbytes_work ) );
+        if (!sol[i].do_eigen) {
+            CUSOLVER_CHECK( cusolverDnXgesvd_bufferSize( sol[i].handle, NULL, 'A', 'A',
+                    cfg->dim, cfg->dim, CUDA_C_64F, sol[i].dA, cfg->dim, CUDA_R_64F,
+                    sol[i].dS, CUDA_C_64F, sol[i].dU, cfg->dim, CUDA_C_64F,
+                    sol[i].dV, cfg->dim, CUDA_C_64F, &sol[i].nbytes_dwork, &sol[i].nbytes_work ) );
+        } else {
+            CUSOLVER_CHECK( cusolverDnXsyevd_bufferSize( sol[i].handle, NULL,
+                    CUSOLVER_EIG_MODE_VECTOR, CUBLAS_FILL_MODE_UPPER, cfg->dim,
+                    CUDA_C_64F, sol[i].dA, cfg->dim, CUDA_R_64F, sol[i].dS,
+                    CUDA_C_64F, &sol[i].nbytes_dwork, &sol[i].nbytes_work ) );
+        }
 
         CUDA_CHECK( cudaMalloc( (void**)&sol[i].dinfo, sizeof(int) ) );
         CUDA_CHECK( cudaMalloc( &sol[i].dwork, sol[i].nbytes_dwork ) );

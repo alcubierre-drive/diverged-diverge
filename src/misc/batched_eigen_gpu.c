@@ -67,12 +67,12 @@ void* batched_eigen_gpu( void* data ) {
             CUDA_CHECK( cudaStreamSynchronize( stream ) );
             memcpy( cfg->H + N_per_run*run*cfg->n*cfg->n, H, sizeof(cuDoubleComplex)*cfg->n*cfg->n*N_this_run );
 
-            #ifndef SKIP_BATCHED_EIGEN_GPU_CONJ
-            for (index_t nij=0; nij<cfg->n*cfg->n*N_this_run; ++nij) {
-                complex128_t* Hstart = cfg->H + N_per_run*run*cfg->n*cfg->n;
-                Hstart[nij] = conj(Hstart[nij]);
-            }
-            #endif // SKIP_BATCHED_EIGEN_GPU_CONJ
+            /* #ifndef SKIP_BATCHED_EIGEN_GPU_CONJ */
+            /* for (index_t nij=0; nij<cfg->n*cfg->n*N_this_run; ++nij) { */
+            /*     complex128_t* Hstart = cfg->H + N_per_run*run*cfg->n*cfg->n; */
+            /*     Hstart[nij] = conj(Hstart[nij]); */
+            /* } */
+            /* #endif // SKIP_BATCHED_EIGEN_GPU_CONJ */
 
             if (cfg->Er == NULL) {
                 for (index_t i=0; i<N_this_run*cfg->n; ++i)

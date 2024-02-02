@@ -21,6 +21,11 @@ void batched_svd( int* dev, int n_dev, complex128_t* A, complex128_t* U,
     batched_svd_cfg_t cfg_parent = { .idx=-1, .A=A, .U=U, .V=V, .S=S, .dim=dim, .cnt=cnt };
     int use_gpu_fun = 0;
 
+    if (n_dev == INT_MIN) {
+        cfg_parent.do_eigen = 1;
+        n_dev = -1;
+    }
+
     // default (CPU) setup
     cfg_parent.n_dev = MIN(diverge_omp_num_threads(), BATCHED_SVD_THREAD_CNT_MAX);
     for (int d=0; d<cfg_parent.n_dev; ++d)
