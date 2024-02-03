@@ -44,8 +44,10 @@ void diverge_model_free(diverge_model_t* model) {
 
     if (model->data_destructor)
         (*model->data_destructor)(model->data);
-    else
+    else if (model->nbytes_data > 0)
         free(model->data);
+    else if (model->data)
+        mpi_log_printf( "data ptr set but not free'd (nbytes_data == 0)\n" );
 
     free(model->hop);
     free(model->vert);
