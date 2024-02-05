@@ -5,6 +5,7 @@
 #include "../misc/batched_eigen.h"
 #include "../misc/init_internal_libs.h"
 #include <iostream>
+#include "../misc/shared_mem.h"
 
 // this function is needed for the C MPI kernel
 extern "C" void tu_loop_reconstruct_from_reduced( void* handle, complex128_t* loop ) {
@@ -82,7 +83,12 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
         GF_fft_conj_plus = (complex128_t*)(gf_buf + nktot*POW2(n_spin*n_orb));
     }
     if(cFRG_loop) {
-        gf_buf_cfrg = (gf_complex_t*)calloc(2*nktot*POW2(n_spin*n_orb),sizeof(gf_complex_t));
+        if (model->internals->greens_shared) {
+            gf_buf_cfrg = (gf_complex_t*)shared_calloc(2*nktot*POW2(n_spin*n_orb),sizeof(gf_complex_t));
+            mpi_wrn_printf("enabled shared GF for cFRG TU loop\n");
+        } else {
+            gf_buf_cfrg = (gf_complex_t*)calloc(2*nktot*POW2(n_spin*n_orb),sizeof(gf_complex_t));
+        }
         if (do_GF_fft_allocs) {
             cFRG_GF_fft_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
             cFRG_GF_fft_conj_plus = (complex128_t*)fftw_alloc_complex(nktot* POW2(n_spin*n_orb));
@@ -353,7 +359,12 @@ tu_loop_t::~tu_loop_t() {
         fftw_free(GF_fft_conj_plus);
     }
     if(cFRG_loop) {
-        free(gf_buf_cfrg);
+
+        if (model->internals->greens_shared)
+            shared_free(gf_buf_cfrg);
+        else
+            free(gf_buf_cfrg);
+
         if (do_GF_fft_allocs) {
             fftw_free(cFRG_GF_fft_plus);
             fftw_free(cFRG_GF_fft_conj_plus);
@@ -380,6 +391,8 @@ void tu_loop_t::GF_zero_T_any( greensfunc_generator_t gf, complex128_t lambda, c
     if (res != greensfunc_op_cpu) mpi_err_printf( "GPU GFs not supported\n" );
     index_t nb = n_spin*n_orb;
     index_t nb2 = POW2(n_spin*n_orb);
+    // TODO this is broken for shared_mem GF. Since it's a hack only, what the
+    // heck? Or should we fix it?
 
     typedef Matrix<gf_complex_t,-1,-1> MatXgfct;
     if (self_energy != nullptr) {
