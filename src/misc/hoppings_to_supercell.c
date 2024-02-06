@@ -28,12 +28,12 @@ static inline claV3i_t claV3i_cross( claV3i_t a, claV3i_t b ) {
     return c;
 }
 
-void supercell_del( supercell_t* s ) {
+static void supercell_del( supercell_t* s ) {
     free( s->cells );
     free( s );
 }
 
-supercell_t* supercell_gen( int* N1, int* N2, int* N3 ) {
+static supercell_t* supercell_gen( int* N1, int* N2, int* N3 ) {
     supercell_t* s = calloc(1, sizeof(supercell_t));
     s->N1 = claV3i_map( N1 );
     s->N2 = claV3i_map( N2 );
@@ -84,16 +84,12 @@ supercell_t* supercell_gen( int* N1, int* N2, int* N3 ) {
     return s;
 }
 
-
 static inline index_t py_mod( index_t i, index_t n ) { return (n + (i % n)) % n; }
 static inline index_t py_div( index_t i, index_t n ) { return (i - py_mod(i,n))/n; }
 
-/* static inline int py_div(int a, int b) { return (a - (((a % b) + b) % b)) / b; } */
-/* static inline int py_mod(int a, int b) { return ((a % b) + b) % b; } */
-
 // maps unit cell lattice vector R to supercell s.
 // returning supercell lattice vector S and supercell index idx
-void supercell_map( supercell_t* s, claV3i_t R, claV3i_t* S, index_t* idx ) {
+static void supercell_map( supercell_t* s, claV3i_t R, claV3i_t* S, index_t* idx ) {
     int RB1 = claV3i_dot(R,s->B1), RB2 = claV3i_dot(R,s->B2), RB3 = claV3i_dot(R,s->B3);
     int R1 = py_div(RB1, s->N), r1 = py_mod(RB1, s->N);
     int R2 = py_div(RB2, s->N), r2 = py_mod(RB2, s->N);
@@ -117,6 +113,11 @@ void supercell_map( supercell_t* s, claV3i_t R, claV3i_t* S, index_t* idx ) {
 
 void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
     assert(m->hop != NULL || m->n_hop == 0);
+
+    if (N2 == NULL && N3 == NULL) {
+        rs_hopping_to_supercell( m, N1 );
+        return;
+    }
 
     supercell_t* s = supercell_gen( N1, N2, N3 );
 

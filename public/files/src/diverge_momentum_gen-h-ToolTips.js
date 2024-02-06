@@ -1,1 +1,1 @@
-﻿NDContentPage.OnToolTipsLoaded({278:"<div class=\"NDToolTip TType LC\"><div class=\"TTSummary\">64bit signed integer</div></div>"});
+﻿NDContentPage.OnToolTipsLoaded({177:"<div class=\"NDToolTip TType LC\"><div class=\"TTSummary\">64bit signed integer</div></div>"});

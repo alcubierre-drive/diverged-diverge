@@ -22,6 +22,9 @@ void rs_hopping_to_supercell( diverge_model_t* m, int* nr );
 //
 // modify model accordingly; operate on hopping parameters, lattice, orbitals,
 // and positions; leave anything else as-is.
+//
+// In case N2 == N3 == NULL, make call to <rs_hopping_to_supercell> with N1 as
+// nr.
 void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 );
 
 #ifdef __cplusplus
