@@ -132,6 +132,7 @@ vector<double> FlowStep::operator()( double Lambda, double dLambda ) {
         if (_D) Dmax = _get_dv( 'D', Lambda, dLambda );
         result.push_back(Pmax);
         result.push_back(Dmax);
+        result.push_back(Dmax);
     }
 
     for (fluctutaions_t& fluc: _remove_fluctuations) {
