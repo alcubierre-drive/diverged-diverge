@@ -105,12 +105,13 @@ void VertexMemory::init_from_qbuf( const complex128_t* qbuf_in, char chan_in, in
                     case 'D': s1 = SA; s2 = SD; s3 = SB; s4 = SC; break;
                     default: break;
                 }
-                complex128_t vadd = qbuf_in[IDX7( qq, SA, SB, OA, SC, SD, OB, ns, ns, no, ns, ns, no )];
+                index_t qbuf_in_idx = IDX7( qq, SA, SB, OA, SC, SD, OB, ns, ns, no, ns, ns, no );
                 index_t b1 = IDX2(s1, o1, no),
                         b2 = IDX2(s2, o2, no),
                         b3 = IDX2(s3, o3, no),
                         b4 = IDX2(s4, o4, no);
-                atomic_add( vbuf_in + IDX7( k1i, k2, k3, b1, b2, b3, b4, _nk, _nk, _nb, _nb, _nb, _nb ), &vadd );
+                index_t vbuf_in_idx = IDX7( k1i, k2, k3, b1, b2, b3, b4, _nk, _nk, _nb, _nb, _nb, _nb );
+                atomic_add( vbuf_in + vbuf_in_idx, qbuf_in + qbuf_in_idx );
             }
         }
     }

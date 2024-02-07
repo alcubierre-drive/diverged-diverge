@@ -217,7 +217,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
         complex128_t* qbuf_in = (complex128_t*)calloc(sizeof(complex128_t), intls->grid_nk * POW2(ns*ns*no));
         for (char chan : {'C', 'P', 'D'}) {
             memset( (void*)qbuf_in, 0, sizeof(complex128_t)*intls->grid_nk * POW2(ns*ns*no) );
-            if ((*(model->vfill))( model, chan, (complex128_t*)qbuf_in ))
+            if ((*(model->vfill))( model, chan, qbuf_in ))
                 V->init_from_qbuf( qbuf_in, chan, ns );
         }
         free(qbuf_in);
