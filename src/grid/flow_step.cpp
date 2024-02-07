@@ -103,6 +103,13 @@ FlowStep::FlowStep( VertexMemory* V, Loops* L, LoopSymmetrizer* LS, bool P, bool
 
     if (_SU2) {
         _norms[2] *= -2.0;
+        if (V->was_sub_D_modified()) {
+            array<bool,3> subD = V->get_sub_D();
+            if (!subD[0]) _norms[2] = 0;
+            if (!subD[1]) _norms[3] = 0;
+            if (!subD[2]) _norms[4] = 0;
+            mpi_log_printf( "enabled D channel diagrams: RPA(%i) VC1(%i) VC2(%i)\n", subD[0], subD[1], subD[2] );
+        }
     } else {
         if (C != D)
             mpi_err_printf( "non-SU2 only uses D *and* C\n" );

@@ -147,6 +147,7 @@ void npatch_flow_step_set_sub_D( bool D1, bool D2, bool D3 ) {
     h_flow_use_D1 = D1;
     h_flow_use_D2 = D2;
     h_flow_use_D3 = D3;
+    mpi_log_printf( "enabled D channel diagrams: RPA(%i) VC1(%i) VC2(%i)\n", D1, D2, D3 );
 }
 
 void npatch_setup_query( const char* property, void** data, index_t* psize ) {

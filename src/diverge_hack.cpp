@@ -107,9 +107,15 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         npatch_flow_step_set_ignore_exchange_nonSU2( atoi(val) );
     }
     CHECKKEY("npatch_set_sub_D") {
-        int ivec[3];
+        int ivec[3] = {0};
         parse_vector_int( ivec, 3, val );
         npatch_flow_step_set_sub_D( ivec[0], ivec[1], ivec[2] );
+    }
+    CHECKKEY("grid_set_sub_D") {
+        int ivec[3] = {0};
+        parse_vector_int( ivec, 3, val );
+        grid::VertexMemory* V = (grid::VertexMemory*)INTERNALS->grid_vertex;
+        if (V) V->set_sub_D( ivec );
     }
     CHECKKEY("npatch_vertex_resym") {
         npatch_flow_step_set_vertex_resym( atoi(val) );

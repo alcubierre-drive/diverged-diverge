@@ -42,6 +42,11 @@ class VertexMemory {
         bool get_SU2(void) const { return _SU2; }
         index_t get_size(void) const { return _size; }
 
+        // enable/disable the D channel diagrams one by one
+        void set_sub_D( int which[3] ) { _was_sub_D_modified = true; for (int i=0; i<3; ++i) _sub_D[i] = which[i]; }
+        bool was_sub_D_modified(void) const { return _was_sub_D_modified; }
+        array<bool,3> get_sub_D(void) const { return _sub_D; }
+
         void overwrite_transform( int send, int recv, string new_name );
 
         // additional buffer may be NULL. In this case, buf_in is overwritten
@@ -89,6 +94,9 @@ class VertexMemory {
         array<string,num_maps> send_recv_descr;
         complex128_t* send_pack;
         complex128_t* recv_pack;
+
+        bool _was_sub_D_modified = false;
+        array<bool,3> _sub_D;
 };
 
 }
