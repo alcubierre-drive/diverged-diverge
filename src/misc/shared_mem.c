@@ -1,4 +1,4 @@
-/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 // TODO(LK) append an interface to this MPI shared memory to the memory pool
 

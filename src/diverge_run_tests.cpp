@@ -1,4 +1,4 @@
-/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "diverge_run_tests.h"
 #include "misc/compilation_status.h"
