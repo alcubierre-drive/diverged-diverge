@@ -50,8 +50,19 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz );
 //
 // Parameters:
 //  model - <diverge_model_t> instance
-//  max_dist - distance up to which formfactors should be included.
+//  max_dist - distance up to which formfactors should be included. If the
+//             return value of <diverge_max_dist_iobi> is passed (a special
+//             'nan'), formfactors that adhere to the IOBI approximation are
+//             generated.
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
+
+#define IOBI_FORMFACTOR_MAGIC_NUMBER 0
+// Function: diverge_max_dist_iobi
+// return magic value for formfactor setup (max_dist value in
+// <diverge_model_internals_tu>) of TUFRG such that only on-site intraorbital
+// formfactors are generated (IOBI approximation). Uses quiet nan payload, i.e.,
+// returns 'nan'. Might break if non-IEEE floating point numbers are in use.
+double diverge_max_dist_iobi( void );
 
 // Function: diverge_model_internals_reset
 // Reset all internal structures of the model and free their resources. Does not
