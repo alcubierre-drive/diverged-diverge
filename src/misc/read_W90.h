@@ -36,7 +36,7 @@ typedef struct rs_hopping_t rs_hopping_t;
 // model->SU2 = 1;
 // model->n_spin = 1;
 // model->hop = diverge_read_W90_C( "/path/to/material_hr.dat",
-//                                  0, &model->n_hop );
+//                                  0, &model->n_hop, NULL );
 // // do something with the hoppings here!
 // ===========
 rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len, index_t* n_orb );
