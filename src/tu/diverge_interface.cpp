@@ -5,6 +5,7 @@
 #include <cassert>
 #include <set>
 #include <map>
+#include <cmath>
 
 #include "../misc/qnan.h"
 #include "../diverge_model_internals.h"
@@ -164,7 +165,7 @@ void init_bond_descriptor(diverge_model_t* model) {
 void init_ff_struct(const double max_dist, diverge_model_t* model) {
 
     bool iobi_setup = false;
-    if (isnan(max_dist) && model->n_tu_ff == 0) {
+    if (qnan_isnan(max_dist) && model->n_tu_ff == 0) {
         uint32_t payload = qnan_get(max_dist);
         mpi_vrb_printf( "found NAN for max_dist, read payload '%u'\n", payload );
         if (payload == IOBI_FORMFACTOR_MAGIC_NUMBER) {

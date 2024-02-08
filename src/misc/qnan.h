@@ -11,6 +11,7 @@ extern "C" {
 
 double qnan_gen( uint32_t payload );
 uint32_t qnan_get( double qnan );
+int qnan_isnan( double qnan );
 
 #ifdef __cplusplus
 }
