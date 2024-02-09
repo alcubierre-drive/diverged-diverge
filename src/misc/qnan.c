@@ -1,52 +1,28 @@
 /* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "qnan.h"
-#include <math.h>
 #include <string.h>
 
-#ifndef NAN
+static const uint64_t NAN_MASK = 0xFFFF000000000000;
+static const uint32_t NOT_A_NAN = 0xFFFFFFFF;
 
-double qnan_gen( uint32_t payload_ ) {
-    (void)payload_;
-    double res;
-    memset( &res, 0xFF, sizeof(double) );
-    return res;
-}
-uint32_t qnan_get( double nan_ ) {
-    (void)nan_;
-    return 0;
-}
 int qnan_isnan( double qnan ) {
-    (void)qnan;
-    return 0;
+    uint64_t unan = 0;
+    memcpy( &unan, &qnan, sizeof(unan) );
+    return ((unan & NAN_MASK) == NAN_MASK);
 }
 
-#else // NAN
-
-static const uint64_t NAN_MASK =     0xFFFF000000000000;
-static const uint64_t PAYLOAD_MASK = 0x00000000FFFFFFFF;
-
-typedef union {
-    uint64_t i;
-    double d;
-} double_u;
-
-double qnan_gen( uint32_t payload_ ) {
-    uint64_t payload = payload_;
-    double_u unan = {.i = NAN_MASK};
-    unan.i |= PAYLOAD_MASK & payload;
-    return unan.d;
+double qnan_gen( uint32_t payload ) {
+    double result = 0;
+    memcpy( &result, &NAN_MASK, sizeof(NAN_MASK) );
+    memcpy( &result, &payload, sizeof(payload) );
+    return result;
 }
 
-uint32_t qnan_get( double nan_ ) {
-    double_u unan = {.d = nan_};
-    uint64_t payload = (unan.i & PAYLOAD_MASK);
-    return payload;
+uint32_t qnan_get( double qnan ) {
+    if (!qnan_isnan( qnan ))
+        return NOT_A_NAN;
+    uint32_t result = 0;
+    memcpy( &result, &qnan, sizeof(result) );
+    return result;
 }
-
-int qnan_isnan( double nan_ ) {
-    double_u qnan = {.d = nan_};
-    return ((qnan.i & NAN_MASK) == NAN_MASK);
-}
-
-#endif // NAN
