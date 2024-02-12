@@ -40,12 +40,11 @@ tu_postproduction::tu_postproduction(const diverge_model_t* mod, Vertex* Vertexi
         Ptype = (char*)calloc(vertex->my_nk,sizeof(char));
         Ctype = (char*)calloc(vertex->my_nk,sizeof(char));
         Dtype = (char*)calloc(vertex->my_nk,sizeof(char));
-        // TODO(@jp) is this n_orb * n_bonds a bug?
-        Pvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)
+        Pvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orbff)
                 *vertex->my_nk,sizeof(complex128_t));
-        Cvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)
+        Cvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orbff)
                 *vertex->my_nk,sizeof(complex128_t));
-        Dvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orb*vertex->n_bonds)
+        Dvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orbff)
                 *vertex->my_nk,sizeof(complex128_t));
 
         lenP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
@@ -113,34 +112,38 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
 
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
     double* _val = (double*)malloc(linsize*sizeof(double));
-    complex128_t* _vec = (complex128_t*)malloc(POW2(linsize)*sizeof(complex128_t));
+    complex128_t* _vec = (complex128_t*)malloc(POW2(linsize) * sizeof(complex128_t));
     index_t n_spin = vertex->n_spin;
 
     double* allval = NULL;
     if (algo == 'b' || algo == 'B') {
+        _vec = (complex128_t*)realloc(_vec, POW2(linsize) * vertex->my_nk * sizeof(complex128_t));
         allval = (double*) calloc(linsize*vertex->my_nk, sizeof(double));
+        memcpy(_vec, channel, sizeof(complex128_t)*POW2(linsize) * vertex->my_nk);
         if (algo == 'b')
-            batched_eigen_r( NULL, -2, channel, allval, linsize, vertex->my_nk );
+            batched_eigen_r( NULL, -2, _vec, allval, linsize, vertex->my_nk );
         else
-            batched_svd( NULL, -1, channel, channel, NULL, allval, linsize, vertex->my_nk );
+            batched_svd( NULL, -1, _vec, _vec, NULL, allval, linsize, vertex->my_nk );
     }
-    index_t wrong_algo_count = 0;
 
     for (index_t q = 0; q < vertex->my_nk;++q) {
         if (q > 0) off[q] = off[q-1] + len[q-1];
-        memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
-        bool hermitian = check_hermicity(_vec,linsize);
-        if (algo == 'e' || (algo == 'a' && hermitian)) {
-            eigen_solve( NULL, _vec, _val, linsize);
-            type[q] = 'e';
-        } else if (algo == 's') {
-            singular_value_decomp( NULL, _vec, vertex->bubble_helper, _val, linsize);
-            type[q] = 's';
-        } else if (allval) {
+        index_t q_off = 0;
+
+        if (allval) {
             type[q] = algo;
+            q_off = q*linsize*linsize;
             memcpy(_val, allval+q*linsize, sizeof(double)*linsize);
         } else {
-            wrong_algo_count++;
+            memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
+            bool hermitian = check_hermicity(_vec,linsize);
+            if (algo == 'e' || (algo == 'a' && hermitian)) {
+                eigen_solve( NULL, _vec, _val, linsize);
+                type[q] = 'e';
+            } else if (algo == 's' || (algo == 'a' && !hermitian)) {
+                singular_value_decomp( NULL, _vec, vertex->bubble_helper, _val, linsize);
+                type[q] = 's';
+            }
         }
         vector<double> vals;
         vector<index_t> idx;
@@ -173,13 +176,11 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
             for(uindex_t j = 0; j<idx.size();++j)
             for(index_t o1 = 0; o1<vertex->n_orbff;++o1) {
                 vec[o1+vertex->n_orbff*(m1 + POW2(n_spin)*(j))+linsize*off[q]] =
-                        _vec[idx[j]+linsize*(o1+vertex->n_orbff*m1)];
+                        _vec[idx[j]+linsize*(o1+vertex->n_orbff*m1) + q_off];
             }
         }
     }
 
-    if (wrong_algo_count)
-        mpi_wrn_printf( "%li qpts have invalid TU vertex decomp algo\n", wrong_algo_count );
     free(_val);
     free(_vec);
     if (allval) free(allval);
