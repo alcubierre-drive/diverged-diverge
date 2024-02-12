@@ -1,11 +1,11 @@
-/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "license.h"
 #include "mpi_log.h"
 
 static const char license_info[] =
 "divERGe implements various ERG examples\n"
-"Copyright (C) 2023 J.B.Hauck, L.Klebl\n"
+"Copyright (C) 2024 J.B.Profe, L.Klebl\n"
 "\n"
 "This program is free software: you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"

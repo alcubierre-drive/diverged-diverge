@@ -1,11 +1,13 @@
-/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "diverge_interface.hpp"
 #include <fstream>
 #include <cassert>
 #include <set>
 #include <map>
+#include <cmath>
 
+#include "../misc/qnan.h"
 #include "../diverge_model_internals.h"
 #include "../misc/cmath_helpers.h"
 
@@ -34,6 +36,7 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
     info->propagator_extra_cpu_timings = false;
     model->internals->tu_data = (void*) info;
     model->internals->tu_data_destructor = tu_data_destructor;
+
     init_ff_struct(max_dist, model);
     generate_reduced_loop_maps(model);
     init_symmetries(model);
@@ -160,13 +163,36 @@ void init_bond_descriptor(diverge_model_t* model) {
 
 
 void init_ff_struct(const double max_dist, diverge_model_t* model) {
-    if(model->n_tu_ff != 0) {
-        mpi_wrn_printf("do not autogenerate bonds (user orbff)\n");
+
+    bool iobi_setup = false;
+    if (qnan_isnan(max_dist) && model->n_tu_ff == 0) {
+        uint32_t payload = qnan_get(max_dist);
+        mpi_vrb_printf( "found NAN for max_dist, read payload '%u'\n", payload );
+        if (payload == IOBI_FORMFACTOR_MAGIC_NUMBER) {
+            mpi_log_printf( "dispatching to IOBI FRG\n" );
+            iobi_setup = true;
+        } else {
+            mpi_err_printf( "invalid payload '%u', anyways doing IOBI\n", payload );
+            // we could do different special cases here
+            iobi_setup = true;
+        }
+        if (iobi_setup) {
+            model->n_tu_ff = model->n_orb;
+            model->tu_ff = (tu_formfactor_t*) calloc(model->n_tu_ff, sizeof(tu_formfactor_t));
+            for (index_t f=0; f<model->n_tu_ff; ++f)
+                model->tu_ff[f].ofrom = model->tu_ff[f].oto = f;
+        }
+    }
+
+    if (model->n_tu_ff != 0) {
+        if (!iobi_setup)
+            mpi_wrn_printf("do not autogenerate bonds (user orbff)\n");
         sort_ff_struct(model->tu_ff, model->n_tu_ff);
         fill_existing_ff(model);
         init_bond_descriptor(model);
-        return ;
+        return;
     }
+
     mpi_vrb_printf("autogenerate bonds (orbff)\n");
     int periodic_iter[3];
     periodic_iter[0] = model->internals->periodic_direction[0] ? 3:0;

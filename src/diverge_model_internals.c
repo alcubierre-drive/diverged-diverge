@@ -1,4 +1,4 @@
-/* Copyright (C) 2023 Jonas B. Hauck, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "diverge_model_internals.h"
 
@@ -10,9 +10,14 @@
 #include "misc/mpi_functions.h"
 #include "diverge_flow_type.h"
 #include "misc/shared_mem.h"
+#include "misc/qnan.h"
 
 #include <stdarg.h>
 #include <limits.h>
+
+double diverge_max_dist_iobi( void ) {
+    return qnan_gen( IOBI_FORMFACTOR_MAGIC_NUMBER );
+}
 
 void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... ) {
     diverge_flow_type t = diverge_flow_type_fromstr( mode );

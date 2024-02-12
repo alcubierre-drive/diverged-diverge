@@ -1,1 +1,1 @@
-﻿NDFramePage.OnPageTitleLoaded("PythonClass:diverge_model","diverge_model");NDSummary.OnSummaryLoaded("PythonClass:diverge_model",[["Python","Python"]],[["Classes","Class"]],[[315,0,0,"diverge_model"]]);
+﻿NDFramePage.OnPageTitleLoaded("PythonClass:diverge_model","diverge_model");NDSummary.OnSummaryLoaded("PythonClass:diverge_model",[["Python","Python"]],[["Classes","Class"]],[[316,0,0,"diverge_model"]]);

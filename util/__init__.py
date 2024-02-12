@@ -589,6 +589,10 @@ if not _libs["divERGe"] is None:
     model_internals_reset.argtypes = [POINTER(model_t)]
     model_internals_reset.restype = None
 
+    max_dist_iobi = _libs["divERGe"].get("diverge_max_dist_iobi", "cdecl")
+    max_dist_iobi.argtypes = None
+    max_dist_iobi.restype = c_double
+
     model_internals_tu = _libs["divERGe"].get("diverge_model_internals_tu", "cdecl")
     model_internals_tu.argtypes = [POINTER(model_t), c_double]
     model_internals_tu.restype = None

@@ -8,6 +8,7 @@ import diverge.output as ro
 import matplotlib.pyplot as plt
 
 diverge.init(None, None)
+diverge.mpi_loglevel_set(6)
 diverge.compilation_status()
 model = diverge.model_init()
 model.contents.name = b'honeycomb_p_wave'
@@ -82,7 +83,7 @@ model.contents.n_ibz_path = ibz_path.shape[0]
 if diverge.model_validate( model ):
     diverge.mpi_py_eprint("invalid model")
 diverge.model_internals_common( model )
-diverge.model_internals_tu( model, 0.1 )
+diverge.model_internals_tu( model, diverge.max_dist_iobi() )
 checksum = diverge.model_to_file( model, "hiobi_m.dvg" )
 diverge.model_set_chempot( model, None, -1, mu )
 
