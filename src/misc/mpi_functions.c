@@ -28,16 +28,23 @@ static int diverge_owns_mpi_context = 0;
 }
 
 void diverge_init( int* pargc, char*** pargv ) {
-    int argc = 1;
-    char arg_[] = "diverge";
-    char* arg = arg_;
-    char** argv = &arg;
+    // nasty manual allocation due to weird alignment issues in OpenMPI
+    int parg_free = 0;
     if (pargc == NULL || pargv == NULL) {
-        pargc = &argc;
-        pargv = &argv;
+        parg_free = 1;
+        pargc = malloc(sizeof(int));
+        pargv = malloc(sizeof(char**));
+        *pargc = 0;
+        *pargv = NULL;
     }
+
     int provided = 0;
     MPI_Init_thread( pargc, pargv, MPI_THREAD_SERIALIZED, &provided );
+    if (parg_free) {
+        free( pargc );
+        free( pargv );
+    }
+
     diverge_mpi_comm = MPI_COMM_WORLD;
     diverge_owns_mpi_context = 1;
 
