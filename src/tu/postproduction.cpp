@@ -40,11 +40,11 @@ tu_postproduction::tu_postproduction(const diverge_model_t* mod, Vertex* Vertexi
         Ptype = (char*)calloc(vertex->my_nk,sizeof(char));
         Ctype = (char*)calloc(vertex->my_nk,sizeof(char));
         Dtype = (char*)calloc(vertex->my_nk,sizeof(char));
-        Pvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orbff)
+        Pvec = (complex128_t*)calloc(POW2(linsize)
                 *vertex->my_nk,sizeof(complex128_t));
-        Cvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orbff)
+        Cvec = (complex128_t*)calloc(POW2(linsize)
                 *vertex->my_nk,sizeof(complex128_t));
-        Dvec = (complex128_t*)calloc(POW4(vertex->n_spin)*POW2(vertex->n_orbff)
+        Dvec = (complex128_t*)calloc(POW2(linsize)
                 *vertex->my_nk,sizeof(complex128_t));
 
         lenP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
@@ -108,32 +108,30 @@ void tu_postproduction::run_and_save(string filename, bool lingaps, bool susc_ff
 }
 
 void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
-                complex128_t* vec, double* val, char* type, index_t* len, index_t* off){
+                complex128_t* vec, double* val, char* type, index_t* len, index_t* off) {
 
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
+    index_t n_spin = vertex->n_spin;
     double* _val = (double*)malloc(linsize*sizeof(double));
     complex128_t* _vec = (complex128_t*)malloc(POW2(linsize) * sizeof(complex128_t));
-    index_t n_spin = vertex->n_spin;
 
     double* allval = NULL;
     if (algo == 'b' || algo == 'B') {
-        _vec = (complex128_t*)realloc(_vec, POW2(linsize) * vertex->my_nk * sizeof(complex128_t));
         allval = (double*) calloc(linsize*vertex->my_nk, sizeof(double));
-        memcpy(_vec, channel, sizeof(complex128_t)*POW2(linsize) * vertex->my_nk);
+        memcpy(vec, channel, sizeof(complex128_t)*POW2(linsize) * vertex->my_nk);
         if (algo == 'b')
-            batched_eigen_r( NULL, -2, _vec, allval, linsize, vertex->my_nk );
+            batched_eigen_r( NULL, -2, vec, allval, linsize, vertex->my_nk );
         else
-            batched_svd( NULL, -1, _vec, _vec, NULL, allval, linsize, vertex->my_nk );
+            batched_svd( NULL, -1, vec, vec, NULL, allval, linsize, vertex->my_nk );
     }
 
     for (index_t q = 0; q < vertex->my_nk;++q) {
         if (q > 0) off[q] = off[q-1] + len[q-1];
-        index_t q_off = 0;
 
         if (allval) {
             type[q] = algo;
-            q_off = q*linsize*linsize;
             memcpy(_val, allval+q*linsize, sizeof(double)*linsize);
+            memcpy(_vec, vec+q*POW2(linsize), sizeof(double)*linsize);
         } else {
             memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
             bool hermitian = check_hermicity(_vec,linsize);
@@ -176,7 +174,7 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
             for(uindex_t j = 0; j<idx.size();++j)
             for(index_t o1 = 0; o1<vertex->n_orbff;++o1) {
                 vec[o1+vertex->n_orbff*(m1 + POW2(n_spin)*(j))+linsize*off[q]] =
-                        _vec[idx[j]+linsize*(o1+vertex->n_orbff*m1) + q_off];
+                        _vec[idx[j]+linsize*(o1+vertex->n_orbff*m1)];
             }
         }
     }
@@ -781,6 +779,6 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     }
 
     new_off = diverge_mpi_write_byte_to_file_master(file, version, new_off, strlen(version));
-
     diverge_mpi_close_file(file);
+    free(header);
 }
