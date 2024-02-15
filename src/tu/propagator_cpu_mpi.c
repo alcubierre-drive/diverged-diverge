@@ -625,6 +625,8 @@ void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_gf_timing_ffttrans] += tock-tick;
     }
+
+    free( shm_counts );
 }
 
 void tu_mpi_gf_destroy( tu_mpi_gf_t* t ) {

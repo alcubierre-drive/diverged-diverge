@@ -214,6 +214,7 @@ void tu_loop_t::cpu_fft_algorithm_cleanup( void ) {
     if (fft_nons2_backward_mpi) delete fft_nons2_backward_mpi;
 
     if (mpi_loop) tu_mpi_loop_destroy( mpi_loop );
+    if (mpi_gf) tu_mpi_gf_destroy( mpi_gf );
 }
 
 static std::string tu_fft_algorithm_name( tu_fft_algorithm_t algo ) {

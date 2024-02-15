@@ -204,15 +204,16 @@ index_t diverge_mpi_write_byte_to_file_master( void* file, const void* data, ind
     }
     MPICHK();
     index_t end_data = -1;
-    if(diverge_mpi_comm_rank() == 0) {
-        MPI_File* fh = (MPI_File*)file;
-        MPI_File_set_view( *fh, displ, MPI_BYTE, MPI_BYTE, "native", MPI_INFO_NULL );
+
+    MPI_File* fh = (MPI_File*)file;
+    // this is a collective call
+    MPI_File_set_view( *fh, displ, MPI_BYTE, MPI_BYTE, "native", MPI_INFO_NULL );
+
+    if (diverge_mpi_comm_rank() == 0) {
         MPI_File_write_at( *fh, 0, data, count, MPI_BYTE, MPI_STATUS_IGNORE );
         end_data = displ + count;
-        MPI_Bcast( &end_data, sizeof(index_t), MPI_BYTE, 0, diverge_mpi_comm );
-    }else{
-        MPI_Bcast( &end_data, sizeof(index_t), MPI_BYTE, 0, diverge_mpi_comm );
     }
+    MPI_Bcast( &end_data, sizeof(index_t), MPI_BYTE, 0, diverge_mpi_comm );
     return end_data;
 }
 
