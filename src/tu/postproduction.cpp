@@ -7,6 +7,7 @@
 #include "../misc/batched_svd.h"
 #include "../misc/batched_gemms.h"
 #include "../misc/eigen.h"
+#include "../diverge_flow_step_internal.hpp"
 
 static bool check_hermicity(complex128_t* data, index_t linsize){
     double err_max = 0.;
@@ -19,13 +20,12 @@ static bool check_hermicity(complex128_t* data, index_t linsize){
     return err_max < 1e-11;
 }
 
-tu_postproduction::tu_postproduction(const diverge_model_t* mod, Vertex* Vertexin,
-                                        Projection* projin, bool tu_skip_channel_calc)
+tu_postproduction::tu_postproduction(diverge_flow_step_t* st, bool tu_skip_channel_calc)
 :
     skip_channel_calc{tu_skip_channel_calc},
-    vertex{Vertexin},
-    proj{projin},
-    model{mod}
+    vertex{st->tu_vertex},
+    proj{st->tu_proj},
+    model{st->tu_vertex->model}
 {
     algo = 'a';
     cutoff = 50;
@@ -40,12 +40,9 @@ tu_postproduction::tu_postproduction(const diverge_model_t* mod, Vertex* Vertexi
         Ptype = (char*)calloc(vertex->my_nk,sizeof(char));
         Ctype = (char*)calloc(vertex->my_nk,sizeof(char));
         Dtype = (char*)calloc(vertex->my_nk,sizeof(char));
-        Pvec = (complex128_t*)calloc(POW2(linsize)
-                *vertex->my_nk,sizeof(complex128_t));
-        Cvec = (complex128_t*)calloc(POW2(linsize)
-                *vertex->my_nk,sizeof(complex128_t));
-        Dvec = (complex128_t*)calloc(POW2(linsize)
-                *vertex->my_nk,sizeof(complex128_t));
+        Pvec = vertex->Pch;
+        Cvec = vertex->Cch;
+        Dvec = vertex->Dch;
 
         lenP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
         lenC = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
@@ -65,9 +62,6 @@ tu_postproduction::~tu_postproduction() {
         free(Ptype);
         free(Ctype);
         free(Dtype);
-        free(Pvec);
-        free(Cvec);
-        free(Dvec);
         free(lenP);
         free(lenC);
         free(lenD);
@@ -113,7 +107,7 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
     index_t n_spin = vertex->n_spin;
     double* _val = (double*)malloc(linsize*sizeof(double));
-    complex128_t* _vec = (complex128_t*)malloc(POW2(linsize) * sizeof(complex128_t));
+    complex128_t* _vec = vertex->product_helper;
 
     double* allval = NULL;
     if (algo == 'b' || algo == 'B') {
@@ -178,9 +172,7 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
             }
         }
     }
-
     free(_val);
-    free(_vec);
     if (allval) free(allval);
 }
 

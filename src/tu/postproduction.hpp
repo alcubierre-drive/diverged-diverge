@@ -4,6 +4,7 @@
 
 #include "global.hpp"
 #include "../diverge_model.h"
+#include "../diverge_flow_step.h"
 #include "vertex.hpp"
 #include "projection_wrapper.hpp"
 #include "projection_handler.hpp"
@@ -15,7 +16,7 @@
 class tu_postproduction
 {
 public:
-    tu_postproduction(const diverge_model_t*, Vertex* Vertex, Projection* proj, bool tu_skip_channel_calc);
+    tu_postproduction(diverge_flow_step_t* st, bool tu_skip_channel_calc);
     ~tu_postproduction();
 
     void run_and_save(string filename, bool lingaps, bool susc_ff, bool susc_full,
