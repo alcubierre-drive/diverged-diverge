@@ -102,7 +102,7 @@ static void patch_pp( diverge_flow_step_t* st,
 
 static void tu_pp( diverge_flow_step_t* st,
         const diverge_postprocess_conf_t* pc, const char* file ) {
-    tu_postproduction tu_pc(st->tu_vertex->model, st->tu_vertex, st->tu_proj, pc->tu_skip_channel_calc);
+    tu_postproduction tu_pc(st, pc->tu_skip_channel_calc);
     tu_pc.tu_n_singular_values = pc->tu_n_singular_values;
     tu_pc.algo = pc->tu_which_solver_mode;
     tu_pc.cutoff = pc->tu_storing_threshold;
