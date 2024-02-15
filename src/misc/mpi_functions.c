@@ -80,7 +80,7 @@ void diverge_reset( void ) {
     diverge_mpi_comm = NULL;
 }
 
-double diverge_mpi_wtime() {
+double diverge_mpi_wtime( void ) {
     MPICHK();
     return MPI_Wtime();
 }

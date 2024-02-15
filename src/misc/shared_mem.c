@@ -142,6 +142,7 @@ static shmem_t* shmem_alloc( shmem_pool_t* p, size_t sz ) {
 }
 
 static void shmem_free( shmem_t* m ) {
+    if (m->rank == 0) sem_destroy( m->sem );
     munmap( m->ptr, m->sz );
     close( m->fd );
     free( m );
