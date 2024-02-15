@@ -3,6 +3,7 @@
 #include "diverge_filling.h"
 #include "diverge_internals_struct.h"
 #include "misc/mpi_functions.h"
+#include "misc/shared_mem.h"
 #include <algorithm>
 
 double diverge_model_get_filling( diverge_model_t* model, const double* E, index_t nb ) {
@@ -24,9 +25,14 @@ void diverge_model_set_chempot( diverge_model_t* model, double* E, index_t nb, d
         nb = model->n_orb * model->n_spin;
         E = model->internals->E;
     }
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t kb=0; kb<nk*nb; ++kb)
-        E[kb] -= mu;
+    // this should cover all cases (custom E and internal E)
+    int shared = shared_exclusive_enter(E);
+    if (shared == -1 || shared == 1) {
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t kb=0; kb<nk*nb; ++kb)
+            E[kb] -= mu;
+    }
+    if (shared != -1) shared_exclusive_wait(E);
     model->internals->mu = mu;
 }
 
