@@ -6,6 +6,202 @@
 
 #if defined(USE_SHARED_MEM) && defined(USE_MPI)
 
+#ifdef SHARED_MEM_MPI_IMPL
+
+#include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <uthash.h>
+
+#include "mpi_functions.h"
+
+static int status = 0;
+static char error[MPI_MAX_ERROR_STRING+1] = {0};
+static int errorlen = 0;
+
+#define MPICALL( fun, ... ) { \
+    if ((status = MPI_##fun( __VA_ARGS__ )) != MPI_SUCCESS) { \
+        MPI_Error_string( status, error, &errorlen ); \
+        error[errorlen] = '\0'; \
+        printf( __FILE__ ":%i MPIERROR: %s\n", __LINE__, error ); \
+    } \
+}
+
+typedef struct {
+    char name[MPI_MAX_PROCESSOR_NAME+1];
+    int rank;
+} mpi_proc_info;
+
+static int mpi_proc_info_compar( const void* pa, const void* pb ) {
+    const mpi_proc_info* a = pa;
+    const mpi_proc_info* b = pb;
+    int result = strcmp(a->name, b->name);
+    if (!result)
+        return a->rank > b->rank;
+    else
+        return result;
+}
+
+typedef struct {
+    void* ptr;
+    size_t sz;
+
+    int rank, size;
+    MPI_Win win;
+    MPI_Comm comm;
+
+    UT_hash_handle hh;
+} shmem_t;
+
+typedef struct {
+    int rank, size;
+    MPI_Comm comm;
+    int shrank, shsize;
+    MPI_Comm shcomm;
+
+    shmem_t* pool;
+} shmem_pool_t;
+
+static shmem_pool_t* shmem_pool_init( void ) {
+    shmem_pool_t* p = calloc(1, sizeof(shmem_pool_t));
+    p->comm = diverge_mpi_get_comm();
+    p->rank = diverge_mpi_comm_rank();
+    p->size = diverge_mpi_comm_size();
+
+    MPICALL(Barrier, p->comm);
+    // color setup
+    mpi_proc_info* procnams = calloc(p->size, sizeof(mpi_proc_info));
+    int len = -1;
+    MPICALL(Get_processor_name, procnams[p->rank].name, &len);
+    procnams[p->rank].rank = p->rank;
+    MPICALL(Allgather, MPI_IN_PLACE, 0, 0, procnams, sizeof(mpi_proc_info), MPI_BYTE, MPI_COMM_WORLD);
+    qsort( procnams, p->size, sizeof(mpi_proc_info), mpi_proc_info_compar );
+    int color = 0;
+    for (int r=1; r<=p->rank; ++r)
+        if (strcmp( procnams[r-1].name, procnams[r].name )) color++;
+    free( procnams );
+
+    // split the communicator according to color
+    MPICALL(Comm_split, p->comm, color, 0, &p->shcomm);
+    MPICALL(Comm_rank, p->shcomm, &p->shrank);
+    MPICALL(Comm_size, p->shcomm, &p->shsize);
+    MPICALL(Barrier, p->comm);
+    return p;
+}
+
+static void shmem_pool_destroy( shmem_pool_t* p ) {
+    free( p );
+}
+
+static shmem_t* shmem_alloc( shmem_pool_t* p, size_t sz ) {
+    shmem_t* m = calloc(1, sizeof(shmem_t));
+
+    m->sz = sz;
+    m->rank = p->shrank;
+    m->size = p->shsize;
+    m->comm = p->shcomm;
+
+    if (m->rank == 0) {
+        MPICALL(Win_allocate_shared, sz, 1, MPI_INFO_NULL, m->comm, &m->ptr, &m->win );
+    } else {
+        int disp_unit = 0;
+        MPI_Aint ssize = 0;
+        MPICALL(Win_allocate_shared, 0, 1, MPI_INFO_NULL, m->comm, &m->ptr, &m->win );
+        MPICALL(Win_shared_query, m->win, 0, &ssize, &disp_unit, &m->ptr );
+    }
+    MPICALL(Barrier, m->comm);
+
+    return m;
+}
+
+static void shmem_free( shmem_t* m ) {
+    MPICALL(Win_free, &m->win );
+
+    free( m );
+}
+
+static shmem_pool_t* shared_mem_pool = NULL;
+
+void shared_malloc_init( void ) {
+    shared_mem_pool = shmem_pool_init();
+}
+void shared_malloc_finalize( void ) {
+    if (!shared_mem_pool) return;
+    shmem_t *mem = NULL, *tmp = NULL;
+    HASH_ITER(hh, shared_mem_pool->pool, mem, tmp) {
+        HASH_DEL(shared_mem_pool->pool, mem);
+        shmem_free( mem );
+    }
+    shmem_pool_destroy( shared_mem_pool );
+}
+
+void* shared_calloc( long long cnt, long long sz ) {
+    void* ptr = shared_malloc( cnt*sz );
+    if (shared_exclusive_enter(ptr) == 1) memset( ptr, 0, cnt*sz );
+    shared_exclusive_wait(ptr);
+    return ptr;
+}
+
+void* shared_malloc( long long sz ) {
+    if (!shared_mem_pool) return NULL;
+    shmem_t* memptr = shmem_alloc( shared_mem_pool, sz );
+    HASH_ADD_PTR( shared_mem_pool->pool, ptr, memptr );
+    return memptr->ptr;
+}
+
+void shared_free( void* ptr ) {
+    if (!shared_mem_pool) return;
+    if (!ptr) return;
+    shmem_t* memptr = NULL;
+    HASH_FIND_PTR( shared_mem_pool->pool, &ptr, memptr );
+    if (!memptr) return;
+    HASH_DEL( shared_mem_pool->pool, memptr );
+    shmem_free( memptr );
+}
+
+int shared_exclusive_enter( void* ptr ) {
+    if (!shared_mem_pool) return -1;
+    if (!ptr) return -1;
+    shmem_t* memptr = NULL;
+    HASH_FIND_PTR( shared_mem_pool->pool, &ptr, memptr );
+    if (!memptr) return -1;
+
+    MPICALL(Win_lock, MPI_LOCK_SHARED, 0, MPI_MODE_NOCHECK, memptr->win);
+    if (memptr->rank == 0)
+        return 1;
+    return 0;
+}
+
+void shared_exclusive_wait( void* ptr ) {
+    if (!shared_mem_pool) return;
+    if (!ptr) return;
+    shmem_t* memptr = NULL;
+    HASH_FIND_PTR( shared_mem_pool->pool, &ptr, memptr );
+    if (!memptr) return;
+
+    MPICALL(Win_unlock, 0, memptr->win);
+    shared_malloc_barrier();
+}
+
+int shared_malloc_rank( void ) {
+    if (!shared_mem_pool) return -1;
+    return shared_mem_pool->shrank;
+}
+
+int shared_malloc_size( void ) {
+    if (!shared_mem_pool) return -1;
+    return shared_mem_pool->shsize;
+}
+
+void shared_malloc_barrier( void ) {
+    if (!shared_mem_pool) return;
+    MPICALL(Barrier, shared_mem_pool->shcomm);
+}
+
+#else // SHARED_MEM_MPI_IMPL
+
 #define _GNU_SOURCE
 #include <sys/mman.h>
 #include <linux/memfd.h>
@@ -229,7 +425,9 @@ void shared_malloc_barrier( void ) {
     MPICALL(Barrier, shared_mem_pool->shcomm);
 }
 
-#else
+#endif // SHARED_MEM_MPI_IMPL
+
+#else // USE_SHARED_MEM && USE_MPI
 
 #include <stdlib.h>
 
@@ -245,7 +443,7 @@ int shared_malloc_rank( void ) { return 0; }
 int shared_malloc_size( void ) { return 1; }
 void shared_malloc_barrier( void ) {}
 
-#endif
+#endif // USE_SHARED_MEM && USE_MPI
 
 /* EXAMPLE
 
