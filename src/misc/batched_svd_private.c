@@ -165,6 +165,7 @@ void* batched_svd_gpu( void* data ) {
         free( sol[i].indices );
     }
 
+    sem_destroy( &sol_sem );
     return NULL;
 }
 
