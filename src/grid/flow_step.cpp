@@ -213,10 +213,9 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
         }
     };
     if (channel == 'P') {
-        std::thread loopcalc( [&](){ if (!_LP) _LP = _L->X_P(Lambda); } );
+        _loop_time +=      elapsed_time( if (!_LP) _LP = _L->X_P(Lambda); );
         _reorder_time +=   elapsed_time( V( v, left,  "D_to_P", false, 1.0 ) );
         _reorder_time +=   elapsed_time( V( v, right, "D_to_P", false, 1.0 ) );
-        _loop_time +=      elapsed_time( loopcalc.join() );
         _loop_symm_time += elapsed_time( symmetrize_P() );
         _loop_gemm_time += elapsed_time( batched_gemm_vertex_loop( left, _LP_sym, qsize, nk, nb ) );
         _contract_time +=  elapsed_time( batched_gemm_overlapping( left, right, right, nk*nb*nb, 1.0, 0.0, qsize ) );
@@ -225,10 +224,9 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
     }
     if (channel == 'C') {
         if (!_SU2) return 0;
-        std::thread loopcalc( [&](){ if(!_LC) _LC = _L->X_C(Lambda); } );
+        _loop_time +=      elapsed_time( if(!_LC) _LC = _L->X_C(Lambda); );
         _reorder_time +=   elapsed_time( V( v, left,  "D_to_C", false, 1.0 ) );
         _reorder_time +=   elapsed_time( V( v, right, "D_to_C", false, 1.0 ) );
-        _loop_time +=      elapsed_time( loopcalc.join() );
         _loop_symm_time += elapsed_time( symmetrize_C() );
         _loop_gemm_time += elapsed_time( batched_gemm_vertex_loop( left, _LC_sym, qsize, nk, nb ) );
         _contract_time +=  elapsed_time( batched_gemm_overlapping( left, right, right, nk*nb*nb, 1.0, 0.0, qsize ) );
@@ -236,14 +234,13 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
         _reorder_time +=   elapsed_time( V( right, dv, "C_to_D", true, _norms[1]*dLambda ) );
     }
     if (channel == 'D') {
-        std::thread loopcalc( [&](){ if(!_LC) _LC = _L->X_C(Lambda); } );
+        _loop_time +=      elapsed_time( if(!_LC) _LC = _L->X_C(Lambda); );
         if (_SU2) {
             // 'right' is the result
 
             // vertex corrections
             // left vertex C channel
             _reorder_time +=   elapsed_time( V( v, left, "D_to_C", false, 1.0 ) );
-            _loop_time +=      elapsed_time( loopcalc.join() );
             _loop_symm_time += elapsed_time( symmetrize_C() );
             _loop_gemm_time += elapsed_time( batched_gemm_vertex_loop( left, _LC_sym, qsize, nk, nb ) );
             // make 'v' the right vertex and 'right' the result
@@ -267,7 +264,6 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
             _reorder_time +=   elapsed_time( V( right, dv, true, 1.0 ) );
         } else {
             _reorder_time +=   elapsed_time( V( v, left, false, 1.0 ) );
-            _loop_time +=      elapsed_time( loopcalc.join() );
             _loop_symm_time += elapsed_time( symmetrize_C() );
             _loop_gemm_time += elapsed_time( batched_gemm_vertex_loop( left, _LC_sym, qsize, nk, nb ) );
             _contract_time +=  elapsed_time( batched_gemm( left, v, right, nk*nb*nb, 1.0, 0.0, qsize ) );

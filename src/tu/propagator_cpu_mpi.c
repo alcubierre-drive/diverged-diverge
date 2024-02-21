@@ -597,6 +597,8 @@ void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_gf_timing_comm] += tock-tick;
 
+        if (use_shm)
+            shared_malloc_barrier();
         // we transpose o/b first
         if (t->enable_timings) tick = diverge_mpi_wtime();
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -609,16 +611,19 @@ void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
             for (index_t b2=0; b2<t->nb; ++b2)
                 tgf_buf[IDX2(b1,b2,t->nb)] = scratch[IDX2(b2,b1,t->nb)] * weight;
         }
-        if (use_shm) shared_malloc_barrier();
+        if (use_shm)
+            shared_malloc_barrier();
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_gf_timing_trans] += tock-tick;
 
         // and then ob/k
         if (t->enable_timings) tick = diverge_mpi_wtime();
         if (use_shm) {
+            shared_malloc_barrier();
             if (shared_exclusive_enter(gf_buf_) == 1)
                 GF_FFTW(execute_dft)( t->transpose[gf_idx], gf_buf, gf_buf );
             shared_exclusive_wait(gf_buf_);
+            shared_malloc_barrier();
         } else {
             GF_FFTW(execute_dft)( t->transpose[gf_idx], gf_buf, gf_buf );
         }

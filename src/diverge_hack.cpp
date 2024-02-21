@@ -208,10 +208,6 @@ static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex12
     {
         int nchnk = shared_malloc_size();
         int chnk = shared_malloc_rank();
-        if (nchnk == -1 || chnk == -1) {
-            mpi_err_printf( "shared memory not initialized\n" );
-            return diverge_greensfunc_generator_default(model, Lambda, buf);
-        }
         vector<index_t> counts( nchnk, 0 );
         for (index_t k=0; k<nkf; ++k) counts[k%nchnk]++;
         vector<index_t> displs( nchnk, 0 );
@@ -221,6 +217,7 @@ static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex12
     }
 
     // do loop
+    shared_malloc_barrier();
     for (int sign=0; sign<2; ++sign) {
         complex128_t L = sign ? Lambda : std::conj(Lambda);
         #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
@@ -234,10 +231,7 @@ static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex12
             buf[IDX4(sign, k, o, p, nkf, nb, nb)] = tmp;
         }
     }
-
-    // synchronize memory
     shared_malloc_barrier();
-
     return greensfunc_op_cpu;
 }
 

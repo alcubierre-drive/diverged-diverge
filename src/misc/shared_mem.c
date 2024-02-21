@@ -197,11 +197,12 @@ int shared_malloc_size( void ) {
 void shared_malloc_barrier( void ) {
     if (!shared_mem_pool) return;
 
+    MPICALL(Barrier, shared_mem_pool->shcomm);
     shmem_t* m = NULL;
-    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next) {
-        shared_exclusive_enter( m->ptr );
-        shared_exclusive_wait( m->ptr );
-    }
+    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next)
+        MPICALL(Win_lock, MPI_LOCK_SHARED, 0, MPI_MODE_NOCHECK, m->win);
+    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next)
+        MPICALL(Win_unlock, 0, m->win );
     MPICALL(Barrier, shared_mem_pool->shcomm);
 }
 
@@ -428,11 +429,12 @@ int shared_malloc_size( void ) {
 void shared_malloc_barrier( void ) {
     if (!shared_mem_pool) return;
 
+    MPICALL(Barrier, shared_mem_pool->shcomm);
     shmem_t* m = NULL;
-    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next) {
-        shared_exclusive_enter( m->ptr );
-        shared_exclusive_wait( m->ptr );
-    }
+    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next)
+        if (m->rank == 0) for (int i=0; i<m->size; ++i) sem_post( m->sem );
+    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next)
+        sem_wait( m->sem );
     MPICALL(Barrier, shared_mem_pool->shcomm);
 }
 

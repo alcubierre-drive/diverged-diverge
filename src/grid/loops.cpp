@@ -278,7 +278,7 @@ static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_
     if (nff > intls->grid_nk) {
         mpi_wrn_printf( "small grid (nk=%li), truncating #formfactors (nff=%li)\n",
                 intls->grid_nk, nff );
-        rs_ff.resize(intls->grid_nk-1);
+        rs_ff.resize(intls->grid_nk/2-1);
         nff = intls->grid_nk;
     }
     complex128_t* formfac = (complex128_t*)malloc(sizeof(complex128_t)*nff*intls->grid_nk);
