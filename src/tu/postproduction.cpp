@@ -116,7 +116,7 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
         if (algo == 'b')
             batched_eigen_r( NULL, -2, vec, allval, linsize, vertex->my_nk );
         else
-            batched_svd( NULL, -1, vec, vec, NULL, allval, linsize, vertex->my_nk );
+            batched_svd( NULL, -1, vec, NULL, vec, allval, linsize, vertex->my_nk );
     }
 
     for (index_t q = 0; q < vertex->my_nk;++q) {
@@ -125,7 +125,10 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
         if (allval) {
             type[q] = algo;
             memcpy(_val, allval+q*linsize, sizeof(double)*linsize);
-            memcpy(_vec, vec+q*POW2(linsize), sizeof(double)*linsize);
+            // the batched algorithms give everything in F order
+            Map<MatXcd> _VEC(_vec, linsize, linsize);
+            Map<MatXcd> VEC(vec + q*POW2(linsize), linsize, linsize);
+            _VEC = VEC.transpose();
         } else {
             memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
             bool hermitian = check_hermicity(_vec,linsize);

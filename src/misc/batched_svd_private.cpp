@@ -45,5 +45,11 @@ void* batched_svd_cpu( void* data ) {
         }
         S = cfg->do_eigen ? eig->eigenvalues() : svd->singularValues();
     }
+
+    if (cfg->do_eigen)
+        delete eig;
+    else
+        delete svd;
+
     return NULL;
 }
