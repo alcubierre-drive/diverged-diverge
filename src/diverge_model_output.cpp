@@ -217,6 +217,26 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
             ADD_ARRAY_TO_IBUF( 0 );
         }
 
+        idx = 98; // fatbands
+        bool include_fatbands = false;
+        if (cfg->fatbands) {
+            if (mod->n_ibz_path > 0 && mod->internals->has_common_internals && npath == -1) {
+                if (band_indices != NULL && n_band_indices > 0) {
+                    include_fatbands = true;
+                    ADD_ARRAY_TO_IBUF( sizeof(double) * POW2(mod->n_orb*mod->n_spin) * n_band_indices );
+                } else {
+                    mpi_wrn_printf( "band indices not set or n_band_indices not > 0\n" );
+                }
+            } else {
+                mpi_wrn_printf( "fatbands require n_ibz_path > 0 (%li) && common_internals && npath == -1 (%i)\n", mod->n_ibz_path, npath );
+            }
+        }
+        if (!include_fatbands) {
+            ADD_ARRAY_TO_IBUF( 0 );
+        }
+        idx = 102; // restore index
+
+
         // save struct offsets and sizes
         ibuf[102] = offsetof(rs_hopping_t, R);
         ibuf[103] = offsetof(rs_hopping_t, o1);
@@ -356,6 +376,17 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
                 mpi_vrb_printf("generating bandstructure with %li points per segment\n", npath );
                 generate_bandstructure( mod, (double*)(buf+ibuf[100]), npath );
             }
+        }
+
+        if (include_fatbands) {
+            double* out = (double*)(buf+ibuf[98]);
+            complex128_t* U = mod->internals->U;
+            index_t nb = mod->n_orb * mod->n_spin;
+            index_t cnt = 0;
+            for (index_t i=0; i<n_band_indices; ++i)
+            for (index_t o=0; o<nb; ++o)
+            for (index_t b=0; b<nb; ++b)
+                out[cnt++] = std::abs(U[band_indices[i]*nb*nb + b*nb + o]);
         }
 
         idx = 125;

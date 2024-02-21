@@ -104,6 +104,7 @@ typedef struct diverge_model_t diverge_model_t;
  *
  * _if ibz_path is set, else all the following are zero_
  *
+ * header[98-99]   - fatbands [displ, size]
  * header[100-101] - bandstructure [displ, size]
  *
  * _structure offest/size information, useful for python wrapping_
@@ -164,6 +165,8 @@ char* diverge_model_to_file( diverge_model_t* mod, const char* fname );
 //         <diverge_model_output_set_npath>). Only used when nonzero; but then
 //         _with precedence_ over what is/has been set in
 //         <diverge_model_output_set_npath>. possible nonzero values: -1, >=1.
+// fatbands - if (npath == -1 && model->n_ibz_path > 0 && common internals are
+//            set), output the absolute value of the orbital to band matrices
 typedef struct diverge_model_output_conf_t {
     int kc;
     int kf;
@@ -173,6 +176,7 @@ typedef struct diverge_model_output_conf_t {
     int U;
     int E;
     int npath;
+    int fatbands;
 } diverge_model_output_conf_t;
 
 #if !defined(__cplusplus) && !defined(CTYPESGEN)
@@ -186,6 +190,7 @@ static const diverge_model_output_conf_t diverge_model_output_conf_defaults = {
     .U = 0,
     .E = 0,
     .npath = 0,
+    .fatbands = 0,
 };
 #endif // __cplusplus
 
