@@ -82,6 +82,7 @@ void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* 
 
     double invalid_hoppings_norm = 0;
     // fill fftw_cbuf as H[R]
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t idx = 0; idx < n_hop; ++idx) {
         index_t o1 = hop[idx].o1,
                 s1 = hop[idx].s1,
@@ -94,10 +95,17 @@ void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* 
                 z_id = (n_kz + R[2]) % n_kz;
         index_t Ridx = IDX3(x_id, y_id, z_id, n_ky, n_kz);
         if (Ridx < 0) {
+            #pragma omp atomic
             invalid_hoppings_norm += std::abs(hop[idx].t);
             continue;
         }
-        fftw_cbuf[IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb)] += hop[idx].t;
+
+        double* out = (double*)(fftw_cbuf + IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb));
+        double* in = (double*)(&hop[idx].t);
+        #pragma omp atomic
+        out[0] += in[0];
+        #pragma omp atomic
+        out[1] += in[1];
     }
 
     if ((n_kpts*POW2(n_spin*n_orb) < n_hop && n_kpts > 1) || (invalid_hoppings_norm > 1e-9))
