@@ -182,7 +182,6 @@ void shared_exclusive_wait( void* ptr ) {
     if (!memptr) return;
 
     MPICALL(Win_unlock, 0, memptr->win);
-    shared_malloc_barrier();
 }
 
 int shared_malloc_rank( void ) {
@@ -197,6 +196,12 @@ int shared_malloc_size( void ) {
 
 void shared_malloc_barrier( void ) {
     if (!shared_mem_pool) return;
+
+    shmem_t* m = NULL;
+    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next) {
+        shared_exclusive_enter( m->ptr );
+        shared_exclusive_wait( m->ptr );
+    }
     MPICALL(Barrier, shared_mem_pool->shcomm);
 }
 
@@ -330,7 +335,7 @@ static shmem_t* shmem_alloc( shmem_pool_t* p, size_t sz ) {
     MPICALL(Bcast, fd_path, sizeof(fd_path), MPI_BYTE, 0, p->shcomm);
     if (p->shrank != 0)
         m->fd = open(fd_path, O_RDWR);
-    m->ptr = mmap( NULL, m->sz, PROT_READ|PROT_WRITE, MAP_SHARED, m->fd, 0 );
+    m->ptr = mmap( NULL, m->sz, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_SHARED, m->fd, 0 );
     m->sem = (sem_t*)((char*)m->ptr + sz);
     if (p->shrank == 0) sem_init( m->sem, 1, 0 );
     MPICALL(Barrier, p->shcomm);
@@ -422,6 +427,12 @@ int shared_malloc_size( void ) {
 
 void shared_malloc_barrier( void ) {
     if (!shared_mem_pool) return;
+
+    shmem_t* m = NULL;
+    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next) {
+        shared_exclusive_enter( m->ptr );
+        shared_exclusive_wait( m->ptr );
+    }
     MPICALL(Barrier, shared_mem_pool->shcomm);
 }
 
