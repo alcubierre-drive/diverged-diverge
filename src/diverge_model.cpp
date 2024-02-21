@@ -111,10 +111,12 @@ void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* 
     if ((n_kpts*POW2(n_spin*n_orb) < n_hop && n_kpts > 1) || (invalid_hoppings_norm > 1e-9))
         mpi_wrn_printf("hamilton_generator: #hoppings > #kpts -> potential error %.5e\n", invalid_hoppings_norm);
 
+    mpi_vrb_printf( "hamilton_generator fft…\n" );
     if(n_kpts > 1)
         fftw_execute(p);
     fftw_destroy_plan(p);
 
+    mpi_vrb_printf( "hamilton_generator outputting elements…\n" );
     for (index_t i=0; i<n_kpts*POW2(n_orb*n_spin); ++i)
         buf[i] += fftw_cbuf[i];
     fftw_free(fftw_buf);
