@@ -4,6 +4,12 @@
 #include "../../src/misc/shared_mem.h"
 #include "../../src/misc/mpi_functions.h"
 #include "../../src/diverge_common.h"
+#include "../../src/diverge_model.h"
+#include "../../src/diverge_hack.h"
+#include "../../src/diverge_model_internals.h"
+
+#include "../../src/diverge_internals_struct.h" // kdimtot
+#include "../model_examples/model_constructor.hpp"
 
 TEST_CASE("MPI shared memory exclusive", "[shared_mem][exclusive]") {
     mpi_log_printf_all( "shared malloc: overall rank %i, shared rank %i, shared sz %i\n",
@@ -33,9 +39,6 @@ TEST_CASE("MPI shared memory exclusive", "[shared_mem][exclusive]") {
 }
 
 TEST_CASE("MPI shared memory barrier", "[shared_mem][barrier]") {
-    mpi_log_printf_all( "shared malloc: overall rank %i, shared rank %i, shared sz %i\n",
-            diverge_mpi_comm_rank(), shared_malloc_rank(), shared_malloc_size() );
-
     index_t N = 1024 * 1024;
     double* local_data = (double*)calloc( N, sizeof(double) );
     double* data = (double*)shared_malloc( N*sizeof(double) );
@@ -69,6 +72,30 @@ TEST_CASE("MPI shared memory barrier", "[shared_mem][barrier]") {
 
     shared_free( data );
     free( local_data );
+}
+
+TEST_CASE("MPI shared memory GF", "[shared_mem][GF]") {
+    int nk = 128;
+    diverge_model_t* m_loc = gen_random( nk, nk );
+    diverge_model_t* m_shm = gen_random( nk, nk );
+    diverge_model_hack( m_shm, "model_shared_gf", "1" );
+
+    gf_complex_t *g_loc = diverge_model_internals_get_greens( m_loc ),
+                 *g_shm = diverge_model_internals_get_greens( m_shm );
+
+    m_loc->gfill( m_loc, complex128_t(1,0.1), g_loc );
+    m_shm->gfill( m_shm, complex128_t(1,0.1), g_shm );
+
+    double error = 0.0;
+    for (index_t i=0; i<kdimtot(m_loc->nk,m_loc->nkf)*POW2(m_loc->n_orb*m_loc->n_spin)*2; ++i)
+        error += std::abs( g_loc[i] - g_shm[i] );
+    double error_sum = 0.0;
+    diverge_mpi_allreduce_double_sum( &error, &error_sum, 1 );
+
+    CHECK(error_sum < 1.e-11);
+
+    diverge_model_free( m_loc );
+    diverge_model_free( m_shm );
 }
 
 #endif // DIVERGE_SKIP_TESTS

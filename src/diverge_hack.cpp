@@ -206,14 +206,15 @@ static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex12
     // calc displs/counts
     index_t kcount = 0, kdispl = 0;
     {
-        int nchnk = shared_malloc_size();
-        int chnk = shared_malloc_rank();
-        vector<index_t> counts( nchnk, 0 );
-        for (index_t k=0; k<nkf; ++k) counts[k%nchnk]++;
-        vector<index_t> displs( nchnk, 0 );
-        for (int c=1; c<nchnk; ++c) displs[c] = displs[c-1] + counts[c-1];
-        kcount = counts[chnk];
-        kdispl = displs[chnk];
+        int size = shared_malloc_size(),
+            rank = shared_malloc_rank();
+        index_t* counts = (index_t*)calloc(size*2, sizeof(index_t));
+        index_t* displs = counts + size;
+        for (index_t k=0; k<nkf; ++k) counts[k%size]++;
+        for (int c=1; c<size; ++c) displs[c] = displs[c-1] + counts[c-1];
+        kcount = counts[rank];
+        kdispl = displs[rank];
+        free( counts );
     }
 
     // do loop
