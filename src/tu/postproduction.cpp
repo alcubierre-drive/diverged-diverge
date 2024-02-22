@@ -8,6 +8,7 @@
 #include "../misc/batched_gemms.h"
 #include "../misc/eigen.h"
 #include "../diverge_flow_step_internal.hpp"
+#include "../diverge_common.h"
 
 static bool check_hermicity(complex128_t* data, index_t linsize){
     double err_max = 0.;
@@ -105,18 +106,18 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
                 complex128_t* vec, double* val, char* type, index_t* len, index_t* off) {
 
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
-    index_t n_spin = vertex->n_spin;
+    /* index_t n_spin = vertex->n_spin; */
     double* _val = (double*)malloc(linsize*sizeof(double));
     complex128_t* _vec = vertex->product_helper;
 
     double* allval = NULL;
     if (algo == 'b' || algo == 'B') {
         allval = (double*) calloc(linsize*vertex->my_nk, sizeof(double));
-        memcpy(vec, channel, sizeof(complex128_t)*POW2(linsize) * vertex->my_nk);
+        memcpy(vec, channel, sizeof(complex128_t)*POW2(linsize)*vertex->my_nk);
         if (algo == 'b')
             batched_eigen_r( NULL, -2, vec, allval, linsize, vertex->my_nk );
         else
-            batched_svd( NULL, -1, vec, NULL, vec, allval, linsize, vertex->my_nk );
+            batched_svd( NULL, -1, vec, vec, NULL, allval, linsize, vertex->my_nk );
     }
 
     for (index_t q = 0; q < vertex->my_nk;++q) {
@@ -125,10 +126,7 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
         if (allval) {
             type[q] = algo;
             memcpy(_val, allval+q*linsize, sizeof(double)*linsize);
-            // the batched algorithms give everything in F order
-            Map<MatXcd> _VEC(_vec, linsize, linsize);
-            Map<MatXcd> VEC(vec + q*POW2(linsize), linsize, linsize);
-            _VEC = VEC.transpose();
+            memcpy(_vec, vec+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
         } else {
             memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
             bool hermitian = check_hermicity(_vec,linsize);
@@ -139,41 +137,20 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
                 singular_value_decomp( NULL, _vec, vertex->bubble_helper, _val, linsize);
                 type[q] = 's';
             }
+            // above the matrices are C order, we must transpose that…
+            Map<MatXcd>(_vec, linsize, linsize).transposeInPlace();
         }
-        vector<double> vals;
-        vector<index_t> idx;
+
+        eigensolution_sort( _vec, _val, linsize, 'M' );
 
         double cutoff_local = cutoff;
+        if (cutoff_rel) cutoff_local *= fabs(_val[0]);
 
-        if (cutoff_rel) {
-            vector<double> vals_sorted(linsize);
-            memcpy( vals_sorted.data(), _val, sizeof(double)*linsize );
-            std::sort( vals_sorted.begin(), vals_sorted.end(),
-                    [](double a, double b)->bool{return std::abs(a)>std::abs(b);} );
-            cutoff_local *= std::abs(vals_sorted[0]);
-        }
-        for (index_t r = 0; r < linsize; ++r) {
-            double cur = _val[r];
-            if(std::abs(cur) > cutoff_local){
-                len[q] += 1;
-                vals.push_back(cur);
-                idx.push_back(r);
-            }
-        }
-        if (len[q]>0) {
-            auto p = sort_permutation(vals);
-            apply_permutation_in_place(vals, p);
-            apply_permutation_in_place(idx, p);
-            memcpy(val+off[q],vals.data(),sizeof(double)*len[q]);
+        for (index_t i=0; i<linsize; ++i)
+            if (fabs(_val[i]) >= cutoff_local) len[q]++;
 
-            #pragma omp parallel for schedule(static) collapse(3) num_threads(diverge_omp_num_threads())
-            for(index_t m1 = 0; m1 < POW2(n_spin); ++m1)
-            for(uindex_t j = 0; j<idx.size();++j)
-            for(index_t o1 = 0; o1<vertex->n_orbff;++o1) {
-                vec[o1+vertex->n_orbff*(m1 + POW2(n_spin)*(j))+linsize*off[q]] =
-                        _vec[idx[j]+linsize*(o1+vertex->n_orbff*m1)];
-            }
-        }
+        memcpy( val+off[q], _val, sizeof(double)*len[q] );
+        memcpy( vec+off[q]*linsize, _vec, sizeof(complex128_t)*len[q]*linsize );
     }
     free(_val);
     if (allval) free(allval);
