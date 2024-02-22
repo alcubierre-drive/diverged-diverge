@@ -3,6 +3,7 @@
 #include "init_internal_libs.h"
 #include "dependency_tree.h"
 #include "shared_mem.h"
+#include "mpi_functions.h"
 
 #include "../diverge_common.h"
 #include <fftw3.h>
@@ -18,6 +19,7 @@ static int dvg_has_internal_libs_init = 0;
 static int dvg_has_fftw_init = 0;
 static int dvg_has_mpi_fftw_init = 0;
 static int dvg_previous_log_color = -1;
+static int dvg_shared_malloc_extra_colors = 0;
 
 static int dvg_omp_num_threads = -1;
 static int dvg_fftw_num_threads = -1;
@@ -31,6 +33,10 @@ static void read_environment( void );
 void init_internal_libs( void ) {
 
     read_environment();
+    // we need to equalize the number of threads on each rank.
+    diverge_mpi_allreduce_int_max_inplace( &dvg_fftw_num_threads, 1 );
+    diverge_mpi_allreduce_int_max_inplace( &dvg_omp_implicit_num_threads, 1 );
+    diverge_mpi_allreduce_int_max_inplace( &dvg_omp_num_threads, 1 );
 
     init_internal_libs_omp_implicit( dvg_omp_implicit_num_threads );
     init_internal_libs_omp_diverge( dvg_omp_num_threads );
@@ -44,7 +50,7 @@ void init_internal_libs( void ) {
     #endif
 
     dependency_tree_init();
-    shared_malloc_init();
+    shared_malloc_init( dvg_shared_malloc_extra_colors );
 
     dvg_has_internal_libs_init = 1;
 
@@ -98,6 +104,7 @@ static void read_environment( void ) {
     char* env_dvg_omp_num_threads = getenv( "DIVERGE_OMP_NUM_THREADS" );
     char* env_dvg_fftw_num_threads = getenv( "DIVERGE_FFTW_NUM_THREADS" );
     char* env_dvg_omp_implicit_num_threads = getenv( "DIVERGE_OMP_IMPLICIT_NUM_THREADS" );
+    char* env_dvg_shared_malloc_extra_colors = getenv( "DIVERGE_SHARED_MALLOC_EXTRA_COLORS" );
 
     // set values
     if (env_dvg_omp_num_threads) {
@@ -111,6 +118,11 @@ static void read_environment( void ) {
     if (env_dvg_omp_implicit_num_threads) {
         dvg_omp_implicit_num_threads = atoi(env_dvg_omp_implicit_num_threads);
         mpi_log_printf( "using %d threads for implicit OpenMP\n", dvg_omp_implicit_num_threads );
+    }
+    if (env_dvg_shared_malloc_extra_colors) {
+        dvg_shared_malloc_extra_colors = atoi(env_dvg_shared_malloc_extra_colors);
+        if (dvg_shared_malloc_extra_colors)
+            mpi_log_printf( "using extra colors for MPI shared memory distribution\n" );
     }
 
     // and check

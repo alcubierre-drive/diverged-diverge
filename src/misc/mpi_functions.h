@@ -51,6 +51,8 @@ int diverge_mpi_comm_size( void );
 // Function: diverge_mpi_comm_rank
 int diverge_mpi_comm_rank( void );
 
+void diverge_mpi_allreduce_int_max_inplace( void* buf, int num );
+
 void diverge_mpi_allreduce_double_max( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int num );
 

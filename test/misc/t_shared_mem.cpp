@@ -1,5 +1,7 @@
 #ifndef DIVERGE_SKIP_TESTS
 
+#include <iostream>
+
 #include "../catch.hpp"
 #include "../../src/misc/shared_mem.h"
 #include "../../src/misc/mpi_functions.h"
@@ -10,6 +12,10 @@
 
 #include "../../src/diverge_internals_struct.h" // kdimtot
 #include "../model_examples/model_constructor.hpp"
+
+#include "../../src/tu/diverge_interface.hpp"
+#include "../../src/tu/global.hpp"
+#include "../../src/tu/propagator.hpp"
 
 TEST_CASE("MPI shared memory exclusive", "[shared_mem][exclusive]") {
     mpi_log_printf_all( "shared malloc: overall rank %i, shared rank %i, shared sz %i\n",
@@ -97,5 +103,61 @@ TEST_CASE("MPI shared memory GF", "[shared_mem][GF]") {
     diverge_model_free( m_loc );
     diverge_model_free( m_shm );
 }
+
+#ifndef USE_CUDA
+class tu_loop_test_t {
+    public:
+        tu_loop_test_t( diverge_model_t* mod ) {
+            _mod = mod;
+            _loop = new tu_loop_t( mod );
+        }
+        ~tu_loop_test_t() {
+            delete _loop;
+        }
+        index_t size( void ) {
+            return POW2(_loop->n_orbff*POW2(_mod->n_spin)) * _loop->nk;
+        }
+        void calculate( complex128_t* buf, complex128_t L ) {
+            _loop->GF_zero_T(L);
+            _loop->ph_loop( buf, NULL );
+        }
+    private:
+        diverge_model_t* _mod;
+        tu_loop_t* _loop;
+};
+
+TEST_CASE("MPI shared memory GF->loop", "[shared_mem][loop]") {
+    int nk = 12;
+    diverge_model_t *m_loc = gen_random( nk, nk ),
+                    *m_shm = gen_random( nk, nk );
+    diverge_model_hack( m_shm, "model_shared_gf", "1" );
+
+    diverge_model_internals_tu( m_loc, 1.01 );
+    diverge_model_internals_tu( m_shm, 1.01 );
+
+    tu_loop_test_t l_loc( m_loc );
+    tu_loop_test_t l_shm( m_shm );
+
+    complex128_t *buf_loc = (complex128_t*)calloc( l_loc.size(), sizeof(complex128_t) ),
+                 *buf_shm = (complex128_t*)calloc( l_shm.size(), sizeof(complex128_t) );
+
+    l_loc.calculate( buf_loc, I128*0.1 );
+    l_shm.calculate( buf_shm, I128*0.1 );
+
+    double error = 0.0;
+    for (index_t i=0; i<l_loc.size(); ++i)
+        error += std::abs( buf_loc[i] - buf_shm[i] );
+    double error_sum = 0.0;
+    diverge_mpi_allreduce_double_sum( &error, &error_sum, 1 );
+
+    CHECK(error_sum < 1.e-11);
+
+    diverge_model_free( m_loc );
+    diverge_model_free( m_shm );
+
+    free( buf_loc );
+    free( buf_shm );
+}
+#endif // USE_CUDA
 
 #endif // DIVERGE_SKIP_TESTS

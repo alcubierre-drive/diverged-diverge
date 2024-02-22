@@ -13,7 +13,7 @@ extern "C" {
 // the uthash.h library somewhere in your CPATH.
 
 // init/deinit functions called by diverge internally, do not use (no symbols)
-void shared_malloc_init( void );
+void shared_malloc_init( int more_colors );
 void shared_malloc_finalize( void );
 
 // Function: shared_malloc

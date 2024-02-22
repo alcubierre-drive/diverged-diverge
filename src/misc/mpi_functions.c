@@ -109,6 +109,11 @@ int diverge_mpi_comm_rank( void ) {
     return rank;
 }
 
+void diverge_mpi_allreduce_int_max_inplace( void* buf, int num ) {
+    MPICHK();
+    MPI_Allreduce( MPI_IN_PLACE, buf, num, MPI_INT, MPI_MAX, diverge_mpi_comm );
+}
+
 void diverge_mpi_allreduce_double_max( const void* sendbuf, void* recvbuf, int num ) {
     MPICHK();
     MPI_Allreduce( sendbuf, recvbuf, num, MPI_DOUBLE, MPI_MAX, diverge_mpi_comm );
@@ -336,6 +341,9 @@ void diverge_mpi_barrier( void ) {}
 int diverge_mpi_comm_size( void ) { return 1; }
 int diverge_mpi_comm_rank( void ) { return 0; }
 
+void diverge_mpi_allreduce_int_max_inplace( void* recvbuf, int num ) {
+    (void)recvbuf; (void)num;
+}
 void diverge_mpi_allreduce_double_max( const void* sendbuf, void* recvbuf, int num ) {
     (void)sendbuf; (void)recvbuf; (void)num;
 }
