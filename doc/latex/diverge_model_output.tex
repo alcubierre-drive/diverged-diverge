@@ -109,12 +109,12 @@
   \begin{scope}[shift={(0.48,-0.059)}, yscale=0.98, xscale=0.06]
     \EcolorizeBox{102}{128}{ForangeRed!30!white}
 
-    \EcolorizeBox{100}{102}{Fblue!20!white}
+    \EcolorizeBox{98}{102}{Fblue!20!white}
 
     \EcolorizeBox{80}{95}{Faqua!30!white}
 
     \EcolorizeBox{67}{80}{gray!30!white}
-    \EcolorizeBox{95}{100}{gray!30!white}
+    \EcolorizeBox{95}{98}{gray!30!white}
 
     \foreach \idx in {0,1,...,60} {
       \tikzmath{
@@ -227,6 +227,7 @@
       finegrained output control} (\cbufB) -- (\coordB);
 
     \EbracketTwo{100}{101}{\ipd{band structure}}
+    \EbracketTwo{98}{99}{\ipd{fatbands (v0.5.x\_dev)}}
 
     \tikzmath{\dbuf=1./6.;
       \coordA = \dbuf*(Ecell102.east) +

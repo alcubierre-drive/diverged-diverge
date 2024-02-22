@@ -162,6 +162,8 @@ class diverge_model:
                    in last three indices. shape usually given as
                    ((ibz_path.size-1)*300+1, n_spin*n_orb + 3) if not specified
                    differently in model output call.
+    fatbands: if supplied (using npath == -1), contains array of shape
+              (#kf_ibz_path, no_ns, nb) fatbands (nonzero after v0.5.x_dev)
     """
 
     def _displ_count( self, i_d ):
@@ -267,6 +269,12 @@ class diverge_model:
         self.npath = self._head(94) # to see what the config actually is
         self.bandstructure = self._displ_count( 100 ).view(
                 np.float64 ).reshape((-1,self.n_spin*self.n_orb + 3))
+
+        fatbands = self._displ_count( 98 ).view( np.float64 )
+        if fatbands.size == 0:
+            self.fatbands = None
+        else:
+            self.fatbands = fatbands.reshape( (-1, self.n_spin*self.n_orb, self.n_spin*self.n_orb) )
 
 # Class: diverge_post_patch
 # documentation found in docstring, i.e., do the following from within python
