@@ -634,6 +634,11 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
     header[i] = strlen(version); ++i;
 
+    if (save_symmetries && tu_data->symm->use_symmetries) {
+        header[i] = header[i-2] + header[i-1]*sizeof(char); ++i;
+        header[i] = symm->kmaps_to.size(); ++i;
+    }
+
     assert(i < 126);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
     header[127] = header[i-1]*sizeof(complex128_t)+header[i-2];
@@ -738,7 +743,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
         free(helper);
     }
     if(save_symmetries && tu_data->symm->use_symmetries) {
-        printf("saving symm!\n");
+        mpi_log_printf("saving symm!\n");
         new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_len.data(), new_off,sindex*symm->mi_map_len.size());
         new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_off.data(), new_off,sindex*symm->mi_map_off.size());
         new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_idx.data(), new_off,sindex*mi_map_idx.size());
@@ -747,6 +752,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     }
 
     new_off = diverge_mpi_write_byte_to_file_master(file, version, new_off, strlen(version));
+    new_off = diverge_mpi_write_byte_to_file_master(file, symm->kmaps_to.data(), new_off, symm->kmaps_to.size() * sindex);
     diverge_mpi_close_file(file);
     free(header);
 }

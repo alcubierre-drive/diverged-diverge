@@ -743,6 +743,8 @@ class diverge_post_tu:
 
         self.version = get_array_header( iL, np.byte ).tobytes().decode()
 
+        self.kmaps_to = get_array_header( iL, np.longlong )
+
 # Function: diverge_read
 # function to read model files as well as post processing files. returns the
 # corresponding class (<diverge_model>, <diverge_post_patch>, or
