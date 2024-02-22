@@ -469,16 +469,16 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     index_t cop = 0;
     index_t coc = 0;
     index_t cod = 0;
-    index_t my_cop = 0;
-    index_t my_coc = 0;
-    index_t my_cod = 0;
+    index_t my_cop = lenP[my_nk-1]+offP[my_nk-1];
+    index_t my_coc = lenC[my_nk-1]+offC[my_nk-1];
+    index_t my_cod = lenD[my_nk-1]+offD[my_nk-1];
     index_t nk_channel = 0;
     if(!skip_channel_calc) {
         nk_channel = tu_data->nkibz;
         for(index_t rank = 0; rank < diverge_mpi_comm_size();++rank){
-            cop = lenP[my_nk-1]+offP[my_nk-1];
-            coc = lenC[my_nk-1]+offC[my_nk-1];
-            cod = lenD[my_nk-1]+offD[my_nk-1];
+            cop = my_cop;
+            coc = my_coc;
+            cod = my_cod;
             diverge_mpi_bcast_bytes((void*)(&cop), sizeof(index_t), rank);
             diverge_mpi_bcast_bytes((void*)(&coc), sizeof(index_t), rank);
             diverge_mpi_bcast_bytes((void*)(&cod), sizeof(index_t), rank);
@@ -497,11 +497,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
         diverge_mpi_bcast_bytes((void*)(&cop), sizeof(index_t), diverge_mpi_comm_size() - 1);
         diverge_mpi_bcast_bytes((void*)(&coc), sizeof(index_t), diverge_mpi_comm_size() - 1);
         diverge_mpi_bcast_bytes((void*)(&cod), sizeof(index_t), diverge_mpi_comm_size() - 1);
-        for(index_t k = 0; k < my_nk; ++k) {
-            my_cop += lenP[k];
-            my_coc += lenC[k];
-            my_cod += lenD[k];
-        }
+
     }
 
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
