@@ -182,6 +182,8 @@ void shared_exclusive_wait( void* ptr ) {
     if (!memptr) return;
 
     MPICALL(Win_unlock, 0, memptr->win);
+
+    shared_malloc_barrier();
 }
 
 int shared_malloc_rank( void ) {
@@ -414,6 +416,8 @@ void shared_exclusive_wait( void* ptr ) {
     if (memptr->rank == 0)
         for (int i=0; i<memptr->size; ++i) sem_post( memptr->sem );
     sem_wait( memptr->sem );
+
+    shared_malloc_barrier();
 }
 
 int shared_malloc_rank( void ) {
