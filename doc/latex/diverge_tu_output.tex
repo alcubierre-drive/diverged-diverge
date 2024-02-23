@@ -114,9 +114,10 @@
     \EcolorizeBox{67}{105}{Faqua!30!white}
     \EcolorizeBox{105}{107}{ForangeRed!30!white}   
     \EcolorizeBox{116}{118}{ForangeRed!30!white}   
-    \EcolorizeBox{107}{116}{gray!30!white}   
+    \EcolorizeBox{109}{116}{gray!30!white}   
+    \EcolorizeBox{107}{109}{Faqua!30!white}
 
-    \foreach \idx in {0,1,...,40} {
+    \foreach \idx in {0,1,...,41} {
       \tikzmath{
         \dbuf = 1./64.;
         \ibuf = \idx+66;
@@ -125,7 +126,7 @@
       }
       \draw (\coordA) -- node[midway, below, yshift=0.27em] (Ecell\ibuf) {\scriptsize\ibuf} (\coordB);
     }
-    \draw (0,0.84375-41.0/64.0) -- (1.0,0.84375-41.0/64.0);
+    \draw (0,0.84375-42.0/64.0) -- (1.0,0.84375-42.0/64.0);
     
     \node[] (q0) at (0.5,0.84375-42.0/64.0) {.};
     \node[] (q1) at (0.5,0.84375-43.0/64.0) {.};
@@ -221,6 +222,7 @@
     \EbracketTwo{100}{101}{\oop{mi\_map\_pref\_in\_in}}
     \EbracketTwo{102}{103}{\oop{mi\_map\_pref\_in\_out}}
     \EbracketTwo{104}{105}{\ipd{version}}
+    \EbracketTwo{106}{107}{\oop{kmaps\_to}}
 
     \draw (Ecell126.east) -- ++(0.2,0.0) node[anchor=west] {magic number (\texttt{'T'==84})};
     \EbracketOne{127}{total filesize}
