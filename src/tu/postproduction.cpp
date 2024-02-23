@@ -140,6 +140,8 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
             Map<MatXcd>(_vec, linsize, linsize).transposeInPlace();
         }
 
+        // TODO reimplement eigensolution_sort() s.t. only the first couple of
+        // eigenvectors are moved in memory
         eigensolution_sort( _vec, _val, linsize, 'M' );
 
         double cutoff_local = cutoff;
