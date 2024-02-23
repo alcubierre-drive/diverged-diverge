@@ -445,11 +445,14 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     index_t cop = 0;
     index_t coc = 0;
     index_t cod = 0;
-    index_t my_cop = lenP[my_nk-1]+offP[my_nk-1];
-    index_t my_coc = lenC[my_nk-1]+offC[my_nk-1];
-    index_t my_cod = lenD[my_nk-1]+offD[my_nk-1];
     index_t nk_channel = 0;
+    index_t my_cop = 0;
+    index_t my_coc = 0;
+    index_t my_cod = 0;
     if(!skip_channel_calc) {
+        my_cop = lenP[my_nk-1]+offP[my_nk-1];
+        my_coc = lenC[my_nk-1]+offC[my_nk-1];
+        my_cod = lenD[my_nk-1]+offD[my_nk-1];
         nk_channel = tu_data->nkibz;
         for(index_t rank = 0; rank < diverge_mpi_comm_size();++rank){
             cop = my_cop;
