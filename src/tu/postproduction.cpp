@@ -41,9 +41,9 @@ tu_postproduction::tu_postproduction(diverge_flow_step_t* st, bool tu_skip_chann
         Ptype = (char*)calloc(vertex->my_nk,sizeof(char));
         Ctype = (char*)calloc(vertex->my_nk,sizeof(char));
         Dtype = (char*)calloc(vertex->my_nk,sizeof(char));
-        Pvec = vertex->Pch;
-        Cvec = vertex->Cch;
-        Dvec = vertex->Dch;
+        Pvec = st->tu_step->internal_vertex->Pch;
+        Cvec = st->tu_step->internal_vertex->Cch;
+        Dvec = st->tu_step->internal_vertex->Dch;
 
         lenP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
         lenC = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
@@ -106,7 +106,6 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
                 complex128_t* vec, double* val, char* type, index_t* len, index_t* off) {
 
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
-    /* index_t n_spin = vertex->n_spin; */
     double* _val = (double*)malloc(linsize*sizeof(double));
     complex128_t* _vec = vertex->product_helper;
 
