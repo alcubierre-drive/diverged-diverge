@@ -83,6 +83,22 @@ void singular_value_decomp( const complex128_t* H, complex128_t* U, complex128_t
 #endif // LAPACKE/MKL
 
 void eigensolution_sort( complex128_t* U, double* E, index_t N, char which ) {
+    char abs_limit_c[sizeof(double)] = {0};
+    double abs_limit_d = 0;
+    memcpy( &abs_limit_d, &abs_limit_c, sizeof(double) );
+    eigensolution_sort_N( U, E, N, which, abs_limit_d );
+}
+
+index_t eigensolution_sort_N( complex128_t* U, double* E, index_t N, char which, double abs_limit ) {
+    char abs_limit_c[sizeof(double)] = {0};
+    double abs_limit_d = 0;
+    memcpy( &abs_limit_d, &abs_limit_c, sizeof(double) );
+
+    int use_all = (abs_limit_d == abs_limit);
+    int use_rel = abs_limit < 0;
+
+    abs_limit = fabs(abs_limit);
+
     if (!which) which = 'M'; // default
 
     vector<index_t> range(N);
@@ -110,14 +126,26 @@ void eigensolution_sort( complex128_t* U, double* E, index_t N, char which ) {
                 }
             } );
     }
-    vector<complex128_t> U_cpy(N*N);
     vector<double> E_cpy(N);
-    memcpy( U_cpy.data(), U, sizeof(complex128_t)*N*N );
     memcpy( E_cpy.data(), E, sizeof(double)*N );
-    for (index_t b=0; b<N; ++b) {
-        index_t bp = range[b];
-        E[b] = E_cpy[bp];
-        for (index_t i=0; i<N; ++i)
-            U[b*N+i] = U_cpy[bp*N+i];
+    for (index_t b=0; b<N; ++b)
+        E[b] = E_cpy[range[b]];
+
+    int index_cut = N;
+    if (!use_all) {
+        double cut = use_rel ? E[0] * abs_limit : abs_limit;
+        for (index_t b=0; b<N; ++b) {
+            if (fabs(E[b]) < cut) {
+                index_cut = b;
+                break;
+            }
+        }
     }
+
+    vector<complex128_t> U_cpy(index_cut*N);
+    for (index_t b=0; b<index_cut; ++b)
+        memcpy( U_cpy.data() + b*N, U + range[b]*N, sizeof(complex128_t)*N );
+    memcpy( U, U_cpy.data(), sizeof(complex128_t)*N*index_cut );
+
+    return index_cut;
 }
