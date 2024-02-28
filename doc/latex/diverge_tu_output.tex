@@ -62,8 +62,8 @@
   \fill[draw=none, fill=#3] (\coordA) rectangle (\coordB);
 }
 \newcommand{\EcolorizeBox}[3]{
-  \tikzmath{\coordA = (0,0.84375-#1/64.0+67/64.0);
-            \coordB = (1,0.84375-#2/64.0+67/64.0);}
+  \tikzmath{\coordA = (0,\toplimitEast-#1/64.0+67/64.0);
+            \coordB = (1,\toplimitEast-#2/64.0+67/64.0);}
   \fill[draw=none, fill=#3] (\coordA) rectangle (\coordB);
 }
 
@@ -75,6 +75,11 @@
     coordinate \coordB;
     int \ibuf;
     real \dbuf;
+    real \toplimitEast;
+    real \toplimitEastX;
+    real \EastNum;
+    \toplimitEast = 58./64.;
+    \EastNum = 61.;
   }
   \node[anchor=north east] at (0.99,0.99) {\begin{minipage}{3in}%
     \begin{flushright}%
@@ -113,37 +118,39 @@
   \begin{scope}[shift={(0.48,-0.059)}, yscale=0.98, xscale=0.06]
     \EcolorizeBox{67}{105}{Faqua!30!white}
     \EcolorizeBox{105}{107}{ForangeRed!30!white}   
-    \EcolorizeBox{116}{118}{ForangeRed!30!white}   
-    \EcolorizeBox{109}{116}{gray!30!white}   
+    \EcolorizeBox{120}{122}{ForangeRed!30!white}   
+    \EcolorizeBox{111}{120}{gray!30!white}   
     \EcolorizeBox{107}{109}{Faqua!30!white}
+    \EcolorizeBox{109}{111}{Fblue!30!white}
 
-    \foreach \idx in {0,1,...,41} {
+    \foreach \idx in {0,1,...,43} {
       \tikzmath{
         \dbuf = 1./64.;
         \ibuf = \idx+66;
-        \coordA = (0,0.84375-\idx/64.0);
-        \coordB = (1,0.84375-\idx/64.0);
+        \coordA = (0,\toplimitEast-\idx/64.0);
+        \coordB = (1,\toplimitEast-\idx/64.0);
       }
       \draw (\coordA) -- node[midway, below, yshift=0.27em] (Ecell\ibuf) {\scriptsize\ibuf} (\coordB);
     }
-    \draw (0,0.84375-42.0/64.0) -- (1.0,0.84375-42.0/64.0);
+    \draw (0,\toplimitEast-44.0/64.0) -- (1.0,\toplimitEast-44.0/64.0);
     
-    \node[] (q0) at (0.5,0.84375-42.0/64.0) {.};
-    \node[] (q1) at (0.5,0.84375-43.0/64.0) {.};
-    \node[] (q2) at (0.5,0.84375-44.0/64.0) {.};
+    \node[] (q0) at (0.5,\toplimitEast-46.0/64.0) {.};
+    \node[] (q1) at (0.5,\toplimitEast-47.0/64.0) {.};
+    \node[] (q2) at (0.5,\toplimitEast-48.0/64.0) {.};
     
     \foreach \idx in {0,1,...,5} {
       \tikzmath{
         \dbuf = 1./64.;
         \ibuf = \idx+122;
-        \coordA = (0,0.84375-45/64.0-\idx/64.0);
-        \coordB = (1,0.84375-45/64.0-\idx/64.0);
+        \coordA = (0,\toplimitEast-49/64.0-\idx/64.0);
+        \coordB = (1,\toplimitEast-49/64.0-\idx/64.0);
       }
       \draw (\coordA) -- node[midway, below, yshift=0.27em] (Ecell\ibuf) {\scriptsize\ibuf} (\coordB);
     }
-    \tikzmath{\dbuf = 1.0 - 61.0/64.0;}
-    \draw[Fblue, ultra thick] (0,0.85375) -- (0,\dbuf) -- (1,\dbuf) -- (1,0.85375);
-    \draw[Fblue, ->, thick] (0.5,0.95-0.03) -- (0.5,0.9005-0.03);
+    \tikzmath{\dbuf = 1.0 - \EastNum/64.0;}
+    \tikzmath{\toplimitEastX = \toplimitEast+0.01;}
+    \draw[Fblue, ultra thick] (0,\toplimitEastX) -- (0,\dbuf) -- (1,\dbuf) -- (1,\toplimitEastX);
+    \draw[Fblue, ->, thick] (0.5,\toplimitEastX+0.05) -- (0.5,\toplimitEastX);
   \end{scope}
   
   \begin{scope}[anchor=east]
@@ -223,6 +230,7 @@
     \EbracketTwo{102}{103}{\oop{mi\_map\_pref\_in\_out}}
     \EbracketTwo{104}{105}{\ipd{version}}
     \EbracketTwo{106}{107}{\oop{kmaps\_to} (v0.6)}
+    \EbracketTwo{108}{109}{\nip{mi\_to\_ffidx} (v0.6)}
 
     \draw (Ecell126.east) -- ++(0.2,0.0) node[anchor=west] {magic number (\texttt{'T'==84})};
     \EbracketOne{127}{total filesize}

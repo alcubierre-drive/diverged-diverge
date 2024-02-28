@@ -633,6 +633,8 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
         header[i] = header[i-2] + header[i-1]*sizeof(char); ++i;
         header[i] = symm->kmaps_to.size(); ++i;
     }
+    header[i] = header[i-2] + header[i-1]*sizeof(index_t); ++i;
+    header[i] = vertex->n_orbff;
 
     assert(i < 126);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
@@ -748,6 +750,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
 
     new_off = diverge_mpi_write_byte_to_file_master(file, version, new_off, strlen(version));
     new_off = diverge_mpi_write_byte_to_file_master(file, symm->kmaps_to.data(), new_off, symm->kmaps_to.size() * sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_ffidx, new_off, sindex*vertex->n_orbff);
     diverge_mpi_close_file(file);
     free(header);
 }
