@@ -33,41 +33,61 @@ static string message( string msg, bool success ) {
     return result;
 }
 
-void diverge_compilation_status( void ) {
 
-    #ifndef CUDA_VERSION_STR
-    #define CUDA_VERSION_STR "CUDA"
-    #endif
-
-    #ifdef USE_CUDA
-    #define _VERSION_IS_CUDA_USED true
-    #else // USE_CUDA
-    #define _VERSION_IS_CUDA_USED false
-    #endif // USE_CUDA
-
+int diverge_compilation_status_mpi( void ) {
     #ifdef USE_MPI
     #define _VERSION_IS_MPI_USED true
     #else
     #define _VERSION_IS_MPI_USED false
     #endif
 
+    return _VERSION_IS_MPI_USED;
+}
+
+int diverge_compilation_status_cuda( char* str ) {
+    #ifndef CUDA_VERSION_STR
+    #define CUDA_VERSION_STR "CUDA"
+    #endif
+
+    #ifdef USE_CUDA
+    #define _VERSION_IS_CUDA_USED true
+    #else
+    #define _VERSION_IS_CUDA_USED false
+    #endif
+
+    if (str) strcpy( str, CUDA_VERSION_STR );
+    return _VERSION_IS_CUDA_USED;
+}
+
+int diverge_compilation_status_version( char* str ) {
+    if (str) strcpy( str, get_version() );
+    return !is_version_dirty();
+}
+
+int diverge_compilation_status_numbers( void ) {
     bool number_representation = check_iec_double() &&
                                  check_iec_float() &&
                                  check_little_endian() &&
                                  check_8bit_char();
+    return number_representation;
+}
 
+void diverge_compilation_status( void ) {
+
+    char version_string[256] = {0};
+    char cuda_string[256] = {0};
     vector<string> compilation_status = {
-        message( get_version(), !is_version_dirty() ),
-        message("MPI", _VERSION_IS_MPI_USED),
-        message(CUDA_VERSION_STR, _VERSION_IS_CUDA_USED),
-        message("numbers", number_representation ),
+        message( version_string, diverge_compilation_status_version(version_string) ),
+        message( "MPI", diverge_compilation_status_mpi() ),
+        message( cuda_string, diverge_compilation_status_cuda(cuda_string) ),
+        message( "numbers", diverge_compilation_status_numbers() ),
     };
     mpi_ver_printf("");
     for (string c: compilation_status)
         mpi_eprintf("   %s", c.c_str());
     mpi_eprintf("\n");
 
-    if (!number_representation) {
+    if (!diverge_compilation_status_numbers()) {
         if (!check_iec_double())
             mpi_wrn_printf("double is not conformant to iec559. binary files may be corrupted.\n");
         if (!check_iec_float())

@@ -209,6 +209,23 @@ if not _libs["divERGe"] is None:
     compilation_status.argtypes = []
     compilation_status.restype = None
 
+    compilation_status = _libs["divERGe"].get("diverge_compilation_status", "cdecl")
+    compilation_status.argtypes = []
+    compilation_status.restype = None
+
+    compilation_status_mpi = _libs["divERGe"].get("diverge_compilation_status_mpi", "cdecl")
+    compilation_status_mpi.argtypes = []
+    compilation_status_mpi.restype = c_int
+    compilation_status_cuda = _libs["divERGe"].get("diverge_compilation_status_cuda", "cdecl")
+    compilation_status_cuda.argtypes = [String]
+    compilation_status_cuda.restype = c_int
+    compilation_status_version = _libs["divERGe"].get("diverge_compilation_status_version", "cdecl")
+    compilation_status_version.argtypes = [String]
+    compilation_status_version.restype = c_int
+    compilation_status_numbers = _libs["divERGe"].get("diverge_compilation_status_numbers", "cdecl")
+    compilation_status_numbers.argtypes = []
+    compilation_status_numbers.restype = c_int
+
     # License
     license = _libs["divERGe"].get("diverge_license", "cdecl")
     license.argtypes = []

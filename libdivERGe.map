@@ -2,6 +2,10 @@ DIVERGE_0.5 {
     global:
         diverge_channel_vertex_generator_default;
         diverge_compilation_status;
+        diverge_compilation_status_cuda;
+        diverge_compilation_status_mpi;
+        diverge_compilation_status_numbers;
+        diverge_compilation_status_version;
         diverge_embed;
         diverge_euler_defaults_CPP;
         diverge_euler_next;
@@ -78,6 +82,7 @@ DIVERGE_0.5 {
         diverge_mpi_allreduce_complex_sum_inplace;
         diverge_mpi_allreduce_double_max;
         diverge_mpi_allreduce_double_sum;
+        diverge_mpi_allreduce_int_max_inplace;
         diverge_mpi_alltoallv_bytes;
         diverge_mpi_alltoallv_complex;
         diverge_mpi_barrier;
