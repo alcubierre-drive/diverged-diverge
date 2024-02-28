@@ -632,9 +632,11 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     if (save_symmetries && tu_data->symm->use_symmetries) {
         header[i] = header[i-2] + header[i-1]*sizeof(char); ++i;
         header[i] = symm->kmaps_to.size(); ++i;
+    } else {
+        i += 2;
     }
     header[i] = header[i-2] + header[i-1]*sizeof(index_t); ++i;
-    header[i] = vertex->n_orbff;
+    header[i] = vertex->n_orbff; ++i;
 
     assert(i < 126);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
