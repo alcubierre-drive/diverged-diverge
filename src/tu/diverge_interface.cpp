@@ -54,6 +54,7 @@ void tu_data_destructor(void* tu_da) {
     free(tu_data->ob_to_orbff);
     free(tu_data->mi_to_ofrom);
     free(tu_data->mi_to_ffidx);
+    free(tu_data->mi_to_tuffidx);
     free(tu_data->mi_to_oto);
     free(tu_data->mi_to_R);
     delete tu_data;
@@ -136,6 +137,7 @@ void init_bond_descriptor(diverge_model_t* model) {
     tu_data->mi_to_oto = (index_t*)calloc(n_tu_ff,sizeof(index_t));
     tu_data->mi_to_R = (index_t*)calloc(3*n_tu_ff,sizeof(index_t));
     tu_data->mi_to_ffidx = (index_t*)calloc(n_tu_ff,sizeof(index_t));
+    tu_data->mi_to_tuffidx = (index_t*)calloc(n_tu_ff,sizeof(index_t));
     index_t idx = 0;
     for(index_t b = 0; b < tu_data->n_bonds; ++b)
     for(index_t o = 0; o < model->n_orb; ++o){
@@ -144,6 +146,7 @@ void init_bond_descriptor(diverge_model_t* model) {
             tu_data->mi_to_ofrom[idx] = tu_ff[b+tu_data->bond_offsets[o]].ofrom;
             tu_data->mi_to_oto[idx]   = tu_ff[b+tu_data->bond_offsets[o]].oto;
             tu_data->mi_to_ffidx[idx] = tu_ff[b+tu_data->bond_offsets[o]].ffidx;
+            tu_data->mi_to_tuffidx[idx] =     b+tu_data->bond_offsets[o];
             tu_data->mi_to_R[3*idx]   = map_to_fine(tu_ff[b+tu_data->bond_offsets[o]].R[0],
                                                         model->nk[0]);
             tu_data->mi_to_R[3*idx+1] = map_to_fine(tu_ff[b+tu_data->bond_offsets[o]].R[1],

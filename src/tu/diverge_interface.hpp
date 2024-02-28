@@ -63,6 +63,7 @@ struct tu_data_t {
     index_t* mi_to_oto;
     index_t* mi_to_ffidx;
     index_t* mi_to_R;
+    index_t* mi_to_tuffidx;
 
     vector<double> bosonic_freq;
     double doping_per_UC = 0.0;

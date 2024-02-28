@@ -546,6 +546,9 @@ class diverge_post_tu:
     bond_offsets: offset to the bonds belonging to site o (n_orb)
     idx_ibz_in_full_mesh: gives the index of the IBZ point in the full PZ (nkibz)
 
+    kmaps_to: symmetry mapping of full BZ to IBZ (nk)
+    mi_to_tuffidx: multiindex to tu_ff index mapping; useful for analysis with model.tu_ff (n_orbff)
+
     VERTEX DIAGONALISATION
     Plen: for each q point the number of stored elements (nkibz)
     Poff: for each q point the offset in the array (nkibz)
@@ -744,7 +747,7 @@ class diverge_post_tu:
         self.version = get_array_header( iL, np.byte ).tobytes().decode()
 
         self.kmaps_to = get_array_header( iL, np.longlong )
-        self.mi_to_ffidx = get_array_header( iL, np.longlong )
+        self.mi_to_tuffidx = get_array_header( iL, np.longlong )
 
 # Function: diverge_read
 # function to read model files as well as post processing files. returns the
