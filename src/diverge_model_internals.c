@@ -223,6 +223,9 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     free(model->internals->symm_orb_len);
     free(model->internals->symm_pref);
 
+    int dim = model->internals->dim;
+    for (int d=dim; d<3; ++d) model->nk[d] = model->nkf[d] = 0;
+
     memset(model->internals, 0, sizeof(internals_t));
     model->internals->has_common_internals = 0;
 }
