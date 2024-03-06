@@ -160,6 +160,8 @@ TEST_CASE("batched svd", "[batched][svd]") {
         Map<VecXd> S2( S+i*N, N );
         double X2 = (U2 * S2.asDiagonal() * V2.conjugate() - AA).norm();
         CHECK( X2 < 1.e-7 );
+
+        CHECK( (SS - S2).norm() < 1.e-7 );
     }
 
     free(A);

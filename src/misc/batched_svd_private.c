@@ -20,6 +20,14 @@ static inline void transpose_memcpy_128( void* out_, const void* in_, index_t N 
         out[IDX2(i,j,N)] = in[IDX2(j,i,N)];
 }
 
+static inline void adjoint_memcpy_128( void* out_, const void* in_, index_t N ) {
+    complex128_t* out = (complex128_t*)out_;
+    const complex128_t* in = (const complex128_t*)in_;
+    for (index_t i=0; i<N; ++i)
+    for (index_t j=0; j<N; ++j)
+        out[IDX2(i,j,N)] = conj(in[IDX2(j,i,N)]);
+}
+
 typedef struct single_cusolver_solution_t single_cusolver_solution_t;
 
 struct single_cusolver_solution_t {
@@ -77,11 +85,12 @@ void* single_cusolver_thread( void* data ) {
 
         if (cfg->U && !cfg->do_eigen)
             transpose_memcpy_128( cfg->U + i*POW2(cfg->dim), cfg->dU, cfg->dim );
-        else if (cfg->U)
+        else if (cfg->U) // the Eigen case is different
             memcpy( cfg->U + i*POW2(cfg->dim), cfg->dA, sizeof(complex128_t)*POW2(cfg->dim) );
 
         if (cfg->V)
-            memcpy( cfg->V + i*POW2(cfg->dim), cfg->dV, sizeof(complex128_t)*POW2(cfg->dim) );
+            adjoint_memcpy_128( cfg->V + i*POW2(cfg->dim), cfg->dV, cfg->dim );
+
         memcpy( cfg->S + i*cfg->dim, cfg->dS, sizeof(double)*cfg->dim );
     }
 
