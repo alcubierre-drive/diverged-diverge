@@ -200,6 +200,10 @@ BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS=VAL - compile all batched GEMMs where
                                                 smaller than the number of
                                                 executions up to matrix size VAL
                                                 explicitly. default: 4.
+CUBLAS_BATCHED_GEMM_CALL=VAL - use this function name for batched cublas gemm
+                               instead of the default
+                               "cublasZgemmStridedBatched_64" (may not be there
+                               in older CUDA versions)
 CUDA_CIRCUMVENT_CONSTEXPR - on old CUDA versions, constexpr may not be
                             supported. define to circumvent this issue.
 CUDA_DEFINE_ATOMIC_ADD - on old CUDA versions (or when compiling for old
@@ -330,3 +334,8 @@ DIVERGE_OMP_IMPLICIT_NUM_THREADS=VAL - set the number of OpenMP threads to VAL
                                        thread control is *not* possible apart
                                        from this global, implicit OpenMP
                                        setting.
+DIVERGE_SHARED_MALLOC_EXTRA_COLORS=VAL - boolean flag to control additional
+                                         splitting of shared memory
+                                         communicators. may be benificial for
+                                         performance in some cases; and very
+                                         useful for debugging
