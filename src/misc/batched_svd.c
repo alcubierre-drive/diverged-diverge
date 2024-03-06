@@ -22,9 +22,9 @@ void batched_svd( int* dev, int n_dev, complex128_t* A, complex128_t* U,
     batched_svd_cfg_t cfg_parent = { .idx=-1, .A=A, .U=U, .V=V, .S=S, .dim=dim, .cnt=cnt };
     int use_gpu_fun = 0;
 
-    if (n_dev == INT_MIN) {
+    if (n_dev == INT_MIN || n_dev == INT_MIN+1) {
         cfg_parent.do_eigen = 1;
-        n_dev = -1;
+        n_dev = n_dev == INT_MIN ? -1 : 0;
     }
 
     // default (CPU) setup

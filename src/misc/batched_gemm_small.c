@@ -4,6 +4,7 @@
 
 #ifndef USE_CUDA
 typedef void* cublasHandle_t;
+typedef void* cudaStream_t;
 #else
 #include <cublas_v2.h>
 #endif
@@ -15,6 +16,7 @@ void batched_gemm_small_cpu( batched_gemm_small_handle_t* h, const complex128_t*
 
 struct batched_gemm_small_handle_t {
     cublasHandle_t h[32];
+    cudaStream_t s[32];
     index_t n;
     index_t num;
 
@@ -71,7 +73,9 @@ batched_gemm_small_handle_t* batched_gemm_small_init( index_t n, index_t num ) {
 
     for (int d=0; d<h->ndev; ++d) {
         CUDA_CHECK( cudaSetDevice(d) );
+        CUDA_CHECK( cudaStreamCreate(&h->s[d]) );
         CUBLAS_CHECK( cublasCreate(&h->h[d]) );
+        CUBLAS_CHECK( cublasSetStream(h->h[d], h->s[d]) );
         CUDA_CHECK( cudaMallocManaged((void**)&h->dA[d], sizeof(complex128_t)*h->private_num[d]*POW2(n),
                     cudaMemAttachGlobal) );
         CUDA_CHECK( cudaMallocManaged((void**)&h->dB[d], sizeof(complex128_t)*h->private_num[d]*POW2(n),
@@ -106,6 +110,7 @@ static void* batched_gemm_small_dev( void* arg ) {
     cuDoubleComplex alpha = {0};
     alpha.x = 1.0;
     cuDoubleComplex beta = {0};
+    CUDA_CHECK( cudaSetDevice(d) );
     memcpy( h->dA[d], A + h->private_mem_displ[d], sizeof(complex128_t)*h->private_num[d]*POW2(h->n) );
     memcpy( h->dB[d], B + h->private_mem_displ[d], sizeof(complex128_t)*h->private_num[d]*POW2(h->n) );
     CUBLAS_CHECK( CUBLAS_BATCHED_GEMM_CALL( h->h[d], CUBLAS_OP_N, CUBLAS_OP_N,
@@ -113,9 +118,7 @@ static void* batched_gemm_small_dev( void* arg ) {
                 (cuDoubleComplex*)h->dB[d], h->n, POW2(h->n),
                 (cuDoubleComplex*)h->dA[d], h->n, POW2(h->n), &beta,
                 (cuDoubleComplex*)h->dC[d], h->n, POW2(h->n), h->private_num[d] ) );
-    cudaStream_t stream;
-    CUBLAS_CHECK( cublasGetStream(h->h[d], &stream) );
-    CUDA_CHECK( cudaStreamSynchronize(stream) );
+    CUDA_CHECK( cudaStreamSynchronize(h->s[d]) );
     memcpy( C + h->private_mem_displ[d], h->dC[d], sizeof(complex128_t)*h->private_num[d]*POW2(h->n) );
     return NULL;
 }
@@ -138,6 +141,7 @@ void batched_gemm_small_destroy( batched_gemm_small_handle_t* h ) {
         CUDA_CHECK( cudaFree(h->dB[d]) );
         CUDA_CHECK( cudaFree(h->dC[d]) );
         CUBLAS_CHECK( cublasDestroy(h->h[d]) );
+        CUDA_CHECK( cudaStreamDestroy(h->s[d]) );
     }
     free(h);
 }

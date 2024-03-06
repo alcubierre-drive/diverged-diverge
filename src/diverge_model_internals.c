@@ -168,7 +168,12 @@ void diverge_model_internals_common( diverge_model_t* model ) {
                 batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
             else {
                 mpi_vrb_printf( "doing eigensolution via the SVD module\n" );
-                batched_svd( NULL, INT_MIN, intls->ham, intls->U, NULL, intls->E, nb, nktot );
+                int selector_flag = INT_MIN;
+                if (intls->use_batched_svd_algo_in_common == -1) {
+                    mpi_vrb_printf( "defaulting to CPU implementation\n" );
+                    selector_flag += 1;
+                }
+                batched_svd( NULL, selector_flag, intls->ham, intls->U, NULL, intls->E, nb, nktot );
             }
         }
         shared_exclusive_wait( intls->U );
