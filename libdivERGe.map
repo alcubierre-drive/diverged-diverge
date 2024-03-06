@@ -172,4 +172,8 @@ DIVERGE_UNSTABLE {
         batched_gemm_cublas_w_buffer_clear;
         batched_gemm_N_ll_num;
         gemm;
+        batched_gemm_small_init;
+        batched_gemm_small_destroy;
+        batched_gemm_small_mode;
+        batched_gemm_small;
 };
