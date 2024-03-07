@@ -11,8 +11,11 @@ extern "C" {
 // batched SVD on square matrices. if n_dev < 0, use GPU with automatic
 // devicing. if n_dev == 0, use CPU. if CUDA is not compiled in, always use CPU.
 //
-// special feature: if n_dev == INT_MIN, do *EIGENSOLUTION* instead of SVD,
-// write the result to U and do not touch V
+// special features:
+// · if n_dev == INT_MIN, do *EIGENSOLUTION* instead of SVD, write the result to
+//   U and do not touch V
+// · if n_dev == INT_MIN+1 same as above, but force CPU algorithm even if CUDA
+//   is compiled in
 //
 // U and V may be NULL, in which case nothing is copied into the output arrays.
 // one of U or V may be the same as A, in which case the input is overwritten.
