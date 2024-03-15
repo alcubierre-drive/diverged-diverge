@@ -167,7 +167,19 @@ struct diverge_model_t {
     // structure along the path.
     index_t n_ibz_path;
     // Variable: ibz_path[MAX_N_ORBS][3]
-    // path in crystal (relative to reciprocal lattice vectors) coordinates.
+    // path in crystal (relative to reciprocal lattice vectors) coordinates,
+    // relevant for output with <diverge_model_to_file>. If
+    // <diverge_model_output_conf_t> contains npath=-1 (used via
+    // <diverge_model_to_file_finegrained at
+    // diverge_model_output_conf_t.diverge_model_to_file_finegrained>), or
+    // <diverge_model_output_set_npath at
+    // diverge_model_output_conf_t.diverge_model_output_set_npath>
+    // has been used to set npath=-1, only values *within* the first primitive
+    // zone (PZ) are allowed, i.e., floating point numbers in the range [0,1).
+    // It is possible to skip segments by setting the first element of an
+    // element of the ibz_path to the magic value returned from
+    // <diverge_model_ibz_path_skip_segment> (nan with payload). Then, both the
+    // segment before and after the special value are skipped.
     double ibz_path[MAX_N_ORBS][3];
 
     // lattice
@@ -312,6 +324,19 @@ diverge_model_t* diverge_model_init(void);
 // Function: diverge_model_free
 // clean up a <diverge_model_t> instance and all the attached arrays.
 void diverge_model_free(diverge_model_t* model);
+
+// function: diverge_model_ibz_path_skip_segment
+// return special NaN that allows to skip segments in the IBZ path. Usage as
+// follows:
+// === C/C++ ===
+// m->ibz_path[0][0] = 0.5;
+// m->ibz_path[1][0] = 0.0;
+// m->ibz_path[2][0] = diverge_model_ibz_path_skip_segment();
+// m->ibz_path[3][0] = 0.5;
+// m->ibz_path[4][0] = 0.0;
+// m->n_ibz_path = 5;
+// =============
+double diverge_model_ibz_path_skip_segment( void );
 
 #ifdef __cplusplus
 }

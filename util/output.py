@@ -803,7 +803,13 @@ def bandstructure_kpts( model ):
 # ==============
 def bandstructure_xvals( model ):
     K = bandstructure_kpts(model)
-    return np.concatenate( [[0], np.cumsum(np.sqrt((np.diff(K,axis=0)**2).sum(axis=1)))] )
+    vals = np.concatenate( [[0], np.sqrt((np.diff(K,axis=0)**2).sum(axis=1))] )
+    if model.npath == -1 and not model.kf_ibz_path is None:
+        n_per_segment = model.kf_ibz_path[0]
+        offsets = np.cumsum( n_per_segment )
+        offset_zero = offsets[n_per_segment == 0]
+        vals[offset_zero] = 0.0
+    return np.cumsum(vals)
 
 # Function: bandstructure_ticks
 # returns the xticks used for band structure plots from a <diverge_model>.

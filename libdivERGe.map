@@ -51,6 +51,7 @@ DIVERGE_0.5 {
         diverge_model_generate_mom_basis;
         diverge_model_get_filling;
         diverge_model_hack;
+        diverge_model_ibz_path_skip_segment;
         diverge_model_init;
         diverge_model_internals_any;
         diverge_model_internals_common;

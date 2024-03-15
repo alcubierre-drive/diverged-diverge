@@ -2,6 +2,7 @@
 
 #include "kmesh_to_bands.h"
 #include "bitary.h"
+#include "qnan.h"
 #include "mpi_functions.h"
 #include "../diverge_Eigen3.hpp"
 #include "../diverge_model.h"
@@ -107,28 +108,39 @@ static index_t* diverge_kmesh_to_bands_both( diverge_model_t* m, index_t**
     Map<Mat3d> Gvec(gvec[0]);
     index_t* n_per_segment = (index_t*)malloc(sizeof(index_t)*m->n_ibz_path-1);
     for (index_t segment=0; segment<m->n_ibz_path-1; ++segment) {
-        Map<Vec3d> start_crystal( m->ibz_path[segment] ),
-                   stop_crystal( m->ibz_path[segment+1] );
-        Vec3d start = Gvec * start_crystal,
-              stop = Gvec * stop_crystal;
 
-        if ((start-stop).norm() < DIVERGE_EPS_MESH)
-            mpi_err_printf( "each segment must cover nonzero distance\n" );
+        // find whether we should skip this segment
+        uint32_t skip_segment = 0;
+        for (int add=0; add<2; ++add) {
+            if (qnan_isnan( m->ibz_path[segment+add][0] ))
+                skip_segment = qnan_get( m->ibz_path[segment+add][0] );
+        }
 
-        index_t *sres, nsres;
+        if (!skip_segment) {
+            Map<Vec3d> start_crystal( m->ibz_path[segment] ),
+                       stop_crystal( m->ibz_path[segment+1] );
 
-        if (fine)
-            find_bandstructure_segment_indices( start.data(), stop.data(),
-                m->internals->kfmesh, kdimtot(m->nk, m->nkf), &sres, &nsres );
-        else
-            find_bandstructure_segment_indices( start.data(), stop.data(),
-                m->internals->kmesh, kdim(m->nk), &sres, &nsres );
+            Vec3d start = Gvec * start_crystal,
+                  stop = Gvec * stop_crystal;
 
-        result = (index_t*)realloc( result, sizeof(index_t) * (sresult + nsres) );
-        memcpy( result + sresult, sres, sizeof(index_t)*nsres );
-        sresult += nsres;
-        n_per_segment[segment] = nsres;
-        free( sres );
+            if ((start-stop).norm() < DIVERGE_EPS_MESH)
+                mpi_err_printf( "each segment must cover nonzero distance\n" );
+
+            index_t *sres = NULL, nsres = 0;
+            if (fine)
+                find_bandstructure_segment_indices( start.data(), stop.data(),
+                    m->internals->kfmesh, kdimtot(m->nk, m->nkf), &sres, &nsres );
+            else
+                find_bandstructure_segment_indices( start.data(), stop.data(),
+                    m->internals->kmesh, kdim(m->nk), &sres, &nsres );
+            result = (index_t*)realloc( result, sizeof(index_t) * (sresult + nsres) );
+            memcpy( result + sresult, sres, sizeof(index_t)*nsres );
+            sresult += nsres;
+            free( sres );
+            n_per_segment[segment] = nsres;
+        } else {
+            n_per_segment[segment] = 0;
+        }
     }
     *indices = result;
     *n_indices = sresult;

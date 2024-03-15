@@ -7,6 +7,7 @@
 #include "misc/mpi_functions.h"
 #include "misc/kmesh_to_bands.h"
 
+#include "misc/qnan.h"
 #include "misc/eigen.h"
 #include "misc/md5.h"
 #include "misc/version.h"
@@ -454,11 +455,19 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
         index_t ni = (seg != (nseg-1)) ? (npath) : (npath+1);
         Map<Vec3d> s0vec( (double*)&mod->ibz_path[seg] );
         Map<Vec3d> s1vec( (double*)&mod->ibz_path[seg+1] );
+
+        uint32_t skip = 0;
+        for (int add=0; add<2; ++add) {
+            if (qnan_isnan(mod->ibz_path[seg+add][0]))
+                skip = qnan_get(mod->ibz_path[seg+add][0]);
+        }
+
         for (index_t i=0; i<ni; ++i) {
             double x = (double)i / (double)npath;
             Vec3d k0vec = Gvec * s0vec,
                   k1vec = Gvec * s1vec;
             Vec3d kvec = k0vec + (k1vec - k0vec) * x;
+            if (skip) kvec = Vec3d::Zero();
             zero_out(H);
             for (index_t h=0; h<mod->n_hop; ++h) {
                 rs_hopping_t* hh = mod->hop+h;

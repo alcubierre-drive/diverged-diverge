@@ -8,6 +8,7 @@
 #include "diverge_patching.h"
 #include "diverge_model_internals.h"
 #include "misc/dependency_tree.h"
+#include "misc/qnan.h"
 #include <fftw3.h>
 #include <algorithm>
 #include <cassert>
@@ -222,3 +223,8 @@ int diverge_channel_vertex_generator_default(diverge_model_t* model, char channe
     return filled;
 }
 
+double diverge_model_ibz_path_skip_segment( void ) {
+    uint32_t number = 0;
+    memcpy( &number, "skip", sizeof(uint32_t) );
+    return qnan_gen( number );
+}
