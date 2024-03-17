@@ -116,7 +116,11 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
         if (algo == 'b')
             batched_eigen_r( NULL, -2, vec, allval, linsize, vertex->my_nk );
         else
-            batched_svd( NULL, -1, vec, vec, NULL, allval, linsize, vertex->my_nk );
+            #ifdef TU_POST_USE_BATCHED_SVD_U
+            batched_svd( NULL, -1, vec, NULL, vec, allval, linsize, vertex->my_nk );
+            #else
+            batched_svd( NULL, -1, vec, NULL, vec, allval, linsize, vertex->my_nk );
+            #endif
     }
 
     for (index_t q = 0; q < vertex->my_nk;++q) {
