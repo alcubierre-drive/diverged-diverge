@@ -133,7 +133,7 @@ index_t eigensolution_sort_N( complex128_t* U, double* E, index_t N, char which,
 
     int index_cut = N;
     if (!use_all) {
-        double cut = use_rel ? E[0] * abs_limit : abs_limit;
+        double cut = use_rel ? fabs(E[0]) * abs_limit : abs_limit;
         for (index_t b=0; b<N; ++b) {
             if (fabs(E[b]) < cut) {
                 index_cut = b;
