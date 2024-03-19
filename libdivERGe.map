@@ -116,6 +116,7 @@ DIVERGE_0.5 {
         diverge_postprocess_and_write_finegrained;
         diverge_postprocess_conf_defaults_CPP;
         diverge_read_W90_C;
+        diverge_read_fplo;
         diverge_reset;
         diverge_run_tests;
         diverge_symmetrize_2pt_coarse;
