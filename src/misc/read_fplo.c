@@ -1,9 +1,9 @@
 /* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 #include "read_fplo.h"
+#include "../diverge_common.h"
 
 #ifndef USE_FPLO_READER
 
-#include <stdlib.h>
 diverge_model_t* diverge_read_fplo( const char* fname ) {
     (void)fname;
     mpi_err_printf( "FPLO reader not compiled in, compile with USE_FPLO_READER\n" );
@@ -16,7 +16,6 @@ diverge_model_t* diverge_read_fplo( const char* fname ) {
 #include <stdlib.h>
 #include <string.h>
 
-#include "../diverge_common.h"
 #include "../diverge_model.h"
 #define LINALG_NO_LAPACKE
 #define LINALG_EXPORT static inline
