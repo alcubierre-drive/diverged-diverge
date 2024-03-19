@@ -19,8 +19,13 @@ extern "C" {
 typedef struct diverge_model_t diverge_model_t;
 
 /* Function: diverge_model_to_file
- * returns a checksum of the model as a string (must not be free'd as it is
- * statically owned by libdivERGe)
+ * output a <diverge_model_t> to a .dvg file that can be read using the
+ * <diverge.output at dvg-output> python library. more control can be obtained
+ * from the <finegrained interface at
+ * diverge_model_output_conf_t.diverge_model_to_file_finegrained> using the
+ * configuration structure <diverge_model_output_conf_t>. Those functions return
+ * a checksum of the model as a string (must not be free'd as it is statically
+ * owned by libdivERGe)
  *
  * file format specification info graphic (text below)
  *
@@ -148,7 +153,12 @@ typedef struct diverge_model_t diverge_model_t;
 char* diverge_model_to_file( diverge_model_t* mod, const char* fname );
 
 // Struct: diverge_model_output_conf_t
-// to have fine-grained output control over diverge_model_to_file
+// to have fine-grained output control over <diverge_model_to_file>. Used
+// explicitly in <diverge_model_to_file_finegrained>, and implicit in the python
+// wrapper <diverge.model_to_file_PY at dvg.model_to_file_PY>. Defaults are
+// *not* documented here, but can be obtained from C/C++/Python via
+// <diverge_model_output_conf_defaults_CPP> or from the static constant variable
+// diverge_model_output_conf_defaults in C.
 //
 // Members (*all integers interpreted as bool if not specified else*):
 //

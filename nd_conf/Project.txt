@@ -9,7 +9,7 @@
 Title: divERGe
 Subtitle: Diverge Implements Various ERG Examples
 
-Copyright: J. B. Hauck and L. Klebl, 2023 ©
+Copyright: J. B. Profe and L. Klebl, 2024 ©
 
 Timestamp: Last Updated Month Day Year
 #    m     - Single digit month, when possible.  January is "1".

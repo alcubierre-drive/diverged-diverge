@@ -19,6 +19,7 @@ Table Of Contents::
         - <generate a patching at Patching>
         - <initializing internal structures at diverge_model_internals_common>
         - <reading Wannier90 files at diverge_read_W90_C>
+        - <reading FPLO files at diverge_read_fplo>
         - <output to file at diverge_model_to_file>
         - <momentum meshes at diverge_model_generate_meshes>
             - <generate IBZ paths from meshes at diverge_kmesh_to_bands>
@@ -60,7 +61,13 @@ Usage::
 The <C library at libdivERGe.so> represents the centrum of divERGe. Python
 specific library features (e.g. the <autoflow at dvg.autoflow> function) are
 documented <here at dvg>. For reading the output files, see <diverge.output at
-dvg-output>.
+dvg-output> *and the Python doc obtained from within Python using help(object),
+i.e.,*
+=== Python ===
+import diverge.output as do
+help(do.diverge_model)
+help(do.diverge_post_tu)
+==============
 
 We now continue with the example: On a not-too-old Linux machine (GLIBC >=
 2.17), extract the tar.gz file and use a python3 interpreter to execute <the

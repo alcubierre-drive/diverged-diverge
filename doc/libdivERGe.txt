@@ -225,4 +225,4 @@ diverge_model_free( mod );
 diverge_finalize();
 ---------------
 
-J. B. Hauck and L. Klebl, 2023 ©
+J. B. Profe and L. Klebl, 2024 ©

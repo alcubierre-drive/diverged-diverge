@@ -53,4 +53,4 @@ differently licensed software ([OpenBLAS](https://www.openblas.net/),
 [FFTW](https://www.fftw.org/)) in binary form.
 
 # Authors
-**Jonas B. Hauck** and **Lennart Klebl**, 2023.
+**Jonas B. Profe** and **Lennart Klebl**, 2024.

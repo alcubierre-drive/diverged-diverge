@@ -9,6 +9,11 @@ extern "C" {
 #endif
 
 // Struct: diverge_postprocess_conf_t
+// Default values are obtained using <diverge_postprocess_conf_defaults_CPP>
+// from C/C++/Python and the static constant variable
+// diverge_postprocess_conf_defaults from C. Note that this documentation does
+// *not* include the defaults, but they are given in the source file
+// src/diverge_post.h.
 //
 // Info:
 // patch_ - used with the patch backend
@@ -68,7 +73,8 @@ typedef struct {
     // 'a'(utomatic), 's'(vd), 'e'(igen), 'b'(atched eigen), 'B'(atched SVD)
     char    tu_which_solver_mode;
     // Variable: tu_skip_channel_calc
-    // if true, the eigenvectors of each channel are not calculated - usefull for RPA
+    // if true, the eigenvectors of each channel are not calculated. useful for
+    // RPA calculations
     bool    tu_skip_channel_calc;
     // Variable: tu_storing_threshold
     // sets a theshold above which all eigen/singular vectors will be stored (magnitude)
@@ -145,11 +151,15 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
 diverge_postprocess_conf_t diverge_postprocess_conf_defaults_CPP( void );
 
 // Function: diverge_postprocess_and_write
-// Post-processing and output to disk. File format specification depends on the
-// chosen backend. In general, the header (shown in the figures) is followed by
-// data. For the TUFRG backend, displacements are _in bytes_ while sizes are in
-// units of the respective datatype. For the other backends, all units are
-// <index_t> (i.e. 64bit)
+// Post-processing and output to disk as .dvg file. Those files can be read by
+// the <diverge.output Python library at dvg-output>. File format specification
+// depends on the chosen backend. In general, the header (shown in the figures)
+// is followed by data. For the TUFRG backend, displacements are _in bytes_
+// while sizes are in units of the respective datatype. For the other backends,
+// all units are <index_t> (i.e. 64bit). Default values from
+// <diverge_postprocess_conf_t> (i.e. <diverge_postprocess_conf_defaults_CPP>)
+// are taken. For more control, use <diverge_postprocess_and_write_finegrained>
+// or <diverge.postprocess_and_write_PY at dvg.postprocess_and_write_PY>.
 //
 // Grid-FRG:
 //
