@@ -12,11 +12,12 @@ typedef struct diverge_model_t diverge_model_t;
 // read FPLO Hamiltonian files (+hamdata) into <diverge_model_t> objects.
 //
 // Behavior:
-// - initializes the <diverge_model_t> via <diverge_model_init>
+// - initializes the <diverge_model_t> via <diverge_model_init at diverge_model_t.diverge_model_init>
 // - sets the hopping parameters (<diverge_model_t.hop> and <diverge_model_t.n_hop>)
 // - sets the number of orbitals (<diverge_model_t.n_orb>)
 // - sets the number of spins (<diverge_model_t.n_spin>)
 // - sets the real space lattice (<diverge_model_t.lattice>) and positions (<diverge_model_t.positions>)
+// - returns NULL on errors / if FPLO reader not compiled in
 //
 // *DOES NOT SET ANY OTHER VARIABLES IN THE MODEL*
 diverge_model_t* diverge_read_fplo( const char* fname );

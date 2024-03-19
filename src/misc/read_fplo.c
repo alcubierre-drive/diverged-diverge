@@ -6,6 +6,7 @@
 #include <stdlib.h>
 diverge_model_t* diverge_read_fplo( const char* fname ) {
     (void)fname;
+    mpi_err_printf( "FPLO reader not compiled in, compile with USE_FPLO_READER\n" );
     return NULL;
 }
 
@@ -40,19 +41,24 @@ static fplo_hamiltonian_t* fplo_hamiltonian_read( const char* fplo_file );
 static void fplo_hamiltonian_free( fplo_hamiltonian_t* h );
 
 diverge_model_t* diverge_read_fplo( const char* fplo_file ) {
-    diverge_model_t* m = diverge_model_init();
     fplo_hamiltonian_t* h = fplo_hamiltonian_read( fplo_file );
-    m->hop = h->hop;
-    m->n_hop = h->n_hop;
-    m->n_orb = h->n_orb;
-    m->n_spin = h->n_spin;
-    memcpy( m->lattice[0], h->lattice[0], sizeof(double)*9 );
-    memcpy( m->positions[0], h->pos, sizeof(double)*h->n_orb*3 );
 
-    h->hop = NULL;
-    fplo_hamiltonian_free( h );
+    if (h) {
+        diverge_model_t* m = diverge_model_init();
+        m->hop = h->hop;
+        m->n_hop = h->n_hop;
+        m->n_orb = h->n_orb;
+        m->n_spin = h->n_spin;
+        memcpy( m->lattice[0], h->lattice[0], sizeof(double)*9 );
+        memcpy( m->positions[0], h->pos, sizeof(double)*h->n_orb*3 );
 
-    return m;
+        h->hop = NULL;
+        fplo_hamiltonian_free( h );
+
+        return m;
+    } else {
+        return NULL;
+    }
 }
 
 typedef struct {
@@ -87,6 +93,8 @@ typedef struct {
     fplo_position_t* fplo_pos;
     index_t fplo_nwan;
     index_t fplo_nspin;
+
+    int valid;
 } fplo_intermediate_output_t;
 
 static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file );
@@ -138,14 +146,20 @@ static index_t fplo_getline( char** pline, size_t* plen, FILE* stream ) {
 
 static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file ) {
 
+    fplo_intermediate_output_t io = {.valid = 0};
+
     FILE* stream = fopen(fplo_file, "r");
-    if (!stream)
+    if (!stream) {
         mpi_err_printf( "could not open file '%s'\n", fplo_file );
+        return io;
+    }
 
     // regex: start, possibly some space and the key, colon, space, end line
     regex_t regex;
-    if (regcomp(&regex, "^[A-Z,a-z,0-9,_, ]*:\\s*$", 0))
+    if (regcomp(&regex, "^[A-Z,a-z,0-9,_, ]*:\\s*$", 0)) {
         mpi_err_printf( "could not compile regex\n" );
+        return io;
+    }
 
     // output objects
     double lattice_vectors[3][3] = {0};
@@ -178,6 +192,9 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
     size_t len = 0;
     char *line = NULL;
     int linenum = 0;
+
+    int errors = 0;
+
     while ((nread = fplo_getline(&line, &len, stream)) != -1) {
         linenum++;
 
@@ -228,39 +245,51 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
                             &lattice_vectors[parse_latvec_i][1],
                             &lattice_vectors[parse_latvec_i][2]);
                     parse_latvec_i++;
-                    if (nscan != 3)
+                    if (nscan != 3) {
                         mpi_err_printf( "could not read lattice_vectors (l.%i)\n", linenum );
+                        errors++;
+                    }
                 }
             }
             if (parse_nwan) {
                 int nscan = sscanf(line, " %ld", &fplo_nwan);
-                if (nscan != 1)
+                if (nscan != 1) {
                     mpi_err_printf( "could not read nwan (l.%i)\n", linenum );
+                    errors++;
+                }
             }
             if (parse_centers) {
                 fplo_position_t* p = calloc(1, sizeof(fplo_position_t));
                 int nscan = sscanf(line, " %le %le %le", &p->pos[0], &p->pos[1], &p->pos[2]);
                 LL_APPEND(fplo_pos, p);
-                if (nscan != 3)
+                if (nscan != 3) {
                     mpi_err_printf( "could not read position (l.%i)\n", linenum );
+                    errors++;
+                }
             }
             if (parse_sect_spin && parse_sect_spin_next_line_set_spin) {
                 int nscan = sscanf(line, " %ld", &current_hopping_s);
-                if (nscan != 1)
+                if (nscan != 1) {
                     mpi_err_printf( "could not read spin (l.%i)\n", linenum );
+                    errors++;
+                }
                 parse_sect_spin_next_line_set_spin = 0;
             }
             if (parse_sect_hop) {
                 if (parse_sect_hop_next_line_set_orbitals) {
                     int nscan = sscanf(line, " %ld %ld", &current_hopping->o1, &current_hopping->o2);
-                    if (nscan != 2)
+                    if (nscan != 2) {
                         mpi_err_printf( "could not read orbital info for hop (l.%i)\n", linenum );
+                        errors++;
+                    }
                     parse_sect_hop_next_line_set_orbitals = 0;
                 } else {
                     double dbls[5] = {0};
                     int nscan = sscanf(line, " %le %le %le %le %le", &dbls[0], &dbls[1], &dbls[2], &dbls[3], &dbls[4]);
-                    if (nscan != 5)
+                    if (nscan != 5) {
                         mpi_err_printf( "could not read hopping (l.%i)\n", linenum );
+                        errors++;
+                    }
                     fplo_single_hopping_t h = {.R = {dbls[0], dbls[1], dbls[2]}};
                     h.t = dbls[3] + I*dbls[4];
                     fplo_hop_element_push( current_hopping, h );
@@ -274,16 +303,31 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
     free(line);
     fclose(stream);
 
-    fplo_intermediate_output_t io = {.fplo_nwan = fplo_nwan,
-                                     .fplo_hops = fplo_hops,
-                                     .fplo_nspin = fplo_nspin,
-                                     .fplo_pos = fplo_pos};
+    io = (fplo_intermediate_output_t){.fplo_nwan = fplo_nwan,
+                                      .fplo_hops = fplo_hops,
+                                      .fplo_nspin = fplo_nspin,
+                                      .fplo_pos = fplo_pos};
     memcpy(io.lattice_vectors[0], lattice_vectors[0], sizeof(double)*9);
+    if (!errors) io.valid = 1;
     return io;
 }
 
 static fplo_hamiltonian_t* fplo_hamiltonian_read( const char* fplo_file ) {
     fplo_intermediate_output_t io = fplo_intermediate_read( fplo_file );
+    if (!io.valid) {
+        mpi_err_printf( "got invalid +hamdata, return NULL\n" );
+        fplo_position_t *pos = NULL, *ptmp = NULL;
+        LL_FOREACH_SAFE( io.fplo_pos, pos, ptmp ) {
+            LL_DELETE( io.fplo_pos, pos );
+            free(pos);
+        }
+        fplo_hop_element_t *hop = NULL, *htmp = NULL;
+        LL_FOREACH_SAFE( io.fplo_hops, hop, htmp ) {
+            LL_DELETE( io.fplo_hops, hop );
+            fplo_hop_elemet_free( hop );
+        }
+        return NULL;
+    }
     fplo_hamiltonian_t* h = calloc( 1, sizeof(fplo_hamiltonian_t) );
     h->n_orb = io.fplo_nwan;
     h->n_spin = io.fplo_nspin;
@@ -332,9 +376,11 @@ static fplo_hamiltonian_t* fplo_hamiltonian_read( const char* fplo_file ) {
 }
 
 static void fplo_hamiltonian_free( fplo_hamiltonian_t* h ) {
-    free( h->hop );
-    free( h->pos );
-    free( h );
+    if (h) {
+        if (h->hop) free( h->hop );
+        if (h->pos) free( h->pos );
+        free( h );
+    }
 }
 
 #endif // USE_FPLO_READER

@@ -283,6 +283,8 @@ USE_BOOST_SORT - use boost's implementation of parallel sort/stable sort
                  algorithms. Particularly useful for the grid FRG code.
 USE_EIGEN_BATCHED_GEMM - use Eigen's matrix multiplication in batched gemms
                          (CPU)
+USE_FPLO_READER - include the (still experimental) FPLO reader. requires
+                  utlist.h and regex.h.
 USE_GF_FLOATS - save Green's function in single point precision. should work for
                 the npatch backend.
 USE_MKL - use #include<mkl.h> instead of #include<lapacke.h> and
