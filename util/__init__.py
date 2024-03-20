@@ -564,6 +564,14 @@ if not _libs["divERGe"] is None:
     rs_hopping_to_fractcell.argtypes = [c_voidp, c_voidp, c_voidp, c_voidp]
     rs_hopping_to_fractcell.restype = None
 
+    kmesh_to_bands = _libs["divERGe"].get("diverge_kmesh_to_bands", "cdecl")
+    kmesh_to_bands.argtypes = [POINTER(model_t), POINTER(POINTER(index_t)), POINTER(index_t)]
+    kmesh_to_bands.restype = POINTER(index_t)
+
+    kmesh_to_bands_crs = _libs["divERGe"].get("diverge_kmesh_to_bands_crs", "cdecl")
+    kmesh_to_bands_crs.argtypes = [POINTER(model_t), POINTER(POINTER(index_t)), POINTER(index_t)]
+    kmesh_to_bands_crs.restype = POINTER(index_t)
+
     model_free = _libs["divERGe"].get("diverge_model_free", "cdecl")
     model_free.argtypes = [POINTER(model_t)]
     model_free.restype = None
