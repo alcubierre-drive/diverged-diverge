@@ -72,6 +72,12 @@ struct rs_hopping_t {
     complex128_t t;
 };
 
+// TODO(LK): We need to comment on the fact that for the -1 components, either
+// the C or D channel objects can be set, but not both. This is necessitated
+// through our wish to keep notation consistent between SU(2) and non-SU(2)
+// vertex initialization and enforcing exchange symmetries
+// TODO(LK): As a consequence, one should also think about what actually happens
+// to the P channel. @JP: Have we thought this through?
 // Struct: rs_vertex_t
 // when setting s1 == -1 and SU(2) symmetry is not present in the model, use
 // this as if it were the full SU2 description of the real space vertex
