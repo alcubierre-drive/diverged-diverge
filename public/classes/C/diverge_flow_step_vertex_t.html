@@ -8,76 +8,76 @@
 
 <script type="text/javascript">var q = window.location.search;if (q.startsWith("?Theme=")){var t = q.slice(7);var e = t.indexOf(";");if (e != -1){  t = t.slice(0, e);  }document.documentElement.classList.add(t + "Theme")}</script>
 
-<a name="Topic309"></a><div class="CTopic TStruct LC first">
+<a name="Topic282"></a><div class="CTopic TStruct LC first">
  <div class="CTitle">diverge_flow_step_vertex_t</div>
  <div class="CBody"><p>Structure that can hold all vertex objects used in divERGe. depending on the backend and channel, the content differs.</p></div>
 </div>
 
-<a name="Variables"></a><a name="Topic310"></a><div class="CTopic TGroup LC">
+<a name="Variables"></a><a name="Topic283"></a><div class="CTopic TGroup LC">
  <div class="CTitle">Variables</div>
 </div>
 
-<a name="ary"></a><a name="Topic311"></a><div class="CTopic TVariable LC">
+<a name="ary"></a><a name="Topic284"></a><div class="CTopic TVariable LC">
  <div class="CTitle">ary</div>
- <div id="NDPrototype311" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:complex128_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,282);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >complex128_t</a>* ary</div></div>
+ <div id="NDPrototype284" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:complex128_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,296);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >complex128_t</a>* ary</div></div>
  <div class="CBody"><p>pointer to the raw memory behind the vertex</p></div>
 </div>
 
-<a name="q_0,q_1"></a><a name="Topic312"></a><div class="CTopic TVariable LC">
+<a name="q_0,q_1"></a><a name="Topic285"></a><div class="CTopic TVariable LC">
  <div class="CTitle">q_0, q_1</div>
- <div id="NDPrototype312" class="NDPrototype"><div class="PSection PPlainSection">index_t q_0, q_1</div></div>
+ <div id="NDPrototype285" class="NDPrototype"><div class="PSection PPlainSection">index_t q_0, q_1</div></div>
  <div class="CBody"><p>start and stop of the 'q' dimension ('k1' in the case of grid-FRG and chan == 'V')</p></div>
 </div>
 
-<a name="nk"></a><a name="Topic313"></a><div class="CTopic TVariable LC">
+<a name="nk"></a><a name="Topic286"></a><div class="CTopic TVariable LC">
  <div class="CTitle">nk</div>
- <div id="NDPrototype313" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,285);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> nk</div></div>
+ <div id="NDPrototype286" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,299);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> nk</div></div>
  <div class="CBody"><p>number of k points</p></div>
 </div>
 
-<a name="n_orbff"></a><a name="Topic314"></a><div class="CTopic TVariable LC">
+<a name="n_orbff"></a><a name="Topic287"></a><div class="CTopic TVariable LC">
  <div class="CTitle">n_orbff</div>
- <div id="NDPrototype314" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,285);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> n_orbff</div></div>
+ <div id="NDPrototype287" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,299);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> n_orbff</div></div>
  <div class="CBody"><p>number of orbitals*formfactors, returns number of orbitals for patch and grid</p></div>
 </div>
 
-<a name="n_spin"></a><a name="Topic315"></a><div class="CTopic TVariable LC">
+<a name="n_spin"></a><a name="Topic288"></a><div class="CTopic TVariable LC">
  <div class="CTitle">n_spin</div>
- <div id="NDPrototype315" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,285);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> n_spin</div></div>
+ <div id="NDPrototype288" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,299);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> n_spin</div></div>
  <div class="CBody"><p>number of spins (==1 if SU2)</p></div>
 </div>
 
-<a name="backend"></a><a name="Topic316"></a><div class="CTopic TVariable LC">
+<a name="backend"></a><a name="Topic289"></a><div class="CTopic TVariable LC">
  <div class="CTitle">backend</div>
- <div id="NDPrototype316" class="NDPrototype"><div class="PSection PPlainSection"><span class="SHKeyword">char</span> backend</div></div>
+ <div id="NDPrototype289" class="NDPrototype"><div class="PSection PPlainSection"><span class="SHKeyword">char</span> backend</div></div>
  <div class="CBody"><p>holds 'T'U, 'G'rid, 'P'atch, or 'I'nvalid</p></div>
 </div>
 
-<a name="channel"></a><a name="Topic317"></a><div class="CTopic TVariable LC">
+<a name="channel"></a><a name="Topic290"></a><div class="CTopic TVariable LC">
  <div class="CTitle">channel</div>
- <div id="NDPrototype317" class="NDPrototype"><div class="PSection PPlainSection"><span class="SHKeyword">char</span> channel</div></div>
+ <div id="NDPrototype290" class="NDPrototype"><div class="PSection PPlainSection"><span class="SHKeyword">char</span> channel</div></div>
  <div class="CBody"><p>holds the channel.</p></div>
 </div>
 
-<a name="Functions"></a><a name="Topic318"></a><div class="CTopic TGroup LC">
+<a name="Functions"></a><a name="Topic291"></a><div class="CTopic TGroup LC">
  <div class="CTitle">Functions</div>
 </div>
 
-<a name="diverge_flow_step_vertex"></a><a name="Topic319"></a><div class="CTopic TFunction LC">
+<a name="diverge_flow_step_vertex"></a><a name="Topic292"></a><div class="CTopic TFunction LC">
  <div class="CTitle">diverge_flow_step_vertex</div>
- <div id="NDPrototype319" class="NDPrototype WideForm"><div class="PSection PParameterSection CStyle"><div class="PParameterCells" data-WideColumnCount="4" data-NarrowColumnCount="3"><div class="PBeforeParameters" data-WideGridArea="1/1/3/2" data-NarrowGridArea="1/1/2/4" style="grid-area:1/1/3/2"><a href="../../index.html#CClass:diverge_flow_step_vertex_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,309);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >diverge_flow_step_vertex_t</a> diverge_flow_step_vertex(</div><div class="PType InFirstParameterColumn" data-WideGridArea="1/2/2/3" data-NarrowGridArea="2/1/3/2" style="grid-area:1/2/2/3"><a href="../../index.html#File:src/diverge_flow_step.h:diverge_flow_step_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,292);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >diverge_flow_step_t</a>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="1/3/2/4" data-NarrowGridArea="2/2/3/3" style="grid-area:1/3/2/4">st,</div><div class="PType InFirstParameterColumn" data-WideGridArea="2/2/3/3" data-NarrowGridArea="3/1/4/2" style="grid-area:2/2/3/3"><span class="SHKeyword">char</span>&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="2/3/3/4" data-NarrowGridArea="3/2/4/3" style="grid-area:2/3/3/4">chan</div><div class="PAfterParameters" data-WideGridArea="2/4/3/5" data-NarrowGridArea="4/1/5/4" style="grid-area:2/4/3/5">)</div></div></div></div>
+ <div id="NDPrototype292" class="NDPrototype WideForm"><div class="PSection PParameterSection CStyle"><div class="PParameterCells" data-WideColumnCount="4" data-NarrowColumnCount="3"><div class="PBeforeParameters" data-WideGridArea="1/1/3/2" data-NarrowGridArea="1/1/2/4" style="grid-area:1/1/3/2"><a href="../../index.html#CClass:diverge_flow_step_vertex_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,282);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >diverge_flow_step_vertex_t</a> diverge_flow_step_vertex(</div><div class="PType InFirstParameterColumn" data-WideGridArea="1/2/2/3" data-NarrowGridArea="2/1/3/2" style="grid-area:1/2/2/3"><a href="../../index.html#File:src/diverge_flow_step.h:diverge_flow_step_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,265);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >diverge_flow_step_t</a>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="1/3/2/4" data-NarrowGridArea="2/2/3/3" style="grid-area:1/3/2/4">st,</div><div class="PType InFirstParameterColumn" data-WideGridArea="2/2/3/3" data-NarrowGridArea="3/1/4/2" style="grid-area:2/2/3/3"><span class="SHKeyword">char</span>&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="2/3/3/4" data-NarrowGridArea="3/2/4/3" style="grid-area:2/3/3/4">chan</div><div class="PAfterParameters" data-WideGridArea="2/4/3/5" data-NarrowGridArea="4/1/5/4" style="grid-area:2/4/3/5">)</div></div></div></div>
  <div class="CBody"><p>returns pointer to vertex object. behaves differently for the various backends:</p><table class="CDefinitionList"><tr><td class="CDLEntry">TUFRG</td><td class="CDLDefinition"><p>chan can be 'P', 'C', or 'D', both upper and lower case. For TUFRG, the case is ignored. The actual channel specific vertex object is returned, ordered as (q, s4,s3,ob2, s2,s1,ob1). Note that q is symmetry reduced as well as MPI distributed.&nbsp; Additionally, chan can be 'S' to yield the self-energy on the fine mesh (if used). Then, n_orbff contains the number of orbitals and nk the number of total (refined * coarse) kpts.</p></td></tr><tr><td class="CDLEntry">grid FRG</td><td class="CDLDefinition"><p>chan can be 'P', 'C', 'D', or 'V', both upper and lower case. In general, lower case references the differential vertex and upper case the full vertex. The three channels are returned in (q, k,O1,O2, k',O3,O4) order. 'V' stands for (k1,k2,k3, O1,O2,O3,O4) ordering. In case of multiple MPI ranks, only the locally accessible part of the vertex is referenced in the returned array. For grid, the indices Oi are actually (oi, si).</p></td></tr><tr><td class="CDLEntry">patch FRG</td><td class="CDLDefinition"><p>chan may be 'V' (full vertex) or 'v' (differential vertex). The vertex in (p1,p2,p3, O1,O2,O3,O4) order is returned. As in the grid case, the indices Oi are actually (oi, si).</p></td></tr></table></div>
 </div>
 
-<a name="diverge_flow_step_refill"></a><a name="Topic320"></a><div class="CTopic TFunction LC">
+<a name="diverge_flow_step_refill"></a><a name="Topic293"></a><div class="CTopic TFunction LC">
  <div class="CTitle">diverge_flow_step_refill</div>
- <div id="NDPrototype320" class="NDPrototype WideForm"><div class="PSection PParameterSection CStyle"><div class="PParameterCells" data-WideColumnCount="4" data-NarrowColumnCount="3"><div class="PBeforeParameters" data-WideGridArea="1/1/4/2" data-NarrowGridArea="1/1/2/4" style="grid-area:1/1/4/2"><span class="SHKeyword">void</span> diverge_flow_step_refill(</div><div class="PType InFirstParameterColumn" data-WideGridArea="1/2/2/3" data-NarrowGridArea="2/1/3/2" style="grid-area:1/2/2/3"><a href="../../index.html#File:src/diverge_flow_step.h:diverge_flow_step_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,292);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >diverge_flow_step_t</a>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="1/3/2/4" data-NarrowGridArea="2/2/3/3" style="grid-area:1/3/2/4">s,</div><div class="PType InFirstParameterColumn" data-WideGridArea="2/2/3/3" data-NarrowGridArea="3/1/4/2" style="grid-area:2/2/3/3"><span class="SHKeyword">double</span>&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="2/3/3/4" data-NarrowGridArea="3/2/4/3" style="grid-area:2/3/3/4">nu,</div><div class="PType InFirstParameterColumn" data-WideGridArea="3/2/4/3" data-NarrowGridArea="4/1/5/2" style="grid-area:3/2/4/3"><span class="SHKeyword">void</span>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="3/3/4/4" data-NarrowGridArea="4/2/5/3" style="grid-area:3/3/4/4">workspace</div><div class="PAfterParameters" data-WideGridArea="3/4/4/5" data-NarrowGridArea="5/1/6/4" style="grid-area:3/4/4/5">)</div></div></div></div>
- <div class="CBody"><p>adjusts the filling value of the non-interacting Hamiltonian such that <b>with</b> self-energy, it is set to nu. Works only if the standard Hamiltonian- &amp; Greensfunction-generators are used as it operates on the internal energy/hamiltonian/orbital2band arrays.</p><p>if workspace != NULL, use this space as scratch memory. size must be at least sizeof(complex128_t) * (nktot, nb, nb) + sizeof(double) * (nktot, nb). On return (if workspace != NULL) workspace contains the Hamiltonian matrices as <a href="../../index.html#File:src/diverge_common.h:complex128_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,282);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >complex128_t</a> array (nktot, nb, nb) followed by the dispersion vectors as double array (nktot, nb), i.e.:</p><pre class="CCode">complex128_t* Utmp = (complex128_t*)workspace;<br /><span class="SHKeyword">double</span>* Etmp = (<span class="SHKeyword">double</span>*)( Utmp + nk*nb*nb );</pre></div>
+ <div id="NDPrototype293" class="NDPrototype WideForm"><div class="PSection PParameterSection CStyle"><div class="PParameterCells" data-WideColumnCount="4" data-NarrowColumnCount="3"><div class="PBeforeParameters" data-WideGridArea="1/1/4/2" data-NarrowGridArea="1/1/2/4" style="grid-area:1/1/4/2"><span class="SHKeyword">void</span> diverge_flow_step_refill(</div><div class="PType InFirstParameterColumn" data-WideGridArea="1/2/2/3" data-NarrowGridArea="2/1/3/2" style="grid-area:1/2/2/3"><a href="../../index.html#File:src/diverge_flow_step.h:diverge_flow_step_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,265);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >diverge_flow_step_t</a>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="1/3/2/4" data-NarrowGridArea="2/2/3/3" style="grid-area:1/3/2/4">s,</div><div class="PType InFirstParameterColumn" data-WideGridArea="2/2/3/3" data-NarrowGridArea="3/1/4/2" style="grid-area:2/2/3/3"><span class="SHKeyword">double</span>&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="2/3/3/4" data-NarrowGridArea="3/2/4/3" style="grid-area:2/3/3/4">nu,</div><div class="PType InFirstParameterColumn" data-WideGridArea="3/2/4/3" data-NarrowGridArea="4/1/5/2" style="grid-area:3/2/4/3"><span class="SHKeyword">void</span>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="3/3/4/4" data-NarrowGridArea="4/2/5/3" style="grid-area:3/3/4/4">workspace</div><div class="PAfterParameters" data-WideGridArea="3/4/4/5" data-NarrowGridArea="5/1/6/4" style="grid-area:3/4/4/5">)</div></div></div></div>
+ <div class="CBody"><p>adjusts the filling value of the non-interacting Hamiltonian such that <b>with</b> self-energy, it is set to nu. Works only if the standard Hamiltonian- &amp; Greensfunction-generators are used as it operates on the internal energy/hamiltonian/orbital2band arrays.</p><p>if workspace != NULL, use this space as scratch memory. size must be at least sizeof(complex128_t) * (nktot, nb, nb) + sizeof(double) * (nktot, nb). On return (if workspace != NULL) workspace contains the Hamiltonian matrices as <a href="../../index.html#File:src/diverge_common.h:complex128_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,296);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >complex128_t</a> array (nktot, nb, nb) followed by the dispersion vectors as double array (nktot, nb), i.e.:</p><pre class="CCode">complex128_t* Utmp = (complex128_t*)workspace;<br /><span class="SHKeyword">double</span>* Etmp = (<span class="SHKeyword">double</span>*)( Utmp + nk*nb*nb );</pre></div>
 </div>
 
-<a name="diverge_flow_step_refill_Hself"></a><a name="Topic321"></a><div class="CTopic TFunction LC last">
+<a name="diverge_flow_step_refill_Hself"></a><a name="Topic294"></a><div class="CTopic TFunction LC last">
  <div class="CTitle">diverge_flow_step_refill_Hself</div>
- <div id="NDPrototype321" class="NDPrototype WideForm"><div class="PSection PParameterSection CStyle"><div class="PParameterCells" data-WideColumnCount="4" data-NarrowColumnCount="3"><div class="PBeforeParameters" data-WideGridArea="1/1/4/2" data-NarrowGridArea="1/1/2/4" style="grid-area:1/1/4/2"><span class="SHKeyword">double</span> diverge_flow_step_refill_Hself(</div><div class="PType InFirstParameterColumn" data-WideGridArea="1/2/2/3" data-NarrowGridArea="2/1/3/2" style="grid-area:1/2/2/3"><a href="../../index.html#File:src/diverge_flow_step.h:diverge_flow_step_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,292);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >diverge_flow_step_t</a>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="1/3/2/4" data-NarrowGridArea="2/2/3/3" style="grid-area:1/3/2/4">s,</div><div class="PType InFirstParameterColumn" data-WideGridArea="2/2/3/3" data-NarrowGridArea="3/1/4/2" style="grid-area:2/2/3/3"><span class="SHKeyword">double</span>&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="2/3/3/4" data-NarrowGridArea="3/2/4/3" style="grid-area:2/3/3/4">nu,</div><div class="PType InFirstParameterColumn" data-WideGridArea="3/2/4/3" data-NarrowGridArea="4/1/5/2" style="grid-area:3/2/4/3"><span class="SHKeyword">void</span>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="3/3/4/4" data-NarrowGridArea="4/2/5/3" style="grid-area:3/3/4/4">workspace</div><div class="PAfterParameters" data-WideGridArea="3/4/4/5" data-NarrowGridArea="5/1/6/4" style="grid-area:3/4/4/5">)</div></div></div></div>
+ <div id="NDPrototype294" class="NDPrototype WideForm"><div class="PSection PParameterSection CStyle"><div class="PParameterCells" data-WideColumnCount="4" data-NarrowColumnCount="3"><div class="PBeforeParameters" data-WideGridArea="1/1/4/2" data-NarrowGridArea="1/1/2/4" style="grid-area:1/1/4/2"><span class="SHKeyword">double</span> diverge_flow_step_refill_Hself(</div><div class="PType InFirstParameterColumn" data-WideGridArea="1/2/2/3" data-NarrowGridArea="2/1/3/2" style="grid-area:1/2/2/3"><a href="../../index.html#File:src/diverge_flow_step.h:diverge_flow_step_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,265);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >diverge_flow_step_t</a>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="1/3/2/4" data-NarrowGridArea="2/2/3/3" style="grid-area:1/3/2/4">s,</div><div class="PType InFirstParameterColumn" data-WideGridArea="2/2/3/3" data-NarrowGridArea="3/1/4/2" style="grid-area:2/2/3/3"><span class="SHKeyword">double</span>&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="2/3/3/4" data-NarrowGridArea="3/2/4/3" style="grid-area:2/3/3/4">nu,</div><div class="PType InFirstParameterColumn" data-WideGridArea="3/2/4/3" data-NarrowGridArea="4/1/5/2" style="grid-area:3/2/4/3"><span class="SHKeyword">void</span>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="3/3/4/4" data-NarrowGridArea="4/2/5/3" style="grid-area:3/3/4/4">workspace</div><div class="PAfterParameters" data-WideGridArea="3/4/4/5" data-NarrowGridArea="5/1/6/4" style="grid-area:3/4/4/5">)</div></div></div></div>
  <div class="CBody"><p>generates the Hamiltonian + self-energy and diagonalizes it in the workspace buffer (same size as above, energies after matrices). Finds the filling and returns the chemical potential needed to obtain this filling value</p></div>
 </div>
 

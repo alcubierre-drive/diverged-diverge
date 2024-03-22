@@ -1,1 +1,1 @@
-﻿NDSearch.OnPrefixDataLoaded("v",["Variable"],[["V",,[["rs_vertex_t",,,,0,"File:src/diverge_model.h:rs_vertex_t.V","CClass:rs_vertex_t:V"]]]]);
+﻿NDSearch.OnPrefixDataLoaded("v",["Variable"],[["V",,[["rs_hopping_t",,,,0,"File:src/diverge_model.h:rs_hopping_t.V","CClass:rs_hopping_t:V"]]]]);
