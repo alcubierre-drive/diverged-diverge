@@ -30,6 +30,7 @@ DIVERGE_0.5 {
         diverge_flow_step_vertex;
         diverge_flow_step_vertmax;
         diverge_force_thread_limit;
+        diverge_fukui;
         diverge_generate_symm_maps;
         diverge_generate_symm_trafo;
         diverge_greensfunc_generator_default;
