@@ -9,10 +9,13 @@ extern "C" {
 typedef struct diverge_model_t diverge_model_t;
 
 // Function: diverge_fukui
-// calculate Berry's curvature using the Fukui-Hatsugai method. Returns an
-// allocated (calloc) array of shape (nk, nb, 3) with the Berry curvature that
-// must be freed by users (using free or <diverge_mem_free>). Returns NULL on
-// errors.
+// Calculate Berry's curvature using the Fukui-Hatsugai method, normed to the
+// Chern number, i.e., the sum of all elements for a certain chern band yields
+// the Chern number of that band, not 2Pi times the Chern number. This function
+// returns an allocated (calloc) array of shape (nk, nb, 3) that contains the
+// Berry curvature along the three crystal axes; not along cartesian axes. The
+// return value can be NULL on errors, and must be freed by users with a call to
+// free or <diverge_mem_free>.
 //
 // Parameters:
 // m - model instance. obtain all parameters from there by default. internals

@@ -19,7 +19,7 @@
 
 <a name="ary"></a><a name="Topic311"></a><div class="CTopic TVariable LC">
  <div class="CTitle">ary</div>
- <div id="NDPrototype311" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:complex128_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,286);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >complex128_t</a>* ary</div></div>
+ <div id="NDPrototype311" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:complex128_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,265);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >complex128_t</a>* ary</div></div>
  <div class="CBody"><p>pointer to the raw memory behind the vertex</p></div>
 </div>
 
@@ -31,19 +31,19 @@
 
 <a name="nk"></a><a name="Topic313"></a><div class="CTopic TVariable LC">
  <div class="CTitle">nk</div>
- <div id="NDPrototype313" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,289);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> nk</div></div>
+ <div id="NDPrototype313" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,268);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> nk</div></div>
  <div class="CBody"><p>number of k points</p></div>
 </div>
 
 <a name="n_orbff"></a><a name="Topic314"></a><div class="CTopic TVariable LC">
  <div class="CTitle">n_orbff</div>
- <div id="NDPrototype314" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,289);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> n_orbff</div></div>
+ <div id="NDPrototype314" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,268);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> n_orbff</div></div>
  <div class="CBody"><p>number of orbitals*formfactors, returns number of orbitals for patch and grid</p></div>
 </div>
 
 <a name="n_spin"></a><a name="Topic315"></a><div class="CTopic TVariable LC">
  <div class="CTitle">n_spin</div>
- <div id="NDPrototype315" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,289);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> n_spin</div></div>
+ <div id="NDPrototype315" class="NDPrototype"><div class="PSection PPlainSection"><a href="../../index.html#File:src/diverge_common.h:index_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,268);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >index_t</a> n_spin</div></div>
  <div class="CBody"><p>number of spins (==1 if SU2)</p></div>
 </div>
 
@@ -72,7 +72,7 @@
 <a name="diverge_flow_step_refill"></a><a name="Topic320"></a><div class="CTopic TFunction LC">
  <div class="CTitle">diverge_flow_step_refill</div>
  <div id="NDPrototype320" class="NDPrototype WideForm"><div class="PSection PParameterSection CStyle"><div class="PParameterCells" data-WideColumnCount="4" data-NarrowColumnCount="3"><div class="PBeforeParameters" data-WideGridArea="1/1/4/2" data-NarrowGridArea="1/1/2/4" style="grid-area:1/1/4/2"><span class="SHKeyword">void</span> diverge_flow_step_refill(</div><div class="PType InFirstParameterColumn" data-WideGridArea="1/2/2/3" data-NarrowGridArea="2/1/3/2" style="grid-area:1/2/2/3"><a href="../../index.html#File:src/diverge_flow_step.h:diverge_flow_step_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,292);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >diverge_flow_step_t</a>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="1/3/2/4" data-NarrowGridArea="2/2/3/3" style="grid-area:1/3/2/4">s,</div><div class="PType InFirstParameterColumn" data-WideGridArea="2/2/3/3" data-NarrowGridArea="3/1/4/2" style="grid-area:2/2/3/3"><span class="SHKeyword">double</span>&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="2/3/3/4" data-NarrowGridArea="3/2/4/3" style="grid-area:2/3/3/4">nu,</div><div class="PType InFirstParameterColumn" data-WideGridArea="3/2/4/3" data-NarrowGridArea="4/1/5/2" style="grid-area:3/2/4/3"><span class="SHKeyword">void</span>*&nbsp;</div><div class="PName InLastParameterColumn" data-WideGridArea="3/3/4/4" data-NarrowGridArea="4/2/5/3" style="grid-area:3/3/4/4">workspace</div><div class="PAfterParameters" data-WideGridArea="3/4/4/5" data-NarrowGridArea="5/1/6/4" style="grid-area:3/4/4/5">)</div></div></div></div>
- <div class="CBody"><p>adjusts the filling value of the non-interacting Hamiltonian such that <b>with</b> self-energy, it is set to nu. Works only if the standard Hamiltonian- &amp; Greensfunction-generators are used as it operates on the internal energy/hamiltonian/orbital2band arrays.</p><p>if workspace != NULL, use this space as scratch memory. size must be at least sizeof(complex128_t) * (nktot, nb, nb) + sizeof(double) * (nktot, nb). On return (if workspace != NULL) workspace contains the Hamiltonian matrices as <a href="../../index.html#File:src/diverge_common.h:complex128_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,286);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >complex128_t</a> array (nktot, nb, nb) followed by the dispersion vectors as double array (nktot, nb), i.e.:</p><pre class="CCode">complex128_t* Utmp = (complex128_t*)workspace;<br /><span class="SHKeyword">double</span>* Etmp = (<span class="SHKeyword">double</span>*)( Utmp + nk*nb*nb );</pre></div>
+ <div class="CBody"><p>adjusts the filling value of the non-interacting Hamiltonian such that <b>with</b> self-energy, it is set to nu. Works only if the standard Hamiltonian- &amp; Greensfunction-generators are used as it operates on the internal energy/hamiltonian/orbital2band arrays.</p><p>if workspace != NULL, use this space as scratch memory. size must be at least sizeof(complex128_t) * (nktot, nb, nb) + sizeof(double) * (nktot, nb). On return (if workspace != NULL) workspace contains the Hamiltonian matrices as <a href="../../index.html#File:src/diverge_common.h:complex128_t" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,265);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >complex128_t</a> array (nktot, nb, nb) followed by the dispersion vectors as double array (nktot, nb), i.e.:</p><pre class="CCode">complex128_t* Utmp = (complex128_t*)workspace;<br /><span class="SHKeyword">double</span>* Etmp = (<span class="SHKeyword">double</span>*)( Utmp + nk*nb*nb );</pre></div>
 </div>
 
 <a name="diverge_flow_step_refill_Hself"></a><a name="Topic321"></a><div class="CTopic TFunction LC last">
