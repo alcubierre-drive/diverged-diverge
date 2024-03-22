@@ -25,6 +25,7 @@ Table Of Contents::
             - <generate IBZ paths from meshes at diverge_kmesh_to_bands>
         - <symmetrizing 2pt functions at diverge_symmetrize_2pt_coarse>
         - <adjusting the filling at diverge_model_get_filling>
+        - <calculating Berry curvatures at diverge_fukui>
 
     - <flow step at diverge_flow_step_t>
         - <integrating the flow at diverge_euler_t>

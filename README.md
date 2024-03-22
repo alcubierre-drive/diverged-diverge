@@ -42,15 +42,27 @@ diverge.finalize()
 ```
 
 # Citation
-Please cite [arXiv.2311.07667](https://doi.org/10.48550/arXiv.2311.07667) when
-using divERGe.
+Please cite [this paper](https://doi.org/10.21468/SciPostPhysCodeb.26) when
+using divERGe for your work. You may use the following BibTex entry:
+```
+@Article{10.21468/SciPostPhysCodeb.26,
+	title={{divERGe implements various Exact Renormalization Group examples}},
+	author={Jonas B. Profe and Dante M. Kennes and Lennart Klebl},
+	journal={SciPost Phys. Codebases},
+	pages={26},
+	year={2024},
+	publisher={SciPost},
+	doi={10.21468/SciPostPhysCodeb.26},
+	url={https://scipost.org/10.21468/SciPostPhysCodeb.26},
+}
+```
 
 # License
 divERGe is published under the
 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html). The releases include
-non-free parts ([CUDA](https://developer.nvidia.com/cuda-toolkit)) and
 differently licensed software ([OpenBLAS](https://www.openblas.net/),
 [FFTW](https://www.fftw.org/)) in binary form.
+<!-- non-free parts ([CUDA](https://developer.nvidia.com/cuda-toolkit)) and -->
 
 # Authors
 **Jonas B. Profe** and **Lennart Klebl**, 2024.
