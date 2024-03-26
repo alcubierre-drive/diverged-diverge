@@ -1,3 +1,5 @@
+/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "fukui.h"
 #include "../diverge_model.h"
 #include "../diverge_model_internals.h"

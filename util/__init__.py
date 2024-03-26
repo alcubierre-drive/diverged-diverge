@@ -1123,8 +1123,7 @@ if not _libs["divERGe"] is None:
     shared_malloc_barrier.argtypes = []
     shared_malloc_barrier.restype = None
 
-    # some more typedefs.
-    # TODO are they needed?
+    # redo the typedefs
     rs_hopping_t = struct_rs_hopping_t
     rs_vertex_t = struct_rs_vertex_t
     mom_patching_t = struct_mom_patching_t

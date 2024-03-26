@@ -243,14 +243,6 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     tock = diverge_mpi_wtime();
     mpi_vrb_printf( "TU-MPI prop: %.2fs for sort\n", tock-tick );
 
-    // TODO verbose printing
-    /* for (int i=0; i<t->kc_send_count; ++i) */
-    /*     printf( "(%i) send %i->%i: k%li(q%li)\n", t->rank, t->kc_send[i].source_rank, */
-    /*             t->kc_send[i].target_rank, t->kc_send[i].k, t->kc_send[i].q ); */
-    /* for (int i=0; i<t->kc_recv_count; ++i) */
-    /*     printf( "(%i) recv %i<-%i: k%li(q%li)\n", t->rank, t->kc_recv[i].target_rank, */
-    /*             t->kc_recv[i].source_rank, t->kc_recv[i].k, t->kc_recv[i].q ); */
-
     tick = diverge_mpi_wtime();
     t->sendcounts = calloc(t->size, sizeof(int));
     t->senddispls = calloc(t->size, sizeof(int));

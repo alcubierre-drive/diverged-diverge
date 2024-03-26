@@ -125,9 +125,9 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
 
         index_t kx_start = 0, kx_stop = dims[0];
         if (which_fft_simple == tu_fft_algorithm_mpi) {
-            fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
-            kx_start = p->get_local_0_start();
-            kx_stop = p->get_local_0_start() + p->get_local_n0();
+            fftw_mpi_plan_t* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
+            kx_start = fftw_mpi_plan_get_local_0_start(p);
+            kx_stop = fftw_mpi_plan_get_local_0_start(p) + fftw_mpi_plan_get_local_n0(p);
         }
 
         // fill buffers
@@ -187,13 +187,13 @@ void tu_loop_t::S_loop_static_simple(complex128_t* loop, index_t ntasks, index_t
 
         // execute DFTs
         if (which_fft_simple == tu_fft_algorithm_mpi) {
-            fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
+            fftw_mpi_plan_t* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
             #ifdef TRANSPOSE_MPI_FFT_BUFFERS
             fftw_execute_dft( fft_T_to, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many );
-            p->execute( buffer_ggp_many, buffer_ggm_many, true );
+            fftw_mpi_plan_execute( p, buffer_ggp_many, buffer_ggm_many, true );
             fftw_execute_dft( fft_T_from, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many );
             #else
-            p->execute( buffer_ggm_many, buffer_ggp_many );
+            fftw_mpi_plan_execute( p, buffer_ggm_many, buffer_ggp_many, false );
             #endif
         } else {
             double tick = 0, tock = 0;
@@ -342,9 +342,9 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
 
         index_t kx_start = 0, kx_stop = dims[0];
         if (which_fft_red == tu_fft_algorithm_mpi) {
-            fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
-            kx_start = p->get_local_0_start();
-            kx_stop = p->get_local_0_start() + p->get_local_n0();
+            fftw_mpi_plan_t* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
+            kx_start = fftw_mpi_plan_get_local_0_start(p);
+            kx_stop = fftw_mpi_plan_get_local_0_start(p) + fftw_mpi_plan_get_local_n0(p);
         }
 
         // fill buffers
@@ -400,13 +400,13 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
 
         // execute DFTs
         if (which_fft_red == tu_fft_algorithm_mpi) {
-            fftw_mpi_plan* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
+            fftw_mpi_plan_t* p = pp ? fft_many_forward_mpi : fft_many_backward_mpi;
             #ifdef TRANSPOSE_MPI_FFT_BUFFERS
             fftw_execute_dft( fft_T_to, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many );
-            p->execute( buffer_ggp_many, buffer_ggm_many, true );
+            fftw_mpi_plan_execute( p, buffer_ggp_many, buffer_ggm_many, true );
             fftw_execute_dft( fft_T_from, (fftw_complex*)buffer_ggm_many, (fftw_complex*)buffer_ggp_many );
             #else
-            p->execute( buffer_ggm_many, buffer_ggp_many );
+            fftw_mpi_plan_execute( p, buffer_ggm_many, buffer_ggp_many, false );
             #endif
         } else {
             double tick = 0, tock = 0;

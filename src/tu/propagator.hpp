@@ -5,13 +5,13 @@
 #include "../diverge_common.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
-#include "../misc/mpi_fft.hpp"
 #include "diverge_interface.hpp"
 #include "global.hpp"
 #include "cuda_init.hpp"
 #include <fftw3.h>
 #include <thread>
 #include "propagator_cpu_mpi.h"
+#include "propagator_cpu_mpi_fft.h"
 
 inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
@@ -142,13 +142,13 @@ private:
 
     // tu_fft_algorithm_mpi
     // simple & red
-    fftw_mpi_plan *fft_many_backward_mpi = NULL,
-                  *fft_many_forward_mpi = NULL;
+    fftw_mpi_plan_t *fft_many_backward_mpi = NULL,
+                    *fft_many_forward_mpi = NULL;
     // transpose a matrix (size: many)
     fftw_plan fft_T_to = NULL,
               fft_T_from = NULL;
     // greens
-    fftw_mpi_plan *fft_nons2_backward_mpi = NULL;
+    fftw_mpi_plan_t *fft_nons2_backward_mpi = NULL;
 
     void cpu_fft_algorithm_init( tu_fft_algorithm_t greens, tu_fft_algorithm_t simple, tu_fft_algorithm_t red );
     void cpu_fft_algorithm_cleanup( void );

@@ -122,23 +122,14 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
 vector<double> tu_loop_t::extra_timings( void ) {
     if (!extra_timings_enabled) return vector<double>();
     if (fft_nons2_backward_mpi) {
-        array<double,3> t = fft_nons2_backward_mpi->timings();
-        extra_tvec->at(1) = t[0];
-        extra_tvec->at(2) = t[1];
-        extra_tvec->at(3) = t[2];
+        fftw_mpi_plan_timings( fft_nons2_backward_mpi, extra_tvec->data() + 1 );
     }
     if (!mpi_loop) {
         if (fft_many_backward_mpi) {
-            array<double,3> t = fft_many_backward_mpi->timings();
-            extra_tvec->at(5) = t[0];
-            extra_tvec->at(6) = t[1];
-            extra_tvec->at(7) = t[2];
+            fftw_mpi_plan_timings( fft_many_backward_mpi, extra_tvec->data() + 5 );
         }
         if (fft_many_forward_mpi) {
-            array<double,3> t = fft_many_forward_mpi->timings();
-            extra_tvec->at(8) = t[0];
-            extra_tvec->at(9) = t[1];
-            extra_tvec->at(10) = t[2];
+            fftw_mpi_plan_timings( fft_many_forward_mpi, extra_tvec->data() + 8 );
         }
     } else {
         extra_tvec->resize(4);
@@ -187,9 +178,9 @@ vector<string> tu_loop_t::extra_timings_descr( void ) {
 }
 
 void tu_loop_t::extra_timings_set( bool enabled ) {
-    if (fft_many_backward_mpi) fft_many_backward_mpi->timings_enabled = enabled;
-    if (fft_many_forward_mpi) fft_many_forward_mpi->timings_enabled = enabled;
-    if (fft_nons2_backward_mpi) fft_nons2_backward_mpi->timings_enabled = enabled;
+    if (fft_many_backward_mpi) fftw_mpi_plan_enable_timings( fft_many_backward_mpi, enabled );
+    if (fft_many_forward_mpi) fftw_mpi_plan_enable_timings( fft_many_forward_mpi, enabled );
+    if (fft_nons2_backward_mpi) fftw_mpi_plan_enable_timings( fft_nons2_backward_mpi, enabled );
     this->extra_timings_enabled = enabled;
 }
 
@@ -207,11 +198,11 @@ void tu_loop_t::cpu_fft_algorithm_cleanup( void ) {
     for (complex128_t* buf : buffer_ggm) fftw_free(buf);
     for (complex128_t* buf : buffer_ggp) fftw_free(buf);
 
-    if (fft_many_backward_mpi) delete fft_many_backward_mpi;
-    if (fft_many_forward_mpi) delete fft_many_forward_mpi;
+    if (fft_many_backward_mpi) fftw_mpi_plan_free(fft_many_backward_mpi);
+    if (fft_many_forward_mpi) fftw_mpi_plan_free(fft_many_forward_mpi);
     if (fft_T_to) fftw_destroy_plan(fft_T_to);
     if (fft_T_from) fftw_destroy_plan(fft_T_from);
-    if (fft_nons2_backward_mpi) delete fft_nons2_backward_mpi;
+    if (fft_nons2_backward_mpi) fftw_mpi_plan_free(fft_nons2_backward_mpi);
 
     if (mpi_loop) tu_mpi_loop_destroy( mpi_loop );
     if (mpi_gf) tu_mpi_gf_destroy( mpi_gf );
@@ -249,7 +240,7 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
             break;
         case tu_fft_algorithm_mpi:
             if (!fft_nons2_backward_mpi)
-                fft_nons2_backward_mpi = new fftw_mpi_plan( dims, POW2(n_spin*n_orb),
+                fft_nons2_backward_mpi = fftw_mpi_plan_init( dims, POW2(n_spin*n_orb),
                     GF_fft_plus, GF_fft_plus, FFTW_BACKWARD, (complex128_t*)gf_buf );
             break;
         case tu_fft_algorithm_split:
@@ -278,11 +269,11 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
             if (!buffer_ggp_many)
                 buffer_ggp_many = (complex128_t*)fftw_alloc_complex(nktot * chunksize_max);
             if (!fft_many_backward_mpi)
-                fft_many_backward_mpi = new fftw_mpi_plan( dims, chunksize_max,
-                    buffer_ggm_many, buffer_ggp_many, FFTW_BACKWARD );
+                fft_many_backward_mpi = fftw_mpi_plan_init( dims, chunksize_max,
+                    buffer_ggm_many, buffer_ggp_many, FFTW_BACKWARD, NULL );
             if (!fft_many_forward_mpi)
-                fft_many_forward_mpi = new fftw_mpi_plan( dims, chunksize_max,
-                    buffer_ggm_many, buffer_ggp_many, FFTW_FORWARD );
+                fft_many_forward_mpi = fftw_mpi_plan_init( dims, chunksize_max,
+                    buffer_ggm_many, buffer_ggp_many, FFTW_FORWARD, NULL );
             if (!fft_T_to)
                 fft_T_to = plan_transpose( chunksize_max, nktot, buffer_ggm_many, buffer_ggp_many );
             if (!fft_T_from)
@@ -392,8 +383,8 @@ void tu_loop_t::GF_zero_T_any( greensfunc_generator_t gf, complex128_t lambda, c
     if (res != greensfunc_op_cpu) mpi_err_printf( "GPU GFs not supported\n" );
     index_t nb = n_spin*n_orb;
     index_t nb2 = POW2(n_spin*n_orb);
-    // TODO this is broken for shared_mem GF. Since it's a hack only, what the
-    // heck? Or should we fix it?
+    // TODO(LK) this is broken for shared_mem GF. Since it's a hack only, what
+    // the heck? Or should we fix it?
 
     typedef Matrix<gf_complex_t,-1,-1> MatXgfct;
     if (self_energy != nullptr) {
@@ -432,8 +423,8 @@ void tu_loop_t::GF_zero_T_FFT_any( complex128_t* gfft_plus, complex128_t* gfft_c
         gfft_conj_plus[IDX3(o,b,k,nb,nktot)] = gbuf[IDX3(k,b,o,nb,nb) + nb2*nktot] * weight;
     if (nktot > 1) {
         if (which_fft_greens == tu_fft_algorithm_mpi) {
-            fft_nons2_backward_mpi->execute( gfft_plus, gfft_plus );
-            fft_nons2_backward_mpi->execute( gfft_conj_plus, gfft_conj_plus );
+            fftw_mpi_plan_execute( fft_nons2_backward_mpi, gfft_plus, gfft_plus, false );
+            fftw_mpi_plan_execute( fft_nons2_backward_mpi, gfft_conj_plus, gfft_conj_plus, false );
         } else {
             double tick = 0, tock = 0;
             if (extra_timings_enabled) tick = diverge_mpi_wtime();
