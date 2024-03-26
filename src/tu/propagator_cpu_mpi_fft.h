@@ -4,6 +4,10 @@
 #include "../diverge_common.h"
 #include <fftw3.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct fftw_mpi_plan_t fftw_mpi_plan_t;
 
 fftw_mpi_plan_t* fftw_mpi_plan_init( int dims[3], index_t howmany,
@@ -21,3 +25,6 @@ index_t fftw_mpi_plan_get_local_0_start( fftw_mpi_plan_t* p );
 complex128_t* fftw_mpi_plan_get_in( fftw_mpi_plan_t* p );
 complex128_t* fftw_mpi_plan_get_out( fftw_mpi_plan_t* p );
 
+#ifdef __cplusplus
+}
+#endif
