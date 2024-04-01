@@ -1,1 +1,1 @@
-﻿NDSummary.OnToolTipsLoaded("TextFileClass:Compilaton-Advanced",{361:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">C/C++/CUDA flags, no need to change manually.</div></div>"});
+﻿NDSummary.OnToolTipsLoaded("TextFileClass:Compilaton-Advanced",{339:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">C/C++/CUDA flags, no need to change manually.</div></div>"});

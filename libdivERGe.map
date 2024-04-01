@@ -1,4 +1,4 @@
-DIVERGE_0.5 {
+DIVERGE_0.6 {
     global:
         diverge_channel_vertex_generator_default;
         diverge_compilation_status;
