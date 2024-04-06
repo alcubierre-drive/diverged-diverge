@@ -759,11 +759,11 @@ class diverge_post_tu:
 def read( fname ):
     r"""
     function to read model files as well as post processing files. returns the
-    corresponding class (:class:`diverge_model`, :class:`diverge_post_patch`, or
-    :class:`diverge_post_grid`). Makes use of to the file format specifications
-    given in :c:func:`diverge_postprocess_and_write` and
-    :c:func:`diverge_model_to_file`; discerning the different file types by
-    their "magic numbers".
+    corresponding class (:class:`diverge_model`, :class:`diverge_post_patch`,
+    :class:`diverge_post_grid`, or :class:`diverge_post_tu`). Makes use of to
+    the file format specifications given in
+    :c:func:`diverge_postprocess_and_write` and :c:func:`diverge_model_to_file`;
+    discerning the different file types by their "magic numbers".
 
     :param fname: file name to read from (typically ```XXX.dvg```)
     """
