@@ -116,7 +116,7 @@ typedef struct site_descr_t {
      * axis, OPTIONAL.
      */
     double zaxis[MAX_ORBS_PER_SITE][3];
-#endi
+#endif
 } site_descr_t;
 
 /**

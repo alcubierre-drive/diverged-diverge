@@ -5,4 +5,3 @@ Simulation Output Python Module Spec
 
 .. automodule:: diverge.output
    :members:
-   :undoc-members:

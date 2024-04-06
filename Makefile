@@ -70,7 +70,7 @@ HEADERS := $(shell find src/ -name '*.h') \
 -include Makefile.inc
 -include Makefile.local
 
-.PHONY: lib test clean types dist dist-src todos $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
+.PHONY: lib test clean types dist dist-src todos doc $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
 
 # resolves nasty circular dependency bug for .cu(.o) files
 .SUFFIXES: 
@@ -158,3 +158,6 @@ UTIL := $(shell find util/ -iname "*.py") \
 dist-src: $(SRC_C) $(SRC_CPP) $(SRC_CU) $(HEADERS) Makefile make.local/ $(EXAMPLES) $(UTIL)
 	$(DIVERGE_TAR) -c util/libdivERGe.so $^ -f divERGe_src.tar
 	$(DIVERGE_GZIP) -f divERGe_src.tar
+
+doc:
+	make -C sphinx html

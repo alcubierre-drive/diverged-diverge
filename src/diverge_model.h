@@ -250,6 +250,10 @@ struct diverge_model_t {
     /**
      * number of refined k points (total k points in each direction
      * ``nk[i]*nkf[i]``). dimension must match that of ``nk``. **required**.
+     *
+     * *Note: For npatch simulations, refinement must be turned off. That means
+     * that for those i where nk[i] is nonzero, nkf[i] must be one, and zero
+     * elsewhere.*
      */
     index_t nkf[3];
     /**

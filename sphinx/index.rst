@@ -3,6 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+TODO: INCLUDE VERSION AS VARIABLE IN HERE. SPHINX SHOULD DEFINITELY BE ABLE TO
+DO THIS!!!
+
 divERGe implements various Exact Renormalization Group examples
 ===============================================================
 
@@ -45,10 +48,10 @@ Tuning`.
 Usage
 -----
 The :ref:`C Interface` represents the centrum of divERGe. Python specific
-library features (e.g. the :ref:`Autoflow` function) are documented :ref:`here
-<Python Interface>`. For reading the output files, see the documentation for
-:ref:`diverge.output <Simulation Output>` **and the Python doc obtained from
-within Python using help(object), i.e.,**
+library features (e.g. the :ref:`AutoflowSec` function) are documented
+:ref:`here <Python Interface>`. For reading the output files, see the
+documentation for :ref:`diverge.output <Simulation Output>` *and also the Python
+doc obtained from within Python using help(object), i.e.,*
 
 .. sourcecode:: Python
 

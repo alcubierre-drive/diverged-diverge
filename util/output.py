@@ -3,9 +3,6 @@
 import numpy as np
 import math
 
-# Namespace: dvg-output
-# python library to read diverge output files
-
 DIVERGE_MODEL_MAGIC_NUMBER = ord('D') + ord('M')
 DIVERGE_POST_GRID_MAGIC_NUMBER = ord('P')
 DIVERGE_POST_PATCH_MAGIC_NUMBER = ord('V')
@@ -99,71 +96,12 @@ def k_ibz_path( byte_ary_slice ):
         rest = byte_ary_slice[i8*(2+n_segments+n_path):].view(dtype=np.float64)
         return (n_per_segment, path, rest.reshape((-1,3)))
 
-# Class: diverge_model
-# documentation found in docstring, i.e., do the following from within python
-# === Python ===
-# help(diverge_model)
-# ==============
 class diverge_model:
-    """class to read diverge model files
+    """
+    class to read diverge model files (.dvg, "magic number" = 145)
 
-    name: model name
-    version: diverge tag version (serves as file format version)
-    dim: dimension
-    nk[3]: #kpts
-    nkf[3]: #fine kpts
-
-    n_patches: #patches for npatch
-    patches: patch indices wrt coarse kmesh
-    weights: weight of each patch in BZ integral
-    p_count: #refined points per patch
-    p_displ: displacement of refined point array for each patch
-    p_map: refined indices, indexed by p_count/p_displ
-    p_weights: weights of refined indices, indexed by p_count/p_displ
-
-    kc_ibz_path: IBZ path on the coarse momentum mesh as tuple (n_per_segment, path_indices, path_vectors)
-    kf_ibz_path: IBZ path on the fine momentum mesh as tuple (n_per_segment, path_indices, path_vectors)
-
-    ibz_path: IBZ path in crystal coordinates
-
-    n_orb: #orbitals
-    n_spin: #spins
-    SU2: SU2 symmetry?
-    lattice: lattice vectors (3,3)
-    rlattice: reciprocal lattice vectors (3,3)
-    positions: atom positions (n_orb, 3)
-
-    n_sym: #symmetries
-    orb_symmetries: orbital symmetries (n_sym, n_orb*n_spin, n_orb*n_spin)
-    rs_symmetries: realspace symmetries (n_sym, 3, 3)
-
-    n_hop: #hoppings
-    hop: hopping elements (n_hop, custom struct)
-
-    n_vert: #vertex elements
-    vert: vertex elements (n_vert, custom struct)
-
-    len_ff_struct: #formfactors
-    tu_ff: formfactors (len_ff_struct, custom struct)
-
-    n_vert_chan: #vertex elements in each channel (3)
-    data: additional data (bytes)
-
-    kmesh: coarse kmesh (nk[0]*nk[1]*nk[2], 3)
-    kfmesh: fine kmesh (nk[0]*nk[1]*nk[2]*nkf[0]*nkf[1]*nkf[2], 3)
-    ham: hamiltonain on fine kmesh (kfmesh.shape[0], n_spin*n_orb, n_spin*n_orb)
-    U: eigenvectors on fine kmesh (kfmesh.shape[0], n_spin*n_orb, n_spin*n_orb)
-    E: eigenvalues on fine kmesh (kfmesh.shape[0], n_spin*n_orb)
-
-    npath: configuration for bandstructure (nonzero after v0.4.x) if -1, used
-           kf_ibz_path indices. otherwise, bandstructure array is shaped as
-           below
-    bandstructure: banstructure along irreducible path, with irreducible path
-                   in last three indices. shape usually given as
-                   ((ibz_path.size-1)*300+1, n_spin*n_orb + 3) if not specified
-                   differently in model output call.
-    fatbands: if supplied (using npath == -1), contains array of shape
-              (#kf_ibz_path, no_ns, nb) fatbands (nonzero after v0.5.x_dev)
+    :param fname: file name of a divERGe model file that should be read, usually
+                  ``XXX.dvg``.
     """
 
     def _displ_count( self, i_d ):
@@ -215,104 +153,165 @@ class diverge_model:
 
         self._f_bytes = numpy_fromfile(fname, dtype=np.byte)
 
+        #: name given to the model by the user through :c:member:`diverge_model_t.name`
         self.name = self._displ_count( 1 ).tobytes().decode().rstrip('\x00')
+
+        #: diverge tag version (serves as file format version)
         self.version = self._displ_count( 125 ).tobytes().decode()
+        #: dimension
         self.dim = self._head(3)
+        #: number of kpts as (3,) array of :c:type:`index_t`
         self.nk = self._head_displ_count(4,3)
+        #: number of fine kpts as (3,) array of :c:type:`index_t`
         self.nkf = self._head_displ_count(7,3)
 
+        #: number of patches (in case npatch backend was initalized)
         self.n_patches = self._head(10)
+        #: indices of the coarse mesh that are patch centers (n_patches,)
         self.patches = self._displ_count( 11 ).view( dtype=np.int64 )
+        #: weights for each of the patches (n_patches,)
         self.weights = self._displ_count( 13 ).view( dtype=np.float64 )
+        #: descriptor for the ``p_map`` and ``p_weights`` arrays, such that
+        #: ``p_map[p_displ[p]:p_displ[p]+p_count[p]]`` is the slice in the array
+        #: ``p_map`` (in python notation) that makes the refinement for patch ``p``
         self.p_count = self._displ_count( 15 ).view( dtype=np.int64 )
+        #: descriptor for the ``p_map`` and ``p_weights`` arrays, same as above
         self.p_displ = self._displ_count( 17 ).view( dtype=np.int64 )
+
+        #: refinement indices for patches; *relative convention*. Let ``p`` be a
+        #: patch index, ``i`` a refinement index for ``p`` (i.e. between zero and
+        #: ``p_count[p]``). Then, the refinement index ``kfi = p_map[p_displ[p]+i]``
+        #: is the relative shift from the patch center ``patches[p]`` to the
+        #: actual refinement point, i.e., ``kf = k1p2(kfi, patches[p])``.
         self.p_map = self._displ_count( 19 ).view( dtype=np.int64 )
+        #: refinement weights for patches, same indexing convention as ``p_map``.
         self.p_weights = self._displ_count( 21 ).view( dtype=np.float64 )
 
+        #: IBZ path in crystal coordinates
         self.ibz_path = self._displ_count( 23 ).view( dtype=np.float64 ).reshape((-1,3))
 
+        #: number of orbitals
         self.n_orb = self._head(25)
+        #: number of spins :math:`n_\mathrm{spin} = 2S+1`.
         self.n_spin = self._head(46)
+        #: :math:`SU(2)` symmetry?
         self.SU2 = self._head(45)
+        #: lattice vectors as (3,3) array
         self.lattice = self._head_displ_count(26, 9).view( dtype=np.float64 ).reshape((3,3))
+        #: reciprocal lattice vectors as (3,3) array
         self.rlattice = self._head_displ_count(58, 9).view( dtype=np.float64 ).reshape((3,3))
+        #: positions as (n_orb,3) array
         self.positions = self._displ_count( 35 ).view( dtype=np.float64 ).reshape((-1,3))
 
+        #: number of symmetries
         self.n_sym = self._head(37)
+        #: orbital symmetries (n_sym, n_orb*n_spin, n_orb*n_spin)
         self.orb_symmetries = self._displ_count( 38 ).view( dtype=np.complex128 ).reshape(
                 (-1, self.n_orb*self.n_spin, self.n_orb*self.n_spin))
+        #: realspace symmetries (n_sym, 3, 3)
         self.rs_symmetries = self._displ_count( 40 ).view( dtype=np.float64 ).reshape((-1,3,3))
 
+        #: number of hoppings
         self.n_hop = self._head(42)
+        #: hopping elements (n_hop, custom struct)
         self.hop = self._displ_count( 43 ).view( self.rs_hopping_t )
 
+        #: number of vertex elements
         self.n_vert = self._head(47)
+        #: vertex elements (n_vert, custom struct)
         self.vert = self._displ_count( 48 ).view( self.rs_vertex_t )
 
+        #: number of TU formfactors
         self.len_ff_struct = self._head( 50 )
+        #: formfactors (len_ff_struct, custom struct). *Note: usually not
+        #: present without TU internals*.
         self.tu_ff = self._displ_count( 51 ).view( self.tu_formfactor_t )
 
+        #: number of vertex elements in each channel (3)
         self.n_vert_chan = self._head_displ_count( 53, 3 )
+        #: additional data (byte array)
         self.data = self._displ_count( 56 )
 
+        #: coarse kmesh (nk[0]*nk[1]*nk[2], 3).
+        #: *Note: only present if (i) common internals were set at the time of
+        #: saving and (ii) the output config key was set to a non-default, non-zero
+        #: value.*
         self.kmesh = self._displ_count( 80 ).view( np.float64 ).reshape((-1,3))
+        #: fine kmesh (nk[0]*nk[1]*nk[2]*nkf[0]*nkf[1]*nkf[2], 3)
+        #: *Note: only present if (i) common internals were set at the time of
+        #: saving and (ii) the output config key was set to a non-default, non-zero
+        #: value.*
         self.kfmesh = self._displ_count( 82 ).view( np.float64 ).reshape((-1,3))
+        #: hamiltonain on fine kmesh (kfmesh.shape[0], n_spin*n_orb, n_spin*n_orb)
+        #: *Note: only present if (i) common internals were set at the time of
+        #: saving and (ii) the output config key was set to a non-default, non-zero
+        #: value.*
         self.ham = self._displ_count( 84 ).view( np.complex128 ).reshape(
                 (-1,self.n_spin*self.n_orb,self.n_spin*self.n_orb))
+        #: eigenvectors on fine kmesh (kfmesh.shape[0], n_spin*n_orb, n_spin*n_orb)
+        #: *Note: only present if (i) common internals were set at the time of
+        #: saving and (ii) the output config key was set to a non-default, non-zero
+        #: value.*
         self.U = self._displ_count( 86 ).view( np.complex128 ).reshape(
                 (-1,self.n_spin*self.n_orb,self.n_spin*self.n_orb))
+        #: eigenvalues on fine kmesh (kfmesh.shape[0], n_spin*n_orb)
+        #: *Note: only present if (i) common internals were set at the time of
+        #: saving and (ii) the output config key was set to a non-default, non-zero
+        #: value.*
         self.E = self._displ_count( 88 ).view( np.float64 ).reshape((-1,self.n_spin*self.n_orb))
 
+        #: IBZ path on the coarse momentum mesh as tuple (n_per_segment, path_indices, path_vectors)
         self.kc_ibz_path = k_ibz_path( self._displ_count( 90 ) )
+        #: IBZ path on the fine momentum mesh as tuple (n_per_segment, path_indices, path_vectors)
         self.kf_ibz_path = k_ibz_path( self._displ_count( 92 ) )
 
+        #: Configuration for bandstructure (nonzero after v0.4.x). If -1, used
+        #: kf_ibz_path indices. Otherwise, bandstructure array is shaped as below.
         self.npath = self._head(94) # to see what the config actually is
+
+        #: banstructure along irreducible path, with irreducible path
+        #: in last three indices. shape usually given as
+        #: ((ibz_path.size-1)*300+1, n_spin*n_orb + 3) if not specified
+        #: differently in model output call.
         self.bandstructure = self._displ_count( 100 ).view(
                 np.float64 ).reshape((-1,self.n_spin*self.n_orb + 3))
 
+        #: If supplied (using npath == -1 and the corresponding config key),
+        #: contains array of shape (#kf_ibz_path, no_ns, nb) fatbands (nonzero
+        #: after v0.6)
         fatbands = self._displ_count( 98 ).view( np.float64 )
         if fatbands.size == 0:
             self.fatbands = None
         else:
             self.fatbands = fatbands.reshape( (-1, self.n_spin*self.n_orb, self.n_spin*self.n_orb) )
 
-# Class: diverge_post_patch
-# documentation found in docstring, i.e., do the following from within python
-# === Python ===
-# help(diverge_post_patch)
-# ==============
 class diverge_post_patch:
-    '''class to read diverge postprocessing files for $N$-patch FRG
-
-    version: diverge tag version (serves as file format version)
+    r'''
+    class to read diverge postprocessing files for :math:`N`-patch FRG
 
     vertices and loops may be None if not explicitly asked for in the
     postprocessing routines. They all are of shape (np, np, np, nb, nb, nb, nb),
     i.e. refer to the patch indices.
 
-    V: full vertex
-    Lp: particle particle loop
-    Lm: particle hole loop
-    dV: increment of the last step
-
-    for each interaction channel X (X \in \{P,C,D\}), there are the following
+    for each interaction channel X (X :math:`\in \{P,C,D\}`), there are the following
     variables:
 
-    X_chan: boolean that tracks whether this channel is included in the output
-    X_dV: boolean that tracks whether the increment was used (True) or whether
-          the vertex at scale was used (False)
-    X_nq: the number of momentum transfer points
-    X_qV: the vertx in 'q representation'. A list of length X_nq with each
-          element of the list a tuple (q, k_kp_descr, values, vectors).
-          q: transfer momentum
-          k_kp_descr: array of indices of secondary momenta. Refers to the
-                      coarse kmesh. May differ for different q.
-          values: eigenvalues (shape: (nv,) with nv the number of eigenvalues
-                  requested) may be None if no eigendecomposition was done
-          vectors: eigenvectors (shape: (nv, len(k_kp_descr), nb, nb)). if
-                   values is None, nv == len(k_kp_descr)*nb*nb and the array
-                   should represents the vertex at the specified q as matrix
-                   with shape: (len(k_kp_descr), nb, nb, len(k_kp_descr), nb, nb).
+    :X_chan: boolean that tracks whether this channel is included in the output
+    :X_dV: boolean that tracks whether the increment was used (True) or whether
+           the vertex at scale was used (False)
+    :X_nq: the number of momentum transfer points
+    :X_qV: the vertx in 'q representation'. A list of length X_nq with each
+           element of the list a tuple (q, k_kp_descr, values, vectors).
+
+            :q: transfer momentum
+            :k_kp_descr: array of indices of secondary momenta. Refers to the
+                         coarse kmesh. May differ for different q.
+            :values: eigenvalues (shape: (nv,) with nv the number of eigenvalues
+                     requested) may be None if no eigendecomposition was done
+            :vectors: eigenvectors (shape: (nv, len(k_kp_descr), nb, nb)). if
+                      values is None, nv == len(k_kp_descr)*nb*nb and the array
+                      should represents the vertex at the specified q as matrix
+                      with shape: (len(k_kp_descr), nb, nb, len(k_kp_descr), nb, nb).
     '''
     def __init__(self, fname):
         d_header = numpy_fromfile(fname, dtype=np.longlong, count=128)
@@ -327,95 +326,76 @@ class diverge_post_patch:
         d_data_l = numpy_fromfile(fname, dtype=np.longlong)
 
         if d_header[2] != 0:
+            #: full vertex
             self.V = d_data[ 0+d_header[1] : d_header[1]+d_header[2] : 2 ] \
                + 1j* d_data[ 1+d_header[1] : d_header[1]+d_header[2] : 2 ]
         else:
             self.V = None
         if d_header[4] != 0:
+            #: particle particle loop
             self.Lp = d_data[ 0+d_header[3] : d_header[3]+d_header[4] : 2 ] \
                 + 1j* d_data[ 1+d_header[3] : d_header[3]+d_header[4] : 2 ]
         else:
             self.Lp = None
         if d_header[6] != 0:
+            #: particle hole loop
             self.Lm = d_data[ 0+d_header[5] : d_header[5]+d_header[6] : 2 ] \
                 + 1j* d_data[ 1+d_header[5] : d_header[5]+d_header[6] : 2 ]
         else:
             self.Lm = None
         if d_header[8] != 0:
+            #: increment of the last step
             self.dV = d_data[ 0+d_header[7] : d_header[7]+d_header[8] : 2 ] \
                 + 1j* d_data[ 1+d_header[7] : d_header[7]+d_header[8] : 2 ]
         else:
             self.dV = None
 
         idx = 9
+        #: X = P
         self.P_chan = chr(d_header[idx]); idx = idx+1
+        #: X = P
         self.P_dV = bool(d_header[idx]); idx = idx+1
+        #: X = P
         self.P_nq = d_header[idx]; idx = idx+1
         if d_header[idx+1] > 0:
+            #: X = P
             self.P_qV = qmatrices( d_data, d_header[idx], d_header[idx+1], self.P_nq ); idx = idx+2
         else:
             self.P_qV = None
 
         idx = 14
+        #: X = C
         self.C_chan = chr(d_header[idx]); idx = idx+1
+        #: X = C
         self.C_dV = bool(d_header[idx]); idx = idx+1
+        #: X = C
         self.C_nq = d_header[idx]; idx = idx+1
         if d_header[idx+1] > 0:
+            #: X = C
             self.C_qV = qmatrices( d_data, d_header[idx], d_header[idx+1], self.C_nq ); idx = idx+2
         else:
             self.C_qV = None
 
         idx = 19
+        #: X = D
         self.D_chan = chr(d_header[idx]); idx = idx+1
+        #: X = D
         self.D_dV = bool(d_header[idx]); idx = idx+1
+        #: X = D
         self.D_nq = d_header[idx]; idx = idx+1
         if d_header[idx+1] > 0:
+            #: X = D
             self.D_qV = qmatrices( d_data, d_header[idx], d_header[idx+1], self.D_nq ); idx = idx+2
         else:
             self.D_qV = None
 
+        #: diverge tag version (serves as file format version)
         self.version = d_data[ d_header[125] : d_header[125]+d_header[126] ].view(
                 dtype=np.byte ).tobytes().decode().rstrip('\x00')
 
-# Class: diverge_post_grid
-# documentation found in docstring, i.e., do the following from within python
-# === Python ===
-# help(diverge_post_grid)
-# ==============
 class diverge_post_grid:
-    '''class to read diverge postprocessing files for grid FRG
-
-    version: diverge tag version (serves as file format version)
-
-    nk: number of k points
-    nb: number of bands
-    nff: number of formfactors
-    SU2: SU2 symmetry
-    lingap_num_ev: linearized gap equation number of singular values
-    lingap_matrix_size: linearized gap equation matrix size
-
-    formfac: formfactors (nff,nk)
-
-    P_susc: P susceptibility (nk,nff,nb,nb,nb,nb)
-    P_mf_U: P lingap U matrix (lingap_num_ev,lingap_matrix_size)
-    P_mf_V: P lingap V matrix (lingap_num_ev,lingap_matrix_size)
-    P_mf_S: P lingap singular values (lingap_num_ev)
-    P_mf_EU: P lingap vertex eigenvectors (lingap_num_ev,lingap_matrix_size)
-    P_mf_EV: P lingap vertex eigenvalues (lingap_num_ev)
-    C_susc: C susceptibility (nk,nff,nb,nb,nb,nb)
-    C_mf_U: C lingap U matrix (lingap_num_ev,lingap_matrix_size)
-    C_mf_V: C lingap V matrix (lingap_num_ev,lingap_matrix_size)
-    C_mf_S: C lingap singular values (lingap_num_ev)
-    C_mf_EU: C lingap vertex eigenvectors (lingap_num_ev,lingap_matrix_size)
-    C_mf_EV: C lingap vertex eigenvalues (lingap_num_ev)
-    D_susc: D susceptibility (nk,nff,nb,nb,nb,nb)
-    D_mf_U: D lingap U matrix (lingap_num_ev,lingap_matrix_size)
-    D_mf_V: D lingap V matrix (lingap_num_ev,lingap_matrix_size)
-    D_mf_S: D lingap singular values (lingap_num_ev)
-    D_mf_EU: D lingap vertex eigenvectors (lingap_num_ev,lingap_matrix_size)
-    D_mf_EV: D lingap vertex eigenvalues (lingap_num_ev)
-
-    any of the above can be 'None' if it was not contained in simulation
+    '''
+    class to read diverge postprocessing files for grid FRG
     '''
     def __init__(self, fname):
         d_header = numpy_fromfile(fname, dtype=np.longlong, count=64)
@@ -428,19 +408,27 @@ class diverge_post_grid:
 
         d_data = numpy_fromfile(fname)
 
+        #: diverge tag version (serves as file format version)
         self.version = d_data[d_header[60]:d_header[60]+d_header[61]].view(
                 dtype=np.byte ).tobytes().decode().rstrip('\x00')
 
+        #: number of kpoints, nk[0]*nk[1]*nk[2] in terms of :c:struct:`diverge_model_t`
         self.nk = d_header[1]
+        #: number of bands, n_orb*n_spin in terms of :c:struct:`diverge_model_t`
         self.nb = d_header[2]
+        #: number of 'formfactors', some heuristic value
         self.nff = d_header[3]
+        #: :math:`SU(2)`?
         self.SU2 = d_header[4]
 
+        #: linearized gap equation number of singular values
         self.lingap_num_ev = d_header[19]
+        #: linearized gap equation matrix size
         self.lingap_matrix_size = d_header[20]
 
         self.file_size = d_header[63]
 
+        #: formfactors (nff,nk)
         formfac = d_data[d_header[5]:d_header[5]+d_header[6]].reshape((self.nff,self.nk,2))
         self.formfac = formfac[:,:,0] + 1j * formfac[:,:,1]
 
@@ -448,6 +436,7 @@ class diverge_post_grid:
 
         _P_susc = d_data[d_header[7]:d_header[7]+d_header[8]]
         if _P_susc.size != 0:
+            #: P susceptibility (nk,nff,nb,nb,nb,nb)
             self.P_susc = _P_susc.reshape(susc_shape)
             self.P_susc = self.P_susc[:,:, :,:,:,:, 0] + 1j * self.P_susc[:,:, :,:,:,:, 1]
         else:
@@ -456,10 +445,15 @@ class diverge_post_grid:
         if _P_mf.size != 0:
             self.P_mf_U, self.P_mf_V, self.P_mf_S, self.P_mf_EU, self.P_mf_EV = self.unroll_mf_solution( _P_mf )
         else:
+            #: P lingap U matrix (lingap_num_ev,lingap_matrix_size)
             self.P_mf_U = None
+            #: P lingap V matrix (lingap_num_ev,lingap_matrix_size)
             self.P_mf_V = None
+            #: P lingap singular values (lingap_num_ev)
             self.P_mf_S = None
+            #: P lingap vertex eigenvectors (lingap_num_ev,lingap_matrix_size)
             self.P_mf_EU = None
+            #: P lingap vertex eigenvalues (lingap_num_ev)
             self.P_mf_EV = None
 
         _C_susc = d_data[d_header[11]:d_header[11]+d_header[12]]
@@ -467,19 +461,26 @@ class diverge_post_grid:
             self.C_susc = _C_susc.reshape(susc_shape)
             self.C_susc = self.C_susc[:,:, :,:,:,:, 0] + 1j * self.C_susc[:,:, :,:,:,:, 1]
         else:
+            #: C susceptibility (nk,nff,nb,nb,nb,nb)
             self.C_susc = None
         _C_mf = d_data[d_header[13]:d_header[13]+d_header[14]]
         if _C_mf.size != 0:
             self.C_mf_U, self.C_mf_V, self.C_mf_S, self.C_mf_EU, self.C_mf_EV = self.unroll_mf_solution( _C_mf )
         else:
+            #: C lingap U matrix (lingap_num_ev,lingap_matrix_size)
             self.C_mf_U = None
+            #: C lingap V matrix (lingap_num_ev,lingap_matrix_size)
             self.C_mf_V = None
+            #: C lingap singular values (lingap_num_ev)
             self.C_mf_S = None
+            #: C lingap vertex eigenvectors (lingap_num_ev,lingap_matrix_size)
             self.C_mf_EU = None
+            #: C lingap vertex eigenvalues (lingap_num_ev)
             self.C_mf_EV = None
 
         _D_susc = d_data[d_header[15]:d_header[15]+d_header[16]]
         if _D_susc.size != 0:
+            #: D susceptibility (nk,nff,nb,nb,nb,nb)
             self.D_susc = _D_susc.reshape(susc_shape)
             self.D_susc = self.D_susc[:,:, :,:,:,:, 0] + 1j * self.D_susc[:,:, :,:,:,:, 1]
         else:
@@ -488,10 +489,15 @@ class diverge_post_grid:
         if _D_mf.size != 0:
             self.D_mf_U, self.D_mf_V, self.D_mf_S, self.D_mf_EU, self.D_mf_EV = self.unroll_mf_solution( _D_mf )
         else:
+            #: D lingap U matrix (lingap_num_ev,lingap_matrix_size)
             self.D_mf_U = None
+            #: D lingap V matrix (lingap_num_ev,lingap_matrix_size)
             self.D_mf_V = None
+            #: D lingap singular values (lingap_num_ev)
             self.D_mf_S = None
+            #: D lingap vertex eigenvectors (lingap_num_ev,lingap_matrix_size)
             self.D_mf_EU = None
+            #: D lingap vertex eigenvalues (lingap_num_ev)
             self.D_mf_EV = None
 
     def unroll_mf_solution( self, mf_solution ):
@@ -518,95 +524,35 @@ class diverge_post_grid:
             EV = EV.reshape((self.lingap_num_ev,))
         return UU[:,:,0] + 1j * UU[:,:,1], VV[:,:,0] + 1j * VV[:,:,1], S, EU, EV
 
-# Class: diverge_post_tu
-# documentation found in docstring, i.e., do the following from within python
-# === Python ===
-# help(diverge_post_tu)
-# ==============
 class diverge_post_tu:
-    '''class to read diverge postprocessing files for tu FRG
+    '''
+    class to read diverge postprocessing files for tu FRG
 
-    version: diverge tag version (serves as file format version)
+    Vertex diagonalisation: For each channel :math:`X \in \{P,C,D\}`, we include
 
-    n_orb: number of orbitals (not spin)
-    n_spin: number of spin degrees of freedom
-    nk: number of momentum points
-    nktot: number of momentum for Hamiltonian
-    nkibz: number of momentum points in the irreducible BZ wedge
-    SU2: Exploit SU2 symmetry
-    n_orbff: number of orbital+bond combinations
-    n_bonds: maximal number of bonds of a single site, not necessarily the same 
-            for every site
-    mi_to_ofrom: map from n_orbff to (o,b) notation, stores o (n_orbff)
-    mi_to_oto: map from n_orbff to (o,b) notation, stores o+bo (n_orbff)
-    mi_to_R: map from n_orbff to (o,b) notation, stores the beyond unit cell
-            contributiom (n_orbff,3)
-    bond_sizes: number of bonds per site o, needed for correct iteration over
-            tu_ff stored in model (n_orb)
-    bond_offsets: offset to the bonds belonging to site o (n_orb)
-    idx_ibz_in_full_mesh: gives the index of the IBZ point in the full PZ (nkibz)
+        :Xlen: for each q point the number of stored elements (nkibz)
+        :Xoff: for each q point the offset in the array (nkibz)
+        :Xtype: for each q point the used diagonalization algorithm (nkibz)
+        :Xval: stored Eigenvalues (sum(Xlen))
+        :Xvec: stored Eigenvectors (sum(Xlen), n_orb*n_bonds*n_spin**2)
 
-    kmaps_to: symmetry mapping of full BZ to IBZ (nk)
-    mi_to_tuffidx: multiindex to tu_ff index mapping; useful for analysis with model.tu_ff (n_orbff)
+    Lineraized gap solution: For each physical channel Y (sc, mag, charge), we include
 
-    VERTEX DIAGONALISATION
-    Plen: for each q point the number of stored elements (nkibz)
-    Poff: for each q point the offset in the array (nkibz)
-    Ptype: for each q point the used diagonalization algorithm (nkibz)
-    Pval: stored Eigenvalues (sum(Plen))
-    Pvec: stored Eigenvectors (sum(Plen), n_orb*n_bonds*n_spin**2)
+        :S_Y: singular values SC lingap (n_sing_val)
+        :U_Y: U SC lingap (n_sing_val, n_orbff*n_spin**2)
+        :V_Y: V SC lingap (n_sing_val, n_orbff*n_spin**2)
 
-    Clen: for each q point the number of stored elements (nkibz)
-    Coff: for each q point the offset in the array (nkibz)
-    Ctype: for each q point the used diagonalization algorithm (nkibz)
-    Cval: stored Eigenvalues (sum(Clen))
-    Cvec: stored Eigenvectors (sum(Clen), n_orb*n_bonds*n_spin**2)
+    Susceptibilities: For each channel X, we include the momentum space
+    (on-site) susceptibility and the formfactor susceptibilities if enabled in
+    the simulation
 
-    Dlen: for each q point the number of stored elements (nkibz)
-    Doff: for each q point the offset in the array (nkibz)
-    Dtype: for each q point the used diagonalization algorithm (nkibz)
-    Dval: stored Eigenvalues (sum(Dlen))
-    Dvec: stored Eigenvectors (sum(Dlen), n_orb*n_bonds*n_spin**2)
+        :Xsusc: channel momentum on-site susceptibility ([n_orb*n_spin]**4,nkibz)
+        :Xsuscff: formfactor resolved susceptibility ([n_orbff*n_spin*n_spin]**2,nkibz)
 
-    LINGAP solution
-    S_sc: singular values SC lingap (n_sing_val)
-    U_sc: U SC lingap (n_sing_val, n_orbff*n_spin**2)
-    V_sc: V SC lingap (n_sing_val, n_orbff*n_spin**2)
+    any of the above can be 'None' if it was not contained in simulation.
 
-    S_mag: singular values magnetic lingap (n_sing_val)
-    U_mag: U magnetic lingap (n_sing_val, n_orbff*n_spin**2)
-    V_mag: V magnetic lingap (n_sing_val, n_orbff*n_spin**2)
-
-    S_ch: singular values charge lingap (n_sing_val)
-    U_ch: U charge (n_sing_val, n_orbff*n_spin**2)
-    V_ch: V charge (n_sing_val, n_orbff*n_spin**2)
-
-    SUSCEPTIBILITY
-    Psusc: Pair-Pair susceptibility ([n_orb*n_spin]*4,nkibz)
-    Csusc: magnetic/crossed PH susceptibility ([n_orb*n_spin]*4,nkibz)
-    Dsusc: charge/direct PH susceptibility ([n_orb*n_spin]*4,nkibz)
-    Psuscff: formfactor resolved Pair-Pair susceptibility ([n_orbff*n_spin*n_spin]*2,nkibz)
-    Csuscff: formfactor resolved magnetic/crossed PH susceptibility ([n_orbff*n_spin*n_spin]*2,nkibz)
-    Dsuscff: formfactor resolved charge/direct PH susceptibility (n_orbff*n_spin*n_spin]*2,nkibz)
-    any of the above can be 'None' if it was not contained in simulation
-
-    SELFENERGY
-    selfenergy: Self-energy at the critical scale ([n_orb*n_spin]*2,nktot)
-
-
-    FULL channels
-    Pchannel: P channel on full PZ
-    Cchannel: C channel on full PZ
-    Dchannel: D channel on full PZ
-    pploop: non interacting PP-loop channel on full PZ
-    phloop: non interacting PH-loop channel on full PZ
-
-    SYMMETRIES
-    symm_o2m_len: length of symmetry maps
-    symm_o2m_off: offsets of symmetry maps
-    symm_o2m_idx_map: index maps
-    self.symm_o2m_Ppref: complex prefactor for P
-    self.symm_o2m_Cpref: complex prefactor for C
+    Full channels: For each channel X, we allow to save the TU vertex at the end
+    of the flow as Xchannel. The loops pploop and phloop can be saved as well.
     '''
     def __init__(self, fname):
         d_header = numpy_fromfile(fname, dtype=np.int64, count=128)
@@ -617,13 +563,21 @@ class diverge_post_tu:
             self.valid = False
             return
 
+        #: number of orbitals (not spin)
         self.n_orb = int(d_header[1])
+        #: number of spin degrees of freedom
         self.n_spin = int(d_header[2])
+        #: number of momentum points
         self.nk = int(d_header[3])
+        #: number of momentum for Hamiltonian
         self.nktot = int(d_header[4])
+        #: number of momentum points in the irreducible BZ wedge
         self.nkibz = int(d_header[5])
+        #: Exploit :math:`SU2` symmetry?
         self.SU2 = int(d_header[6])
+        #: number of orbital+bond combinations
         self.n_orbff = int(d_header[7])
+        #: maximal number of bonds of a single site, not necessarily the same for every site
         self.n_bonds = int(d_header[8])
         self.n_sym = int(d_header[9])
         n_spin = self.n_spin
@@ -640,127 +594,179 @@ class diverge_post_tu:
             return res
 
         iL = [10] # can't pass by reference, therefore we need a list... python is stupid after all
+
+        #: map from n_orbff to (o,b) notation, stores o (n_orbff)
         self.mi_to_ofrom = get_array_header( iL, np.int64 )
+        #: map from n_orbff to (o,b) notation, stores o+bo (n_orbff)
         self.mi_to_oto = get_array_header( iL, np.longlong )
+        #: map from n_orbff to (o,b) notation, stores the beyond unit cell contributiom (n_orbff,3)
         self.mi_to_R = get_array_header( iL, np.longlong ).reshape((-1,3))
+        #: number of bonds per site o, needed for correct iteration over tu_ff stored in model (n_orb)
         self.bond_sizes = get_array_header( iL, np.longlong )
+        #: offset to the bonds belonging to site o (n_orb)
         self.bond_offsets = get_array_header( iL, np.longlong )
+        #: gives the index of the IBZ point in the full PZ (nkibz)
         self.idx_ibz_in_bz = get_array_header( iL, np.longlong )
+
+        #: for each q point the number of stored elements (nkibz)
         self.Plen = get_array_header( iL, np.longlong )
+        #: for each q point the offset in the array (nkibz)
         self.Poff = get_array_header( iL, np.longlong )
+        #: for each q point the used diagonalization algorithm (nkibz)
         self.Ptype = get_array_header( iL, np.byte )
+        #: stored Eigenvalues (sum(Plen))
         self.Pval = get_array_header( iL, np.float64 )
+        #: stored Eigenvectors (sum(Plen), n_orbff*n_spin**2)
         self.Pvec = get_array_header( iL, np.complex128 )
 
         self.Pvec = self.Pvec.reshape((np.sum(self.Plen),n_spin,n_spin,n_orbff))
 
+        #: for each q point the number of stored elements (nkibz)
         self.Clen = get_array_header( iL, np.longlong )
+        #: for each q point the offset in the array (nkibz)
         self.Coff = get_array_header( iL, np.longlong )
+        #: for each q point the used diagonalization algorithm (nkibz)
         self.Ctype = get_array_header( iL, np.byte )
+        #: stored Eigenvalues (sum(Clen))
         self.Cval = get_array_header( iL, np.float64 )
+        #: stored Eigenvectors (sum(Clen), n_orbff*n_spin**2)
         self.Cvec = get_array_header( iL, np.complex128 )
 
         self.Cvec = self.Cvec.reshape((np.sum(self.Clen),n_spin,n_spin,n_orbff))
 
+        #: for each q point the number of stored elements (nkibz)
         self.Dlen = get_array_header( iL, np.longlong )
+        #: for each q point the offset in the array (nkibz)
         self.Doff = get_array_header( iL, np.longlong )
+        #: for each q point the used diagonalization algorithm (nkibz)
         self.Dtype = get_array_header( iL, np.byte )
+        #: stored Eigenvalues (sum(Dlen))
         self.Dval = get_array_header( iL, np.float64 )
+        #: stored Eigenvectors (sum(Dlen), n_orbff*n_spin**2)
         self.Dvec = get_array_header( iL, np.complex128 )
 
         self.Dvec = self.Dvec.reshape((np.sum(self.Dlen),n_spin,n_spin,n_orbff))
 
+        #: singular values sc lingap (n_sing_val)
         self.S_sc = get_array_header( iL, np.float64 )
         self.n_svdP = d_header[iL[0]-1]
+        #: U sc lingap (n_sing_val, n_orbff*n_spin**2)
         self.U_sc = get_array_header( iL, np.complex128 )
         self.U_sc = self.U_sc.reshape((self.n_svdP,n_spin,n_spin,n_orbff))
+        #: V sc lingap (n_sing_val, n_orbff*n_spin**2)
         self.V_sc = get_array_header( iL, np.complex128 )
         self.V_sc = self.V_sc.reshape((self.n_svdP,n_spin,n_spin,n_orbff))
 
+        #: singular values magnetic lingap (n_sing_val)
         self.S_mag = get_array_header( iL, np.float64 )
         self.n_svdC = d_header[iL[0]-1]
+        #: U magnetic lingap (n_sing_val, n_orbff*n_spin**2)
         self.U_mag = get_array_header( iL, np.complex128 )
         self.U_mag = self.U_mag.reshape((self.n_svdC,n_spin,n_spin,n_orbff))
+        #: V magnetic lingap (n_sing_val, n_orbff*n_spin**2)
         self.V_mag = get_array_header( iL, np.complex128 )
         self.V_mag = self.V_mag.reshape((self.n_svdC,n_spin,n_spin,n_orbff))
 
+        #: singular values charge lingap (n_sing_val)
         self.S_charge = get_array_header( iL, np.float64 )
         self.n_svdD = d_header[iL[0]-1]
+        #: U charge lingap (n_sing_val, n_orbff*n_spin**2)
         self.U_charge = get_array_header( iL, np.complex128 )
         self.U_charge = self.U_charge.reshape((self.n_svdD,n_spin,n_spin,n_orbff))
+        #: V charge lingap (n_sing_val, n_orbff*n_spin**2)
         self.V_charge = get_array_header( iL, np.complex128 )
         self.V_charge = self.V_charge.reshape((self.n_svdD,n_spin,n_spin,n_orbff))
 
         susc_shape = (n_spin,n_orb,n_spin,n_orb,n_spin,n_orb,n_spin,n_orb,self.nk)
+
+        #: Pair-Pair susceptibility ([n_orb*n_spin]**4,nkibz)
         self.Psusc = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Psusc = self.Psusc.reshape(susc_shape)
+        #: magnetic/crossed PH susceptibility ([n_orb*n_spin]**4,nkibz)
         self.Csusc = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Csusc = self.Csusc.reshape(susc_shape)
+        #: charge/direct PH susceptibility ([n_orb*n_spin]**4,nkibz)
         self.Dsusc = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Dsusc = self.Dsusc.reshape(susc_shape)
 
         susc_shape = (n_spin*n_spin,n_orbff,n_spin*n_spin,n_orbff,self.nk)
+        #: formfactor resolved Pair-Pair susceptibility ([n_orbff*n_spin*n_spin]**2,nkibz)
         self.Psusc_ff = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Psusc_ff = self.Psusc_ff.reshape(susc_shape)
+        #: formfactor resolved magnetic/crossed PH susceptibility ([n_orbff*n_spin*n_spin]**2,nkibz)
         self.Csusc_ff = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Csusc_ff = self.Csusc_ff.reshape(susc_shape)
+        #: formfactor resolved charge/direct PH susceptibility (n_orbff*n_spin*n_spin]**2,nkibz)
         self.Dsusc_ff = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Dsusc_ff = self.Dsusc_ff.reshape(susc_shape)
 
+        #: Self-energy at the critical scale ([n_orb*n_spin]**2,nktot)
         self.selfenergy = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.selfenergy = self.selfenergy.reshape(self.nktot,n_spin,n_orb,n_spin,n_orb)
 
+        #: P channel on full PZ
         self.Pchannel = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Pchannel = self.Pchannel.reshape(susc_shape)
+        #: C channel on full PZ
         self.Cchannel = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Cchannel = self.Cchannel.reshape(susc_shape)
+        #: D channel on full PZ
         self.Dchannel = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.Dchannel = self.Dchannel.reshape(susc_shape)
+        #: non interacting PP-loop channel on full PZ
         self.pploop = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.pploop = self.pploop.reshape(susc_shape)
+        #: non interacting PH-loop channel on full PZ
         self.phloop = get_array_header( iL, np.complex128 )
         if(d_header[iL[0]-1] > 0):
             self.phloop = self.phloop.reshape(susc_shape)
 
         symm_shape = (self.n_sym,n_spin,n_spin,n_orbff)
+        #: length of symmetry maps
         self.symm_o2m_len = get_array_header( iL, np.longlong )
         if(d_header[iL[0]-1] > 0):
             self.symm_o2m_len = self.symm_o2m_len.reshape(symm_shape)
+        #: offsets of symmetry maps
         self.symm_o2m_off = get_array_header( iL, np.longlong )
         if(d_header[iL[0]-1] > 0):
             self.symm_o2m_off = self.symm_o2m_off.reshape(symm_shape)
+        #: index maps
         self.symm_o2m_idx_map = get_array_header( iL, np.longlong )
+        #: complex prefactor for P
         self.symm_o2m_Ppref = get_array_header( iL, np.complex128 )
+        #: complex prefactor for C
         self.symm_o2m_Cpref = get_array_header( iL, np.complex128 )
 
+        #: diverge tag version (serves as file format version)
         self.version = get_array_header( iL, np.byte ).tobytes().decode()
 
+        #: symmetry mapping of full BZ to IBZ (nk)
         self.kmaps_to = get_array_header( iL, np.longlong )
+        #: multiindex to tu_ff index mapping; useful for analysis with model.tu_ff (n_orbff)
         self.mi_to_tuffidx = get_array_header( iL, np.longlong )
 
-# Function: diverge_read
-# function to read model files as well as post processing files. returns the
-# corresponding class (<diverge_model>, <diverge_post_patch>, or
-# <diverge_post_grid>). Makes use of to the file format specifications given in
-# <diverge_postprocess_and_write at
-# diverge_postprocess_conf_t.diverge_postprocess_and_write> and
-# <diverge_model_to_file>; discerning the different file types by their magic
-# numbers
-#
-# Parameters:
-# fname - file name to read from (typically ....dvg)
 def read( fname ):
+    r"""
+    function to read model files as well as post processing files. returns the
+    corresponding class (:class:`diverge_model`, :class:`diverge_post_patch`, or
+    :class:`diverge_post_grid`). Makes use of to the file format specifications
+    given in :c:func:`diverge_postprocess_and_write` and
+    :c:func:`diverge_model_to_file`; discerning the different file types by
+    their "magic numbers".
+
+    :param fname: file name to read from (typically ```XXX.dvg```)
+    """
     magic = numpy_fromfile( fname, dtype='i8', count=1 )[0]
     if magic == DIVERGE_MODEL_MAGIC_NUMBER:
         return diverge_model( fname )
@@ -774,34 +780,41 @@ def read( fname ):
         print(f"magic number {magic} ('{chr(magic)}') unknown")
         return None
 
-# Function: bandstructure_bands
-# return the bands array (nk,nb) from the band  structure obtained from a
-# <diverge_model>. Useful for plotting (for example see <bandstructure_xvals>).
 def bandstructure_bands( model ):
+    r"""
+    return the bands array (nk,nb) from the band  structure obtained from a
+    :class:`diverge_model`. Useful for plotting (for example see
+    :func:`bandstructure_xvals`).
+    """
     return model.bandstructure[:,:-3]
 
-# Function: bandstructure_kpts
-# return the momentum points (nk,3) from the band structure obtained from a
-# <diverge_model>. Useful for plotting and post-processing.
 def bandstructure_kpts( model ):
+    r"""
+    return the momentum points (nk,3) from the band structure obtained from a
+    :class:`diverge_model`. Useful for plotting and post-processing.
+    """
     return model.bandstructure[:,-3:]
 
-# Function: bandstructure_xvals
-# calculate the differential distance between the momentum points from the band
-# structure obtained from a <diverge_model>. Useful for plotting in conjuction
-# with <bandstructure_bands> and <bandstructure_ticks>.
-# === Python ===
-# import diverge.output as do
-# import matplotlib.pyplot as plt
-# M = do.read("model.dvg")
-# b = do.bandstructure_bands(M)
-# x = do.bandstructure_xvals(M)
-# plt.plot( x, b, color='black' )
-# plt.xticks( do.bandstructure_ticks(M) )
-# # need to set the labels manually as they are not known to the model
-# plt.show()
-# ==============
 def bandstructure_xvals( model ):
+    r"""
+    calculate the differential distance between the momentum points from the band
+    structure obtained from a :class:`diverge_model`. Useful for plotting in
+    conjuction with :func:`bandstructure_bands` and :func:`bandstructure_ticks`.
+
+    Example:
+
+    .. sourcecode:: python
+
+        import diverge.output as do
+        import matplotlib.pyplot as plt
+        M = do.read("model.dvg")
+        b = do.bandstructure_bands(M)
+        x = do.bandstructure_xvals(M)
+        plt.plot( x, b, color='black' )
+        plt.xticks( do.bandstructure_ticks(M) )
+        # need to set the labels manually as they are not known to the model
+        plt.show()
+    """
     K = bandstructure_kpts(model)
     vals = np.concatenate( [[0], np.sqrt((np.diff(K,axis=0)**2).sum(axis=1))] )
     if model.npath == -1 and not model.kf_ibz_path is None:
@@ -811,10 +824,12 @@ def bandstructure_xvals( model ):
         vals[offset_zero] = 0.0
     return np.cumsum(vals)
 
-# Function: bandstructure_ticks
-# returns the xticks used for band structure plots from a <diverge_model>.
-# Useful in conjuction with <bandstructure_xvals>.
 def bandstructure_ticks( model ):
+    r"""
+    returns the xticks used for band structure plots from a
+    :class:`diverge_model`. Useful in conjuction with
+    :func:`bandstructure_xvals`.
+    """
     x = bandstructure_xvals( model )
     n_bandstruct = x.shape[0]
     n_ibz_path = model.ibz_path.shape[0]

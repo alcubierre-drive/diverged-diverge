@@ -1,34 +1,11 @@
-# Namespace: dvg
-# import diverge::
-# Wrapper for diverge.h, generated with some help of ctypesgen. It is heavily
-# based on wrapping C arrays as numpy structured arrays. Therefore, some
-# documentation for these (and how to use them from <dvg>) is included <below at
-# Structured Arrays>.
-#
-# The documentation only includes those functions that exist *on top* of the <C
-# library at libdivERGe.so>. Everything else is documented <there at
-# libdivERGe.so>. For usage examples, see the python examples shipped with
-# <diverge.tar.gz at
-# https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.2/divERGe.tar.gz>
-# (or found in the <examples/ directory of the repo at
-# https://git.rwth-aachen.de/frg/diverge/-/tree/master/examples>).
-#
-# Note::
-# on linux, the python library will search for libdivERGe.so in your
-# LD_LIBRARY_PATH _with precedence_ over the shipped version (located somewhere
-# in your PYTHONPATH). This makes it easy to swap out the backend by pointing
-# LD_LIBRARY_PATH to a location with the desired libdivERGe.so:
-# === Code ===
-# LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/gpu/version/ python script.py
-# ============
-
 from diverge.helpers import *
 from diverge.helpers import String, ReturnString, _libs
 from ctypes import *
 
-# Function: info
-# print information on the shared library
 def info():
+    r"""
+    print information on the shared library
+    """
     try:
         info_str = str(_libs["divERGe"].access['cdecl'])
     except:
@@ -307,18 +284,18 @@ if not _libs["divERGe"] is None:
     generate_symm_trafo_.argtypes = [ index_t, c_voidp, index_t, c_voidp, index_t, c_voidp, c_voidp ]
     generate_symm_trafo_.restype = None
 
-    # Function: generate_symm_trafo
-    # python version of the symmetry transformation
-    #
-    # Parameters:
-    # n_spin - number of spins
-    # orbs - np.array( ..., dtype=site_descr_t )
-    # syms - np.array( ..., dtype=sym_op_t )
-    #
-    # Returns:
-    # rs_trafo - (3,3) double array
-    # orb_trafo - (n_spin*orbs.size, n_spin*orbs.size) complex128_t array
     def generate_symm_trafo( n_spin, orbs, syms ):
+        r"""
+        python version of the symmetry transformation
+
+        :param n_spin: number of spins
+        :param orbs: np.array( ..., dtype=site_descr_t )
+        :param syms: np.array( ..., dtype=sym_op_t )
+
+        :returns:
+            * rs_trafo; (3,3) double array
+            * orb_trafo; (n_spin*orbs.size, n_spin*orbs.size) :c:type:`complex128_t` array
+        """
         rs_trafo = np.zeros( (3,3), dtype=np.float64 )
         orb_trafo = np.zeros( (n_spin*orbs.size, n_spin*orbs.size), dtype=np.complex128 )
 
@@ -536,17 +513,19 @@ if not _libs["divERGe"] is None:
     read_W90 = _libs["divERGe"].get("diverge_read_W90_C", "cdecl")
     read_W90.argtypes = [c_char_p,index_t,POINTER(index_t),POINTER(index_t)]
     read_W90.restype = c_void_p
-    # Function: read_W90_PY
-    # returns a numpy array of <rs_hopping_t> with the hoppings from W90 file
-    # and its length
-    #
-    # Parameters:
-    # fname - filename to read W90 data from (usually ..._hr.dat)
-    # nspin - default value 0 amounts to SU(2) symmetric model. if nspin != 0,
-    #         abs(nspin) = (S+1/2)*2 with S the physical spin (i.e., for S=1/2 we
-    #         have abs(nspin)=2). the sign determines whether the spin index is the
-    #         one which increases memory slowly (negative) for fast (positive)
+
     def read_W90_PY( fname, nspin ):
+        """
+        returns a numpy array of :c:struct:`rs_hopping_t` with the hoppings from
+        W90 file. Wraps :c:func:`diverge_read_W90_C` s.t. no messy pointer stuff
+        must be done manually from within python.
+
+        :param fname: filename to read W90 data from (usually ..._hr.dat)
+        :param nspin: default value 0 amounts to SU(2) symmetric model. if nspin != 0,
+                abs(nspin) = (S+1/2)*2 with S the physical spin (i.e., for S=1/2 we
+                have abs(nspin)=2). the sign determines whether the spin index is the
+                one which increases memory slowly (negative) for fast (positive)
+        """
         length = index_t()
         n_orb = index_t(0)
         ptr = POINTER(rs_hopping_t)
@@ -636,10 +615,11 @@ if not _libs["divERGe"] is None:
     model_internals_any_ = _libs["divERGe"].get("diverge_model_internals_any", "cdecl")
     model_internals_any_.argtypes = [POINTER(model_t), String, ArgUnion]
     model_internals_any_.restype = None
-    # Function: model_internals_any_PY
-    # wraps <diverge_model_internals_any> with varargs substituted by kwargs
-    # np_ibz or max_dist.
     def model_internals_any_PY( model, mode, np_ibz=None, max_dist=None ):
+        """
+        wraps :c:func:`diverge_model_internals_any` with varargs substituted by
+        kwargs; np_ibz or max_dist.
+        """
         arg = ArgUnion()
         if not np_ibz is None:
             arg.np_ibz = np_ibz
@@ -892,19 +872,17 @@ if not _libs["divERGe"] is None:
     postprocess_and_write_finegrained.argtypes = [POINTER(flow_step_t), String, POINTER(postprocess_conf_t)]
     postprocess_and_write_finegrained.restype = None
 
-    # Function: postprocess_and_write_PY
-    # wraps <diverge_postprocess_and_write_finegrained at
-    # diverge_postprocess_conf_t.diverge_postprocess_and_write_finegrained> in a
-    # convenient pythonic way.
-    #
-    # Parameters:
-    # step - <diverge_flow_step_t> pointer
-    # filename - string: where to save the postprocessing results
-    # **kwargs - each member of <diverge_postprocess_conf_t> can be passed as
-    #            kwarg (key1 = val1, key2 = val2, …). The defaults are those
-    #            returned by <diverge_postprocess_conf_defaults_CPP at
-    #            diverge_postprocess_conf_t.diverge_postprocess_conf_defaults_CPP>.
     def postprocess_and_write_PY( step, filename, **kwargs ):
+        r"""
+        wraps :c:func:`diverge_postprocess_and_write_finegrained` in a
+        convenient pythonic way.
+
+        :param step: :c:type:`diverge_flow_step_t` pointer
+        :param filename: string where to save the postprocessing results
+        :param \*\*kwargs: each member of :c:struct:`diverge_postprocess_conf_t`
+            can be passed as kwarg (key1 = val1, key2 = val2, …). The defaults
+            are those returned by :c:func:`diverge_postprocess_conf_defaults_CPP`.
+        """
         cfg = postprocess_conf_defaults_CPP()
         for s in struct_postprocess_conf_t.__slots__:
             try:
@@ -960,29 +938,17 @@ if not _libs["divERGe"] is None:
         model_to_file_finegrained.restype = String
         model_to_file_finegrained.errcheck = ReturnString
 
-    # Function: model_to_file_PY
-    # writes a <diverge_model_t> to file using the
-    # <diverge_model_to_file_finegrained at
-    # diverge_model_output_conf_t.diverge_model_to_file_finegrained> backend
-    # wrapped in a convenient pythonic way. Returns the md5sum of the model file
-    # as string.
-    #
-    # Parameters:
-    # model - <diverge_model_t> pointer
-    # filename - string: where to save the model
-    # **kwargs - each member of <diverge_model_output_conf_t> can be passed as
-    #            kwarg (key1 = val1, key2 = val2, …). The defaults are those
-    #            returned by <diverge_model_output_conf_defaults_CPP at
-    #            diverge_model_output_conf_t.diverge_model_output_conf_defaults_CPP>.
     def model_to_file_PY( model, filename, **kwargs ):
         """
-        function that wraps :c:func:`diverge_model_to_file_finegrained`
+        function that wraps :c:func:`diverge_model_to_file_finegrained` in a
+        pythonic way.
 
         :param model: diverge model
         :param filename: output file name
         :param \*\*kwargs: keyword arguments, where each member of
-                           :c:struct:`diverge_model_output_conf_t` can be parsed
-                           as kwarg in the form ``key=val``.
+            :c:struct:`diverge_model_output_conf_t` can be passed as kwarg in
+            the form ``key=val``. Defaults are those returned by
+            :c:func:`diverge_model_output_conf_defaults_CPP`.
         """
         cfg = model_output_conf_defaults_CPP()
         for s in struct_model_output_conf_t.__slots__:
@@ -1008,19 +974,20 @@ if not _libs["divERGe"] is None:
     patching_find_fs_pts_C_ = _libs["divERGe"].get("diverge_patching_find_fs_pts_C", "cdecl")
     patching_find_fs_pts_C_.argtypes = [POINTER(model_t), POINTER(c_double), index_t, index_t, index_t, POINTER(POINTER(index_t)), POINTER(index_t)]
     patching_find_fs_pts_C_.restype = None
-    # Function: patching_find_fs_pts_PY
-    # returns a numpy array of <index_t> with the indices of the found patches
-    #
-    # Parameters:
-    # model - <diverge_model_t> pointer
-    # energies - either None or pointer to a double (64bit) floating point array
-    #            that holds energies for nbands bands on the mesh defined in the
-    #            model, i.e. an (nk, nb) array
-    # nbands - number of bands to use. if energies is None, must coincide with the
-    #          number of bands defined in the model
-    # np_ibz - number of patches that should be found in the IBZ
-    # np_ibz_search - number of points that are considered for the patch search
     def patching_find_fs_pts_PY( model, energies, nbands, np_ibz, np_ibz_search ):
+        r"""
+        returns a numpy array of :c:type:`index_t` with the indices of the found
+        patches. wraps :c:func:`diverge_patching_find_fs_pts_C` in a pythonic way.
+
+        :param model: :c:struct:`diverge_model_t` pointer
+        :param energies: either None or pointer to a double (64bit) floating point array
+            that holds energies for nbands bands on the mesh defined in the
+            model, i.e. an (nk, nb) array
+        :param nbands: number of bands to use. if energies is None, must coincide with the
+            number of bands defined in the model
+        :param np_ibz: number of patches that should be found in the IBZ
+        :param np_ibz_search: number of points that are considered for the patch search
+        """
         if energies is None:
             e_ptr = None
         else:
@@ -1080,14 +1047,19 @@ if not _libs["divERGe"] is None:
     run_tests_ = _libs["divERGe"].get("diverge_run_tests", "cdecl")
     run_tests_.argtypes = [c_int, POINTER(POINTER(c_char))]
     run_tests_.restype = c_int
-    # Function: run_tests
-    # run all unit tests shipped with divERGe to check health.
-    #
-    # Parameters:
-    # args - list of strings to pass as an argument to CATCH (the testing
-    #        framework). To enable a specific test filter, set args=['[filter]'].
-    #        For example, the BHK tests can be run with args=['[BHK]'].
     def run_tests( args=[] ):
+        r"""
+        run all unit tests shipped with divERGe to check health, wraps
+        :c:func:`diverge_run_tests` without pointer stuff for the argc/argv
+        parameters.
+
+        *Note*: You must initialize the library before calling this function!
+
+        :param args: list of strings to pass as an argument to CATCH (the testing
+               framework). To enable a specific test filter, set
+               args=['[filter]']. For example, the BHK tests can be run with
+               args=['[BHK]'].
+        """
         try:
             arr = (c_char_p * (len(args) + 1))()
             arr[1:] = [ a.encode('utf8') for a in args ]
@@ -1142,32 +1114,29 @@ if not _libs["divERGe"] is None:
     flow_step_t = struct_flow_step_t
     euler_t = struct_euler_t
 
-    # Var: numpy
-    # imports numpy in standard fashion (as np)
     import numpy as np
-    # Var: zeros
-    # additionally import zeros from numpy for less namespace pollution
     zeros = np.zeros
 
-    # Function: view_array
-    # give an array view on existing memory
-    #
-    # Parameters:
-    #   dtype - data type that the view is using
-    #   shape - all dimensions (in C ordering) that the view is using
     def view_array( mem, dtype=np.complex128, shape=(1,) ):
+        r"""
+        give an array view on existing memory
+
+        :param dtype: data type that the view is using
+        :param shape: all dimensions (in C ordering) that the view is using
+        """
         dtype = np.dtype(dtype)
         return np.ctypeslib.as_array( cast(mem, POINTER(c_char)), shape=(*shape,dtype.itemsize) ).view( dtype=dtype ).reshape( shape )
 
-    # Function: alloc_array
-    # allocate an array of given data type and shape such that it is not cleared by
-    # the python garbage collector
-    #
-    # Parameters:
-    #   shape - all dimensions (in C ordering)
-    #   dtype - data type. can be <complex128_t>, <rs_hopping_t>, <rs_vertex_t>, or
-    #           <tu_formfactor_t>. data type name must be passed as python string.
     def alloc_array( shape, dtype = "complex128_t" ):
+        r"""
+        allocate an array of given data type and shape such that it is not cleared by
+        the python garbage collector
+
+        :param shape: all dimensions (in C ordering)
+        :param dtype: data type. can be ``"complex128_t"``, ``"rs_hopping_t"``,
+            ``"rs_vertex_t"``, or ``"tu_formfactor_t"``. data type name must be
+            passed *as python string*.
+        """
         if dtype == "complex128_t":
             return view_array( mem_alloc_complex128_t(np.prod(shape)), dtype=np.complex128, shape=shape )
         elif dtype == "rs_hopping_t":
@@ -1181,71 +1150,77 @@ if not _libs["divERGe"] is None:
             return None
 
     print_ = print
-    # Function: print
-    # wraps the python print function to work with MPI
+
     def print( *args, **kwargs ):
+        """
+        wraps the python print function to work with MPI
+        """
         if mpi_comm_rank() == 0:
             print_( *args, **kwargs )
 
-    # Function: autoflow
-    # simplest possible FRG flow
-    #
-    # Parameters:
-    #   hoppings - numpy array of dtype <rs_hopping_t>, *required*.
-    #   vertex - numpy array of dtype <rs_vertex_t>, *required*.
-    #   nk - number of coarse k points in all three dimensions, *required*.
-    #        Dimensionality of the model is inferred from the nk list by inspecting
-    #        how many nonzero entries exist.
-    #   nkf - number of fine k points in all three dimensions, defaults to 15 in
-    #         each dimension for mode=="grid" or mode=="tu", and to 1 for
-    #         mode=="patch".
-    #   lattice - 3×3 matrix in C order that holds the lattice vectors lattice[0],
-    #             lattice[1], and lattice[2]
-    #   no - number of orbitals and sites
-    #   SU2 - SU2 symmetry setting. If SU2>0, model is assumed to be SU2 symmetric.
-    #         If SU2==0, model is not SU2 symmetric and exchange symmetry in the
-    #         vertex is *not* enforced. for SU2<0, model is not SU2 symmetric, but
-    #         exchange symmetry in the vertex *is* enforced.
-    #   nspin - number of spin indices. For SU2>0, nspin=1 is required. For SU2<=0,
-    #           nspin must be set from physical grounds.
-    #   sites - positions of the orbital centers in real space as array of shape
-    #           (no, 3).
-    #   model_output - output file for the model.
-    #   post_output - output file for postprocessing info.
-    #   flow_output - output file for flow data.
-    #   rs_symmetries - realspace symmetry list as array of shape (nsym, 3, 3). If
-    #                   None, no symmetries are used.
-    #   orb_symmetries - orbital symmetry list as array of shape (nsym, no, no). If
-    #                    None, no symmetries are used.
-    #   mode - backend selection. valid choices are "grid", "patch", and "tu".
-    #   npatches_ibz - number of FS patches in the IBZ used with the "patch"
-    #                  backend.
-    #   formfactor_maxdist - maximal distance up to which formfactors should be
-    #                        included in the "tu" backend.
-    #   channels - selection of channels to be included in the FRG flow. The library
-    #              looks for the characters 'P', 'C', 'D', 'S' in the string that
-    #              stand for the particle particle channel ('P'), the crossed
-    #              particle hole channel ('C'), the direct particle hole channel
-    #              ('D'), and self-energies ('S'), respectively.
-    #   ibz_path - Brillouin zone path in reciprocal crystal coordinates. if empty,
-    #              do not compute band structure
-    #   maxvert - value after which the vertex is considered 'diverged'
-    #   mu - chemical potential. use if mu is not None
-    #   nu - filling value. use if nu is not None. nu has precedence over mu, i.e.
-    #        if both nu and mu are not None, the filling value is used.
-    #
-    # Create the (numpy) arrays with
-    # === Python ===
-    # import diverge as dvg
-    # hoppings = dvg.zeros(shape_h, dtype=dvg.rs_hopping_t)
-    # vertex = dvg.zeros(shape_v, dtype=dvg.rs_vertex_t)
-    # ==============
     def autoflow( hoppings=None, vertex=None, nk=None, nkf=None, lattice=np.eye(3),
                  no=1, SU2=1, nspin=1, sites=[[0,0,0]], model_output="model.dvg",
                  post_output="post.dvg", flow_output="flow.dat", rs_symmetries=None,
                  orb_symmetries=None, mode="tu", npatches_ibz=6,
                  formfactor_maxdist=2.01, channels="PCD", ibz_path=[], maxvert=50.0,
                  mu=None, nu=None ):
+        r"""
+        Function for the simplest possible FRG flow.
+
+        Can be used to get familiar with the library, or to do some extremely
+        rapid coding for a 'standard' FRG run. Outputs to three files by default
+        and has some drastic simplifications built in, with no control left to
+        the user. You are strongly advised to (a) build on top of this function
+        or (b) use the actual API for actual (serious) projects.
+
+        :param hoppings: :c:struct:`rs_hopping_t` array with the hopping
+            elements. Created by ``diverge.zeros((n_hop,),
+            dtype=diverge.rs_hopping_t)``. **required**.
+        :param vertex: :c:struct:`rs_vertex_t` array with the interaction
+            elements. Created by ``diverge.zeros((n_vert,),
+            dtype=diverge.rs_vertex_t)``. **required**.
+        :param nk: length 3 integer tuple for the momentum mesh. **required**.
+        :param nkf: length 3 integer tuple for the refined momentum mesh,
+            default: refinement factor 15
+        :param lattice: (3,3) float64 array for the lattice vectors in C
+            ordering, default: ``np.eye(3)``
+        :param no: number of orbitals, default: 1
+        :param SU2: use :math:`SU(2)` symmetry, default: 1
+        :param nspin: number of spin degrees of freedom
+            (:math:`n_\mathrm{spin}`), default: 1 (since SU(2) is active)
+        :param sites: (n_orb, 3) float64 array for the positions in C ordering
+            (see :c:member:`diverge_model_t.positions`), default: ``[[0,0,0]]``
+        :param model_output: string for the model output file
+            (see :c:func:`diverge_model_to_file`), default: ``"model.dvg"``
+        :param post_output: string for the postprocessing output file
+            (see :c:func:`diverge_postprocess_and_write`), default:
+            ``"post.dvg"``
+        :param flow_output: string for the flow output file (see :ref:`Flow`),
+            default: ``"flow.dat"``
+        :param rs_symmetries: (n_sym, 3, 3) array or None. use these matrices as
+            real-space symmetries (see :ref:`Symmetries`), default: None
+        :param orb_symmetries: (n_sym, n_orb, n_orb) array or None. use these
+            matrices as orbital symmetries, default: None
+        :param mode: string for backend selection, default: ``"tu"``
+        :param npatches_ibz: in case ``mode == "patch"``, the number of patches
+            to look for in the IBZ
+            (see :c:func:`diverge_model_internals_patch`), default: 6
+        :param formfactor_maxdist: in case ``mode == "tu"``, the formfactor
+            cutoff distance (see :c:func:`diverge_model_internals_tu`), default
+            2.01
+        :param channels: string that holds the diagrammatic channels that should
+            be included in the FRG flow (see :c:func:`diverge_flow_step_init`),
+            default: ``"PCD"``
+        :param ibz_path: array that holds the crystalc coordinates of the high
+            symmetry path for band structures
+            (see :c:member:`diverge_model_t.ibz_path`), default: []
+        :param maxvert: value of maximum vertex element that is considered
+            'diverged' (see :c:struct:`diverge_euler_t`).
+        :param mu: chemical potential :math:`\mu`
+            (see :c:func:`diverge_model_set_chempot`), default: None
+        :param nu: filling value :math:`\nu` between zero and one
+            (see :c:func:`diverge_model_set_filling`), default: None
+        """
 
         errors = 0
         init(None, None)
@@ -1392,15 +1367,17 @@ if not _libs["divERGe"] is None:
         model_free( model )
         finalize()
 
-    # Class: mpi_stdout_logger
-    # direct output to stdout and a file at the same time. usage:
-    # === Python ===
-    # stdout_ = sys.stdout
-    # sys.stdout = mpi_stdout_logger(filename)
-    # # some code with print() statements
-    # sys.stdout = stdout_
-    # ==============
     class mpi_stdout_logger(object):
+        r"""
+        direct output to stdout and a file at the same time. usage:
+
+        .. sourcecode:: python
+
+            stdout_ = sys.stdout
+            sys.stdout = mpi_stdout_logger(filename)
+            # some code with print() statements
+            sys.stdout = stdout_
+        """
         def __init__(self, fname, mode="w"):
             if mpi_comm_rank() == 0:
                 self.terminal = sys.stdout
@@ -1416,65 +1393,4 @@ if not _libs["divERGe"] is None:
 
 else: # _libs["divERGe"] is None
     print( info() )
-
-# Namespace: Structured Arrays
-# DivERGe defines several primitive datatypes (structures) that can be
-# interfaced to from this python library:
-#
-# - <complex128_t>
-# - <rs_hopping_t>
-# - <rs_vertex_t>
-# - <tu_formfactor_t>
-# - <sym_op_t>
-# - <site_descr_t>
-#
-# Allocation:
-# To allocate an array that is *not* garbage collected from python (and can thus
-# be free'd from within divERGe or via <diverge.mem_free at diverge_mem_free>),
-# call <diverge.alloc_array at dvg.alloc_array>. The datatype is passed as
-# *string* to this function, in contrast to what one may be used to from numpy.
-# For standard, garbage-collected allocation, use <diverge.zeros at dvg.zeros>
-# (or just np.zeros):
-# === Python ===
-# hopping_gc = diverge.zeros( (128,), dtype=diverge.rs_hopping_t )
-# hopping_non_gc = diverge.alloc_array( (128,), dtype="rs_hopping_t" )
-# ==============
-#
-# View:
-# A numpy structured array can be used just as any other numpy array (shapes,
-# views, etc). To conveniently use memory owned by divERGe in a pythonic way, we
-# added <diverge.view_array at dvg.view_array>:
-# === Python ===
-# positions = diverge.view_array( model.contents.positions, dtype=np.float64, shape=(12,3) )
-# positions[:] += 1 # now positions are updated!
-# ==============
-#
-# Access:
-# Now to the usage of structured arrays (or array views). If one or more full
-# element(s) is (are) to be set, a (list of) tuple(s) can be passed as so:
-# === Python ===
-# hopping = diverge.alloc_array( (128,), dtype="rs_hopping_t" )
-# hopping[0] = ( [0,0,0], 0,0, 0,0, (1.0,0.0) )
-# hopping[1:3] = [ ( [0,0,0], 1,1, 0,0, (0.2,0.0) ),
-#                  ( [0,0,0], 2,2, 0,0, (0.2,0.0) ) ]
-# ==============
-# This works because the inserted tuples are understood as compatible with the
-# <rs_hopping_t> data type:
-# ---- C/C++ ----
-# // C declaration
-# struct rs_hopping_t {
-#   index_t R[3];
-#   index_t o1,o2, s1,s2;
-#   complex128_t t;
-# };
-# ---------------
-# If only a single member of the structure should be modified or accessed, a
-# dictionary-like syntax is supported:
-# === Python ===
-# vertex = diverge.alloc_array( (128,), dtype="rs_vertex_t" )
-# vertex[0]['chan'] = 'D'
-# vertex[0]['V'] = (3.0,0.0)
-# ==============
-# The keys of this dictionary-like access resemble the names of the members in
-# the respective C declaration.
 

@@ -20,10 +20,12 @@ int diverge_model_validate( diverge_model_t* model );
 void diverge_model_internals_common( diverge_model_t* model );
 
 /** Prepare internal structure for the computation mode specified as string in
- * mode; can be "grid", "patch", or "tu". Dispatches to either
- * :c:func:`diverge_model_internals_grid`,
- * :c:func:`diverge_model_internals_patch`, or
- * :c:func:`diverge_model_internals_tu`.
+ * mode; can be ``"grid"``, ``"patch"``, or ``"tu"``. Dispatches to the
+ * corrseponding function, i.e.,
+ *
+ *  * :c:func:`diverge_model_internals_grid`,
+ *  * :c:func:`diverge_model_internals_patch`,
+ *  * :c:func:`diverge_model_internals_tu`.
  *
  * For :c:func:`diverge_model_internals_grid`, no additional parameters are
  * needed.
@@ -34,7 +36,7 @@ void diverge_model_internals_common( diverge_model_t* model );
  *
  * For :c:func:`diverge_model_internals_tu`, one additional parameter (``double
  * max_dist``) must be passed. Documentation found in
- * c:func:`diverge_model_internals_tu`.
+ * :c:func:`diverge_model_internals_tu`.
  */
 void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... );
 
@@ -47,6 +49,10 @@ void diverge_model_internals_grid( diverge_model_t* model );
  * Prepare the patch part of the :c:type:`internals_t` struct as well as the
  * :c:struct:`mom_patching_t` struct (:c:member:`diverge_model_t.patching`) if it
  * is not allocated.
+ *
+ * *Note: divERGe can only generate and operate on the npatch backend if there
+ * is no refinement set through* :c:member:`diverge_model_t.nkf`, *i.e., ones in
+ * those spots where* :c:member:`diverge_model_t.nk` *is nonzero.*
  *
  * :param diverge_model_t model: model instance
  * :param index_t np_ibz: number of patches to search for in the IBZ if
