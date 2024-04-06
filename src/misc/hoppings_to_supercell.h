@@ -8,23 +8,38 @@ typedef struct diverge_model_t diverge_model_t;
 extern "C" {
 #endif
 
-// function: rs_hopping_to_supercell
-// map model to a cubic supercell of extent (nr[0], nr[1], nr[2]).
+/**
+ * map model to a cubic supercell. requires :c:member:`diverge_model_t.hop`,
+ * :c:member:`diverge_model_t.n_hop`, and :c:member:`diverge_model_t.lattice` to
+ * be set and modifies those members, as well as
+ * :c:member:`diverge_model_t.positions` and :c:member:`diverge_model_t.n_orb`.
+ *
+ * Special case of :c:func:`rs_hopping_to_fractcell` with :math:`N^j_i =
+ * \delta_{ij} n^r_i`.
+ *
+ * :param diverge_model_t* m: input/output model
+ * :param int[3] nr: description of the cubic supercell :math:`n^r`. the new
+ *                   lattice vectors are given as :math:`L_i = n^r_i l_i`, with
+ *                   :math:`l_i` the old lattice vectors.
+ */
 void rs_hopping_to_supercell( diverge_model_t* m, int* nr );
 
-// function: rs_hopping_to_fractcell
-// map hopping parameters and model to supercell and allow matrix supercells
-// wrt. to the old lattice vectors:
-//
-// S1 = m->lattice[0] * N1[0] + m->lattice[1] * N1[1] + m->lattice[2] * N1[2]
-// S2 = m->lattice[0] * N2[0] + m->lattice[1] * N2[1] + m->lattice[2] * N2[2]
-// ...
-//
-// modify model accordingly; operate on hopping parameters, lattice, orbitals,
-// and positions; leave anything else as-is.
-//
-// In case N2 == N3 == NULL, make call to <rs_hopping_to_supercell> with N1 as
-// nr.
+/**
+ * map hopping parameters and model to supercell and allow matrix supercells
+ * wrt. to the old lattice vectors. requires :c:member:`diverge_model_t.hop`,
+ * :c:member:`diverge_model_t.n_hop`, and :c:member:`diverge_model_t.lattice` to
+ * be set and modifies those members, as well as
+ * :c:member:`diverge_model_t.positions` and :c:member:`diverge_model_t.n_orb`.
+ *
+ * The supercell lattice vectors are given as :math:`L_j = \sum_i N^j_i l_i`. In
+ * case N2 == N3 == NULL, make call to :c:func:`rs_hopping_to_supercell` with N1
+ * as nr.
+ *
+ * :param diverge_model_t* m: input/output model
+ * :param int[3] N1: integer coordinates :math:`N^1` for first supercell vector
+ * :param int[3] N2: integer coordinates :math:`N^2` for first supercell vector
+ * :param int[3] N3: integer coordinates :math:`N^3` for first supercell vector
+ */
 void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 );
 
 #ifdef __cplusplus

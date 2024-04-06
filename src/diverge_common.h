@@ -36,11 +36,9 @@ extern "C" {
 
 #ifndef CTYPESGEN
 #include <complex.h>
-// Typedef: complex128_t
-// 128bit complex number (two 64bit floating point numbers)
+/** 128bit complex number (two 64bit floating point numbers) */
 typedef _Complex double complex128_t;
-// Typedef: complex64_t
-// 64bit complex number (two 32bit floating point numbers)
+/** 64bit complex number (two 32bit floating point numbers) */
 typedef _Complex float complex64_t;
 #endif
 
@@ -56,9 +54,10 @@ typedef struct complex64_t complex64_t;
 #ifdef USE_GF_FLOATS
 typedef complex64_t gf_complex_t;
 #else // USE_GF_FLOATS
-// Typedef: gf_complex_t
-// Green's function complex type. uses <complex128_t> if USE_GF_FLOATS is not
-// defined. Otherwise, <complex64_t> is used
+/**
+ * Green's function complex type. uses :c:type:`complex128_t` if USE_GF_FLOATS
+ * is not defined. Otherwise, :c:type:`complex64_t` is used
+ */
 typedef complex128_t gf_complex_t;
 #endif // USE_GF_FLOATS
 #define lapack_complex_double complex128_t
@@ -84,33 +83,43 @@ typedef complex128_t gf_complex_t;
 #define DIVERGE_EPS_MESH 1.e-6
 #endif // DIVERGE_EPS_MESH
 
-// Typedef: index_t
-// 64bit signed integer
+/** 64bit signed integer */
 typedef int64_t index_t;
-// Typedef: uindex_t
-// 64bit unsigned integer
+/** 64bit unsigned integer */
 typedef uint64_t uindex_t;
 
+/** simple power of 2 as macro */
 #define POW2(x) ((x)*(x))
+/** simple power of 3 as macro */
 #define POW3(x) ((x)*(x)*(x))
+/** simple power of 4 as macro */
 #define POW4(x) ((x)*(x)*(x)*(x))
 
+/** rank-2 tensor index in C-style ordering */
 #define IDX2( i, j, nj ) \
     ( (i)*(nj) + (j) )
+/** rank-3 tensor index in C-style ordering */
 #define IDX3( i, j, k, nj, nk ) \
     ( (i)*(nj)*(nk) + IDX2(j, k, nk) )
+/** rank-4 tensor index in C-style ordering */
 #define IDX4( i, j, k, l, nj, nk, nl ) \
     ( (i)*(nj)*(nk)*(nl) + IDX3(j, k, l, nk, nl) )
+/** rank-5 tensor index in C-style ordering */
 #define IDX5( i, j, k, l, m, nj, nk, nl, nm ) \
     ( (i)*(nj)*(nk)*(nl)*(nm) + IDX4(j, k, l, m, nk, nl, nm) )
+/** rank-6 tensor index in C-style ordering */
 #define IDX6( i, j, k, l, m, n, nj, nk, nl, nm, nn ) \
     ( (i)*(nj)*(nk)*(nl)*(nm)*(nn) + IDX5(j, k, l, m, n, nk, nl, nm, nn) )
+/** rank-7 tensor index in C-style ordering */
 #define IDX7( i, j, k, l, m, n, o, nj, nk, nl, nm, nn, no ) \
     ( (i)*(nj)*(nk)*(nl)*(nm)*(nn)*(no) + IDX6(j, k, l, m, n, o, nk, nl, nm, nn, no) )
+/** rank-8 tensor index in C-style ordering */
 #define IDX8( i, j, k, l, m, n, o, p, nj, nk, nl, nm, nn, no, np ) \
     ( (i)*(nj)*(nk)*(nl)*(nm)*(nn)*(no)*(np) + IDX7(j, k, l, m, n, o, p, nk, nl, nm, nn, no, np) )
 
+/** maximum element */
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
+/** minimum element */
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 
 #ifndef BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB

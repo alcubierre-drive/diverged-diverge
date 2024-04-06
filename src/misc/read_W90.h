@@ -15,37 +15,52 @@ extern "C" {
 // forward declaration
 typedef struct rs_hopping_t rs_hopping_t;
 
-// Function: diverge_read_W90_C
-// reads Wannier90's *_hr.dat file into divERGe's <rs_hopping_t> data structure.
-//
-// Parameters:
-// fname - /path/to/material_hr.dat
-// n_spin - default value 0 amounts to SU(2) symmetric model. if nspin != 0,
-//         abs(nspin) = (S+1/2)*2 with S the physical spin (i.e., for S=1/2 we
-//         have abs(nspin)=2). the sign determines whether the spin index is the
-//         one which increases memory slowly (negative) or fast (positive) in
-//         the W90 file. Note that the divERGe convention is always (s,o), i.e.
-//         spin indices increasing memory fast ('outer indices').
-// n_orb - output for the maximum number of orbitals that were found in the
-//         hr.dat file. not considered if NULL.
-//
-// Example:
-// ===C/C++===
-// diverge_model_t* model = diverge_model_init();
-// // set some model parameters...
-// model->SU2 = 1;
-// model->n_spin = 1;
-// model->hop = diverge_read_W90_C( "/path/to/material_hr.dat",
-//                                  0, &model->n_hop, NULL );
-// // do something with the hoppings here!
-// ===========
+/**
+ * reads Wannier90's \*_hr.dat file into divERGe's :c:struct:`rs_hopping_t` data
+ * structure.
+ *
+ * :param const char* fname: /path/to/material_hr.dat
+ * :param index_t n_spin: default value 0 amounts to :math:`SU(2)` symmetric model. if
+ *                        :math:`n_\mathrm{spin} \neq 0`,
+ *                        :math:`|n_\mathrm{spin}| = 2S+1` with :math:`S` the
+ *                        physical spin (i.e., for :math:`S=1/2` we have
+ *                        :math:`|n_\mathrm{spin}|=2`). the sign determines
+ *                        whether the spin index is the one which increases
+ *                        memory slowly (negative) or fast (positive) in the W90
+ *                        file. Note that the divERGe convention is always
+ *                        (s,o), i.e. spin indices increasing memory fast
+ *                        ('outer indices').
+ * :param index_t* len: output for the number of hoppings that have been read.
+ * :param index_t* n_orb: output for the maximum number of orbitals that were
+ *                        found in the hr.dat file. not considered if NULL.
+ *
+ * Example:
+ *
+ * .. sourcecode:: C
+ *
+ *  diverge_model_t* model = diverge_model_init();
+ *  // set some model parameters...
+ *  model->SU2 = 1;
+ *  model->n_spin = 1;
+ *  model->hop = diverge_read_W90_C( "/path/to/material_hr.dat",
+ *                                  0, &model->n_hop, &model->n_orb );
+ *  // do something with the hoppings here!
+ */
 rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len, index_t* n_orb );
 
 #ifdef __cplusplus
 } // extern "C"
 
-// Function: diverge_read_W90
-// C++ function corresponding to <diverge_read_W90_C> that facilitates the usage
-// by returning an std::vector< <rs_hopping_t> > instead of messing with pointers.
+/**
+ * .. sourcecode:: C++
+ *
+ *  vector<rs_hopping_t> diverge_read_W90( const char* fname,
+ *      index_t n_spin, index_t* n_orb );
+ *
+ * C++ function corresponding to :c:func:`diverge_read_W90_C` that facilitates
+ * the usage by returning an ``std::vector<<rs_hopping_t>>`` instead of messing
+ * with pointers (*note: the documented 'int' is wrong and due to weird behavior
+ * in the documentation tools*).
+ */
 vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_t* n_orb );
 #endif

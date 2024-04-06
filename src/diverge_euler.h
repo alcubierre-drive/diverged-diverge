@@ -9,50 +9,58 @@ extern "C" {
 #endif
 
 typedef struct diverge_euler_t diverge_euler_t;
-// Class: diverge_euler_t
+/**
+ * simple structure to support user-driven Euler integration with adaptive step
+ * size
+ */
 struct diverge_euler_t {
-    // Variable: Lambda
+    /** current scale :math:`\Lambda` */
     double Lambda;
-    // Variable: dLambda
+    /** current differential scale :math:`d_\Lambda` */
     double dLambda;
-    // Variable: Lambda_min
+    /** minimal scale :math:`\Lambda_\mathrm{min}` */
     double Lambda_min;
-    // Variable: dLambda_min
+    /** absolute minimal differentail scale :math:`d_{\Lambda,\mathrm{min}}` */
     double dLambda_min;
-    // Variable: dLambda_fac
+    /** :math:`d_{\Lambda,\mathrm{fac}}` TODO: see arXiv how to document */
     double dLambda_fac;
-    // Variable: dLambda_fac_scale
+    /** :math:`d_{\Lambda,\mathrm{fac-scale}}` TODO: see arXiv how to document */
     double dLambda_fac_scale;
-    // Variable: maxvert
+    /** maximum vertex value */
     double maxvert;
-    // Variable: maxvert_hard_limit
+    /** hard limit for maximum vertex value */
     double maxvert_hard_limit;
 
-    // Variable: niter
+    /** number of iterations */
     index_t niter;
-    // Variable: maxiter
+    /** maximum number of iterations */
     index_t maxiter;
-    // Variable: consider_maxvert_iter_start
+    /** consider :c:member:`diverge_euler_t.maxvert` only after this iteration */
     index_t consider_maxvert_iter_start;
-    // Variable: consider_maxvert_lambda
+    /**
+     * consider :c:member:`diverge_euler_t.maxvert` only after passing this
+     * value of :math:`\Lambda`
+     */
     double consider_maxvert_lambda;
 };
 
-// Function: diverge_euler_defaults_CPP
-// returns default values for the Euler integrator in C/C++/Python
+/** returns default values for the Euler integrator in C/C++/Python */
 diverge_euler_t diverge_euler_defaults_CPP( void );
-// Function: diverge_euler_next
-// performs adaptive step, without calling any <diverge_flow_step_t> related
-// routines. example usage:
-// --- C/C++ ---
-// // diverge_flow_step_t* st = ...;
-// diverge_euler_t eu = diverge_euler_defaults_CPP();
-// double vertmax = 0.0;
-// do {
-//     diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
-//     diverge_flow_step_vertmax( st, &vertmax );
-// } while (diverge_euler_next(&eu, vertmax));
-// -------------
+
+/**
+ * performs adaptive step, without calling any :c:type:`diverge_flow_step_t`
+ * related routines. example usage:
+ *
+ * .. sourcecode:: C
+ *
+ *  // diverge_flow_step_t* st = ...;
+ *  diverge_euler_t eu = diverge_euler_defaults_CPP();
+ *  double vertmax = 0.0;
+ *  do {
+ *      diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
+ *      diverge_flow_step_vertmax( st, &vertmax );
+ *  } while (diverge_euler_next(&eu, vertmax));
+ */
 bool diverge_euler_next( diverge_euler_t* de, double Vmax );
 
 #if !defined(__cplusplus) && !defined(CTYPESGEN)

@@ -501,7 +501,7 @@ if not _libs["divERGe"] is None:
         ('vfill', channel_vertex_generator_t),
         ('ffill', full_vertex_generator_t),
         ('gfill', greensfunc_generator_t),
-        ('grpoj', greensfunc_generator_t),
+        ('gproj', greensfunc_generator_t),
         ('data', String),
         ('nbytes_data', index_t),
         ('data_destructor', CFUNCTYPE(UNCHECKED(None), POINTER(c_char))),
@@ -975,6 +975,15 @@ if not _libs["divERGe"] is None:
     #            returned by <diverge_model_output_conf_defaults_CPP at
     #            diverge_model_output_conf_t.diverge_model_output_conf_defaults_CPP>.
     def model_to_file_PY( model, filename, **kwargs ):
+        """
+        function that wraps :c:func:`diverge_model_to_file_finegrained`
+
+        :param model: diverge model
+        :param filename: output file name
+        :param \*\*kwargs: keyword arguments, where each member of
+                           :c:struct:`diverge_model_output_conf_t` can be parsed
+                           as kwarg in the form ``key=val``.
+        """
         cfg = model_output_conf_defaults_CPP()
         for s in struct_model_output_conf_t.__slots__:
             try:

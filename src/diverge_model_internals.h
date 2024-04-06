@@ -8,65 +8,78 @@
 extern "C" {
 #endif
 
-// Function: diverge_model_validate
-// Check for errors in the user defined model
+/**
+ * Check for errors in the user defined model
+ */
 int diverge_model_validate( diverge_model_t* model );
 
-// Function: diverge_model_internals_common
-// Prepare the common part of the <internals_t> struct
+/**
+ * Prepare the common part of the :c:type:`internals_t` struct,
+ * including Hamiltonian, Eigenvectors/Eigenvalues, momentum meshes, etc.
+ */
 void diverge_model_internals_common( diverge_model_t* model );
 
-// Function: diverge_model_internals_any
-// Prepare internal structure for the computation mode specified in mode.
-// Dispatches to either
-// <diverge_model_internals_grid>,
-// <diverge_model_internals_patch>, or
-// <diverge_model_internals_tu>.
-// 
-// For <diverge_model_internals_grid>, no additional parameters are needed.
-//
-// For <diverge_model_internals_patch>, one additional parameter (np_ibz;
-// <index_t>) must be passed. Documentation found in
-// <diverge_model_internals_patch>.
-//
-// For <diverge_model_internals_tu>, one additional parameter (max_dist; double)
-// must be passed. Documentation found in <diverge_model_internals_tu>.
+/** Prepare internal structure for the computation mode specified as string in
+ * mode; can be "grid", "patch", or "tu". Dispatches to either
+ * :c:func:`diverge_model_internals_grid`,
+ * :c:func:`diverge_model_internals_patch`, or
+ * :c:func:`diverge_model_internals_tu`.
+ *
+ * For :c:func:`diverge_model_internals_grid`, no additional parameters are
+ * needed.
+ *
+ * For :c:func:`diverge_model_internals_patch`, one additional parameter
+ * (``index_t np_ibz``) must be passed. Documentation found in
+ * :c:func:`diverge_model_internals_patch`.
+ *
+ * For :c:func:`diverge_model_internals_tu`, one additional parameter (``double
+ * max_dist``) must be passed. Documentation found in
+ * c:func:`diverge_model_internals_tu`.
+ */
 void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... );
 
-// Function: diverge_model_internals_grid
-// Prepare the grid part of the <internals_t> struct
+/**
+ * Prepare the grid FRG part of the :c:type:`internals_t` structure.
+ */
 void diverge_model_internals_grid( diverge_model_t* model );
-// Function: diverge_model_internals_patch
-// Prepare the patch part of the <internals_t> struct as well as the
-// <mom_patching_t> struct if it is not allocated.
-//
-// Parameters:
-//  model - <diverge_model_t> instance
-//  np_ibz - number of patches to search for in the IBZ if <mom_patching_t> is
-//           NULL
+
+/**
+ * Prepare the patch part of the :c:type:`internals_t` struct as well as the
+ * :c:struct:`mom_patching_t` struct (:c:member:`diverge_model_t.patching`) if it
+ * is not allocated.
+ *
+ * :param diverge_model_t model: model instance
+ * :param index_t np_ibz: number of patches to search for in the IBZ if
+ *                        :c:member:`diverge_model_t.patching` is NULL
+ */
 void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz );
-// Function: diverge_model_internals_tu
-// Prepare the tu part of the <internals_t> struct
-//
-// Parameters:
-//  model - <diverge_model_t> instance
-//  max_dist - distance up to which formfactors should be included. If the
-//             return value of <diverge_max_dist_iobi> is passed (a special
-//             'nan'), formfactors that adhere to the IOBI approximation are
-//             generated.
+
+/**
+ * Prepare the TU part of the :c:type:`internals_t` struct.
+ *
+ * :param diverge_model_t model: model instance
+ * :param double max_dist: distance up to which formfactors should be included.
+ *                         If the return value of
+ *                         :c:func:`diverge_max_dist_iobi` is passed (a special
+ *                         'nan'), formfactors that adhere to the IOBI
+ *                         approximation are generated.
+ */
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
 
 #define IOBI_FORMFACTOR_MAGIC_NUMBER 0
-// Function: diverge_max_dist_iobi
-// return magic value for formfactor setup (max_dist value in
-// <diverge_model_internals_tu>) of TUFRG such that only on-site intraorbital
-// formfactors are generated (IOBI approximation). Uses quiet nan payload, i.e.,
-// returns 'nan'. Might break if non-IEEE floating point numbers are in use.
+/**
+ * return magic value for formfactor setup (max_dist value in
+ * :c:func:`diverge_model_internals_tu`) of TUFRG such that only on-site
+ * intraorbital formfactors are generated (IOBI approximation). Uses quiet nan
+ * payload, i.e., returns 'nan'. Might break if non-IEEE floating point numbers
+ * are in use.
+ */
 double diverge_max_dist_iobi( void );
 
-// Function: diverge_model_internals_reset
-// Reset all internal structures of the model and free their resources. Does not
-// reset the patching. Usage is discouraged.
+/**
+ * Reset all internal structures of the model and free their resources. Does not
+ * reset the patching. Usage is discouraged.
+ */
 void diverge_model_internals_reset( diverge_model_t* model );
 
 // DEVELOPERS
@@ -93,45 +106,47 @@ void diverge_model_internals_reset( diverge_model_t* model );
 // interactions in their 'natural' (i.e. D) channel only, and not both C and D
 // channel.
 
-// Namespace: diverge_model_internals_get_
-// some getter functions to access internals. may break for non-standard
-// models.
-//
-// Function: diverge_model_internals_get_E
-// returns the internally generated energies (nk*nkf, nb).
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
+/**
+ * returns the internally generated energies (nk*nkf, nb).
+ *
+ * :c:func:`diverge_model_internals_common` must have been called, otherwise
+ * NULL is returned.
+ */
 double*       diverge_model_internals_get_E(      const diverge_model_t* model );
-// Function: diverge_model_internals_get_U
-// returns the internally generated orbital to band transform (nk*nkf, nb, nb)
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
+/**
+ * returns the internally generated orbital to band transform (nk*nkf, nb, nb)
+ *
+ * :c:func:`diverge_model_internals_common` must have been called, otherwise
+ * NULL is returned.
+ */
 complex128_t* diverge_model_internals_get_U(      const diverge_model_t* model );
-// Function: diverge_model_internals_get_H
-// returns the internally generated hamiltonian (nk*nkf, nb, nb)
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
+/**
+ * returns the internally generated hamiltonian (nk*nkf, nb, nb)
+ *
+ * :c:func:`diverge_model_internals_common` must have been called, otherwise
+ * NULL is returned.
+ */
 complex128_t* diverge_model_internals_get_H(      const diverge_model_t* model );
-// Function: diverge_model_internals_get_kmesh
-// returns the internally generated coarse momentum mesh (nk, 3)
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
+/**
+ * returns the internally generated coarse momentum mesh (nk, 3)
+ *
+ * :c:func:`diverge_model_internals_common` must have been called, otherwise
+ * NULL is returned.
+ */
 double*       diverge_model_internals_get_kmesh(  const diverge_model_t* model );
-// Function: diverge_model_internals_get_kfmesh
-// returns the internally generated coarse momentum mesh (nk*nkf, 3)
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
+/**
+ * returns the internally generated coarse momentum mesh (nk*nkf, 3)
+ *
+ * :c:func:`diverge_model_internals_common` must have been called, otherwise
+ * NULL is returned.
+ */
 double*       diverge_model_internals_get_kfmesh( const diverge_model_t* model );
-// Function: diverge_model_internals_get_greens
-// returns the internal Green's function buffer (2, nk*nkf, nb, nb)
-//
-// <diverge_model_internals_common> must have been called, otherwise NULL is
-// returned.
+/** 
+ * returns the internal Green's function buffer (2, nk*nkf, nb, nb)
+ *
+ * :c:func:`diverge_model_internals_common` must have been called, otherwise
+ * NULL is returned.
+ */
 gf_complex_t* diverge_model_internals_get_greens( const diverge_model_t* model );
 #ifdef __cplusplus
 }

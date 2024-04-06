@@ -13,56 +13,79 @@
 #ifdef __cplusplus
 #include <vector>
 using std::vector;
-// Function: diverge_patching_find_fs_pts
-// uses internal energy array if NULL is provided for E
+/**
+ * uses internal energy array if NULL is provided for E. Works like
+ * :c:func:`diverge_patching_find_fs_pts_C` but from C++, i.e., returning an
+ * vector<index_t> instead of messing with pointers.
+ */
 vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double* E, index_t nb, index_t np_ibz, index_t np_search );
 extern "C" {
 #endif // __cplusplus
 
-// Function: diverge_patching_find_fs_pts_C
-// C interface to the above function. must free the pts memory with free(*pts)
+/**
+ * C interface to the function :cpp:func:`diverge_patching_find_fs_pts`. must
+ * free the pts memory with ``free(*pts)``.
+ *
+ * :param diverge_model_t mod: model to operate on
+ * :param double E: energy array. May be NULL for operation on model internals
+ * :param index_t nb: number of bands. May be -1 for operation on model
+ *                    internals
+ * :param index_t np_ibz: number of patches to generate in the irreducible BZ
+ * :param index_t np_search: number of patches to include in the search array
+ *                           within the irreducible BZ
+ * :param index_t** pts: output pointer for the fermi surface index array.
+ *                       allocated with standard malloc/calloc. must be free'd
+ *                       manually.
+ * :param index_t* npts: output pointer for the length of the fermi surface
+ *                       array.
+ */
 void diverge_patching_find_fs_pts_C( diverge_model_t* mod, double* E, index_t nb,
         index_t np_ibz, index_t np_search, index_t** pts, index_t* npts );
 
-// Function: diverge_patching_from_indices
-// allocates everything inside the mom_patching_t* struct. the mom_patching_t*
-// internals as well as the struct itself are freed by the code itself when they
-// are attached to a diverge_model_t* instance.
+/**
+ * allocates everything inside the ``mom_patching_t*`` struct given Fermi
+ * surface indices in the array ``patches``. The ``mom_patching_t*`` internals
+ * as well as the struct itself are freed by the code when they are attached to
+ * a ``diverge_model_t*`` instance.
+ */
 mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index_t* patches, index_t npatches );
 
-// Function: diverge_patching_autofine
-// alpha - (|E-E_min|/|E_max-E_min|)^alpha is used to calculate group index g
-// beta - (1-g/#g)^beta is used to calculate number of clusters in group g
-// gamma - if gamma < beta * #g use all points in cluster
-//
-// uses internal energy array if NULL is provided for E
+/**
+ * generate refinement with a heuristic function
+ *
+ * :param diverge_model_t* mod: model to operate on
+ * :param mom_patching_t* patch: patching to operate on
+ * :param double* E: energy array to operate on. uses internal energy array if
+ *                   NULL is provided for E
+ * :param index_t nb: #bands spanned by E. uses internal nb if NULL is set for
+ *                    E.
+ * :param index_t ngroups: #groups to use for autofine function
+ * :param double alpha: :math:`(|E-E_\mathrm{min}|/|E_\mathrm{max}-
+ *                      E_\mathrm{min}|)^\alpha` is used to calculate group
+ *                      index g
+ * :param double beta: :math:`(1-g/n_\mathrm{groups})^\beta` is used to
+ *                     calculate number of clusters in group g
+ * :param double gamma: if :math:`\gamma < \beta * n_\mathrm{groups}` use all
+ *                      points in cluster
+ */
 void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
         const double* E, index_t nb, index_t ngroups, double alpha, double beta,
         double gamma );
 
-// Function: diverge_patching_symmetrize_refinement
-// according to the realspace symmetries defined in the model the refinement is
-// symmetrized. useful if the refinement has been generated with the autofine
-// method.
+/**
+ * according to the realspace symmetries defined in the model the refinement is
+ * symmetrized. useful if the refinement has been generated with the autofine
+ * method.
+ */
 void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_t* patch );
 
-// Function: diverge_patching_free
-// frees all resources of a <mom_patching_t> structure. Usage is typically not
-// needed, but for advanced patching calculations it may be advantageous.
+/**
+ * frees all resources of a :c:struct:`mom_patching_t` structure. Usage is
+ * typically not needed, but for advanced patching calculations it may be
+ * advantageous.
+ */
 void diverge_patching_free( mom_patching_t* patching );
 
-
-// typical calling of the above functions in the model would look like
-//
-// index_t *patches, npatches;
-// diverge_patching_find_fs_pts_C( mod, E, nb, np_ibz, np_ibz*10, &patches, &npatches );
-// mom_patching_t* pat = diverge_patching_from_indices( mod, patches, npatches );
-// free(patches);
-// diverge_patching_autofine( mod, pat, E, nb, 10, 0.5, 4.0, 0.4 );
-// diverge_patching_symmetrize_refinement( mod, pat );
-// mod->patching = pat;
-//
-// ... (some further diverge code)
 
 #ifdef __cplusplus
 }

@@ -12,23 +12,22 @@ extern "C" {
 #define MAX_ORBS_PER_SITE 20
 #endif // MAX_ORBS_PER_SITE
 
-// Enum: real_harmonics_t
-// enumerates all possible orbitals supported by divERGe's symmetry generator
+/**
+ * enumerates all possible orbitals supported by divERGe's symmetry generator.
+ * For orbitals other than :math:`s`, :math:`p_y`, :math:`p_z`, :math:`p_x`, see
+ * the source code.
+ */
 typedef enum real_harmonics_t {
-    // Var: orb_s
-    // s orbital
+    /** s orbital */
     orb_s = 0,
 
-    // Var: orb_pm1
-    // py orbital
+    /** py orbital */
     orb_pm1 = 1,
     orb_py = 1,
-    // Var: orb_p_0
-    // pz orbital
+    /** pz orbital */
     orb_p_0 = 2,
     orb_pz = 2,
-    // Var: orb_p_1
-    // px orbital
+    /** px orbital */
     orb_p_1 = 3,
     orb_px = 3,
 
@@ -64,44 +63,34 @@ typedef enum real_harmonics_t {
     orb_g_4 = 24
 } real_harmonics_t;
 
-// Struct: sym_op_t
-// defines one symmetry operation
-//
-// Members:
-// type - single character: possible choices are 'R'(rotation), 'S'(spin
-//        rotation), 'M'(mirror), 'I'(inversion), 'F'(spin flip), 'E'(identity)
-// normal_vector - double[3]: the normal vector around which to generate the
-//                 symmetry, in real space (irrelevant for 'I', 'F', 'E')
-// angle - double: angle of rotation (relevant for 'R', 'S')
+/**
+ * defines one symmetry operation
+ */
 typedef struct sym_op_t {
-    // Var: type
+    /**
+     * single character: possible choices are 'R'(rotation), 'S'(spin rotation),
+     * 'M'(mirror), 'I'(inversion), 'F'(spin flip), 'E'(identity)
+     */
     char type;
-    // Var: normal_vector
+    /**
+     * the normal vector around which to generate the symmetry, in real space
+     * (irrelevant for 'I', 'F', 'E')
+     */
     double normal_vector[3];
-    // Var: angle
+    /**
+     * angle of rotation (relevant for 'R', 'S')
+     */
     double angle;
 } sym_op_t;
 
-// Struct: site_descr_t
-// defines a single orbital (in the language of n_orb defined in
-// <diverge_model_t>) on a single site.
-//
-// Members:
-// amplitude - complex128_t[]: array of amplitudes in the real harmonic basis
-// function - real_harmonics_t[]: array of real harmonics defining the basis
-//            (see <real_harmonics_t>)
-// n_functions - index_t: number of real harmonic basis functions of the site
-//               (length of each of the above two arrays)
-// xaxis - double[][3]: orientation of the x axis of each of the real harmonic
-//         basis functions defined in the amplitude/function arrays. defaults to
-//         the cartesian x axis, OPTIONAL.
-// zaxis - double[][3]: orientation of the z axis of each of the real harmonic
-//         basis functions defined in the amplitude/function arrays. defaults to
-//         the cartesian z axis, OPTIONAL.
+/**
+ * defines a single orbital (in the language of ``n_orb`` defined in
+ * :c:struct:`diverge_model_t`) on a single site.
+ */
 typedef struct site_descr_t {
-    // Var: amplitude
+    /** array of amplitudes in the real harmonic basis */
     complex128_t amplitude[MAX_ORBS_PER_SITE];
-    // Var: function
+    /** array of real harmonics defining the basis (see :c:struct:`real_harmonics_t`) */
     real_harmonics_t function[MAX_ORBS_PER_SITE];
 // default initialization in c++ is weird...
 #ifdef __cplusplus
@@ -109,31 +98,44 @@ typedef struct site_descr_t {
     double xaxis[MAX_ORBS_PER_SITE][3] = {{0}};
     double zaxis[MAX_ORBS_PER_SITE][3] = {{0}};
 #else
-    // Var: n_functions
+    /**
+     * length of the :c:member:`site_descr_t.function` and
+     * :c:member:`site_descr_t.amplitude` arrays, i.e., number of real harmonic basis
+     * functions of the site
+     */
     index_t n_functions;
-    // Var: xaxis
+    /**
+     * orientation of the x axis of each of the real harmonic basis functions
+     * defined in the amplitude/function arrays. defaults to the cartesian x
+     * axis, OPTIONAL.
+     */
     double xaxis[MAX_ORBS_PER_SITE][3];
-    // Var: zaxis
+    /**
+     * orientation of the z axis of each of the real harmonic basis functions
+     * defined in the amplitude/function arrays. defaults to the cartesian z
+     * axis, OPTIONAL.
+     */
     double zaxis[MAX_ORBS_PER_SITE][3];
-#endif
+#endi
 } site_descr_t;
 
-// Function: diverge_generate_symm_trafo
-// generates symmetry transform for the orbitals decribed in the <site_descr_t>
-// array orbs and a symmetry operation described by the <sym_op_t> array syms.
-// Outputs the orbital and real-space symmetry matrices
-//
-// Parameters:
-// n_spin - number of spins
-// orbs - <site_descr_t> array of length n_orbs
-// n_orbs - number of 'orbitals' (cf. <diverge_model_t>)
-// syms - <sym_op_t> array (of length n_syms) of the atomic symmetry operations,
-//        first element (syms[0]) acts first, then second (syms[1]), etc.
-// n_syms - number of atomic symmetry operations to build symmetry operation at
-//          hand
-// rs_trafo - output for the realspace matrix (size must be >= 9)
-// orb_trafo - output for the orbital space matrix (size must be
-//             >= n_orbs*n_orbs)
+/**
+ * generates symmetry transform for the orbitals decribed in the :c:struct:`site_descr_t`
+ * array orbs and a symmetry operation described by the :c:struct:`sym_op_t` array syms.
+ * Outputs the orbital and real-space symmetry matrices
+ *
+ * :param index_t n_spin: number of spins
+ * :param site_descr_t* orbs: site descriptor array of length ``n_orbs``
+ * :param index_t n_orbs: number of 'orbitals' (cf. :c:struct:`diverge_model_t`)
+ * :param sym_op_t* syms: symmetry operation array (of length ``n_syms``) of the
+ *                        atomic symmetry operations, first element (syms[0])
+ *                        acts first, then second (syms[1]), etc.
+ * :param index_t n_syms: number of atomic symmetry operations to build symmetry
+ *                        operation at hand
+ * :param double* rs_trafo: output for the realspace matrix (size must be >= 9)
+ * :param complex128_t* orb_trafo: output for the orbital space matrix (size
+ *                                 must be >= n_orbs*n_orbs)
+ */
 void diverge_generate_symm_trafo( index_t n_spin, const site_descr_t* orbs, index_t n_orbs,
     const sym_op_t* syms, index_t n_syms, double* rs_trafo, complex128_t* orb_trafo );
 

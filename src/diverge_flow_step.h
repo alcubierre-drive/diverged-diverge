@@ -8,145 +8,176 @@
 extern "C" {
 #endif
 
-// Typedef: diverge_flow_step_t
+/**
+ * opaque typedef because none of the internal structure is needed by users.
+ * Pointers to this structure must be obtained through
+ * :c:func:`diverge_flow_step_init` (or :c:func:`diverge_flow_step_init_any`)
+ * and free'd with :c:func:`diverge_flow_step_free`.
+ */
 typedef struct diverge_flow_step_t diverge_flow_step_t;
 
-// Function: diverge_flow_step_init
-// internals of the model must be set up at the time of calling this function
-// therefore, the model already holds all vertex data etc. returns NULL upon
-// error.
-// all channels present in the string (P,C,D) are selected, all other ones deselected.
+/**
+ * internals of the ``model`` must be set up at the time of calling this
+ * function. Therefore, the model already holds all vertex data etc. returns
+ * NULL upon error.
+ *
+ * :param diverge_model_t model: model to base the flow step on
+ * :param const char* method: string that can be "patch", "tu", or "grid";
+ *                            selecting one of the backends.
+ * :param const char* channels: all channels present in the string (P,C,D) are
+ *                              selected, all other ones deselected.
+ *
+ * :returns: an pointer to a :c:type:`diverge_flow_step_t` object.
+ */
 diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* method,
         const char* channels );
 
-// Function: diverge_flow_step_init_any
-// initialize the flow step instance from a model instance that has its
-// internals set to one method. Everything else works as in
-// <diverge_flow_step_init>.
+/**
+ * initialize the flow step instance from a model instance that has its
+ * internals set to one method. Everything else works as in
+ * :c:func:`diverge_flow_step_init`.
+ */
 diverge_flow_step_t* diverge_flow_step_init_any( diverge_model_t* mod, const char* channels );
 
-// Function: diverge_flow_step_vertmax
+/** outputs the maximum vertex element in ``vertmax`` */
 void diverge_flow_step_vertmax( diverge_flow_step_t* st, double vertmax[1] );
-// Function: diverge_flow_step_loopmax
+/** outputs the maximum loop elements in ``loopmax`` */
 void diverge_flow_step_loopmax( diverge_flow_step_t* st, double loopmax[2] );
-// Function: diverge_flow_step_chanmax
+/** outputs the maximum channel vertex elements in ``chanmax`` */
 void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
 
-// Function: diverge_flow_step_euler
-// Do an euler step starting at Lambda ending at Lambda+dLambda
+/** Do an euler step starting at :math:`\Lambda` ending at :math:`\Lambda+d_\Lambda` */
 void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLambda );
 
-// Function: diverge_flow_step_niter
-// return the number of iterations carried out by the <diverge_flow_step_t>
+/** return the number of iterations carried out by the :c:type`diverge_flow_step_t` */
 index_t diverge_flow_step_niter( diverge_flow_step_t* st );
-// Function: diverge_flow_step_ntimings
-// return the length of the timing list attached to <diverge_flow_step_t>
+/** return the length of the timing list attached to :c:type`diverge_flow_step_t` */
 index_t diverge_flow_step_ntimings( diverge_flow_step_t* st );
-// Function: diverge_flow_step_timing
-// return the timing list element at idx attached to <diverge_flow_step_t>
+/** return the timing list element at ``idx`` attached to :c:type:`diverge_flow_step_t` */
 double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx );
-// Function: diverge_flow_step_timing_descr
-// return the timing list element name at idx attached to <diverge_flow_step_t>
+/** return the timing list element name at ``idx`` attached to :c:type:`diverge_flow_step_t` */
 const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx );
 
-// Function: diverge_flow_step_timing_vec
-// returns all timings as static vector (that must not be freed), maximal size
-// 128. last element [128] is zerod.
+/**
+ * returns all timings as static vector (that must not be freed), maximal size
+ * 128. last element [128] is zerod.
+ *
+ * cf. :c:func:`diverge_flow_step_timing`
+ */
 double* diverge_flow_step_timing_vec( diverge_flow_step_t* st );
-// Function: diverge_flow_step_timing_descr_vec
-// returns all timing descriptions as static vector (that must not be freed),
-// maximal size 128. last element [128] is zerod.
+/**
+ * returns all timing descriptions as static vector (that must not be freed),
+ * maximal size 128. last element [128] is zerod.
+ *
+ * cf. :c:func:`diverge_flow_step_timing_descr`
+ */
 char** diverge_flow_step_timing_descr_vec( diverge_flow_step_t* st );
 
-// Function: diverge_flow_step_lambda
-// get the current Lambda
+/** get the current :math:`\Lambda` */
 double diverge_flow_step_lambda( diverge_flow_step_t* st );
-// Function: diverge_flow_step_dlambda
-// get the current dLambda
+/** get the current :math:`d_\Lambda` */
 double diverge_flow_step_dlambda( diverge_flow_step_t* st );
 
-// Function: diverge_flow_step_free
+/** free the resources attached to a :c:func:`diverge_flow_step_t`. */
 void diverge_flow_step_free( diverge_flow_step_t* st );
 
-// Struct: diverge_flow_step_vertex_t
-// Structure that can hold all vertex objects used in divERGe. depending on the
-// backend and channel, the content differs.
+/**
+ * Vertices
+ * ========
+ *
+ * For maximum flexibility, we expose the memory of the vertex objects that are
+ * allocated for the FRG flow to users.
+ */
+
+/**
+ * Structure that can hold all vertex objects used in divERGe. depending on the
+ * backend and channel, the content differs.
+ */
 typedef struct {
-    // Var: ary
-    // pointer to the raw memory behind the vertex
+    /** pointer to the raw memory behind the vertex */
     complex128_t* ary;
-    // Var: q_0, q_1
-    // start and stop of the 'q' dimension ('k1' in the case of grid-FRG and
-    // chan == 'V')
-    index_t q_0, q_1;
-    // Var: nk
-    // number of k points
+    /** start and of the 'q' dimension ('k1' in the case of grid-FRG and chan == 'V') */
+    index_t q_0;
+    /** stop and of the 'q' dimension ('k1' in the case of grid-FRG and chan == 'V') */
+    index_t q_1;
+    /** number of k points */
     index_t nk;
-    // Var: n_orbff
-    // number of orbitals*formfactors, returns number of orbitals for patch and
-    // grid
+    /** number of orbitals & formfactors, returns number of orbitals for patch and grid */
     index_t n_orbff;
-    // Var: n_spin
-    // number of spins (==1 if SU2)
+    /** number of spins (==1 if SU2) */
     index_t n_spin;
-    // Var: backend
-    // holds 'T'U, 'G'rid, 'P'atch, or 'I'nvalid
+    /** holds 'T'U, 'G'rid, 'P'atch, or 'I'nvalid */
     char backend;
-    // Var: channel
-    // holds the channel.
+    /** holds the channel. */
     char channel;
 } diverge_flow_step_vertex_t;
 
 
-// Function: diverge_flow_step_vertex
-// returns pointer to vertex object. behaves differently for the various
-// backends:
-//
-// TUFRG - chan can be 'P', 'C', or 'D', both upper and lower case. For TUFRG,
-//         the case is ignored. The actual channel specific vertex object is
-//         returned, ordered as (q, s4,s3,ob2, s2,s1,ob1). Note that q is
-//         symmetry reduced as well as MPI distributed.
-//         Additionally, chan can be 'S' to yield the self-energy on the fine
-//         mesh (if used). Then, n_orbff contains the number of orbitals and nk
-//         the number of total (refined * coarse) kpts.
-// grid FRG - chan can be 'P', 'C', 'D', or 'V', both upper and lower case. In
-//            general, lower case references the differential vertex and upper
-//            case the full vertex. The three channels are returned in
-//            (q, k,O1,O2, k',O3,O4) order. 'V' stands for
-//            (k1,k2,k3, O1,O2,O3,O4) ordering. In case of multiple MPI ranks,
-//            only the locally accessible part of the vertex is referenced in
-//            the returned array. For grid, the indices Oi are actually (oi, si).
-// patch FRG - chan may be 'V' (full vertex) or 'v' (differential vertex). The
-//             vertex in (p1,p2,p3, O1,O2,O3,O4) order is returned. As in the
-//             grid case, the indices Oi are actually (oi, si).
+/**
+ * returns a vertex object defined by :c:struct:`diverge_flow_step_vertex_t`.
+ * behaves differently for the various backends:
+ *
+ * :TUFRG: chan can be 'P', 'C', or 'D', both upper and lower case. For TUFRG,
+ *         the case is ignored. The actual channel specific vertex object is
+ *         returned, ordered as (q, s4,s3,ob2, s2,s1,ob1). Note that q is
+ *         symmetry reduced as well as MPI distributed.
+ *         Additionally, chan can be 'S' to yield the self-energy on the fine
+ *         mesh (if used). Then, n_orbff contains the number of orbitals and nk
+ *         the number of total (refined * coarse) kpts.
+ * :grid FRG: chan can be 'P', 'C', 'D', or 'V', both upper and lower case. In
+ *            general, lower case references the differential vertex and upper
+ *            case the full vertex. The three channels are returned in
+ *            (q, k,O1,O2, k',O3,O4) order. 'V' stands for
+ *            (k1,k2,k3, O1,O2,O3,O4) ordering. In case of multiple MPI ranks,
+ *            only the locally accessible part of the vertex is referenced in
+ *            the returned array. For grid, the indices Oi are actually (oi, si).
+ * :patch FRG: chan may be 'V' (full vertex) or 'v' (differential vertex). The
+ *             vertex in (p1,p2,p3, O1,O2,O3,O4) order is returned. As in the
+ *             grid case, the indices Oi are actually (oi, si).
+ */
 diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, char chan );
 
-// Function: diverge_flow_step_refill
-// adjusts the filling value of the non-interacting Hamiltonian such that *with*
-// self-energy, it is set to nu. Works only if the standard Hamiltonian- &
-// Greensfunction-generators are used as it operates on the internal
-// energy/hamiltonian/orbital2band arrays.
-//
-// if workspace != NULL, use this space as scratch memory. size must be at least
-// sizeof(complex128_t) * (nktot, nb, nb) + sizeof(double) * (nktot, nb). On
-// return (if workspace != NULL) workspace contains the Hamiltonian matrices as
-// <complex128_t> array (nktot, nb, nb) followed by the dispersion vectors as
-// double array (nktot, nb), i.e.:
-// === C/C++ ===
-// complex128_t* Utmp = (complex128_t*)workspace;
-// double* Etmp = (double*)( Utmp + nk*nb*nb );
-// =============
+/**
+ * Filling
+ * =======
+ *
+ * For quasi-canonical calculations, where the filling :math:`\nu` is forced to
+ * be fixed instead of the chemical potential :math:`\mu`, we provide functions
+ * that adjust the model's kinetics depending on the self-energy.
+ */
+
+/**
+ * adjusts the filling value of the non-interacting Hamiltonian such that *with*
+ * self-energy, it is set to :math:`\nu`. Works only if the standard
+ * Hamiltonian- & Greensfunction-generators are used as it operates on the
+ * internal energy/hamiltonian/orbital2band arrays.
+ *
+ * if ``workspace != NULL``, use this space as scratch memory. size must be at
+ * least ``sizeof(complex128_t) * (nktot * nb * nb) + sizeof(double) * (nktot *
+ * nb)``. On return (if ``workspace != NULL``) ``workspace`` contains the
+ * Hamiltonian matrices as :c:type:`complex128_t` array (nktot, nb, nb) followed
+ * by the dispersion vectors as ``double`` array (nktot, nb), i.e.:
+ *
+ * .. sourcecode:: C
+ *
+ *  complex128_t* Utmp = (complex128_t*)workspace;
+ *  double* Etmp = (double*)( Utmp + nk*nb*nb );
+ */
 void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspace );
 
-// Function: diverge_flow_step_refill_Hself
-// generates the Hamiltonian + self-energy and diagonalizes it in the workspace
-// buffer (same size as above, energies after matrices). Finds the filling and
-// returns the chemical potential needed to obtain this filling value
+/**
+ * generates the Hamiltonian + self-energy and diagonalizes it in the workspace
+ * buffer (same size as :c:func:`diverge_flow_step_refill`, energies after
+ * matrices). Finds the filling and returns the chemical potential needed to
+ * obtain this filling value
+ */
 double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* workspace );
 
-// Function: diverge_flow_step_get_filling_Hself
-// generates the Hamiltonian + self-energy and diagonalizes it in the workspace
-// buffer (same size as above, energies after matrices). Calculates the current filling
+/**
+ * generates the Hamiltonian + self-energy and diagonalizes it in the workspace
+ * buffer (same size as :c:func:`diverge_flow_step_refill`, energies after
+ * matrices). Calculates the current filling
+ */
 double diverge_flow_step_get_filling_Hself( diverge_flow_step_t* s, void* workspace );
 
 #ifdef __cplusplus
