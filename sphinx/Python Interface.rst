@@ -3,14 +3,6 @@
 Python Interface
 ================
 
-.. toctree::
-   :maxdepth: 1
-
-   Autoflow
-   MPI Output
-   Structured Arrays
-   Full Python Module Specification
-
 Wrapper for diverge.h, generated with some help of ctypesgen. It is heavily
 based on wrapping C arrays as numpy structured arrays. Therefore, some
 documentation for these (and how to use them from the ``diverge`` python module)
@@ -57,4 +49,12 @@ pointing ``LD_LIBRARY_PATH`` to a location with the desired ``libdivERGe.so``:
 .. sourcecode:: bash
 
     LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/gpu/version/ python script.py
+
+.. toctree::
+   :maxdepth: 1
+
+   Autoflow
+   MPI Output
+   Structured Arrays
+   Full Python Module Specification
 

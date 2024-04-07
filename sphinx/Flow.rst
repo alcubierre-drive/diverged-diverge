@@ -16,10 +16,6 @@ quasi-automatic integration, users are expected to
 Those steps are summarized in this document (:ref:`Flow Step Object`) and the
 liked pages below:
 
-.. toctree::
-   Flow Integration
-   Postprocessing and Output
-
 .. _Flow Step Object:
 
 Flow Step Object
@@ -31,4 +27,8 @@ therefore private by construction and everything is done over the
 :c:type:`diverge_flow_step_t` handle.
 
 .. c:autodoc:: diverge_flow_step.h
+
+.. toctree::
+   Flow Integration
+   Postprocessing and Output
 

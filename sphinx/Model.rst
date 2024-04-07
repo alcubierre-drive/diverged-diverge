@@ -11,6 +11,8 @@ set, and thereafter one can generate common internal structures via
 model **must** be free'd using the :c:func:`diverge_model_free` function to
 appropriately release all allocated memory.
 
+.. c:autodoc:: diverge_model.h
+
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
@@ -28,4 +30,3 @@ appropriately release all allocated memory.
    Output
    Hacking
 
-.. c:autodoc:: diverge_model.h
