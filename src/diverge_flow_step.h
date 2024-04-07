@@ -49,9 +49,9 @@ void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
 /** Do an euler step starting at :math:`\Lambda` ending at :math:`\Lambda+d_\Lambda` */
 void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLambda );
 
-/** return the number of iterations carried out by the :c:type`diverge_flow_step_t` */
+/** return the number of iterations carried out by the :c:type:`diverge_flow_step_t` */
 index_t diverge_flow_step_niter( diverge_flow_step_t* st );
-/** return the length of the timing list attached to :c:type`diverge_flow_step_t` */
+/** return the length of the timing list attached to :c:type:`diverge_flow_step_t` */
 index_t diverge_flow_step_ntimings( diverge_flow_step_t* st );
 /** return the timing list element at ``idx`` attached to :c:type:`diverge_flow_step_t` */
 double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx );
