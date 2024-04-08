@@ -70,7 +70,7 @@ HEADERS := $(shell find src/ -name '*.h') \
 -include Makefile.inc
 -include Makefile.local
 
-.PHONY: lib test clean types dist dist-src todos doc $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
+.PHONY: lib test clean types dist dist-src todos doc man pdf $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
 
 # resolves nasty circular dependency bug for .cu(.o) files
 .SUFFIXES: 
@@ -127,6 +127,7 @@ clean:
 	-@$(RM) -rf $(NAME) $(NAME_GPU) $(NAME_GPU_LINK) $(NAME_LIB) types.vim
 	-@$(RM) -rf $(shell find . -type f -name '*.o') $(shell find . -type f -name '*.d')
 	-@$(RM) -rf divERGe.tar.gz divERGe_src.tar
+	make -C sphinx clean
 
 $(NAME_GPU): $(OBJ_CU)
 	$(AR) -crs $@ $^
@@ -161,3 +162,7 @@ dist-src: $(SRC_C) $(SRC_CPP) $(SRC_CU) $(HEADERS) Makefile make.local/ $(EXAMPL
 
 doc:
 	make -C sphinx html
+man:
+	make -C sphinx man
+pdf:
+	make -C sphinx latexpdf

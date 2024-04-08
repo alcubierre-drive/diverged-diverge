@@ -9,7 +9,7 @@ extern "C" {
 typedef struct diverge_model_t diverge_model_t;
 
 /**
- * read FPLO Hamiltonian files (+hamdata) into :c:struct:`diverge_model_t`
+ * read FPLO Hamiltonian files (``+hamdata``) into :c:struct:`diverge_model_t`
  * objects. Only sets/reads the members listed below and leaves everything else
  * untouched:
  *
@@ -21,9 +21,10 @@ typedef struct diverge_model_t diverge_model_t;
  *   and positions (:c:member:`diverge_model_t.positions`)
  * * returns NULL on errors / if FPLO reader not compiled in
  *
- * *Note: This function is not compiled into the library by default. Enable
- * compilation of the FPLO reader by passing the* ``USE_FPLO_READER`` *flag in
- * the* :ref:`Compilation`) *process (see* :ref:`Compilation DEFINES` *).*
+ * .. note::
+ *  This function is not compiled into the library by default. Enable
+ *  compilation of the FPLO reader by passing the ``USE_FPLO_READER`` flag in
+ *  the :ref:`Compilation` process (see :ref:`Compilation DEFINES`).
  */
 diverge_model_t* diverge_read_fplo( const char* fname );
 

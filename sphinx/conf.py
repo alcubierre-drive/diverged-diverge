@@ -12,8 +12,8 @@ import datetime
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'divERGe'
-copyright = f'{datetime.date.today().year}, Lennart Klebl, Jonas B. Profe'
-author = 'Lennart Klebl, Jonas B. Profe'
+copyright = f'{datetime.date.today().year}, Jonas B. Profe, Lennart Klebl'
+author = 'Jonas B. Profe, Lennart Klebl'
 
 # getting some release info
 _tag = subprocess.check_output( ['bash', '-c', 'git tag --list "v*.*" | tail -n1'] )

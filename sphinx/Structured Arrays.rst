@@ -17,12 +17,12 @@ Allocation
 ----------
 
 To allocate an array that is *not* garbage collected from python (and can thus
-be free'd from within divERGe or via :c:func:`diverge_mem_free` (*note: the
-python name for this function is diverge.mem_free*),
-call :func:`diverge.alloc_array`. The datatype is passed as
-*string* to this function, in contrast to what one may be used to from numpy.
-For standard, garbage-collected allocation, use ``diverge.zeros``, which is a
-wrapper for ``numpy.zeros``:
+be free'd from within divERGe or via
+:c:func:`diverge_mem_free`/``diverge.mem_free``), call
+:func:`diverge.alloc_array`. The datatype is passed as *string* to this
+function, in contrast to what one may be used to from numpy. For standard,
+garbage-collected allocation, use ``diverge.zeros``, which is a wrapper for
+``numpy.zeros``:
 
 .. sourcecode:: python
 

@@ -37,16 +37,16 @@ directory of the repo . They generically work similar to the following skeleton:
 Notice how the ``diverge_`` prefix disappeared into the module name. This holds
 for all functions that hold this prefix. Others *keep* their name.
 
-*Installation and Extension Note*
+.. note:: Installation and Extension
 
-On GNU/Linux, the python library will search for ``libdivERGe.so`` in your
-``LD_LIBRARY_PATH`` *with precedence* over the shipped version (located
-somewhere in your ``PYTHONPATH``). This makes it easy to swap out the backend by
-pointing ``LD_LIBRARY_PATH`` to a location with the desired ``libdivERGe.so``:
+    On GNU/Linux, the python library will search for ``libdivERGe.so`` in your
+    ``LD_LIBRARY_PATH`` *with precedence* over the shipped version (located
+    somewhere in your ``PYTHONPATH``). This makes it easy to swap out the backend by
+    pointing ``LD_LIBRARY_PATH`` to a location with the desired ``libdivERGe.so``:
 
-.. sourcecode:: bash
+    .. sourcecode:: bash
 
-    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/gpu/version/ python script.py
+        LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/gpu/version/ python script.py
 
 .. toctree::
    :maxdepth: 1

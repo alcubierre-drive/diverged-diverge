@@ -50,9 +50,12 @@ void diverge_model_internals_grid( diverge_model_t* model );
  * :c:struct:`mom_patching_t` struct (:c:member:`diverge_model_t.patching`) if it
  * is not allocated.
  *
- * *Note: divERGe can only generate and operate on the npatch backend if there
- * is no refinement set through* :c:member:`diverge_model_t.nkf`, *i.e., ones in
- * those spots where* :c:member:`diverge_model_t.nk` *is nonzero.*
+ * .. note::
+ *  divERGe can only generate and operate on the npatch backend if there
+ *  is no refinement set through :c:member:`diverge_model_t.nkf`, i.e., ones in
+ *  those spots where :c:member:`diverge_model_t.nk` is nonzero. Some of the
+ *  patching routines further assume a two-dimensional model -- not the actual
+ *  FRG kernels, merely some helper functions.
  *
  * :param diverge_model_t model: model instance
  * :param index_t np_ibz: number of patches to search for in the IBZ if

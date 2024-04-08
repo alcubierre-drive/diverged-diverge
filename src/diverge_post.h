@@ -13,17 +13,20 @@ typedef struct diverge_postprocess_conf_t diverge_postprocess_conf_t;
  * Default values are obtained using
  * :c:func:`diverge_postprocess_conf_defaults_CPP` from C/C++/Python and the
  * static constant variable :c:var:`diverge_postprocess_conf_defaults` from C.
- * Note that this documentation does *not* include the defaults directly, but
- * they are given in the (linked) source file ``src/diverge_post.h``.
  *
- * Info: Member variables with prefix are used as follows
+ * .. note::
+ *  This documentation does *not* include the defaults directly, but
+ *  they are given in the (linked) source file ``src/diverge_post.h``.
  *
- * ``patch_``
- *  used with the patch backend
- * ``grid_``
- *  used with the grid backend
- * ``tu_``
- *  used with the tu backend
+ * .. note::
+ *  Member variables with prefix are used as follows
+ *
+ *  ``patch_``
+ *   used with the patch backend
+ *  ``grid_``
+ *   used with the grid backend
+ *  ``tu_``
+ *   used with the tu backend
  */
 struct diverge_postprocess_conf_t {
     /** include the channelized matrices in the save */
