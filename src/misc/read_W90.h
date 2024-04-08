@@ -51,6 +51,9 @@ rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* le
 #ifdef __cplusplus
 } // extern "C"
 
+/** alias of std::vector<:c:struct:`rs_hopping_t`> */
+typedef vector<rs_hopping_t> vector_rs_hopping_t;
+
 /**
  * .. sourcecode:: C++
  *
@@ -58,9 +61,8 @@ rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* le
  *      index_t n_spin, index_t* n_orb );
  *
  * C++ function corresponding to :c:func:`diverge_read_W90_C` that facilitates
- * the usage by returning an ``std::vector<<rs_hopping_t>>`` instead of messing
- * with pointers (*note: the documented 'int' is wrong and due to weird behavior
- * in the documentation tools*).
+ * the usage by returning an std::vector<:c:struct:`rs_hopping_t`> instead of messing
+ * with pointers.
  */
-vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_t* n_orb );
+vector_rs_hopping_t diverge_read_W90( const char* fname, index_t n_spin, index_t* n_orb );
 #endif

@@ -3,18 +3,16 @@
 Python Interface
 ================
 
-Wrapper for diverge.h, generated with some help of ctypesgen. It is heavily
-based on wrapping C arrays as numpy structured arrays. Therefore, some
-documentation for these (and how to use them from the ``diverge`` python module)
-is included in the section :ref:`Structured Arrays`.
+Wrapper for the :ref:`C Interface` ``diverge.h``, generated with some help of
+ctypesgen. It is heavily based on wrapping C arrays as numpy structured arrays.
+Therefore, some documentation for these (and how to use them from the
+``diverge`` python module) is included in the section :ref:`Structured Arrays`.
 
 The documentation only includes those functions that exist *on top* of the
 :ref:`C Interface`. Everything else is documented *there*. For usage examples,
-see the python examples shipped with `diverge.tar.gz
-<https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.6/divERGe.tar.gz>`_
-or found in the `examples/ directory of the repo
-<https://git.rwth-aachen.de/frg/diverge/-/tree/master/examples>`_. They
-generically work similar to the following skeleton:
+see the python examples shipped with :release_version:`diverge.tar.gz
+<divERGe.tar.gz>` or found in the :release_tree:`examples/ <examples>`
+directory of the repo . They generically work similar to the following skeleton:
 
 .. sourcecode:: python
 

@@ -6,11 +6,10 @@ For an easy start with the :ref:`Python Interface`, install divERGe from pip via
 
     pip install diverge-flow
 
-You can further download `divERGe.tar.gz
-<https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.6/divERGe.tar.gz>`_
+You can further download :release_version:`divERGe.tar.gz <divERGe.tar.gz>`
 to obtain a pre-compiled copy of divERGe that additionally contains the :ref:`C
-Interface` and some :ref:`Examples`. For more pre-built versions, see `releases
-<https://git.rwth-aachen.de/frg/diverge/-/tree/master/public/releases>`_. If you
+Interface` and some :ref:`Examples`. For more pre-built versions, see
+:release_tree:`releases <public/releases>`. If you
 wish to :ref:`compile yourself <Compilation>` to include various optimizations
 (MPI, CUDA, ...), you can do so by cloning the `git repository
 <https://git.rwth-aachen.de/frg/diverge.git>`_ and following the :ref:`build
@@ -36,11 +35,8 @@ In general, the naming for Python functions follows the C function naming,
 except for that the ``diverge_`` prefix is omitted.
 
 We now continue with the example: On a not-too-old Linux machine (GLIBC >=
-2.17), extract the tar.gz file and use a python3 interpreter to execute `the
-simple example
-<https://git.rwth-aachen.de/frg/diverge/-/blob/master/examples/python/simple.py>`_.
-Alternatively, download the simple example directly from the repo `here
-<https://git.rwth-aachen.de/frg/diverge/-/blob/master/examples/python/simple.py>`_.
+2.17), extract the tar.gz file and use a python3 interpreter to execute
+:release_tree:`the simple example <examples/python/simple.py>`.
 
 .. sourcecode:: bash
 
@@ -58,9 +54,7 @@ Troubleshooting
 ---------------
 
 If the pip installation fails, you can navigate to the folder where you
-extracted `diverge.tar.gz
-<https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.6/divERGe.tar.gz>`_
-and execute
+extracted :release_version:`diverge.tar.gz <divERGe.tar.gz>` and execute
 
 .. sourcecode:: bash
 
@@ -98,33 +92,25 @@ you can call
 to obtain three files as output: model.dvg, post.dvg, and flow.dat (with the
 flow information). The columns in flow.dat correspond to:
 
-Lambda
-    the current scale
-dLambda
-    the step size
-Lp
-    the particle particle loop maximum
-Lm
-    the particle hole loop maximum
-dP
-    the differential (for grid and patch) or absolute (for tu) channel maximum
-    in the particle particle channel
-dC
-    the differential (for grid and patch) or absolute (for tu) channel maximum
-    in the crossed particle hole channel
-dD
-    the differential (for grid and patch) or absolute (for tu) channel maximum
-    in the direct particle hole channel
-V
-    the absolute maximum element of the vertex (for grid/patch) or maximum of
-    the channel maxima (tu)
+    :Lambda: the current scale
+    :dLambda: the step size
+    :Lp: the particle particle loop maximum
+    :Lm: the particle hole loop maximum
+    :dP: the differential (for grid and patch) or absolute (for tu) channel maximum
+        in the particle particle channel
+    :dC: the differential (for grid and patch) or absolute (for tu) channel maximum
+        in the crossed particle hole channel
+    :dD: the differential (for grid and patch) or absolute (for tu) channel maximum
+        in the direct particle hole channel
+    :V: the absolute maximum element of the vertex (for grid/patch) or maximum of
+        the channel maxima (tu)
 
 License
 -------
 
 divERGe is published under the `GPLv3
-<https://www.gnu.org/licenses/gpl-3.0.html>`_. The license is found in the `git
-repo <https://git.rwth-aachen.de/frg/diverge/-/tree/master/LICENSE.md>`_.
-License information from within divERGe can be obtained by calling
-:c:func:`diverge_license` or :c:func:`diverge_license_print`.
+<https://www.gnu.org/licenses/gpl-3.0.html>`_. The license is found in the
+:release_tree:`git repo <LICENSE.md>`. License information from within divERGe
+can be obtained by calling :c:func:`diverge_license` or
+:c:func:`diverge_license_print`.
 

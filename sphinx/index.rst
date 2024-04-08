@@ -1,5 +1,3 @@
-.. TODO: INCLUDE VERSION AS VARIABLE IN HERE. SPHINX SHOULD DEFINITELY BE ABLE TO DO THIS!!!
-
 divERGe implements various Exact Renormalization Group examples
 ===============================================================
 

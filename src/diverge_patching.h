@@ -13,12 +13,15 @@
 #ifdef __cplusplus
 #include <vector>
 using std::vector;
+
+/** alias of std::vector<:c:type:`index_t`> */
+typedef vector<index_t> vector_index_t;
 /**
  * uses internal energy array if NULL is provided for E. Works like
  * :c:func:`diverge_patching_find_fs_pts_C` but from C++, i.e., returning an
- * vector<index_t> instead of messing with pointers.
+ * std::vector<:c:type:`index_t`> instead of messing with pointers.
  */
-vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double* E, index_t nb, index_t np_ibz, index_t np_search );
+vector_index_t diverge_patching_find_fs_pts( diverge_model_t* mod, const double* E, index_t nb, index_t np_ibz, index_t np_search );
 extern "C" {
 #endif // __cplusplus
 
