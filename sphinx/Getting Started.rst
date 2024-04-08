@@ -6,12 +6,13 @@ For an easy start with the :ref:`Python Interface`, install divERGe from pip via
 
     pip install diverge-flow
 
-You can further download :release_version:`divERGe.tar.gz <divERGe.tar.gz>`
-to obtain a pre-compiled copy of divERGe that additionally contains the :ref:`C
-Interface` and some :ref:`Examples`. For more pre-built versions, see
-:release_tree:`releases <public/releases>`. If you
-wish to :ref:`compile yourself <Compilation>` to include various optimizations
-(MPI, CUDA, ...), you can do so by cloning the `git repository
+You find a tutorial for the C interface :ref:`here <Tutorial>`. You can further
+download :release_version:`divERGe.tar.gz <divERGe.tar.gz>` to obtain a
+pre-compiled copy of divERGe that additionally contains the :ref:`C Interface`
+and some :ref:`Examples`. For more pre-built versions, see
+:release_tree:`releases <public/releases>`. If you wish to :ref:`compile
+yourself <Compilation>` to include various optimizations (MPI, CUDA, ...), you
+can do so by cloning the `git repository
 <https://git.rwth-aachen.de/frg/diverge.git>`_ and following the :ref:`build
 instructions <Compilation>`. Moreover, environment variables can be used to
 change the number of threads for different components, see :ref:`Runtime

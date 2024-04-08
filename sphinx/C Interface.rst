@@ -6,6 +6,7 @@ C Interface
 .. toctree::
    :maxdepth: 2
 
+   Tutorial
    Initialization
    Model
    Flow

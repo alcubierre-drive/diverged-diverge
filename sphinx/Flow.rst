@@ -13,22 +13,10 @@ quasi-automatic integration, users are expected to
 - call postprocessing routines and save the output to disk (see
   :ref:`Postprocessing and Output`)
 
-Those steps are summarized in this document (:ref:`Flow Step Object`) and the
-liked pages below:
-
-.. _Flow Step Object:
-
-Flow Step Object
-----------------
-
-Given the heterogenous nature of the three backends that can be chosen in
-divERGe, the flow step internals are *not* exposed to the user. The API is
-therefore private by construction and everything is done over the
-:c:type:`diverge_flow_step_t` handle.
-
-.. c:autodoc:: diverge_flow_step.h
+Those steps are summarized in the liked pages below:
 
 .. toctree::
+   Flow Step Object
    Flow Integration
    Postprocessing and Output
 

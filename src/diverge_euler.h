@@ -11,20 +11,30 @@ extern "C" {
 typedef struct diverge_euler_t diverge_euler_t;
 /**
  * simple structure to support user-driven Euler integration with adaptive step
- * size
+ * size. The step size is chosen as :math:`d\Lambda = \max[ \min(B_\mathrm{fac},
+ * B_\mathrm{fac-sc}), d\Lambda_\mathrm{min} ]`.
  */
 struct diverge_euler_t {
     /** current scale :math:`\Lambda` */
     double Lambda;
-    /** current differential scale :math:`d_\Lambda` */
+    /** current differential scale :math:`d\Lambda` */
     double dLambda;
     /** minimal scale :math:`\Lambda_\mathrm{min}` */
     double Lambda_min;
-    /** absolute minimal differentail scale :math:`d_{\Lambda,\mathrm{min}}` */
+    /** absolute minimal differentail scale :math:`d\Lambda_\mathrm{min}` */
     double dLambda_min;
-    /** :math:`d_{\Lambda,\mathrm{fac}}` TODO: see arXiv how to document */
+    /**
+     * :math:`d\Lambda_\mathrm{fac}` defines an upper bound :math:`B` for the
+     * step width as :math:`B_\mathrm{fac} = d\Lambda_\mathrm{fac} \cdot
+     * \Lambda`.
+     */
     double dLambda_fac;
-    /** :math:`d_{\Lambda,\mathrm{fac-scale}}` TODO: see arXiv how to document */
+    /**
+     * :math:`d\Lambda_{\mathrm{fac-sc}}` additional scaling factor for the
+     * calculation of the width of the next step, used as an upper bound
+     * :math:`B` for the step-width: :math:`B_\mathrm{fac-sc} =
+     * d\Lambda_\mathrm{fac-sc} / V_\mathrm{max} \cdot \Lambda`
+     */
     double dLambda_fac_scale;
     /** maximum vertex value */
     double maxvert;
