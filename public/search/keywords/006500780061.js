@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("exa",["Class"],[["Examples",,[[,,,,0,"File:doc/examples.txt:Examples","TextFileClass:Examples"]]]]);

@@ -1,1 +1,0 @@
-﻿NDFramePage.OnPageTitleLoaded("PythonClass:mpi_stdout_logger","mpi_stdout_logger");NDSummary.OnSummaryLoaded("PythonClass:mpi_stdout_logger",[["Python","Python"]],[["Classes","Class"]],[[363,0,0,"mpi_stdout_logger"]]);

@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("nor",["Variable"],[["normal_vector",,[["sym_op_t",,,,0,"File:src/misc/generate_symmetries.h:sym_op_t.normal_vector","CClass:sym_op_t:normal_vector"]]]]);

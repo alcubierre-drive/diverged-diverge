@@ -1,1 +1,0 @@
-﻿NDSummary.OnToolTipsLoaded("PythonClass:Structured_Arrays",{364:"<div class=\"NDToolTip TClass LPython\"><div class=\"TTSummary\">DivERGe defines several primitive datatypes (structures) that can be interfaced to from this python library:</div></div>"});

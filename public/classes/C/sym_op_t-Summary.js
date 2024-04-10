@@ -1,1 +1,0 @@
-﻿NDFramePage.OnPageTitleLoaded("CClass:sym_op_t","sym_op_t");NDSummary.OnSummaryLoaded("CClass:sym_op_t",[["C/C++","C"]],[["Groups","Group"],["Structs","Struct"],["Variables","Variable"]],[[81,0,1,"sym_op_t"],[82,0,0,"Variables","Variables"],[83,0,2,"type","type"],[84,0,2,"normal_vector","normal_vector"],[85,0,2,"angle","angle"]]);

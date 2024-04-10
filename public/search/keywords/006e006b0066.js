@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("nkf",["Variable"],[["nkf",,[["diverge_model_t",,,,0,"File:src/diverge_model.h:diverge_model_t.nkf","CClass:diverge_model_t:nkf"]]]]);

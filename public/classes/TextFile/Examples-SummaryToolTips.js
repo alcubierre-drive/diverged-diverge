@@ -1,1 +1,0 @@
-﻿NDSummary.OnToolTipsLoaded("TextFileClass:Examples",{343:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">Examples are found in the examples/ directory. In the git repository, they are furthermore grouped into programming languages. In the release tarball, all examples are merged within examples/.</div></div>"});

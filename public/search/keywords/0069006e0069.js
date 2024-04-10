@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("ini",["Function"],[["init_C_channel",,[[,,,,0,"File:src/misc/init_interaction_channels.h:init_C_channel"]]],["init_D_channel",,[[,,,,0,"File:src/misc/init_interaction_channels.h:init_D_channel"]]],["init_P_channel",,[[,,,,0,"File:src/misc/init_interaction_channels.h:init_P_channel"]]]]);

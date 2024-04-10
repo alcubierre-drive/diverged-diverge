@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("str",["Class"],[["Structured",,[[,"Structured Arrays",,,0,"File:util/__init__.py:Structured_Arrays","PythonClass:Structured_Arrays"]]]]);

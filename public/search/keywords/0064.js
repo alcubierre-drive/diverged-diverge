@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("d",["Variable"],[["d",,[["tu_formfactor_t",,,,0,"File:src/diverge_model.h:tu_formfactor_t.d","CClass:tu_formfactor_t:d"]]]]);

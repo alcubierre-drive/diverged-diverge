@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("inf",["Function"],[["info",,[["dvg",,,,0,"File:util/__init__.py:dvg.info","PythonClass:dvg:info"]]]]);

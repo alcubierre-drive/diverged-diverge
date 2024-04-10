@@ -162,6 +162,7 @@ dist-src: $(SRC_C) $(SRC_CPP) $(SRC_CU) $(HEADERS) Makefile make.local/ $(EXAMPL
 
 doc:
 	make -C sphinx html
+	@bash sphinx/publish.sh
 man:
 	make -C sphinx man
 pdf:

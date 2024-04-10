@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("zer",["Variable"],[["zeros",,[["dvg",,,,0,"File:util/__init__.py:dvg.zeros","PythonClass:dvg:zeros"]]]]);

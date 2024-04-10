@@ -1,1 +1,0 @@
-﻿NDFramePage.OnPageTitleLoaded("File:src/misc/kmesh_to_bands.h","kmesh_to_bands.h");NDSummary.OnSummaryLoaded("File:src/misc/kmesh_to_bands.h",[["C/C++","C"]],[["Functions","Function"],["Groups","Group"]],[[16,0,1,"Functions","Functions"],[17,0,0,"diverge_kmesh_to_bands","diverge_kmesh_to_bands"],[18,0,0,"diverge_kmesh_to_bands_crs","diverge_kmesh_to_bands_crs"]]);

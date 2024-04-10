@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Flow &#8212; divERGe 0.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=ec806d2c"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Flow Step Object" href="Flow%20Step%20Object.html" />
+    <link rel="prev" title="Hacking" href="Hacking.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="flow">
+<span id="id1"></span><h1>Flow<a class="headerlink" href="#flow" title="Link to this heading">¶</a></h1>
+<p>divERGe does <em>not</em> include an automatic flow integrator. To achieve
+quasi-automatic integration, users are expected to</p>
+<ul class="simple">
+<li><p>create a <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a> object (see <a class="reference internal" href="Flow%20Step%20Object.html#flow-step-object"><span class="std std-ref">Flow Step Object</span></a>)</p></li>
+<li><p>create a <a class="reference internal" href="Flow%20Integration.html#c.diverge_euler_t" title="diverge_euler_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_euler_t</span></code></a> object (see <a class="reference internal" href="Flow%20Integration.html#flow-integration"><span class="std std-ref">Flow Integration</span></a>)</p></li>
+<li><p>wrap this in a <code class="docutils literal notranslate"><span class="pre">do</span> <span class="pre">{}</span> <span class="pre">while()</span></code> loop (see <a class="reference internal" href="Flow%20Integration.html#flow-integration"><span class="std std-ref">Flow Integration</span></a>) until a
+stopping criterion is reached.</p></li>
+<li><p>call postprocessing routines and save the output to disk (see
+<a class="reference internal" href="Postprocessing%20and%20Output.html#postprocessing-and-output"><span class="std std-ref">Postprocessing and Output</span></a>)</p></li>
+</ul>
+<p>Those steps are summarized in the liked pages below:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Flow%20Step%20Object.html">Flow Step Object</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Flow%20Step%20Object.html#vertices">Vertices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Flow%20Step%20Object.html#filling">Filling</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Flow%20Integration.html">Flow Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Postprocessing%20and%20Output.html">Postprocessing and Output</a></li>
+</ul>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">divERGe</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Getting%20Started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Compilation.html">Compilation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="C%20Interface.html">C Interface</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Initialization.html">Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Model.html">Model</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Flow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Flow%20Step%20Object.html">Flow Step Object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Flow%20Integration.html">Flow Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Postprocessing%20and%20Output.html">Postprocessing and Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Testing.html">Testing</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Python%20Interface.html">Python Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Simulation%20Output.html">Simulation Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Runtime%20Tuning.html">Runtime Tuning</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="C%20Interface.html">C Interface</a><ul>
+      <li>Previous: <a href="Hacking.html" title="previous chapter">Hacking</a></li>
+      <li>Next: <a href="Flow%20Step%20Object.html" title="next chapter">Flow Step Object</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Jonas B. Profe, Lennart Klebl.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/Flow.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

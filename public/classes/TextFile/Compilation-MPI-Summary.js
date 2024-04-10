@@ -1,1 +1,0 @@
-﻿NDFramePage.OnPageTitleLoaded("TextFileClass:Compilation-MPI","Compilation-MPI");NDSummary.OnSummaryLoaded("TextFileClass:Compilation-MPI",[["Text File","TextFile"]],[["Classes","Class"]],[[336,0,0,"Compilation-MPI"]]);

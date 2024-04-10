@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("pos",["Variable","Function"],[["positions",,[["diverge_model_t",,,,0,"File:src/diverge_model.h:diverge_model_t.positions","CClass:diverge_model_t:positions"]]],["postprocess_and_write_PY",,[["dvg",,,,1,"File:util/__init__.py:dvg.postprocess_and_write_PY","PythonClass:dvg:postprocess_and_write_PY"]]]]);

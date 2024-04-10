@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("wei",["Variable"],[["weights",,[["mom_patching_t",,,,0,"File:src/diverge_model.h:mom_patching_t.weights","CClass:mom_patching_t:weights"]]]]);

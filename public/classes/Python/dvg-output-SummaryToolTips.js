@@ -1,1 +1,0 @@
-﻿NDSummary.OnToolTipsLoaded("PythonClass:dvg-output",{323:"<div class=\"NDToolTip TClass LPython\"><div class=\"TTSummary\">python library to read diverge output files</div></div>"});

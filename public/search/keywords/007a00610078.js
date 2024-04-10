@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("zax",["Variable"],[["zaxis",,[["site_descr_t",,,,0,"File:src/misc/generate_symmetries.h:site_descr_t.zaxis","CClass:site_descr_t:zaxis"]]]]);

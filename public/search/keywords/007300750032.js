@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("su2",["Variable"],[["SU2",,[["diverge_model_t",,,,0,"File:src/diverge_model.h:diverge_model_t.SU2","CClass:diverge_model_t:SU2"]]]]);

@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("xax",["Variable"],[["xaxis",,[["site_descr_t",,,,0,"File:src/misc/generate_symmetries.h:site_descr_t.xaxis","CClass:site_descr_t:xaxis"]]]]);

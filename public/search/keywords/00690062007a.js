@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("ibz",["Variable"],[["ibz_path[MAX_N_ORBS]",,[["diverge_model_t",,,,0,"File:src/diverge_model.h:diverge_model_t.ibz_path[MAX_N_ORBS]","CClass:diverge_model_t:ibz_path[MAX_N_ORBS]"]]]]);

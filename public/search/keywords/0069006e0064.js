@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("ind",["Type"],[["index_t",,[[,,,,0,"File:src/diverge_common.h:index_t"]]]]);

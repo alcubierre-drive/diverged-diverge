@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("nby",["Variable"],[["nbytes_data",,[["diverge_model_t",,,,0,"File:src/diverge_model.h:diverge_model_t.nbytes_data","CClass:diverge_model_t:nbytes_data"]]]]);

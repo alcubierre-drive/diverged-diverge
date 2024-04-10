@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("fun",["Variable"],[["function",,[["site_descr_t",,,,0,"File:src/misc/generate_symmetries.h:site_descr_t.function","CClass:site_descr_t:function"]]]]);

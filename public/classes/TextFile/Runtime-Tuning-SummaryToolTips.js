@@ -1,1 +1,0 @@
-﻿NDSummary.OnToolTipsLoaded("TextFileClass:Runtime-Tuning",{341:"<div class=\"NDToolTip TClass LTextFile\"><div class=\"TTSummary\">Besides the obvious tuning parameters exposed through the compile time options listed above, divERGe exposes access to fine-grained control using three environment variables:</div></div>"});

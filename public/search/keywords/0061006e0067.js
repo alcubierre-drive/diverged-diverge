@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("ang",["Variable"],[["angle",,[["sym_op_t",,,,0,"File:src/misc/generate_symmetries.h:sym_op_t.angle","CClass:sym_op_t:angle"]]]]);

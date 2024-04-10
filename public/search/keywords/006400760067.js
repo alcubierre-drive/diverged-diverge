@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("dvg",["Class"],[["dvg",,[[,,,,0,"File:util/__init__.py:dvg","PythonClass:dvg"]]],["dvg-output",,[[,,,,0,"File:util/output.py:dvg-output","PythonClass:dvg-output"]]]]);

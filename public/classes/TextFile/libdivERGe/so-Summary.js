@@ -1,1 +1,0 @@
-﻿NDFramePage.OnPageTitleLoaded("TextFileClass:libdivERGe.so","so");NDSummary.OnSummaryLoaded("TextFileClass:libdivERGe.so",[["Text File","TextFile"]],[["Classes","Class"]],[[365,0,0,"<span class=\"Qualifier\">libdivERGe.</span>&#8203;so"]]);

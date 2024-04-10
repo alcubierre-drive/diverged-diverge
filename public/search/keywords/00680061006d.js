@@ -1,1 +1,0 @@
-﻿NDSearch.OnPrefixDataLoaded("ham",["Function"],[["hamiltonian_generator_t",,[[,,,,0,"File:src/diverge_model.h:hamiltonian_generator_t"]]]]);
