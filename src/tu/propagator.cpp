@@ -635,6 +635,11 @@ void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
 }
 
 void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L) {
+    if (tu_data->use_cuda_mpi_loop) {
+        mpi_vrb_printf("dispatching to CUDA/MPI algorithm\n");
+        S_loop_static_red_gpu_mpi(L, false);
+        return;
+    }
     if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
         mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
         allocate_GPU_memory();
@@ -650,6 +655,11 @@ void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L) {
 }
 
 void tu_loop_t::S_pp_loop_static_red_gpu(complex128_t* L) {
+    if (tu_data->use_cuda_mpi_loop) {
+        mpi_vrb_printf("dispatching to CUDA/MPI algorithm\n");
+        S_loop_static_red_gpu_mpi(L, true);
+        return;
+    }
     if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
         mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
         allocate_GPU_memory();
@@ -860,15 +870,11 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
 }
 
 void tu_loop_t::allocate_GPU_memory(){;}
-
 void tu_loop_t::S_ph_loop_static_simple_gpu(complex128_t* L){(void)L;}
-
 void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L){(void)L;}
-
 void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L){(void)L;}
-
 void tu_loop_t::S_pp_loop_static_red_gpu(complex128_t* L){(void)L;}
-
+void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ){ (void)L; (void)pp; }
 void tu_loop_t::merge_gpu_cpu_loop(complex128_t* L, complex128_t* tmpgpu) const {(void)L; (void)tmpgpu;}
 void tu_loop_t::merge_gpu_cpu_loop_cfrg_step1(complex128_t* L, complex128_t* tmpgpu) const {(void)L; (void)tmpgpu;}
 void tu_loop_t::merge_gpu_cpu_loop_cfrg_step2(complex128_t* L, complex128_t* tmpgpu) const {(void)L; (void)tmpgpu;}

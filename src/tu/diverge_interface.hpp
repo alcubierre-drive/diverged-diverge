@@ -20,6 +20,7 @@ typedef enum {
 
 struct tu_data_t {
     bool use_reduced_loop;
+    bool use_cuda_mpi_loop;
     index_t nk;
     index_t nkf;
     index_t nktot;

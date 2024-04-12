@@ -61,6 +61,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         if(TU_INTERNALS->percent_mem_GPU_blocked > 1.0)
             TU_INTERNALS->percent_mem_GPU_blocked = 0.9;
     }
+    CHECKKEY("tu_use_cuda_mpi_loop") {
+        TU_INTERNALS->use_cuda_mpi_loop = true;
+    }
     CHECKKEY("tu_selfenergy_flow") {
         TU_INTERNALS->tu_selfenergy_flow = (bool)atoi(val);
     }
