@@ -794,14 +794,15 @@ void tu_loop_t::allocate_GPU_memory() {
 
     for(int i = 0; i<tu_num_of_devices;++i) {
         cudaSetDevice(i);
+        index_t my_nk_tot = (tu_data->use_cuda_mpi_loop ? nktot : my_nk);
         prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R
-        prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk); // c_to_f_q
+        prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk_tot); // c_to_f_q
         prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev
         prop_memsize[3] = ensure_align(_GF_size); // GF_fft
         prop_memsize[4] = ensure_align(_GF_size); // GF_fft_conj
         prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG
-        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
-        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 1
+        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*my_nk_tot); // buf_res 0
+        prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*my_nk_tot); // buf_res 1
         prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*cuda_descr.worksize_fft[i]); // fft_workspace 0
 
         cudaMalloc(&(cuda_descr.mi_to_R[i]), prop_memsize[0]);
