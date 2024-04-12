@@ -40,7 +40,11 @@ double diverge_mpi_wtime( void );
 /** get global MPI communicator */
 MPI_Comm diverge_mpi_get_comm( void );
 
-/** returns array of length :c:func:`diverge_mpi_comm_size` that must be freed manually */
+/**
+ * returns array of length two times :c:func:`diverge_mpi_comm_size` that must
+ * be freed manually. First half is the count, second the displ. second half can
+ * be safely ignored.
+ */
 index_t* diverge_mpi_distribute( index_t sz );
 
 /**
@@ -66,6 +70,7 @@ void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int n
 
 void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num );
+void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num );
 
 void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num );
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num );

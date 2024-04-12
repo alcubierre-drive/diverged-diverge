@@ -25,10 +25,12 @@ struct cuda_prop_descr_t {
     bool prop_memory_set_local = false;
     bool prop_memory_set_vertex = false;
     bool prop_preload_full_gf = true;
+
     int _tasks_prop[32] = {0};
     int _off_prop[32] = {0};
     int _tasks_cpu = 0;
     int _off_cpu = 0;
+
     array<int,3> nthread {512,1,1};
     array<int,3> nblock {18,1,1};
     size_t nk_per_thread = 1;

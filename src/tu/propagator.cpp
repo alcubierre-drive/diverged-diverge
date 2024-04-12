@@ -366,6 +366,8 @@ tu_loop_t::~tu_loop_t() {
 
     cpu_fft_algorithm_cleanup();
 
+    if (L_full_q) free(L_full_q);
+
     delete extra_tvec;
 }
 
@@ -662,7 +664,64 @@ void tu_loop_t::S_pp_loop_static_red_gpu(complex128_t* L) {
                                       tu_data->unique_mi_r.data(),tu_data->unique_mi_l.size());
 }
 
+void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
+    if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
+        mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
+        allocate_GPU_memory();
+    }
+    const index_t* vnk = model->nk;
+    const index_t* vnkf = model->nkf;
+    index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]), (vnk[2]*vnkf[2])};
 
+    index_t L_orbff_spin = POW2(n_orbff*POW2(n_spin));
+    if (!L_full_q) {
+        L_full_q = (complex128_t*)calloc( sizeof(complex128_t), kdim(vnk)*L_orbff_spin );
+    } else {
+        memset( L_full_q, 0, sizeof(complex128_t) * kdim(vnk)*L_orbff_spin );
+    }
+
+    if (!has_tasks_off_saved) {
+        has_tasks_off_saved = true;
+        memcpy( tasks_prop, cuda_descr._tasks_prop, sizeof(tasks_prop) );
+        memcpy( off_prop, cuda_descr._off_prop, sizeof(off_prop) );
+        for (int i=0; i<tu_num_of_devices; ++i) {
+            index_t* tasks_count = diverge_mpi_distribute( tasks_prop[i] );
+            index_t* tasks_displ = tasks_count + diverge_mpi_comm_size();
+
+            off_prop_mpi[i] = off_prop[i] + tasks_displ[diverge_mpi_comm_rank()];
+            tasks_prop_mpi[i] = tasks_count[diverge_mpi_comm_rank()];
+            free( tasks_count );
+        }
+    }
+
+    // set the MPI offsets
+    memcpy( cuda_descr._tasks_prop, tasks_prop_mpi, sizeof(tasks_prop_mpi) );
+    memcpy( cuda_descr._off_prop, off_prop_mpi, sizeof(off_prop_mpi) );
+
+    // do the calc
+    if (pp) {
+        pp_bubble_momenta_handler_fft_red( &cuda_descr, L,
+                GF_fft_plus, GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
+                my_nk, c2fmap.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
+                tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
+                tu_data->unique_mi_l.size() );
+    } else {
+        ph_bubble_momenta_handler_fft_red( &cuda_descr, L,
+                GF_fft_plus,GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
+                my_nk, c2fmap.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
+                tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
+                tu_data->unique_mi_l.size() );
+    }
+
+    // reset the offsets
+    memcpy( cuda_descr._tasks_prop, tasks_prop, sizeof(tasks_prop) );
+    memcpy( cuda_descr._off_prop, off_prop, sizeof(off_prop) );
+
+    // and do the mpi reduction
+    memcpy( L_full_q + my_nk_off*L_orbff_spin, L, sizeof(complex128_t)*my_nk*L_orbff_spin );
+    diverge_mpi_allreduce_complex_bor_inplace( L_full_q, kdim(vnk)*L_orbff_spin );
+    memcpy( L, L_full_q + my_nk_off*L_orbff_spin, sizeof(complex128_t)*my_nk*L_orbff_spin );
+}
 
 void tu_loop_t::merge_gpu_cpu_loop_cfrg_step1(complex128_t* L, complex128_t* tmpgpu) const {
     index_t blocksize = POW2(n_orbff*POW2(n_spin));

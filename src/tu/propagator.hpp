@@ -80,6 +80,9 @@ public:
     void S_ph_loop_static_red_gpu(complex128_t* L);
     void S_pp_loop_static_red_gpu(complex128_t* L);
 
+    // not quite tested...
+    void S_loop_static_red_gpu_mpi( complex128_t* L, bool pp );
+
     void merge_gpu_cpu_loop(complex128_t* L, complex128_t* tmpgpu) const;
 
     void merge_gpu_cpu_loop_cfrg_step1(complex128_t* L, complex128_t* tmpgpu) const;
@@ -164,6 +167,15 @@ private:
     gf_complex_t* gf_buf_cfrg = nullptr;
     complex128_t* cFRG_GF_fft_plus = nullptr;
     complex128_t* cFRG_GF_fft_conj_plus = nullptr;
+
+    // GPU MPI algorithm (very memory intensive)
+    complex128_t* L_full_q = nullptr;
+    index_t tasks_prop[32];
+    index_t off_prop[32];
+    index_t tasks_prop_mpi[32];
+    index_t off_prop_mpi[32];
+    bool has_tasks_off_saved = false;
+
     void allocate_GPU_memory();
     void swap_GF_cfrg();
 
