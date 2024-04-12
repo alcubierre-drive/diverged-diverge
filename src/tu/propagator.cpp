@@ -736,6 +736,7 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
     memcpy( cuda_descr._tasks_prop, tasks_prop, sizeof(tasks_prop) );
     memcpy( cuda_descr._off_prop, off_prop, sizeof(off_prop) );
 
+    // TODO this hangs/is super duper slow...
     // do the mpi reduction
     diverge_mpi_allreduce_complex_bor_inplace( L_full_q, kdim(vnk)*L_orbff_spin );
 
