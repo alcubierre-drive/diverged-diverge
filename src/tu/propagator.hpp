@@ -170,11 +170,12 @@ private:
 
     // GPU MPI algorithm (very memory intensive)
     complex128_t* L_full_q = nullptr;
-    index_t tasks_prop[32];
-    index_t off_prop[32];
-    index_t tasks_prop_mpi[32];
-    index_t off_prop_mpi[32];
+    int32_t tasks_prop[32];
+    int32_t off_prop[32];
+    int32_t tasks_prop_mpi[32];
+    int32_t off_prop_mpi[32];
     bool has_tasks_off_saved = false;
+    vector<index_t> c2fmap_full;
 
     void allocate_GPU_memory();
     void swap_GF_cfrg();

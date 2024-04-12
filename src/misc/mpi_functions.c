@@ -12,9 +12,11 @@ index_t* diverge_mpi_distribute( index_t sz ) {
     index_t* howmany = (index_t*)calloc( 2*nranks, sizeof(index_t) );
     for (index_t s=0; s<sz; ++s)
         howmany[s%nranks]++;
+
     index_t* offsets = howmany + nranks;
-    for (index_t s=1; s<sz; ++s)
-        offsets[s] = offsets[s-1] + howmany[s-1];
+    for (int r=1; r<nranks; ++r)
+        offsets[r] = offsets[r-1] + howmany[r-1];
+
     return howmany;
 }
 
@@ -138,7 +140,7 @@ void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num ) {
 
 void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num ) {
     MPICHK();
-    MPI_Allreduce( MPI_IN_PLACE, sendrecvbuf, num, MPI_C_DOUBLE_COMPLEX, MPI_BOR, diverge_mpi_comm);
+    MPI_Allreduce( MPI_IN_PLACE, sendrecvbuf, sizeof(complex128_t)*num, MPI_BYTE, MPI_BOR, diverge_mpi_comm );
 }
 
 void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num ) {

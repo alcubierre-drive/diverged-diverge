@@ -635,15 +635,16 @@ void tu_loop_t::S_pp_loop_static_simple_gpu(complex128_t* L) {
 }
 
 void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L) {
-    if (tu_data->use_cuda_mpi_loop) {
-        mpi_vrb_printf("dispatching to CUDA/MPI algorithm\n");
-        S_loop_static_red_gpu_mpi(L, false);
-        return;
-    }
     if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
         mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
         allocate_GPU_memory();
     }
+
+    if (tu_data->use_cuda_mpi_loop) {
+        S_loop_static_red_gpu_mpi(L, false);
+        return;
+    }
+
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
@@ -655,15 +656,16 @@ void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L) {
 }
 
 void tu_loop_t::S_pp_loop_static_red_gpu(complex128_t* L) {
-    if (tu_data->use_cuda_mpi_loop) {
-        mpi_vrb_printf("dispatching to CUDA/MPI algorithm\n");
-        S_loop_static_red_gpu_mpi(L, true);
-        return;
-    }
     if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
         mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
         allocate_GPU_memory();
     }
+
+    if (tu_data->use_cuda_mpi_loop) {
+        S_loop_static_red_gpu_mpi(L, true);
+        return;
+    }
+
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
@@ -675,10 +677,6 @@ void tu_loop_t::S_pp_loop_static_red_gpu(complex128_t* L) {
 }
 
 void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
-    if(!cuda_descr.prop_memory_set_local && !cuda_descr.prop_memory_set_vertex) {
-        mpi_wrn_printf("Memory for GPU calculation was not allocated by vertex \n");
-        allocate_GPU_memory();
-    }
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]), (vnk[2]*vnkf[2])};
@@ -704,21 +702,32 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
         }
     }
 
+    if (c2fmap_full.size() == 0) {
+        c2fmap_full.resize( nktot );
+        if (tu_data->symm->use_symmetries) {
+            for (index_t i=0; i<nktot; ++i)
+                c2fmap_full[i] = kidxc2f(tu_data->symm->idx_ibz_in_fullmesh[i], model->nk, model->nkf);
+        } else {
+            for (index_t i=0; i<nktot ;++i)
+                c2fmap_full[i] = kidxc2f(i,model->nk,model->nkf);
+        }
+    }
+
     // set the MPI offsets
     memcpy( cuda_descr._tasks_prop, tasks_prop_mpi, sizeof(tasks_prop_mpi) );
     memcpy( cuda_descr._off_prop, off_prop_mpi, sizeof(off_prop_mpi) );
 
     // do the calc
     if (pp) {
-        pp_bubble_momenta_handler_fft_red( &cuda_descr, L,
+        pp_bubble_momenta_handler_fft_red( &cuda_descr, L_full_q,
                 GF_fft_plus, GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
-                my_nk, c2fmap.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
+                nktot, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
                 tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
                 tu_data->unique_mi_l.size() );
     } else {
-        ph_bubble_momenta_handler_fft_red( &cuda_descr, L,
-                GF_fft_plus,GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
-                my_nk, c2fmap.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
+        ph_bubble_momenta_handler_fft_red( &cuda_descr, L_full_q,
+                GF_fft_plus, GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
+                nktot, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
                 tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
                 tu_data->unique_mi_l.size() );
     }
@@ -727,10 +736,14 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
     memcpy( cuda_descr._tasks_prop, tasks_prop, sizeof(tasks_prop) );
     memcpy( cuda_descr._off_prop, off_prop, sizeof(off_prop) );
 
-    // and do the mpi reduction
-    memcpy( L_full_q + my_nk_off*L_orbff_spin, L, sizeof(complex128_t)*my_nk*L_orbff_spin );
+    // do the mpi reduction
     diverge_mpi_allreduce_complex_bor_inplace( L_full_q, kdim(vnk)*L_orbff_spin );
-    memcpy( L, L_full_q + my_nk_off*L_orbff_spin, sizeof(complex128_t)*my_nk*L_orbff_spin );
+
+    // and save the result back into L
+    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+    for (index_t b=0; b<L_orbff_spin; ++b)
+    for (index_t qrel=0; qrel<my_nk; ++qrel)
+        L[IDX2(b, qrel, my_nk)] = L_full_q[IDX2(b, my_nk_off+qrel, nktot)];
 }
 
 void tu_loop_t::merge_gpu_cpu_loop_cfrg_step1(complex128_t* L, complex128_t* tmpgpu) const {
