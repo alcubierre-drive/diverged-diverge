@@ -6,6 +6,9 @@
 #include "../diverge_internals_struct.h"
 #include "../misc/shared_mem.h"
 
+// global var
+unsigned propagator_cpu_mpi_planning_patience = FFTW_MEASURE;
+
 // this function resides in propagator.cpp
 void tu_loop_reconstruct_from_reduced( void* handle, complex128_t* loop );
 
@@ -28,7 +31,8 @@ static fftw_plan plan_transpose( int rows, int cols, complex128_t* in, complex12
     howmany_dims[1].n  = cols;
     howmany_dims[1].is = 1;
     howmany_dims[1].os = rows;
-    return fftw_plan_guru_dft( 0, NULL, 2, howmany_dims, (fftw_complex*)in, (fftw_complex*)out, 0, FFTW_MEASURE);
+    return fftw_plan_guru_dft( 0, NULL, 2, howmany_dims, (fftw_complex*)in,
+            (fftw_complex*)out, 0, propagator_cpu_mpi_planning_patience);
 }
 
 static GF_FFTW(plan) GF_plan_transpose( int rows, int cols, gf_complex_t* in_out ) {
@@ -39,7 +43,8 @@ static GF_FFTW(plan) GF_plan_transpose( int rows, int cols, gf_complex_t* in_out
     howmany_dims[1].n  = cols;
     howmany_dims[1].is = 1;
     howmany_dims[1].os = rows;
-    return GF_FFTW(plan_guru_dft)( 0, NULL, 2, howmany_dims, in_out, in_out, 0, FFTW_MEASURE );
+    return GF_FFTW(plan_guru_dft)( 0, NULL, 2, howmany_dims, in_out, in_out, 0,
+            propagator_cpu_mpi_planning_patience );
 }
 
 
@@ -136,10 +141,10 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
 
     t->fft_forward = fftw_mpi_plan_many_dft( 3, t->dims, t->chunksize_max,
             FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->ggm_buf, t->ggp_buf,
-            t->comm, FFTW_FORWARD, FFTW_MEASURE );
+            t->comm, FFTW_FORWARD, propagator_cpu_mpi_planning_patience );
     t->fft_backward = fftw_mpi_plan_many_dft( 3, t->dims, t->chunksize_max,
             FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->ggm_buf, t->ggp_buf,
-            t->comm, FFTW_BACKWARD, FFTW_MEASURE );
+            t->comm, FFTW_BACKWARD, propagator_cpu_mpi_planning_patience );
     t->fft_transpose = plan_transpose( t->chunksize_max,
             t->kx_count*t->dims[1]*t->dims[2], t->ggm_buf, t->ggp_buf );
     tock = diverge_mpi_wtime();
@@ -522,7 +527,7 @@ tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t 
     alloc_print( sizeof(gf_complex_t)*alloc );
     t->fft = GF_FFTW(mpi_plan_many_dft)( 3, t->dims, POW2(t->nb),
             FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->fft_buf,
-            t->fft_buf, t->comm, FFTW_BACKWARD, FFTW_MEASURE );
+            t->fft_buf, t->comm, FFTW_BACKWARD, propagator_cpu_mpi_planning_patience );
 
     int displ = t->kx_displ * t->dims[1] * t->dims[2] * POW2(t->nb);
     int count = t->kx_count * t->dims[1] * t->dims[2] * POW2(t->nb);

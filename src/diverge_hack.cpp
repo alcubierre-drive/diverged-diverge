@@ -11,6 +11,7 @@
 #include "grid/vertex_memory.hpp"
 #include "misc/kmeans_lloyd.h"
 #include "misc/shared_mem.h"
+#include "tu/propagator_cpu_mpi.h"
 
 #include <string>
 #include <set>
@@ -159,6 +160,24 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         m->internals->use_batched_svd_algo_in_common = 1;
         if (atoi(val) == -1)
             m->internals->use_batched_svd_algo_in_common = -1;
+    }
+
+    CHECKKEY("propagator_cpu_mpi_planning_patience") {
+        switch (atoi(val)) {
+            case 0:
+                propagator_cpu_mpi_planning_patience = FFTW_ESTIMATE;
+                break;
+            case 2:
+                propagator_cpu_mpi_planning_patience = FFTW_PATIENT;
+                break;
+            case 3:
+                propagator_cpu_mpi_planning_patience = FFTW_EXHAUSTIVE;
+                break;
+            case 1:
+            default:
+                propagator_cpu_mpi_planning_patience = FFTW_MEASURE;
+                break;
+        }
     }
 
     if (key_) {

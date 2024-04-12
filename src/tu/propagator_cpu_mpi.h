@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+extern unsigned propagator_cpu_mpi_planning_patience;
+
 typedef struct diverge_model_t diverge_model_t;
 
 typedef struct {
