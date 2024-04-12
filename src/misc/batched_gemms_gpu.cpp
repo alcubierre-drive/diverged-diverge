@@ -26,6 +26,7 @@ void batched_gemm_cublas_w_buffer_init() {
     cublas_w_buffer_setup = true;
     int ndevices = 0;
     CUDA_CHECK( cudaGetDeviceCount( &ndevices ) );
+    cublas_ndevices = ndevices;
     cublas_handles_w_buffer = (cublasHandle_t*)malloc(sizeof(cublasHandle_t)*ndevices);
     for (int d=0; d<ndevices; ++d) {
         CUDA_CHECK( cudaSetDevice( d ) );
