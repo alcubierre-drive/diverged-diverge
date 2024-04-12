@@ -687,7 +687,7 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
     if (!L_full_q) {
         L_full_q = (complex128_t*)calloc( sizeof(complex128_t), kdim(vnk)*L_orbff_spin );
     } else {
-        memset( L_full_q, 0, sizeof(complex128_t) * kdim(vnk)*L_orbff_spin );
+        memset( (void*)L_full_q, 0, sizeof(complex128_t) * kdim(vnk)*L_orbff_spin );
     }
 
     if (!has_tasks_off_saved) {
