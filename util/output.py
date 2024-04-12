@@ -863,7 +863,28 @@ def bandstructure_ticks( model ):
     else:
         return None
 
+def ibz_path_vals( kf_ibz_path ):
+    r"""
+    returns the correctly spaced cumulative distance values associated to an IBZ
+    path object (as returned in :attr:`diverge_model.kc_ibz_path` and
+    :attr:`diverge_model.kf_ibz_path`).
+    """
+    K = kf_ibz_path[2]
+    vals = np.concatenate( [[0], np.sqrt((np.diff(K,axis=0)**2).sum(axis=1))] )
+    n_per_segment = kf_ibz_path[0]
+    offsets = np.cumsum( n_per_segment )
+    offset_zero = offsets[n_per_segment == 0]
+    vals[offset_zero] = 0.0
+    return np.cumsum(vals)
 
+def ibz_path_ticks( kf_ibz_path ):
+    r"""
+    returns the correctly spaced ticks corresponding to the cumulative distance
+    returned by :func:`ibz_path_vals`.
+    """
+    n_per_segment = kf_ibz_path[0]
+    x = ibz_path_vals(kf_ibz_path)
+    return list(x[np.concatenate( [[0], np.cumsum( n_per_segment ) - 1] )])
 
 if __name__ == "__main__":
     # mod = read('post.dvg')
