@@ -703,12 +703,12 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
     }
 
     if (c2fmap_full.size() == 0) {
-        c2fmap_full.resize( nktot );
+        c2fmap_full.resize( nk );
         if (tu_data->symm->use_symmetries) {
-            for (index_t i=0; i<nktot; ++i)
+            for (index_t i=0; i<nk; ++i)
                 c2fmap_full[i] = kidxc2f(tu_data->symm->idx_ibz_in_fullmesh[i], model->nk, model->nkf);
         } else {
-            for (index_t i=0; i<nktot ;++i)
+            for (index_t i=0; i<nk ;++i)
                 c2fmap_full[i] = kidxc2f(i,model->nk,model->nkf);
         }
     }
@@ -721,13 +721,13 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
     if (pp) {
         pp_bubble_momenta_handler_fft_red( &cuda_descr, L_full_q,
                 GF_fft_plus, GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
-                nktot, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
+                my_nk, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
                 tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
                 tu_data->unique_mi_l.size() );
     } else {
         ph_bubble_momenta_handler_fft_red( &cuda_descr, L_full_q,
                 GF_fft_plus, GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
-                nktot, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
+                my_nk, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
                 tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
                 tu_data->unique_mi_l.size() );
     }
@@ -743,7 +743,7 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
     #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t b=0; b<L_orbff_spin; ++b)
     for (index_t qrel=0; qrel<my_nk; ++qrel)
-        L[IDX2(b, qrel, my_nk)] = L_full_q[IDX2(b, my_nk_off+qrel, nktot)];
+        L[IDX2(b, qrel, my_nk)] = L_full_q[IDX2(b, my_nk_off+qrel, nk)];
 }
 
 void tu_loop_t::merge_gpu_cpu_loop_cfrg_step1(complex128_t* L, complex128_t* tmpgpu) const {
@@ -794,7 +794,7 @@ void tu_loop_t::allocate_GPU_memory() {
 
     for(int i = 0; i<tu_num_of_devices;++i) {
         cudaSetDevice(i);
-        index_t my_nk_tot = (tu_data->use_cuda_mpi_loop ? nktot : my_nk);
+        index_t my_nk_tot = (tu_data->use_cuda_mpi_loop ? nk : my_nk);
         prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R
         prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk_tot); // c_to_f_q
         prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev
