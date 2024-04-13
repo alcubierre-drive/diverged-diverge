@@ -1,4 +1,5 @@
 #include "propagator_gpu_mpi.h"
+#include "../misc/mpi_functions.h"
 
 #include <algorithm>
 #ifdef USE_BOOST_SORT
