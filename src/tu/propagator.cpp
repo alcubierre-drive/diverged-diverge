@@ -726,7 +726,7 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
             for (index_t i=0; i<nk; ++i)
                 c2fmap_full[i] = kidxc2f(tu_data->symm->idx_ibz_in_fullmesh[i], model->nk, model->nkf);
         } else {
-            for (index_t i=0; i<nk ;++i)
+            for (index_t i=0; i<nk; ++i)
                 c2fmap_full[i] = kidxc2f(i,model->nk,model->nkf);
         }
     }
