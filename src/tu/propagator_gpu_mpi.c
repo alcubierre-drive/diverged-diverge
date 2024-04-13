@@ -216,6 +216,7 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
 
     double tick, tock;
 
+    // TODO(LK) this is slow (5s)
     tick = diverge_mpi_wtime();
     // reset the touched index array
     if (t->n_touched) {
@@ -268,6 +269,7 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     tock = diverge_mpi_wtime();
     t->t_touched_realloc += tock-tick;
 
+    // TODO(LK) this is slow (10s)
     tick = diverge_mpi_wtime();
     // save the touched indices
     t->n_touched = 0;
@@ -299,12 +301,14 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     tock = diverge_mpi_wtime();
     t->t_sendpack_gen += tock-tick;
 
+    // TODO(LK) this is slow (21s)
     tick = diverge_mpi_wtime();
     // sort the send pack
     sort_pack( t->send_pack, t->send_pack + t->n_touched );
     tock = diverge_mpi_wtime();
     t->t_sendpack_sort += tock-tick;
 
+    // TODO(LK) this is slow (7s)
     tick = diverge_mpi_wtime();
     // set the send indices and communicate
     for (index_t s=0; s<t->n_touched; ++s)
@@ -335,6 +339,11 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     tock = diverge_mpi_wtime();
     t->t_counts_mult += tock - tick;
 
+    // TODO(LK) this is slow (6s?!)
+    // TODO(LK) the realloc is kinda destroying the point. maybe memory gets
+    // moved here even if it shouldnt...
+    // TODO(LK) we should definitely do a dry run in the first one through and
+    // then just save things and operate on the saved buffers.
     tick = diverge_mpi_wtime();
     // align the sizes and realloc memory accordingly
     t->send_displs_cpy[0] = t->recv_displs_cpy[0] = 0;
@@ -349,6 +358,7 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     tock = diverge_mpi_wtime();
     t->t_sendpack_align += tock - tick;
 
+    // TODO(LK) this is slow (6s)
     tick = diverge_mpi_wtime();
     // move the memory in send_pack to the right in order to pad accordingly. We
     // iterate in reverse and therefore don't need a copy. First need to
@@ -365,6 +375,7 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     tock = diverge_mpi_wtime();
     t->t_sendpack_pad += tock - tick;
 
+    // TODO(LK) this is slow (7s)
     tick = diverge_mpi_wtime();
     // send the pack in larger chunks, copy over the counts/displs to integer
     // arrays for MPI
@@ -380,6 +391,7 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     tock = diverge_mpi_wtime();
     t->t_comm_alltoallv += tock - tick;
 
+    // TODO(LK) this is slow (22s)
     tick = diverge_mpi_wtime();
     // write into L_full_q, but only those elements that we found
     memset( L_full_q, 0, sizeof(complex128_t) * t->nk * t->L_orbff_spin );
