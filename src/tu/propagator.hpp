@@ -177,7 +177,8 @@ private:
     int32_t off_prop_mpi[32];
     bool has_tasks_off_saved = false;
     vector<index_t> c2fmap_full;
-    tu_prop_gpu_mpi_dist_t* gpu_mpi_dist = NULL;
+    tu_prop_gpu_mpi_dist_t* gpu_mpi_dist_pp = NULL;
+    tu_prop_gpu_mpi_dist_t* gpu_mpi_dist_ph = NULL;
 
     void allocate_GPU_memory();
     void swap_GF_cfrg();

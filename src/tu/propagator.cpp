@@ -367,8 +367,11 @@ tu_loop_t::~tu_loop_t() {
 
     cpu_fft_algorithm_cleanup();
 
-    if (L_full_q) free(L_full_q);
-    if (gpu_mpi_dist) tu_prop_gpu_mpi_dist_free(gpu_mpi_dist);
+    #ifdef USE_CUDA
+    if (L_full_q) cudaFree(L_full_q);
+    #endif
+    if (gpu_mpi_dist_pp) tu_prop_gpu_mpi_dist_free(gpu_mpi_dist_pp);
+    if (gpu_mpi_dist_ph) tu_prop_gpu_mpi_dist_free(gpu_mpi_dist_ph);
 
     delete extra_tvec;
 }
@@ -684,11 +687,9 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
     index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]), (vnk[2]*vnkf[2])};
 
     index_t L_orbff_spin = POW2(n_orbff*POW2(n_spin));
-    if (!L_full_q) {
-        L_full_q = (complex128_t*)calloc( sizeof(complex128_t), kdim(vnk)*L_orbff_spin );
-    } else {
-        memset( (void*)L_full_q, 0, sizeof(complex128_t) * kdim(vnk)*L_orbff_spin );
-    }
+    if (!L_full_q)
+        cudaMallocHost( &L_full_q, nk*L_orbff_spin*sizeof(complex128_t) );
+    memset( (void*)L_full_q, 0, sizeof(complex128_t) * nk*L_orbff_spin );
 
     if (!has_tasks_off_saved) {
         has_tasks_off_saved = true;
@@ -723,13 +724,13 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
     if (pp) {
         pp_bubble_momenta_handler_fft_red( &cuda_descr, L_full_q,
                 GF_fft_plus, GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
-                my_nk, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
+                nk, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
                 tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
                 tu_data->unique_mi_l.size() );
     } else {
         ph_bubble_momenta_handler_fft_red( &cuda_descr, L_full_q,
                 GF_fft_plus, GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
-                my_nk, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
+                nk, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
                 tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
                 tu_data->unique_mi_l.size() );
     }
@@ -738,9 +739,11 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
     memcpy( cuda_descr._tasks_prop, tasks_prop, sizeof(tasks_prop) );
     memcpy( cuda_descr._off_prop, off_prop, sizeof(off_prop) );
 
-    if (!gpu_mpi_dist)
-        gpu_mpi_dist = tu_prop_gpu_mpi_dist_init( my_nk, my_nk_off, nk, L_orbff_spin );
-    tu_prop_gpu_mpi_dist_comm( gpu_mpi_dist, L_full_q, L );
+    if ( pp && !gpu_mpi_dist_pp)
+        gpu_mpi_dist_pp = tu_prop_gpu_mpi_dist_init( my_nk, my_nk_off, nk, L_orbff_spin );
+    if (!pp && !gpu_mpi_dist_ph)
+        gpu_mpi_dist_ph = tu_prop_gpu_mpi_dist_init( my_nk, my_nk_off, nk, L_orbff_spin );
+    tu_prop_gpu_mpi_dist_comm( pp ? gpu_mpi_dist_pp : gpu_mpi_dist_ph, L_full_q, L );
 }
 
 void tu_loop_t::merge_gpu_cpu_loop_cfrg_step1(complex128_t* L, complex128_t* tmpgpu) const {

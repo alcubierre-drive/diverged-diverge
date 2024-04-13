@@ -13,9 +13,8 @@ static inline void atomic_set_complex128_t( complex128_t* dest_, const complex12
 }
 
 struct tu_prop_gpu_mpi_dist_t {
-
     cbyte_t* touched;
-    index_t touched_n_bytes;
+    index_t touched_bytes;
 
     index_t n_touched;
     index_t* touched_to_idx;
@@ -79,7 +78,7 @@ tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
     t->L_orbff_spin = L_orbff_spin;
     t->L_tot = t->L_orbff_spin * t->nk;
     t->touched = bitary_alloc( t->L_tot );
-    t->touched_n_bytes = CHAR_DIV(t->L_tot) + (CHAR_MOD(t->L_tot) != 0);
+    t->touched_bytes = CHAR_DIV(t->L_tot)+(CHAR_MOD(t->L_tot) != 0);
 
     t->rank = diverge_mpi_comm_rank();
     t->size = diverge_mpi_comm_size();
@@ -106,12 +105,6 @@ static inline int find_rank( index_t i, index_t* displs, index_t* counts, int si
     return rank;
 }
 
-static inline int pack_compar( const void* p1_, const void* p2_ ) {
-    const pack_t *p1 = (const pack_t*)p1_,
-                 *p2 = (const pack_t*)p2_;
-    return p1->dest_rank - p2->dest_rank;
-}
-
 void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L ) {
     // reset the touched index array
     if (t->n_touched) {
@@ -121,11 +114,11 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     if (t->n_recv_pack) {
         memset( t->recv_pack, 0, sizeof(pack_t)*t->n_recv_pack );
     }
-    // clear send counts/displs to count again
-    memset( t->send_counts, 0, sizeof(index_t) * t->size );
-    memset( t->send_displs, 0, sizeof(index_t) * t->size );
+    // clear send counts to count again
     memset( t->recv_counts, 0, sizeof(index_t) * t->size );
-    memset( t->recv_displs, 0, sizeof(index_t) * t->size );
+    memset( t->send_counts, 0, sizeof(index_t) * t->size );
+
+    memset( t->touched, 0, t->touched_bytes );
 
     // find the touched indices
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -137,23 +130,23 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     }
 
     // accumulate the number of touched indices
-    index_t n_touched = 0;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_touched)
+    t->n_touched = 0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<t->L_tot; ++i) {
         if (bitary_get(t->touched, i))
-            n_touched++;
+            #pragma omp atomic
+            t->n_touched++;
     }
-    t->n_touched = n_touched;
 
     // realloc the array of touched indices. This should be a no-op after first
     // iteration.
     t->touched_to_idx = realloc_print( t->touched_to_idx, sizeof(index_t)*t->n_touched );
 
     // save the touched indices
-    n_touched = 0;
+    t->n_touched = 0;
     for (index_t i=0; i<t->L_tot; ++i) {
         if (bitary_get(t->touched, i)) {
-            t->touched_to_idx[n_touched++] = i;
+            t->touched_to_idx[t->n_touched++] = i;
         }
     }
 
@@ -180,6 +173,7 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     diverge_mpi_alltoall_index( t->send_counts, t->recv_counts, 1 );
 
     // set the displs
+    t->send_displs[0] = t->recv_displs[0] = 0;
     for (int r=1; r<t->size; ++r) {
         t->send_displs[r] = t->send_displs[r-1] + t->send_counts[r-1];
         t->recv_displs[r] = t->recv_displs[r-1] + t->recv_counts[r-1];
@@ -189,25 +183,21 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     t->n_recv_pack = t->recv_counts[t->size-1] + t->recv_displs[t->size-1];
     t->recv_pack = realloc_print( t->recv_pack, sizeof(pack_t)*t->n_recv_pack );
 
-    // TODO
-    mpi_log_printf( "SND/RCV:\n" );
-    for (int r=0; r<t->size; ++r) {
-        printf( "SND %i -> %i: %li(+%li)\n", t->rank, r, t->send_counts[r], t->send_displs[r] );
-        printf( "RCV %i <- %i: %li(+%li)\n", t->rank, r, t->recv_counts[r], t->recv_displs[r] );
-    }
-
     // send the pack!
     diverge_mpi_alltoallv_bytes( t->send_pack, t->send_counts, t->send_displs,
                                  t->recv_pack, t->recv_counts, t->recv_displs, sizeof(pack_t) );
 
+    // write into L_full_q, but only those elements that we found
+    memset( L_full_q, 0, sizeof(complex128_t) * t->nk * t->L_orbff_spin );
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t s=0; s<t->n_recv_pack; ++s)
-        assert( t->recv_pack[s].dest_rank == t->rank ),
+    for (index_t s=0; s<t->n_recv_pack; ++s) {
+        assert( t->recv_pack[s].dest_rank == t->rank );
         atomic_set_complex128_t( L_full_q+t->recv_pack[s].dest, &t->recv_pack[s].val );
+    }
 
-    // and save *that* result back into L
-    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+    // write out into L
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2)
     for (index_t b=0; b<t->L_orbff_spin; ++b)
-    for (index_t qrel=0; qrel<t->my_nk; ++qrel)
-        atomic_set_complex128_t( L + IDX2(b, qrel, t->my_nk), L_full_q+IDX2(b, t->my_nk_off+qrel, t->nk) );
+    for (index_t qr=0; qr<t->my_nk; ++qr)
+        L[IDX2(b,qr,t->my_nk)] = L_full_q[IDX2(b,qr+t->my_nk_off,t->nk)];
 }
