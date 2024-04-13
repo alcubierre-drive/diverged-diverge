@@ -153,7 +153,7 @@ void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num ) 
     MPI_Allgather( sendbuf, num, MPI_LONG_LONG, recvbuf, num, MPI_LONG_LONG, diverge_mpi_comm );
 }
 
-void diverge_mpi_allgather_index_inplace( const void* sendrecvbuf, int num ) {
+void diverge_mpi_allgather_index_inplace( void* sendrecvbuf, int num ) {
     MPICHK();
     MPI_Allgather( MPI_IN_PLACE, 0, MPI_LONG_LONG, sendrecvbuf, num, MPI_LONG_LONG, diverge_mpi_comm );
 }
@@ -253,6 +253,11 @@ void diverge_mpi_close_file(void* file) {
     }
     MPI_File_close( (MPI_File*)file );
     free( file );
+}
+
+void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count ) {
+    MPICHK();
+    MPI_Alltoall( send, count, MPI_LONG_LONG, recv, count, MPI_LONG_LONG, diverge_mpi_comm );
 }
 
 void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts_, const index_t* senddispls_,
@@ -460,6 +465,10 @@ void diverge_mpi_close_file(void* file) {
         return;
     }
     fclose((FILE*)file);
+}
+
+void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count ) {
+    memcpy( recv, send, sizeof(index_t) * count );
 }
 
 void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts, const index_t* senddispls,

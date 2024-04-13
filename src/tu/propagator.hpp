@@ -12,6 +12,7 @@
 #include <thread>
 #include "propagator_cpu_mpi.h"
 #include "propagator_cpu_mpi_fft.h"
+#include "propagator_gpu_mpi.h"
 
 inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
@@ -176,6 +177,7 @@ private:
     int32_t off_prop_mpi[32];
     bool has_tasks_off_saved = false;
     vector<index_t> c2fmap_full;
+    tu_prop_gpu_mpi_dist_t* gpu_mpi_dist = NULL;
 
     void allocate_GPU_memory();
     void swap_GF_cfrg();
