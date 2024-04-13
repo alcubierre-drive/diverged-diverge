@@ -94,6 +94,16 @@ void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count );
 void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts, const index_t* senddispls,
                                         void* recv, const index_t* recvcounts, const index_t* recvdispls,
                                         index_t numbytes );
+/**
+ * this version of alltoallv requires some explanation: since MPI typically
+ * only knows 32bit integers for any count/displ variables, we can trick it into
+ * operation on larger arrays by making packed datatypes. This is exactly what
+ * this function is here for. Note that the other version of alltoallv
+ * (undocumented) is restricted to 32bit bytes of communication.
+ */
+void diverge_mpi_alltoallv_bytes_packed( const void* s, const int* sc, const int* sd,
+                                               void* r, const int* rc, const int* rd,
+                                               index_t numbytes );
 void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcounts, const int* senddispls,
                                           complex128_t* recv, const int* recvcounts, const int* recvdispls );
 

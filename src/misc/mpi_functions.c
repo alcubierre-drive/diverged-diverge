@@ -283,6 +283,16 @@ void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts_, 
     free( recvdispls );
 }
 
+void diverge_mpi_alltoallv_bytes_packed( const void* s, const int* sc, const int* sd,
+                                               void* r, const int* rc, const int* rd,
+                                               index_t numbytes ) {
+    MPICHK();
+    MPI_Datatype dt_bytes;
+    MPI_Type_contiguous(numbytes, MPI_BYTE, &dt_bytes);
+    MPI_Type_commit(&dt_bytes);
+    MPI_Alltoallv( s, sc, sd, dt_bytes, r, rc, rd, dt_bytes, diverge_mpi_comm );
+}
+
 void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcounts, const int* senddispls,
                                           complex128_t* recv, const int* recvcounts, const int* recvdispls ) {
     MPICHK();
@@ -479,6 +489,13 @@ void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts, c
     memcpy( (char*)recv + recvdispls[0] * numbytes,
             (char*)send + senddispls[0] * numbytes,
             sendcounts[0] * numbytes );
+}
+void diverge_mpi_alltoallv_bytes_packed( const void* s, const int* sc, const int* sd,
+                                               void* r, const int* rc, const int* rd,
+                                               index_t numbytes ) {
+    assert( sc[0] == rc[0] );
+    (void)rc;
+    memcpy( (char*)r + numbytes * rd[0], (char*)s + numbytes * sd[0], numbytes * sc[0] );
 }
 
 void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcounts, const int* senddispls,

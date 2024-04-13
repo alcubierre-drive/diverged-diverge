@@ -141,6 +141,14 @@ vector<double> tu_loop_t::extra_timings( void ) {
     if (mpi_gf)
         for (int i=0; i<TU_MPI_GF_TIMING_NUM; ++i)
             extra_tvec->at(i) = mpi_gf->timings[i];
+
+    if (gpu_mpi_dist_pp)
+        for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( gpu_mpi_dist_pp ); ++i)
+            extra_tvec->push_back( tu_prop_gpu_mpi_dist_timing( gpu_mpi_dist_pp, i ) );
+    if (gpu_mpi_dist_ph)
+        for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( gpu_mpi_dist_ph ); ++i)
+            extra_tvec->push_back( tu_prop_gpu_mpi_dist_timing( gpu_mpi_dist_ph, i ) );
+
     return *extra_tvec;
 }
 
@@ -175,6 +183,13 @@ vector<string> tu_loop_t::extra_timings_descr( void ) {
                               "tu_mpi_loop_timing_comm",
                               "tu_mpi_loop_timing_insert_missing",
                               "tu_mpi_loop_timing_postproc" }) descr.push_back(s);
+
+    if (gpu_mpi_dist_pp)
+        for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( gpu_mpi_dist_pp ); ++i)
+            descr.push_back( string("pp:") + tu_prop_gpu_mpi_dist_timing_name( gpu_mpi_dist_pp, i ) );
+    if (gpu_mpi_dist_ph)
+        for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( gpu_mpi_dist_ph ); ++i)
+            descr.push_back( string("ph:") + tu_prop_gpu_mpi_dist_timing_name( gpu_mpi_dist_ph, i ) );
     return descr;
 }
 
