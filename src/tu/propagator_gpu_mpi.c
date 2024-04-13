@@ -203,6 +203,10 @@ static inline int find_rank( index_t i, index_t* displs, index_t* counts, int si
     return rank;
 }
 
+// TODO(LK) this algorithm seems to work, but we should really also include a
+// dry run functionality to the CUDA kernel in order to set up the maps only
+// once.  They're not the worst in terms of time, but I guess there's some room
+// left for improvement.
 void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L ) {
 
     double tick, tock;
