@@ -569,32 +569,32 @@ void tu_loop_t::pp_loop(complex128_t* L, complex128_t* tmpgpu) {
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
             std::thread cpu = std::thread([&](){
-                S_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
-            std::thread gpu = std::thread([&](){
-                S_pp_loop_static_red_gpu(tmpgpu);});
-            cpu.join(); gpu.join();
+                S_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);
+            });
+            S_pp_loop_static_red_gpu(tmpgpu);
+            cpu.join();
         }else{
             std::thread cpu = std::thread([&](){
-                S_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
-            std::thread gpu = std::thread([&](){
-                S_pp_loop_static_simple_gpu(tmpgpu);});
-            cpu.join(); gpu.join();
+                S_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);
+            });
+            S_pp_loop_static_simple_gpu(tmpgpu);
+            cpu.join();
         }
         if(cFRG_loop) {
             swap_GF_cfrg();
             if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1(L, tmpgpu);
             if(tu_data->use_reduced_loop) {
                 std::thread cpu = std::thread([&](){
-                    S_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
-                std::thread gpu = std::thread([&](){
-                    S_pp_loop_static_red_gpu(tmpgpu);});
-                cpu.join(); gpu.join();
+                    S_loop_static_red<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);
+                });
+                S_pp_loop_static_red_gpu(tmpgpu);
+                cpu.join();
             }else{
                 std::thread cpu = std::thread([&](){
-                    S_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
-                std::thread gpu = std::thread([&](){
-                    S_pp_loop_static_simple_gpu(tmpgpu);});
-                cpu.join(); gpu.join();
+                    S_loop_static_simple<true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);
+                });
+                S_pp_loop_static_simple_gpu(tmpgpu);
+                cpu.join();
             }
             swap_GF_cfrg();
             if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step2(L, tmpgpu);
