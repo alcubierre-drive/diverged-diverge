@@ -4,6 +4,7 @@
 #include "cuda_init.hpp"
 #include "../misc/batched_eigen.h"
 #include "../misc/init_internal_libs.h"
+#include "../misc/bitary.h"
 #include <iostream>
 #include "../misc/shared_mem.h"
 
@@ -513,16 +514,16 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
         memset((void*)L,0,sizeof(complex128_t)*my_nk*POW2(n_orbff*POW2(n_spin)));
         if(tu_data->use_reduced_loop) {
             std::thread cpu = std::thread([&](){
-                S_loop_static_red<false>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
-            std::thread gpu = std::thread([&](){
-                S_ph_loop_static_red_gpu(tmpgpu);});
-            cpu.join(); gpu.join();
+                S_loop_static_red<false>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);
+            });
+            S_ph_loop_static_red_gpu(tmpgpu);
+            cpu.join();
         } else {
             std::thread cpu = std::thread([&](){
-                S_loop_static_simple<false>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
-            std::thread gpu = std::thread([&](){
-                S_ph_loop_static_simple_gpu(tmpgpu);});
-            cpu.join(); gpu.join();
+                S_loop_static_simple<false>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);
+            });
+            S_ph_loop_static_simple_gpu(tmpgpu);
+            cpu.join();
         }
 
         if(cFRG_loop) {
@@ -530,16 +531,16 @@ void tu_loop_t::ph_loop(complex128_t* L, complex128_t* tmpgpu) {
             if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1(L, tmpgpu);
             if(tu_data->use_reduced_loop) {
                 std::thread cpu = std::thread([&](){
-                    S_loop_static_red<false,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
-                std::thread gpu = std::thread([&](){
-                    S_ph_loop_static_red_gpu(tmpgpu);});
-                cpu.join(); gpu.join();
+                    S_loop_static_red<false,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);
+                });
+                S_ph_loop_static_red_gpu(tmpgpu);
+                cpu.join();
             } else {
                 std::thread cpu = std::thread([&](){
-                    S_loop_static_simple<false,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);});
-                std::thread gpu = std::thread([&](){
-                    S_ph_loop_static_simple_gpu(tmpgpu);});
-                cpu.join(); gpu.join();
+                    S_loop_static_simple<false,true>(L, cuda_descr._tasks_cpu, cuda_descr._off_cpu, !cuda_descr.prop_has_gpu_setup);}
+                );
+                S_ph_loop_static_simple_gpu(tmpgpu);
+                cpu.join();
             }
             swap_GF_cfrg();
             if(cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step2(L, tmpgpu);
@@ -738,7 +739,67 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
 
     // TODO this hangs/is super duper slow...
     // do the mpi reduction
+
+    // find which indices have been touched
+    index_t L_tot = kdim(vnk)*L_orbff_spin;
+    cbyte_t* touched = bitary_alloc( L_tot );
+    index_t n_touched = 0;
+    const uint64_t zero_bits = 0x0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<L_tot; ++i) {
+        uint64_t* L_full_q_uint = (uint64_t*)(L_full_q + i);
+        if ((L_full_q_uint[0] | zero_bits) || (L_full_q_uint[1] | zero_bits)) {
+            bitary_set(touched, i);
+            #pragma omp atomic
+            n_touched++;
+        }
+    }
+    index_t* touched_indices = (index_t*)calloc( n_touched, sizeof(index_t) );
+    n_touched = 0;
+    for (index_t i=0; i<L_tot; ++i) if (bitary_get(touched, i)) touched_indices[n_touched++] = i;
+    free( touched );
+
+    int my_rank = diverge_mpi_comm_rank(),
+        my_size = diverge_mpi_comm_size();
+
+    index_t* index_counts = (index_t*)calloc( my_size, sizeof(index_t) );
+    index_counts[my_rank] = n_touched;
+    diverge_mpi_allgather_index_inplace( index_counts, my_size );
+    index_t* index_displs = (index_t*)calloc( my_size, sizeof(index_t) );
+    for (index_t r=1; r<my_size; ++r)
+        index_displs[r] = index_displs[r-1] + index_counts[r-1];
+
+    index_t overall_n_touched = index_displs[my_size-1] + index_counts[my_size-1];
+    index_t* indices = (index_t*)calloc( overall_n_touched, sizeof(index_t) );
+
+    memcpy( indices + index_displs[my_rank], touched_indices,
+            sizeof(index_t) * index_counts[my_rank] );
+    free( touched_indices );
+
+    int *rcnt = (int*)calloc( my_size, sizeof(int) ),
+        *rdsp = (int*)calloc( my_size, sizeof(int) );
+    for (int r=0; r<my_size; ++r) {
+        rcnt[r] = index_counts[r];
+        rdsp[r] = index_displs[r];
+    }
+    diverge_mpi_allgatherv_index( indices, rcnt, rdsp );
+
+    complex128_t* values = (complex128_t*)calloc( overall_n_touched, sizeof(complex128_t) );
+
+    for (index_t i=0; i<index_counts[my_rank]; ++i)
+        values[index_displs[my_rank] + i] = L_full_q[indices[index_displs[my_rank]+i]];
+
+    diverge_mpi_allgatherv_bytes( values, sizeof(complex128_t), rcnt, rdsp );
+    free( rcnt );
+    free( rdsp );
+
+    for (index_t i=0; i<overall_n_touched; ++i)
+        L_full_q[indices[i]] = values[i];
+
+    /*
     diverge_mpi_allreduce_complex_bor_inplace( L_full_q, kdim(vnk)*L_orbff_spin );
+    fprintf( stderr, "rank %i: comm done\n", diverge_mpi_comm_rank() );
+    */
 
     // and save the result back into L
     #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())

@@ -153,6 +153,11 @@ void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num ) 
     MPI_Allgather( sendbuf, num, MPI_LONG_LONG, recvbuf, num, MPI_LONG_LONG, diverge_mpi_comm );
 }
 
+void diverge_mpi_allgather_index_inplace( const void* sendrecvbuf, int num ) {
+    MPICHK();
+    MPI_Allgather( MPI_IN_PLACE, 0, MPI_LONG_LONG, sendrecvbuf, num, MPI_LONG_LONG, diverge_mpi_comm );
+}
+
 void diverge_mpi_allgather_double( const void* sendbuf, void* recvbuf, int num ) {
     MPICHK();
     MPI_Allgather( sendbuf, num, MPI_DOUBLE, recvbuf, num, MPI_DOUBLE, diverge_mpi_comm );
@@ -376,6 +381,9 @@ void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num ) {
 }
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num ) {
     memcpy( recvbuf, sendbuf, sizeof(index_t)*num );
+}
+void diverge_mpi_allgather_index_inplace( void* sendrecvbuf, int num ) {
+    (void)sendrecvbuf; (void)num;
 }
 void diverge_mpi_allgather_double( const void* sendbuf, void* recvbuf, int num ) {
     memcpy( recvbuf, sendbuf, sizeof(double)*num );

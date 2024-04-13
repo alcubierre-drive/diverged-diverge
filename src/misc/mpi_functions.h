@@ -75,6 +75,7 @@ void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num );
 void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num );
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allgather_double( const void* sendbuf, void* recvbuf, int num );
+void diverge_mpi_allgather_index_inplace( const void* sendrecvbuf, int num );
 
 void diverge_mpi_send_double( void* data, int num, int destination, int tag );
 void diverge_mpi_recv_double( void* data, int num, int source, int tag );
