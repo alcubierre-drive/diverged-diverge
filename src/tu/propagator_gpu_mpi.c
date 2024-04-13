@@ -12,6 +12,27 @@ static inline void atomic_set_complex128_t( complex128_t* dest_, const complex12
     dest[1] = src[1];
 }
 
+#ifndef PACK_MPI_MULTIPLIER
+#define PACK_MPI_MULTIPLIER 1
+#endif // PACK_MPI_MULTIPLIER
+
+static inline void align_pack_sizes( index_t* send_counts, index_t* recv_counts, int size,
+        index_t* send_counts_packed, index_t* send_displs_packed,
+        index_t* recv_counts_packed, index_t* recv_displs_packed ) {
+    for (int r=0; r<size; ++r) {
+        send_counts_packed[r] = ((send_counts[r]/PACK_MPI_MULTIPLIER)+
+                                 (send_counts[r]%PACK_MPI_MULTIPLIER!=0));
+        recv_counts_packed[r] = ((recv_counts[r]/PACK_MPI_MULTIPLIER)+
+                                 (recv_counts[r]%PACK_MPI_MULTIPLIER!=0));
+        send_counts[r] = send_counts_packed[r] * PACK_MPI_MULTIPLIER;
+        recv_counts[r] = recv_counts_packed[r] * PACK_MPI_MULTIPLIER;
+        if (r > 0) {
+            send_displs_packed[r] = send_displs_packed[r-1] + send_counts_packed[r-1];
+            recv_displs_packed[r] = recv_displs_packed[r-1] + recv_counts_packed[r-1];
+        }
+    }
+}
+
 struct tu_prop_gpu_mpi_dist_t {
     cbyte_t* touched;
     index_t touched_bytes;
@@ -28,14 +49,19 @@ struct tu_prop_gpu_mpi_dist_t {
     index_t* k_counts;
     index_t* k_displs;
 
+    /* index_t n_touched; */
     pack_t* send_pack;
     index_t* send_counts;
-    index_t* send_displs;
+    index_t *send_displs;
 
     index_t n_recv_pack;
     pack_t* recv_pack;
     index_t* recv_counts;
-    index_t* recv_displs;
+
+    index_t *send_counts_packed, *send_displs_packed,
+            *recv_counts_packed, *recv_displs_packed;
+    index_t *send_counts_cpy, *send_displs_cpy,
+            *recv_counts_cpy, *recv_displs_cpy;
 };
 
 void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
@@ -51,7 +77,16 @@ void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
 
     free( t->recv_pack );
     free( t->recv_counts );
-    free( t->recv_displs );
+
+    free( t->send_counts_cpy );
+    free( t->send_displs_cpy );
+    free( t->send_counts_packed );
+    free( t->send_displs_packed );
+
+    free( t->recv_counts_cpy );
+    free( t->recv_displs_cpy );
+    free( t->recv_counts_packed );
+    free( t->recv_displs_packed );
 
     free( t );
 }
@@ -94,7 +129,16 @@ tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
     t->send_counts = calloc_print( t->size, sizeof(index_t) );
     t->send_displs = calloc_print( t->size, sizeof(index_t) );
     t->recv_counts = calloc_print( t->size, sizeof(index_t) );
-    t->recv_displs = calloc_print( t->size, sizeof(index_t) );
+
+    t->send_counts_cpy = calloc_print( t->size, sizeof(index_t) );
+    t->recv_counts_cpy = calloc_print( t->size, sizeof(index_t) );
+    t->send_displs_cpy = calloc_print( t->size, sizeof(index_t) );
+    t->recv_displs_cpy = calloc_print( t->size, sizeof(index_t) );
+
+    t->send_counts_packed = calloc_print( t->size, sizeof(index_t) );
+    t->recv_counts_packed = calloc_print( t->size, sizeof(index_t) );
+    t->send_displs_packed = calloc_print( t->size, sizeof(index_t) );
+    t->recv_displs_packed = calloc_print( t->size, sizeof(index_t) );
     return t;
 }
 
@@ -172,27 +216,54 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
         t->send_counts[t->send_pack[s].dest_rank]++;
     diverge_mpi_alltoall_index( t->send_counts, t->recv_counts, 1 );
 
-    // set the displs
-    t->send_displs[0] = t->recv_displs[0] = 0;
-    for (int r=1; r<t->size; ++r) {
+    // now we have the recv and send counts in units of sizeof(pack_t). But we
+    // must convert to sizeof(pack_t) * PACK_MPI_MULTIPLIER...
+    memcpy( t->send_counts_cpy, t->send_counts, sizeof(index_t)*t->size );
+    memcpy( t->recv_counts_cpy, t->recv_counts, sizeof(index_t)*t->size );
+    align_pack_sizes( t->send_counts_cpy, t->recv_counts_cpy, t->size,
+            t->send_counts_packed, t->send_displs_packed,
+            t->recv_counts_packed, t->recv_displs_packed );
+
+    // align the sizes and realloc memory accordingly
+    index_t aligned_send_pack_size = 0, aligned_recv_pack_size = 0;
+    t->send_displs_cpy[0] = t->recv_displs_cpy[0] = 0;
+    for (int r=0; r<t->size; ++r) {
+        aligned_send_pack_size += t->send_counts_cpy[r];
+        aligned_recv_pack_size += t->recv_counts_cpy[r];
+        if (r > 0) {
+            t->send_displs_cpy[r] = t->send_displs_cpy[r-1] + t->send_counts_cpy[r-1];
+            t->recv_displs_cpy[r] = t->recv_displs_cpy[r-1] + t->recv_counts_cpy[r-1];
+        }
+    }
+    t->send_pack = realloc_print( t->send_pack, sizeof(pack_t) * aligned_send_pack_size );
+    t->recv_pack = realloc_print( t->recv_pack, sizeof(pack_t) * aligned_recv_pack_size );
+
+    // move the memory in send_pack to the right in order to pad accordingly. We
+    // iterate in reverse and therefore don't need a copy. First need to
+    // generade send_displs, though
+    t->send_displs[0] = 0;
+    for (int r=1; r<t->size; ++r)
         t->send_displs[r] = t->send_displs[r-1] + t->send_counts[r-1];
-        t->recv_displs[r] = t->recv_displs[r-1] + t->recv_counts[r-1];
+
+    for (int r=t->size-1; r>=0; --r) {
+        for (index_t c=t->send_counts[r]-1; c>=0; --c) {
+            t->send_pack[t->send_displs_cpy[r] + c] = t->send_pack[t->send_displs[r] + c];
+        }
     }
 
-    // alloc recv pack, no-op after first iter
-    t->n_recv_pack = t->recv_counts[t->size-1] + t->recv_displs[t->size-1];
-    t->recv_pack = realloc_print( t->recv_pack, sizeof(pack_t)*t->n_recv_pack );
-
-    // send the pack!
-    diverge_mpi_alltoallv_bytes( t->send_pack, t->send_counts, t->send_displs,
-                                 t->recv_pack, t->recv_counts, t->recv_displs, sizeof(pack_t) );
+    // send the pack in larger chunks
+    diverge_mpi_alltoallv_bytes( t->send_pack, t->send_counts_packed, t->send_displs_packed,
+                                 t->recv_pack, t->recv_counts_packed, t->recv_displs_packed,
+                                 sizeof(pack_t) * PACK_MPI_MULTIPLIER );
 
     // write into L_full_q, but only those elements that we found
     memset( L_full_q, 0, sizeof(complex128_t) * t->nk * t->L_orbff_spin );
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t s=0; s<t->n_recv_pack; ++s) {
-        assert( t->recv_pack[s].dest_rank == t->rank );
-        atomic_set_complex128_t( L_full_q+t->recv_pack[s].dest, &t->recv_pack[s].val );
+    for (int r=0; r<t->size; ++r) {
+        for (index_t c=0; c<t->recv_counts[r]; ++c) {
+            index_t idx = t->recv_displs_cpy[r] + c;
+            assert( t->recv_pack[idx].dest_rank == t->rank );
+            atomic_set_complex128_t( L_full_q+t->recv_pack[idx].dest, &t->recv_pack[idx].val );
+        }
     }
 
     // write out into L
