@@ -2,6 +2,8 @@
 #include "../misc/mpi_functions.h"
 #include "propagator_cpu_mpi.h"
 
+unsigned fftw_mpi_plan_patience = FFTW_MEASURE;
+
 struct fftw_mpi_plan_t {
     bool timings_enabled:1;
     bool free_buf:1;
@@ -94,7 +96,7 @@ fftw_mpi_plan_t* fftw_mpi_plan_init_l( index_t dims[3], index_t howmany,
 
     p->p = fftw_mpi_plan_many_dft( 3, p->dims, p->howmany, FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK,
             (fftw_complex*)p->in_mpi, (fftw_complex*)p->out_mpi, diverge_mpi_get_comm(), dir,
-            propagator_cpu_mpi_planning_patience );
+            fftw_mpi_plan_patience );
 
     p->counts = (int*)calloc(p->nranks, sizeof(int));
     p->displs = (int*)calloc(p->nranks, sizeof(int));
@@ -215,7 +217,7 @@ fftw_mpi_plan_t* fftw_mpi_plan_init_l( index_t dims_[3], index_t howmany_,
     p->out = out_;
     p->p = fftw_plan_many_dft( 3, mydims, p->howmany, (fftw_complex*)p->in, mydims, 1, mydims[0]*mydims[1]*mydims[2],
             (fftw_complex*)p->out, mydims, 1, mydims[0]*mydims[1]*mydims[2], dir,
-            propagator_cpu_mpi_planning_patience );
+            fftw_mpi_plan_patience );
     return p;
 }
 

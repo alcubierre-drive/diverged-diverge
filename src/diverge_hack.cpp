@@ -12,6 +12,7 @@
 #include "misc/kmeans_lloyd.h"
 #include "misc/shared_mem.h"
 #include "tu/propagator_cpu_mpi.h"
+#include "tu/propagator_cpu_mpi_fft.h"
 
 #include <string>
 #include <set>
@@ -165,21 +166,21 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
             m->internals->use_batched_svd_algo_in_common = -1;
     }
 
-    CHECKKEY("propagator_cpu_mpi_planning_patience") {
+    CHECKKEY("fftw_mpi_plan_patience") {
+        // either set with 'G' (GX) to address fftw_mpi_plan_patience (for
+        // GPU/MPI) or without (X) to address
+        // propagator_cpu_mpi_planning_patience (for MPI)
+        unsigned* addr = &propagator_cpu_mpi_planning_patience;
+        if (strlen(val) > 0) {
+            if (toupper(val[0]) == 'G') addr = &fftw_mpi_plan_patience;
+            val++;
+        }
         switch (atoi(val)) {
-            case 0:
-                propagator_cpu_mpi_planning_patience = FFTW_ESTIMATE;
-                break;
-            case 2:
-                propagator_cpu_mpi_planning_patience = FFTW_PATIENT;
-                break;
-            case 3:
-                propagator_cpu_mpi_planning_patience = FFTW_EXHAUSTIVE;
-                break;
-            case 1:
-            default:
-                propagator_cpu_mpi_planning_patience = FFTW_MEASURE;
-                break;
+            case 0: *addr = FFTW_ESTIMATE; break;
+            case 1: *addr = FFTW_MEASURE; break;
+            case 2: *addr = FFTW_PATIENT; break;
+            case 3: *addr = FFTW_EXHAUSTIVE; break;
+            default: break;
         }
     }
 
