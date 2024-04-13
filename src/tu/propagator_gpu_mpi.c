@@ -16,16 +16,21 @@ static inline void atomic_set_complex128_t( complex128_t* dest_, const complex12
 #define PACK_MPI_MULTIPLIER 1
 #endif // PACK_MPI_MULTIPLIER
 
+static inline index_t align_to( index_t number, index_t n ) {
+    if (number == 0) return 0;
+    while (number % n != 0) number++;
+    return number;
+}
+
 static inline void align_pack_sizes( index_t* send_counts, index_t* recv_counts, int size,
         index_t* send_counts_packed, index_t* send_displs_packed,
         index_t* recv_counts_packed, index_t* recv_displs_packed ) {
+    send_displs_packed[0] = recv_displs_packed[0] = 0;
     for (int r=0; r<size; ++r) {
-        send_counts_packed[r] = ((send_counts[r]/PACK_MPI_MULTIPLIER)+
-                                 (send_counts[r]%PACK_MPI_MULTIPLIER!=0));
-        recv_counts_packed[r] = ((recv_counts[r]/PACK_MPI_MULTIPLIER)+
-                                 (recv_counts[r]%PACK_MPI_MULTIPLIER!=0));
-        send_counts[r] = send_counts_packed[r] * PACK_MPI_MULTIPLIER;
-        recv_counts[r] = recv_counts_packed[r] * PACK_MPI_MULTIPLIER;
+        send_counts[r] = align_to( send_counts[r], PACK_MPI_MULTIPLIER );
+        recv_counts[r] = align_to( recv_counts[r], PACK_MPI_MULTIPLIER );
+        send_counts_packed[r] = send_counts[r] / PACK_MPI_MULTIPLIER;
+        recv_counts_packed[r] = recv_counts[r] / PACK_MPI_MULTIPLIER;
         if (r > 0) {
             send_displs_packed[r] = send_displs_packed[r-1] + send_counts_packed[r-1];
             recv_displs_packed[r] = recv_displs_packed[r-1] + recv_counts_packed[r-1];
@@ -313,26 +318,34 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     // must convert to sizeof(pack_t) * PACK_MPI_MULTIPLIER...
     memcpy( t->send_counts_cpy, t->send_counts, sizeof(index_t)*t->size );
     memcpy( t->recv_counts_cpy, t->recv_counts, sizeof(index_t)*t->size );
+    /*
+    for (int r=0; r<t->size; ++r)
+        printf( "rank %i, comm with %i: send %9li, recv %9li\n",
+                t->rank, r, t->send_counts_cpy[r], t->recv_counts_cpy[r] );
+    */
     align_pack_sizes( t->send_counts_cpy, t->recv_counts_cpy, t->size,
             t->send_counts_packed, t->send_displs_packed,
             t->recv_counts_packed, t->recv_displs_packed );
+    /*
+    for (int r=0; r<t->size; ++r)
+        printf( "rank %i, comm with %i: send %9li (+%9li), recv %9li (+%9li)\n",
+                t->rank, r, t->send_counts_packed[r], t->send_displs_packed[r],
+                t->recv_counts_packed[r], t->recv_displs_packed[r] );
+    */
     tock = diverge_mpi_wtime();
     t->t_counts_mult += tock - tick;
 
     tick = diverge_mpi_wtime();
     // align the sizes and realloc memory accordingly
-    index_t aligned_send_pack_size = 0, aligned_recv_pack_size = 0;
     t->send_displs_cpy[0] = t->recv_displs_cpy[0] = 0;
-    for (int r=0; r<t->size; ++r) {
-        aligned_send_pack_size += t->send_counts_cpy[r];
-        aligned_recv_pack_size += t->recv_counts_cpy[r];
-        if (r > 0) {
-            t->send_displs_cpy[r] = t->send_displs_cpy[r-1] + t->send_counts_cpy[r-1];
-            t->recv_displs_cpy[r] = t->recv_displs_cpy[r-1] + t->recv_counts_cpy[r-1];
-        }
+    for (int r=1; r<t->size; ++r) {
+        t->send_displs_cpy[r] = t->send_displs_cpy[r-1] + t->send_counts_cpy[r-1];
+        t->recv_displs_cpy[r] = t->recv_displs_cpy[r-1] + t->recv_counts_cpy[r-1];
     }
-    t->send_pack = realloc_print( t->send_pack, sizeof(pack_t) * aligned_send_pack_size );
-    t->recv_pack = realloc_print( t->recv_pack, sizeof(pack_t) * aligned_recv_pack_size );
+    t->send_pack = realloc_print( t->send_pack, sizeof(pack_t) *
+            (t->send_displs_cpy[t->size-1]+t->send_counts_cpy[t->size-1]) );
+    t->recv_pack = realloc_print( t->recv_pack, sizeof(pack_t) *
+            (t->recv_displs_cpy[t->size-1]+t->recv_counts_cpy[t->size-1]) );
     tock = diverge_mpi_wtime();
     t->t_sendpack_align += tock - tick;
 
