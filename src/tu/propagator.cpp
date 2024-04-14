@@ -672,7 +672,7 @@ void tu_loop_t::S_ph_loop_static_red_gpu(complex128_t* L) {
     ph_bubble_momenta_handler_fft_red(&cuda_descr, L, GF_fft_plus,GF_fft_conj_plus,
                             n_orb, n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
                             dims, mi_to_ofrom, mi_to_oto, mi_to_R, tu_data->unique_mi_l.data(),
-                                      tu_data->unique_mi_r.data(),tu_data->unique_mi_l.size());
+                            tu_data->unique_mi_r.data(),tu_data->unique_mi_l.size(), NULL);
 }
 
 void tu_loop_t::S_pp_loop_static_red_gpu(complex128_t* L) {
@@ -693,7 +693,7 @@ void tu_loop_t::S_pp_loop_static_red_gpu(complex128_t* L) {
     pp_bubble_momenta_handler_fft_red(&cuda_descr, L, GF_fft_plus,GF_fft_conj_plus,
                             n_orb, n_orbff, n_spin, nktot, my_nk, c2fmap.data(),
                             dims, mi_to_ofrom, mi_to_oto, mi_to_R, tu_data->unique_mi_l.data(),
-                                      tu_data->unique_mi_r.data(),tu_data->unique_mi_l.size());
+                                      tu_data->unique_mi_r.data(),tu_data->unique_mi_l.size(), NULL);
 }
 
 void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
@@ -737,27 +737,27 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
 
     // do the calc
     if (pp) {
+        if (!gpu_mpi_dist_pp)
+            gpu_mpi_dist_pp = tu_prop_gpu_mpi_dist_init( my_nk, my_nk_off, nk, L_orbff_spin );
         pp_bubble_momenta_handler_fft_red( &cuda_descr, L_full_q,
                 GF_fft_plus, GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
                 nk, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
                 tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
-                tu_data->unique_mi_l.size() );
+                tu_data->unique_mi_l.size(), tu_prop_gpu_mpi_dist_cuda_kernel_bitary(gpu_mpi_dist_pp) );
     } else {
+        if (!gpu_mpi_dist_ph)
+            gpu_mpi_dist_ph = tu_prop_gpu_mpi_dist_init( my_nk, my_nk_off, nk, L_orbff_spin );
         ph_bubble_momenta_handler_fft_red( &cuda_descr, L_full_q,
                 GF_fft_plus, GF_fft_conj_plus, n_orb, n_orbff, n_spin, nktot,
                 nk, c2fmap_full.data(), dims, mi_to_ofrom, mi_to_oto, mi_to_R,
                 tu_data->unique_mi_l.data(), tu_data->unique_mi_r.data(),
-                tu_data->unique_mi_l.size() );
+                tu_data->unique_mi_l.size(), tu_prop_gpu_mpi_dist_cuda_kernel_bitary(gpu_mpi_dist_ph) );
     }
 
     // reset the offsets
     memcpy( cuda_descr._tasks_prop, tasks_prop, sizeof(tasks_prop) );
     memcpy( cuda_descr._off_prop, off_prop, sizeof(off_prop) );
 
-    if ( pp && !gpu_mpi_dist_pp)
-        gpu_mpi_dist_pp = tu_prop_gpu_mpi_dist_init( my_nk, my_nk_off, nk, L_orbff_spin );
-    if (!pp && !gpu_mpi_dist_ph)
-        gpu_mpi_dist_ph = tu_prop_gpu_mpi_dist_init( my_nk, my_nk_off, nk, L_orbff_spin );
     tu_prop_gpu_mpi_dist_comm( pp ? gpu_mpi_dist_pp : gpu_mpi_dist_ph, L_full_q, L );
 }
 

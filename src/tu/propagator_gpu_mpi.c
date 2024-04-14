@@ -1,5 +1,4 @@
 #include "propagator_gpu_mpi.h"
-#include "../misc/bitary.h"
 #include "../misc/mpi_functions.h"
 #include <assert.h>
 
@@ -39,8 +38,9 @@ static inline void align_pack_sizes( index_t* send_counts, index_t* recv_counts,
 }
 
 struct tu_prop_gpu_mpi_dist_t {
+
     cbyte_t* touched;
-    index_t touched_bytes;
+    cbyte_t* touched_ext;
 
     index_t n_touched;
     index_t* touched_to_idx;
@@ -87,12 +87,16 @@ struct tu_prop_gpu_mpi_dist_t {
                    t_comm_alltoallv,
                    t_writeout_full,
                    t_writeout_L,
+                   t_total,
                    _t_last;
         };
         struct {
-            double _t_vector[15];
+            double _t_vector[16];
         };
     };
+
+    int first_pass; // document whether this is the first pass of calling the
+                    // communicator
 };
 
 static const char _t_descr[][256] = {
@@ -111,6 +115,7 @@ static const char _t_descr[][256] = {
     "t_comm_alltoallv",
     "t_writeout_full",
     "t_writeout_L",
+    "t_total",
 };
 
 void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
@@ -158,6 +163,10 @@ void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
 #define realloc_print realloc
 #endif
 
+cbyte_t* tu_prop_gpu_mpi_dist_cuda_kernel_bitary( tu_prop_gpu_mpi_dist_t* t ) {
+    return t->first_pass ? t->touched_ext : NULL;
+}
+
 tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
         index_t my_nk_off, index_t nk, index_t L_orbff_spin ) {
     tu_prop_gpu_mpi_dist_t* t = calloc_print( 1, sizeof(tu_prop_gpu_mpi_dist_t) );
@@ -167,7 +176,7 @@ tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
     t->L_orbff_spin = L_orbff_spin;
     t->L_tot = t->L_orbff_spin * t->nk;
     t->touched = bitary_alloc( t->L_tot );
-    t->touched_bytes = CHAR_DIV(t->L_tot)+(CHAR_MOD(t->L_tot) != 0);
+    t->touched_ext = bitary_alloc( t->L_tot );
 
     t->rank = diverge_mpi_comm_rank();
     t->size = diverge_mpi_comm_size();
@@ -198,6 +207,8 @@ tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
     t->sdpi = calloc_print( t->size, sizeof(int) );
     t->rcpi = calloc_print( t->size, sizeof(int) );
     t->rdpi = calloc_print( t->size, sizeof(int) );
+
+    t->first_pass = 1;
     return t;
 }
 
@@ -208,16 +219,23 @@ static inline int find_rank( index_t i, index_t* displs, index_t* counts, int si
     return rank;
 }
 
-// TODO(LK) this algorithm seems to work, but we should really also include a
-// dry run functionality to the CUDA kernel in order to set up the maps only
-// once.  They're not the worst in terms of time, but I guess there's some room
-// left for improvement.
+static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L );
+
 void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L ) {
+    if (t->first_pass) {
+        tu_prop_gpu_mpi_dist_comm_first_pass( t, L_full_q, L );
+        t->first_pass = 0;
+    } else {
+        // TODO
+        tu_prop_gpu_mpi_dist_comm_first_pass( t, L_full_q, L );
+    }
+}
 
-    double tick, tock;
+static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L ) {
 
-    // TODO(LK) this is slow (5s)
-    tick = diverge_mpi_wtime();
+    double tick, tock, tick_init;
+
+    tick_init = tick = diverge_mpi_wtime();
     // reset the touched index array
     if (t->n_touched) {
         memset( t->touched_to_idx, 0, sizeof(index_t)*t->n_touched );
@@ -230,7 +248,7 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     memset( t->recv_counts, 0, sizeof(index_t) * t->size );
     memset( t->send_counts, 0, sizeof(index_t) * t->size );
     // clear touched bytes
-    memset( t->touched, 0, t->touched_bytes );
+    memset( t->touched, 0, bitary_nbytes(t->L_tot) );
     tock = diverge_mpi_wtime();
     t->t_prepare += tock-tick;
 
@@ -245,6 +263,12 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     }
     tock = diverge_mpi_wtime();
     t->t_touched_find += tock-tick;
+
+    // compare the touched indices
+    for (uindex_t i=0; i<bitary_nbytes(t->L_tot); ++i) {
+        if (t->touched_ext[i] != t->touched[i])
+            printf( "halp! %li\n", i );
+    }
 
     tick = diverge_mpi_wtime();
     // find the touched indices
@@ -322,20 +346,9 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     // must convert to sizeof(pack_t) * PACK_MPI_MULTIPLIER...
     memcpy( t->send_counts_cpy, t->send_counts, sizeof(index_t)*t->size );
     memcpy( t->recv_counts_cpy, t->recv_counts, sizeof(index_t)*t->size );
-    /*
-    for (int r=0; r<t->size; ++r)
-        printf( "rank %i, comm with %i: send %9li, recv %9li\n",
-                t->rank, r, t->send_counts_cpy[r], t->recv_counts_cpy[r] );
-    */
     align_pack_sizes( t->send_counts_cpy, t->recv_counts_cpy, t->size,
             t->send_counts_packed, t->send_displs_packed,
             t->recv_counts_packed, t->recv_displs_packed );
-    /*
-    for (int r=0; r<t->size; ++r)
-        printf( "rank %i, comm with %i: send %9li (+%9li), recv %9li (+%9li)\n",
-                t->rank, r, t->send_counts_packed[r], t->send_displs_packed[r],
-                t->recv_counts_packed[r], t->recv_displs_packed[r] );
-    */
     tock = diverge_mpi_wtime();
     t->t_counts_mult += tock - tick;
 
@@ -413,6 +426,7 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
         L[IDX2(b,qr,t->my_nk)] = L_full_q[IDX2(b,qr+t->my_nk_off,t->nk)];
     tock = diverge_mpi_wtime();
     t->t_writeout_L += tock - tick;
+    t->t_total += tock - tick_init;
 }
 
 index_t tu_prop_gpu_mpi_dist_timing_num( const tu_prop_gpu_mpi_dist_t* t ) {

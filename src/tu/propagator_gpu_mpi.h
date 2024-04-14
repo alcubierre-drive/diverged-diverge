@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../diverge_common.h"
+#include "../misc/bitary.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,6 +13,8 @@ tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
         index_t my_nk_off, index_t nk, index_t L_orbff_spin );
 void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t );
 void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L );
+
+cbyte_t* tu_prop_gpu_mpi_dist_cuda_kernel_bitary( tu_prop_gpu_mpi_dist_t* t );
 
 typedef struct {
     index_t dest;
