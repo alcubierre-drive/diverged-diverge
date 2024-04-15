@@ -15,6 +15,14 @@ typedef struct {
 
 typedef struct tu_prop_gpu_mpi_dist_t tu_prop_gpu_mpi_dist_t;
 
+// must take non-null pointers p_recv_pack and p_n_recv_pack. The *values* may
+// be NULL/0, respectively. Depending on whether this is the case, the function
+// *allocates* or *reallocates* the recv_pack array in order to keep the memory
+// usage minimal.
+//
+// TODO(LK) we should implement specific communication datastructures, s.t. only
+// as much data as needed is communicated (reduction to 3/4 in size of send_pack
+// and recv_pack).
 tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
         index_t my_nk_off, index_t nk, index_t L_orbff_spin,
         pack_t** p_recv_pack, index_t* p_n_recv_pack );
