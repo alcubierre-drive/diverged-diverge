@@ -415,15 +415,15 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
         t->send_displs[r] = t->send_displs[r-1] + t->send_counts[r-1];
     // and the actual padding
     for (int r=t->size-1; r>=0; --r) {
-        for (index_t c=t->send_counts[r]-1; c>=0; --c) {
-            t->send_pack[t->send_displs_cpy[r] + c] = t->send_pack[t->send_displs[r] + c];
-        }
-    }
-    // set all the invalid ones to -1!
-    for (int r=0; r<t->size; ++r) {
-        for (index_t c=t->send_counts[r]; c<t->send_displs_cpy[r]; ++c) {
+        for (index_t c=t->send_counts_cpy[r]-1; c>=t->send_counts[r]; --c) {
+            // set all the invalid ones to -1!
             t->send_pack[t->send_displs_cpy[r] + c] = (pack_t){
-                .dest = -1, .orig_rank = -1, .dest_rank = -1, .val = 0 };
+                .dest = -1, .orig_rank = -1, .dest_rank = -1, .val = 0
+            };
+        }
+        for (index_t c=t->send_counts[r]-1; c>=0; --c) {
+            // and copy the other ones over
+            t->send_pack[t->send_displs_cpy[r] + c] = t->send_pack[t->send_displs[r] + c];
         }
     }
 
