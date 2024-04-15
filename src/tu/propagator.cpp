@@ -49,6 +49,18 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     which_fft_greens{tu_data->which_fft_greens}
 {
 
+    tu_data_t* tu_data_write = (tu_data_t*)(model -> internals-> tu_data);
+    if (tu_data_write->use_cuda_mpi_loop) {
+        if (diverge_mpi_comm_size() <= 1) {
+            mpi_wrn_printf( "reset use_cuda_mpi_loop to 0 since we only have one MPI rank\n" );
+            tu_data_write->use_cuda_mpi_loop = 0;
+        }
+        if (tu_data_write->nkibz < tu_data_write->nk) {
+            mpi_wrn_printf( "reset use_cuda_mpi_loop to 0 since we have symmetries\n" );
+            tu_data_write->use_cuda_mpi_loop = 0;
+        }
+    }
+
     if (which_fft_greens == tu_fft_algorithm_mpi_new && nktot == 1)
         which_fft_greens = tu_fft_algorithm_mpi;
     #ifdef USE_CUDA
