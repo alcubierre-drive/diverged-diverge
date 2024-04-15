@@ -144,26 +144,32 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         dkm_set_use_random_seed( atoi(val) );
     }
     CHECKKEY("model_free_hamiltonian") {
-        shared_free(m->internals->ham);
-        m->internals->ham = NULL;
+        shared_free(INTERNALS->ham);
+        INTERNALS->ham = NULL;
+        if (!strcmp(val, "eigen")) {
+            shared_free(INTERNALS->E);
+            INTERNALS->E = NULL;
+            shared_free(INTERNALS->U);
+            INTERNALS->U = NULL;
+        }
     }
     CHECKKEY("model_shared_gf") {
         if (m->gfill != &diverge_greensfunc_generator_default) {
             mpi_wrn_printf( "shared GF buffer for custom GF generator must be taken care of manually\n" );
         }
         m->gfill = &diverge_shared_gf;
-        free(m->internals->greens);
-        m->internals->greens = (gf_complex_t*)shared_malloc(sizeof(gf_complex_t) *
+        free(INTERNALS->greens);
+        INTERNALS->greens = (gf_complex_t*)shared_malloc(sizeof(gf_complex_t) *
                 kdimtot(m->nk, m->nkf) * POW2(m->n_orb*m->n_spin) * 2);
-        m->internals->greens_shared = 1;
+        INTERNALS->greens_shared = 1;
     }
     CHECKKEY("model_internals_eigensolve_ignore") {
-        m->internals->ignore_eigensolver_in_common = 1;
+        INTERNALS->ignore_eigensolver_in_common = 1;
     }
     CHECKKEY("model_internals_eigensolve_svd_algo") {
-        m->internals->use_batched_svd_algo_in_common = 1;
+        INTERNALS->use_batched_svd_algo_in_common = 1;
         if (atoi(val) == -1)
-            m->internals->use_batched_svd_algo_in_common = -1;
+            INTERNALS->use_batched_svd_algo_in_common = -1;
     }
 
     CHECKKEY("fftw_mpi_plan_patience") {
