@@ -118,13 +118,19 @@ void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
 }
 
 #ifdef TU_GPU_MPI_ALLOC_PRINT
-#define calloc_print( cnt, sz ) \
-    calloc( cnt, sz ); \
-    mpi_vrb_printf( "calloc %.2fGB\n", (double)sz*cnt / (1024.*1024.*1024) )
+static inline void* calloc_print( size_t cnt, size_t sz ) {
+    void* ptr = calloc( cnt, sz );
+    int scc = ptr != NULL;
+    mpi_vrb_printf( "calloc %.2fGB (%s)\n", (double)sz*cnt / (1024.*1024.*1024), scc ? "success!!!" : "no success" );
+    return ptr;
+}
 
-#define realloc_print( ptr, cnt_sz ) \
-    realloc( ptr, cnt_sz ); \
-    mpi_vrb_printf( "realloc %.2fGB\n", (double)cnt_sz / (1024.*1024.*1024) )
+static inline void* realloc_print( void* ptr, size_t sz ) {
+    ptr = realloc( ptr, sz );
+    int scc = ptr != NULL;
+    mpi_vrb_printf( "realloc %.2fGB (%s)\n", (double)sz / (1024.*1024.*1024), scc ? "success!!!" : "no success" );
+    return ptr;
+}
 #else
 #define calloc_print calloc
 #define realloc_print realloc
@@ -137,7 +143,7 @@ cbyte_t* tu_prop_gpu_mpi_dist_cuda_kernel_bitary( tu_prop_gpu_mpi_dist_t* t ) {
 tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
         index_t my_nk_off, index_t nk, index_t L_orbff_spin,
         pack_t** p_recv_pack, index_t* p_n_recv_pack ) {
-    tu_prop_gpu_mpi_dist_t* t = calloc_print( 1, sizeof(tu_prop_gpu_mpi_dist_t) );
+    tu_prop_gpu_mpi_dist_t* t = calloc( 1, sizeof(tu_prop_gpu_mpi_dist_t) );
     t->my_nk = my_nk;
     t->my_nk_off = my_nk_off;
     t->nk = nk;
@@ -148,32 +154,32 @@ tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
     t->rank = diverge_mpi_comm_rank();
     t->size = diverge_mpi_comm_size();
 
-    t->k_counts = calloc_print( t->size, sizeof(index_t) );
-    t->k_displs = calloc_print( t->size, sizeof(index_t) );
+    t->k_counts = calloc( t->size, sizeof(index_t) );
+    t->k_displs = calloc( t->size, sizeof(index_t) );
 
     t->k_counts[t->rank] = t->my_nk;
     t->k_displs[t->rank] = t->my_nk_off;
     diverge_mpi_allgather_index( MPI_IN_PLACE, t->k_counts, 1 );
     diverge_mpi_allgather_index( MPI_IN_PLACE, t->k_displs, 1 );
 
-    t->send_counts = calloc_print( t->size, sizeof(index_t) );
-    t->send_displs = calloc_print( t->size, sizeof(index_t) );
-    t->recv_counts = calloc_print( t->size, sizeof(index_t) );
+    t->send_counts = calloc( t->size, sizeof(index_t) );
+    t->send_displs = calloc( t->size, sizeof(index_t) );
+    t->recv_counts = calloc( t->size, sizeof(index_t) );
 
-    t->send_counts_cpy = calloc_print( t->size, sizeof(index_t) );
-    t->recv_counts_cpy = calloc_print( t->size, sizeof(index_t) );
-    t->send_displs_cpy = calloc_print( t->size, sizeof(index_t) );
-    t->recv_displs_cpy = calloc_print( t->size, sizeof(index_t) );
+    t->send_counts_cpy = calloc( t->size, sizeof(index_t) );
+    t->recv_counts_cpy = calloc( t->size, sizeof(index_t) );
+    t->send_displs_cpy = calloc( t->size, sizeof(index_t) );
+    t->recv_displs_cpy = calloc( t->size, sizeof(index_t) );
 
-    t->send_counts_packed = calloc_print( t->size, sizeof(index_t) );
-    t->recv_counts_packed = calloc_print( t->size, sizeof(index_t) );
-    t->send_displs_packed = calloc_print( t->size, sizeof(index_t) );
-    t->recv_displs_packed = calloc_print( t->size, sizeof(index_t) );
+    t->send_counts_packed = calloc( t->size, sizeof(index_t) );
+    t->recv_counts_packed = calloc( t->size, sizeof(index_t) );
+    t->send_displs_packed = calloc( t->size, sizeof(index_t) );
+    t->recv_displs_packed = calloc( t->size, sizeof(index_t) );
 
-    t->scpi = calloc_print( t->size, sizeof(int) );
-    t->sdpi = calloc_print( t->size, sizeof(int) );
-    t->rcpi = calloc_print( t->size, sizeof(int) );
-    t->rdpi = calloc_print( t->size, sizeof(int) );
+    t->scpi = calloc( t->size, sizeof(int) );
+    t->sdpi = calloc( t->size, sizeof(int) );
+    t->rcpi = calloc( t->size, sizeof(int) );
+    t->rdpi = calloc( t->size, sizeof(int) );
 
     t->first_pass = 1;
 
@@ -331,7 +337,7 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
 
     // realloc the array of touched indices. This should be a no-op after first
     // iteration.
-    t->touched_to_idx = realloc_print( t->touched_to_idx, sizeof(index_t)*t->n_touched );
+    t->touched_to_idx = calloc_print( t->n_touched, sizeof(index_t) );
 
     // save the touched indices
     t->n_touched = 0;
@@ -342,7 +348,7 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
     }
 
     // make some space. no-op after first iteration
-    t->send_pack = realloc_print( t->send_pack, sizeof(pack_t)*t->n_touched );
+    t->send_pack = calloc_print( t->n_touched, sizeof(pack_t) );
 
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t s=0; s<t->n_touched; ++s) {
@@ -383,7 +389,7 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
 
     if (*(t->p_recv_pack) == NULL) {
         *(t->p_n_recv_pack) = n_recv_pack;
-        *(t->p_recv_pack) = calloc_print( sizeof(pack_t), *(t->p_n_recv_pack) );
+        *(t->p_recv_pack) = calloc_print( *(t->p_n_recv_pack), sizeof(pack_t) );
         t->owns_recv_pack = 1;
     } else {
         *(t->p_n_recv_pack) = MAX( *(t->p_n_recv_pack), n_recv_pack );
