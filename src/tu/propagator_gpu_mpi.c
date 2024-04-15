@@ -40,7 +40,6 @@ static inline void align_pack_sizes( index_t* send_counts, index_t* recv_counts,
 struct tu_prop_gpu_mpi_dist_t {
 
     cbyte_t* touched;
-    cbyte_t* touched_ext;
 
     index_t n_touched;
     index_t* touched_to_idx;
@@ -59,8 +58,11 @@ struct tu_prop_gpu_mpi_dist_t {
     index_t* send_counts;
     index_t *send_displs;
 
-    pack_t* recv_pack;
     index_t* recv_counts;
+    int owns_recv_pack;
+
+    pack_t** p_recv_pack;
+    index_t* p_n_recv_pack;
 
     index_t *send_counts_packed, *send_displs_packed,
             *recv_counts_packed, *recv_displs_packed;
@@ -88,7 +90,6 @@ struct tu_prop_gpu_mpi_dist_t {
                     // communicator
 
     index_t n_send_pack;
-    index_t n_recv_pack;
 };
 
 static const char _t_descr[][256] = {
@@ -101,29 +102,12 @@ static const char _t_descr[][256] = {
 };
 
 void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
-    free( t->touched );
-    free( t->touched_ext );
-    free( t->touched_to_idx );
-
-    free( t->k_counts );
-    free( t->k_displs );
-
     free( t->send_pack );
-    free( t->send_counts );
-    free( t->send_displs );
-
-    free( t->recv_pack );
+    if (t->owns_recv_pack)
+        free( *(t->p_recv_pack) );
     free( t->recv_counts );
 
-    free( t->send_counts_cpy );
-    free( t->send_displs_cpy );
-    free( t->send_counts_packed );
-    free( t->send_displs_packed );
-
-    free( t->recv_counts_cpy );
     free( t->recv_displs_cpy );
-    free( t->recv_counts_packed );
-    free( t->recv_displs_packed );
 
     free( t->scpi );
     free( t->sdpi );
@@ -147,11 +131,12 @@ void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
 #endif
 
 cbyte_t* tu_prop_gpu_mpi_dist_cuda_kernel_bitary( tu_prop_gpu_mpi_dist_t* t ) {
-    return t->first_pass ? t->touched_ext : NULL;
+    return t->first_pass ? t->touched : NULL;
 }
 
 tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
-        index_t my_nk_off, index_t nk, index_t L_orbff_spin ) {
+        index_t my_nk_off, index_t nk, index_t L_orbff_spin,
+        pack_t** p_recv_pack, index_t* p_n_recv_pack ) {
     tu_prop_gpu_mpi_dist_t* t = calloc_print( 1, sizeof(tu_prop_gpu_mpi_dist_t) );
     t->my_nk = my_nk;
     t->my_nk_off = my_nk_off;
@@ -159,7 +144,6 @@ tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
     t->L_orbff_spin = L_orbff_spin;
     t->L_tot = t->L_orbff_spin * t->nk;
     t->touched = bitary_alloc( t->L_tot );
-    t->touched_ext = bitary_alloc( t->L_tot );
 
     t->rank = diverge_mpi_comm_rank();
     t->size = diverge_mpi_comm_size();
@@ -192,6 +176,9 @@ tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
     t->rdpi = calloc_print( t->size, sizeof(int) );
 
     t->first_pass = 1;
+
+    t->p_recv_pack = p_recv_pack;
+    t->p_n_recv_pack = p_n_recv_pack;
     return t;
 }
 
@@ -206,13 +193,32 @@ static void tu_prop_gpu_mpi_dist_comm_communicate( tu_prop_gpu_mpi_dist_t* t ) {
     double tick, tock;
     tick = diverge_mpi_wtime();
     diverge_mpi_alltoallv_bytes_packed( t->send_pack, t->scpi, t->sdpi,
-                                        t->recv_pack, t->rcpi, t->rdpi,
+                                        *(t->p_recv_pack), t->rcpi, t->rdpi,
                                         sizeof(pack_t) * PACK_MPI_MULTIPLIER );
     tock = diverge_mpi_wtime();
     t->t_comm_alltoallv += tock - tick;
 }
 
 static void tu_prop_gpu_mpi_dist_comm_writeout( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L ) {
+
+    pack_t* recv_pack = *(t->p_recv_pack);
+    memset( L_full_q, 0, sizeof(complex128_t) * t->nk * t->L_orbff_spin );
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (int r=0; r<t->size; ++r) {
+        for (index_t c=0; c<t->recv_counts[r]; ++c) {
+            index_t idx = t->recv_displs_cpy[r] + c;
+            assert( recv_pack[idx].dest_rank == t->rank );
+            index_t bq_idx = recv_pack[idx].dest;
+            index_t b = bq_idx / t->nk;
+            index_t qrel = (bq_idx % t->nk) - t->my_nk_off;
+            atomic_set_complex128_t( L + IDX2(b, qrel, t->my_nk), &recv_pack[idx].val );
+            /* atomic_set_complex128_t( L_full_q+recv_pack[idx].dest, &recv_pack[idx].val ); */
+        }
+    }
+    // TODO timing
+    return;
+
+    /*
     double tick, tock;
     tick = diverge_mpi_wtime();
     // write into L_full_q, but only those elements that we found
@@ -236,6 +242,7 @@ static void tu_prop_gpu_mpi_dist_comm_writeout( tu_prop_gpu_mpi_dist_t* t, compl
         L[IDX2(b,qr,t->my_nk)] = L_full_q[IDX2(b,qr+t->my_nk_off,t->nk)];
     tock = diverge_mpi_wtime();
     t->t_writeout_L += tock - tick;
+    */
 }
 
 static void tu_prop_gpu_mpi_dist_comm_make_send_pack( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q ) {
@@ -265,18 +272,13 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
         t->first_pass = 0;
 
         free_null( t->touched );
-        free_null( t->touched_ext );
         free_null( t->touched_to_idx );
 
         free_null( t->k_counts );
         free_null( t->k_displs );
 
-        // free_null( t->send_pack ); // needed for later use
         free_null( t->send_counts );
         free_null( t->send_displs );
-
-        // free_null( t->recv_pack ); // needed for later use
-        // free_null( t->recv_counts ); // needed for later use
 
         free_null( t->send_counts_cpy );
         free_null( t->send_displs_cpy );
@@ -284,15 +286,8 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
         free_null( t->send_displs_packed );
 
         free_null( t->recv_counts_cpy );
-        // free_null( t->recv_displs_cpy ); // needed for later use
         free_null( t->recv_counts_packed );
         free_null( t->recv_displs_packed );
-
-        // free_null( t->scpi ); // needed for later use
-        // free_null( t->sdpi ); // needed for later use
-        // free_null( t->rcpi ); // needed for later use
-        // free_null( t->rdpi ); // needed for later use
-
     } else {
         double tick, tock;
         tick = diverge_mpi_wtime();
@@ -318,13 +313,6 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
         uint64_t* L_full_q_uint = (uint64_t*)(L_full_q + i);
         if (L_full_q_uint[0] | L_full_q_uint[1]) {
             bitary_set(t->touched, i);
-        }
-    }
-    // make all indices that the CUDA kernel wrote into "touched"
-    if (t->touched_ext) {
-        #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (uindex_t i=0; i<bitary_nbytes(t->L_tot); ++i) {
-            t->touched[i] |= t->touched_ext[i];
         }
     }
 
@@ -391,8 +379,17 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
     }
     t->n_send_pack = (t->send_displs_cpy[t->size-1]+t->send_counts_cpy[t->size-1]);
     t->send_pack = realloc_print( t->send_pack, sizeof(pack_t) * t->n_send_pack );
-    t->n_recv_pack = (t->recv_displs_cpy[t->size-1]+t->recv_counts_cpy[t->size-1]);
-    t->recv_pack = realloc_print( t->recv_pack, sizeof(pack_t) * t->n_recv_pack );
+    index_t n_recv_pack = (t->recv_displs_cpy[t->size-1]+t->recv_counts_cpy[t->size-1]);
+
+    if (*(t->p_recv_pack) == NULL) {
+        *(t->p_n_recv_pack) = n_recv_pack;
+        *(t->p_recv_pack) = calloc_print( sizeof(pack_t), *(t->p_n_recv_pack) );
+        t->owns_recv_pack = 1;
+    } else {
+        *(t->p_n_recv_pack) = MAX( *(t->p_n_recv_pack), n_recv_pack );
+        *(t->p_recv_pack) = realloc_print( *(t->p_recv_pack), sizeof(pack_t) * (*(t->p_n_recv_pack)) );
+        t->owns_recv_pack = 0;
+    }
 
     // move the memory in send_pack to the right in order to pad accordingly. We
     // iterate in reverse and therefore don't need a copy. First need to

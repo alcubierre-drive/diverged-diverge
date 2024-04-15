@@ -181,6 +181,9 @@ private:
     vector<index_t> c2fmap_full;
     tu_prop_gpu_mpi_dist_t* gpu_mpi_dist_pp = NULL;
     tu_prop_gpu_mpi_dist_t* gpu_mpi_dist_ph = NULL;
+    // those are shared between the two pp/ph
+    pack_t* gpu_mpi_dist_recv_pack = NULL;
+    index_t gpu_mpi_dist_recv_pack_sz = 0;
 
     void allocate_GPU_memory();
     void swap_GF_cfrg();
