@@ -26,7 +26,7 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
                  model->nkf[0] * model->nkf[1] * model->nkf[2];
     info->symm = new symmstruct_t;
     info->use_reduced_loop = true;
-    info->use_cuda_mpi_loop = false;
+    info->use_cuda_mpi_loop = true;
     info->tu_selfenergy_flow = false;
     info->mpi_fft_chunksize = -1; // auto
     #if defined(USE_MPI) && defined(USE_MPI_FFTW)

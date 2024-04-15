@@ -118,19 +118,23 @@ void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
 }
 
 #ifdef TU_GPU_MPI_ALLOC_PRINT
-static inline void* calloc_print( size_t cnt, size_t sz ) {
+static inline void* calloc_print_( size_t cnt, size_t sz, int line ) {
     void* ptr = calloc( cnt, sz );
     int scc = ptr != NULL;
-    mpi_vrb_printf( "calloc %.2fGB (%s)\n", (double)sz*cnt / (1024.*1024.*1024), scc ? "success!!!" : "no success" );
+    mpi_vrb_printf_all( "rank %i: calloc@%03i %.2fGB (%s)\n", diverge_mpi_comm_rank(), line,
+            (double)sz*cnt / (1024.*1024.*1024), scc ? "success!!!" : "no success" );
     return ptr;
 }
 
-static inline void* realloc_print( void* ptr, size_t sz ) {
+static inline void* realloc_print_( void* ptr, size_t sz, int line ) {
     ptr = realloc( ptr, sz );
     int scc = ptr != NULL;
-    mpi_vrb_printf( "realloc %.2fGB (%s)\n", (double)sz / (1024.*1024.*1024), scc ? "success!!!" : "no success" );
+    mpi_vrb_printf_all( "rank %i:realloc@%03i %.2fGB (%s)\n", diverge_mpi_comm_rank(), line,
+            (double)sz / (1024.*1024.*1024), scc ? "success!!!" : "no success" );
     return ptr;
 }
+#define calloc_print( cnt, sz ) calloc_print_( cnt, sz, __LINE__ )
+#define realloc_print( ptr, sz ) realloc_print_( ptr, sz, __LINE__ )
 #else
 #define calloc_print calloc
 #define realloc_print realloc
@@ -206,7 +210,9 @@ static void tu_prop_gpu_mpi_dist_comm_communicate( tu_prop_gpu_mpi_dist_t* t ) {
 }
 
 static void tu_prop_gpu_mpi_dist_comm_writeout( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
+    double tick, tock;
 
+    tick = diverge_mpi_wtime();
     pack_t* recv_pack = *(t->p_recv_pack);
     memset( L, 0, sizeof(complex128_t) * t->nk * t->L_orbff_spin );
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -218,11 +224,10 @@ static void tu_prop_gpu_mpi_dist_comm_writeout( tu_prop_gpu_mpi_dist_t* t, compl
             index_t b = bq_idx / t->nk;
             index_t qrel = (bq_idx % t->nk) - t->my_nk_off;
             atomic_set_complex128_t( L + IDX2(b, qrel, t->my_nk), &recv_pack[idx].val );
-            /* atomic_set_complex128_t( L_full_q+recv_pack[idx].dest, &recv_pack[idx].val ); */
         }
     }
-    // TODO timing
-    return;
+    tock = diverge_mpi_wtime();
+    t->t_writeout_L += tock - tick;
 
     /*
     double tick, tock;

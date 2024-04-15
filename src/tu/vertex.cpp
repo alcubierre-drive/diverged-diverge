@@ -38,19 +38,21 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
     if(use_self) {
         self_en = (complex128_t*)calloc(selfenergy_size, sizeof(complex128_t));
         memsize += 2*selfenergy_size;
-        index_t n = nk;
-        bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
-        product_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
+        index_t nk_local = nk;
+        index_t bubble_nk_local = (tu_data->use_cuda_mpi_loop && tu_data->use_reduced_loop) ? nk : nk_local;
+        bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*bubble_nk_local*POW4(n_spin), sizeof(complex128_t));
+        product_helper = (complex128_t*)calloc(POW2(n_orbff)*nk_local*POW4(n_spin), sizeof(complex128_t));
         projection_helper = (complex128_t*)calloc(POW2(n_orbff)*my_nk*POW4(n_spin), sizeof(complex128_t));
-        memsize += 2*POW2(n_orbff)*n*POW4(n_spin);
+        memsize += 2*POW2(n_orbff)*nk_local*POW4(n_spin);
         memsize += POW2(n_orbff)*my_nk*POW4(n_spin);
     }else{
-        index_t n = my_nk > symm->my_nk_in_bz ? my_nk : symm->my_nk_in_bz;
-        bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
-        memsize += POW2(n_orbff)*n*POW4(n_spin);
-        n = my_nk > proj->get_nr() ? my_nk : proj->get_nr();
-        product_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
-        memsize += POW2(n_orbff)*n*POW4(n_spin);
+        index_t nk_local = my_nk > symm->my_nk_in_bz ? my_nk : symm->my_nk_in_bz;
+        index_t bubble_nk_local = (tu_data->use_cuda_mpi_loop && tu_data->use_reduced_loop) ? nk : nk_local;
+        bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*bubble_nk_local*POW4(n_spin), sizeof(complex128_t));
+        memsize += POW2(n_orbff)*nk_local*POW4(n_spin);
+        nk_local = my_nk > proj->get_nr() ? my_nk : proj->get_nr();
+        product_helper = (complex128_t*)calloc(POW2(n_orbff)*nk_local*POW4(n_spin), sizeof(complex128_t));
+        memsize += POW2(n_orbff)*nk_local*POW4(n_spin);
         projection_helper = (complex128_t*)calloc(POW2(n_orbff)*my_nk*POW4(n_spin), sizeof(complex128_t));
         memsize += POW2(n_orbff)*my_nk*POW4(n_spin);
     }
