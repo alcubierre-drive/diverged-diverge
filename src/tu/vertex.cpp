@@ -365,7 +365,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
         cuda_prop_descr_t* cloop = &(loop->cuda_descr);
 
-        index_t my_nk_tot = (tu_data->use_cuda_mpi_loop) ? nk : my_nk;
+        index_t my_nk_tot = (tu_data->use_reduced_loop && tu_data->use_cuda_mpi_loop) ? nk : my_nk;
         prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R
         prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk_tot); // c_to_f_q
         prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev

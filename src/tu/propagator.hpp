@@ -172,7 +172,7 @@ private:
     complex128_t* cFRG_GF_fft_conj_plus = nullptr;
 
     // GPU MPI algorithm (very memory intensive)
-    complex128_t* L_full_q = nullptr;
+    bool has_memory_resized = false;
     int32_t tasks_prop[32];
     int32_t off_prop[32];
     int32_t tasks_prop_mpi[32];

@@ -199,10 +199,10 @@ static void tu_prop_gpu_mpi_dist_comm_communicate( tu_prop_gpu_mpi_dist_t* t ) {
     t->t_comm_alltoallv += tock - tick;
 }
 
-static void tu_prop_gpu_mpi_dist_comm_writeout( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L ) {
+static void tu_prop_gpu_mpi_dist_comm_writeout( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
 
     pack_t* recv_pack = *(t->p_recv_pack);
-    memset( L_full_q, 0, sizeof(complex128_t) * t->nk * t->L_orbff_spin );
+    memset( L, 0, sizeof(complex128_t) * t->nk * t->L_orbff_spin );
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (int r=0; r<t->size; ++r) {
         for (index_t c=0; c<t->recv_counts[r]; ++c) {
@@ -245,14 +245,14 @@ static void tu_prop_gpu_mpi_dist_comm_writeout( tu_prop_gpu_mpi_dist_t* t, compl
     */
 }
 
-static void tu_prop_gpu_mpi_dist_comm_make_send_pack( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q ) {
+static void tu_prop_gpu_mpi_dist_comm_make_send_pack( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
     double tick, tock;
     tick = diverge_mpi_wtime();
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t s=0; s<t->n_send_pack; ++s) {
         if (t->send_pack[s].dest != -1) {
             assert( t->send_pack[s].orig_rank == t->rank );
-            t->send_pack[s].val = L_full_q[t->send_pack[s].dest];
+            t->send_pack[s].val = L[t->send_pack[s].dest];
         }
     }
     tock = diverge_mpi_wtime();
@@ -264,11 +264,11 @@ static void tu_prop_gpu_mpi_dist_comm_make_send_pack( tu_prop_gpu_mpi_dist_t* t,
     ptr = NULL; \
 }
 
-static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L );
+static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, complex128_t* L );
 
-void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L ) {
+void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
     if (t->first_pass) {
-        tu_prop_gpu_mpi_dist_comm_first_pass( t, L_full_q, L );
+        tu_prop_gpu_mpi_dist_comm_first_pass( t, L );
         t->first_pass = 0;
 
         free_null( t->touched );
@@ -291,18 +291,18 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_
     } else {
         double tick, tock;
         tick = diverge_mpi_wtime();
-        // L_full_q -> send_pack, requires *only* send_pack
-        tu_prop_gpu_mpi_dist_comm_make_send_pack( t, L_full_q );
+        // L -> send_pack, requires *only* send_pack
+        tu_prop_gpu_mpi_dist_comm_make_send_pack( t, L );
         // send_pack -> recv_pack, requires send_pack, recv_pack, scpi, sdpi, rcpi, rdpi
         tu_prop_gpu_mpi_dist_comm_communicate( t );
-        // recv_pack -> L_full_q,L, requires *only* recv_pack
-        tu_prop_gpu_mpi_dist_comm_writeout( t, L_full_q, L );
+        // recv_pack -> L, requires *only* recv_pack
+        tu_prop_gpu_mpi_dist_comm_writeout( t, L );
         tock = diverge_mpi_wtime();
         t->t_total += tock - tick;
     }
 }
 
-static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, complex128_t* L_full_q, complex128_t* L ) {
+static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
 
     double tick, tock;
 
@@ -310,8 +310,8 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
     // find the touched indices
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<t->L_tot; ++i) {
-        uint64_t* L_full_q_uint = (uint64_t*)(L_full_q + i);
-        if (L_full_q_uint[0] | L_full_q_uint[1]) {
+        uint64_t* L_uint = (uint64_t*)(L + i);
+        if (L_uint[0] | L_uint[1]) {
             bitary_set(t->touched, i);
         }
     }
@@ -351,7 +351,7 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
             .dest = i,
             .orig_rank = t->rank,
             .dest_rank = find_rank( i % t->nk, t->k_displs, t->k_counts, t->size ),
-            .val = L_full_q[i],
+            .val = L[i],
         };
     }
 
@@ -421,7 +421,7 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
     }
     tu_prop_gpu_mpi_dist_comm_communicate( t );
 
-    tu_prop_gpu_mpi_dist_comm_writeout( t, L_full_q, L );
+    tu_prop_gpu_mpi_dist_comm_writeout( t, L );
 
     tock = diverge_mpi_wtime();
     t->t_prepare += tock - tick;
