@@ -118,7 +118,12 @@ void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
 }
 
 #ifdef TU_GPU_MPI_ALLOC_PRINT
-static inline void* calloc_print_( size_t cnt, size_t sz, int line ) {
+#ifndef NDEBUG
+#define EXPORT_TU_GPU_MPI_ALLOC_PRINT 
+#else
+#define EXPORT_TU_GPU_MPI_ALLOC_PRINT static inline
+#endif
+EXPORT_TU_GPU_MPI_ALLOC_PRINT void* calloc_print_( size_t cnt, size_t sz, int line ) {
     void* ptr = calloc( cnt, sz );
     int scc = ptr != NULL;
     mpi_vrb_printf_all( "rank %i: calloc@%03i %.2fGB (%s)\n", diverge_mpi_comm_rank(), line,
@@ -126,7 +131,7 @@ static inline void* calloc_print_( size_t cnt, size_t sz, int line ) {
     return ptr;
 }
 
-static inline void* realloc_print_( void* ptr, size_t sz, int line ) {
+EXPORT_TU_GPU_MPI_ALLOC_PRINT inline void* realloc_print_( void* ptr, size_t sz, int line ) {
     ptr = realloc( ptr, sz );
     int scc = ptr != NULL;
     mpi_vrb_printf_all( "rank %i:realloc@%03i %.2fGB (%s)\n", diverge_mpi_comm_rank(), line,
