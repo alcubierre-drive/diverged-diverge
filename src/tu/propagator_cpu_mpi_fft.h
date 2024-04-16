@@ -25,6 +25,8 @@ index_t fftw_mpi_plan_get_local_0_start( fftw_mpi_plan_t* p );
 complex128_t* fftw_mpi_plan_get_in( fftw_mpi_plan_t* p );
 complex128_t* fftw_mpi_plan_get_out( fftw_mpi_plan_t* p );
 
+extern unsigned fftw_mpi_plan_patience;
+
 #ifdef __cplusplus
 }
 #endif

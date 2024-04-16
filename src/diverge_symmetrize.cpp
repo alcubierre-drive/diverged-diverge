@@ -110,7 +110,9 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     // TODO the symmetrizer fails if multiple orbitals are on the same position,
     // but the position is shifted by a lattice vector (i.e. +A1/2 and -A1/2)
 
-    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+    #ifndef ASAN_COMPILATION
+    _Pragma("omp parallel for collapse(2) num_threads(diverge_omp_num_threads())")
+    #endif
     for(index_t s = 0; s < n_sym; ++s)
     for(index_t o1 = 0; o1 < n_orb; ++o1) {
         Map<CMat3d> sym_rs(rs_symmetries+s*9);

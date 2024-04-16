@@ -272,7 +272,7 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
     const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
-    const index_t n_unique_pairs) {
+    const index_t n_unique_pairs, cbyte_t* L_touched_map ) {
     cuda_setup();
     memset(L,0,POW4(n_spin)*POW2(n_orbff)*my_nk*sizeof(complex128_t));
 
@@ -361,6 +361,11 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                                         +POW2(n_spin)*(mo3+n_orbff*(s3 + s2*n_spin)));
                 cudaMemcpyAsync((cuDoubleComplex*)(L+loop_idx*my_nk),cp->buf_res[dev], my_nk*sizeof(cuDoubleComplex),
                                     cudaMemcpyDeviceToHost,down);
+                if (L_touched_map) {
+                    for (index_t k=0; k<my_nk; ++k) {
+                        bitary_set( L_touched_map, loop_idx*my_nk + k );
+                    }
+                }
 
             }
             cudaDeviceSynchronize();
@@ -378,7 +383,7 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
     const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
-    const index_t n_unique_pairs) {
+    const index_t n_unique_pairs, cbyte_t* L_touched_map ) {
     cuda_setup();
     memset(L,0,POW4(n_spin)*POW2(n_orbff)*my_nk*sizeof(complex128_t));
 
@@ -468,6 +473,11 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                                         +POW2(n_spin)*(mo3+n_orbff*(s3 + s4*n_spin)));
                 cudaMemcpyAsync((cuDoubleComplex*)(L+loop_idx*my_nk),cp->buf_res[dev], my_nk*sizeof(cuDoubleComplex),
                                     cudaMemcpyDeviceToHost,down);
+                if (L_touched_map) {
+                    for (index_t k=0; k<my_nk; ++k) {
+                        bitary_set( L_touched_map, loop_idx*my_nk + k );
+                    }
+                }
             }
             cudaDeviceSynchronize();
         },dev);

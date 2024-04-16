@@ -38,19 +38,21 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
     if(use_self) {
         self_en = (complex128_t*)calloc(selfenergy_size, sizeof(complex128_t));
         memsize += 2*selfenergy_size;
-        index_t n = nk;
-        bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
-        product_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
+        index_t nk_local = nk;
+        index_t bubble_nk_local = (tu_data->use_cuda_mpi_loop && tu_data->use_reduced_loop) ? nk : nk_local;
+        bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*bubble_nk_local*POW4(n_spin), sizeof(complex128_t));
+        product_helper = (complex128_t*)calloc(POW2(n_orbff)*nk_local*POW4(n_spin), sizeof(complex128_t));
         projection_helper = (complex128_t*)calloc(POW2(n_orbff)*my_nk*POW4(n_spin), sizeof(complex128_t));
-        memsize += 2*POW2(n_orbff)*n*POW4(n_spin);
+        memsize += 2*POW2(n_orbff)*nk_local*POW4(n_spin);
         memsize += POW2(n_orbff)*my_nk*POW4(n_spin);
     }else{
-        index_t n = my_nk > symm->my_nk_in_bz ? my_nk : symm->my_nk_in_bz;
-        bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
-        memsize += POW2(n_orbff)*n*POW4(n_spin);
-        n = my_nk > proj->get_nr() ? my_nk : proj->get_nr();
-        product_helper = (complex128_t*)calloc(POW2(n_orbff)*n*POW4(n_spin), sizeof(complex128_t));
-        memsize += POW2(n_orbff)*n*POW4(n_spin);
+        index_t nk_local = my_nk > symm->my_nk_in_bz ? my_nk : symm->my_nk_in_bz;
+        index_t bubble_nk_local = (tu_data->use_cuda_mpi_loop && tu_data->use_reduced_loop) ? nk : nk_local;
+        bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*bubble_nk_local*POW4(n_spin), sizeof(complex128_t));
+        memsize += POW2(n_orbff)*nk_local*POW4(n_spin);
+        nk_local = my_nk > proj->get_nr() ? my_nk : proj->get_nr();
+        product_helper = (complex128_t*)calloc(POW2(n_orbff)*nk_local*POW4(n_spin), sizeof(complex128_t));
+        memsize += POW2(n_orbff)*nk_local*POW4(n_spin);
         projection_helper = (complex128_t*)calloc(POW2(n_orbff)*my_nk*POW4(n_spin), sizeof(complex128_t));
         memsize += POW2(n_orbff)*my_nk*POW4(n_spin);
     }
@@ -365,14 +367,14 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
         cuda_prop_descr_t* cloop = &(loop->cuda_descr);
 
-
+        index_t my_nk_tot = (tu_data->use_reduced_loop && tu_data->use_cuda_mpi_loop) ? nk : my_nk;
         prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R
-        prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk); // c_to_f_q
+        prop_memsize[1] = ensure_align(sizeof(index_t)*my_nk_tot); // c_to_f_q
         prop_memsize[2] = ensure_align(sizeof(index_t)*3); // nkdev
         prop_memsize[3] = ensure_align(_GF_size); // GF_fft
         prop_memsize[4] = ensure_align(_GF_size); // GF_fft_conj
         prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*nktot); // buf_GG
-        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*my_nk); // buf_res 0
+        prop_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*my_nk_tot); // buf_res 0
         prop_memsize[7] = ensure_align(sizeof(cuDoubleComplex)*loop->cuda_descr.worksize_fft[i]); // fft_workspace
         index_t all_propmem = 0;
         for (index_t mem = 0; mem < 8; ++mem) {

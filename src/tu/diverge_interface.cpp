@@ -26,6 +26,7 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
                  model->nkf[0] * model->nkf[1] * model->nkf[2];
     info->symm = new symmstruct_t;
     info->use_reduced_loop = true;
+    info->use_cuda_mpi_loop = false;
     info->tu_selfenergy_flow = false;
     info->mpi_fft_chunksize = -1; // auto
     #if defined(USE_MPI) && defined(USE_MPI_FFTW)
@@ -292,6 +293,13 @@ void init_ff_struct(const double max_dist, diverge_model_t* model) {
 
 void init_doping_per_UC(diverge_model_t* model) {
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
+
+    if (model->internals->E == NULL) {
+        mpi_wrn_printf( "doping per UC cannot be initialized, setting to 0.5\n" );
+        tu_data->doping_per_UC = 0.5;
+        return;
+    }
+
     tu_data->doping_per_UC = 0.0;
     double helper = 0.;
     #pragma omp parallel for collapse(2) reduction(+:helper) num_threads(diverge_omp_num_threads())

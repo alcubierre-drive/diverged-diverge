@@ -12,6 +12,7 @@
 #include "misc/kmeans_lloyd.h"
 #include "misc/shared_mem.h"
 #include "tu/propagator_cpu_mpi.h"
+#include "tu/propagator_cpu_mpi_fft.h"
 
 #include <string>
 #include <set>
@@ -60,6 +61,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         TU_INTERNALS->percent_mem_GPU_blocked = atof(val);
         if(TU_INTERNALS->percent_mem_GPU_blocked > 1.0)
             TU_INTERNALS->percent_mem_GPU_blocked = 0.9;
+    }
+    CHECKKEY("tu_use_cuda_mpi_loop") {
+        TU_INTERNALS->use_cuda_mpi_loop = true;
     }
     CHECKKEY("tu_selfenergy_flow") {
         TU_INTERNALS->tu_selfenergy_flow = (bool)atoi(val);
@@ -140,43 +144,49 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         dkm_set_use_random_seed( atoi(val) );
     }
     CHECKKEY("model_free_hamiltonian") {
-        shared_free(m->internals->ham);
-        m->internals->ham = NULL;
+        shared_free(INTERNALS->ham);
+        INTERNALS->ham = NULL;
+        if (!strcmp(val, "eigen")) {
+            shared_free(INTERNALS->E);
+            INTERNALS->E = NULL;
+            shared_free(INTERNALS->U);
+            INTERNALS->U = NULL;
+        }
     }
     CHECKKEY("model_shared_gf") {
         if (m->gfill != &diverge_greensfunc_generator_default) {
             mpi_wrn_printf( "shared GF buffer for custom GF generator must be taken care of manually\n" );
         }
         m->gfill = &diverge_shared_gf;
-        free(m->internals->greens);
-        m->internals->greens = (gf_complex_t*)shared_malloc(sizeof(gf_complex_t) *
+        free(INTERNALS->greens);
+        INTERNALS->greens = (gf_complex_t*)shared_malloc(sizeof(gf_complex_t) *
                 kdimtot(m->nk, m->nkf) * POW2(m->n_orb*m->n_spin) * 2);
-        m->internals->greens_shared = 1;
+        INTERNALS->greens_shared = 1;
     }
     CHECKKEY("model_internals_eigensolve_ignore") {
-        m->internals->ignore_eigensolver_in_common = 1;
+        INTERNALS->ignore_eigensolver_in_common = 1;
     }
     CHECKKEY("model_internals_eigensolve_svd_algo") {
-        m->internals->use_batched_svd_algo_in_common = 1;
+        INTERNALS->use_batched_svd_algo_in_common = 1;
         if (atoi(val) == -1)
-            m->internals->use_batched_svd_algo_in_common = -1;
+            INTERNALS->use_batched_svd_algo_in_common = -1;
     }
 
-    CHECKKEY("propagator_cpu_mpi_planning_patience") {
+    CHECKKEY("fftw_mpi_plan_patience") {
+        // either set with 'G' (GX) to address fftw_mpi_plan_patience (for
+        // GPU/MPI) or without (X) to address
+        // propagator_cpu_mpi_planning_patience (for MPI)
+        unsigned* addr = &propagator_cpu_mpi_planning_patience;
+        if (strlen(val) > 0) {
+            if (toupper(val[0]) == 'G') addr = &fftw_mpi_plan_patience;
+            val++;
+        }
         switch (atoi(val)) {
-            case 0:
-                propagator_cpu_mpi_planning_patience = FFTW_ESTIMATE;
-                break;
-            case 2:
-                propagator_cpu_mpi_planning_patience = FFTW_PATIENT;
-                break;
-            case 3:
-                propagator_cpu_mpi_planning_patience = FFTW_EXHAUSTIVE;
-                break;
-            case 1:
-            default:
-                propagator_cpu_mpi_planning_patience = FFTW_MEASURE;
-                break;
+            case 0: *addr = FFTW_ESTIMATE; break;
+            case 1: *addr = FFTW_MEASURE; break;
+            case 2: *addr = FFTW_PATIENT; break;
+            case 3: *addr = FFTW_EXHAUSTIVE; break;
+            default: break;
         }
     }
 

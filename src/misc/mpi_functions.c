@@ -9,10 +9,14 @@ static MPI_Comm diverge_mpi_comm = NULL;
 
 index_t* diverge_mpi_distribute( index_t sz ) {
     int nranks = diverge_mpi_comm_size();
-    index_t* howmany = (index_t*)calloc( nranks, sizeof(index_t) );
-    for (index_t s=0; s<sz; ++s) {
+    index_t* howmany = (index_t*)calloc( 2*nranks, sizeof(index_t) );
+    for (index_t s=0; s<sz; ++s)
         howmany[s%nranks]++;
-    }
+
+    index_t* offsets = howmany + nranks;
+    for (int r=1; r<nranks; ++r)
+        offsets[r] = offsets[r-1] + howmany[r-1];
+
     return howmany;
 }
 
@@ -134,6 +138,11 @@ void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num ) {
     MPI_Allreduce( MPI_IN_PLACE, sendrecvbuf, num, MPI_C_DOUBLE_COMPLEX, MPI_SUM, diverge_mpi_comm);
 }
 
+void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num ) {
+    MPICHK();
+    MPI_Allreduce( MPI_IN_PLACE, sendrecvbuf, sizeof(complex128_t)*num, MPI_BYTE, MPI_BOR, diverge_mpi_comm );
+}
+
 void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num ) {
     MPICHK();
     MPI_Allgather( sendbuf, num, MPI_INT, recvbuf, num, MPI_INT, diverge_mpi_comm );
@@ -142,6 +151,11 @@ void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num ) {
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num ) {
     MPICHK();
     MPI_Allgather( sendbuf, num, MPI_LONG_LONG, recvbuf, num, MPI_LONG_LONG, diverge_mpi_comm );
+}
+
+void diverge_mpi_allgather_index_inplace( void* sendrecvbuf, int num ) {
+    MPICHK();
+    MPI_Allgather( MPI_IN_PLACE, 0, MPI_LONG_LONG, sendrecvbuf, num, MPI_LONG_LONG, diverge_mpi_comm );
 }
 
 void diverge_mpi_allgather_double( const void* sendbuf, void* recvbuf, int num ) {
@@ -241,6 +255,11 @@ void diverge_mpi_close_file(void* file) {
     free( file );
 }
 
+void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count ) {
+    MPICHK();
+    MPI_Alltoall( send, count, MPI_LONG_LONG, recv, count, MPI_LONG_LONG, diverge_mpi_comm );
+}
+
 void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts_, const index_t* senddispls_,
                                         void* recv, const index_t* recvcounts_, const index_t* recvdispls_,
                                         index_t numbytes ) {
@@ -262,6 +281,16 @@ void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts_, 
     free( senddispls );
     free( recvcounts );
     free( recvdispls );
+}
+
+void diverge_mpi_alltoallv_bytes_packed( const void* s, const int* sc, const int* sd,
+                                               void* r, const int* rc, const int* rd,
+                                               index_t numbytes ) {
+    MPICHK();
+    MPI_Datatype dt_bytes;
+    MPI_Type_contiguous(numbytes, MPI_BYTE, &dt_bytes);
+    MPI_Type_commit(&dt_bytes);
+    MPI_Alltoallv( s, sc, sd, dt_bytes, r, rc, rd, dt_bytes, diverge_mpi_comm );
 }
 
 void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcounts, const int* senddispls,
@@ -355,13 +384,21 @@ void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int 
 }
 
 void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num ) {
-    (void)sendrecvbuf; (void) num;}
+    (void)sendrecvbuf; (void) num;
+}
+
+void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num ) {
+    (void)sendrecvbuf; (void) num;
+}
 
 void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num ) {
     memcpy( recvbuf, sendbuf, sizeof(int)*num );
 }
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num ) {
     memcpy( recvbuf, sendbuf, sizeof(index_t)*num );
+}
+void diverge_mpi_allgather_index_inplace( void* sendrecvbuf, int num ) {
+    (void)sendrecvbuf; (void)num;
 }
 void diverge_mpi_allgather_double( const void* sendbuf, void* recvbuf, int num ) {
     memcpy( recvbuf, sendbuf, sizeof(double)*num );
@@ -440,6 +477,10 @@ void diverge_mpi_close_file(void* file) {
     fclose((FILE*)file);
 }
 
+void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count ) {
+    memcpy( recv, send, sizeof(index_t) * count );
+}
+
 void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts, const index_t* senddispls,
                                         void* recv, const index_t* recvcounts, const index_t* recvdispls,
                                         index_t numbytes ) {
@@ -448,6 +489,13 @@ void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts, c
     memcpy( (char*)recv + recvdispls[0] * numbytes,
             (char*)send + senddispls[0] * numbytes,
             sendcounts[0] * numbytes );
+}
+void diverge_mpi_alltoallv_bytes_packed( const void* s, const int* sc, const int* sd,
+                                               void* r, const int* rc, const int* rd,
+                                               index_t numbytes ) {
+    assert( sc[0] == rc[0] );
+    (void)rc;
+    memcpy( (char*)r + numbytes * rd[0], (char*)s + numbytes * sd[0], numbytes * sc[0] );
 }
 
 void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcounts, const int* senddispls,

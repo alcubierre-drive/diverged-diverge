@@ -12,6 +12,9 @@
 #include <thread>
 #include "propagator_cpu_mpi.h"
 #include "propagator_cpu_mpi_fft.h"
+#include "propagator_gpu_mpi.h"
+
+#include "../misc/bitary.h"
 
 inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
@@ -43,7 +46,7 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* cons
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
     const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
-    const index_t n_unique_pairs);
+    const index_t n_unique_pairs, cbyte_t* L_touched_map );
 void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* const L,
     const complex128_t* const GF, const complex128_t* const GFconj,
     const index_t n_orb,
@@ -51,7 +54,7 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* cons
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
     const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
-    const index_t n_unique_pairs);
+    const index_t n_unique_pairs, cbyte_t* L_touched_map );
 
 class tu_loop_t {
 public:
@@ -79,6 +82,9 @@ public:
     void S_pp_loop_static_simple_gpu(complex128_t* L);
     void S_ph_loop_static_red_gpu(complex128_t* L);
     void S_pp_loop_static_red_gpu(complex128_t* L);
+
+    // not quite tested...
+    void S_loop_static_red_gpu_mpi( complex128_t* L, bool pp );
 
     void merge_gpu_cpu_loop(complex128_t* L, complex128_t* tmpgpu) const;
 
@@ -164,6 +170,21 @@ private:
     gf_complex_t* gf_buf_cfrg = nullptr;
     complex128_t* cFRG_GF_fft_plus = nullptr;
     complex128_t* cFRG_GF_fft_conj_plus = nullptr;
+
+    // GPU MPI algorithm (very memory intensive)
+    bool has_memory_resized = false;
+    int32_t tasks_prop[32];
+    int32_t off_prop[32];
+    int32_t tasks_prop_mpi[32];
+    int32_t off_prop_mpi[32];
+    bool has_tasks_off_saved = false;
+    vector<index_t> c2fmap_full;
+    tu_prop_gpu_mpi_dist_t* gpu_mpi_dist_pp = NULL;
+    tu_prop_gpu_mpi_dist_t* gpu_mpi_dist_ph = NULL;
+    // those are shared between the two pp/ph
+    pack_t* gpu_mpi_dist_recv_pack = NULL;
+    index_t gpu_mpi_dist_recv_pack_sz = 0;
+
     void allocate_GPU_memory();
     void swap_GF_cfrg();
 

@@ -40,7 +40,11 @@ double diverge_mpi_wtime( void );
 /** get global MPI communicator */
 MPI_Comm diverge_mpi_get_comm( void );
 
-/** returns array of length :c:func:`diverge_mpi_comm_size` that must be freed manually */
+/**
+ * returns array of length two times :c:func:`diverge_mpi_comm_size` that must
+ * be freed manually. First half is the count, second the displ. second half can
+ * be safely ignored.
+ */
 index_t* diverge_mpi_distribute( index_t sz );
 
 /**
@@ -66,10 +70,12 @@ void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int n
 
 void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num );
+void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num );
 
 void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num );
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allgather_double( const void* sendbuf, void* recvbuf, int num );
+void diverge_mpi_allgather_index_inplace( void* sendrecvbuf, int num );
 
 void diverge_mpi_send_double( void* data, int num, int destination, int tag );
 void diverge_mpi_recv_double( void* data, int num, int source, int tag );
@@ -84,9 +90,20 @@ index_t diverge_mpi_write_byte_to_file_master( void* file, const void* data, ind
 void* diverge_mpi_open_file(const char* fname);
 void diverge_mpi_close_file(void* file);
 
+void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count );
 void diverge_mpi_alltoallv_bytes( const void* send, const index_t* sendcounts, const index_t* senddispls,
                                         void* recv, const index_t* recvcounts, const index_t* recvdispls,
                                         index_t numbytes );
+/**
+ * this version of alltoallv requires some explanation: since MPI typically
+ * only knows 32bit integers for any count/displ variables, we can trick it into
+ * operation on larger arrays by making packed datatypes. This is exactly what
+ * this function is here for. Note that the other version of alltoallv
+ * (undocumented) is restricted to 32bit bytes of communication.
+ */
+void diverge_mpi_alltoallv_bytes_packed( const void* s, const int* sc, const int* sd,
+                                               void* r, const int* rc, const int* rd,
+                                               index_t numbytes );
 void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcounts, const int* senddispls,
                                           complex128_t* recv, const int* recvcounts, const int* recvdispls );
 
