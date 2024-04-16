@@ -99,7 +99,7 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
     if(!D_flow){free(Dch); Dch = nullptr; memsize -= 2*full_vert_size;}
     
     mpi_vrb_printf("TU euler requires %.1f GB\n", memsize * sizeof(complex128_t) / POW3(1024.))
-    mpi_vrb_printf("TU vertex size: %.1f GB\n", (double)memsize/ POW3(1024.));
+    mpi_vrb_printf("TU vertex size: %.1f GB\n",  (double)full_vert_size *sizeof(complex128_t) / POW3(1024.));
 }
 
 void Vertex::init_U(bool enforce_exchange) {
@@ -380,7 +380,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         }
 
         if(all_propmem > (index_t)(available_memory[i])) {
-            mpi_vrb_printf("Fallback to shuffeling algorithm\n");
+            mpi_vrb_printf("Fallback to shuffeling algorithm \n");
             prop_memsize[3] = ensure_align(sizeof(cuDoubleComplex)*nktot*2); // GF_fft
             prop_memsize[4] = ensure_align(sizeof(cuDoubleComplex)*nktot*2); // GF_fft_conj
             cloop->prop_preload_full_gf = false;
