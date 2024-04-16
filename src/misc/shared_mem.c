@@ -337,6 +337,10 @@ typedef struct {
     int rank, size;
     MPI_Comm comm;
 
+#ifdef SHARED_MEM_POSIX_IMPL
+    char name[256];
+#endif
+
     UT_hash_handle hh;
 } shmem_t;
 
@@ -446,27 +450,24 @@ static shmem_t* shmem_alloc( shmem_pool_t* p, size_t sz ) {
 
 #else // SHARED_MEM_POSIX_IMPL
 
-    char name[256] = {0};
     m->fd = -1;
     if (p->shrank == 0) {
-        shmem_alloc_name( name, m->sz );
-        errors += ((m->fd = shm_open( name, O_RDWR|O_CREAT|O_EXCL|O_SYNC, 0777 )) == -1);
+        shmem_alloc_name( m->name, m->sz );
+        errors += ((m->fd = shm_open( m->name, O_RDWR|O_CREAT|O_EXCL|O_SYNC, 0777 )) == -1);
         errors += (ftruncate(m->fd, m->sz) == -1);
     }
-    MPICALL(Bcast, name, sizeof(name), MPI_BYTE, 0, p->shcomm);
+    MPICALL(Bcast, m->name, sizeof(m->name), MPI_BYTE, 0, p->shcomm);
 
     MPICALL(Reduce, p->rank == 0 ? MPI_IN_PLACE : &errors, &errors, 1, MPI_INT, MPI_SUM, 0, p->comm);
     if (errors)
-        mpi_err_printf( "could not open/truncate shm file %s\n", name );
+        mpi_err_printf( "could not open/truncate shm file %s\n", m->name );
 
     errors = 0;
     if (p->shrank != 0)
-        errors += ((m->fd = shm_open( name, O_RDWR|O_SYNC, 0777 )) == -1);
+        errors += ((m->fd = shm_open( m->name, O_RDWR|O_SYNC, 0777 )) == -1);
 
     errors += ((m->ptr = mmap( NULL, m->sz, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|MAP_SYNC, m->fd, 0 )) == (void*)-1);
-    errors += ((close( m->fd) == -1));
-    if (m->rank == 0)
-        errors += (shm_unlink( name ) == -1);
+    errors += ((close( m->fd ) == -1));
 
     MPICALL(Reduce, p->rank == 0 ? MPI_IN_PLACE : &errors, &errors, 1, MPI_INT, MPI_SUM, 0, p->comm);
     if (errors)
@@ -498,6 +499,9 @@ static void shmem_free( shmem_t* m ) {
 
 #ifndef SHARED_MEM_POSIX_IMPL
     errors += (close( m->fd ) == -1);
+#else
+    if (m->rank == 0)
+        errors += (shm_unlink( m->name ) == -1);
 #endif // SHARED_MEM_POSIX_IMPL
 
     MPICALL(Reduce, shared_mem_pool->rank == 0 ? MPI_IN_PLACE : &errors,
