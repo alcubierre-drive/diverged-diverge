@@ -370,6 +370,9 @@ written (i.e., the variable can be either *defined* or *not*), or
     :``SHARED_MEM_MPI_IMPL``: use ``MPI_Win_XXX`` (and friends) for the
         implementation of the shared memory. Might behave strangely on clusters
         where pinning to certain sockets is enforced.
+    :``SHARED_MEM_POSIX_IMPL``: use the POSIX functions ``shm_open`` and
+        ``shm_unlink`` to create shared memory regions. In Linux, these are then
+        typically located in ``/dev/shm/``.
     :``USE_MPI_FFTW``: use the MPI backend for FFTW in the TU propagator
         calculation. this usually comes with an enormeous speedup. Users are
         responsible for adding the corresponding linker flags to the

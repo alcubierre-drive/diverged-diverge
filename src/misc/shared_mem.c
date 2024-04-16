@@ -242,12 +242,27 @@ void shared_malloc_barrier( void ) {
 
 #define _GNU_SOURCE
 #include <sys/mman.h>
-#include <linux/memfd.h>
-#include <unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
 #include <semaphore.h>
+#include <unistd.h>
+#include <time.h>
 
+#include <mpi.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <uthash.h>
+
+#include "mpi_functions.h"
+#include "md5.h"
+
+#ifndef SHARED_MEM_POSIX_IMPL
+
+#include <linux/memfd.h>
 #ifdef MEMFD_NOT_SUPPORTED
 #include <sys/syscall.h>
 #include <err.h>
@@ -260,14 +275,28 @@ static int memfd_create_(const char* fname, unsigned flags) {
 #define memfd_create memfd_create_
 #endif // MEMFD_NOT_SUPPORTED
 
-#include <mpi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <uthash.h>
+#else // SHARED_MEM_POSIX_IMPL
 
-#include "mpi_functions.h"
+#include <errno.h>
+
+static inline void shmem_alloc_name( char* out, size_t alloc_sz ) {
+    // buffer for all that goes into the md5sum
+    char buf[2048] = {0};
+    snprintf( buf, sizeof(buf), "%zu@%li", alloc_sz, clock() );
+
+    // calculate the md5sum
+    uint128_t md5 = md5sum_div_stack( buf, sizeof(buf) );
+
+    // output
+    sprintf( out, "/diverge.shm." );
+    for (int i=0; i<16; ++i) {
+        char mbuf[16];
+        sprintf( mbuf, "%02X", (int)md5.digest[i] );
+        strcat( out, mbuf );
+    }
+}
+
+#endif // SHARED_MEM_POSIX_IMPL
 
 static int status = 0;
 static char error[MPI_MAX_ERROR_STRING+1] = {0};
@@ -387,31 +416,97 @@ static shmem_t* shmem_alloc( shmem_pool_t* p, size_t sz ) {
     m->rank = p->shrank;
     m->size = p->shsize;
     m->comm = p->shcomm;
+
+    int errors = 0;
+
+#ifndef SHARED_MEM_POSIX_IMPL
+
     char fd_path[64];
     if (p->shrank == 0) {
         // tame the beast (i.e. create the memfd) if we're shared rank 0
-        m->fd = memfd_create( "666", MFD_CLOEXEC|MFD_ALLOW_SEALING );
+        errors += ((m->fd = memfd_create( "666", MFD_CLOEXEC|MFD_ALLOW_SEALING )) == -1);
         snprintf( fd_path, sizeof(fd_path), "/proc/%d/fd/%d", getpid(), m->fd );
-        ftruncate( m->fd, m->sz );
+        errors += ((ftruncate( m->fd, m->sz ) == -1));
     }
     MPICALL(Bcast, fd_path, sizeof(fd_path), MPI_BYTE, 0, p->shcomm);
+
+    MPICALL(Reduce, p->rank == 0 ? MPI_IN_PLACE : &errors, &errors, 1, MPI_INT, MPI_SUM, 0, p->comm);
+    if (errors)
+        mpi_err_printf( "could not open/truncate shm file %s\n", fd_path );
+
+    errors = 0;
     if (p->shrank != 0)
-        m->fd = open(fd_path, O_RDWR);
-    m->ptr = mmap( NULL, m->sz, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_SHARED, m->fd, 0 );
+        errors += ((m->fd = open(fd_path, O_RDWR)) == -1);
+
+    errors += ((m->ptr = mmap( NULL, m->sz, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_SHARED, m->fd, 0 )) == (void*)-1);
+
+    MPICALL(Reduce, p->rank == 0 ? MPI_IN_PLACE : &errors, &errors, 1, MPI_INT, MPI_SUM, 0, p->comm);
+    if (errors)
+        mpi_err_printf( "could not open, or mmap\n" );
+
+#else // SHARED_MEM_POSIX_IMPL
+
+    char name[256] = {0};
+    m->fd = -1;
+    if (p->shrank == 0) {
+        shmem_alloc_name( name, m->sz );
+        errors += ((m->fd = shm_open( name, O_RDWR|O_CREAT|O_EXCL|O_SYNC, 0777 )) == -1);
+        errors += (ftruncate(m->fd, m->sz) == -1);
+    }
+    MPICALL(Bcast, name, sizeof(name), MPI_BYTE, 0, p->shcomm);
+
+    MPICALL(Reduce, p->rank == 0 ? MPI_IN_PLACE : &errors, &errors, 1, MPI_INT, MPI_SUM, 0, p->comm);
+    if (errors)
+        mpi_err_printf( "could not open/truncate shm file %s\n", name );
+
+    errors = 0;
+    if (p->shrank != 0)
+        errors += ((m->fd = shm_open( name, O_RDWR|O_SYNC, 0777 )) == -1);
+
+    errors += ((m->ptr = mmap( NULL, m->sz, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|MAP_SYNC, m->fd, 0 )) == (void*)-1);
+    errors += ((close( m->fd) == -1));
+    if (m->rank == 0)
+        errors += (shm_unlink( name ) == -1);
+
+    MPICALL(Reduce, p->rank == 0 ? MPI_IN_PLACE : &errors, &errors, 1, MPI_INT, MPI_SUM, 0, p->comm);
+    if (errors)
+        mpi_err_printf( "could not shm_open, or mmap/close\n" );
+
+#endif // SHARED_MEM_POSIX_IMPL
+
+    errors = 0;
+
     m->sem = (sem_t*)((char*)m->ptr + sz);
-    if (p->shrank == 0) sem_init( m->sem, 1, 0 );
+    if (p->shrank == 0)
+        errors += (sem_init( m->sem, 1, 0 ) == -1);
+    MPICALL(Reduce, p->rank == 0 ? MPI_IN_PLACE : &errors, &errors, 1, MPI_INT, MPI_SUM, 0, p->comm);
+    if (errors)
+        mpi_err_printf( "could not perform semaphore init\n" );
+
     MPICALL(Barrier, p->shcomm);
     return m;
 }
 
+static shmem_pool_t* shared_mem_pool = NULL;
+
 static void shmem_free( shmem_t* m ) {
-    if (m->rank == 0) sem_destroy( m->sem );
-    munmap( m->ptr, m->sz );
-    close( m->fd );
+    int errors = 0;
+    if (m->rank == 0)
+        errors += (sem_destroy( m->sem ) == -1);
+
+    errors += (munmap( m->ptr, m->sz ) == -1);
+
+#ifndef SHARED_MEM_POSIX_IMPL
+    errors += (close( m->fd ) == -1);
+#endif // SHARED_MEM_POSIX_IMPL
+
+    MPICALL(Reduce, shared_mem_pool->rank == 0 ? MPI_IN_PLACE : &errors,
+            &errors, 1, MPI_INT, MPI_SUM, 0, shared_mem_pool->comm);
+    if (errors)
+        mpi_err_printf( "could not munmap/close shared memory\n" );
+
     free( m );
 }
-
-static shmem_pool_t* shared_mem_pool = NULL;
 
 void shared_malloc_init( int more_colors ) {
     shmem_pool_more_colors = more_colors;

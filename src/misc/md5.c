@@ -240,8 +240,7 @@ static void md5Step(uint32_t *buffer, uint32_t *input){
 
 #define MIN( x, y ) (x) < (y) ? (x) : (y)
 
-char* md5sum_div( const char* buf, size_t size ) {
-
+uint128_t md5sum_div_stack( const char* buf, size_t size ) {
     MD5Context ctx;
     md5Init(&ctx);
     uint8_t ibuf[1024];
@@ -253,11 +252,19 @@ char* md5sum_div( const char* buf, size_t size ) {
     }
     md5Finalize(&ctx);
 
+    uint128_t result;
+    memcpy( &result, ctx.digest, sizeof(result) );
+    return result;
+}
+
+char* md5sum_div( const char* buf, size_t size ) {
+    uint128_t md5num = md5sum_div_stack( buf, size );
+
     memset( md5string, 0, sizeof(md5string) );
     char* result = md5string;
     char* p = result;
     for (unsigned i=0; i<16; ++i) {
-        sprintf( p, "%02x", ctx.digest[i] );
+        sprintf( p, "%02x", md5num.digest[i] );
         p += 2;
     }
     return result;

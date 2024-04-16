@@ -499,18 +499,23 @@ as well as some more recent linux kernel features (<code class="docutils literal
 implementation of the shared memory. Might behave strangely on clusters
 where pinning to certain sockets is enforced.</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_MPI_FFTW</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>use the MPI backend for FFTW in the TU propagator
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">SHARED_MEM_POSIX_IMPL</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>use the POSIX functions <code class="docutils literal notranslate"><span class="pre">shm_open</span></code> and
+<code class="docutils literal notranslate"><span class="pre">shm_unlink</span></code> to create shared memory regions. In Linux, these are then
+typically located in <code class="docutils literal notranslate"><span class="pre">/dev/shm/</span></code>.</p>
+</dd>
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_MPI_FFTW</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>use the MPI backend for FFTW in the TU propagator
 calculation. this usually comes with an enormeous speedup. Users are
 responsible for adding the corresponding linker flags to the
 Makefile.local.</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">MPI_VERBOSE_ALLOCATION_PRINT</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>be extra verbose on TU propagator
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">MPI_VERBOSE_ALLOCATION_PRINT</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>be extra verbose on TU propagator
 allocations in the new CPU/MPI algorithms</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">TRANSPOSE_MPI_FFT_BUFFERS</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>try to optimize memory access and usage by
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">TRANSPOSE_MPI_FFT_BUFFERS</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>try to optimize memory access and usage by
 defining some tensors in different ordering. Only enabled when switching
 the TU propagator algorithms via <a class="reference internal" href="Hacking.html#c.diverge_model_hack" title="diverge_model_hack"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_hack()</span></code></a>
 (<em>unsupported</em>)</p>

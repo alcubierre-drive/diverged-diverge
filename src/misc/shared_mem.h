@@ -11,6 +11,16 @@ extern "C" {
  * the compilation flags -DUSE_MPI and -DUSE_SHARED_MEM (see :ref:`Compilation`).
  * reasonably recent linux kernel + headers required (memfd); as well as the
  * uthash.h library somewhere in your CPATH.
+ *
+ * There are three backends for shared memory (swapped through :ref:`Compilation
+ * DEFINES`):
+ *
+ *  * The linux kernel via the syscall ``memfd_create``, i.e., anonymous files
+ *    (default)
+ *  * The POSIX interface via ``shm_open`` and ``shm_unlink``
+ *    (``SHARED_MEM_POSIX_IMPL``)
+ *  * An MPI implementation via ``MPI_Win_create`` and friends
+ *    (``SHARED_MEM_MPI_IMPL``)
  */
 
 // init/deinit functions called by diverge internally, do not use (no symbols)
