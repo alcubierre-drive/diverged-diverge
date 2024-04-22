@@ -47,6 +47,10 @@ for all functions that hold this prefix. Others *keep* their name.
     .. sourcecode:: bash
 
         LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/gpu/version/ python script.py
+        
+    Note to developpers using the python interface:
+    Installing the library with ``pip install -e`` is recommended for not having
+    to reinstall the package after every change.
 
 .. toctree::
    :maxdepth: 1
