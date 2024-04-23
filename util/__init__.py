@@ -849,7 +849,7 @@ if not _libs["divERGe"] is None:
         ('tu_which_solver_mode', c_char),
         ('tu_skip_channel_calc', c_bool),
         ('tu_storing_threshold', c_double),
-        ('tu_storing_relative', c_double),
+        ('tu_storing_relative', c_bool),
         ('tu_n_singular_values', index_t),
         ('tu_lingap', c_bool),
         ('tu_susceptibilities_full', c_bool),
