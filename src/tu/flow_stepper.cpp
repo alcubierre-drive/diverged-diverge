@@ -83,7 +83,7 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
                     for(index_t ii = 0; ii <  inout->full_vert_size;++ii)
                         internal_vertex->projection_helper[ii] -= 0.5*internal_vertex->Dch[ii];
                     tock = diverge_mpi_wtime();
-                    w_time_loop += tock-tick;
+                    w_time_projection += tock-tick;
 
                     tick = diverge_mpi_wtime();
                     vertex_product(internal_vertex->Dch, internal_vertex->projection_helper,
