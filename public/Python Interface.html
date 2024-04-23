@@ -73,6 +73,15 @@ pointing <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$LD_LIBRARY_PATH</span>:/path/to/gpu/version/<span class="w"> </span>python<span class="w"> </span>script.py
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><em>Python Developers</em></p>
+<p>Installing the library with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span></code> is recommended for not
+having to reinstall the package after every change. On some Linux
+systems, you may have to fiddle around with pip’s flags (e.g. <code class="docutils literal notranslate"><span class="pre">pip</span>
+<span class="pre">install</span> <span class="pre">--editable</span> <span class="pre">.</span> <span class="pre">--config-settings</span> <span class="pre">editable_mode=strict</span>
+<span class="pre">--break-system-packages</span></code>).</p>
+</div>
 </div>
 <div class="toctree-wrapper compound">
 <ul>
