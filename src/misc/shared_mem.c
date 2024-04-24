@@ -279,10 +279,10 @@ static int memfd_create_(const char* fname, unsigned flags) {
 
 #include <errno.h>
 
-static inline void shmem_alloc_name( char* out, size_t alloc_sz ) {
+static inline void shmem_alloc_name( char* out, size_t alloc_sz, int shrank, int shsize, int rank, int size ) {
     // buffer for all that goes into the md5sum
     char buf[2048] = {0};
-    snprintf( buf, sizeof(buf), "%zu@%li", alloc_sz, clock() );
+    snprintf( buf, sizeof(buf), "%zu@%li:%i/%i:%i/%i", alloc_sz, clock(), shrank, shsize, rank, size );
 
     // calculate the md5sum
     uint128_t md5 = md5sum_div_stack( buf, sizeof(buf) );
@@ -452,7 +452,7 @@ static shmem_t* shmem_alloc( shmem_pool_t* p, size_t sz ) {
 
     m->fd = -1;
     if (p->shrank == 0) {
-        shmem_alloc_name( m->name, m->sz );
+        shmem_alloc_name( m->name, m->sz, p->shrank, p->shsize, p->rank, p->size );
         errors += ((m->fd = shm_open( m->name, O_RDWR|O_CREAT|O_EXCL|O_SYNC, 0777 )) == -1);
         errors += (ftruncate(m->fd, m->sz) == -1);
     }
