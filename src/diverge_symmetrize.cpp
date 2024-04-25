@@ -10,6 +10,20 @@
 #include <vector>
 #include <cassert>
 
+#ifndef SYMNORM_SQUARED_POSITION
+#define SYMNORM_SQUARED_POSITION 1e-6
+#endif
+#ifndef SYMNORM_ASSERT_POSITION_BEYOND
+#define SYMNORM_ASSERT_POSITION_BEYOND 1e-4
+#endif
+#ifndef SYMNORM_ORBITAL_OVERLAP
+#define SYMNORM_ORBITAL_OVERLAP 1e-5
+#endif
+#ifndef SYMNORM_POS_EQUAL
+#define SYMNORM_POS_EQUAL 1e-8
+#endif
+
+
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 typedef Matrix<index_t,3,1> Vec3idx;
 using std::vector;
@@ -126,11 +140,11 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         for(int iq = -periodic_iter[2];iq<=periodic_iter[2];iq++) {
             Map<Vec3d> to_trial(model->positions[o2]);
             Vec3d trial = to_trial+in*UC1+im*UC2+iq*UC3;
-            if((trial-to).squaredNorm() < 1e-6) {
+            if((trial-to).squaredNorm() < SYMNORM_SQUARED_POSITION) {
                 maps_to = o2;
                 mapped_pos[o1+n_orb*s] = to_trial;
                 bey_UC = ( to - to_trial );
-                assert((bey_UC-(in*UC1+im*UC2+iq*UC3)).norm() < 1e-4);
+                assert((bey_UC-(in*UC1+im*UC2+iq*UC3)).norm() < SYMNORM_ASSERT_POSITION_BEYOND);
                 goto symmetrizer_orb_found;
             }
         }
@@ -153,7 +167,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         for(index_t o1t = 0; o1t < n_orb; ++o1t) {
             Map<Vec3d> pos(model->positions[o1t]);
             complex128_t overlap = orb_symmetries[IDX5(s, s1t, o1t, s1, o1, n_spin,n_orb, n_spin,n_orb)];
-            if(std::abs(overlap) > 1e-5 && (mapped_pos[o1+n_orb*s] - pos).norm() < 1e-8) {
+            if(std::abs(overlap) > SYMNORM_ORBITAL_OVERLAP && (mapped_pos[o1+n_orb*s] - pos).norm() < SYMNORM_POS_EQUAL) {
                 orbmaps_to.push_back(IDX2(s1t,o1t,n_orb));
                 orbmaps_to_prefac.push_back(overlap);
                 len+=1;

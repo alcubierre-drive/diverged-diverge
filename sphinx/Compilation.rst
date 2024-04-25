@@ -337,6 +337,14 @@ written (i.e., the variable can be either *defined* or *not*), or
         equivalent to /usr/include/Eigen instead of /usr/include/eigen3/Eigen.
         This flag is there to enable the former.
     :``SKIP_FLOW_TIMING``: do not time the flow step in the grid FRG code
+    :``SYMNORM_SQUARED_POSITION=VAL``: maximum squared norm to consider two
+        positions equivalent under symmetries (default: ``1e-6``)
+    :``SYMNORM_ASSERT_POSITION_BEYOND=VAL``: in beyond unit-cell symmetry
+        contribution, value to check for in the assertion (default: ``1e-4``)
+    :``SYMNORM_ORBITAL_OVERLAP=VAL``: minimum value to consider for orbitals to
+        *overlap* (default: ``1e-5``)
+    :``SYMNORM_POS_EQUAL=VAL``: maximum norm to consider for positions to be
+        equal in the *overlap* check (default: ``1e-8``)
     :``TAG_VERSION=VAL``: set the git tag version string to VAL
     :``TU_MAGIC_NUMBER_POST_PROCESSING=VAL``: set the TU backend post processing
         magic number (relevant for output) to VAL
@@ -346,8 +354,9 @@ written (i.e., the variable can be either *defined* or *not*), or
         algorithms. Particularly useful for the grid FRG code.
     :``USE_EIGEN_BATCHED_GEMM``: use Eigen's matrix multiplication in batched
         gemms (CPU)
-    :``USE_FPLO_READER``: include the (still experimental) FPLO reader. requires
-        `utlist.h <https://troydhanson.github.io/uthash/>`_ and POSIX regex.h.
+    :``USE_FPLO_READER``: include the (still experimental) :c:func:`FPLO reader
+        <diverge_read_fplo>`. requires `utlist.h
+        <https://troydhanson.github.io/uthash/>`_ and POSIX regex.h.
     :``USE_GF_FLOATS``: save Green's function in single point precision. should
         work for the npatch backend.
     :``USE_MKL``: use ``#include <mkl.h>`` instead of ``#include <lapacke.h>``
