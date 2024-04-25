@@ -122,6 +122,11 @@ typedef uint64_t uindex_t;
 /** minimum element */
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 
+/** swap operands using the XOR-swap algorithm, fails if applied on the same element. */
+#define XORSWAP_UNSAFE(a, b) ((a) ^= (b), (b) ^= (a), (a) ^= (b))
+/** swap operands using the XOR-swap algorithm, but first check if their addresses are equal. */
+#define XORSWAP(a, b) ((&(a) == &(b)) ? (a) : XORSWAP_UNSAFE(a, b))
+
 #ifndef BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB
 #define BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB 4ul
 #endif // BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB
