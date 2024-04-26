@@ -145,11 +145,22 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     // node-shared mem is a bit complicated (see diverge_hack.cpp)
     intls->greens = (gf_complex_t*)calloc(nktot*nb*nb*2,sizeof(gf_complex_t));
 
+    // we check here whether to symmetrize the Hamiltonian
+    int symmetrize_hamiltonian = model->n_sym < 0;
+    model->n_sym = labs(model->n_sym);
+
+    if (model->n_sym > 0) {
+        // this step must be taken out of the shmem region because the GF is
+        // symmetrized as well, and the structure won't be initialized on all
+        // ranks that way.
+        diverge_generate_symm_maps( model );
+    }
+
     mpi_vrb_printf("filling hamiltonian buffer\n");
     if (shared_exclusive_enter(intls->ham) == 1) {
         (*(model->hfill))( model, intls->ham );
-        if (model->n_sym < 0) {
-            model->n_sym *= -1;
+        if (symmetrize_hamiltonian) {
+            mpi_vrb_printf( "symmetrizing Hamiltonain before diagonalization\n" );
             double err = diverge_symmetrize_2pt_fine( model, intls->ham, intls->U );
             if (err > DIVERGE_EPS_MESH) {
                 mpi_wrn_printf("resymmetrize hamiltonian->large error: %.5e\n", err);
