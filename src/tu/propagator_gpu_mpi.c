@@ -14,7 +14,7 @@ static inline void atomic_set_complex128_t( complex128_t* dest_, const complex12
 }
 
 #ifndef PACK_MPI_MULTIPLIER
-#define PACK_MPI_MULTIPLIER 1
+#define PACK_MPI_MULTIPLIER 128
 #endif // PACK_MPI_MULTIPLIER
 
 static inline index_t align_to( index_t number, index_t n ) {
@@ -121,7 +121,7 @@ void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t ) {
 
 #ifdef TU_GPU_MPI_ALLOC_PRINT
 #ifndef NDEBUG
-#define EXPORT_TU_GPU_MPI_ALLOC_PRINT 
+#define EXPORT_TU_GPU_MPI_ALLOC_PRINT
 #else
 #define EXPORT_TU_GPU_MPI_ALLOC_PRINT static inline
 #endif
@@ -133,7 +133,7 @@ EXPORT_TU_GPU_MPI_ALLOC_PRINT void* calloc_print_( size_t cnt, size_t sz, int li
     return ptr;
 }
 
-EXPORT_TU_GPU_MPI_ALLOC_PRINT inline void* realloc_print_( void* ptr, size_t sz, int line ) {
+EXPORT_TU_GPU_MPI_ALLOC_PRINT void* realloc_print_( void* ptr, size_t sz, int line ) {
     ptr = realloc( ptr, sz );
     int scc = ptr != NULL;
     mpi_vrb_printf_all( "rank %i:realloc@%03i %.2fGB (%s)\n", diverge_mpi_comm_rank(), line,
