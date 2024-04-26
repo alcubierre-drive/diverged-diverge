@@ -345,6 +345,14 @@ written (i.e., the variable can be either *defined* or *not*), or
         *overlap* (default: ``1e-5``)
     :``SYMNORM_POS_EQUAL=VAL``: maximum norm to consider for positions to be
         equal in the *overlap* check (default: ``1e-8``)
+    :``SYMNOORM_MIN_ORBITAL_WEIGHT=VAL``: minimal orbital weight to consider "1"
+        for checking if weight is conserved (default: ``0.99999``). *Very
+        important to set this to a lower value (e.g. 0.99) for many-orbital
+        systems on some machines.*
+    :``SYMNORM_MATRIX_ZERO=VAL``: maximum value that may pop up in a difference
+        matrix when checking whether symmetries have an inverse (default:
+        ``1.e-7``). *Very important to set this to a higher value (e.g. 1.e-3)
+        for many-orbital systems on some machines.*
     :``TAG_VERSION=VAL``: set the git tag version string to VAL
     :``TU_MAGIC_NUMBER_POST_PROCESSING=VAL``: set the TU backend post processing
         magic number (relevant for output) to VAL

@@ -137,6 +137,18 @@ is not defined. Otherwise, <a class="reference internal" href="#c.complex64_t" t
 <dd><p>minimum element</p>
 </dd></dl>
 
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.XORSWAP_UNSAFE">
+<span class="sig-name descname"><span class="n"><span class="pre">XORSWAP_UNSAFE</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XORSWAP_UNSAFE" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L124"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>swap operands using the XOR-swap algorithm, fails if applied on the same element.</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.XORSWAP">
+<span class="sig-name descname"><span class="n"><span class="pre">XORSWAP</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XORSWAP" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L126"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>swap operands using the XOR-swap algorithm, but first check if their addresses are equal.</p>
+</dd></dl>
+
 </section>
 
 

@@ -3,6 +3,24 @@
 Symmetries
 ==========
 
+.. note::
+   For models with many orbitals or inaccurate positions, implementing
+   symmetries can be difficult. Remember to check:
+
+     * the orbital ordering in the hopping matrix elements. Quick 'n dirty
+       solution is to just swap it and see if it works.
+     * that your orbital axes align with the orbital axes defined in the
+       previous steps of obtaining the TB model
+     * the accuracy of what is considered "zero" or "one" in some of the
+       symmetrization routines of divERGe. These values can be changed upon
+       recompilation (see :ref:`Compilation DEFINES`), specifically the DEFINES
+       ``SYMNOORM_MIN_ORBITAL_WEIGHT`` and ``SYMNORM_MATRIX_ZERO``.
+     * build your symmetry operations "bottom-up", i.e. start with a small
+       subgroup of your full point group and see if that works.
+
+   If none of that quickly fixes your issues, you'll have to dig into the TB
+   model and accurately map out its symmetries by yourself.
+
 Example: Hubbard Model
 ----------------------
 

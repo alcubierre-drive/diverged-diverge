@@ -35,6 +35,27 @@
             
   <section id="symmetries">
 <span id="id1"></span><h1>Symmetries<a class="headerlink" href="#symmetries" title="Link to this heading">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For models with many orbitals or inaccurate positions, implementing
+symmetries can be difficult. Remember to check:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the orbital ordering in the hopping matrix elements. Quick ‘n dirty
+solution is to just swap it and see if it works.</p></li>
+<li><p>that your orbital axes align with the orbital axes defined in the
+previous steps of obtaining the TB model</p></li>
+<li><p>the accuracy of what is considered “zero” or “one” in some of the
+symmetrization routines of divERGe. These values can be changed upon
+recompilation (see <a class="reference internal" href="Compilation.html#compilation-defines"><span class="std std-ref">Compilation DEFINES</span></a>), specifically the DEFINES
+<code class="docutils literal notranslate"><span class="pre">SYMNOORM_MIN_ORBITAL_WEIGHT</span></code> and <code class="docutils literal notranslate"><span class="pre">SYMNORM_MATRIX_ZERO</span></code>.</p></li>
+<li><p>build your symmetry operations “bottom-up”, i.e. start with a small
+subgroup of your full point group and see if that works.</p></li>
+</ul>
+</div></blockquote>
+<p>If none of that quickly fixes your issues, you’ll have to dig into the TB
+model and accurately map out its symmetries by yourself.</p>
+</div>
 <section id="example-hubbard-model">
 <h2>Example: Hubbard Model<a class="headerlink" href="#example-hubbard-model" title="Link to this heading">¶</a></h2>
 <p>For the automatic patch finding algorithm, symmetries are <strong>strongly
