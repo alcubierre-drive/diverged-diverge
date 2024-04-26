@@ -105,6 +105,7 @@ public:
     const index_t nk;
     const index_t nkf;
     const index_t nktot;
+    const index_t nkibz;
     const index_t my_nk;
     const index_t my_nk_off;
     const bool SU2;
