@@ -81,9 +81,9 @@ fftw_mpi_plan_t* fftw_mpi_plan_init_l( index_t dims[3], index_t howmany,
     p->tvec[0] = p->tvec[1] = p->tvec[2] = 0.0;
     ptrdiff_t alloc = fftw_mpi_local_size_many( 3, dims, howmany, FFTW_MPI_DEFAULT_BLOCK,
             diverge_mpi_get_comm(), &p->local_n0, &p->local_0_start );
-    p->in_mpi = (complex128_t*)fftw_alloc_complex_wrap(alloc);
+    p->in_mpi = fftw_alloc_complex_wrap(alloc);
     if (p->in != p->out)
-        p->out_mpi = (complex128_t*)fftw_alloc_complex_wrap(alloc);
+        p->out_mpi = fftw_alloc_complex_wrap(alloc);
     else
         p->out_mpi = p->in_mpi;
 
@@ -91,7 +91,7 @@ fftw_mpi_plan_t* fftw_mpi_plan_init_l( index_t dims[3], index_t howmany,
         p->buf = buf;
         p->free_buf = false;
     } else {
-        p->buf = (complex128_t*)fftw_alloc_complex_wrap(p->howmany*p->dims[0]*p->dims[1]*p->dims[2]);
+        p->buf = fftw_alloc_complex_wrap(p->howmany*p->dims[0]*p->dims[1]*p->dims[2]);
     }
 
     p->p = fftw_mpi_plan_many_dft( 3, p->dims, p->howmany, FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK,

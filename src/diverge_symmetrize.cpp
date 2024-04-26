@@ -81,6 +81,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     double* rs_symmetries = (double*)model->rs_symmetries;
     complex128_t* orb_symmetries = (complex128_t*)model->orb_symmetries;
 
+    mpi_vrb_printf( "finding coarse IBZ…\n" );
     #pragma omp parallel for schedule(static) collapse(2) num_threads(diverge_omp_num_threads())
     for(index_t s = 0; s < n_sym; ++s)
     for(index_t k = 0; k < nk; ++k) {
@@ -93,6 +94,8 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         symm_map_mom_crs[s+n_sym*k] = idx;
         if (!found) mpi_err_printf("not all momenta mappable (%d->%d; accuracy issue?)\n", s, k);
     }
+
+    mpi_vrb_printf( "finding fine IBZ…\n" );
     #pragma omp parallel for schedule(static) collapse(2) num_threads(diverge_omp_num_threads())
     for(index_t s = 0; s < n_sym; ++s)
     for(index_t k = 0; k < nktot; ++k) {
@@ -105,7 +108,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         if (!found) mpi_err_printf("not all momenta mappable (%d->%d; accuracy issue?)\n", s, k);
     }
 
-    // orbital maps
+    mpi_vrb_printf( "finding orbital maps…\n" );
     vector<index_t> orbmaps_to_len; orbmaps_to_len.resize(n_os*n_sym);
     vector<index_t> orbmaps_to_off; orbmaps_to_off.resize(n_os*n_sym);
     vector<index_t> orbmaps_to;
@@ -222,5 +225,6 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     memcpy(symm_map_orb, orbmaps_to.data(), total_length * sizeof(index_t));
     memcpy(symm_pref, orbmaps_to_prefac.data(), total_length * sizeof(complex128_t));
 
+    mpi_vrb_printf( "merging realspace orbitals…\n" );
     merge_rs_orb(model);
 }
