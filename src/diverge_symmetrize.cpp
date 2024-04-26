@@ -22,7 +22,9 @@
 #ifndef SYMNORM_POS_EQUAL
 #define SYMNORM_POS_EQUAL 1e-8
 #endif
-
+#ifndef SYMNOORM_MIN_ORBITAL_WEIGHT
+#define SYMNOORM_MIN_ORBITAL_WEIGHT 0.99999
+#endif
 
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 typedef Matrix<index_t,3,1> Vec3idx;
@@ -202,7 +204,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
             sum += std::abs(orbmaps_to_prefac[orbmaps_to_off[o1]+e]
                     *conj(orbmaps_to_prefac[orbmaps_to_off[o1]+e]));
         }
-        if(sum < 0.99999) {
+        if(sum < SYMNOORM_MIN_ORBITAL_WEIGHT) {
             mpi_err_printf("Orbitals do not sum up to one %1.3f  \n", sum);
             model->n_sym = 0;
         }
