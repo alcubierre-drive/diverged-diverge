@@ -135,6 +135,7 @@ static char h_log_color_return[16] = { 0x001b };
 #define h_log_color_file h_log_color_bright_cyan
 #define h_log_color_user h_log_color_bright_white
 #define h_log_color_version h_log_color_bright_green
+#define h_log_color_trace h_log_color_bright_white
 #else // DIVERGE_LOG_GRAYSCALE
 #define h_log_color_VERBOSE h_log_color_gray5
 #define h_log_color_LOG     h_log_color_gray4
@@ -154,6 +155,7 @@ static char h_log_color_return[16] = { 0x001b };
 #define h_log_color_error   h_log_color_gray1
 #define h_log_color_time    h_log_color_gray0
 #define h_log_color_version h_log_color_gray0
+#define h_log_color_trace   h_log_color_gray0
 #endif // DIVERGE_LOG_GRAYSCALE
 
 static const char* h_log_color( const char* descr ) {
@@ -205,6 +207,7 @@ static const char* h_log_color( const char* descr ) {
     H_RETPART( file )
     H_RETPART( user )
     H_RETPART( version )
+    H_RETPART( trace )
 #endif // DIVERGE_LOG_COLORLESS
     return h_log_color_return;
 }

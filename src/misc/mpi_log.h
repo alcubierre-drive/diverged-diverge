@@ -39,6 +39,8 @@ void mpi_dbg_printf( const char* logname, int loglevel, const char* fname, int l
 #define mpi_usr_printf( ... ) mpi_dbg_printf( "user", 2, __FILE__, __LINE__, __VA_ARGS__ );
 /** print version message (loglevel -1) */
 #define mpi_ver_printf( ... ) mpi_dbg_printf( "version", -1, __FILE__, __LINE__, __VA_ARGS__ );
+/** print backtrace (loglevel 5, off by default) */
+#define mpi_btr_printf( ... ) mpi_dbg_printf( "trace", 5, __FILE__, __LINE__, __VA_ARGS__ );
 
 /** set loglevel. all messages below this level are discarded and not printed */
 void mpi_loglevel_set( int loglevel );

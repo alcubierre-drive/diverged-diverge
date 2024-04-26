@@ -7,13 +7,19 @@
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 typedef Eigen::Matrix<complex128_t,-1,-1,Eigen::RowMajor> CMatXcd;
 
-static inline bool approxEQ(MatXcd A, MatXcd B) { return (A-B).lpNorm<Eigen::Infinity>() < 1e-7; }
+#ifndef SYMNORM_MATRIX_ZERO
+#define SYMNORM_MATRIX_ZERO 1.e-7
+#endif
+
+static inline bool approxEQ(CMatXcd A, CMatXcd B) {
+    return (A-B).array().abs().maxCoeff() < SYMNORM_MATRIX_ZERO;
+}
 
 bool init_inv_symmerty_map(diverge_model_t* model) {
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
     symmstruct_t* symm = tu_data->symm;
-    complex128_t* orb_symmetries = (complex128_t*)model->orb_symmetries;
-    double* rs_symmetries = (double*)model->rs_symmetries;
+    complex128_t* orb_symmetries = model->orb_symmetries;
+    double* rs_symmetries = model->rs_symmetries[0][0];
     index_t n_orb = model->n_orb;
     index_t n_spin = model->n_spin;
     index_t& n_sym = model->n_sym;
