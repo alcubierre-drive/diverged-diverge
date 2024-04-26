@@ -83,7 +83,7 @@ test: types $(NAME)
 -include $(DEP_C) $(DEP_CPP)
 
 $(NAME): src/main.c.o $(NAME_LIB)
-	$(LD) $(EXEFLAGS) $< $(LDFLAGS) -o $@
+	$(LD) $< $(EXEFLAGS) $(LDFLAGS) -o $@
 
 ifdef USE_CUDA
 DEFINES += -DUSE_CUDA
@@ -127,7 +127,7 @@ clean:
 	-@$(RM) -rf $(NAME) $(NAME_GPU) $(NAME_GPU_LINK) $(NAME_LIB) types.vim
 	-@$(RM) -rf $(shell find . -type f -name '*.o') $(shell find . -type f -name '*.d')
 	-@$(RM) -rf divERGe.tar.gz divERGe_src.tar
-	make -C sphinx clean
+	# make -C sphinx clean
 
 $(NAME_GPU): $(OBJ_CU)
 	$(AR) -crs $@ $^
