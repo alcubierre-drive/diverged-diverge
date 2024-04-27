@@ -172,5 +172,5 @@ void batched_gemm_small_cpu( batched_gemm_small_handle_t* h, const complex128_t*
         const complex128_t* B, complex128_t* C ) {
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<h->num; ++i)
-        gemm( A+i*POW2(h->n), B+i*POW2(h->n), C+i*POW2(h->n), h->n, h->n, h->n, 1.0, 0.0 );
+        single_gemm( A+i*POW2(h->n), B+i*POW2(h->n), C+i*POW2(h->n), h->n, h->n, h->n, 1.0, 0.0 );
 }

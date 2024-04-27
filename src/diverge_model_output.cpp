@@ -476,7 +476,7 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
                     std::exp(-complex128_t(0,1) * Rvec.dot(kvec)) * hh->t;
             }
             double* here_buf = buf + (nb+3) * running_idx;
-            eigen_solve(H, U, here_buf, nb);
+            single_eigen(H, U, here_buf, nb);
             for (index_t b=0; b<nb; ++b) {
                 here_buf[b] -= mod->internals->mu;
             }

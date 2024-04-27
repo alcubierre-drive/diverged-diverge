@@ -127,8 +127,8 @@ void LinearizedGapSolution::_calc( double T, char chan, bool use_loop, string ve
     complex128_t* V_ = V.vertex_buffers[3];
 
     // eigensolution of vertex (hermitian!)
-    eigen_solve( v, U_, _eigen_values, N );
-    eigensolution_sort( U_, _eigen_values, N, 0 );
+    single_eigen( v, U_, _eigen_values, N );
+    single_eigen_sort( U_, _eigen_values, N, 0 );
     for (index_t i=0; i<N; ++i) {
         for (index_t v=0; v<_num_singular_values; ++v) {
             _eigen_vectors[v*N+i] = *(V_ + i*N + v);
@@ -137,7 +137,7 @@ void LinearizedGapSolution::_calc( double T, char chan, bool use_loop, string ve
 
     if (loop)
         batched_gemm_vertex_loop( V.vertex_buffers[1], loop, _qsize, _nk, _nb );
-    singular_value_decomp( v, U_, V_, _singular_values, N );
+    single_svd( v, U_, V_, _singular_values, N );
     for (index_t i=0; i<N; ++i) {
         for (index_t v=0; v<_num_singular_values; ++v) {
             _singular_matrix_U[v*N+i] = *(U_ + i*N + v );

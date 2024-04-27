@@ -8,9 +8,12 @@
 extern "C" {
 #endif
 
-void gemm( const complex128_t* Astart, const complex128_t* Bstart,
-        complex128_t* Cstart, index_t M, index_t N, index_t K, complex128_t alpha,
-        complex128_t beta);
+/**
+ * :math:`C_{n,m} = \beta C_{n,m] + \alpha A_{n,k} B_{k,m}`, with A, B, C
+ * matrices in C order.
+ */
+void single_gemm( const complex128_t* A, const complex128_t* B, complex128_t* C,
+        index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta);
 
 #ifdef __cplusplus
 }

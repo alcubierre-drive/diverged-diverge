@@ -17,7 +17,7 @@ using std::vector;
 #include <lapacke.h>
 #endif
 
-void eigen_solve( const complex128_t* H, complex128_t* U, double* E, index_t N ) {
+void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N ) {
     assert(U != NULL);
     assert(E != NULL);
     assert(N > 0);
@@ -27,7 +27,7 @@ void eigen_solve( const complex128_t* H, complex128_t* U, double* E, index_t N )
     LAPACKE_zheev( LAPACK_ROW_MAJOR, 'V', 'U', N, (lapack_complex_double*)U, N, E );
 }
 
-void singular_value_decomp( const complex128_t* H, complex128_t* U, complex128_t* V, double* E, index_t N ) {
+void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double* E, index_t N ) {
     assert(U != NULL);
     assert(V != NULL);
     assert(E != NULL);
@@ -42,7 +42,7 @@ void singular_value_decomp( const complex128_t* H, complex128_t* U, complex128_t
 
 #else // LAPACKE/MKL
 
-void eigen_solve( const complex128_t* H, complex128_t* U, double* E, index_t N ) {
+void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N ) {
     assert(U != NULL);
     assert(E != NULL);
     assert(N > 0);
@@ -58,7 +58,7 @@ void eigen_solve( const complex128_t* H, complex128_t* U, double* E, index_t N )
     mE = sol.eigenvalues();
 }
 
-void singular_value_decomp( const complex128_t* H, complex128_t* U, complex128_t* V, double* E, index_t N ) {
+void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double* E, index_t N ) {
     assert(U != NULL);
     assert(V != NULL);
     assert(E != NULL);
@@ -82,14 +82,14 @@ void singular_value_decomp( const complex128_t* H, complex128_t* U, complex128_t
 
 #endif // LAPACKE/MKL
 
-void eigensolution_sort( complex128_t* U, double* E, index_t N, char which ) {
+void single_eigen_sort( complex128_t* U, double* E, index_t N, char which ) {
     char abs_limit_c[sizeof(double)] = {0};
     double abs_limit_d = 0;
     memcpy( &abs_limit_d, &abs_limit_c, sizeof(double) );
-    eigensolution_sort_N( U, E, N, which, abs_limit_d );
+    single_eigen_sort_N( U, E, N, which, abs_limit_d );
 }
 
-index_t eigensolution_sort_N( complex128_t* U, double* E, index_t N, char which, double abs_limit ) {
+index_t single_eigen_sort_N( complex128_t* U, double* E, index_t N, char which, double abs_limit ) {
     char abs_limit_c[sizeof(double)] = {0};
     double abs_limit_d = 0;
     memcpy( &abs_limit_d, &abs_limit_c, sizeof(double) );

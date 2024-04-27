@@ -134,17 +134,17 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
             memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
             bool hermitian = check_hermicity(_vec,linsize);
             if (algo == 'e' || (algo == 'a' && hermitian)) {
-                eigen_solve( NULL, _vec, _val, linsize);
+                single_eigen( NULL, _vec, _val, linsize);
                 type[q] = 'e';
             } else if (algo == 's' || (algo == 'a' && !hermitian)) {
-                singular_value_decomp( NULL, _vec, vertex->bubble_helper, _val, linsize);
+                single_svd( NULL, _vec, vertex->bubble_helper, _val, linsize);
                 type[q] = 's';
             }
             // above the matrices are C order, we must transpose that…
             Map<MatXcd>(_vec, linsize, linsize).transposeInPlace();
         }
 
-        len[q] = eigensolution_sort_N( _vec, _val, linsize, 'M', cutoff_rel ? -cutoff : cutoff );
+        len[q] = single_eigen_sort_N( _vec, _val, linsize, 'M', cutoff_rel ? -cutoff : cutoff );
         memcpy( val+off[q], _val, sizeof(double)*len[q] );
         memcpy( vec+off[q]*linsize, _vec, sizeof(complex128_t)*len[q]*linsize );
     }
@@ -192,7 +192,7 @@ void tu_postproduction::lingap_ff() {
         if(diverge_mpi_comm_rank()==0) {
             batched_gemm(vertex->projection_helper, vertex->pp_bubble_int,
                     vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff,1.0, 0.0, 1);
-            singular_value_decomp( NULL, vertex->product_helper,
+            single_svd( NULL, vertex->product_helper,
                     vertex->bubble_helper, _val, linsize);
             for(index_t i = 0; i < tu_n_singular_valuesP;++i) {
                 Sgap_sc[i] = _val[i];
@@ -209,7 +209,7 @@ void tu_postproduction::lingap_ff() {
         if(diverge_mpi_comm_rank()==0) {
             batched_gemm(vertex->projection_helper, vertex->ph_bubble_int,
                     vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff,1.0, 0.0, 1);
-            singular_value_decomp( NULL, vertex->product_helper,
+            single_svd( NULL, vertex->product_helper,
                     vertex->bubble_helper, _val, linsize);
             for(index_t i = 0; i < tu_n_singular_valuesC;++i) {
                 Sgap_mag[i] = _val[i];
@@ -237,7 +237,7 @@ void tu_postproduction::lingap_ff() {
         if(diverge_mpi_comm_rank()==0) {
             batched_gemm(vertex->projection_helper, vertex->ph_bubble_int,
                     vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff,1.0, 0.0, 1);
-            singular_value_decomp( NULL, vertex->product_helper,
+            single_svd( NULL, vertex->product_helper,
                     vertex->bubble_helper, _val, linsize);
             for(index_t i = 0; i < tu_n_singular_valuesD;++i) {
                 Sgap_charge[i] = _val[i];

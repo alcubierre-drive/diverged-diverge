@@ -15,8 +15,7 @@ void Vertex::reco_ft(complex128_t* const buf,
         index_t my_vertsize = mvsq*POW2(n_orbff*POW2(n_spin));
         buf_q = (complex128_t*)calloc(my_vertsize,sizeof(complex128_t));
     }
-    
-    
+
     const index_t rest = POW2(n_orbff*POW2(n_spin));
     if(symm->use_symmetries) {
         const index_t my_nk_in_bz = symm->my_nk_in_bz;
@@ -89,7 +88,7 @@ void Vertex::reco_ft(complex128_t* const buf,
         }
 
         const double norm = 1./(double)nk;
-        gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,norm,0.0);
+        single_gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,norm,0.0);
     }else{
         #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
         for(index_t s4 = 0; s4<(n_spin);++s4)
@@ -118,7 +117,7 @@ void Vertex::reco_ft(complex128_t* const buf,
             }
         }
         const double norm = 1./(double)nk;
-        gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk,norm,0.0);
+        single_gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk,norm,0.0);
     }
     diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
 
@@ -138,7 +137,7 @@ void Vertex::reco(complex128_t* const buf_q, const complex128_t* inp) const {
         if(channel == 'D') inp = Dch;
     }
     const complex128_t* const helper = inp;
-    
+
     if(symm->use_symmetries) {
 
         const index_t my_nk_in_bz = symm->my_nk_in_bz;

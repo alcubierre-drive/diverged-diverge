@@ -73,7 +73,7 @@ void npatch_qvert_mat_eigen( npatch_qvert_mat_t* qvm, index_t nq, index_t nv, ch
         batched_eigen_shut_up(0);
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
         for (int q=0; q<nq; ++q) {
-            eigensolution_sort( vector+q*Nmax*Nmax, valueR+q*Nmax, Nmax, which );
+            single_eigen_sort( vector+q*Nmax*Nmax, valueR+q*Nmax, Nmax, which );
 
             index_t N = qvm[q].nb * qvm[q].nb * qvm[q].n_k_kp;
             qvm[q].eigen = true;

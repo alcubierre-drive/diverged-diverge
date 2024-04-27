@@ -39,9 +39,6 @@ DIVERGE_UNSTABLE {
         batched_eigen_r;
         batched_svd;
         batched_zgemd_r;
-        eigen_solve;
-        singular_value_decomp;
-        eigensolution_sort;
         batched_gemm_overlapping;
         batched_gemm;
         batched_gemm_with_buffers;
@@ -51,11 +48,15 @@ DIVERGE_UNSTABLE {
         batched_gemm_cublas_clear;
         batched_gemm_cublas_w_buffer_clear;
         batched_gemm_N_ll_num;
-        gemm;
         batched_gemm_small_init;
         batched_gemm_small_destroy;
         batched_gemm_small_mode;
         batched_gemm_small;
+        single_eigen;
+        single_eigen_sort;
+        single_eigen_sort_N;
+        single_gemm;
+        single_svd;
 };
 EOF
 )
