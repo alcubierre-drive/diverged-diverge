@@ -25,6 +25,7 @@ static double dot(double* A, double* B) {
     return A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
 }
 
+// TODO(LK) these tests fail with MPI
 double test_symm_4_pnt( diverge_model_t* model, Vertex* vertex ) {
     if (model->n_sym == 0 || model->orb_symmetries == NULL) return -1.0;
 

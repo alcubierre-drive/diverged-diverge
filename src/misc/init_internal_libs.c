@@ -25,10 +25,21 @@ static int dvg_omp_num_threads = -1;
 static int dvg_fftw_num_threads = -1;
 static int dvg_omp_implicit_num_threads = -1;
 
+static int dvg_tu_symcheck_mpi = 0;
+static int dvg_symcheck_mpi = 0;
+
 static void init_internal_libs_omp_implicit( int nthr );
 static void init_internal_libs_omp_diverge( int nthr );
 static void init_internal_libs_fftw( int nthr );
 static void read_environment( void );
+
+int environ_tu_symcheck_mpi( void ) {
+    return dvg_tu_symcheck_mpi;
+}
+
+int environ_symcheck_mpi( void ) {
+    return dvg_symcheck_mpi;
+}
 
 void init_internal_libs( void ) {
 
@@ -105,6 +116,8 @@ static void read_environment( void ) {
     char* env_dvg_fftw_num_threads = getenv( "DIVERGE_FFTW_NUM_THREADS" );
     char* env_dvg_omp_implicit_num_threads = getenv( "DIVERGE_OMP_IMPLICIT_NUM_THREADS" );
     char* env_dvg_shared_malloc_extra_colors = getenv( "DIVERGE_SHARED_MALLOC_EXTRA_COLORS" );
+    char* env_dvg_symcheck_mpi = getenv( "DIVERGE_SYMCHECK_MPI" );
+    char* env_dvg_tu_symcheck_mpi = getenv( "DIVERGE_TU_SYMCHECK_MPI" );
 
     // set values
     if (env_dvg_omp_num_threads) {
@@ -123,6 +136,12 @@ static void read_environment( void ) {
         dvg_shared_malloc_extra_colors = atoi(env_dvg_shared_malloc_extra_colors);
         if (dvg_shared_malloc_extra_colors)
             mpi_log_printf( "using extra colors for MPI shared memory distribution\n" );
+    }
+    if (env_dvg_symcheck_mpi) {
+        dvg_symcheck_mpi = 1;
+    }
+    if (env_dvg_tu_symcheck_mpi) {
+        dvg_tu_symcheck_mpi = 1;
     }
 
     // and check

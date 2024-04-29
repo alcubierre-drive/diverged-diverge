@@ -9,6 +9,7 @@
 #include "diverge_model_internals.h"
 #include "misc/dependency_tree.h"
 #include "misc/qnan.h"
+#include "misc/init_internal_libs.h"
 #include <fftw3.h>
 #include <algorithm>
 #include <cassert>
@@ -25,6 +26,8 @@ diverge_model_t* diverge_model_init(void) {
     result->SU2 = 1;
     result->internals = (internals_t*)calloc(1,sizeof(internals_t));
     result->internals->has_common_internals = 0;
+    result->internals->tu_symcheck_mpi = environ_tu_symcheck_mpi();
+    result->internals->symcheck_mpi = environ_symcheck_mpi();
     dependency_tree_insert_model(result);
     return result;
 }

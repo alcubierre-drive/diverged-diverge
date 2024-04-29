@@ -10,6 +10,7 @@
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
 #include "../../src/misc/generate_symmetries.h"
+#include "../../src/misc/shared_mem.h"
 
 TEST_CASE("symmetrize 2pnt simple","[symm_2pnt][symm_2pntsim]") {
     site_descr_t sites[1];
@@ -91,8 +92,14 @@ TEST_CASE("symmetrize 2pnt simple","[symm_2pnt][symm_2pntsim]") {
     model2->hop[0].t = 1.;
     diverge_model_internals_common( model2 );
 
-    diverge_symmetrize_2pt_coarse( model, model->internals->ham, NULL );
-    diverge_symmetrize_2pt_fine( model2, model2->internals->ham, NULL );
+    if (shared_exclusive_enter( model->internals->ham ) == 1)
+        diverge_symmetrize_2pt_coarse( model, model->internals->ham, NULL );
+    shared_exclusive_wait( model->internals->ham );
+
+    if (shared_exclusive_enter( model2->internals->ham ) == 1)
+        diverge_symmetrize_2pt_fine( model2, model2->internals->ham, NULL );
+    shared_exclusive_wait( model2->internals->ham );
+
     for(index_t i = 0; i < 6*6; ++i) {
         CHECK(std::abs(model->internals->ham[i] - model2->internals->ham[i]) < 1e-10);
     }
@@ -196,8 +203,14 @@ TEST_CASE("symmetrize 2pnt","[symm_2pnt]") {
     model2->hop[3].t = -1.;
     diverge_model_internals_common( model2 );
 
-    diverge_symmetrize_2pt_fine( model, model->internals->ham, NULL );
-    diverge_symmetrize_2pt_coarse( model2, model2->internals->ham, NULL );
+    if (shared_exclusive_enter( model->internals->ham ) == 1)
+        diverge_symmetrize_2pt_fine( model, model->internals->ham, NULL );
+    shared_exclusive_wait( model->internals->ham );
+
+    if (shared_exclusive_enter( model2->internals->ham ) == 1)
+        diverge_symmetrize_2pt_coarse( model2, model2->internals->ham, NULL );
+    shared_exclusive_wait( model2->internals->ham );
+
     for(index_t i = 0; i < 6*6*4; ++i) {
         CHECK(std::abs(model->internals->ham[i] - model2->internals->ham[i]) < 1e-10);
     }

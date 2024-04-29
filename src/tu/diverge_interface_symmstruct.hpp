@@ -39,3 +39,10 @@ struct symmstruct_t{
     index_t my_nk_in_bz_off;
 };
 
+// allocates *ptr using realloc, i.e., must be free'd by user with free.
+void symmstruct_serialize( const symmstruct_t* symm, char** ptr, uindex_t* nbytes );
+// allocates symmstruct_t* with new, i.e., must be free'd by user with delete.
+symmstruct_t* symmstruct_deserialize( const char* ptr );
+
+// checks whether two symmtructs are equal, ignores my_* members
+int symmstruct_equal( const symmstruct_t* A, const symmstruct_t* B );

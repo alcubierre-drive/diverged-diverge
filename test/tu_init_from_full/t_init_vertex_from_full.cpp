@@ -23,12 +23,13 @@
 
 
 void full_vertex(const diverge_model_t* mod, index_t k1, index_t k2, index_t k3, complex128_t* buf) {
+    complex128_t* hbuf = (complex128_t*)mod->data;
+
     index_t nk = kdim( mod->nk );
     index_t n_os = mod->n_orb * mod->n_spin;
     index_t size_batch = POW4(n_os);
     index_t koff = k3 + nk *(k2 + nk * k1);
-    memcpy((void*)buf,(void*)(mod->internals->ham + size_batch * koff),
-            sizeof(complex128_t)*size_batch);
+    memcpy((void*)buf,(void*)(hbuf + size_batch * koff), sizeof(complex128_t)*size_batch);
 }
 
 TEST_CASE("check init_from_full","[tu_from_full]") {
@@ -52,18 +53,24 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
     index_t n_os = mod1->n_orb * mod1->n_spin;
     index_t size = POW4(n_os) * POW3(nk);
 
-    mod1->internals->ham = (complex128_t*)realloc(mod1->internals->ham,size*sizeof(complex128_t));
+    complex128_t* hbuf = (complex128_t*) calloc( size, sizeof(complex128_t) );
+    for (index_t k123=0; k123<POW3(nk); ++k123)
+        memcpy( hbuf + k123*POW4(mod1->n_orb*mod1->n_spin), mod1->internals->ham, POW4(mod1->n_orb*mod1->n_spin)*sizeof(complex128_t) );
+    mod1->data = (char*)hbuf;
+
     complex128_t* buf = (complex128_t*) calloc( size, sizeof(complex128_t) );
-    step1->tu_vertex->project_fullV(mod1, mod1->internals->ham);
+    step1->tu_vertex->project_fullV(mod1, hbuf);
 
     mod1->ffill = &full_vertex;
     Projection proj (mod1);
     tu_loop_t loop (mod1);
     Vertex v2(mod1, &proj,&loop);
     v2.project_fullV(mod1, buf);
-    CHECK(check_equal(buf,mod1->internals->ham,size));
+    CHECK(check_equal(buf,hbuf,size));
 
     free(buf);
+    free(hbuf);
+    mod1->data = NULL;
     diverge_flow_step_free(step1);
     diverge_model_free( mod1 );
 }

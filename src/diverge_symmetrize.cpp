@@ -47,6 +47,13 @@ static inline bool map_back_to_BZ(Vec3d* k_point, index_t* idx, const diverge_mo
     return (*idx < (nk(0)*nk(1)*nk(2)));
 }
 
+// allocates *ptr using realloc, i.e., must be free'd by user with free.
+static void syms_serialize( const diverge_model_t* model, char** ptr, uindex_t* nbytes );
+// allocates internals_t* using malloc/calloc, must be free'd by user with free
+static internals_t* syms_deserialize( const diverge_model_t* model, char* ptr );
+// checks whether two internals_t objects are equal in their symmetry parts
+static int syms_equal( const diverge_model_t* model, const internals_t* ii_B );
+
 void diverge_generate_symm_maps( diverge_model_t* model ) {
     if (model->internals->symm_orb_off &&
         model->internals->symm_orb_len &&
@@ -229,4 +236,178 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
 
     mpi_vrb_printf( "merging realspace orbitals…\n" );
     merge_rs_orb(model);
+
+    if (model->internals->symcheck_mpi) {
+        // serialization and communication
+        char* ptr = NULL;
+        uindex_t nbytes = 0;
+        syms_serialize( model, &ptr, &nbytes );
+        vector<index_t> nbytes_ranks( diverge_mpi_comm_size(), 0 );
+        nbytes_ranks[diverge_mpi_comm_rank()] = nbytes;
+        diverge_mpi_allgather_index_inplace( nbytes_ranks.data(), 1 );
+        vector<index_t> sendcounts( diverge_mpi_comm_size(), 0 ),
+                        recvcounts( diverge_mpi_comm_size(), 0 ),
+                        senddispls( diverge_mpi_comm_size(), 0 ),
+                        recvdispls( diverge_mpi_comm_size(), 0 );
+        int to = (diverge_mpi_comm_rank() + 1) % diverge_mpi_comm_size(),
+            from = (diverge_mpi_comm_rank() - 1 + diverge_mpi_comm_size()) % diverge_mpi_comm_size();
+        char* other = (char*)calloc( nbytes_ranks[from], 1 );
+        sendcounts[to] = nbytes;
+        recvcounts[from] = nbytes_ranks[from];
+        diverge_mpi_alltoallv_bytes( ptr, sendcounts.data(), senddispls.data(), other,
+                recvcounts.data(), recvdispls.data(), 1 );
+        free( ptr );
+
+        // get the symmstruct and check for error
+        internals_t* ii_from = syms_deserialize( model, other );
+        free( other );
+        int error = syms_equal( model, ii_from );
+        free( ii_from->symm_orb_off );
+        free( ii_from->symm_orb_len );
+        free( ii_from->symm_beyond_UC );
+        free( ii_from->symm_map_mom_fine );
+        free( ii_from->symm_map_mom_crs );
+        free( ii_from->symm_map_orb );
+        free( ii_from->symm_pref );
+        free( ii_from );
+
+        // print if we found an error
+        vector<int> errors( diverge_mpi_comm_size() );
+        diverge_mpi_allgather_int( &error, errors.data(), 1 );
+        int total_error = 0;
+        for (int e: errors) total_error += e;
+        if (total_error) {
+            mpi_err_printf_all( "rank %i got error %i from symm-compare with rank %i (round-robin)\n", diverge_mpi_comm_rank(), error, from );
+        } else {
+            mpi_log_printf( "symm-compare check successful\n" );
+        }
+    }
+}
+
+static void syms_serialize( const diverge_model_t* model, char** ptr_, uindex_t* nbytes_ ) {
+    const internals_t* ii = model->internals;
+
+    index_t n_sym = model->n_sym;
+    index_t n_os = model->n_orb * model->n_spin;
+    index_t nk = kdim(model->nk);
+    index_t nktot = kdimtot(model->nk, model->nkf);
+    index_t n_orb = model->n_orb;
+
+    index_t total_length = 0;
+    for(index_t s = 0; s < n_sym; ++s)
+    for(index_t o = 0; o < n_os; ++o) {
+        total_length += ii->symm_orb_len[s * n_os + o];
+    }
+
+    char* ptr = NULL;
+    index_t nbytes = 0;
+
+#define push_array( ary, sz ) { \
+    ptr = (char*) realloc( ptr, nbytes + sz ); \
+    memcpy( ptr + nbytes, ary, sz ); \
+    nbytes += sz; \
+}
+
+    push_array( ii->symm_orb_off, n_os * n_sym * sizeof(index_t) );
+    push_array( ii->symm_orb_len, n_os * n_sym * sizeof(index_t) );
+    push_array( ii->symm_beyond_UC, n_orb * n_sym * 3 * sizeof(double) );
+    push_array( ii->symm_map_mom_fine, nktot * n_sym * sizeof(index_t) );
+    push_array( ii->symm_map_mom_crs, nk * n_sym * sizeof(index_t) );
+    push_array( ii->symm_map_orb, total_length * sizeof(index_t) );
+    push_array( ii->symm_pref, total_length * sizeof(complex128_t) );
+
+    *ptr_ = ptr;
+    *nbytes_ = nbytes;
+}
+
+static internals_t* syms_deserialize( const diverge_model_t* model, char* ptr ) {
+    internals_t* ii = (internals_t*)calloc( 1, sizeof(internals_t) );
+
+    index_t n_sym = model->n_sym;
+    index_t n_os = model->n_orb * model->n_spin;
+    index_t nk = kdim(model->nk);
+    index_t nktot = kdimtot(model->nk, model->nkf);
+    index_t n_orb = model->n_orb;
+
+#define pull_array( ary, sz, type ) { \
+    ary = (type *) malloc( sz ); \
+    memcpy( ary, ptr, sz ); \
+    ptr += sz; \
+}
+
+    pull_array( ii->symm_orb_off, n_os * n_sym * sizeof(index_t), index_t );
+    pull_array( ii->symm_orb_len, n_os * n_sym * sizeof(index_t), index_t );
+    pull_array( ii->symm_beyond_UC, n_orb * n_sym * 3 * sizeof(double), double );
+    pull_array( ii->symm_map_mom_fine, nktot * n_sym * sizeof(index_t), index_t );
+    pull_array( ii->symm_map_mom_crs, nk * n_sym * sizeof(index_t), index_t );
+
+    index_t total_length = 0;
+    for(index_t s = 0; s < n_sym; ++s)
+    for(index_t o = 0; o < n_os; ++o) {
+        total_length += ii->symm_orb_len[s * n_os + o];
+    }
+
+    pull_array( ii->symm_map_orb, total_length * sizeof(index_t), index_t );
+    pull_array( ii->symm_pref, total_length * sizeof(complex128_t), complex128_t );
+
+    return ii;
+}
+
+static int compare_ary_i( const index_t* A, const index_t* B, index_t len ) {
+    int errors = 0;
+    for (index_t i=0; i<len; ++i)
+        errors += A[i] != B[i];
+    return errors;
+}
+
+static int compare_ary_c( const complex128_t* A, const complex128_t* B, index_t len ) {
+    int errors = 0;
+    for (index_t i=0; i<len; ++i)
+        errors += std::abs(A[i] - B[i]) > 1.e-5;
+    return errors;
+}
+
+static int compare_ary_d( const double* A, const double* B, index_t len ) {
+    int errors = 0;
+    for (index_t i=0; i<len; ++i)
+        errors += std::abs(A[i] - B[i]) > 1.e-5;
+    return errors;
+}
+
+static int syms_equal( const diverge_model_t* model, const internals_t* ii_B ) {
+    const internals_t* ii_A = model->internals;
+
+    index_t n_sym = model->n_sym;
+    index_t n_os = model->n_orb * model->n_spin;
+    index_t nk = kdim(model->nk);
+    index_t nktot = kdimtot(model->nk, model->nkf);
+    index_t n_orb = model->n_orb;
+
+    index_t total_lengths[2];
+
+    for (int i=0; i<2; ++i) {
+        const internals_t* ii = i == 0 ? ii_A : ii_B;
+        index_t total_length = 0;
+        for(index_t s = 0; s < n_sym; ++s)
+        for(index_t o = 0; o < n_os; ++o) {
+            total_length += ii->symm_orb_len[s * n_os + o];
+        }
+        total_lengths[i] = total_length;
+    }
+
+    int errors = total_lengths[0] != total_lengths[1];
+    if (errors) return errors;
+
+#define compare( ary, typ, len ) \
+    errors += compare_ary_##typ( ii_A->ary, ii_B->ary, len );
+
+    compare( symm_orb_off, i, n_os * n_sym );
+    compare( symm_orb_len, i, n_os * n_sym );
+    compare( symm_beyond_UC, d, n_orb * n_sym * 3 );
+    compare( symm_map_mom_fine, i, nktot * n_sym );
+    compare( symm_map_mom_crs, i, nk * n_sym );
+    compare( symm_map_orb, i, total_lengths[0] );
+    compare( symm_pref, c, total_lengths[0] );
+
+    return errors;
 }

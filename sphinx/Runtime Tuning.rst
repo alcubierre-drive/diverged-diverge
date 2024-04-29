@@ -23,3 +23,9 @@ the following environment variables:
     :``DIVERGE_SHARED_MALLOC_EXTRA_COLORS=VAL``: boolean flag to control
         additional splitting of shared memory communicators. may be benificial
         for performance in some cases; and very useful for debugging.
+    :``DIVERGE_SYMCHECK_MPI``: pass around the diverge symmetry maps among MPI
+        ranks in round-robin fashion and then check whether they are equal.
+        useful for debugging MPI related symmetry issues. MPI communication
+        function called upon symmetry map creation.
+    :``DIVERGE_TU_SYMCHECK_MPI``: same as ``DIVERGE_SYMCHECK_MPI`` but for TUFRG
+        specific data structures.

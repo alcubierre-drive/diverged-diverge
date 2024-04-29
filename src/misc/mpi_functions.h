@@ -80,6 +80,9 @@ void diverge_mpi_allgather_index_inplace( void* sendrecvbuf, int num );
 void diverge_mpi_send_double( void* data, int num, int destination, int tag );
 void diverge_mpi_recv_double( void* data, int num, int source, int tag );
 
+void diverge_mpi_send_bytes( void* data, int sz, int dst, int tag );
+void diverge_mpi_recv_bytes( void* data, int sz, int src, int tag );
+
 void diverge_mpi_gatherv_index( const void* send, int count, void* recv, int* counts, int* displs, int root );
 void diverge_mpi_gatherv_bytes( const void* send, int count, void* recv, int* counts, int* displs, int root );
 void diverge_mpi_gatherv_cdoub( const void* send, int count, void* recv, int* counts, int* displs, int root );

@@ -21,6 +21,8 @@ void mpi_dbg_printf( const char* logname, int loglevel, const char* fname, int l
 #define mpi_tim_printf( ... ) mpi_dbg_printf( "time", -1, __FILE__, __LINE__, __VA_ARGS__ );
 /** print error message (loglevel 0) */
 #define mpi_err_printf( ... ) mpi_dbg_printf( "error", 0, __FILE__, __LINE__, __VA_ARGS__ );
+/** print error message on all ranks (loglevel 0) */
+#define mpi_err_printf_all( ... ) mpi_dbg_printf_all( "error", 0, __FILE__, __LINE__, __VA_ARGS__ );
 /** print warning message (loglevel 1) */
 #define mpi_wrn_printf( ... ) mpi_dbg_printf( "warn", 1, __FILE__, __LINE__, __VA_ARGS__ );
 /** print success message (loglevel 2) */

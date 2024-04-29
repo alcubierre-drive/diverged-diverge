@@ -76,6 +76,7 @@ struct internals_t {
     // tu internals
     void* tu_data;
     internals_destructor_t tu_data_destructor;
+    int tu_symcheck_mpi;
 
     // symmetry internals for two point functions
     index_t* symm_map_mom_fine;
@@ -86,6 +87,8 @@ struct internals_t {
     index_t* symm_orb_off;
     index_t* symm_orb_len;
     complex128_t* symm_pref;
+
+    int symcheck_mpi;
 
 };
 typedef struct internals_t internals_t;

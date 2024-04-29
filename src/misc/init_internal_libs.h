@@ -14,6 +14,9 @@ void diverge_force_thread_limit( int nthr );
 int diverge_omp_num_threads( void );
 int diverge_fftw_num_threads( void );
 
+int environ_tu_symcheck_mpi( void );
+int environ_symcheck_mpi( void );
+
 #ifdef __cplusplus
 }
 #endif

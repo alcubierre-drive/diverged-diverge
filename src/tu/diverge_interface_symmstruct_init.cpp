@@ -398,5 +398,44 @@ void init_symmetries(diverge_model_t* model) {
     init_ibz(model);
     init_map_for_one_leg(model, symm->beyond_UC);
     init_symmetry_maps_o2m(model, symm->beyond_UC);
+
+    if (model->internals->tu_symcheck_mpi) {
+        // serialization and communication
+        char* ptr = NULL;
+        uindex_t nbytes = 0;
+        symmstruct_serialize( symm, &ptr, &nbytes );
+        vector<index_t> nbytes_ranks( diverge_mpi_comm_size(), 0 );
+        nbytes_ranks[diverge_mpi_comm_rank()] = nbytes;
+        diverge_mpi_allgather_index_inplace( nbytes_ranks.data(), 1 );
+        vector<index_t> sendcounts( diverge_mpi_comm_size(), 0 ),
+                        recvcounts( diverge_mpi_comm_size(), 0 ),
+                        senddispls( diverge_mpi_comm_size(), 0 ),
+                        recvdispls( diverge_mpi_comm_size(), 0 );
+        int to = (diverge_mpi_comm_rank() + 1) % diverge_mpi_comm_size(),
+            from = (diverge_mpi_comm_rank() - 1 + diverge_mpi_comm_size()) % diverge_mpi_comm_size();
+        char* other = (char*)calloc( nbytes_ranks[from], 1 );
+        sendcounts[to] = nbytes;
+        recvcounts[from] = nbytes_ranks[from];
+        diverge_mpi_alltoallv_bytes( ptr, sendcounts.data(), senddispls.data(), other,
+                recvcounts.data(), recvdispls.data(), 1 );
+        free( ptr );
+
+        // get the symmstruct and check for error
+        symmstruct_t* symm_from = symmstruct_deserialize( other );
+        free( other );
+        int error = symmstruct_equal( symm, symm_from );
+        delete symm_from;
+
+        // print if we found an error
+        vector<int> errors( diverge_mpi_comm_size() );
+        diverge_mpi_allgather_int( &error, errors.data(), 1 );
+        int total_error = 0;
+        for (int e: errors) total_error += e;
+        if (total_error) {
+            mpi_err_printf_all( "rank %i got error %i from TU symm-compare with rank %i (round-robin)\n", diverge_mpi_comm_rank(), error, from );
+        } else {
+            mpi_log_printf( "TU symm-compare check successful\n" );
+        }
+    }
 }
 

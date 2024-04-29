@@ -174,6 +174,17 @@ void diverge_mpi_recv_double( void* data, int num, int source, int tag ) {
     MPI_Recv( data, num, MPI_DOUBLE, source, tag, diverge_mpi_comm, &result );
 }
 
+void diverge_mpi_send_bytes( void* data, int sz, int dst, int tag ) {
+    MPICHK();
+    MPI_Send( data, sz, MPI_BYTE, dst, tag, diverge_mpi_comm );
+}
+
+void diverge_mpi_recv_bytes( void* data, int sz, int src, int tag ) {
+    MPICHK();
+    MPI_Status result;
+    MPI_Recv( data, sz, MPI_BYTE, src, tag, diverge_mpi_comm, &result );
+}
+
 void diverge_mpi_gatherv_index( const void* send, int count, void* recv, int* counts, int* displs, int root ) {
     MPICHK();
     MPI_Gatherv( send, count, MPI_LONG_LONG, recv, counts, displs, MPI_LONG_LONG, root, diverge_mpi_comm );
@@ -407,6 +418,12 @@ void diverge_mpi_send_double( void* data, int num, int destination, int tag ) {
     (void)data; (void)num; (void)destination; (void)tag;
 }
 void diverge_mpi_recv_double( void* data, int num, int source, int tag ) {
+    (void)data; (void)num; (void)source; (void)tag;
+}
+void diverge_mpi_send_bytes( void* data, int num, int destination, int tag ) {
+    (void)data; (void)num; (void)destination; (void)tag;
+}
+void diverge_mpi_recv_bytes( void* data, int num, int source, int tag ) {
     (void)data; (void)num; (void)source; (void)tag;
 }
 

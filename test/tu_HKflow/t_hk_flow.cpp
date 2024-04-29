@@ -112,6 +112,11 @@ double err_P(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
 }
 
 TEST_CASE("two orbital model in 1d","[hk]") {
+    CHECK( diverge_mpi_comm_size() == 1 );
+    if (diverge_mpi_comm_size() > 1) {
+        mpi_err_printf( "cannot test two orbital model in 1d [hk] with more than one MPI rank\n" );
+        return;
+    }
     mpi_loglevel_set( 5 );
     diverge_model_t* mod1 = test_model(1);
     diverge_model_t* mod2 = test_model(2);
@@ -272,7 +277,7 @@ TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
     diverge_model_free( mod2 );
 }
 
-
+// TODO(LK) this test fails with MPI
 TEST_CASE("two orbital model in 1d mom","[mhk]") {
     mpi_loglevel_set( 5 );
     diverge_model_t* mod1 = test_model(1,10,5);
