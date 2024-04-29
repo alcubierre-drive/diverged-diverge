@@ -210,6 +210,69 @@ TEST_CASE("two orbital model in 1d","[hk]") {
     diverge_model_free( mod2 );
 }
 
+
+TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
+    mpi_loglevel_set( 5 );
+    diverge_model_t* mod2 = test_model(2);
+    diverge_model_internals_grid( mod2 );
+    diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "grid", "PCD" );
+
+    index_t fsize = POW4(mod2->n_orb*mod2->n_spin);
+    complex128_t* vertex = (complex128_t*)calloc(fsize,sizeof(complex128_t));
+    ((grid::VertexMemory*)s2->intls->grid_vertex)->get_vertex( vertex, 'V' );
+    index_t norb = mod2->n_orb*mod2->n_spin;
+    for(index_t s4 = 0; s4<mod2->n_spin;++s4)
+    for(index_t s3 = 0; s3<mod2->n_spin;++s3)
+    for(index_t s2 = 0; s2<mod2->n_spin;++s2)
+    for(index_t s1 = 0; s1<mod2->n_spin;++s1)
+    for(index_t o4 = 0; o4<mod2->n_orb;++o4)
+    for(index_t o3 = 0; o3<mod2->n_orb;++o3)
+    for(index_t o2 = 0; o2<mod2->n_orb;++o2)
+    for(index_t o1 = 0; o1<mod2->n_orb;++o1)
+    {
+        const index_t so1 = o1+mod2->n_orb*s1;
+        const index_t so2 = o2+mod2->n_orb*s2;
+        const index_t so3 = o3+mod2->n_orb*s3;
+        const index_t so4 = o4+mod2->n_orb*s4;
+        if(s1 == s4 && s2 == s3){
+            if(s1!=s3){
+                if(o1==o4 && o3==o2){
+                    if(o1==o2) {
+                        CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0) < 1e-10);
+                    }else
+                        CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0-2.*0.1) < 1e-10);
+                }else if(o1==o3 && o4==o2 && o2!=o1)
+                    CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
+                else if(o1==o2 && o3==o4&& o1!=o3)
+                    CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
+            }else{
+                if(o1==o4 && o2==o3 && o1!=o3)
+                    CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0*1.0-3.0*0.1) < 1e-10);
+            }
+        }else if(s1 == s3 && s4 == s2){
+            if(s1!=s4){
+                if(o1==o3 && o2==o4){
+                    if(o1==o2) {
+                        CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0) < 1e-10);
+                    }else
+                         CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0+2.*0.1) < 1e-10);
+                }else if(o1==o4 && o3==o2 && o3!=o1)
+                     CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
+                else if(o1==o2 && o3==o4 && o1!=o3)
+                     CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
+            }else{
+                if(o1==o3 && o2==o4 && o1!=o2)
+                     CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0*1.0+3.0*0.1) < 1e-10);
+            }
+        }
+    }
+
+    diverge_flow_step_free( s2 );
+    free(vertex);
+    diverge_model_free( mod2 );
+}
+
+
 TEST_CASE("two orbital model in 1d mom","[mhk]") {
     mpi_loglevel_set( 5 );
     diverge_model_t* mod1 = test_model(1,10,5);
