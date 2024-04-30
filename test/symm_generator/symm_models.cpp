@@ -20,6 +20,7 @@
 
 #include "../model_examples/model_constructor.hpp"
 #include "../helper_functions.hpp"
+#include "../../src/misc/shared_mem.h"
 
 static double dot(double* A, double* B) {
     return A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
@@ -113,6 +114,15 @@ double test_symm_4_pnt( diverge_model_t* model, Vertex* vertex ) {
     return max_diff;
 }
 
+static double shmem_diverge_symmetrize_2pt_fine( diverge_model_t* mod, complex128_t* ptr, complex128_t* aux ) {
+    double priv_error = 0.0;
+    if (shared_exclusive_enter( ptr ) == 1)
+        priv_error += diverge_symmetrize_2pt_fine( mod, ptr, aux );
+    shared_exclusive_wait( ptr );
+    double all_error = 0.0;
+    diverge_mpi_allreduce_double_sum( &priv_error, &all_error, 1 );
+    return all_error;
+}
 
 TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
 
@@ -121,9 +131,9 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
 
     diverge_model_internals_tu( mod1, 1.0 );
     diverge_model_internals_tu( mod2, 1.0 );
-    double err = diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
+    double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
     CHECK(err < 1e-12);
-    err = diverge_symmetrize_2pt_fine( mod1, mod2->internals->ham, NULL );
+    err = shmem_diverge_symmetrize_2pt_fine( mod1, mod2->internals->ham, NULL );
     CHECK(err < 1e-12);
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
@@ -182,9 +192,9 @@ TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
 
     diverge_model_t* mod1 = gen_square_lat_rashba_sym(6,6);
     diverge_model_t* mod2 = gen_square_lat_rashba(6,6);
-    double err = diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
+    double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
     CHECK(err < 1e-12);
-    err = diverge_symmetrize_2pt_fine( mod1, mod2->internals->ham, NULL );
+    err = shmem_diverge_symmetrize_2pt_fine( mod1, mod2->internals->ham, NULL );
     CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.0 );
     diverge_model_internals_tu( mod2, 1.0 );
@@ -248,9 +258,9 @@ TEST_CASE("check symm hub","[symm_2pnt][symm_hub]") {
 
     diverge_model_t* mod1 = gen_square_lat_hub_sym(6,6);
     diverge_model_t* mod2 = gen_square_lat_hub(6,6);
-    double err = diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
+    double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
     CHECK(err < 1e-12);
-    err = diverge_symmetrize_2pt_fine( mod2, mod2->internals->ham, NULL );
+    err = shmem_diverge_symmetrize_2pt_fine( mod2, mod2->internals->ham, NULL );
     CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.1 );
     diverge_model_internals_tu( mod2, 1.1 );
@@ -306,7 +316,7 @@ TEST_CASE("check symm hub ref","[symm_2pnt][symm_hub][symm_ref]") {
     diverge_model_t* mod1 = gen_square_lat_hub_sym(6,6,3,3);
     diverge_model_t* mod2 = gen_square_lat_hub_sym(6,6,3,3);
     mod2->n_sym = 0;
-    double err = diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
+    double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
     CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 2.0 );
     diverge_model_internals_tu( mod2, 2.0 );
@@ -365,7 +375,7 @@ TEST_CASE("check symm honey ref","[symm_2pnt][symm_honey][symm_ref]") {
     diverge_model_t* mod1 = gen_honeycomb_lat_hub_sym(6,6,3,3);
     diverge_model_t* mod2 = gen_honeycomb_lat_hub_sym(6,6,3,3);
     mod2->n_sym = 0;
-    double err = diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
+    double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
     CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.3 );
     diverge_model_internals_tu( mod2, 1.3 );
@@ -424,7 +434,7 @@ TEST_CASE("check symm rashba ref","[symm_2pnt][symm_rashba][symm_ref]") {
     diverge_model_t* mod1 = gen_square_lat_rashba_sym(6,6,3,3);
     diverge_model_t* mod2 = gen_square_lat_rashba_sym(6,6,3,3);
     mod2->n_sym = 0;
-    double err = diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
+    double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
     CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.3 );
     diverge_model_internals_tu( mod2, 1.3 );
@@ -482,7 +492,7 @@ TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
     diverge_model_t* mod1 = gen_triangular_pxpy_sym(4,false);
     diverge_model_t* mod2 = gen_triangular_pxpy_sym(4,false);
     mod2->n_sym = 0;
-    double err = diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
+    double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
     CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.0 );
     diverge_model_internals_tu( mod2, 1.0 );
@@ -539,7 +549,7 @@ TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
     diverge_model_t* mod1 = gen_triangular_lat_rashba(4);
     diverge_model_t* mod2 = gen_triangular_lat_rashba(4);
     mod2->n_sym = 0;
-    double err = diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
+    double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
     CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.1 );
     diverge_model_internals_tu( mod2, 1.1 );
@@ -596,7 +606,7 @@ TEST_CASE("check symm triangular p+p- ref","[symm_2pnt][symm_tri][symm_ref]") {
     diverge_model_t* mod1 = gen_triangular_pxpy_sym(6,true);
     diverge_model_t* mod2 = gen_triangular_pxpy_sym(6,true);
     mod2->n_sym = 0;
-    double err = diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
+    double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
     CHECK(err < 1e-12);
 
     bool test = check_hermicity(mod1->internals->ham, 2, 36);
