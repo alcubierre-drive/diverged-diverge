@@ -134,6 +134,10 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     tick = diverge_mpi_wtime();
     t->alloc = fftw_mpi_local_size_many( 3, t->dims, t->chunksize_max,
             FFTW_MPI_DEFAULT_BLOCK, t->comm, &t->kx_count, &t->kx_displ );
+
+    // align size to 512 (sizeof(complex128_t) == 16)
+    while ((t->alloc % 32) != 0) t->alloc++;
+
     t->ggm_buf = fftw_alloc_complex(t->alloc);
     alloc_print( sizeof(complex128_t)*t->alloc );
     t->ggp_buf = fftw_alloc_complex(t->alloc);

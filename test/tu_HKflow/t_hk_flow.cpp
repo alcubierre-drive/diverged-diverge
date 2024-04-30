@@ -281,6 +281,8 @@ TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
     diverge_model_free( mod2 );
 }
 
+// TODO(LK) this one still fails for me (with -DUSE_MPI_FFTW and depending on
+// the number of ranks; I guess this is something we should actually check)
 TEST_CASE("two orbital model in 1d mom","[mhk]") {
     mpi_loglevel_set( 5 );
     diverge_model_t* mod1 = test_model(1,10,5);
