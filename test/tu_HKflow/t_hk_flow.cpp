@@ -17,6 +17,7 @@
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
+#include<iostream>
 
 diverge_model_t* test_model(int n_spin, int kx = 1, int kxf = 1) {
     diverge_model_t* mod1 = diverge_model_init();
@@ -74,6 +75,7 @@ diverge_model_t* test_model(int n_spin, int kx = 1, int kxf = 1) {
 
 double err_D(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
     double err = 0.0;
+    if(diverge_mpi_comm_rank() == 0)
     for (index_t op3=0; op3<n_orb; ++op3){
         for (index_t op1=0; op1<n_orb; ++op1){
             index_t o1 = op1 + n_orbff * (3);
@@ -87,6 +89,7 @@ double err_D(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
 
 double err_C(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
     double err = 0.0;
+    if(diverge_mpi_comm_rank() == 0)
     for (index_t op3=0; op3<n_orb; ++op3){
         for (index_t op1=0; op1<n_orb; ++op1){
             index_t o1 = op1 + n_orbff * (1);
@@ -100,6 +103,7 @@ double err_C(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
 
 double err_P(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
     double err = 0.0;
+    if(diverge_mpi_comm_rank() == 0)
     for (index_t op3=0; op3<n_orb; ++op3){
         for (index_t op1=0; op1<n_orb; ++op1){
             index_t o1 = op1 + n_orbff * (1);
@@ -277,7 +281,6 @@ TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
     diverge_model_free( mod2 );
 }
 
-// TODO(LK) this test fails with MPI
 TEST_CASE("two orbital model in 1d mom","[mhk]") {
     mpi_loglevel_set( 5 );
     diverge_model_t* mod1 = test_model(1,10,5);

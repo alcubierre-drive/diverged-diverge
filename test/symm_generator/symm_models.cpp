@@ -25,7 +25,6 @@ static double dot(double* A, double* B) {
     return A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
 }
 
-// TODO(LK) these tests fail with MPI
 double test_symm_4_pnt( diverge_model_t* model, Vertex* vertex ) {
     if (model->n_sym == 0 || model->orb_symmetries == NULL) return -1.0;
 
@@ -129,6 +128,11 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
 
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
+
     double Lambda = 1.0;
     double dLambda = -0.06;
 
@@ -140,35 +144,36 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
     double maxdiff = 0.0;
     CHECK( test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10 );
 
-    step1->tu_vertex->reco<'P'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'P'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'P'>(reco_vert1);
+    step2->tu_vertex->reco<'P'>(reco_vert2);
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
 
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'C'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'C'>(reco_vert1);
+    step2->tu_vertex->reco<'C'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'D'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'D'>(reco_vert1);
+    step2->tu_vertex->reco<'D'>(reco_vert2);
     maxdiff = 0.0;
 
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
 
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
-
+    free(reco_vert1);
+    free(reco_vert2);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
@@ -188,7 +193,10 @@ TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
 
     double Lambda = 1.0;
     double dLambda = -0.05;
-
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
 
     for (int i=0; i<4; ++i) {
         diverge_flow_step_euler( step1, Lambda, dLambda );
@@ -203,33 +211,35 @@ TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
     }
     CHECK(maxdiff < 1e-8);
     maxdiff = 0.0;
-    step1->tu_vertex->reco<'P'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'P'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'P'>(reco_vert1);
+    step2->tu_vertex->reco<'P'>(reco_vert2);
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'C'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'C'>(reco_vert1);
+    step2->tu_vertex->reco<'C'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'D'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'D'>(reco_vert1);
+    step2->tu_vertex->reco<'D'>(reco_vert2);
     maxdiff = 0.0;
 
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
 
     CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
+    free(reco_vert1);
+    free(reco_vert2);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
@@ -246,6 +256,10 @@ TEST_CASE("check symm hub","[symm_2pnt][symm_hub]") {
     diverge_model_internals_tu( mod2, 1.1 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
 
     double Lambda = 1.0;
     double dLambda = -0.1;
@@ -255,32 +269,34 @@ TEST_CASE("check symm hub","[symm_2pnt][symm_hub]") {
         Lambda += dLambda;
     }
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'P'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'P'>(reco_vert1);
+    step2->tu_vertex->reco<'P'>(reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'C'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'C'>(reco_vert1);
+    step2->tu_vertex->reco<'C'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'D'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'D'>(reco_vert1);
+    step2->tu_vertex->reco<'D'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
+    free(reco_vert1);
+    free(reco_vert2);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
@@ -296,6 +312,10 @@ TEST_CASE("check symm hub ref","[symm_2pnt][symm_hub][symm_ref]") {
     diverge_model_internals_tu( mod2, 2.0 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
 
 
     double Lambda = 1.0;
@@ -308,32 +328,34 @@ TEST_CASE("check symm hub ref","[symm_2pnt][symm_hub][symm_ref]") {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'P'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'P'>(reco_vert1);
+    step2->tu_vertex->reco<'P'>(reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'C'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'C'>(reco_vert1);
+    step2->tu_vertex->reco<'C'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'D'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'D'>(reco_vert1);
+    step2->tu_vertex->reco<'D'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
+    free(reco_vert1);
+    free(reco_vert2);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
@@ -349,6 +371,10 @@ TEST_CASE("check symm honey ref","[symm_2pnt][symm_honey][symm_ref]") {
     diverge_model_internals_tu( mod2, 1.3 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
 
 
     double Lambda = 1.0;
@@ -361,32 +387,34 @@ TEST_CASE("check symm honey ref","[symm_2pnt][symm_honey][symm_ref]") {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'P'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'P'>(reco_vert1);
+    step2->tu_vertex->reco<'P'>(reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'C'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'C'>(reco_vert1);
+    step2->tu_vertex->reco<'C'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'D'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'D'>(reco_vert1);
+    step2->tu_vertex->reco<'D'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
+    free(reco_vert1);
+    free(reco_vert2);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
@@ -402,6 +430,10 @@ TEST_CASE("check symm rashba ref","[symm_2pnt][symm_rashba][symm_ref]") {
     diverge_model_internals_tu( mod2, 1.3 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
 
 
     double Lambda = 1.0;
@@ -414,32 +446,34 @@ TEST_CASE("check symm rashba ref","[symm_2pnt][symm_rashba][symm_ref]") {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'P'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'P'>(reco_vert1);
+    step2->tu_vertex->reco<'P'>(reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'C'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'C'>(reco_vert1);
+    step2->tu_vertex->reco<'C'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'D'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'D'>(reco_vert1);
+    step2->tu_vertex->reco<'D'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
+    free(reco_vert1);
+    free(reco_vert2);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
@@ -454,6 +488,10 @@ TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
     diverge_model_internals_tu( mod2, 1.0 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
 
     double Lambda = 1.0;
     double dLambda = -0.1;
@@ -465,32 +503,34 @@ TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
     CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
     CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'P'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'P'>(reco_vert1);
+    step2->tu_vertex->reco<'P'>(reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'C'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'C'>(reco_vert1);
+    step2->tu_vertex->reco<'C'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'D'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'D'>(reco_vert1);
+    step2->tu_vertex->reco<'D'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
+    free(reco_vert1);
+    free(reco_vert2);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
@@ -505,6 +545,10 @@ TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
     diverge_model_internals_tu( mod2, 1.1 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
 
     double Lambda = 1.0;
     double dLambda = -0.1;
@@ -516,32 +560,34 @@ TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
     CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
     CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'P'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'P'>(reco_vert1);
+    step2->tu_vertex->reco<'P'>(reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'C'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'C'>(reco_vert1);
+    step2->tu_vertex->reco<'C'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'D'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'D'>(reco_vert1);
+    step2->tu_vertex->reco<'D'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
+    free(reco_vert1);
+    free(reco_vert2);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
@@ -560,6 +606,10 @@ TEST_CASE("check symm triangular p+p- ref","[symm_2pnt][symm_tri][symm_ref]") {
     diverge_model_internals_tu( mod2, 0.0 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
 
     double Lambda = 1.0;
     double dLambda = -0.1;
@@ -571,32 +621,34 @@ TEST_CASE("check symm triangular p+p- ref","[symm_2pnt][symm_tri][symm_ref]") {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'P'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'P'>(reco_vert1);
+    step2->tu_vertex->reco<'P'>(reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'C'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'C'>(reco_vert1);
+    step2->tu_vertex->reco<'C'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(step1->tu_vertex->bubble_helper);
-    step2->tu_vertex->reco<'D'>(step2->tu_vertex->bubble_helper);
+    step1->tu_vertex->reco<'D'>(reco_vert1);
+    step2->tu_vertex->reco<'D'>(reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
-        double d = std::abs(step2->tu_vertex->bubble_helper[i]-step1->tu_vertex->bubble_helper[i]);
+        double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
+    free(reco_vert1);
+    free(reco_vert2);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
 }
