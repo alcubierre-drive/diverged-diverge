@@ -80,15 +80,18 @@ tu_loop_t::tu_loop_t(diverge_model_t* modelin)
     // The 1D problem is described here:
     // https://fftw.org/doc/Basic-and-advanced-distribution-interfaces.html
     if (model->internals->dim <= 1) {
-        if (which_fft_red == tu_fft_algorithm_mpi_new) {
+        if (which_fft_red == tu_fft_algorithm_mpi_new ||
+            which_fft_red == tu_fft_algorithm_mpi) {
             which_fft_red = tu_fft_algorithm_greedy;
             mpi_wrn_printf( "which_fft_red <- tu_fft_algorithm_greedy (fftw3_mpi cannot do 1D/many)\n" );
         }
-        if (which_fft_simple == tu_fft_algorithm_mpi_new) {
+        if (which_fft_simple == tu_fft_algorithm_mpi_new ||
+            which_fft_simple == tu_fft_algorithm_mpi) {
             which_fft_simple = tu_fft_algorithm_greedy;
             mpi_wrn_printf( "which_fft_simple <- tu_fft_algorithm_greedy (fftw3_mpi cannot do 1D/many)\n" );
         }
-        if (which_fft_greens == tu_fft_algorithm_mpi_new) {
+        if (which_fft_greens == tu_fft_algorithm_mpi_new ||
+            which_fft_greens == tu_fft_algorithm_mpi) {
             which_fft_greens = tu_fft_algorithm_greedy;
             mpi_wrn_printf( "which_fft_greens <- tu_fft_algorithm_greedy (fftw3_mpi cannot do 1D/many)\n" );
         }
