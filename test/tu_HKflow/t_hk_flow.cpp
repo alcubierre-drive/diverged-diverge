@@ -73,46 +73,29 @@ diverge_model_t* test_model(int n_spin, int kx = 1, int kxf = 1) {
     return mod1;
 }
 
-double err_D(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
+template<char chan>
+double err_X(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
     double err = 0.0;
-    if(diverge_mpi_comm_rank() == 0)
     for (index_t op3=0; op3<n_orb; ++op3){
         for (index_t op1=0; op1<n_orb; ++op1){
-            index_t o1 = op1 + n_orbff * (3);
-            index_t o3 = op3 + n_orbff * (0);
+            index_t o1, o3;
+            if constexpr(chan == 'D') {
+                o1 = op1 + n_orbff * (3);
+                o3 = op3 + n_orbff * (0);
+            } else if constexpr(chan == 'C') {
+                o1 = op1 + n_orbff * (1);
+                o3 = op3 + n_orbff * (1);
+            } else if constexpr(chan == 'P') {
+                o1 = op1 + n_orbff * (1);
+                o3 = op3 + n_orbff * (1);
+            }
             double trial = std::abs(pSU[op1+n_orbff*op3] - pnSU[o1+n_orbff*4*o3]);
             if(trial > err) err = trial;
         }
     }
-    return err;
-}
-
-double err_C(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
-    double err = 0.0;
-    if(diverge_mpi_comm_rank() == 0)
-    for (index_t op3=0; op3<n_orb; ++op3){
-        for (index_t op1=0; op1<n_orb; ++op1){
-            index_t o1 = op1 + n_orbff * (1);
-            index_t o3 = op3 + n_orbff * (1);
-            double trial = std::abs(pSU[op1+n_orbff*op3] - pnSU[o1+n_orbff*4*o3]);
-            if(trial > err) err = trial;
-        }
-    }
-    return err;
-}
-
-double err_P(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
-    double err = 0.0;
-    if(diverge_mpi_comm_rank() == 0)
-    for (index_t op3=0; op3<n_orb; ++op3){
-        for (index_t op1=0; op1<n_orb; ++op1){
-            index_t o1 = op1 + n_orbff * (1);
-            index_t o3 = op3 + n_orbff * (1);
-            double trial = std::abs(pSU[op1+n_orbff*op3] - pnSU[o1+n_orbff*4*o3]);
-            if(trial > err) err = trial;
-        }
-    }
-    return err;
+    double mpi_err = 0;
+    diverge_mpi_allreduce_double_max( &err, &mpi_err, 1 );
+    return mpi_err;
 }
 
 TEST_CASE("two orbital model in 1d","[hk]") {
@@ -130,9 +113,9 @@ TEST_CASE("two orbital model in 1d","[hk]") {
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "PCD" );
     Vertex* v1 = s1->tu_vertex;
     Vertex* v2 = s2->tu_vertex;
-    CHECK(err_D(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_C(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_P(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
 
 
     index_t fsize = POW4(mod2->n_orb*mod2->n_spin);
@@ -209,9 +192,9 @@ TEST_CASE("two orbital model in 1d","[hk]") {
 
         Lambda += dLambda;
     }
-    CHECK(err_D(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_C(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_P(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
     diverge_flow_step_free( s1 );
     diverge_flow_step_free( s2 );
     free(vertex);
@@ -281,8 +264,6 @@ TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
     diverge_model_free( mod2 );
 }
 
-// TODO(LK) this one still fails for me (with -DUSE_MPI_FFTW and depending on
-// the number of ranks; I guess this is something we should actually check)
 TEST_CASE("two orbital model in 1d mom","[mhk]") {
     mpi_loglevel_set( 5 );
     diverge_model_t* mod1 = test_model(1,10,5);
@@ -293,9 +274,9 @@ TEST_CASE("two orbital model in 1d mom","[mhk]") {
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "SPCD" );
     Vertex* v1 = s1->tu_vertex;
     Vertex* v2 = s2->tu_vertex;
-    CHECK(err_D(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_C(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_P(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
 
     double Lambda = 1.0;
     double dLambda = -0.1;
@@ -304,9 +285,9 @@ TEST_CASE("two orbital model in 1d mom","[mhk]") {
         diverge_flow_step_euler( s2, Lambda, dLambda );
         Lambda += dLambda;
     }
-    CHECK(err_D(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_C(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_P(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
     diverge_flow_step_free( s1 );
     diverge_flow_step_free( s2 );
     diverge_model_free( mod1 );
