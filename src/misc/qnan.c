@@ -26,3 +26,24 @@ uint32_t qnan_get( double qnan ) {
     memcpy( &result, &qnan, sizeof(result) );
     return result;
 }
+
+int fnan_isnan( double fnan ) {
+    uint64_t unan = 0;
+    memcpy( &unan, &fnan, sizeof(unan) );
+    return ((unan & NAN_MASK) == NAN_MASK);
+}
+
+double fnan_gen( float payload ) {
+    double result = 0;
+    memcpy( &result, &NAN_MASK, sizeof(NAN_MASK) );
+    memcpy( &result, &payload, sizeof(payload) );
+    return result;
+}
+
+float fnan_get( double fnan ) {
+    if (!fnan_isnan( fnan ))
+        return NOT_A_NAN;
+    float result = 0;
+    memcpy( &result, &fnan, sizeof(result) );
+    return result;
+}

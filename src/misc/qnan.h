@@ -13,6 +13,10 @@ double qnan_gen( uint32_t payload );
 uint32_t qnan_get( double qnan );
 int qnan_isnan( double qnan );
 
+double fnan_gen( float payload );
+float fnan_get( double fnan );
+int fnan_isnan( double fnan );
+
 #ifdef __cplusplus
 }
 #endif
