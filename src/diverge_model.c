@@ -4,15 +4,14 @@
 #include "diverge_internals_struct.h"
 #include "misc/init_interaction_channels.h"
 #include "misc/mpi_functions.h"
-#include "diverge_Eigen3.hpp"
 #include "diverge_patching.h"
 #include "diverge_model_internals.h"
 #include "misc/dependency_tree.h"
 #include "misc/qnan.h"
 #include "misc/init_internal_libs.h"
+#include "misc/timsort.h"
 #include <fftw3.h>
-#include <algorithm>
-#include <cassert>
+#include <assert.h>
 
 diverge_model_t* diverge_model_init(void) {
     diverge_model_t* result = (diverge_model_t*)calloc(1,sizeof(diverge_model_t));
@@ -100,7 +99,7 @@ void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* 
         index_t Ridx = IDX3(x_id, y_id, z_id, n_ky, n_kz);
         if (Ridx < 0) {
             #pragma omp atomic
-            invalid_hoppings_norm += std::abs(hop[idx].t);
+            invalid_hoppings_norm += cabs(hop[idx].t);
             continue;
         }
 
@@ -140,32 +139,36 @@ greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* mode
     const double* E = model->internals->E;
 
     for (int sign=0; sign<2; ++sign) {
-        complex128_t L = sign ? Lambda : std::conj(Lambda);
+        complex128_t L = sign ? Lambda : conj(Lambda);
         #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
         for (index_t k=0; k<nkf; ++k)
         for (index_t o=0; o<nb; ++o)
         for (index_t p=0; p<nb; ++p) {
             complex128_t tmp = 0.0;
             for (index_t b=0; b<nb; ++b)
-                tmp += U[IDX3(k,b,o,nb,nb)] * std::conj(U[IDX3(k,b,p,nb,nb)]) / (L - E[IDX2(k,b,nb)]);
+                tmp += U[IDX3(k,b,o,nb,nb)] * conj(U[IDX3(k,b,p,nb,nb)]) / (L - E[IDX2(k,b,nb)]);
             buf[IDX4(sign, k, o, p, nkf, nb, nb)] = tmp;
         }
     }
     return greensfunc_op_cpu;
 }
 
+static inline int rs_vertex_compar_R( const void* v1_, const void* v2_, void* data_ ) {
+    const index_t* nk = data_;
+    const rs_vertex_t *v1 = v1_, *v2 = v2_;
+    return IDX3( v1->R[0], v1->R[1], v1->R[2], nk[1], nk[2] ) -
+           IDX3( v2->R[0], v2->R[1], v2->R[2], nk[1], nk[2] );
+}
+
+static inline int rs_vertex_compar_chan( const void* v1_, const void* v2_ ) {
+    const rs_vertex_t *v1 = v1_, *v2 = v2_;
+    return v1->chan - v2->chan;
+}
+
 static inline void sort_rs_vertex_elements(diverge_model_t* model) {
     if (model->n_vert_chan[0] != -1) return;
-    const index_t* nk = model->nk;
-    std::sort( model->vert, model->vert + model->n_vert,
-        [nk](const rs_vertex_t& V1, const rs_vertex_t& V2)->bool{
-            return V1.R[0]*nk[1]*nk[2] + V1.R[1]*nk[2] + V1.R[2] <
-                   V2.R[0]*nk[1]*nk[2] + V2.R[1]*nk[2] + V2.R[2];
-        });
-    std::stable_sort( model->vert, model->vert + model->n_vert,
-        [](const rs_vertex_t& V1, const rs_vertex_t& V2)->bool{
-            return V1.chan < V2.chan;
-        });
+    timsort_r( model->vert, model->n_vert, sizeof(rs_vertex_t), &rs_vertex_compar_R, model->nk );
+    timsort( model->vert, model->n_vert, sizeof(rs_vertex_t), &rs_vertex_compar_chan );
     char chans[] = "CDP";
     rs_vertex_t* vptr = model->vert;
     const rs_vertex_t* vptr_end = model->vert + model->n_vert;
@@ -231,3 +234,4 @@ double diverge_model_ibz_path_skip_segment( void ) {
     memcpy( &number, "skip", sizeof(uint32_t) );
     return qnan_gen( number );
 }
+
