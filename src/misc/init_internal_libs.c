@@ -16,17 +16,24 @@
 
 static int dvg_has_internal_libs_init = 0;
 
+typedef struct {
+    int val:30;
+    int set:1;
+    int warn:1;
+} tag_t;
+
+static struct {
+    tag_t fftw_num_threads;
+    tag_t omp_num_threads;
+    tag_t omp_implicit_num_threads;
+    tag_t symcheck_mpi;
+    tag_t tu_symcheck_mpi;
+    tag_t shared_malloc_extra_colors;
+} dvg_env = {0};
+
 static int dvg_has_fftw_init = 0;
 static int dvg_has_mpi_fftw_init = 0;
 static int dvg_previous_log_color = -1;
-static int dvg_shared_malloc_extra_colors = 0;
-
-static int dvg_omp_num_threads = -1;
-static int dvg_fftw_num_threads = -1;
-static int dvg_omp_implicit_num_threads = -1;
-
-static int dvg_tu_symcheck_mpi = 0;
-static int dvg_symcheck_mpi = 0;
 
 static void init_internal_libs_omp_implicit( int nthr );
 static void init_internal_libs_omp_diverge( int nthr );
@@ -34,24 +41,37 @@ static void init_internal_libs_fftw( int nthr );
 static void read_environment( void );
 
 int environ_tu_symcheck_mpi( void ) {
-    return dvg_tu_symcheck_mpi;
+    return dvg_env.tu_symcheck_mpi.set;
 }
 
 int environ_symcheck_mpi( void ) {
-    return dvg_symcheck_mpi;
+    return dvg_env.symcheck_mpi.set;
 }
 
 void init_internal_libs( void ) {
-
     read_environment();
-    // we need to equalize the number of threads on each rank.
-    diverge_mpi_allreduce_int_max_inplace( &dvg_fftw_num_threads, 1 );
-    diverge_mpi_allreduce_int_max_inplace( &dvg_omp_implicit_num_threads, 1 );
-    diverge_mpi_allreduce_int_max_inplace( &dvg_omp_num_threads, 1 );
 
-    init_internal_libs_omp_implicit( dvg_omp_implicit_num_threads );
-    init_internal_libs_omp_diverge( dvg_omp_num_threads );
-    init_internal_libs_fftw( dvg_fftw_num_threads );
+    // we need to equalize the number of threads on each rank.
+#define EQUALIZE_X( name, x ) { \
+    int equalize_buf = dvg_env.name.x; \
+    diverge_mpi_allreduce_int_max_inplace( &equalize_buf, 1 ); \
+    dvg_env.name.x = equalize_buf; \
+}
+#define EQUALIZE( name ) { \
+    EQUALIZE_X( name, val ); \
+    EQUALIZE_X( name, set ); \
+    EQUALIZE_X( name, warn ); \
+}
+    EQUALIZE( fftw_num_threads );
+    EQUALIZE( omp_implicit_num_threads );
+    EQUALIZE( omp_num_threads );
+    EQUALIZE( symcheck_mpi );
+    EQUALIZE( tu_symcheck_mpi );
+    EQUALIZE( shared_malloc_extra_colors );
+
+    init_internal_libs_omp_implicit( dvg_env.omp_implicit_num_threads.val );
+    init_internal_libs_omp_diverge( dvg_env.omp_num_threads.val );
+    init_internal_libs_fftw( dvg_env.fftw_num_threads.val );
 
     // logging
     dvg_previous_log_color = mpi_log_get_colors();
@@ -60,11 +80,24 @@ void init_internal_libs( void ) {
         mpi_log_set_colors(isatty(STDERR_FILENO));
     #endif
 
+#define NOTIFY_OR_WARN( nam, ... ) { \
+    if (dvg_env.nam.warn) { \
+        mpi_wrn_printf( __VA_ARGS__ ); \
+    } else if (dvg_env.nam.set) { \
+        mpi_log_printf( __VA_ARGS__ ); \
+    } \
+}
+    NOTIFY_OR_WARN( omp_num_threads, "using %d threads for divERGe OpenMP\n", dvg_env.omp_num_threads.val );
+    NOTIFY_OR_WARN( fftw_num_threads, "using %d threads for FFTW\n", dvg_env.fftw_num_threads.val );
+    NOTIFY_OR_WARN( omp_implicit_num_threads, "using %d threads for implicit OpenMP\n", dvg_env.omp_implicit_num_threads.val );
+    NOTIFY_OR_WARN( shared_malloc_extra_colors, "using extra colors for MPI shared memory distribution\n" );
+    NOTIFY_OR_WARN( symcheck_mpi, "enable symmetry check for MPI\n" );
+    NOTIFY_OR_WARN( tu_symcheck_mpi, "enable TU symmetry check for MPI\n" );
+
     dependency_tree_init();
-    shared_malloc_init( dvg_shared_malloc_extra_colors );
+    shared_malloc_init( dvg_env.shared_malloc_extra_colors.set );
 
     dvg_has_internal_libs_init = 1;
-
 }
 
 void finalize_internal_libs( void ) {
@@ -93,7 +126,7 @@ int diverge_omp_num_threads( void ) {
     if (!dvg_has_internal_libs_init)
         return 1;
     else
-        return dvg_omp_num_threads;
+        return dvg_env.omp_num_threads.val;
 }
 
 
@@ -101,7 +134,7 @@ int diverge_fftw_num_threads( void ) {
     if (!dvg_has_internal_libs_init)
         return 1;
     else
-        return dvg_fftw_num_threads;
+        return dvg_env.fftw_num_threads.val;
 }
 
 void diverge_force_thread_limit( int nthr ) {
@@ -119,45 +152,36 @@ static void read_environment( void ) {
     char* env_dvg_symcheck_mpi = getenv( "DIVERGE_SYMCHECK_MPI" );
     char* env_dvg_tu_symcheck_mpi = getenv( "DIVERGE_TU_SYMCHECK_MPI" );
 
-    // set values
-    if (env_dvg_omp_num_threads) {
-        dvg_omp_num_threads = atoi(env_dvg_omp_num_threads);
-        mpi_log_printf( "using %d threads for divERGe OpenMP\n", dvg_omp_num_threads );
+#define SET_ENV_VAR( nam ) \
+    if ((dvg_env.nam.set = (env_dvg_##nam != NULL))) { \
+        dvg_env.nam.val = atoi( env_dvg_##nam ); \
     }
-    if (env_dvg_fftw_num_threads) {
-        dvg_fftw_num_threads = atoi(env_dvg_fftw_num_threads);
-        mpi_log_printf( "using %d threads for FFTW\n", dvg_fftw_num_threads );
-    }
-    if (env_dvg_omp_implicit_num_threads) {
-        dvg_omp_implicit_num_threads = atoi(env_dvg_omp_implicit_num_threads);
-        mpi_log_printf( "using %d threads for implicit OpenMP\n", dvg_omp_implicit_num_threads );
-    }
-    if (env_dvg_shared_malloc_extra_colors) {
-        dvg_shared_malloc_extra_colors = atoi(env_dvg_shared_malloc_extra_colors);
-        if (dvg_shared_malloc_extra_colors)
-            mpi_log_printf( "using extra colors for MPI shared memory distribution\n" );
-    }
-    if (env_dvg_symcheck_mpi) {
-        dvg_symcheck_mpi = 1;
-    }
-    if (env_dvg_tu_symcheck_mpi) {
-        dvg_tu_symcheck_mpi = 1;
-    }
+    SET_ENV_VAR( omp_num_threads );
+    SET_ENV_VAR( fftw_num_threads );
+    SET_ENV_VAR( omp_implicit_num_threads );
+    SET_ENV_VAR( shared_malloc_extra_colors );
+    SET_ENV_VAR( symcheck_mpi );
+    SET_ENV_VAR( tu_symcheck_mpi );
 
     // and check
-    if (dvg_omp_num_threads <= 0) dvg_omp_num_threads = omp_get_max_threads();
-    if (dvg_fftw_num_threads <= 0) dvg_fftw_num_threads = omp_get_max_threads();
-    if (dvg_omp_implicit_num_threads <= 0) dvg_omp_implicit_num_threads = omp_get_max_threads();
+#define CHECK_ENV_VAR( nam, default ) \
+    if (dvg_env.nam.val <= 0) { \
+        dvg_env.nam.warn = (dvg_env.nam.val < 0); \
+        dvg_env.nam.val = default; \
+    }
+    CHECK_ENV_VAR( omp_num_threads, omp_get_max_threads() );
+    CHECK_ENV_VAR( fftw_num_threads, omp_get_max_threads() );
+    CHECK_ENV_VAR( omp_implicit_num_threads, omp_get_max_threads() );
 }
 
 static void init_internal_libs_fftw( int nthr ) {
-    dvg_fftw_num_threads = nthr;
+    dvg_env.fftw_num_threads.val = nthr;
     #ifndef USE_SERIAL_FFTW
     if (!dvg_has_fftw_init)
         fftw_init_threads();
-    fftw_plan_with_nthreads( dvg_fftw_num_threads );
+    fftw_plan_with_nthreads( dvg_env.fftw_num_threads.val );
     #else
-    dvg_fftw_num_threads = 1;
+    dvg_env.fftw_num_threads.val = 1;
     #endif
     dvg_has_fftw_init = 1;
 
@@ -169,20 +193,20 @@ static void init_internal_libs_fftw( int nthr ) {
 }
 
 static void init_internal_libs_omp_implicit( int nthr ) {
-    dvg_omp_implicit_num_threads = nthr;
+    dvg_env.omp_implicit_num_threads.val = nthr;
 
     #ifdef DIVERGE_OPENBLAS_LIMIT_THREADS
-    if (dvg_omp_implicit_num_threads > DIVERGE_OPENBLAS_LIMIT_THREADS) {
+    if (dvg_env.omp_implicit_num_threads.val > DIVERGE_OPENBLAS_LIMIT_THREADS) {
         mpi_wrn_printf("export OMP_NUM_THREADS=%i (due to OpenBLAS config)\n",
                 DIVERGE_OPENBLAS_LIMIT_THREADS);
-        dvg_omp_implicit_num_threads = DIVERGE_OPENBLAS_LIMIT_THREADS;
+        dvg_env.omp_implicit_num_threads.val = DIVERGE_OPENBLAS_LIMIT_THREADS;
     }
     #endif
 
-    omp_set_num_threads( dvg_omp_implicit_num_threads );
+    omp_set_num_threads( dvg_env.omp_implicit_num_threads.val );
 }
 
 static void init_internal_libs_omp_diverge( int nthr ) {
-    dvg_omp_num_threads = nthr;
+    dvg_env.omp_num_threads.val = nthr;
 }
 
