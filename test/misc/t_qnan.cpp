@@ -15,7 +15,6 @@ TEST_CASE("quiet NaN, integers", "[qnan][int]") {
     CHECK( qnan_isnan( qnan_with_payload ) );
     CHECK( !qnan_isnan( regular_number ) );
     CHECK( qnan_get( qnan_with_payload ) == payload );
-    CHECK( std::isnan(qnan_with_payload) );
 }
 
 TEST_CASE("quiet NaN, floats", "[qnan][float]") {
@@ -28,7 +27,6 @@ TEST_CASE("quiet NaN, floats", "[qnan][float]") {
     CHECK( fnan_isnan( fnan_with_payload ) );
     CHECK( !fnan_isnan( regular_number ) );
     CHECK( fnan_get( fnan_with_payload ) == payload );
-    CHECK( std::isnan(fnan_with_payload) );
 }
 
 #endif

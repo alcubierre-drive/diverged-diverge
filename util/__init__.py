@@ -939,7 +939,7 @@ if not _libs["divERGe"] is None:
         model_to_file_finegrained.errcheck = ReturnString
 
     def model_to_file_PY( model, filename, **kwargs ):
-        """
+        r"""
         function that wraps :c:func:`diverge_model_to_file_finegrained` in a
         pythonic way.
 
