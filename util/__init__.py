@@ -967,7 +967,7 @@ if not _libs["divERGe"] is None:
     model_generate_meshes.restype = None
 
     model_generate_mom_basis = _libs["divERGe"].get("diverge_model_generate_mom_basis", "cdecl")
-    model_generate_mom_basis.argtypes = [(c_double * int(3)) * int(3), (c_double * int(3)) * int(3)]
+    model_generate_mom_basis.argtypes = [c_void_p, c_void_p]
     model_generate_mom_basis.restype = None
 
     # Patching
