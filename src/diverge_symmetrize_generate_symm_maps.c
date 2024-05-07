@@ -4,11 +4,15 @@
 #include "diverge_symmetrize.h"
 #include "diverge_internals_struct.h"
 #include "diverge_momentum_gen.h"
-#include "diverge_Eigen3.hpp"
 #include "misc/mpi_functions.h"
 #include "misc/merge_orb_w_rs_symm.h"
-#include <vector>
-#include <cassert>
+
+#define LINALG_NO_LAPACKE
+#define LINALG_EXPORT static inline
+#include "misc/linalg.h"
+LINALG_IMPLEMENT
+
+#include <assert.h>
 
 #ifndef SYMNORM_SQUARED_POSITION
 #define SYMNORM_SQUARED_POSITION 1e-6
@@ -25,26 +29,36 @@
 #ifndef SYMNOORM_MIN_ORBITAL_WEIGHT
 #define SYMNOORM_MIN_ORBITAL_WEIGHT 0.99999
 #endif
+    
+#define VECTOR_INIT( type, ary ) \
+    index_t ary##_cap = 1024; \
+    index_t ary##_sz = 0; \
+    type* ary = calloc(ary##_cap, sizeof(type));
 
-typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
-typedef Matrix<index_t,3,1> Vec3idx;
-using std::vector;
+#define VECTOR_PUSH_BACK( ary, val ) { \
+    if (ary##_sz >= ary##_cap) { \
+        ary = realloc(ary, sizeof(*ary) * (ary##_cap *= 2)); \
+    } \
+    ary[ ary##_sz++ ] = val; \
+}
 
-static inline bool map_back_to_BZ(Vec3d* k_point, index_t* idx, const diverge_model_t* model, bool fine) {
-    Vec3idx nk = Map<const Vec3idx>( model->nk );
-    if (fine) nk.array() *= Map<const Vec3idx>( model->nkf ).array();
+
+static inline bool map_back_to_BZ(claV3d_t* k_point, index_t* idx, const diverge_model_t* model, bool fine) {
+    index_t nk[3]; memcpy( nk, model->nk, sizeof(nk) );
+    if (fine) { for (int d=0; d<3; ++d) nk[d] *= model->nkf[d]; }
 
     double* mesh = fine ? model->internals->kfmesh : model->internals->kmesh;
-    Map<const CMat3d> UC(model->lattice[0]);
+    claM3d_t UC = claM3d_map( (double*)model->lattice[0] );
 
-    Vec3d a = UC * (*k_point) / (2.*M_PI);
+    claV3d_t a = claV3d_scale( claM3d_matvec( UC, *k_point ), 1./(2.*M_PI) );
     for (int i=0; i<3; ++i)
-        a[i] += labs(lround(a[i])) + 3;
-    Vec3d ai = (a.array() * nk.array().cast<double>()).round().matrix();
+        a.v[i] += labs(lround(a.v[i])) + 3;
+    index_t ai[3];
+    for (int d=0; d<3; ++d) ai[d] = lround(a.v[d] * nk[d]);
 
-    *idx = IDX3( lround(ai(0))%nk(0), lround(ai(1))%nk(1), lround(ai(2))%nk(2), nk(1), nk(2));
-    *k_point = Map<Vec3d>( mesh+3*(*idx) );
-    return (*idx < (nk(0)*nk(1)*nk(2)));
+    *idx = IDX3( ai[0]%nk[0], ai[1]%nk[1], ai[2]%nk[2], nk[1], nk[2] );
+    *k_point = claV3d_map( mesh+3*(*idx) );
+    return (*idx < kdim(nk));
 }
 
 // allocates *ptr using realloc, i.e., must be free'd by user with free.
@@ -74,12 +88,11 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     double* kfmesh = model->internals->kfmesh;
     index_t n_sym = model->n_sym;
 
-    model->internals->symm_orb_off = (index_t*)malloc( n_os * n_sym * sizeof(index_t) );
-    model->internals->symm_orb_len = (index_t*)malloc( n_os * n_sym * sizeof(index_t) );
-
-    model->internals->symm_map_mom_fine = (index_t*)malloc( nktot * n_sym * sizeof(index_t) );
-    model->internals->symm_map_mom_crs = (index_t*)malloc( nk * n_sym * sizeof(index_t) );
-    model->internals->symm_beyond_UC = (double*)malloc( n_orb * n_sym * 3 * sizeof(double) );
+    model->internals->symm_orb_off = calloc( n_os * n_sym, sizeof(index_t) );
+    model->internals->symm_orb_len = calloc( n_os * n_sym, sizeof(index_t) );
+    model->internals->symm_map_mom_fine = calloc( nktot * n_sym, sizeof(index_t) );
+    model->internals->symm_map_mom_crs = calloc( nk * n_sym, sizeof(index_t) );
+    model->internals->symm_beyond_UC = calloc( n_orb * n_sym, 3 * sizeof(double) );
 
     index_t* symm_orb_off = model->internals->symm_orb_off;
     index_t* symm_orb_len = model->internals->symm_orb_len;
@@ -87,51 +100,54 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     index_t* symm_map_mom_crs = model->internals->symm_map_mom_crs;
     double* symm_beyond_UC = model->internals->symm_beyond_UC;
 
-    double* rs_symmetries = (double*)model->rs_symmetries;
-    complex128_t* orb_symmetries = (complex128_t*)model->orb_symmetries;
+    double* rs_symmetries = model->rs_symmetries[0][0];
+    complex128_t* orb_symmetries = model->orb_symmetries;
 
     mpi_vrb_printf( "finding coarse IBZ…\n" );
     #pragma omp parallel for schedule(static) collapse(2) num_threads(diverge_omp_num_threads())
-    for(index_t s = 0; s < n_sym; ++s)
-    for(index_t k = 0; k < nk; ++k) {
-        Map<CMat3d> sym(rs_symmetries+s*9);
-        Map<Vec3d> kpnt(kmesh+k*3);
-        Vec3d tmp =  sym * kpnt;
-
-        index_t idx;
-        bool found = map_back_to_BZ(&tmp, &idx, model, false);
+    for (index_t s=0; s<n_sym; ++s)
+    for (index_t k=0; k<nk; ++k) {
+        claM3d_t sym = claM3d_map( rs_symmetries + s*3*3 );
+        claV3d_t kpnt = claV3d_map( kmesh + k*3 );
+        claV3d_t tmp = claM3d_matvec( sym, kpnt );
+        index_t idx = 0; bool found = map_back_to_BZ(&tmp, &idx, model, false);
         symm_map_mom_crs[s+n_sym*k] = idx;
-        if (!found) mpi_err_printf("not all momenta mappable (%d->%d; accuracy issue?)\n", s, k);
+        if (!found) {
+            #pragma omp critical
+            mpi_err_printf("not all momenta mappable (%d->%d; accuracy issue?)\n", s, k);
+        }
     }
 
     mpi_vrb_printf( "finding fine IBZ…\n" );
     #pragma omp parallel for schedule(static) collapse(2) num_threads(diverge_omp_num_threads())
-    for(index_t s = 0; s < n_sym; ++s)
-    for(index_t k = 0; k < nktot; ++k) {
-        Map<CMat3d> sym(rs_symmetries+s*9);
-        Map<Vec3d> kpnt(kfmesh+k*3);
-        Vec3d tmp =  sym * kpnt;
-        index_t idx;
-        bool found = map_back_to_BZ(&tmp, &idx, model, true);
+    for (index_t s=0; s<n_sym; ++s)
+    for (index_t k=0; k<nktot; ++k) {
+        claM3d_t sym = claM3d_map( rs_symmetries + s*3*3 );
+        claV3d_t kpnt = claV3d_map( kfmesh + k*3 );
+        claV3d_t tmp = claM3d_matvec( sym, kpnt );
+        index_t idx = 0; bool found = map_back_to_BZ(&tmp, &idx, model, true);
         symm_map_mom_fine[s+n_sym*k] = idx;
-        if (!found) mpi_err_printf("not all momenta mappable (%d->%d; accuracy issue?)\n", s, k);
+        if (!found) {
+            #pragma omp critical
+            mpi_err_printf("not all momenta mappable (%d->%d; accuracy issue?)\n", s, k);
+        }
     }
 
     mpi_vrb_printf( "finding orbital maps…\n" );
-    vector<index_t> orbmaps_to_len; orbmaps_to_len.resize(n_os*n_sym);
-    vector<index_t> orbmaps_to_off; orbmaps_to_off.resize(n_os*n_sym);
-    vector<index_t> orbmaps_to;
-    vector<complex128_t> orbmaps_to_prefac;
-    vector<Vec3d> mapped_pos; mapped_pos.resize(n_orb*n_sym);
+    index_t* orbmaps_to_len = calloc(n_os * n_sym, sizeof(index_t));
+    index_t* orbmaps_to_off = calloc(n_os * n_sym, sizeof(index_t));
+    VECTOR_INIT( index_t, orbmaps_to )
+    VECTOR_INIT( complex128_t, orbmaps_to_prefac )
+    claV3d_t* mapped_pos = calloc(n_orb*n_sym, sizeof(claV3d_t));
 
     int periodic_iter[3];
     periodic_iter[0] = model->internals->periodic_direction[0] ? 3:0;
     periodic_iter[1] = model->internals->periodic_direction[1] ? 3:0;
     periodic_iter[2] = model->internals->periodic_direction[2] ? 3:0;
 
-    Map<Vec3d> UC1(model->lattice[0]);
-    Map<Vec3d> UC2(model->lattice[1]);
-    Map<Vec3d> UC3(model->lattice[2]);
+    claV3d_t UC1 = claV3d_map(model->lattice[0]);
+    claV3d_t UC2 = claV3d_map(model->lattice[1]);
+    claV3d_t UC3 = claV3d_map(model->lattice[2]);
 
     // TODO the symmetrizer fails if multiple orbitals are on the same position,
     // but the position is shifted by a lattice vector (i.e. +A1/2 and -A1/2)
@@ -139,24 +155,29 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     #ifndef ASAN_COMPILATION
     _Pragma("omp parallel for collapse(2) num_threads(diverge_omp_num_threads())")
     #endif
-    for(index_t s = 0; s < n_sym; ++s)
-    for(index_t o1 = 0; o1 < n_orb; ++o1) {
-        Map<CMat3d> sym_rs(rs_symmetries+s*9);
-        Map<Vec3d> from(model->positions[o1]);
-        Map<Vec3d> bey_UC(symm_beyond_UC+3*(s+n_sym*o1));
-        Vec3d to = sym_rs*from;
+    for (index_t s=0; s<n_sym; ++s)
+    for (index_t o1=0; o1<n_orb; ++o1) {
+        claM3d_t sym_rs = claM3d_map(rs_symmetries + s*3*3);
+        claV3d_t from = claV3d_map(model->positions[o1]),
+                 bey_UC = claV3d_map(symm_beyond_UC+3*(s+n_sym*o1));
+        claV3d_t to = claM3d_matvec(sym_rs, from);
         index_t maps_to = -1;
-        for(index_t o2 = 0; o2 < n_orb; ++o2)
-        for(int in = -periodic_iter[0];in<=periodic_iter[0];in++)
-        for(int im = -periodic_iter[1];im<=periodic_iter[1];im++)
-        for(int iq = -periodic_iter[2];iq<=periodic_iter[2];iq++) {
-            Map<Vec3d> to_trial(model->positions[o2]);
-            Vec3d trial = to_trial+in*UC1+im*UC2+iq*UC3;
-            if((trial-to).squaredNorm() < SYMNORM_SQUARED_POSITION) {
+        for (index_t o2=0; o2<n_orb; ++o2)
+        for (int in=-periodic_iter[0]; in<=periodic_iter[0]; in++)
+        for (int im=-periodic_iter[1]; im<=periodic_iter[1]; im++)
+        for (int iq=-periodic_iter[2]; iq<=periodic_iter[2]; iq++) {
+            claV3d_t to_trial = claV3d_map(model->positions[o2]);
+            claV3d_t UC123 = claV3d_add( claV3d_add(
+                                claV3d_scale(UC1,in),
+                                claV3d_scale(UC2,im) ),
+                                claV3d_scale(UC3,iq) );
+            claV3d_t trial = claV3d_add(to_trial, UC123);
+            if (claV3d_norm2(claV3d_sub(trial,to)) < SYMNORM_SQUARED_POSITION) {
                 maps_to = o2;
                 mapped_pos[o1+n_orb*s] = to_trial;
-                bey_UC = ( to - to_trial );
-                assert((bey_UC-(in*UC1+im*UC2+iq*UC3)).norm() < SYMNORM_ASSERT_POSITION_BEYOND);
+                bey_UC = claV3d_sub( to, to_trial );
+                claV3d_rmap( bey_UC, symm_beyond_UC + 3*(s+n_sym*o1) );
+                assert( claV3d_norm(claV3d_sub(bey_UC, UC123)) < SYMNORM_ASSERT_POSITION_BEYOND );
                 goto symmetrizer_orb_found;
             }
         }
@@ -168,71 +189,82 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
             }
         }
         symmetrizer_orb_found:
-        Map<Vec3d> from_in_UC(model->positions[maps_to]);
+        {}
     }
 
-    for(index_t s = 0; s < n_sym; ++s)
-    for(index_t s1 = 0; s1 < n_spin; ++s1)
-    for(index_t o1 = 0; o1 < n_orb; ++o1) {
+    // generate orbmaps, try to find each orbital that has overlap with the
+    // current one *and* maps to its position
+    for (index_t s=0; s<n_sym; ++s)
+    for (index_t s1=0; s1<n_spin; ++s1)
+    for (index_t o1=0; o1<n_orb; ++o1) {
         index_t len = 0;
-        for(index_t s1t = 0; s1t < n_spin; ++s1t)
-        for(index_t o1t = 0; o1t < n_orb; ++o1t) {
-            Map<Vec3d> pos(model->positions[o1t]);
+        for (index_t s1t=0; s1t<n_spin; ++s1t)
+        for (index_t o1t=0; o1t<n_orb; ++o1t) {
+            claV3d_t pos = claV3d_map(model->positions[o1t]);
             complex128_t overlap = orb_symmetries[IDX5(s, s1t, o1t, s1, o1, n_spin,n_orb, n_spin,n_orb)];
-            if(std::abs(overlap) > SYMNORM_ORBITAL_OVERLAP && (mapped_pos[o1+n_orb*s] - pos).norm() < SYMNORM_POS_EQUAL) {
-                orbmaps_to.push_back(IDX2(s1t,o1t,n_orb));
-                orbmaps_to_prefac.push_back(overlap);
-                len+=1;
+            if ((cabs(overlap) > SYMNORM_ORBITAL_OVERLAP) &&
+                (claV3d_norm(claV3d_sub(mapped_pos[o1+n_orb*s], pos)) < SYMNORM_POS_EQUAL)) {
+                VECTOR_PUSH_BACK( orbmaps_to, IDX2(s1t,o1t,n_orb) );
+                VECTOR_PUSH_BACK( orbmaps_to_prefac, overlap );
+                len++;
             }
         }
-        if(len == 0) {
+        if (len == 0) {
             mpi_wrn_printf("orbital %li doesn't map under symmetry %li!\n", o1, s);
             model->n_sym = 0;
         }
         orbmaps_to_len[IDX3(s,s1,o1,n_spin,n_orb)] = len;
     }
+    // offsets
     orbmaps_to_off[0] = 0;
-    for (index_t i = 1; i < n_os*n_sym; ++i) {
+    for (index_t i=1; i<n_os*n_sym; ++i) {
         orbmaps_to_off[i] = orbmaps_to_off[i-1] + orbmaps_to_len[i-1];
     }
-    for (index_t i = 0; i < n_os*n_sym; ++i) {
-        if(orbmaps_to_len[i]>1) {
-            mpi_vrb_printf("Symmetries map one to many \n");
-            i= n_os*n_sym;
+    // verbose info
+    for (index_t i=0; i<n_os*n_sym; ++i) {
+        if (orbmaps_to_len[i]>1) {
+            mpi_vrb_printf("Symmetries map one to many\n");
+            break;
         }
     }
-    for(index_t o1 = 0; o1 < n_os*n_sym; ++o1) {
-        if(orbmaps_to_len[o1] == 0) {
-            mpi_err_printf("orbital maps not constructed correctly, there is an empty one \n");
+    // and checking
+    for (index_t o1=0; o1<n_os*n_sym; ++o1) {
+        if (orbmaps_to_len[o1] == 0) {
+            mpi_err_printf("orbital maps not constructed correctly, there is an empty one\n");
             model->n_sym = 0;
         }
-        double sum = 0.;
-        for(index_t e = 0; e < orbmaps_to_len[o1]; ++e) {
-            sum += std::abs(orbmaps_to_prefac[orbmaps_to_off[o1]+e]
-                    *conj(orbmaps_to_prefac[orbmaps_to_off[o1]+e]));
-        }
-        if(sum < SYMNOORM_MIN_ORBITAL_WEIGHT) {
-            mpi_err_printf("Orbitals do not sum up to one %1.3f  \n", sum);
+        double sum = 0.0;
+        for (index_t e=0; e<orbmaps_to_len[o1]; ++e)
+            sum += cabs(POW2(orbmaps_to_prefac[orbmaps_to_off[o1]+e]));
+        if (sum < SYMNOORM_MIN_ORBITAL_WEIGHT) {
+            mpi_err_printf("Orbitals do not sum up to one %1.3f\n", sum);
             model->n_sym = 0;
         }
     }
 
-
+    // calc total length and copy data over
     index_t total_length = 0;
-    for(index_t s = 0; s < n_sym; ++s)
-    for(index_t o1 = 0; o1 < n_os; ++o1) {
-        symm_orb_off[s + n_sym * o1] = orbmaps_to_off[s * n_os + o1];
-        symm_orb_len[s + n_sym * o1] = orbmaps_to_len[s * n_os + o1];
-        total_length += orbmaps_to_len[s * n_os + o1];
+    for (index_t s=0; s<n_sym; ++s)
+    for (index_t o1=0; o1<n_os; ++o1) {
+        symm_orb_off[IDX2(o1,s,n_sym)] = orbmaps_to_off[IDX2(s,o1,n_os)];
+        symm_orb_len[IDX2(o1,s,n_sym)] = orbmaps_to_len[IDX2(s,o1,n_os)];
+        total_length += orbmaps_to_len[IDX2(s,o1,n_os)];
     }
-    model->internals->symm_map_orb = (index_t*)malloc( total_length * sizeof(index_t) );
-    model->internals->symm_pref = (complex128_t*)malloc( total_length * sizeof(complex128_t) );
+    model->internals->symm_map_orb = calloc( total_length, sizeof(index_t) );
+    model->internals->symm_pref = calloc( total_length, sizeof(complex128_t) );
 
     index_t* symm_map_orb = model->internals->symm_map_orb;
     complex128_t* symm_pref = model->internals->symm_pref;
 
-    memcpy(symm_map_orb, orbmaps_to.data(), total_length * sizeof(index_t));
-    memcpy(symm_pref, orbmaps_to_prefac.data(), total_length * sizeof(complex128_t));
+    memcpy(symm_map_orb, orbmaps_to, total_length * sizeof(index_t));
+    memcpy(symm_pref, orbmaps_to_prefac, total_length * sizeof(complex128_t));
+
+    // free dynamic arrays
+    free( orbmaps_to_len );
+    free( orbmaps_to_off );
+    free( orbmaps_to );
+    free( orbmaps_to_prefac );
+    free( mapped_pos );
 
     mpi_vrb_printf( "merging realspace orbitals…\n" );
     merge_rs_orb(model);
@@ -242,20 +274,19 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         char* ptr = NULL;
         uindex_t nbytes = 0;
         syms_serialize( model, &ptr, &nbytes );
-        vector<index_t> nbytes_ranks( diverge_mpi_comm_size(), 0 );
+        index_t* nbytes_ranks = calloc( diverge_mpi_comm_size(), sizeof(index_t) );
         nbytes_ranks[diverge_mpi_comm_rank()] = nbytes;
-        diverge_mpi_allgather_index_inplace( nbytes_ranks.data(), 1 );
-        vector<index_t> sendcounts( diverge_mpi_comm_size(), 0 ),
-                        recvcounts( diverge_mpi_comm_size(), 0 ),
-                        senddispls( diverge_mpi_comm_size(), 0 ),
-                        recvdispls( diverge_mpi_comm_size(), 0 );
+        diverge_mpi_allgather_index_inplace( nbytes_ranks, 1 );
+        index_t *sendcounts = calloc( diverge_mpi_comm_size(), sizeof(index_t) ),
+                *recvcounts = calloc( diverge_mpi_comm_size(), sizeof(index_t) ),
+                *senddispls = calloc( diverge_mpi_comm_size(), sizeof(index_t) ),
+                *recvdispls = calloc( diverge_mpi_comm_size(), sizeof(index_t) );
         int to = (diverge_mpi_comm_rank() + 1) % diverge_mpi_comm_size(),
             from = (diverge_mpi_comm_rank() - 1 + diverge_mpi_comm_size()) % diverge_mpi_comm_size();
         char* other = (char*)calloc( nbytes_ranks[from], 1 );
         sendcounts[to] = nbytes;
         recvcounts[from] = nbytes_ranks[from];
-        diverge_mpi_alltoallv_bytes( ptr, sendcounts.data(), senddispls.data(), other,
-                recvcounts.data(), recvdispls.data(), 1 );
+        diverge_mpi_alltoallv_bytes( ptr, sendcounts, senddispls, other, recvcounts, recvdispls, 1 );
         free( ptr );
 
         // get the symmstruct and check for error
@@ -272,15 +303,22 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         free( ii_from );
 
         // print if we found an error
-        vector<int> errors( diverge_mpi_comm_size() );
-        diverge_mpi_allgather_int( &error, errors.data(), 1 );
+        int* errors = calloc( diverge_mpi_comm_size(), sizeof(int) );
+        diverge_mpi_allgather_int( &error, errors, 1 );
         int total_error = 0;
-        for (int e: errors) total_error += e;
+        for (int ie=0; ie<diverge_mpi_comm_size(); ++ie) total_error += errors[ie];
+        free(errors);
         if (total_error) {
             mpi_err_printf_all( "rank %i got error %i from symm-compare with rank %i (round-robin)\n", diverge_mpi_comm_rank(), error, from );
         } else {
             mpi_log_printf( "symm-compare check successful\n" );
         }
+
+        free(nbytes_ranks);
+        free(sendcounts);
+        free(senddispls);
+        free(recvcounts);
+        free(recvdispls);
     }
 }
 
@@ -363,14 +401,14 @@ static int compare_ary_i( const index_t* A, const index_t* B, index_t len ) {
 static int compare_ary_c( const complex128_t* A, const complex128_t* B, index_t len ) {
     int errors = 0;
     for (index_t i=0; i<len; ++i)
-        errors += std::abs(A[i] - B[i]) > 1.e-5;
+        errors += cabs(A[i] - B[i]) > 1.e-5;
     return errors;
 }
 
 static int compare_ary_d( const double* A, const double* B, index_t len ) {
     int errors = 0;
     for (index_t i=0; i<len; ++i)
-        errors += std::abs(A[i] - B[i]) > 1.e-5;
+        errors += fabs(A[i] - B[i]) > 1.e-5;
     return errors;
 }
 
