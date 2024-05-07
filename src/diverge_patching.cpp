@@ -172,7 +172,7 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
         kf[k] = kum[k].k;
 
     double kbasis[3][3];
-    diverge_model_generate_mom_basis(mod->lattice, kbasis);
+    diverge_model_generate_mom_basis(mod->lattice[0], kbasis[0]);
     complex128_t g1, g2;
     memcpy(&g1, kbasis[0], sizeof(complex128_t));
     memcpy(&g2, kbasis[1], sizeof(complex128_t));
@@ -518,7 +518,7 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
         kmesh[k] = kum[k].k;
 
     double kbasis[3][3];
-    diverge_model_generate_mom_basis(mod->lattice, kbasis);
+    diverge_model_generate_mom_basis(mod->lattice[0], kbasis[0]);
     complex128_t g1, g2;
     memcpy(&g1, kbasis[0], sizeof(complex128_t));
     memcpy(&g2, kbasis[1], sizeof(complex128_t));

@@ -12,7 +12,11 @@ static double dot(const double A[3], const double B[3]) {
     return A[0]*B[0] + A[1]*B[1] + A[2]*B[2];
 }
 
-void diverge_model_generate_mom_basis(double lattice[3][3], double kbasis[3][3]) {
+void diverge_model_generate_mom_basis(double* lattice_, double* kbasis_) {
+    double lattice[3][3];
+    double kbasis[3][3];
+    memcpy( lattice[0], lattice_, sizeof(lattice) );
+
     double helper[3];
     cross(helper,lattice[0],lattice[1],1.0);
     double VBZsign = dot(helper,lattice[2]);
@@ -24,6 +28,9 @@ void diverge_model_generate_mom_basis(double lattice[3][3], double kbasis[3][3])
     double prefactor = 2.0 * M_PI / VBZsign;
     for (int i=0; i<3; ++i)
         cross( kbasis[i], lattice[(i+1)%3], lattice[(i+2)%3], prefactor );
+
+    memcpy( lattice_, lattice[0], sizeof(lattice) );
+    memcpy( kbasis_, kbasis[0], sizeof(kbasis) );
 }
 
 static void fill_mesh(double* mesh, const index_t nk[3], double kbasis[3][3]) {
@@ -48,7 +55,7 @@ static void fill_mesh(double* mesh, const index_t nk[3], double kbasis[3][3]) {
 void diverge_model_generate_meshes(double* kmesh, double* kfmesh,
         const index_t nk[3], const index_t nkf[3], double lattice[3][3]) {
     double kbasis[3][3];
-    diverge_model_generate_mom_basis(lattice,kbasis);
+    diverge_model_generate_mom_basis(lattice[0],kbasis[0]);
     index_t nkff[3];
     for (int i=0; i<3; ++i) nkff[i] = nk[i] * nkf[i];
 

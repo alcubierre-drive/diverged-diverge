@@ -145,7 +145,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
 
         // reciprocal lattice as double[3][3]
         double Gvec[3][3];
-        diverge_model_generate_mom_basis(mod->lattice, Gvec);
+        diverge_model_generate_mom_basis(mod->lattice[0], Gvec[0]);
         for (int ll=0; ll<9; ++ll)
             dbuf[idx++] = ((double*)Gvec)[ll];
 
@@ -442,7 +442,7 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
 
     claM3d_t Gvec = {0};
     claM3d_t Lvec = claM3d_map(mod->lattice[0]);
-    diverge_model_generate_mom_basis(mod->lattice, Gvec.m);
+    diverge_model_generate_mom_basis(mod->lattice[0], Gvec.m[0]);
     claV3d_t claV3d_zero = {0};
 
     index_t no = mod->n_orb,

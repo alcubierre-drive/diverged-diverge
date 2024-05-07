@@ -69,7 +69,7 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
     }
 
     double kbasis[3][3];
-    diverge_model_generate_mom_basis(model->lattice, kbasis);
+    diverge_model_generate_mom_basis(model->lattice[0], kbasis[0]);
 
     memcpy( &model->internals->patch_g1, &(kbasis[0]), sizeof(double)*2 );
     memcpy( &model->internals->patch_g2, &(kbasis[1]), sizeof(double)*2 );

@@ -27,7 +27,7 @@ void diverge_model_generate_meshes(double* kmesh, double* kfmesh,
  *                              :c:member:`diverge_model_t.lattice`), input & output.
  * :param double[3][3] kbasis: reciprocal lattice vectors in C ordering, output.
  */
-void diverge_model_generate_mom_basis(double lattice[3][3], double kbasis[3][3]);
+void diverge_model_generate_mom_basis(double* lattice, double* kbasis);
 
 #ifdef __cplusplus
 }

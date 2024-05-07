@@ -104,7 +104,7 @@ static index_t* diverge_kmesh_to_bands_both( diverge_model_t* m, index_t**
     }
     index_t *result = NULL, sresult = 0;
     double gvec[3][3];
-    diverge_model_generate_mom_basis( m->lattice, gvec );
+    diverge_model_generate_mom_basis( m->lattice[0], gvec[0] );
     Map<Mat3d> Gvec(gvec[0]);
     index_t* n_per_segment = (index_t*)malloc(sizeof(index_t)*m->n_ibz_path-1);
     for (index_t segment=0; segment<m->n_ibz_path-1; ++segment) {
