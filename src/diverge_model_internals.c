@@ -132,9 +132,10 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     mpi_vrb_printf("allocating/generating meshes\n");
     intls->kmesh = shared_malloc(sizeof(double)*nk*3);
     intls->kfmesh = shared_malloc(sizeof(double)*nktot*3);
-    if (shared_exclusive_enter(intls->kmesh) == 1)
+    if (shared_exclusive_enter(intls->kmesh) && shared_exclusive_enter(intls->kfmesh))
         diverge_model_generate_meshes( intls->kmesh, intls->kfmesh, model->nk, model->nkf, model->lattice );
     shared_exclusive_wait(intls->kmesh);
+    shared_exclusive_wait(intls->kfmesh);
 
     mpi_vrb_printf("allocating internal common buffers\n");
     intls->ham = shared_calloc(nktot*nb*nb,sizeof(complex128_t));
@@ -157,7 +158,7 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     }
 
     mpi_vrb_printf("filling hamiltonian buffer\n");
-    if (shared_exclusive_enter(intls->ham) == 1) {
+    if (shared_exclusive_enter(intls->ham) && shared_exclusive_enter(intls->U)) {
         (*(model->hfill))( model, intls->ham );
         if (symmetrize_hamiltonian) {
             mpi_vrb_printf( "symmetrizing Hamiltonain before diagonalization\n" );
@@ -168,12 +169,13 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         }
     }
     shared_exclusive_wait(intls->ham);
+    shared_exclusive_wait(intls->U);
 
     if (intls->ignore_eigensolver_in_common) {
         mpi_vrb_printf("ignoring hamiltonian diag\n");
     } else {
         mpi_vrb_printf("diagonalizing hamiltonian\n");
-        if (shared_exclusive_enter( intls->U ) == 1) {
+        if (shared_exclusive_enter(intls->U) && shared_exclusive_enter(intls->E)) {
             memcpy( intls->U, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
             if (!intls->use_batched_svd_algo_in_common)
                 batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
@@ -188,6 +190,7 @@ void diverge_model_internals_common( diverge_model_t* model ) {
             }
         }
         shared_exclusive_wait( intls->U );
+        shared_exclusive_wait( intls->E );
     }
 }
 

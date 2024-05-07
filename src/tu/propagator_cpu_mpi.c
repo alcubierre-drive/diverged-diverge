@@ -614,7 +614,7 @@ void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
         // and then ob/k
         if (t->enable_timings) tick = diverge_mpi_wtime();
         if (use_shm) {
-            if (shared_exclusive_enter(gf_buf_) == 1)
+            if (shared_exclusive_enter(gf_buf_))
                 GF_FFTW(execute_dft)( t->transpose[gf_idx], gf_buf, gf_buf );
             shared_exclusive_wait(gf_buf_);
         } else {

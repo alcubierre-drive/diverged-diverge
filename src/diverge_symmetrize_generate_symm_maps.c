@@ -42,7 +42,6 @@ LINALG_IMPLEMENT
     ary[ ary##_sz++ ] = val; \
 }
 
-
 static inline bool map_back_to_BZ(claV3d_t* k_point, index_t* idx, const diverge_model_t* model, bool fine) {
     index_t nk[3]; memcpy( nk, model->nk, sizeof(nk) );
     if (fine) { for (int d=0; d<3; ++d) nk[d] *= model->nkf[d]; }
