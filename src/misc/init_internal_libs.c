@@ -9,6 +9,7 @@
 #include <fftw3.h>
 #include <omp.h>
 #include <unistd.h>
+#include <limits.h>
 
 #if defined(USE_MPI) && defined(USE_MPI_FFTW)
 #include <fftw3-mpi.h>
@@ -16,8 +17,9 @@
 
 static int dvg_has_internal_libs_init = 0;
 
+#define INT_BIT (CHAR_BIT * sizeof(int))
 typedef struct {
-    int val:30;
+    int val:(INT_BIT-2);
     int set:1;
     int warn:1;
 } tag_t;
