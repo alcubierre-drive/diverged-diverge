@@ -30,6 +30,7 @@
 #include "misc/license.h"
 #include "misc/shared_mem.h"
 #include "misc/fukui.h"
+#include "misc/quantum_metric.h"
 
 #include "diverge_common.h"
 #include "diverge_model.h"

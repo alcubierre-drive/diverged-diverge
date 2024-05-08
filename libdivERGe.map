@@ -105,7 +105,9 @@ DIVERGE_0.6 {
         diverge_mpi_get_comm;
         diverge_mpi_max;
         diverge_mpi_open_file;
+        diverge_mpi_recv_bytes;
         diverge_mpi_recv_double;
+        diverge_mpi_send_bytes;
         diverge_mpi_send_double;
         diverge_mpi_write_byte_to_file;
         diverge_mpi_write_byte_to_file_master;
@@ -120,6 +122,7 @@ DIVERGE_0.6 {
         diverge_postprocess_and_write;
         diverge_postprocess_and_write_finegrained;
         diverge_postprocess_conf_defaults_CPP;
+        diverge_qgt;
         diverge_read_W90_C;
         diverge_read_fplo;
         diverge_reset;
