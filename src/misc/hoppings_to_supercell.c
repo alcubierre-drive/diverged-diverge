@@ -6,7 +6,6 @@
 #include <assert.h>
 
 #define LINALG_NO_LAPACKE
-#define LINALG_EXPORT static inline
 #include "linalg.h"
 LINALG_IMPLEMENT
 

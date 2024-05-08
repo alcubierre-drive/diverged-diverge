@@ -15,7 +15,6 @@
 #include "diverge_momentum_gen.h"
 
 #define LINALG_NO_LAPACKE
-#define LINALG_EXPORT static inline
 #include "misc/linalg.h"
 LINALG_IMPLEMENT
 
@@ -443,7 +442,6 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
     claM3d_t Gvec = {0};
     claM3d_t Lvec = claM3d_map(mod->lattice[0]);
     diverge_model_generate_mom_basis(mod->lattice[0], Gvec.m[0]);
-    claV3d_t claV3d_zero = {0};
 
     index_t no = mod->n_orb,
             ns = mod->n_spin,
@@ -474,7 +472,7 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
             claV3d_t k0vec = claM3d_matvec( Gvec, s0vec ),
                      k1vec = claM3d_matvec( Gvec, s1vec );
             claV3d_t kvec = claV3d_add( k0vec, claV3d_scale(claV3d_sub(k1vec,k0vec),x) );
-            if (skip) kvec = claV3d_zero;
+            if (skip) kvec = claV3d_zero();
             zero_out(H);
             for (index_t h=0; h<mod->n_hop; ++h) {
                 rs_hopping_t* hh = mod->hop+h;

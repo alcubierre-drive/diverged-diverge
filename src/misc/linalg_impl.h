@@ -16,9 +16,15 @@
 #endif // LINALG_NO_LAPACKE
 
 #define LINALG_LAPACKE_EIGH_i( ... ) { (void)H; (void)pU; }
+#define LINALG_LAPACKE_EIGH_ll( ... ) { (void)H; (void)pU; }
 #define LINALG_LAPACKE_SVD_i( ... ) { (void)superb; (void)H; (void)pU; (void)pVT; }
+#define LINALG_LAPACKE_SVD_ll( ... ) { (void)superb; (void)H; (void)pU; (void)pVT; }
 
 #define LINALG_VEC_IMPL( dim, type ) \
+LINALG_EXPORT cla##V##dim##type##_t cla##V##dim##type##_zero( void ) { \
+    cla##V##dim##type##_t result = {0}; \
+    return result; \
+} \
 LINALG_EXPORT cla##V##dim##type##_t cla##V##dim##type##_map( LINALG_DATA_TYPE_##type* p ) { \
     cla##V##dim##type##_t result; \
     for (int i=0; i<dim; ++i) \
@@ -79,6 +85,10 @@ LINALG_EXPORT cla##M##dim##type##_t cla##M##dim##type##_map( LINALG_DATA_TYPE_##
 LINALG_EXPORT void cla##M##dim##type##_rmap( cla##M##dim##type##_t m, LINALG_DATA_TYPE_##type * p ) { \
     LINALG_DATA_TYPE_##type* ptr = m.m[0]; \
     for (int i=0; i<dim*dim; ++i) p[i] = ptr[i]; \
+} \
+LINALG_EXPORT cla##M##dim##type##_t cla##M##dim##type##_zero( void ) { \
+    cla##M##dim##type##_t result = {0}; \
+    return result; \
 } \
 LINALG_EXPORT cla##M##dim##type##_t cla##M##dim##type##_id( void ) { \
     cla##M##dim##type##_t result = {0}; \

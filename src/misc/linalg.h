@@ -6,9 +6,10 @@ typedef _Complex double complex128_t;
 #define LINALG_DATA_TYPE_d double
 #define LINALG_DATA_TYPE_cd complex128_t
 #define LINALG_DATA_TYPE_i int
+#define LINALG_DATA_TYPE_ll long long
 
 #ifndef LINALG_EXPORT
-#define LINALG_EXPORT 
+#define LINALG_EXPORT static inline
 #endif
 
 #ifndef LINALG_IMPLEMENT
@@ -21,18 +22,21 @@ typedef _Complex double complex128_t;
 #define LINALG_TYPES( dim ) \
     LINALG_VEC_TYPES( dim, d ) \
     LINALG_VEC_TYPES( dim, cd ) \
-    LINALG_VEC_TYPES( dim, i )
+    LINALG_VEC_TYPES( dim, i ) \
+    LINALG_VEC_TYPES( dim, ll )
 
 #define LINALG_IMPL( dim ) \
     LINALG_TYPES( dim ) \
     LINALG_VEC_IMPL( dim, d ) \
     LINALG_VEC_IMPL( dim, cd ) \
-    LINALG_VEC_IMPL( dim, i )
+    LINALG_VEC_IMPL( dim, i ) \
+    LINALG_VEC_IMPL( dim, ll )
 
 #define LINALG_VEC_TYPES( dim, type ) \
 typedef struct cla##V##dim##type##_t { \
     LINALG_DATA_TYPE_##type v[dim]; \
 } cla##V##dim##type##_t; \
+LINALG_EXPORT cla##V##dim##type##_t cla##V##dim##type##_zero( void ); \
 LINALG_EXPORT cla##V##dim##type##_t cla##V##dim##type##_map( LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT void cla##V##dim##type##_rmap( cla##V##dim##type##_t v, LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT cla##V##dim##type##_t cla##V##dim##type##_scale( cla##V##dim##type##_t v, LINALG_DATA_TYPE_##type s ); \
@@ -47,6 +51,7 @@ LINALG_EXPORT double cla##V##dim##type##_norm( cla##V##dim##type##_t a ); \
 typedef struct cla##M##dim##type##_t { \
     LINALG_DATA_TYPE_##type m [dim][dim]; \
 } cla##M##dim##type##_t; \
+LINALG_EXPORT cla##M##dim##type##_t cla##M##dim##type##_zero( void ); \
 LINALG_EXPORT cla##M##dim##type##_t cla##M##dim##type##_id( void ); \
 LINALG_EXPORT cla##M##dim##type##_t cla##M##dim##type##_map( LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT void cla##M##dim##type##_rmap( cla##M##dim##type##_t m, LINALG_DATA_TYPE_##type * p ); \

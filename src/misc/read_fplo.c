@@ -18,7 +18,6 @@ diverge_model_t* diverge_read_fplo( const char* fname ) {
 
 #include "../diverge_model.h"
 #define LINALG_NO_LAPACKE
-#define LINALG_EXPORT static inline
 #include "linalg.h"
 LINALG_IMPLEMENT
 
