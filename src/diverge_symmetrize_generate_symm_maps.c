@@ -235,6 +235,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         double sum = 0.0;
         for (index_t e=0; e<orbmaps_to_len[o1]; ++e)
             sum += cabs(POW2(orbmaps_to_prefac[orbmaps_to_off[o1]+e]));
+        /* printf( "o1=%li, len=%li, off=%li, sum=%.5e\n", o1, orbmaps_to_len[o1], orbmaps_to_off[o1], sum ); */
         if (sum < SYMNOORM_MIN_ORBITAL_WEIGHT) {
             mpi_err_printf("Orbitals do not sum up to one %1.3f\n", sum);
             model->n_sym = 0;
@@ -339,11 +340,11 @@ static void syms_serialize( const diverge_model_t* model, char** ptr_, uindex_t*
     char* ptr = NULL;
     index_t nbytes = 0;
 
-#define push_array( ary, sz ) { \
-    ptr = (char*) realloc( ptr, nbytes + sz ); \
-    memcpy( ptr + nbytes, ary, sz ); \
-    nbytes += sz; \
-}
+    #define push_array( ary, sz ) { \
+        ptr = realloc( ptr, nbytes + sz ); \
+        if (sz > 0) { memcpy( ptr + nbytes, ary, sz ); } \
+        nbytes += sz; \
+    }
 
     push_array( ii->symm_orb_off, n_os * n_sym * sizeof(index_t) );
     push_array( ii->symm_orb_len, n_os * n_sym * sizeof(index_t) );
@@ -366,11 +367,11 @@ static internals_t* syms_deserialize( const diverge_model_t* model, char* ptr ) 
     index_t nktot = kdimtot(model->nk, model->nkf);
     index_t n_orb = model->n_orb;
 
-#define pull_array( ary, sz, type ) { \
-    ary = (type *) malloc( sz ); \
-    memcpy( ary, ptr, sz ); \
-    ptr += sz; \
-}
+    #define pull_array( ary, sz, type ) { \
+        ary = (type *) malloc( sz ); \
+        if (sz > 0) { memcpy( ary, ptr, sz ); } \
+        ptr += sz; \
+    }
 
     pull_array( ii->symm_orb_off, n_os * n_sym * sizeof(index_t), index_t );
     pull_array( ii->symm_orb_len, n_os * n_sym * sizeof(index_t), index_t );
