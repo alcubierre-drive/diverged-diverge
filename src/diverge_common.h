@@ -127,6 +127,15 @@ typedef uint64_t uindex_t;
 /** swap operands using the XOR-swap algorithm, but first check if their addresses are equal. */
 #define XORSWAP(a, b) ((&(a) == &(b)) ? (a) : XORSWAP_UNSAFE(a, b))
 
+// do not use those macros unless you really know what you're doing...
+#define XOR_PTR_( pa, pb ) ( (pa)=(void*)(((uintptr_t)(pa))^((uintptr_t)(pb))) )
+#define XORSWAP_PTR_UNSAFE_(a, b) ( XOR_PTR_(a,b), XOR_PTR_(b,a), XOR_PTR_(a,b) )
+/**
+ * swap operands using the XOR-swap algorithm, but for pointers (C doesn't
+ * allow ``ptr1 ^= ptr2``, that's why we need a second macro)
+ */
+#define XORSWAP_PTR(a, b) ( (&(a) == &(b)) ? (a) : XORSWAP_PTR_UNSAFE_(a, b) )
+
 #ifndef BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB
 #define BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB 4ul
 #endif // BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB

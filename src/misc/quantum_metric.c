@@ -108,7 +108,7 @@ double* diverge_qgt( diverge_model_t* m, complex128_t* U_, index_t nb_,
         mpi_err_printf( "which bands cannot be NULL\n" );
         errors++;
     }
-    if (n_which_bands < 0 || n_which_bands >= nb) {
+    if (n_which_bands < 0 || n_which_bands > nb) {
         mpi_err_printf( "# of which bands must be within %li,%li\n", 0, nb );
         errors++;
     }
