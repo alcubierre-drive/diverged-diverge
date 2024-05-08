@@ -33,12 +33,16 @@ typedef struct diverge_model_t diverge_model_t;
  *      :math:`\mathcal S`. Must not be NULL. Array of shape (``n_which_bands``,).
  * :param index_t n_which_bands: number of bands to sum over. Describes the set
  *      :math:`\mathcal S`, i.e., the array ``which_bands``.
+ * :param int non_ortho_grad: boolean flag that determines whether the lattice
+ *      vectors are taken into account in the calculation of :math:`\nabla f
+ *      \cdot \nabla g`.
  *
  * :returns: a ``double`` array of size (nk,) with the values of
  *      :math:`g(\boldsymbol k)`. Must be free'd by the user by a call to free
  *      or :c:func:`diverge_mem_free`.
  */
-double* diverge_qgt( diverge_model_t* m, complex128_t* U, index_t nb, index_t* nk, index_t* which_bands, index_t n_which_bands );
+double* diverge_qgt( diverge_model_t* m, complex128_t* U, index_t nb, index_t* nk,
+                     index_t* which_bands, index_t n_which_bands, int non_ortho_grad );
 
 #ifdef __cplusplus
 }
