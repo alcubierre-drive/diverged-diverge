@@ -243,14 +243,14 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
     }
     free(nkf_per_patch);
 
-    mom_patching_t* patch = (mom_patching_t*)calloc(sizeof(mom_patching_t), 1);
+    mom_patching_t* patch = (mom_patching_t*)calloc(1, sizeof(mom_patching_t));
     patch->n_patches = np;
     patch->patches = (index_t*)malloc(sizeof(index_t)*np);
     memcpy( patch->patches, pp, sizeof(index_t)*np );
 
-    patch->weights = (double*)calloc(sizeof(double), np);
-    patch->p_count = (index_t*)calloc(sizeof(index_t), np);
-    patch->p_displ = (index_t*)calloc(sizeof(index_t), np);
+    patch->weights = (double*)calloc(np, sizeof(double));
+    patch->p_count = (index_t*)calloc(np, sizeof(index_t));
+    patch->p_displ = (index_t*)calloc(np, sizeof(index_t));
 
     // set count and displ
     for (index_t p=0; p<np; ++p) {
@@ -259,8 +259,8 @@ mom_patching_t* diverge_patching_from_indices( diverge_model_t* mod, const index
     }
     index_t total_refined = patch->p_count[np-1] + patch->p_displ[np-1];
 
-    patch->p_map = (index_t*)calloc(sizeof(index_t), total_refined);
-    patch->p_weights = (double*)calloc(sizeof(double), total_refined);
+    patch->p_map = (index_t*)calloc(total_refined, sizeof(index_t));
+    patch->p_weights = (double*)calloc(total_refined, sizeof(double));
 
     // save fine weights for each kpt so we can 'choose' later on
     double* fine_weights = (double*)malloc(sizeof(double)*nk);

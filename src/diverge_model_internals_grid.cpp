@@ -214,7 +214,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     } else {
         mpi_vrb_printf("using channel vertex generators\n");
         memset( (void*)V->vertex_buffers[0], 0, sizeof(complex128_t)*V->qshare().size()*POW2(intls->grid_nk)*POW4(ns*no) );
-        complex128_t* qbuf_in = (complex128_t*)calloc(sizeof(complex128_t), intls->grid_nk * POW2(ns*ns*no));
+        complex128_t* qbuf_in = (complex128_t*)calloc(intls->grid_nk * POW2(ns*ns*no), sizeof(complex128_t));
         for (char chan : {'C', 'P', 'D'}) {
             memset( (void*)qbuf_in, 0, sizeof(complex128_t)*intls->grid_nk * POW2(ns*ns*no) );
             if ((*(model->vfill))( model, chan, qbuf_in ))

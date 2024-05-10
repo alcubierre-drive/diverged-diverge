@@ -54,7 +54,7 @@ BITARY_HOST_DEV static inline size_t bitary_nbytes( size_t nbit ) {
 }
 
 BITARY_HOST_DEV static inline cbyte_t* bitary_alloc( size_t nbit ) {
-    cbyte_t* result = (cbyte_t*)calloc(sizeof(cbyte_t), bitary_nbytes(nbit));
+    cbyte_t* result = (cbyte_t*)calloc(bitary_nbytes(nbit), sizeof(cbyte_t));
     return result;
 }
 

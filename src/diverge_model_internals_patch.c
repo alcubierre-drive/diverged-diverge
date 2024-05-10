@@ -117,8 +117,9 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
                     vbuf + IDX3(p1, p2, p3, np, np)*no4 );
     } else {
         mpi_vrb_printf("using channel vertex generators\n");
-        complex128_t* qbuf_in = (complex128_t*)calloc(sizeof(complex128_t),
-                model->internals->patch_nk * POW2(POW2(model->n_spin) * model->n_orb));
+        complex128_t* qbuf_in = calloc(
+                model->internals->patch_nk * POW2(POW2(model->n_spin) * model->n_orb),
+                sizeof(complex128_t) );
         char chans[] = "CPD";
         for (char *pchan = chans; *pchan; ++pchan)
             if ((*(model->vfill))( model, *pchan, qbuf_in ))
