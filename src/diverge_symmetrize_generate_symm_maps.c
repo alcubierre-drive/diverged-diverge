@@ -28,15 +28,19 @@ LINALG_IMPLEMENT
 #ifndef SYMNOORM_MIN_ORBITAL_WEIGHT
 #define SYMNOORM_MIN_ORBITAL_WEIGHT 0.99999
 #endif
-    
-#define VECTOR_INIT( type, ary ) \
-    index_t ary##_cap = 1024; \
+
+#define VECTOR_INIT_CAP( type, ary, cap ) \
+    index_t ary##_cap = (cap); \
     index_t ary##_sz = 0; \
-    type* ary = calloc(ary##_cap, sizeof(type));
+    type* ary = (type*)calloc(ary##_cap, sizeof(type));
+
+#define VECTOR_DEFAULT_CAP 1024
+#define VECTOR_INIT( type, ary ) VECTOR_INIT_CAP( type, ary, VECTOR_DEFAULT_CAP )
 
 #define VECTOR_PUSH_BACK( ary, val ) { \
     if (ary##_sz >= ary##_cap) { \
-        ary = realloc(ary, sizeof(*ary) * (ary##_cap *= 2)); \
+        void** p_ary = (void**)&ary; \
+        *p_ary = realloc(ary, sizeof(*ary) * ((ary##_cap <= 0) ? (ary##_cap = 1) : (ary##_cap *= 2))); \
     } \
     ary[ ary##_sz++ ] = val; \
 }
