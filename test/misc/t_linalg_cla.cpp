@@ -3,6 +3,7 @@
 #include "../catch.hpp"
 #include "../../src/diverge_common.h"
 #include "../../src/diverge_Eigen3.hpp"
+#include "t_linalg_cla_solvers.hpp"
 
 #include <string>
 #include <sstream>
@@ -299,13 +300,6 @@ MATRIX_TEST_CASE( 2, int64_t, ll )
 MATRIX_TEST_CASE( 3, int64_t, ll )
 MATRIX_TEST_CASE( 4, int64_t, ll )
 
-typedef Eigen::SelfAdjointEigenSolver<CMat2d> Sol2d;
-typedef Eigen::SelfAdjointEigenSolver<CMat3d> Sol3d;
-typedef Eigen::SelfAdjointEigenSolver<CMat4d> Sol4d;
-typedef Eigen::SelfAdjointEigenSolver<CMat2cd> Sol2cd;
-typedef Eigen::SelfAdjointEigenSolver<CMat3cd> Sol3cd;
-typedef Eigen::SelfAdjointEigenSolver<CMat4cd> Sol4cd;
-
 #define MATRIX_DECOMPOSITION_TEST_CASE( dim, dtype_long, dtype_short ) \
 \
 TEST_CASE("C decomp matrix " #dtype_long "@" #dim, "[cla][decomp_M" #dim #dtype_short "]") { \
@@ -328,13 +322,13 @@ TEST_CASE("C decomp matrix " #dtype_long "@" #dim, "[cla][decomp_M" #dim #dtype_
  \
     test_claM##dim##dtype_short##_t c_eigvalsh_H = C_RANDOM_DATA; \
     test_claV##dim##d_t c_eigvalsh_E = test_claM##dim##dtype_short##_eigvalsh( c_eigvalsh_H ); \
-    Sol##dim##dtype_short S( RANDOM_DATA ); \
-    CHECK( (c##dim##dXeigen(c_eigvalsh_E) - S.eigenvalues()).norm() < CLA_ZERO ); \
+    auto S = eigensolve_##dim##dtype_short( RANDOM_DATA ); \
+    CHECK( (c##dim##dXeigen(c_eigvalsh_E) - S.E).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_eigh_H = C_RANDOM_DATA; \
     test_claM##dim##dtype_short##_t c_eigh_U = {0}, c_eigh_UE = {0}; \
     test_claV##dim##d_t c_eigh_E = test_claM##dim##dtype_short##_eigh( c_eigh_H, &c_eigh_U ); \
-    CHECK( (c##dim##dXeigen(c_eigh_E) - S.eigenvalues()).norm() < CLA_ZERO ); \
+    CHECK( (c##dim##dXeigen(c_eigh_E) - S.E).norm() < CLA_ZERO ); \
     c_eigh_UE = c_eigh_U; \
     for (int i=0; i<dim; ++i) \
     for (int j=0; j<dim; ++j) \
@@ -346,8 +340,8 @@ TEST_CASE("C decomp matrix " #dtype_long "@" #dim, "[cla][decomp_M" #dim #dtype_
     test_claM##dim##dtype_short##_t c_svd_A = C_RANDOM_DATA2; \
     test_claM##dim##dtype_short##_t c_svd_U = {0}, c_svd_V = {0}; \
     test_claV##dim##d_t c_svd_E = test_claM##dim##dtype_short##_svd( c_svd_A, &c_svd_U, &c_svd_V ); \
-    auto svd = RANDOM_DATA2.bdcSvd(); \
-    CHECK( (c##dim##dXeigen(c_svd_E) - svd.singularValues()).norm() < CLA_ZERO ); \
+    Vec##dim##d singularValues = svd_##dim##dtype_short( RANDOM_DATA2 ); \
+    CHECK( (c##dim##dXeigen(c_svd_E) - singularValues).norm() < CLA_ZERO ); \
     for (int i=0; i<dim; ++i) \
     for (int j=0; j<dim; ++j) \
         c_svd_U.m[i][j] *= c_svd_E.v[j]; \
