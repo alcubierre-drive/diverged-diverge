@@ -3,7 +3,11 @@
 #include <math.h>
 
 #ifndef LINALG_NO_LAPACKE
+#ifdef USE_MKL
+#include <mkl.h>
+#else
 #include <lapacke.h>
+#endif
 #define LINALG_LAPACKE_EIGH_d LAPACKE_dsyevd
 #define LINALG_LAPACKE_EIGH_cd LAPACKE_zheevd
 #define LINALG_LAPACKE_SVD_d LAPACKE_dgesvd
