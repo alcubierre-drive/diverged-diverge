@@ -37,16 +37,24 @@ typedef Eigen::Matrix<int64_t,4,1> Vec4ll;
 #define RANDOM_DATA_GEN_V3ll Vec3ll::Random().array().unaryExpr([](int64_t x)->int64_t{return x%100;}).matrix()
 #define RANDOM_DATA_GEN_V4ll Vec4ll::Random().array().unaryExpr([](int64_t x)->int64_t{return x%100;}).matrix()
 
+#ifndef SKIP_FANCY_PARENS
+#define PAREN_L ((row>1) ? (i==0) ? "⎛" : (i==row-1) ? "⎝" : "⎜" : "(")
+#define PAREN_R ((row>1) ? (i==0) ? "⎞" : (i==row-1) ? "⎠" : "⎟" : ")")
+#else // SKIP_FANCY_PARENS
+#define PAREN_L "["
+#define PAREN_R "]"
+#endif // SKIP_FANCY_PARENS
+
 static const char print_matrix_padding[] = "    ";
 static void print_matrix_d( char* buf_, double* mat, int row, int col ) {
     char* buf = buf_;
     for (int i=0; i<row; ++i) {
-        sprintf( buf, "%s[", print_matrix_padding ); buf += strlen(buf);
+        sprintf( buf, "%s%s", print_matrix_padding, PAREN_L ); buf += strlen(buf);
         for (int j=0; j<col; ++j) {
-            sprintf( buf, "%+4.1f, ", mat[IDX2(i,j,col)] );
+            sprintf( buf, "%+4.1f  ", mat[IDX2(i,j,col)] );
             buf += strlen(buf);
         }
-        sprintf( buf -= 2, "]\n" ); buf += strlen(buf);
+        sprintf( buf -= 2, "%s\n", PAREN_R ); buf += strlen(buf);
     }
     for (size_t i=0; i<strlen(buf_); ++i)
         if (buf_[i] == '+')  buf_[i] = ' ';
@@ -55,28 +63,28 @@ static void print_matrix_d( char* buf_, double* mat, int row, int col ) {
 static void print_matrix_cd( char* buf_, complex128_t* mat, int row, int col ) {
     char* buf = buf_;
     for (int i=0; i<row; ++i) {
-        sprintf( buf, "%s[", print_matrix_padding ); buf += strlen(buf);
+        sprintf( buf, "%s%s", print_matrix_padding, PAREN_L ); buf += strlen(buf);
         for (int j=0; j<col; ++j) {
-            sprintf( buf, "%+4.1f%+4.1fj, ", mat[IDX2(i,j,col)].real(), mat[IDX2(i,j,col)].imag() );
+            sprintf( buf, "%+4.1f%+4.1fj  ", mat[IDX2(i,j,col)].real(), mat[IDX2(i,j,col)].imag() );
             for (size_t i=0; i<strlen(buf); ++i) {
                 if (buf[i] == '+')  buf[i] = ' ';
                 break;
             }
             buf += strlen(buf);
         }
-        sprintf( buf -= 2, "]\n" ); buf += strlen(buf);
+        sprintf( buf -= 2, "%s\n", PAREN_R ); buf += strlen(buf);
     }
 }
 
 static void print_matrix_i( char* buf_, int* mat, int row, int col ) {
     char* buf = buf_;
     for (int i=0; i<row; ++i) {
-        sprintf( buf, "%s[", print_matrix_padding ); buf += strlen(buf);
+        sprintf( buf, "%s%s", print_matrix_padding, PAREN_L ); buf += strlen(buf);
         for (int j=0; j<col; ++j) {
-            sprintf( buf, "%3i, ", mat[IDX2(i,j,col)] );
+            sprintf( buf, "%3i  ", mat[IDX2(i,j,col)] );
             buf += strlen(buf);
         }
-        sprintf( buf -= 2, "]\n" ); buf += strlen(buf);
+        sprintf( buf -= 2, "%s\n", PAREN_R ); buf += strlen(buf);
     }
     for (size_t i=0; i<strlen(buf_); ++i)
         if (buf_[i] == '+')  buf_[i] = ' ';
@@ -85,12 +93,12 @@ static void print_matrix_i( char* buf_, int* mat, int row, int col ) {
 static void print_matrix_ll( char* buf_, int64_t* mat, int row, int col ) {
     char* buf = buf_;
     for (int i=0; i<row; ++i) {
-        sprintf( buf, "%s[", print_matrix_padding ); buf += strlen(buf);
+        sprintf( buf, "%s%s", print_matrix_padding, PAREN_L ); buf += strlen(buf);
         for (int j=0; j<col; ++j) {
-            sprintf( buf, "%3li, ", mat[IDX2(i,j,col)] );
+            sprintf( buf, "%3li  ", mat[IDX2(i,j,col)] );
             buf += strlen(buf);
         }
-        sprintf( buf -= 2, "]\n" ); buf += strlen(buf);
+        sprintf( buf -= 2, "%s\n", PAREN_R ); buf += strlen(buf);
     }
     for (size_t i=0; i<strlen(buf_); ++i)
         if (buf_[i] == '+')  buf_[i] = ' ';
