@@ -25,6 +25,7 @@ public:
     void calc_susc(bool susz_ff, bool susz_full);
     void save_channel_leading_ev();
 
+    index_t tu_n_decomp_values;
     index_t tu_n_singular_values;
     char algo;
     double cutoff;

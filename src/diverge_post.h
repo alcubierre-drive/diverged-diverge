@@ -84,10 +84,12 @@ struct diverge_postprocess_conf_t {
     bool    tu_susceptibilities_ff;
     /** store the selfenergy if it was included in the calculation */
     bool    tu_selfenergy;
-    /** store the vertices in the formfactor basis -- Requires a lot of memory */
+    /** store the vertices in the formfactor basis (*requires a lot of memory*) */
     bool    tu_channels;
-    /** store the symmetry transfromations for the left multiindex -- works for eigenvectors */
+    /** store the symmetry transfromations for the left multiindex (works for eigenvectors) */
     bool    tu_symmetry_maps;
+    /** store the N leading values of the channel eigendecomposition/SVD. ignored if zero */
+    index_t tu_n_decomp_values;
 
     // DEVELOPERS
     //
@@ -126,7 +128,8 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_susceptibilities_ff = false,
     .tu_selfenergy = false,
     .tu_channels = false,
-    .tu_symmetry_maps = false
+    .tu_symmetry_maps = false,
+    .tu_n_decomp_values = 0,
 };
 #endif
 

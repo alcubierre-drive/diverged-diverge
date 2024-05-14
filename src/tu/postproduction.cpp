@@ -144,7 +144,8 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
             Map<MatXcd>(_vec, linsize, linsize).transposeInPlace();
         }
 
-        len[q] = single_eigen_sort_N( _vec, _val, linsize, 'M', cutoff_rel ? -cutoff : cutoff );
+        len[q] = (tu_n_decomp_values != 0) ? single_eigen_sort_part( _vec, _val, linsize, 'M', tu_n_decomp_values ) :
+                                             single_eigen_sort_N( _vec, _val, linsize, 'M', cutoff_rel ? -cutoff : cutoff );
         memcpy( val+off[q], _val, sizeof(double)*len[q] );
         memcpy( vec+off[q]*linsize, _vec, sizeof(complex128_t)*len[q]*linsize );
     }

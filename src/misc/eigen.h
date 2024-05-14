@@ -19,6 +19,9 @@ void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double
 // 'M': magnitude
 // 'm': inverse magnitude
 void single_eigen_sort( complex128_t* U, double* E, index_t N, char which );
+// same as above, but only copy over the first num values. return the number of
+// values written.
+index_t single_eigen_sort_part( complex128_t* U, double* E, index_t N, char which, index_t num );
 
 // sorting options are the same as above (which). in addition, we allow for
 // relative or absolute cutoff in abs_limit. if abs_limit<0, use relative

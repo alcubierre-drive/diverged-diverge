@@ -3,7 +3,6 @@
 #include "diverge_hack.h"
 #include "diverge_model.h"
 #include "diverge_internals_struct.h"
-#include "diverge_Eigen3.hpp"
 
 #include "tu/diverge_interface.hpp"
 #include "npatch/vertex.h"

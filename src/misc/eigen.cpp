@@ -3,6 +3,7 @@
 #include "../diverge_Eigen3.hpp"
 
 #include "eigen.h"
+#include "qnan.h"
 
 #include <algorithm>
 #include <vector>
@@ -83,18 +84,20 @@ void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double
 #endif // LAPACKE/MKL
 
 void single_eigen_sort( complex128_t* U, double* E, index_t N, char which ) {
-    char abs_limit_c[sizeof(double)] = {0};
-    double abs_limit_d = 0;
-    memcpy( &abs_limit_d, &abs_limit_c, sizeof(double) );
-    single_eigen_sort_N( U, E, N, which, abs_limit_d );
+    single_eigen_sort_N( U, E, N, which, qnan_gen(0) );
+}
+
+index_t single_eigen_sort_part( complex128_t* U, double* E, index_t N, char which, index_t num ) {
+    return single_eigen_sort_N( U, E, N, which, qnan_gen(num) );
 }
 
 index_t single_eigen_sort_N( complex128_t* U, double* E, index_t N, char which, double abs_limit ) {
-    char abs_limit_c[sizeof(double)] = {0};
-    double abs_limit_d = 0;
-    memcpy( &abs_limit_d, &abs_limit_c, sizeof(double) );
-
-    int use_all = (abs_limit_d == abs_limit);
+    int use_all_or_num = 0;
+    uint32_t num_limit = 0;
+    if (qnan_isnan(abs_limit)) {
+        num_limit = qnan_get(abs_limit);
+        use_all_or_num = 1;
+    }
     int use_rel = abs_limit < 0;
 
     abs_limit = fabs(abs_limit);
@@ -131,8 +134,8 @@ index_t single_eigen_sort_N( complex128_t* U, double* E, index_t N, char which, 
     for (index_t b=0; b<N; ++b)
         E[b] = E_cpy[range[b]];
 
-    int index_cut = N;
-    if (!use_all) {
+    int index_cut = (num_limit != 0) ? num_limit : N;
+    if (!use_all_or_num) { // overwrite index_cut
         double cut = use_rel ? fabs(E[0]) * abs_limit : abs_limit;
         for (index_t b=0; b<N; ++b) {
             if (fabs(E[b]) < cut) {

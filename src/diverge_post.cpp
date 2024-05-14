@@ -107,6 +107,7 @@ static void tu_pp( diverge_flow_step_t* st,
     tu_pc.algo = pc->tu_which_solver_mode;
     tu_pc.cutoff = pc->tu_storing_threshold;
     tu_pc.cutoff_rel = pc->tu_storing_relative;
+    tu_pc.tu_n_decomp_values = pc->tu_n_decomp_values;
     tu_pc.run_and_save(file,pc->tu_lingap,pc->tu_susceptibilities_ff,pc->tu_susceptibilities_full,
                         pc->tu_selfenergy, pc->tu_channels, pc->tu_symmetry_maps);
 }
