@@ -184,6 +184,7 @@ DIVERGE_UNSTABLE {
         batched_gemm_small;
         single_eigen;
         single_eigen_sort;
+        single_eigen_sort_part;
         single_eigen_sort_N;
         single_gemm;
         single_svd;
