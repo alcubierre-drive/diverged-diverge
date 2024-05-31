@@ -274,8 +274,8 @@ diverge_model_t* honeycomb( index_t nk, index_t nkf, double t, double tp, double
     double t_norm = pos.col(0).norm();
     double tp_norm = 1.0;
 
-    m->hop = (rs_hopping_t*)calloc(sizeof(rs_hopping_t), 1024);
-    m->vert = (rs_vertex_t*)calloc(sizeof(rs_vertex_t), 1024);
+    m->hop = (rs_hopping_t*)calloc(1024, sizeof(rs_hopping_t));
+    m->vert = (rs_vertex_t*)calloc(1024, sizeof(rs_vertex_t));
     m->vert[m->n_vert++] = rs_vertex_t{ 'D', {0,0,0}, 0,0, -1,0,0,0, U };
     m->vert[m->n_vert++] = rs_vertex_t{ 'D', {0,0,0}, 1,1, -1,0,0,0, U };
     for (int Rx=-5; Rx<=5; ++Rx)
