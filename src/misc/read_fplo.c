@@ -132,14 +132,14 @@ static inline claM3d_t claM3d_inv( claM3d_t A ) {
     return claM3d_scale( B, 1./claV3d_dot(claV3d_map(B.m[0]),claV3d_map(A.m[0])) );
 }
 
-static char* fplo_getline_string = NULL;
-static index_t fplo_getline( char** pline, size_t* plen, FILE* stream ) {
-    if (!fplo_getline_string)
-        fplo_getline_string = calloc(4096, 1);
-    fgets(fplo_getline_string, 4096, stream);
-    *pline = fplo_getline_string;
-    *plen = strlen(fplo_getline_string);
-    return feof(stream) ? -1 : (index_t)*plen;
+#ifndef FPLO_GETLINE_MAX
+#define FPLO_GETLINE_MAX 8192
+#endif
+
+static index_t fplo_getline( char* line, FILE* stream ) {
+    if (!line) return -1;
+    fgets(line, FPLO_GETLINE_MAX-1, stream);
+    return feof(stream) ? -1 : (index_t)strlen(line);
 }
 
 static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file ) {
@@ -187,18 +187,17 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
 }
 
     ssize_t nread = 0;
-    size_t len = 0;
-    char *line = NULL;
+    char line[FPLO_GETLINE_MAX] = {0};
     int linenum = 0;
 
     int errors = 0;
 
-    while ((nread = fplo_getline(&line, &len, stream)) != -1) {
+    while ((nread = fplo_getline(line, stream)) != -1) {
         linenum++;
 
         regmatch_t match = {0};
         if (regexec(&regex, line, 1, &match, 0) == 0) {
-            char *str = calloc(strlen(line)+1,1);
+            char str[FPLO_GETLINE_MAX] = {0};
             char *l = line, *s = str;
             while ((*s++ = *l++) != ':') {}
             *(s-1) = '\0';
@@ -233,8 +232,6 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
             } else {
                 RESET_PARSE_STATE();
             }
-
-            free( str );
         } else {
             if (parse_latvec) {
                 if (parse_latvec_i < 3) {
@@ -297,8 +294,6 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
     }
 
     regfree(&regex);
-    line = NULL;
-    free(line);
     fclose(stream);
 
     io = (fplo_intermediate_output_t){.fplo_nwan = fplo_nwan,
