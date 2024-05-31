@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-const char* gen_graphene_hr_dat( void );
+const char* gen_graphene_hr_dat( int use_fplo );
 
 #ifdef __cplusplus
 }
