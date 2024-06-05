@@ -24,7 +24,7 @@ TEST_CASE("FPLO read in","[FPLOreader]") {
     int nread = fread(fcontent, 1, 1024, fptr);
     fclose(fptr);
     memset( fcontent+nread, 0, 1024-nread );
-    mpi_fil_printf( "gnerated file '%s' (+hamdata). Content:\n%s",
+    mpi_fil_printf( "generated file '%s' (+hamdata). Content:\n%s",
             fname_FPLO.c_str(), fcontent );
 
     diverge_model_t* fplo_model = diverge_read_fplo( fname_FPLO.c_str() );
