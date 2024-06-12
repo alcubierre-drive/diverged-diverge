@@ -479,7 +479,7 @@ if not _libs["divERGe"] is None:
         ('ffill', full_vertex_generator_t),
         ('gfill', greensfunc_generator_t),
         ('gproj', greensfunc_generator_t),
-        ('data', String),
+        ('data', c_voidp),
         ('nbytes_data', index_t),
         ('data_destructor', CFUNCTYPE(UNCHECKED(None), POINTER(c_char))),
         ('internals', POINTER(internals_t)),
