@@ -1,13 +1,13 @@
-# modele load gcc/12 openmpi/4.1 cuda/12.1 mkl/2022.2
+# module load gcc/12 openmpi/4.1 cuda/12.1 mkl/2022.2 fftw-serial/3.3.10
+# assumes Eigen3 to be installed in ${HOME}/software/include
 USE_CUDA := true
-INC_TEST := true
 
 # USE_MPI := true
 # CXX := mpicxx
 # CC := mpicc
 # LD := mpicxx
 
-INCLUDES += -I$(HOME)/software/include -I$(MKLROOT)/include -I$(CUDA_HOME)/include
+INCLUDES += -I$(HOME)/software/include -I$(MKLROOT)/include -I$(CUDA_HOME)/include -I$(FFTW_HOME)/include
 DEFINES += -DUSE_MKL -DNDEBUG -DEIGEN_NO_DEBUG -DUSE_GF_FLOATS \
 	-DDIVERGE_LOG_GRAYSCALE
 CXXFLAGS += -Ofast -mtune=native -march=native -m64 -flto
@@ -23,5 +23,5 @@ LIBS := -flto=24 -Wno-lto-type-mismatch -Wno-maybe-uninitialized \
 		${MKLROOT}/lib/intel64/libmkl_gnu_thread.a \
 		${MKLROOT}/lib/intel64/libmkl_core.a \
 	-Wl,--end-group \
-	-lgomp -lpthread -lm -ldl -lfftw3 -lfftw3_omp
+	-lgomp -lpthread -lm -ldl -L$(FFTW_HOME)/lib -lfftw3 -lfftw3_omp
 
