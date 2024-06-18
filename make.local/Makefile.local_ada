@@ -1,27 +1,36 @@
-# module load gcc/12 openmpi/4.1 cuda/12.1 mkl/2022.2 fftw-serial/3.3.10
-# assumes Eigen3 to be installed in ${HOME}/software/include
-USE_CUDA := true
+# output of "module list":
+# Currently Loaded Modulefiles:
+#  1) git/2.43   2) git-lfs/3.4   3) mkl/2024.0   4) gcc/12   5) openmpi/4.1   6) fftw-serial/3.3.10   7) cuda/12.1 
 
+# for CUDA, uncomment the flag below
+# USE_CUDA := true
+
+# for MPI, uncomment the flags below
 # USE_MPI := true
 # CXX := mpicxx
 # CC := mpicc
 # LD := mpicxx
 
-INCLUDES += -I$(HOME)/software/include -I$(MKLROOT)/include -I$(CUDA_HOME)/include -I$(FFTW_HOME)/include
-DEFINES += -DUSE_MKL -DNDEBUG -DEIGEN_NO_DEBUG -DUSE_GF_FLOATS \
-	-DDIVERGE_LOG_GRAYSCALE
+# change this to your installation path of Eigen3
+EIGEN_PATH := .
+
+INCLUDES += -I$(MKLROOT)/include -I$(CUDA_HOME)/include -I${FFTW_HOME}/include -I${EIGEN_PATH}
+DEFINES += -DUSE_MKL -DNDEBUG -DEIGEN_NO_DEBUG
+
 CXXFLAGS += -Ofast -mtune=native -march=native -m64 -flto
 CFLAGS += -Ofast -mtune=native -march=native -m64 -flto
-CUFLAGS += -O4 --use_fast_math --gpu-architecture=compute_80 \
-	--expt-relaxed-constexpr -ccbin $(CXX) \
-	-Xcompiler="-Ofast -mtune=native -march=native -m64" \
-	-diag-suppress 20012
-LIBS := -flto=24 -Wno-lto-type-mismatch -Wno-maybe-uninitialized \
-	-L$(CUDA_HOME)/lib64 -L$(HOME)/software/lib \
-	-Wl,--start-group \
-		${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
-		${MKLROOT}/lib/intel64/libmkl_gnu_thread.a \
-		${MKLROOT}/lib/intel64/libmkl_core.a \
-	-Wl,--end-group \
-	-lgomp -lpthread -lm -ldl -L$(FFTW_HOME)/lib -lfftw3 -lfftw3_omp
 
+CUFLAGS += -O4 --use_fast_math --gpu-architecture=compute_80 \
+        --expt-relaxed-constexpr -ccbin $(CXX) \
+        -Xcompiler="-Ofast -mtune=native -march=native -m64" \
+        -diag-suppress 20012
+
+LIBS := -flto=24 -Wno-lto-type-mismatch -Wno-maybe-uninitialized \
+        -L$(CUDA_HOME)/lib64 -L$(FFTW_HOME)/lib \
+        -Wl,--start-group \
+                ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
+                ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a \
+                ${MKLROOT}/lib/intel64/libmkl_core.a \
+        -Wl,--end-group \
+        -lgomp -lpthread -lm -ldl -lfftw3 -lfftw3_omp \
+        -Wl,-rpath=${FFTW_HOME}/lib/
