@@ -4,18 +4,57 @@
 
 #ifdef __cplusplus
 #include <cstdint>
+#include <cstring>
 extern "C" {
 #else
 #include <stdint.h>
+#include <string.h>
 #endif
 
-double qnan_gen( uint32_t payload );
-uint32_t qnan_get( double qnan );
-int qnan_isnan( double qnan );
+static const uint64_t NAN_MASK = 0xFFFF000000000000;
+static const uint32_t NOT_A_NAN = 0xFFFFFFFF;
 
-double fnan_gen( float payload );
-float fnan_get( double fnan );
-int fnan_isnan( double fnan );
+static inline int qnan_isnan( double qnan ) {
+    uint64_t unan = 0;
+    memcpy( &unan, &qnan, sizeof(unan) );
+    return ((unan & NAN_MASK) == NAN_MASK);
+}
+
+static inline double qnan_gen( uint32_t payload ) {
+    double result = 0;
+    memcpy( &result, &NAN_MASK, sizeof(NAN_MASK) );
+    memcpy( &result, &payload, sizeof(payload) );
+    return result;
+}
+
+static inline uint32_t qnan_get( double qnan ) {
+    if (!qnan_isnan( qnan ))
+        return NOT_A_NAN;
+    uint32_t result = 0;
+    memcpy( &result, &qnan, sizeof(result) );
+    return result;
+}
+
+static inline int fnan_isnan( double fnan ) {
+    uint64_t unan = 0;
+    memcpy( &unan, &fnan, sizeof(unan) );
+    return ((unan & NAN_MASK) == NAN_MASK);
+}
+
+static inline double fnan_gen( float payload ) {
+    double result = 0;
+    memcpy( &result, &NAN_MASK, sizeof(NAN_MASK) );
+    memcpy( &result, &payload, sizeof(payload) );
+    return result;
+}
+
+static inline float fnan_get( double fnan ) {
+    if (!fnan_isnan( fnan ))
+        return NOT_A_NAN;
+    float result = 0;
+    memcpy( &result, &fnan, sizeof(result) );
+    return result;
+}
 
 #ifdef __cplusplus
 }
