@@ -172,8 +172,8 @@ diverge_model_t* kagome_model( index_t nk, index_t nkf , double U , double V) {
 
     mod->n_ibz_path = 4;
     mod->ibz_path[1][0] = 0.5;
-    mod->ibz_path[2][0] = 0.5;
-    mod->ibz_path[2][1] = 0.5;
+    mod->ibz_path[2][0] = 2./3.;
+    mod->ibz_path[2][1] = 1./3.;
 
     site_descr_t sites[3];
     sites[0].n_functions = 1;
