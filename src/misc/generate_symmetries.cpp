@@ -286,13 +286,23 @@ spherical_harmonic_t extract_spherical_harmonic(real_harmonics_t function) {
     return result;
 }
 
-static spherical_harmonic_t rotate(spherical_harmonic_t inp, Vec3d v_in, Vec3d v_fin) {
-    Vec3d rot_vec = v_in.cross(v_fin);
-    if(rot_vec.norm() > 1e-10) {
-        double angle = atan2(rot_vec.norm(), v_in.dot(v_fin));
-        rot_vec /= rot_vec.norm();
-        spherical_harmonic_t helper = t_orbital('R', rot_vec, gen_euler_angle(rot_vec,angle))*inp;
-        assert((v_fin/v_fin.norm()-t_spatial('R',rot_vec,angle) * v_in).norm() < 1e-10);
+static spherical_harmonic_t rotatexz(spherical_harmonic_t inp, Vec3d exi, Vec3d exf, Vec3d ezi, Vec3d ezf) {
+    Vec3d rotv_x = exi.cross(exf);
+    double angle_x = atan2(rotv_x.norm(), exi.dot(exf));
+    if(rotv_x.norm() > 1e-10) {
+        rotv_x /= rotv_x.norm();
+        spherical_harmonic_t helper = t_orbital('R', rotv_x, gen_euler_angle(rotv_x,angle_x)) * inp;
+        ezi = t_spatial('R',rotv_x,angle_x) * ezi;
+        assert((exf/exf.norm()-t_spatial('R',rotv_x,angle_x) * exi).norm() < 1e-10);
+        inp = helper;
+    }
+
+    Vec3d rotv_z = ezi.cross(ezf);
+    double angle_z = atan2(rotv_z.norm(), ezi.dot(ezf));
+    if(rotv_z.norm() > 1e-10) {
+        rotv_z /= rotv_z.norm();
+        spherical_harmonic_t helper = t_orbital('R', rotv_z, gen_euler_angle(rotv_z,angle_z)) * inp;
+        assert((ezf/ezf.norm()-t_spatial('R',rotv_z,angle_z) * ezi).norm() < 1e-10);
         inp = helper;
     }
     return inp;
@@ -314,8 +324,7 @@ static vector<spherical_harmonic_t> construct_spherical_harmonic_vector( vector<
             spherical_harmonic_t orbital = extract_spherical_harmonic(orbital_content[o].function[id]);
             Map<Vec3d> exdef (&(orbital_content[o].xaxis[id][0]));
             Map<Vec3d> ezdef (&(orbital_content[o].zaxis[id][0]));
-            orbital = rotate(orbital,ex,exdef);
-            orbital = rotate(orbital,ez,ezdef);
+            orbital = rotatexz(orbital,ex,exdef, ez, ezdef);
             orbs[o] += orbital_content[o].amplitude[id] * orbital;
         }
         if(std::abs(orbs[o].norm() - 1.0) > 1e-10 ) {
