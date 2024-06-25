@@ -49,7 +49,7 @@ int init_D_channel(const diverge_model_t* model, complex128_t* buf) {
 static inline void init_channel_SU2(const diverge_model_t* model, complex128_t* buf, index_t offset, index_t n_elem) {
     const index_t no = model->n_orb;
     const index_t* nk = model->nk;
-    memset(buf,0,sizeof(complex128_t)*kdim(nk)*POW2(no*ns*ns));
+    memset(buf,0,sizeof(complex128_t)*kdim(nk)*POW2(no));
 
     for (index_t idx=offset; idx<offset+n_elem; ++idx) {
         index_t o1 = model->vert[idx].o1,
