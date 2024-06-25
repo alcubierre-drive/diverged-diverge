@@ -270,14 +270,14 @@ if not _libs["divERGe"] is None:
         'function',
         'n_functions',
         'xaxis',
-        'yaxis',
+        'zaxis',
     ]
     struct_site_descr_t._fields_ = [
         ('amplitude', complex128_t * int(MAX_ORBS_PER_SITE)),
         ('function', real_harmonics_t * int(MAX_ORBS_PER_SITE)),
         ('n_functions', index_t),
         ('xaxis', c_double * int(3*MAX_ORBS_PER_SITE)),
-        ('yaxis', c_double * int(3*MAX_ORBS_PER_SITE)),
+        ('zaxis', c_double * int(3*MAX_ORBS_PER_SITE)),
     ]
 
     generate_symm_trafo_ = _libs["divERGe"].get("diverge_generate_symm_trafo", "cdecl")
