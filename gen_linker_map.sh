@@ -1,6 +1,7 @@
 #!/bin/bash
 
-VERSION=0.6
+TAG_VERSION="$(git tag --list "v*.*" | tail -n1)"
+VERSION=${TAG_VERSION:1}
 SYMBOLS=DIVERGE_$VERSION
 OUTFILE=libdivERGe.map
 
