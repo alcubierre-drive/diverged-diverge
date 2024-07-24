@@ -9,4 +9,3 @@ therefore private by construction and everything is done over the
 :c:type:`diverge_flow_step_t` handle.
 
 .. c:autodoc:: diverge_flow_step.h
-

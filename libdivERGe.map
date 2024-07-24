@@ -188,4 +188,7 @@ DIVERGE_UNSTABLE {
         single_eigen_sort_N;
         single_gemm;
         single_svd;
+        tu_highsym_vertex_store;
+        tu_highsym_vertex_to_file;
+        tu_highsym_vertex_free;
 };
