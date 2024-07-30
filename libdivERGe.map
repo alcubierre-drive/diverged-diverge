@@ -6,6 +6,7 @@ DIVERGE_0.7 {
         diverge_compilation_status_mpi;
         diverge_compilation_status_numbers;
         diverge_compilation_status_version;
+        diverge_distribute;
         diverge_embed;
         diverge_euler_defaults_CPP;
         diverge_euler_next;
@@ -191,4 +192,7 @@ DIVERGE_UNSTABLE {
         tu_highsym_vertex_store;
         tu_highsym_vertex_to_file;
         tu_highsym_vertex_free;
+        subspace_gfill_multi_init;
+        subspace_gfill_multi_free;
+        subspace_gfill_multi_exec;
 };

@@ -62,6 +62,9 @@ DIVERGE_UNSTABLE {
         tu_highsym_vertex_store;
         tu_highsym_vertex_to_file;
         tu_highsym_vertex_free;
+        subspace_gfill_multi_init;
+        subspace_gfill_multi_free;
+        subspace_gfill_multi_exec;
 };
 EOF
 )
