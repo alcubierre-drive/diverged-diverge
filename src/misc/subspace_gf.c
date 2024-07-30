@@ -17,6 +17,7 @@ struct subspace_gfill_multi_t {
 subspace_gfill_multi_t* subspace_gfill_multi_init( double* E, complex128_t* U,
         index_t nk, const index_t* orbs, index_t n_orbs, index_t nb, index_t b_per_bb ) {
     (void)b_per_bb;
+    mpi_wrn_printf( "subspace GF works on CPU, but won't be much faster...\n" );
     subspace_gfill_multi_t* s = calloc(1, sizeof(subspace_gfill_multi_t));
     s->E = E;
     s->U = U;
