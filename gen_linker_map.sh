@@ -58,6 +58,7 @@ DIVERGE_UNSTABLE {
         single_eigen_sort_part;
         single_eigen_sort_N;
         single_gemm;
+        single_square_gemm;
         single_svd;
         tu_highsym_vertex_store;
         tu_highsym_vertex_to_file;
@@ -65,6 +66,7 @@ DIVERGE_UNSTABLE {
         subspace_gfill_multi_init;
         subspace_gfill_multi_free;
         subspace_gfill_multi_exec;
+        diverge_largemat_gf;
 };
 EOF
 )
