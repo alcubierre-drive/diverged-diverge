@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Advanced Features &#8212; divERGe 0.7 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=48f8e935"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Flow" href="Flow.html" />
+    <link rel="prev" title="Hacking" href="Hacking.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="advanced-features">
+<span id="id1"></span><h1>Advanced Features<a class="headerlink" href="#advanced-features" title="Link to this heading">¶</a></h1>
+<section id="green-s-functions-for-systems-with-many-orbitals">
+<h2>Green’s functions for systems with many orbitals<a class="headerlink" href="#green-s-functions-for-systems-with-many-orbitals" title="Link to this heading">¶</a></h2>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_largemat_gf">
+<a class="reference internal" href="Model.html#c.greensfunc_op_t" title="greensfunc_op_t"><span class="n"><span class="pre">greensfunc_op_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_largemat_gf</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">Lambda</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buf</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_largemat_gf" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/misc/largemat_gf.h#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Green’s function generator that is faster than the default
+<a class="reference internal" href="Model.html#c.diverge_greensfunc_generator_default" title="diverge_greensfunc_generator_default"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_greensfunc_generator_default()</span></code></a> for systems with a significant
+number of orbitals. Performs actual BLAS calls to GEMM instead of manually
+passing through the (o,b,p) loop. Shared memory GFs as well as 32bit floating
+point precision <em>not supported</em>.</p>
+</dd></dl>
+
+</section>
+<section id="green-s-functions-for-subspace-systems">
+<h2>Green’s functions for subspace systems<a class="headerlink" href="#green-s-functions-for-subspace-systems" title="Link to this heading">¶</a></h2>
+<p>When only a certain orbital subspace is considered as “correlated”, a custom
+Green’s function generator can be defined to only calculate the Green’s function
+for those orbitals. We provide a GPU (and CPU) subspace GF generator that is
+most conveniently used when both the full system and the subspace system are
+separate <a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_model_t</span></code></a> instances.</p>
+<p>Due to the GPU capability, the functions provided here must operate on a handle
+(<a class="reference internal" href="#c.subspace_gfill_multi_t" title="subspace_gfill_multi_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">subspace_gfill_multi_t</span></code></a>). The actual Green’s function calculation is
+carried out using <a class="reference internal" href="#c.subspace_gfill_multi_exec" title="subspace_gfill_multi_exec"><code class="xref c c-func docutils literal notranslate"><span class="pre">subspace_gfill_multi_exec()</span></code></a>; the documentation
+includes an example of how to use it as a <a class="reference internal" href="Model.html#c.greensfunc_generator_t" title="greensfunc_generator_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">greensfunc_generator_t</span></code></a>.</p>
+<dl class="c type">
+<dt class="sig sig-object c" id="c.subspace_gfill_multi_t">
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subspace_gfill_multi_t</span></span></span><a class="headerlink" href="#c.subspace_gfill_multi_t" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/misc/subspace_gf.h#L8"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>opaque typedef for hanlde used in subspace Green’s functions</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.subspace_gfill_multi_init">
+<a class="reference internal" href="#c.subspace_gfill_multi_t" title="subspace_gfill_multi_t"><span class="n"><span class="pre">subspace_gfill_multi_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">subspace_gfill_multi_init</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">U</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nk</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">orbs</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_orbs</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">b_per_bb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.subspace_gfill_multi_init" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/misc/subspace_gf.h#L12"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>initialize the <a class="reference internal" href="#c.subspace_gfill_multi_t" title="subspace_gfill_multi_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">subspace_gfill_multi_t</span></code></a> handle, which must be free’d
+using <a class="reference internal" href="#c.subspace_gfill_multi_free" title="subspace_gfill_multi_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">subspace_gfill_multi_free()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>E</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span><span class="p">*</span></span></span>) – dispersion array of the <em>full</em> model</p></li>
+<li><p><strong>U</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n">complex128_t</span></a><span class="p">*</span></span></span>) – orbital to band transformation of the <em>full</em> model</p></li>
+<li><p><strong>nk</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of kpoints (<code class="docutils literal notranslate"><span class="pre">kdimtot(nk,</span> <span class="pre">nkf)</span></code>)</p></li>
+<li><p><strong>orbs</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – selection of orbital/spin indices to construct
+subspace for</p></li>
+<li><p><strong>n_orbs</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – size of subspace</p></li>
+<li><p><strong>nb</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of bands in the <em>full</em> model</p></li>
+<li><p><strong>b_per_bb</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of bands to consider in a single CUDA thread
+(for the hand-written GEMM). Note that the maximum
+number of threads per block is not checked against,
+so make this large enough to accomodate
+<code class="docutils literal notranslate"><span class="pre">dim3(nb/b_per_bb,</span> <span class="pre">n_orbs,</span> <span class="pre">n_orbs)</span></code> threads per
+block.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.subspace_gfill_multi_free">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subspace_gfill_multi_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.subspace_gfill_multi_t" title="subspace_gfill_multi_t"><span class="n"><span class="pre">subspace_gfill_multi_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.subspace_gfill_multi_free" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/misc/subspace_gf.h#L33"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>free the <a class="reference internal" href="#c.subspace_gfill_multi_t" title="subspace_gfill_multi_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">subspace_gfill_multi_t</span></code></a> handle.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.subspace_gfill_multi_exec">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subspace_gfill_multi_exec</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.subspace_gfill_multi_t" title="subspace_gfill_multi_t"><span class="n"><span class="pre">subspace_gfill_multi_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">dest</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">Lambda</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.subspace_gfill_multi_exec" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/misc/subspace_gf.h#L38"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>calculate subspace GFs using the handle obtained with
+<a class="reference internal" href="#c.subspace_gfill_multi_init" title="subspace_gfill_multi_init"><code class="xref c c-func docutils literal notranslate"><span class="pre">subspace_gfill_multi_init()</span></code></a>. Safe to call multiple times, but not
+safe to use in a scenario where the target buffer resides in shared memory.</p>
+<p>Example:</p>
+<div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">greensfunc_op_t</span><span class="w"> </span><span class="nf">subspace_gf</span><span class="p">(</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">diverge_model_t</span><span class="o">*</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="n">complex128_t</span><span class="w"> </span><span class="n">Lambda</span><span class="p">,</span><span class="w"> </span><span class="n">complex128_t</span><span class="o">*</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="p">);</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">**</span><span class="w"> </span><span class="n">argv</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">diverge_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">argv</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// some initialization, other code, ...</span>
+
+<span class="w">    </span><span class="n">diverge_model_t</span><span class="o">*</span><span class="w"> </span><span class="n">fullmodel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span><span class="w"> </span><span class="c1">// set up the full model for kinetics</span>
+<span class="w">    </span><span class="n">diverge_model_t</span><span class="o">*</span><span class="w"> </span><span class="n">subspace</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span><span class="w"> </span><span class="c1">// set up the subspace model for interactions</span>
+
+<span class="w">    </span><span class="n">index_t</span><span class="w"> </span><span class="n">orbital_selection</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="w"> </span><span class="p">};</span><span class="w"> </span><span class="c1">// choice of orbitals</span>
+<span class="w">    </span><span class="n">index_t</span><span class="w"> </span><span class="n">n_orbital_selection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">orbital_selection</span><span class="p">)</span><span class="o">/</span><span class="k">sizeof</span><span class="p">(</span><span class="n">orbital_selection</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="n">index_t</span><span class="w"> </span><span class="n">b_per_bb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"> </span><span class="c1">// adjust accordingly</span>
+<span class="w">    </span><span class="c1">// before calling the function below, diverge_model_internals_common()</span>
+<span class="w">    </span><span class="c1">// must have been called on fullmodel</span>
+<span class="w">    </span><span class="n">subspace_gfill_multi_t</span><span class="o">*</span><span class="w"> </span><span class="n">subspace_gf_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">subspace_gfill_multi_init</span><span class="p">(</span>
+<span class="w">        </span><span class="n">diverge_model_internals_get_E</span><span class="p">(</span><span class="n">fullmodel</span><span class="p">),</span>
+<span class="w">        </span><span class="n">diverge_model_internals_get_U</span><span class="p">(</span><span class="n">fullmodel</span><span class="p">),</span>
+<span class="w">        </span><span class="n">kdimtot</span><span class="p">(</span><span class="n">fullmodel</span><span class="o">-&gt;</span><span class="n">nk</span><span class="p">,</span><span class="w"> </span><span class="n">fullmodel</span><span class="o">-&gt;</span><span class="n">nkf</span><span class="p">),</span>
+<span class="w">        </span><span class="n">orbital_selection</span><span class="p">,</span>
+<span class="w">        </span><span class="n">n_orbital_selection</span><span class="p">,</span>
+<span class="w">        </span><span class="n">fullmodel</span><span class="o">-&gt;</span><span class="n">n_orb</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">fullmodel</span><span class="o">-&gt;</span><span class="n">n_spin</span><span class="p">,</span>
+<span class="w">        </span><span class="n">b_per_bb</span>
+<span class="w">    </span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">subspace</span><span class="o">-&gt;</span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">subspace_gf_data</span><span class="p">;</span>
+<span class="w">    </span><span class="n">subspace</span><span class="o">-&gt;</span><span class="n">gfill</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">subspace_gf</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// do something with the subspace model</span>
+
+<span class="w">    </span><span class="n">subspace_gfill_multi_free</span><span class="p">(</span><span class="w"> </span><span class="n">subspace_gf_data</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">diverge_finalize</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">static</span><span class="w"> </span><span class="n">greensfunc_op_t</span><span class="w"> </span><span class="nf">subspace_gf</span><span class="p">(</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">diverge_model_t</span><span class="o">*</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="n">complex128_t</span><span class="w"> </span><span class="n">Lambda</span><span class="p">,</span><span class="w"> </span><span class="n">complex128_t</span><span class="o">*</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">subspace_gfill_multi_exec</span><span class="p">(</span><span class="w"> </span><span class="n">model</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">Lambda</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">greensfunc_op_cpu</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">divERGe</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Getting%20Started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Compilation.html">Compilation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="C%20Interface.html">C Interface</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Initialization.html">Initialization</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="Model.html">Model</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Internals.html">Internals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Meshing.html">Meshing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Wannier90.html">Wannier90</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FPLO.html">FPLO</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Patching.html">Patching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Symmetries.html">Symmetries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Symmetrization.html">Symmetrization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Filling.html">Filling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Berry%20Curvature.html">Berry Curvature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Supercells.html">Supercells</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Output.html">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Hacking.html">Hacking</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Advanced Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Flow.html">Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Testing.html">Testing</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Python%20Interface.html">Python Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Simulation%20Output.html">Simulation Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Runtime%20Tuning.html">Runtime Tuning</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="C%20Interface.html">C Interface</a><ul>
+  <li><a href="Model.html">Model</a><ul>
+      <li>Previous: <a href="Hacking.html" title="previous chapter">Hacking</a></li>
+      <li>Next: <a href="Flow.html" title="next chapter">Flow</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Jonas B. Profe, Lennart Klebl.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/Advanced Features.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

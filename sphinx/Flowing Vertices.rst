@@ -3,9 +3,6 @@
 Flowing Vertices
 ================
 
-.. note::
-   This feature is in a very early stage, so please consider it 'alpha' at best.
-
 It can be useful to extract certain components of the three (:math:`P`,
 :math:`C`, :math:`D`) diagrammatic channels over the course of the FRG flow in
 order to analyze them in post-processing. For example, one may be interested to

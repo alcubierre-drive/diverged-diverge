@@ -60,7 +60,7 @@ nature of simulation output depending on backends.</p>
 information held by the <a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_model_t</span></code></a> structure. Depending on the
 output options requested at the time of saving the <code class="docutils literal notranslate"><span class="pre">model.dvg</span></code> file (see
 <a class="reference internal" href="Output.html#c.diverge_model_to_file_finegrained" title="diverge_model_to_file_finegrained"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_to_file_finegrained()</span></code></a>,
-<a class="reference internal" href="Output.html#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_model_output_conf_t</span></code></a>, and <a class="reference internal" href="Full%20Python%20Module%20Specification.html#diverge.model_to_file_PY" title="diverge.model_to_file_PY"><code class="xref py py-func docutils literal notranslate"><span class="pre">diverge.model_to_file_PY()</span></code></a>),
+<a class="reference internal" href="Output.html#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_model_output_conf_t</span></code></a>, and <code class="xref py py-func docutils literal notranslate"><span class="pre">diverge.model_to_file_PY()</span></code>),
 some other information like the band structure, momentum meshes, eigenvalues on
 the mesh, eigenvectors on the mesh, etc. are accessible.</p>
 <p>Bandstructures in particular receive some more support in the output library, as
@@ -105,7 +105,7 @@ with an existing <a class="reference internal" href="Model.html#c.diverge_model_
 your model output file through the key
 <a class="reference internal" href="Output.html#c.diverge_model_output_conf_t.kc_ibz_path" title="diverge_model_output_conf_t.kc_ibz_path"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_output_conf_t.kc_ibz_path</span></code></a> (using the
 <a class="reference internal" href="Output.html#c.diverge_model_to_file_finegrained" title="diverge_model_to_file_finegrained"><code class="xref c c-func docutils literal notranslate"><span class="pre">finegrained</span> <span class="pre">inteface</span></code></a> or the
-<a class="reference internal" href="Full%20Python%20Module%20Specification.html#diverge.model_to_file_PY" title="diverge.model_to_file_PY"><code class="xref py py-func docutils literal notranslate"><span class="pre">python</span> <span class="pre">interface</span></code></a>). Then, the <em>model</em> output
+<code class="xref py py-func docutils literal notranslate"><span class="pre">python</span> <span class="pre">interface</span></code>). Then, the <em>model</em> output
 file will have coarse mesh indices corresponding to the IBZ path saved in
 <a class="reference internal" href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_model.kc_ibz_path" title="diverge.output.diverge_model.kc_ibz_path"><code class="xref py py-attr docutils literal notranslate"><span class="pre">kc_ibz_path</span></code></a>. With, say, a
 TUFRG postprocessing saved to <code class="docutils literal notranslate"><span class="pre">post.dvg</span></code>, one could then do</p>
