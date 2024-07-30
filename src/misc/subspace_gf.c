@@ -3,6 +3,8 @@
 
 #ifndef USE_CUDA
 
+#include "init_internal_libs.h"
+
 struct subspace_gfill_multi_t {
     double* E;
     complex128_t* U;
@@ -10,7 +12,7 @@ struct subspace_gfill_multi_t {
     index_t nb;
     index_t* orbs;
     index_t n_orbs;
-}
+};
 
 subspace_gfill_multi_t* subspace_gfill_multi_init( double* E, complex128_t* U,
         index_t nk, const index_t* orbs, index_t n_orbs, index_t nb, index_t b_per_bb ) {
@@ -27,14 +29,17 @@ subspace_gfill_multi_t* subspace_gfill_multi_init( double* E, complex128_t* U,
 }
 
 void subspace_gfill_multi_free( subspace_gfill_multi_t* m ) {
-    free( s->orbs );
-    free( s );
+    free( m->orbs );
+    free( m );
 }
 
 void subspace_gfill_multi_exec( subspace_gfill_multi_t* m, complex128_t* dest, complex128_t Lambda ) {
     const index_t no = m->n_orbs,
                   *orbs = m->orbs,
-                  nk = m->nk;
+                  nk = m->nk,
+                  nb = m->nb;
+    const complex128_t* U = m->U;
+    const double* E = m->E;
 
     for (int sign=0; sign<2; ++sign) {
         complex128_t L = sign ? Lambda : conj(Lambda);
@@ -44,8 +49,8 @@ void subspace_gfill_multi_exec( subspace_gfill_multi_t* m, complex128_t* dest, c
         for (index_t p=0; p<no; ++p) {
             complex128_t tmp = 0.0;
             for (index_t b=0; b<nb; ++b)
-                tmp += U[IDX3(k,b,orbs[o],nb,nb)] * std::conj(U[IDX3(k,b,orbs[p],nb,nb)]) / (L - E[IDX2(k,b,nb)]);
-            buf[IDX4(sign, k, o, p, nkf, no, no)] = tmp;
+                tmp += U[IDX3(k,b,orbs[o],nb,nb)] * conj(U[IDX3(k,b,orbs[p],nb,nb)]) / (L - E[IDX2(k,b,nb)]);
+            dest[IDX4(sign, k, o, p, nk, no, no)] = tmp;
         }
     }
 }
