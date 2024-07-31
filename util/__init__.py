@@ -481,7 +481,7 @@ if not _libs["divERGe"] is None:
         ('gproj', greensfunc_generator_t),
         ('data', c_voidp),
         ('nbytes_data', index_t),
-        ('data_destructor', CFUNCTYPE(UNCHECKED(None), POINTER(c_char))),
+        ('data_destructor', CFUNCTYPE(UNCHECKED(None), c_voidp)),
         ('internals', POINTER(internals_t)),
     ]
 
