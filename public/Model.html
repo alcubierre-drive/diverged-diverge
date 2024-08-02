@@ -554,7 +554,7 @@ constrained FRG (cFRG). The projected loop is given by
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_t.data">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">data</span></span></span><a class="headerlink" href="#c.diverge_model_t.data" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_model.h#L407"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">data</span></span></span><a class="headerlink" href="#c.diverge_model_t.data" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_model.h#L407"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>used to add additional information to the struct, useful to “hack” or
 pass user data to function calls like <a class="reference internal" href="#c.greensfunc_generator_t" title="greensfunc_generator_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">greensfunc_generator_t</span></code></a>.</p>
 </dd></dl>
@@ -568,7 +568,7 @@ data is saved on calls to <a class="reference internal" href="Output.html#c.dive
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_t.data_destructor">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">data_destructor</span></span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><span class="kt"><span class="pre">char</span></span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.diverge_model_t.data_destructor" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_model.h#L417"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">data_destructor</span></span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.diverge_model_t.data_destructor" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_model.h#L417"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>set a nontrivial destructor for the optional data attached to the struct.
 ignored if left untouched (NULL)</p>
 </dd></dl>

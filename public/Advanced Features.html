@@ -11,6 +11,7 @@
     <script src="_static/documentation_options.js?v=48f8e935"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Flow" href="Flow.html" />
@@ -144,6 +145,40 @@ safe to use in a scenario where the target buffer resides in shared memory.</p>
 <span class="p">}</span>
 </pre></div>
 </div>
+</dd></dl>
+
+</section>
+<section id="unique-distances">
+<h2>Unique Distances<a class="headerlink" href="#unique-distances" title="Link to this heading">¶</a></h2>
+<p>Sometimes it may be useful to generate all uniquely defined distances in a
+divERGe model, i.e., in order to set on-site, nearest-neighbor,
+next-nearest-neighbor, etc. interactions. We provide a function to do so in the
+unstable interface, which can be included with <code class="docutils literal notranslate"><span class="pre">#include</span>
+<span class="pre">&lt;misc/unique_distances.h&gt;</span></code>. This header comprises one function with the
+following signatures:</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_unique_distances">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_unique_distances</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">Rmax</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_unique_distances" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/misc/unique_distances.h#L10"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>given a <a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_model_t</span></code></a> with lattice vectors and positions, this
+function calculates all unique distances. Useful if e.g. interactions of
+first, second, etc. nearest neighbors should be initialized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a><span class="p">*</span></span></span>) – model to operate on</p></li>
+<li><p><strong>Rmax</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">int</span></span></span>) – maximum integer distance of lattice vectors. For each
+dimension, the loop walks through
+<span class="math notranslate nohighlight">\(-R_\mathrm{max}..R_\mathrm{max}\)</span> for the calculation
+of all possible distances</p></li>
+<li><p><strong>dim</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">int</span></span></span>) – dimension of the model. The first <code class="docutils literal notranslate"><span class="pre">dim</span></code> lattice vectors are
+considered in the iteration via <code class="docutils literal notranslate"><span class="pre">Rmax</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>allocated vector of unique distances terminated by a quiet NaN (see
+src/misc/qnan.h). Must be free’d manually using <code class="docutils literal notranslate"><span class="pre">free</span></code>.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

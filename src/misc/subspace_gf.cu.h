@@ -1,3 +1,5 @@
+/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #pragma once
 
 #include "subspace_gf.h"

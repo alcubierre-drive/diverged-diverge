@@ -23,3 +23,15 @@ carried out using :c:func:`subspace_gfill_multi_exec`; the documentation
 includes an example of how to use it as a :c:type:`greensfunc_generator_t`.
 
 .. c:autodoc:: misc/subspace_gf.h
+
+Unique Distances
+----------------
+
+Sometimes it may be useful to generate all uniquely defined distances in a
+divERGe model, i.e., in order to set on-site, nearest-neighbor,
+next-nearest-neighbor, etc. interactions. We provide a function to do so in the
+unstable interface, which can be included with ``#include
+<misc/unique_distances.h>``. This header comprises one function with the
+following signature:
+
+.. c:autodoc:: misc/unique_distances.h
