@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "qnan.h"
+#include "../diverge_common.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,6 +29,26 @@ typedef struct diverge_model_t diverge_model_t;
  *           src/misc/qnan.h). Must be free'd manually using ``free``.
  */
 double* diverge_model_unique_distances( diverge_model_t* m, int Rmax, int dim );
+
+/**
+ * return the length of the unique distance array by checking for quiet NaN (see
+ * src/misc/qnan.h). In practice, unique distances can be obtained as follows:
+ *
+ * .. sourcecode:: C
+ *
+ *  diverge_model_t* m = ...;
+ *
+ *  double* dists = diverge_model_unique_distances( m, 3, 2 ); // for a 2D model
+ *  index_t n_dists = diverge_model_unique_distances_length( dists );
+ *
+ *  // do sth with dists here
+ *
+ *  free( dists );
+ */
+static inline index_t diverge_model_unique_distances_length( double* dists ) {
+    index_t n_dists = -1; while (!qnan_isnan(dists[++n_dists])) {}
+    return n_dists;
+}
 
 #ifdef __cplusplus
 }

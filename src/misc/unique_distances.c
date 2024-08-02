@@ -1,9 +1,7 @@
 #include "unique_distances.h"
 
-#include "../diverge_common.h"
 #include "../diverge_model.h"
 #include "init_internal_libs.h"
-#include "qnan.h"
 #define LINALG_NO_LAPACKE
 #define LINALG_EXPORT static inline
 #include "linalg.h"
