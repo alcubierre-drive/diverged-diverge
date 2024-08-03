@@ -57,7 +57,9 @@ parameters are set accordingly.</p></li>
 <span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">||</span> <span class="pre">nk[1]</span> <span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">||</span> <span class="pre">nk[2]</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, include transformation
 to improper gauge in the calculation of
 <span class="math notranslate nohighlight">\(\Omega(\boldsymbol{k})\)</span> and use <code class="docutils literal notranslate"><span class="pre">abs(nk[i])</span></code> as
-number of <span class="math notranslate nohighlight">\(\boldsymbol{k}\)</span> points.</p></li>
+number of <span class="math notranslate nohighlight">\(\boldsymbol{k}\)</span> points. In case the
+improper gauge is used, one can swap the sign convention
+by changing the number of negative dimensions.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -93,7 +95,9 @@ common internals.</p></li>
 <li><p><strong>nk</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – number of k points as array of shape (3,). May be NULL in
 case <code class="docutils literal notranslate"><span class="pre">m</span></code> is given. As for <a class="reference internal" href="#c.diverge_fukui" title="diverge_fukui"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_fukui()</span></code></a>, if any of the
 provided mesh lengths is negative, this function transforms to the
-improper gauge; the model <code class="docutils literal notranslate"><span class="pre">m</span></code> must not be NULL for this to work.</p></li>
+improper gauge; the model <code class="docutils literal notranslate"><span class="pre">m</span></code> must not be NULL for this to work.
+In case the improper gauge is used, one can swap the sign convention by
+changing the number of negative dimensions.</p></li>
 <li><p><strong>which_bands</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – the bands to sum over. Describes the set
 <span class="math notranslate nohighlight">\(\mathcal S\)</span>. Must not be NULL. Array of shape (<code class="docutils literal notranslate"><span class="pre">n_which_bands</span></code>,).</p></li>
 <li><p><strong>n_which_bands</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of bands to sum over. Describes the set

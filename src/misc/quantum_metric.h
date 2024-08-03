@@ -31,6 +31,8 @@ typedef struct diverge_model_t diverge_model_t;
  *      case ``m`` is given. As for :c:func:`diverge_fukui`, if any of the
  *      provided mesh lengths is negative, this function transforms to the
  *      improper gauge; the model ``m`` must not be NULL for this to work.
+ *      In case the improper gauge is used, one can swap the sign convention by
+ *      changing the number of negative dimensions.
  * :param index_t* which_bands: the bands to sum over. Describes the set
  *      :math:`\mathcal S`. Must not be NULL. Array of shape (``n_which_bands``,).
  * :param index_t n_which_bands: number of bands to sum over. Describes the set

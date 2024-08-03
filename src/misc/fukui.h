@@ -28,7 +28,9 @@ typedef struct diverge_model_t diverge_model_t;
  *                     < 0 || nk[1] < 0 || nk[2] < 0``, include transformation
  *                     to improper gauge in the calculation of
  *                     :math:`\Omega(\boldsymbol{k})` and use ``abs(nk[i])`` as
- *                     number of :math:`\boldsymbol{k}` points.
+ *                     number of :math:`\boldsymbol{k}` points. In case the
+ *                     improper gauge is used, one can swap the sign convention
+ *                     by changing the number of negative dimensions.
  *
  * :returns: ``double`` array of shape ``(nk, nb, 3)`` that contains the Berry
  *           curvature along the three crystal axes. Must be freed manually by a

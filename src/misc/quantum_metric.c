@@ -17,6 +17,7 @@ typedef struct {
     double* pos;
     double* kfmesh;
     index_t no;
+    double sgn;
 } qgt_improper_gauge_t;
 
 static double* diverge_qgt_impl_grad( double* lattice_, complex128_t* U,
@@ -75,9 +76,9 @@ static double* diverge_qgt_impl_grad( double* lattice_, complex128_t* U,
                 for (index_t ww=0; ww<n_which_bands; ++ww) {
                     index_t bb=which_bands[ww];
                     P_o1_o2_k += U[IDX3( k, bb, o1, nb, nb )] * conj(U[IDX3( k, bb, o2, nb, nb )]) *
-                        cexp( -I*claV3d_dot(kvec, claV3d_sub(o1vec,o2vec)) );
+                        cexp( ig->sgn*I*claV3d_dot(kvec, claV3d_sub(o1vec,o2vec)) );
                     P_o1_o2_k_dk += U[IDX3( k_dk, bb, o1, nb, nb )] * conj(U[IDX3( k_dk, bb, o2, nb, nb )]) *
-                        cexp( -I*claV3d_dot(dkvec, claV3d_sub(o1vec,o2vec)) );
+                        cexp( ig->sgn*I*claV3d_dot(dkvec, claV3d_sub(o1vec,o2vec)) );
                 }
                 complex128_t dP_o1_o2 = P_o1_o2_k_dk - P_o1_o2_k;
                 f.v[dim] = dP_o1_o2;
@@ -156,14 +157,18 @@ double* diverge_qgt( diverge_model_t* m, complex128_t* U_, index_t nb_,
         non_ortho_grad = 0;
     }
 
+    qgt_improper_gauge_t ig = {0};
+    ig.sgn = 1.0;
+
     int improper_gauge = 0;
     for (int i=0; i<3; ++i) {
         if (nk[i] < 0) {
             improper_gauge = 1;
             nk[i] *= -1;
+            ig.sgn *= -1;
         }
     }
-    qgt_improper_gauge_t ig = {0};
+
     if (!m && improper_gauge) {
         improper_gauge = 0;
         mpi_wrn_printf( "improper gauge requires model\n" );

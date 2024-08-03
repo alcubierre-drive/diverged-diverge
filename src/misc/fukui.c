@@ -56,11 +56,13 @@ double* diverge_fukui( diverge_model_t* m, complex128_t* U_, index_t nb_, index_
 
     if (errors) return NULL;
 
+    double sgn = 1.0;
     int improper_gauge = 0;
     for (int i=0; i<3; ++i) {
         if (nk[i] < 0) {
             improper_gauge = 1;
             nk[i] *= -1;
+            sgn *= -1;
         }
     }
     double* pos = NULL;
@@ -121,7 +123,7 @@ double* diverge_fukui( diverge_model_t* m, complex128_t* U_, index_t nb_, index_
                         if (wraps_add[i] && wraps[i]) \
                             kvec = claV3d_add(kvec, claV3d_map(rlattice[i])); \
                     } \
-                    U_cube[U_cube_idx] *= cexp( -I*claV3d_dot(kvec,ovec) ); \
+                    U_cube[U_cube_idx] *= cexp( sgn*I*claV3d_dot(kvec,ovec) ); \
                 } \
             } \
             cube_idx++;
