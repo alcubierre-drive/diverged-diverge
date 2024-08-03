@@ -38,13 +38,10 @@
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_fukui">
 <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_fukui</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">U</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">nk</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_fukui" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/misc/fukui.h#L13"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Calculate Berry’s curvature using the Fukui-Hatsugai method, normed to the
-Chern number, i.e., the sum of all elements for a certain chern band yields
-the Chern number of that band, not <span class="math notranslate nohighlight">\(2\pi\)</span> times the Chern number. This
-function returns an allocated (calloc) array of shape (nk, nb, 3) that
-contains the Berry curvature along the three crystal axes; not along
-cartesian axes. The return value can be NULL on errors, and must be freed by
-users with a call to free or <a class="reference internal" href="Allocators.html#c.diverge_mem_free" title="diverge_mem_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_mem_free()</span></code></a>.</p>
+<dd><p>Calculate Berry’s curvature <span class="math notranslate nohighlight">\(\Omega(\boldsymbol{k})\)</span> using the
+Fukui-Hatsugai method, normed to the Chern number, i.e., the sum of all
+elements for a certain chern band yields the Chern number of that band, not
+<span class="math notranslate nohighlight">\(2\pi\)</span> times the Chern number.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -56,8 +53,18 @@ function can still operate in case all the other
 parameters are set accordingly.</p></li>
 <li><p><strong>U</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n">complex128_t</span></a><span class="p">*</span></span></span>) – orbital to band matrices as (k,b,o) array. Use if != NULL.</p></li>
 <li><p><strong>nb</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – nuber of bands. Use this if &gt; 0.</p></li>
-<li><p><strong>nk</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – number of k points (3,) array. Use if != NULL.</p></li>
+<li><p><strong>nk</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – number of k points (3,) array. Use if != NULL. If <code class="docutils literal notranslate"><span class="pre">nk[0]</span>
+<span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">||</span> <span class="pre">nk[1]</span> <span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">||</span> <span class="pre">nk[2]</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, include transformation
+to improper gauge in the calculation of
+<span class="math notranslate nohighlight">\(\Omega(\boldsymbol{k})\)</span> and use <code class="docutils literal notranslate"><span class="pre">abs(nk[i])</span></code> as
+number of <span class="math notranslate nohighlight">\(\boldsymbol{k}\)</span> points.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">double</span></code> array of shape <code class="docutils literal notranslate"><span class="pre">(nk,</span> <span class="pre">nb,</span> <span class="pre">3)</span></code> that contains the Berry
+curvature along the three crystal axes. Must be freed manually by a
+call to <code class="docutils literal notranslate"><span class="pre">free</span></code> or <a class="reference internal" href="Allocators.html#c.diverge_mem_free" title="diverge_mem_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_mem_free()</span></code></a>. May be <code class="docutils literal notranslate"><span class="pre">NULL</span></code> on
+errors.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -69,7 +76,7 @@ parameters are set accordingly.</p></li>
 <span class="math notranslate nohighlight">\(g(\boldsymbol k) = \frac{1}{2} \mathrm{Tr} \partial_i P_{\mathcal S}
 \partial_i P_\mathcal{S}\)</span>, where <span class="math notranslate nohighlight">\(P^{o,o'}_{\mathcal S}(\boldsymbol k)
 = \sum_{b\in\mathcal S} U_{o,b}(\boldsymbol k) U_{o',b}^*(\boldsymbol k)\)</span>,
-where <span class="math notranslate nohighlight">\(\mathcal S\)</span> denotes a set of bands to sum over. Our
+and <span class="math notranslate nohighlight">\(\mathcal S\)</span> denotes a set of bands to sum over. Our
 implementation only takes finite differences along each of the lattice
 directions, but does <em>not</em> divide by the corresponding lengths. This must be
 taken into account when interpreting <span class="math notranslate nohighlight">\(g(\boldsymbol k)\)</span>.</p>
@@ -84,7 +91,9 @@ common internals.</p></li>
 <li><p><strong>nb</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – total number of bands in the system. May be -1 in case
 <code class="docutils literal notranslate"><span class="pre">m</span></code> is given.</p></li>
 <li><p><strong>nk</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – number of k points as array of shape (3,). May be NULL in
-case <code class="docutils literal notranslate"><span class="pre">m</span></code> is given.</p></li>
+case <code class="docutils literal notranslate"><span class="pre">m</span></code> is given. As for <a class="reference internal" href="#c.diverge_fukui" title="diverge_fukui"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_fukui()</span></code></a>, if any of the
+provided mesh lengths is negative, this function transforms to the
+improper gauge; the model <code class="docutils literal notranslate"><span class="pre">m</span></code> must not be NULL for this to work.</p></li>
 <li><p><strong>which_bands</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – the bands to sum over. Describes the set
 <span class="math notranslate nohighlight">\(\mathcal S\)</span>. Must not be NULL. Array of shape (<code class="docutils literal notranslate"><span class="pre">n_which_bands</span></code>,).</p></li>
 <li><p><strong>n_which_bands</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of bands to sum over. Describes the set

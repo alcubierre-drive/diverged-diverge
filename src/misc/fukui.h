@@ -11,13 +11,10 @@ extern "C" {
 typedef struct diverge_model_t diverge_model_t;
 
 /**
- * Calculate Berry's curvature using the Fukui-Hatsugai method, normed to the
- * Chern number, i.e., the sum of all elements for a certain chern band yields
- * the Chern number of that band, not :math:`2\pi` times the Chern number. This
- * function returns an allocated (calloc) array of shape (nk, nb, 3) that
- * contains the Berry curvature along the three crystal axes; not along
- * cartesian axes. The return value can be NULL on errors, and must be freed by
- * users with a call to free or :c:func:`diverge_mem_free`.
+ * Calculate Berry's curvature :math:`\Omega(\boldsymbol{k})` using the
+ * Fukui-Hatsugai method, normed to the Chern number, i.e., the sum of all
+ * elements for a certain chern band yields the Chern number of that band, not
+ * :math:`2\pi` times the Chern number.
  *
  * :param diverge_model_t m: model instance. obtain all parameters from there by
  *                           default. internals must be set
@@ -27,7 +24,16 @@ typedef struct diverge_model_t diverge_model_t;
  *                           parameters are set accordingly.
  * :param complex128_t* U: orbital to band matrices as (k,b,o) array. Use if != NULL.
  * :param index_t nb: nuber of bands. Use this if > 0.
- * :param index_t* nk: number of k points (3,) array. Use if != NULL.
+ * :param index_t* nk: number of k points (3,) array. Use if != NULL. If ``nk[0]
+ *                     < 0 || nk[1] < 0 || nk[2] < 0``, include transformation
+ *                     to improper gauge in the calculation of
+ *                     :math:`\Omega(\boldsymbol{k})` and use ``abs(nk[i])`` as
+ *                     number of :math:`\boldsymbol{k}` points.
+ *
+ * :returns: ``double`` array of shape ``(nk, nb, 3)`` that contains the Berry
+ *           curvature along the three crystal axes. Must be freed manually by a
+ *           call to ``free`` or :c:func:`diverge_mem_free`. May be ``NULL`` on
+ *           errors.
  */
 double* diverge_fukui( diverge_model_t* m, complex128_t* U, index_t nb, index_t* nk );
 

@@ -15,7 +15,7 @@ typedef struct diverge_model_t diverge_model_t;
  * :math:`g(\boldsymbol k) = \frac{1}{2} \mathrm{Tr} \partial_i P_{\mathcal S}
  * \partial_i P_\mathcal{S}`, where :math:`P^{o,o'}_{\mathcal S}(\boldsymbol k)
  * = \sum_{b\in\mathcal S} U_{o,b}(\boldsymbol k) U_{o',b}^*(\boldsymbol k)`,
- * where :math:`\mathcal S` denotes a set of bands to sum over. Our
+ * and :math:`\mathcal S` denotes a set of bands to sum over. Our
  * implementation only takes finite differences along each of the lattice
  * directions, but does *not* divide by the corresponding lengths. This must be
  * taken into account when interpreting :math:`g(\boldsymbol k)`.
@@ -28,7 +28,9 @@ typedef struct diverge_model_t diverge_model_t;
  * :param index_t nb: total number of bands in the system. May be -1 in case
  *      ``m`` is given.
  * :param index_t* nk: number of k points as array of shape (3,). May be NULL in
- *      case ``m`` is given.
+ *      case ``m`` is given. As for :c:func:`diverge_fukui`, if any of the
+ *      provided mesh lengths is negative, this function transforms to the
+ *      improper gauge; the model ``m`` must not be NULL for this to work.
  * :param index_t* which_bands: the bands to sum over. Describes the set
  *      :math:`\mathcal S`. Must not be NULL. Array of shape (``n_which_bands``,).
  * :param index_t n_which_bands: number of bands to sum over. Describes the set
