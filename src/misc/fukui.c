@@ -56,7 +56,7 @@ double* diverge_fukui( diverge_model_t* m, complex128_t* U_, index_t nb_, index_
 
     if (errors) return NULL;
 
-    double sgn = 1.0;
+    double sgn = -1.0;
     int improper_gauge = 0;
     for (int i=0; i<3; ++i) {
         if (nk[i] < 0) {
