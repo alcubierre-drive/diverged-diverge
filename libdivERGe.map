@@ -131,6 +131,7 @@ DIVERGE_0.7 {
         diverge_symmetrize_2pt_coarse;
         diverge_symmetrize_2pt_fine;
         diverge_symmetrize_greens;
+        diverge_symmetrize_hoppings;
         diverge_symmetrize_mom_coarse;
         diverge_symmetrize_mom_fine;
         merge_rs_orb;

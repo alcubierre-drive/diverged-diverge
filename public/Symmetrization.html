@@ -127,6 +127,42 @@ sub dimension are symmetrized</p></li>
 </dl>
 </dd></dl>
 
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_symmetrize_hoppings">
+<a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_symmetrize_hoppings</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">hop</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">n_hop</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">hoplim</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_symmetrize_hoppings" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_symmetrize.h#L74"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>symmetrizes hopping parameters of a divERGe model. Operates on the momentum
+mesh associated to the <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a><span class="p">*</span></span></span>) – the divERGe model which needs to have common
+internals set (using
+<a class="reference internal" href="Internals.html#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a>) and
+nonzero number of symmetries/allocated orbital
+symmetries (<a class="reference internal" href="Model.html#c.diverge_model_t.n_sym" title="diverge_model_t.n_sym"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.n_sym</span></code></a>,
+<a class="reference internal" href="Model.html#c.diverge_model_t.orb_symmetries" title="diverge_model_t.orb_symmetries"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.orb_symmetries</span></code></a>).</p></li>
+<li><p><strong>hop</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n">rs_hopping_t</span></a><span class="p">*</span></span></span>) – hopping parameters to symmetrize. Reallocates (via
+<code class="docutils literal notranslate"><span class="pre">realloc</span></code>) and returns the new memory. If <code class="docutils literal notranslate"><span class="pre">hop</span>
+<span class="pre">==</span> <span class="pre">NULL</span></code>, the function operates on the internal
+hopping parameters, ignores <code class="docutils literal notranslate"><span class="pre">n_hop</span></code>, and swaps
+out the old pointer to the realloced one.</p></li>
+<li><p><strong>n_hop</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – pointer to the length of the <code class="docutils literal notranslate"><span class="pre">hop</span></code> array. If
+<code class="docutils literal notranslate"><span class="pre">n_hop</span> <span class="pre">==</span> <span class="pre">NULL</span></code> operate on the model’s hopping
+parameters and ignore <code class="docutils literal notranslate"><span class="pre">n_hop</span></code> and <code class="docutils literal notranslate"><span class="pre">hop</span></code>.</p></li>
+<li><p><strong>hoplim</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – absolute value up to which include hopping parameters
+in the symmetrized hoppings</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">rs_hopping_t</span></code></a> array that is the realloced version of the
+input, On exit and if <code class="docutils literal notranslate"><span class="pre">!=</span> <span class="pre">NULL</span></code>,
+<code class="docutils literal notranslate"><span class="pre">*n_hop</span></code> is set to the new number of
+hopping parameters. Otherwise, all relevant
+information is updated in the <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 

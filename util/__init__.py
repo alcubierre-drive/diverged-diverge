@@ -1044,6 +1044,10 @@ if not _libs["divERGe"] is None:
     symmetrize_mom_fine.argtypes = [POINTER(model_t), POINTER(c_double), index_t, POINTER(c_double)]
     symmetrize_mom_fine.restype = c_double
 
+    symmetrize_hoppings = _libs["divERGe"].get("diverge_symmetrize_hoppings", "cdecl")
+    symmetrize_hoppings.argtypes = [POINTER(model_t), c_voidp, c_voidp, c_double]
+    symmetrize_hoppings.restype = c_voidp
+
     # Additional symmetry related stuff
     merge_rs_orb = _libs["divERGe"].get("merge_rs_orb", "cdecl")
     merge_rs_orb.argtypes = [POINTER(model_t)]
