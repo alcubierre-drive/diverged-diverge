@@ -321,13 +321,22 @@ rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
 
     // find the new number of hoppings
     *n_hop = 0;
-    for (index_t i=0; i<nk_tot * POW2(n_orb*n_spin); ++i) {
-        fftw_cbuf[i] *= 1./(double)nk_tot;
-        if (cabs(fftw_cbuf[i]) > hoplim) (*n_hop)++;
+    for (index_t Rx=-nr[0]/2; Rx<=nr[0]/2; Rx++)
+    for (index_t Ry=-nr[1]/2; Ry<=nr[1]/2; Ry++)
+    for (index_t Rz=-nr[2]/2; Rz<=nr[2]/2; Rz++)
+    for (index_t o1=0; o1<n_orb; ++o1)
+    for (index_t o2=0; o2<n_orb; ++o2)
+    for (index_t s1=0; s1<n_spin; ++s1)
+    for (index_t s2=0; s2<n_spin; ++s2) {
+        index_t Rx_ = (Rx + nr[0]) % nr[0],
+                Ry_ = (Ry + nr[1]) % nr[1],
+                Rz_ = (Rz + nr[2]) % nr[2];
+        complex128_t elem = fftw_cbuf[IDX7(Rx_,Ry_,Rz_,s1,o1,s2,o2, nr[1],nr[2],n_spin,n_orb,n_spin,n_orb)];
+        if (cabs(elem) > hoplim) (*n_hop)++;
     }
-    *n_hop += 32; // some buffer elements for potential double counting
 
-    hop = realloc(hop, sizeof(rs_hopping_t) * (*n_hop));
+    const index_t n_hop_buffer_increase = 128;
+    hop = realloc(hop, sizeof(rs_hopping_t) * (*n_hop + n_hop_buffer_increase));
     if (swap_model_hoppings) model->hop = hop;
     *n_hop = 0;
     for (index_t Rx=-nr[0]/2; Rx<=nr[0]/2; Rx++)
