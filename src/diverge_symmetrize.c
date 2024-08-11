@@ -316,6 +316,7 @@ rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
     fftw_execute( p_forward );
     diverge_symmetrize_2pt_fine( model, fftw_cbuf, NULL );
     fftw_execute( p_backward );
+    for (index_t i=0; i<nk_tot*POW2(n_orb*n_spin); ++i) fftw_cbuf[i] *= 1./(double)nk_tot;
     fftw_destroy_plan( p_forward );
     fftw_destroy_plan( p_backward );
 
