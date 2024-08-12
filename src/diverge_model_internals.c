@@ -254,6 +254,10 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
         error++; \
         mpi_err_printf( __VA_ARGS__ ); \
     }
+#define verbose_wassert( expr, ... ) \
+    if (!(expr)) { \
+        mpi_wrn_printf( __VA_ARGS__ ); \
+    }
 int diverge_model_validate( diverge_model_t* model ) {
     int error = 0;
 
@@ -325,15 +329,15 @@ int diverge_model_validate( diverge_model_t* model ) {
     index_t num_zero = 0;
 
     num_zero = find_zero_array_elements( model->hop, sizeof(rs_hopping_t), model->n_hop );
-    verbose_assert( num_zero == 0, "found %li hopping elements that are all zero bytes\n", num_zero );
+    verbose_wassert( num_zero == 0, "found %li hopping elements that are all zero bytes\n", num_zero );
     num_zero = find_zero_array_elements( model->vert, sizeof(rs_vertex_t), model->n_vert );
-    verbose_assert( num_zero == 0, "found %li vertex elements that are all zero bytes\n", num_zero );
+    verbose_wassert( num_zero == 0, "found %li vertex elements that are all zero bytes\n", num_zero );
 
     num_zero = find_zero_array_elements( model->rs_symmetries, sizeof(double)*9, model->n_sym );
-    verbose_assert( num_zero == 0, "found %li rs symmetry elements that are all zero bytes\n", num_zero );
+    verbose_wassert( num_zero == 0, "found %li rs symmetry elements that are all zero bytes\n", num_zero );
     num_zero = find_zero_array_elements( model->orb_symmetries, sizeof(complex128_t)
             *POW2(model->n_orb*model->n_spin), model->n_sym );
-    verbose_assert( num_zero == 0, "found %li orbital symmetry elements that are all zero bytes\n", num_zero );
+    verbose_wassert( num_zero == 0, "found %li orbital symmetry elements that are all zero bytes\n", num_zero );
 
     num_zero = find_zero_array_elements( model->positions, sizeof(double)*3, model->n_orb );
     if (num_zero == model->n_orb && model->n_orb > 1)
