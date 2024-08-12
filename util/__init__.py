@@ -555,29 +555,38 @@ if not _libs["divERGe"] is None:
     kmesh_to_bands.argtypes = [POINTER(model_t), POINTER(POINTER(index_t)), POINTER(index_t)]
     kmesh_to_bands.restype = POINTER(index_t)
 
-    def kmesh_to_bands_PY( model ):
+    def kmesh_to_bands_PY( model, crs=False ):
         """
-        returns a numpy array of :c:struct:`index_t` with the number of momentum points
-        per segment of the ipz_path stored in the diverge.model, the indices of the points
-        associated to the fine mesh and the number of total points.
-        Wraps :c:func:`kmesh_to_bands` s.t. no messy pointer stuff
-        must be done manually from within python.
+        get the ipz_path indices of a :c:struct:`diverge_model_t` in a pythonic
+        way, wrapping both :c:func:`diverge_kmesh_to_bands` and
+        :c:func:`diverge_kmesh_to_bands_crs`.
 
-        :param model: diverge model file
+        :param model: diverge model structure
+        :param crs: use the coarse mesh?
+
+        :return: a tuple ``(n_per_segment, pts, n_pts)``, where
+                 ``n_per_segment`` is the number of indices per ibz_path
+                 segment, ``pts`` is the array of all indices, and ``n_pts`` the
+                 length of ``pts``.
+        :rtype: (numpy array of type :c:type:`index_t`, numpy array of type
+                :c:type:`index_t`, integer)
         """
         pts_ptr, n_pts_ptr = POINTER(index_t)(), index_t()
-        n_per_segment_ptr  = POINTER(index_t)
-        n_per_segment_ptr  = kmesh_to_bands( model, byref(pts_ptr), byref(n_pts_ptr))
-        n_per_segment      = view_array( n_per_segment_ptr, dtype=index_t, shape=(model.contents.n_ibz_path,) )
-        pts                = view_array( pts_ptr, dtype=index_t, shape=(n_pts_ptr.value,) )
+        n_per_segment_ptr = POINTER(index_t)
+        if crs:
+            n_per_segment_ptr = kmesh_to_bands_crs( model, byref(pts_ptr), byref(n_pts_ptr))
+        else:
+            n_per_segment_ptr = kmesh_to_bands( model, byref(pts_ptr), byref(n_pts_ptr))
+        n_per_segment = view_array( n_per_segment_ptr, dtype=index_t, shape=(model.contents.n_ibz_path,) )
+        pts = view_array( pts_ptr, dtype=index_t, shape=(n_pts_ptr.value,) )
 
-        n_per_segment      = np.copy( n_per_segment )
-        pts                = np.copy( pts )
+        n_per_segment = np.copy( n_per_segment )
+        pts = np.copy( pts )
         mem_free( n_per_segment_ptr )
         mem_free( pts_ptr )
 
         return n_per_segment, pts, n_pts_ptr.value
-        
+
     kmesh_to_bands_crs = _libs["divERGe"].get("diverge_kmesh_to_bands_crs", "cdecl")
     kmesh_to_bands_crs.argtypes = [POINTER(model_t), POINTER(POINTER(index_t)), POINTER(index_t)]
     kmesh_to_bands_crs.restype = POINTER(index_t)
