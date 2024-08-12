@@ -472,15 +472,7 @@ double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* 
     complex128_t* Utmp = (complex128_t*)workspace;
     double* Etmp = (double*)( Utmp + nk*nb*nb );
 
-    // add S to UEU* (in Utmp)
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t k=0; k<nk; ++k) {
-        Map<MatXcd> UU(U + k*nb*nb, nb, nb);
-        Map<VecXd> EE(E + k*nb, nb);
-        Map<MatXcd> SS(S + k*nb*nb, nb, nb);
-
-        Map<MatXcd>(Utmp + k*nb*nb, nb, nb) = UU * EE.asDiagonal() * UU.adjoint() + SS;
-    }
+    // add S to UEU* (in Utmp), i.e., H_eff = UEU* + S
     memcpy( Utmp, S, sizeof(complex128_t)*nk*nb*nb );
     batched_zgemd_r( Utmp, U, E, 1.0, 1.0, nb, nk );
     // do the eigensolution
@@ -522,15 +514,7 @@ double diverge_flow_step_get_filling_Hself( diverge_flow_step_t* s, void* worksp
     complex128_t* Utmp = (complex128_t*)workspace;
     double* Etmp = (double*)( Utmp + nk*nb*nb );
 
-    // add S to UEU* (in Utmp)
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t k=0; k<nk; ++k) {
-        Map<MatXcd> UU(U + k*nb*nb, nb, nb);
-        Map<VecXd> EE(E + k*nb, nb);
-        Map<MatXcd> SS(S + k*nb*nb, nb, nb);
-
-        Map<MatXcd>(Utmp + k*nb*nb, nb, nb) = UU * EE.asDiagonal() * UU.adjoint() + SS;
-    }
+    // add S to UEU* (in Utmp), i.e., H_eff = UEU* + S
     memcpy( Utmp, S, sizeof(complex128_t)*nk*nb*nb );
     batched_zgemd_r( Utmp, U, E, 1.0, 1.0, nb, nk );
     // do the eigensolution
