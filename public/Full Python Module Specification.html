@@ -188,6 +188,32 @@ symmetry path for band structures
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="diverge.kmesh_to_bands_PY">
+<span class="sig-prename descclassname"><span class="pre">diverge.</span></span><span class="sig-name descname"><span class="pre">kmesh_to_bands_PY</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.kmesh_to_bands_PY" title="Link to this definition">¶</a></dt>
+<dd><p>get the ipz_path indices of a <a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_model_t</span></code></a> in a pythonic
+way, wrapping both <a class="reference internal" href="Meshing.html#c.diverge_kmesh_to_bands" title="diverge_kmesh_to_bands"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_kmesh_to_bands()</span></code></a> and
+<a class="reference internal" href="Meshing.html#c.diverge_kmesh_to_bands_crs" title="diverge_kmesh_to_bands_crs"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_kmesh_to_bands_crs()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – diverge model structure</p></li>
+<li><p><strong>crs</strong> – use the coarse mesh?</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a tuple <code class="docutils literal notranslate"><span class="pre">(n_per_segment,</span> <span class="pre">pts,</span> <span class="pre">n_pts)</span></code>, where
+<code class="docutils literal notranslate"><span class="pre">n_per_segment</span></code> is the number of indices per ibz_path
+segment, <code class="docutils literal notranslate"><span class="pre">pts</span></code> is the array of all indices, and <code class="docutils literal notranslate"><span class="pre">n_pts</span></code> the
+length of <code class="docutils literal notranslate"><span class="pre">pts</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(numpy array of type <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">index_t</span></code></a>, numpy array of type
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">index_t</span></code></a>, integer)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="diverge.model_internals_any_PY">
 <span class="sig-prename descclassname"><span class="pre">diverge.</span></span><span class="sig-name descname"><span class="pre">model_internals_any_PY</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">np_ibz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.model_internals_any_PY" title="Link to this definition">¶</a></dt>
 <dd><p>wraps <a class="reference internal" href="Internals.html#c.diverge_model_internals_any" title="diverge_model_internals_any"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_any()</span></code></a> with varargs substituted by
