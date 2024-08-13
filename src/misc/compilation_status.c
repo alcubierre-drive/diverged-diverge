@@ -4,7 +4,6 @@
 #include "compilation_status.h"
 #include "version.h"
 #include "number_repr_checks.h"
-#include "../diverge_internals_struct.h" // strdup_div
 
 #include <string.h>
 
