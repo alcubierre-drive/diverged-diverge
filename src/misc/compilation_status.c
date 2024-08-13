@@ -4,15 +4,16 @@
 #include "compilation_status.h"
 #include "version.h"
 #include "number_repr_checks.h"
+#include "../diverge_internals_struct.h" // strdup_div
 
-#include <cstring>
-#include <string>
-#include <vector>
+#include <string.h>
 
-using std::string;
-using std::vector;
+#define MSG_STR_SZ 1024
+static inline char* strxcat( char* dest, const char* src ) {
+    return strncat( dest, src, MSG_STR_SZ-1 );
+}
 
-static string message( string msg, bool success ) {
+static void message( const char* msg, bool success, char* result ) {
     int use_color = mpi_log_get_colors();
     char _mark_avail[] = "✓";
     char _mark_not_avail[] = "✗";
@@ -23,16 +24,13 @@ static string message( string msg, bool success ) {
     _color_bright_green[0] = _escape;
     _color_bright_red[0] = _escape;
     _color_reset[0] = _escape;
-    string result = "";
-    if (use_color) result += success ? _color_bright_green : _color_bright_red;
-    result += msg;
-    result += " ";
-    result += success ? _mark_avail : _mark_not_avail;
-    if (use_color) result += _color_reset;
-    result += " ";
-    return result;
+    if (use_color) strxcat( result, success ? _color_bright_green : _color_bright_red );
+    strxcat( result, msg );
+    strxcat( result, " " );
+    strxcat( result, success ? _mark_avail : _mark_not_avail );
+    if (use_color) strxcat( result, _color_reset );
+    strxcat( result, " " );
 }
-
 
 int diverge_compilation_status_mpi( void ) {
     #ifdef USE_MPI
@@ -76,15 +74,14 @@ void diverge_compilation_status( void ) {
 
     char version_string[256] = {0};
     char cuda_string[256] = {0};
-    vector<string> compilation_status = {
-        message( version_string, diverge_compilation_status_version(version_string) ),
-        message( "MPI", diverge_compilation_status_mpi() ),
-        message( cuda_string, diverge_compilation_status_cuda(cuda_string) ),
-        message( "numbers", diverge_compilation_status_numbers() ),
-    };
+    char compilation_status[4][MSG_STR_SZ] = {0};
+    message( version_string, diverge_compilation_status_version(version_string), compilation_status[0] );
+    message( "MPI", diverge_compilation_status_mpi(), compilation_status[1] );
+    message( cuda_string, diverge_compilation_status_cuda(cuda_string), compilation_status[2] );
+    message( "numbers", diverge_compilation_status_numbers(), compilation_status[3] );
     mpi_ver_printf("");
-    for (string c: compilation_status)
-        mpi_eprintf("   %s", c.c_str());
+    for (unsigned int i=0; i<sizeof(compilation_status)/sizeof(compilation_status[0]); ++i)
+        mpi_eprintf("   %s", compilation_status[i]);
     mpi_eprintf("\n");
 
     if (!diverge_compilation_status_numbers()) {

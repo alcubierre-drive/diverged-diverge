@@ -334,7 +334,7 @@ TEST_CASE("C decomp matrix " #dtype_long "@" #dim, "[cla][decomp_M" #dim #dtype_
     CHECK( (c##dim##dXeigen(c_eigvalsh_E) - S.E).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_eigh_H = C_RANDOM_DATA; \
-    test_claM##dim##dtype_short##_t c_eigh_U = {0}, c_eigh_UE = {0}; \
+    test_claM##dim##dtype_short##_t c_eigh_U, c_eigh_UE; \
     test_claV##dim##d_t c_eigh_E = test_claM##dim##dtype_short##_eigh( c_eigh_H, &c_eigh_U ); \
     CHECK( (c##dim##dXeigen(c_eigh_E) - S.E).norm() < CLA_ZERO ); \
     c_eigh_UE = c_eigh_U; \
@@ -346,7 +346,7 @@ TEST_CASE("C decomp matrix " #dtype_long "@" #dim, "[cla][decomp_M" #dim #dtype_
             c_eigh_H ) ) < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_svd_A = C_RANDOM_DATA2; \
-    test_claM##dim##dtype_short##_t c_svd_U = {0}, c_svd_V = {0}; \
+    test_claM##dim##dtype_short##_t c_svd_U, c_svd_V; \
     test_claV##dim##d_t c_svd_E = test_claM##dim##dtype_short##_svd( c_svd_A, &c_svd_U, &c_svd_V ); \
     Vec##dim##d singularValues = svd_##dim##dtype_short( RANDOM_DATA2 ); \
     CHECK( (c##dim##dXeigen(c_svd_E) - singularValues).norm() < CLA_ZERO ); \
