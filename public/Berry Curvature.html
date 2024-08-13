@@ -72,6 +72,42 @@ errors.</p>
 </dd></dl>
 
 <dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_fukui_matrix">
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_fukui_matrix</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">U</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">nk</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_fukui_matrix" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/misc/fukui.h#L42"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Calculate the non-abelian Berry curvature matrix
+<span class="math notranslate nohighlight">\(\Omega_{\mu\nu}(\boldsymbol{k})\)</span> using Fukui’s method. As for
+<a class="reference internal" href="#c.diverge_fukui" title="diverge_fukui"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_fukui()</span></code></a>, we norm it to the Chern number. The input parameters
+also follow this function (<a class="reference internal" href="#c.diverge_fukui" title="diverge_fukui"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_fukui()</span></code></a>):</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a></span></span>) – model instance. obtain all parameters from there by
+default. internals must be set
+(<a class="reference internal" href="Internals.html#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a>) in order
+to have U initialized. if NULL is passed, the
+function can still operate in case all the other
+parameters are set accordingly.</p></li>
+<li><p><strong>U</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n">complex128_t</span></a><span class="p">*</span></span></span>) – orbital to band matrices as (k,b,o) array. Use if != NULL.</p></li>
+<li><p><strong>nb</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – nuber of bands. Use this if &gt; 0.</p></li>
+<li><p><strong>nk</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – number of k points (3,) array. Use if != NULL. If <code class="docutils literal notranslate"><span class="pre">nk[0]</span>
+<span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">||</span> <span class="pre">nk[1]</span> <span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">||</span> <span class="pre">nk[2]</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, include transformation
+to improper gauge in the calculation of
+<span class="math notranslate nohighlight">\(\Omega(\boldsymbol{k})\)</span> and use <code class="docutils literal notranslate"><span class="pre">abs(nk[i])</span></code> as
+number of <span class="math notranslate nohighlight">\(\boldsymbol{k}\)</span> points. In case the
+improper gauge is used, one can swap the sign convention
+by changing the number of negative dimensions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">complex128_t</span></code></a> array of shape <code class="docutils literal notranslate"><span class="pre">(nk,</span> <span class="pre">nb,</span> <span class="pre">nb,</span> <span class="pre">3)</span></code> that
+contains the non-abelian Berry curvature along the three crystal
+axes. Must be freed manually by a call to <code class="docutils literal notranslate"><span class="pre">free</span></code> or
+<a class="reference internal" href="Allocators.html#c.diverge_mem_free" title="diverge_mem_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_mem_free()</span></code></a>. May be <code class="docutils literal notranslate"><span class="pre">NULL</span></code> on errors.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_qgt">
 <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_qgt</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">U</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">nk</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">which_bands</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_which_bands</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">non_ortho_grad</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_qgt" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/misc/quantum_metric.h#L13"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Calculate the Fubini-Study metric <span class="math notranslate nohighlight">\(g(\boldsymbol k)\)</span>. It is defined as
