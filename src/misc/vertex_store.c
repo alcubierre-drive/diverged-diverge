@@ -10,14 +10,16 @@ tu_highsym_vertex_t* tu_highsym_vertex_store( diverge_flow_step_t* step,
 
     if (!vert) {
         vert = calloc(1, sizeof(tu_highsym_vertex_t));
-        vert->stepsz = nqpts * (POW2(vP.n_orbff) + POW2(vC.n_orbff) + POW2(vD.n_orbff));
+        vert->stepsz = nqpts * (POW2(vP.n_orbff)*POW4(vP.n_spin) +
+                                POW2(vC.n_orbff)*POW4(vC.n_spin) +
+                                POW2(vD.n_orbff)*POW4(vD.n_spin));
         vert->memory_cap = vert->stepsz;
         vert->memory = calloc(vert->memory_cap, sizeof(complex128_t));
 
         vert->nqpts = nqpts;
-        vert->n_orbff_P = vP.n_orbff;
-        vert->n_orbff_C = vC.n_orbff;
-        vert->n_orbff_D = vD.n_orbff;
+        vert->n_orbff_P = vP.n_orbff * POW2(vP.n_spin);
+        vert->n_orbff_C = vC.n_orbff * POW2(vC.n_spin);
+        vert->n_orbff_D = vD.n_orbff * POW2(vD.n_spin);
     }
 
     if (vert->memory_cap < (++vert->nsteps)*vert->stepsz)
@@ -26,7 +28,7 @@ tu_highsym_vertex_t* tu_highsym_vertex_store( diverge_flow_step_t* step,
     complex128_t* vertices = vert->memory + vert->memory_idx;
     for (int chans=0; chans<3; ++chans)
     for (index_t i=0; i<nqpts; ++i) {
-        index_t sz = POW2(vs[chans].n_orbff);
+        index_t sz = POW2(vs[chans].n_orbff) * POW4(vs[chans].n_spin);
         memcpy( vertices, vs[chans].ary + qpts[i]*sz, sizeof(complex128_t)*sz );
         vertices += sz;
     }

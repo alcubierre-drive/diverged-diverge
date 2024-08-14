@@ -13,8 +13,7 @@ typedef struct tu_highsym_vertex_t tu_highsym_vertex_t;
  * .. note::
  *      this functionality is restricted to TUFRG and in its current
  *      implementation only works when all channels are included in the
- *      simulation. Furthermore, only :math:`SU(2)` symmetric vertices are
- *      treated correctly.
+ *      simulation.
  */
 struct tu_highsym_vertex_t {
     /** number of steps that have a saved vertex */
@@ -24,7 +23,10 @@ struct tu_highsym_vertex_t {
 
     /** number of momentum points to save the vertices on */
     index_t nqpts;
-    /** number of orbitals/formfactors (i.e. the linear dimension) in each channel */
+    /**
+     * number of orbitals/formfactors *and spins* (i.e. the linear dimension,
+     * this is strictly speaking *not* ``n_orbff``) in each channel
+     */
     index_t n_orbff_P, n_orbff_C, n_orbff_D;
 
     /**
