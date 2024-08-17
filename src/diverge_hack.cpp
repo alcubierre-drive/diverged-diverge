@@ -13,13 +13,6 @@
 #include "tu/propagator_cpu_mpi.h"
 #include "tu/propagator_cpu_mpi_fft.h"
 
-#include <string>
-#include <set>
-
-using std::set;
-using std::string;
-using std::stringstream;
-
 static int npatch_gpus[128];
 static int npatch_nblocks[3];
 static int npatch_gpu_weights[128];
@@ -34,21 +27,23 @@ extern double autofine_gamma;
 static int parse_vector_int( int* vec, int len, const char* str );
 static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf);
 
-static set<string> hacking_keys;
+static char hacking_keys[48][48] = {0};
+static int hacking_keys_setup = 0;
 
 #define CHECKKEY( ckey ) \
-    hacking_keys.insert( ckey ); \
-    if (key == ckey) key_set = true; \
-    if (key == ckey)
+    if (hacking_keys_setup >= 0) \
+        strncpy( hacking_keys[hacking_keys_setup++], ckey, sizeof(hacking_keys[0])-1 ); \
+    if (!strcmp(key,ckey)) key_set = true; \
+    if (!strcmp(key,ckey))
 
 void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val ) {
 
     #define INTERNALS (m->internals)
     #define TU_INTERNALS ((tu_data_t*)m->internals->tu_data)
 
-    string key;
-    if (key_) key = key_;
-    else key = "";
+    char key[48] = {0};
+    if (key_)
+        strncpy(key, key_, sizeof(key)-1);
     bool key_set = false;
 
     CHECKKEY("tu_cpu_offload") {
@@ -196,35 +191,36 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
             mpi_wrn_printf("hacking: %s not a valid key\n", key_);
         }
     }
+
+    if (hacking_keys_setup >= 0) hacking_keys_setup *= -1;
 }
 
 void diverge_model_print_hacks( void ) {
     diverge_model_hack( NULL, NULL, NULL );
     mpi_scc_printf( "available hacking keys:\n" );
-    for (string s: hacking_keys)
-        mpi_scc_printf( "'%s'\n", s.c_str() );
+    for (int i=0; i<-hacking_keys_setup; ++i)
+        mpi_scc_printf( "'%s'\n", hacking_keys[i] );
 }
 
-static int parse_vector_int( int* vec, int len, const char* str_ ) {
-    string input(str_);
-    stringstream input_stream(input);
-
-    string parsed;
-    vector<string> components;
-    while (std::getline( input_stream, parsed, ',' ))
-        components.push_back( parsed );
-
-    int parsed_len = components.size();
-    if (parsed_len > len) {
-        components.resize(len);
-        parsed_len = len;
+static int parse_vector_int( int* out_i, int n_out, const char* s ) {
+    const char* separator = ",;| ";
+    char* buf = (char*)malloc(strlen(s)+1);
+    int n_found = 0;
+    for (const char* p = s; *p; ) {
+        if (n_found >= n_out)
+            goto buffree;
+        p += strspn( p, separator );
+        const char* prev = p;
+        p += strcspn( p, separator );
+        int width = p - prev;
+        if (width) {
+            memcpy( buf, prev, width ), buf[width] = 0;
+            out_i[n_found++] = atoi(buf);
+        }
     }
-
-    for (int i=0; i<parsed_len; ++i)
-        vec[i] = atoi(components[i].c_str());
-    for (int j=parsed_len; j<len; ++j)
-        vec[j] = 0;
-    return parsed_len;
+buffree:
+    free(buf);
+    return n_found;
 }
 
 static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf) {
