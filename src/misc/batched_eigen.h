@@ -20,6 +20,10 @@ void batched_eigen_r( int* devices, int ndevices, complex128_t* H, double* E, in
 void batched_eigen_set_nchunks( int nchunks );
 int batched_eigen_get_nchunks( void );
 
+// we need this (annoying) function because some LAPACKE implementations won't
+// accept running with the implicitly set number of OMP threads
+void batched_eigen_set_nthreads( int nthr );
+
 void batched_eigen_shut_up( int silence );
 
 #ifdef __cplusplus
