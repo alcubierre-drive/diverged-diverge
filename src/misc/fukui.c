@@ -12,6 +12,10 @@
 #include "linalg.h"
 LINALG_IMPLEMENT
 
+#ifdef CLOG_MISSING
+complex128_t clog(complex128_t z);
+#endif
+
 double* diverge_fukui( diverge_model_t* m, complex128_t* U_, index_t nb_, index_t* nk_ ) {
 
     index_t nk[3] = {0};
