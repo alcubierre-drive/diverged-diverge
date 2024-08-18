@@ -27,7 +27,8 @@ LDSOFLAGS = $(LDFLAGS)
 FLAGS = 
 INCLUDES = 
 DEFINES = 
-LIBS = -llapacke -lcblas -lfftw3 -lfftw3_omp
+LIBS_LAPACK = -llapacke -lcblas
+LIBS = $(LIBS_LAPACK) -lfftw3 -lfftw3_omp
 CULIBS = -lcudart -lcuda -lcufft -lcublas -lcusolver -lcusolverMg
 DEVICES = -gencode arch=compute_70,code=sm_70 \
 	  -gencode arch=compute_75,code=sm_75 \
