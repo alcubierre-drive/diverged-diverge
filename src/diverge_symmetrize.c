@@ -304,12 +304,14 @@ rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
                 z_id = (nr[2] + R[2]) % nr[2];
         index_t Ridx = IDX3(x_id, y_id, z_id, nr[1], nr[2]);
 
-        double* out = (double*)(fftw_cbuf + IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb));
-        double* in = (double*)(&hop[idx].t);
-        #pragma omp atomic
-        out[0] += in[0];
-        #pragma omp atomic
-        out[1] += in[1];
+        if (cabs(hop[idx].t) > hoplim) {
+            double* out = (double*)(fftw_cbuf + IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb));
+            double* in = (double*)(&hop[idx].t);
+            #pragma omp atomic
+            out[0] += in[0];
+            #pragma omp atomic
+            out[1] += in[1];
+        }
     }
 
     // FFT, symmetrize, IFFT
@@ -336,8 +338,7 @@ rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
         if (cabs(elem) > hoplim) (*n_hop)++;
     }
 
-    const index_t n_hop_buffer_increase = 128;
-    hop = realloc(hop, sizeof(rs_hopping_t) * (*n_hop + n_hop_buffer_increase));
+    hop = realloc(hop, sizeof(rs_hopping_t) * (*n_hop));
     if (swap_model_hoppings) model->hop = hop;
     *n_hop = 0;
     for (index_t Rx=-nr[0]/2; Rx<=nr[0]/2; Rx++)
