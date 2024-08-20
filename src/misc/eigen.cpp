@@ -45,7 +45,7 @@ void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double
         lapack_complex_double* A = (lapack_complex_double*)calloc(N*N, sizeof(complex128_t));
         memcpy( A, (H == NULL || H == U) ? U : H, sizeof(complex128_t)*N*N );
         VecXcd Ec = VecXcd::Zero(N);
-        LAPACKE_zgeev( LAPACK_ROW_MAJOR, 'V', 'V', N, A, N, (lapack_complex_double*)Ec.data(), U, N, V, N );
+        LAPACKE_zgeev( LAPACK_ROW_MAJOR, 'V', 'V', N, A, N, (lapack_complex_double*)Ec.data(), V, N, U, N );
         Map<VecXd> mE(E, N); mE = Ec.array().real().matrix();
         free( A );
     }
@@ -88,6 +88,7 @@ void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double
         mV = SVD.matrixV();
         mE = SVD.singularValues();
     } else {
+        // do non-hermitian eigen
         N = std::abs(N);
         MatXcd A = (H == NULL || H == U) ? Map<const MatXcd>(U, N, N) : Map<const MatXcd>(H, N, N);
         Map<MatXcd> mU(U, N, N);
@@ -95,8 +96,8 @@ void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double
         Map<VecXd> mE(E, N);
 
         Eigen::ComplexEigenSolver<MatXcd> sol( A.transpose() );
-        mV = sol.eigenvectors().transpose();
-        mU = sol.eigenvectors().inverse();
+        mU = sol.eigenvectors().transpose();
+        mV = sol.eigenvectors().inverse();
         mE = sol.eigenvalues().array().real().matrix();
     }
 }
