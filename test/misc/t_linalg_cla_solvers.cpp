@@ -1,3 +1,5 @@
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "t_linalg_cla_solvers.hpp"
 
 static void eigensolve_Xd( const MatXd& H, MatXd& U, VecXd& E ) {
@@ -56,3 +58,5 @@ SVD_IMPL( 4, d )
 SVD_IMPL( 2, cd )
 SVD_IMPL( 3, cd )
 SVD_IMPL( 4, cd )
+
+#endif // DIVERGE_SKIP_TESTS
