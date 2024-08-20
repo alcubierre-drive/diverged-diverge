@@ -88,8 +88,8 @@ tu_postproduction::~tu_postproduction() {
     }
     if(called_suscep_ff) {
         if (vertex->D_flow) free(suscCh_ff);
-        if (vertex->C_flow) free(suscPp_ff);
-        if (vertex->P_flow) free(suscMa_ff);
+        if (vertex->C_flow) free(suscMa_ff);
+        if (vertex->P_flow) free(suscPp_ff);
     }
 }
 
