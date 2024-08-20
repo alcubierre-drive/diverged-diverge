@@ -69,7 +69,7 @@ void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N 
         mU = sol.eigenvectors().transpose();
         mE = sol.eigenvalues();
     } else {
-        MatXcd A = (H == NULL || H == U) ? mU : Map<MatXcd>(H, N, N);
+        MatXcd A = (H == NULL || H == U) ? mU : Map<MatXcd>(const_cast<complex128_t*>(H), N, N);
         Eigen::ComplexEigenSolver<MatXcd> sol( A.transpose() );
         mU = sol.eigenvectors().transpose();
         mE = sol.eigenvalues().array().real().matrix();
