@@ -198,14 +198,18 @@ void tu_postproduction::lingap_ff(bool atscale) {
             if (solver_mode == 's') {
                 single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, linsize );
             } else {
-                single_eigen( NULL, vertex->product_helper, _val, -linsize );
-                single_eigen_sort( vertex->product_helper, _val, linsize,
-                        solver_mode == 'E' ? 'M' : // absolute
-                        solver_mode == 'e' ? 'A' : // alternating
-                        solver_mode == 't' ? 'P' : // from largest
-                        solver_mode == 'b' ? 'N' : // from smallest
-                                             'm'   // inverse if none of the above
-                );
+                single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, -linsize );
+                char sort_mode = solver_mode == 'E' ? 'M' : // absolute
+                                 solver_mode == 'e' ? 'A' : // alternating
+                                 solver_mode == 't' ? 'P' : // from largest
+                                 solver_mode == 'b' ? 'N' : // from smallest
+                                                      'm';  // inverse if none of the above
+                VecXd xval = Map<VecXd>(_val, linsize);
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
+                Map<MatXcd>(vertex->bubble_helper,  linsize, linsize).transposeInPlace();
+                single_eigen_sort( vertex->product_helper, _val, linsize, sort_mode );
+                single_eigen_sort( vertex->bubble_helper, xval.data(), linsize, sort_mode );
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
             }
             for(index_t i = 0; i < tu_n_singular_valuesP;++i) {
                 Sgap_sc[i] = _val[i];
@@ -226,14 +230,18 @@ void tu_postproduction::lingap_ff(bool atscale) {
             if (solver_mode == 's') {
                 single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, linsize );
             } else {
-                single_eigen( NULL, vertex->product_helper, _val, -linsize );
-                single_eigen_sort( vertex->product_helper, _val, linsize,
-                        solver_mode == 'E' ? 'M' : // absolute
-                        solver_mode == 'e' ? 'A' : // alternating
-                        solver_mode == 't' ? 'P' : // from largest
-                        solver_mode == 'b' ? 'N' : // from smallest
-                                             'm'   // inverse if none of the above
-                );
+                single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, -linsize );
+                char sort_mode = solver_mode == 'E' ? 'M' : // absolute
+                                 solver_mode == 'e' ? 'A' : // alternating
+                                 solver_mode == 't' ? 'P' : // from largest
+                                 solver_mode == 'b' ? 'N' : // from smallest
+                                                      'm';  // inverse if none of the above
+                VecXd xval = Map<VecXd>(_val, linsize);
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
+                Map<MatXcd>(vertex->bubble_helper,  linsize, linsize).transposeInPlace();
+                single_eigen_sort( vertex->product_helper, _val, linsize, sort_mode );
+                single_eigen_sort( vertex->bubble_helper, xval.data(), linsize, sort_mode );
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
             }
             for(index_t i = 0; i < tu_n_singular_valuesC;++i) {
                 Sgap_mag[i] = _val[i];
@@ -265,14 +273,18 @@ void tu_postproduction::lingap_ff(bool atscale) {
             if (solver_mode == 's') {
                 single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, linsize );
             } else {
-                single_eigen( NULL, vertex->product_helper, _val, -linsize );
-                single_eigen_sort( vertex->product_helper, _val, linsize,
-                        solver_mode == 'E' ? 'M' : // absolute
-                        solver_mode == 'e' ? 'A' : // alternating
-                        solver_mode == 't' ? 'P' : // from largest
-                        solver_mode == 'b' ? 'N' : // from smallest
-                                             'm'   // inverse if none of the above
-                );
+                single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, -linsize );
+                char sort_mode = solver_mode == 'E' ? 'M' : // absolute
+                                 solver_mode == 'e' ? 'A' : // alternating
+                                 solver_mode == 't' ? 'P' : // from largest
+                                 solver_mode == 'b' ? 'N' : // from smallest
+                                                      'm';  // inverse if none of the above
+                VecXd xval = Map<VecXd>(_val, linsize);
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
+                Map<MatXcd>(vertex->bubble_helper,  linsize, linsize).transposeInPlace();
+                single_eigen_sort( vertex->product_helper, _val, linsize, sort_mode );
+                single_eigen_sort( vertex->bubble_helper, xval.data(), linsize, sort_mode );
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
             }
             for(index_t i = 0; i < tu_n_singular_valuesD;++i) {
                 Sgap_charge[i] = _val[i];
