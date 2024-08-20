@@ -30,6 +30,7 @@ public:
     char algo;
     double cutoff;
     bool cutoff_rel;
+    char tu_lingap_solver_mode[4] = "sss";
 
     index_t* lenP;
     index_t* lenC;

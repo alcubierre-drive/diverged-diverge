@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 
+// if N<0, use non-hermitian solver (right vectors, dim=|N|) and copy the *real part* of the eigenvalues
 void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N );
 void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double* S, index_t N );
 

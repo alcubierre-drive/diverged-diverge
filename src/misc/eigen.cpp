@@ -21,11 +21,22 @@ using std::vector;
 void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N ) {
     assert(U != NULL);
     assert(E != NULL);
-    assert(N > 0);
+    bool hermitian = N > 0; N = std::abs(N);
     if (H != NULL)
         if (U != H)
             memcpy( U, H, sizeof(complex128_t)*N*N );
-    LAPACKE_zheev( LAPACK_ROW_MAJOR, 'V', 'U', N, (lapack_complex_double*)U, N, E );
+    if (hermitian) {
+        LAPACKE_zheev( LAPACK_ROW_MAJOR, 'V', 'U', N, (lapack_complex_double*)U, N, E );
+    } else {
+        lapack_complex_double* A = (lapack_complex_double*)calloc(N*N, sizeof(complex128_t));
+        complex128_t* Ec = (complex128_t*)calloc(N, sizeof(complex128_t));
+        memcpy( A, U, sizeof(complex128_t)*N*N );
+        LAPACKE_zgeev( LAPACK_ROW_MAJOR, 'N', 'V', N, A, N, (lapack_complex_double*)Ec,
+                       NULL, N, (lapack_complex_double*)U, N );
+        for (index_t i=0; i<N; ++i) E[i] = Ec[i].real();
+        free( A );
+        free( Ec );
+    }
 }
 
 void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double* E, index_t N ) {
@@ -46,17 +57,23 @@ void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double
 void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N ) {
     assert(U != NULL);
     assert(E != NULL);
-    assert(N > 0);
+    bool hermitian = N > 0; N = std::abs(N);
 
     Map<MatXcd> mU(U, N, N);
     Map<VecXd> mE(E, N);
 
-    if (!(H == NULL || H == U))
-        mU = Map<MatXcd>(const_cast<complex128_t*>(H), N, N);
-
-    Eigen::SelfAdjointEigenSolver<MatXcd> sol( mU.transpose() );
-    mU = sol.eigenvectors().transpose();
-    mE = sol.eigenvalues();
+    if (hermitian) {
+        if (!(H == NULL || H == U))
+            mU = Map<MatXcd>(const_cast<complex128_t*>(H), N, N);
+        Eigen::SelfAdjointEigenSolver<MatXcd> sol( mU.transpose() );
+        mU = sol.eigenvectors().transpose();
+        mE = sol.eigenvalues();
+    } else {
+        MatXcd A = (H == NULL || H == U) ? mU : Map<MatXcd>(H, N, N);
+        Eigen::ComplexEigenSolver<MatXcd> sol( A.transpose() );
+        mU = sol.eigenvectors().transpose();
+        mE = sol.eigenvalues().array().real().matrix();
+    }
 }
 
 void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double* E, index_t N ) {

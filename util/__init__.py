@@ -870,6 +870,7 @@ if not _libs["divERGe"] is None:
         'tu_symmetry_maps',
         'tu_n_decomp_values',
         'tu_lingap_atscale',
+        'tu_lingap_solver_mode',
     ]
     struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
@@ -901,6 +902,7 @@ if not _libs["divERGe"] is None:
         ('tu_symmetry_maps', c_bool),
         ('tu_n_decomp_values', index_t),
         ('tu_lingap_atscale', c_bool),
+        ('tu_lingap_solver_mode', c_char * int(3)),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 

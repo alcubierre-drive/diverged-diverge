@@ -64,8 +64,9 @@ struct diverge_postprocess_conf_t {
     char    grid_vertex_chan;
 
     /**
-     * choose how to handle non hermitian entries of the channels options
-     * 'a'(utomatic), 's'(vd), 'e'(igen), 'b'(atched eigen), 'B'(atched SVD)
+     * choose how to handle non hermitian entries of the channel
+     * diagonalization. options: 'a'(utomatic), 's'(vd), 'e'(igen), 'b'(atched
+     * eigen), 'B'(atched SVD)
      */
     char    tu_which_solver_mode;
     /** if true, the eigenvectors of each channel are not calculated. useful for RPA calculations */
@@ -74,7 +75,7 @@ struct diverge_postprocess_conf_t {
     double  tu_storing_threshold;
     /** use a relative storing threshold instead of the aboslute one */
     bool    tu_storing_relative;
-    /** number of singular values to save for the lineraized gap solutions */
+    /** number of singular/eigen values to save for the lineraized gap solutions */
     index_t tu_n_singular_values;
     /** calculate the linearized gap solution */
     bool    tu_lingap;
@@ -90,8 +91,19 @@ struct diverge_postprocess_conf_t {
     bool    tu_symmetry_maps;
     /** store the N leading values of the channel eigendecomposition/SVD. ignored if zero */
     index_t tu_n_decomp_values;
-    /** use the at-scale propagator instead of the integrated one in the linearized gap */
+    /**
+     * use the at-scale propagator instead of the integrated one in the
+     * linearized gap, useful for RPA
+     */
     bool    tu_lingap_atscale;
+    /**
+     * choose how to handle diagonalizations in the linearized gap equations for
+     * each of the channels (PCD, as index), useful for RPA. options: ``'s'``
+     * (svd), ``'E'`` (eigen, sort by absolute value), ``'e'`` (eigen, sort
+     * alternating), ``'t'`` (eigen, sort from largest), ``'b'`` (eigen, sort
+     * from smallest)
+     */
+    char    tu_lingap_solver_mode[4];
 
     // DEVELOPERS
     //
@@ -133,6 +145,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_symmetry_maps = false,
     .tu_n_decomp_values = 0,
     .tu_lingap_atscale = false,
+    .tu_lingap_solver_mode = "sss",
 };
 #endif
 
