@@ -90,6 +90,8 @@ struct diverge_postprocess_conf_t {
     bool    tu_symmetry_maps;
     /** store the N leading values of the channel eigendecomposition/SVD. ignored if zero */
     index_t tu_n_decomp_values;
+    /** use the at-scale propagator instead of the integrated one in the linearized gap */
+    bool    tu_lingap_atscale;
 
     // DEVELOPERS
     //
@@ -130,6 +132,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_channels = false,
     .tu_symmetry_maps = false,
     .tu_n_decomp_values = 0,
+    .tu_lingap_atscale = false,
 };
 #endif
 

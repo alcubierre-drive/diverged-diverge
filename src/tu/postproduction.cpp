@@ -25,6 +25,7 @@ tu_postproduction::tu_postproduction(diverge_flow_step_t* st, bool tu_skip_chann
 :
     skip_channel_calc{tu_skip_channel_calc},
     vertex{st->tu_vertex},
+    internal_vertex{st->tu_step->internal_vertex},
     proj{st->tu_proj},
     model{st->tu_vertex->model}
 {
@@ -94,12 +95,12 @@ tu_postproduction::~tu_postproduction() {
 }
 
 void tu_postproduction::run_and_save(string filename, bool lingaps, bool susc_ff,
-                                            bool susc_full, bool save_self, bool save_full,
-                                            bool save_symmetries) {
+        bool susc_full, bool lingap_atscale, bool save_self, bool save_full,
+        bool save_symmetries) {
     if (!skip_channel_calc) save_channel_leading_ev();
-    if (lingaps) lingap_ff();
+    if (lingaps) lingap_ff(lingap_atscale);
     if (susc_ff || susc_full) calc_susc(susc_ff, susc_full);
-    to_file(filename, save_self, save_full,save_symmetries);
+    to_file(filename, save_self, save_full, save_symmetries);
 }
 
 void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
@@ -165,7 +166,7 @@ void tu_postproduction::save_channel_leading_ev() {
             Dvec, Dval, Dtype, lenD, offD);
 }
 
-void tu_postproduction::lingap_ff() {
+void tu_postproduction::lingap_ff(bool atscale) {
     // only calculates q = 0 linearized gap
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
     called_lingap = true;
@@ -191,7 +192,7 @@ void tu_postproduction::lingap_ff() {
     if(vertex->P_flow) {
         P_projection(vertex->projection_helper, vertex, proj);
         if(diverge_mpi_comm_rank()==0) {
-            batched_gemm(vertex->projection_helper, vertex->pp_bubble_int,
+            batched_gemm(vertex->projection_helper, (atscale ? internal_vertex : vertex)->pp_bubble_int,
                     vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff,1.0, 0.0, 1);
             single_svd( NULL, vertex->product_helper,
                     vertex->bubble_helper, _val, linsize);
@@ -208,7 +209,7 @@ void tu_postproduction::lingap_ff() {
         C_projection(vertex->projection_helper, vertex, proj);
 
         if(diverge_mpi_comm_rank()==0) {
-            batched_gemm(vertex->projection_helper, vertex->ph_bubble_int,
+            batched_gemm(vertex->projection_helper, (atscale ? internal_vertex : vertex)->ph_bubble_int,
                     vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff,1.0, 0.0, 1);
             single_svd( NULL, vertex->product_helper,
                     vertex->bubble_helper, _val, linsize);
@@ -236,7 +237,7 @@ void tu_postproduction::lingap_ff() {
         }
 
         if(diverge_mpi_comm_rank()==0) {
-            batched_gemm(vertex->projection_helper, vertex->ph_bubble_int,
+            batched_gemm(vertex->projection_helper, (atscale ? internal_vertex : vertex)->ph_bubble_int,
                     vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff,1.0, 0.0, 1);
             single_svd( NULL, vertex->product_helper,
                     vertex->bubble_helper, _val, linsize);
