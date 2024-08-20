@@ -82,14 +82,14 @@ tu_postproduction::~tu_postproduction() {
         free(Vgap_charge);
     }
     if(called_suscep_full){
-        free(suscCh);
-        free(suscMa);
-        free(suscPp);
+        if (vertex->D_flow) free(suscCh);
+        if (vertex->C_flow) free(suscMa);
+        if (vertex->P_flow) free(suscPp);
     }
     if(called_suscep_ff) {
-        free(suscCh_ff);
-        free(suscPp_ff);
-        free(suscMa_ff);
+        if (vertex->D_flow) free(suscCh_ff);
+        if (vertex->C_flow) free(suscPp_ff);
+        if (vertex->P_flow) free(suscMa_ff);
     }
 }
 
@@ -388,9 +388,9 @@ void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
         }
     }
     if(!susc_ff) {
-        free(suscCh_ff);
-        free(suscPp_ff);
-        free(suscMa_ff);
+        if (vertex->D_flow) free(suscCh_ff);
+        if (vertex->C_flow) free(suscMa_ff);
+        if (vertex->P_flow) free(suscPp_ff);
     }
     free(suscff);
 }
