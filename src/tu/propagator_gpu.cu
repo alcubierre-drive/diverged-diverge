@@ -1,5 +1,7 @@
 /* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#define EIGEN_NO_CUDA
+
 #include "propagator.hpp"
 #include "../misc/cuda_error.h"
 
