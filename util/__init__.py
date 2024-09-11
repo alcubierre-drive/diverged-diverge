@@ -1441,6 +1441,13 @@ if not _libs["divERGe"] is None:
                 self.terminal.flush()
                 self.log.flush()
 
+    def kidxc2f( k, nk, nkf ):
+        kx = k // (nk[1]*nk[2])
+        ky = (k % (nk[1]*nk[2])) // nk[2]
+        kz = k % nk[2]
+        kk = ( kx*nkf[0], ky*nkf[1], kz*nkf[2] )
+        return (kk[0]*nk[1]*nkf[1] + kk[1])*nk[2]*nkf[2] + kk[2]
+
 else: # _libs["divERGe"] is None
     print( info() )
 
