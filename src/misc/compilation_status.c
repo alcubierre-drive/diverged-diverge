@@ -7,6 +7,14 @@
 
 #include <string.h>
 
+#ifndef DIVERGE_MARK_OK
+#define DIVERGE_MARK_OK "✓"
+#endif
+
+#ifndef DIVERGE_MARK_NOT_OK
+#define DIVERGE_MARK_NOT_OK "✗"
+#endif
+
 #define MSG_STR_SZ 1024
 static inline char* strxcat( char* dest, const char* src ) {
     return strncat( dest, src, MSG_STR_SZ-1 );
@@ -14,15 +22,11 @@ static inline char* strxcat( char* dest, const char* src ) {
 
 static void message( const char* msg, bool success, char* result ) {
     int use_color = mpi_log_get_colors();
-    char _mark_avail[] = "✓";
-    char _mark_not_avail[] = "✗";
-    char _escape = 0x001b;
-    char _color_bright_red[] = "0[31;1m";
-    char _color_bright_green[] = "0[32;1m";
-    char _color_reset[] = "0[0m";
-    _color_bright_green[0] = _escape;
-    _color_bright_red[0] = _escape;
-    _color_reset[0] = _escape;
+    const char _mark_avail[16] = DIVERGE_MARK_OK;
+    const char _mark_not_avail[16] = DIVERGE_MARK_NOT_OK;
+    const char _color_bright_red[16] = "\x1b[31;1m";
+    const char _color_bright_green[16] = "\x1b[32;1m";
+    const char _color_reset[16] = "\x1b[0m";
     if (use_color) strxcat( result, success ? _color_bright_green : _color_bright_red );
     strxcat( result, msg );
     strxcat( result, " " );
@@ -74,9 +78,11 @@ void diverge_compilation_status( void ) {
     char version_string[256] = {0};
     char cuda_string[256] = {0};
     char compilation_status[4][MSG_STR_SZ] = {0};
-    message( version_string, diverge_compilation_status_version(version_string), compilation_status[0] );
+    int version_status = diverge_compilation_status_version(version_string),
+        cuda_status = diverge_compilation_status_cuda(cuda_string);
+    message( version_string, version_status, compilation_status[0] );
     message( "MPI", diverge_compilation_status_mpi(), compilation_status[1] );
-    message( cuda_string, diverge_compilation_status_cuda(cuda_string), compilation_status[2] );
+    message( cuda_string, cuda_status, compilation_status[2] );
     message( "numbers", diverge_compilation_status_numbers(), compilation_status[3] );
     mpi_ver_printf("");
     for (unsigned int i=0; i<sizeof(compilation_status)/sizeof(compilation_status[0]); ++i)
