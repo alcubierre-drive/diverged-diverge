@@ -37,27 +37,22 @@ static void message( const char* msg, bool success, char* result ) {
 
 int diverge_compilation_status_mpi( void ) {
     #ifdef USE_MPI
-    #define _VERSION_IS_MPI_USED true
+    return true;
     #else
-    #define _VERSION_IS_MPI_USED false
+    return false;
     #endif
-
-    return _VERSION_IS_MPI_USED;
 }
 
 int diverge_compilation_status_cuda( char* str ) {
     #ifndef CUDA_VERSION_STR
     #define CUDA_VERSION_STR "CUDA"
     #endif
-
-    #ifdef USE_CUDA
-    #define _VERSION_IS_CUDA_USED true
-    #else
-    #define _VERSION_IS_CUDA_USED false
-    #endif
-
     if (str) strcpy( str, CUDA_VERSION_STR );
-    return _VERSION_IS_CUDA_USED;
+    #ifdef USE_CUDA
+    return true;
+    #else
+    return false;
+    #endif
 }
 
 int diverge_compilation_status_version( char* str ) {
