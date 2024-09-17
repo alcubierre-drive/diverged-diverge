@@ -6,6 +6,7 @@
 
 #include "../../src/diverge.h"
 #include "../../src/misc/subspace_gf.h"
+#include "../../src/misc/largemat_gf.h"
 
 TEST_CASE("greensfunction subspace full", "[greens][subspace-full]") {
     if (sizeof(gf_complex_t) != sizeof(complex128_t)) return;
@@ -59,6 +60,33 @@ TEST_CASE("greensfunction subspace partial", "[greens][subspace]") {
 
     free(xbuf);
     diverge_model_free(m);
+}
+
+TEST_CASE("greensfunction largemat", "[greens][largemat]") {
+    if (sizeof(gf_complex_t) != sizeof(complex128_t)) return;
+    const complex128_t Lambda(0.0,1.0);
+
+    diverge_model_t* m = gen_kagome_model(6,6);
+    m->gfill(m, Lambda, diverge_model_internals_get_greens(m));
+
+    diverge_model_t* l = gen_kagome_model(6,6);
+    diverge_largemat_gf(l, Lambda, (gf_complex_t*)diverge_model_internals_get_greens(l));
+
+    /*CHECK( check_equal(diverge_model_internals_get_greens(m), diverge_model_internals_get_greens(l), kdimtot(m->nk,m->nkf)*9*2) );*/
+    double maxerr = 0.0;
+    complex128_t *gbuf = (complex128_t*)diverge_model_internals_get_greens(m),
+                 *xbuf = (complex128_t*)diverge_model_internals_get_greens(l);
+    index_t nk = kdimtot(m->nk,m->nkf);
+    for (index_t l=0; l<2; ++l)
+    for (index_t k=0; k<nk; ++k)
+    for (index_t o1=0; o1<3; ++o1)
+    for (index_t o2=0; o2<3; ++o2)
+        maxerr = MAX(maxerr, std::abs(xbuf[IDX4(l,k,o1,o2,nk,3,3)] - gbuf[IDX4(l,k,o1,o2,nk,3,3)]));
+    CHECK( maxerr < 1e-12 );
+
+
+    diverge_model_free(m);
+    diverge_model_free(l);
 }
 
 #endif

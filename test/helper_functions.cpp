@@ -79,6 +79,10 @@ bool check_equal_T( T* data1, T* data2, index_t size, double errbnd ) {
     return (displs.back() + counts.back()) == 0;
 }
 
+bool check_equal(complex64_t* data1, complex64_t* data2, index_t size, float errbnd) {
+    return check_equal_T(data1, data2, size, errbnd);
+}
+
 bool check_equal(complex128_t* data1, complex128_t* data2, index_t size, double errbnd) {
     return check_equal_T(data1, data2, size, errbnd);
 }
