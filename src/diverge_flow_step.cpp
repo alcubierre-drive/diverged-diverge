@@ -525,3 +525,10 @@ double diverge_flow_step_get_filling_Hself( diverge_flow_step_t* s, void* worksp
     return diverge_model_get_filling( m, Etmp, nb );
 }
 
+diverge_flow_type diverge_flow_step_type( const diverge_flow_step_t* st ) {
+    return st->type;
+}
+
+void diverge_flow_step_get_channels( const diverge_flow_step_t* st, int chans[4] ) {
+    for (int i=0; i<4; ++i) chans[i] = st->channel_selection[i];
+}

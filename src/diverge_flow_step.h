@@ -4,6 +4,9 @@
 
 #include "diverge_model.h"
 
+// sort of a private include
+#include "diverge_flow_type.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,6 +34,11 @@ typedef struct diverge_flow_step_t diverge_flow_step_t;
  */
 diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* method,
         const char* channels );
+
+// undocumented functions, they are needed for some C interfacing, but not
+// explicitly exposed to users.
+diverge_flow_type diverge_flow_step_type( const diverge_flow_step_t* st );
+void diverge_flow_step_get_channels( const diverge_flow_step_t* st, int chans[4] );
 
 /**
  * initialize the flow step instance from a model instance that has its

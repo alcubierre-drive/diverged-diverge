@@ -3,6 +3,15 @@
 
 tu_highsym_vertex_t* tu_highsym_vertex_store( diverge_flow_step_t* step,
         index_t* qpts, index_t nqpts, tu_highsym_vertex_t* vert ) {
+    if (diverge_flow_step_type(step) != diverge_tu) {
+        mpi_err_printf( "cannot store vertices of non-TU backend\n" );
+        return NULL;
+    }
+    int chans[4] = {0}; diverge_flow_step_get_channels(step, chans);
+    if (!chans[0] || !chans[1] || !chans[2]) {
+        mpi_err_printf( "all channels must be included\n" );
+        return NULL;
+    }
     diverge_flow_step_vertex_t vP = diverge_flow_step_vertex( step, 'P' );
     diverge_flow_step_vertex_t vC = diverge_flow_step_vertex( step, 'C' );
     diverge_flow_step_vertex_t vD = diverge_flow_step_vertex( step, 'D' );
@@ -38,6 +47,10 @@ tu_highsym_vertex_t* tu_highsym_vertex_store( diverge_flow_step_t* step,
 }
 
 void tu_highsym_vertex_to_file( tu_highsym_vertex_t* vert, const char* fname ) {
+    if (!vert) {
+        mpi_wrn_printf( "vertex store object points to NULL, not saving to file %s\n", fname );
+        return;
+    }
     index_t header[128] = {0};
     char magic[] = "tu_highsym_vertex_t";
     int nmagic = sizeof(magic) / sizeof(header[0]) + 1;

@@ -54,7 +54,10 @@ struct diverge_euler_t {
     double consider_maxvert_lambda;
 };
 
-/** returns default values for the Euler integrator in C/C++/Python */
+/**
+ * returns default values for the Euler integrator in C/C++/Python, see
+ * :c:var:`diverge_euler_defaults` for values.
+ */
 diverge_euler_t diverge_euler_defaults_CPP( void );
 
 /**
@@ -74,7 +77,11 @@ diverge_euler_t diverge_euler_defaults_CPP( void );
 bool diverge_euler_next( diverge_euler_t* de, double Vmax );
 
 #if !defined(__cplusplus) && !defined(CTYPESGEN)
-// defaults in plain C
+/**
+ * defaults struct accessible only in C, because C++ does not allow named
+ * member initialization. Look the values up in the source (linked on the
+ * right).
+ */
 static const diverge_euler_t diverge_euler_defaults = {
     .Lambda = 50.0,
     .dLambda = -5.0,

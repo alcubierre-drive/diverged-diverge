@@ -130,13 +130,14 @@ value of <span class="math notranslate nohighlight">\(\Lambda\)</span></p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_euler_defaults_CPP">
-<a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_defaults_CPP</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_defaults_CPP" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_euler.h#L56"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>returns default values for the Euler integrator in C/C++/Python</p>
+<a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_defaults_CPP</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_defaults_CPP" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_euler.h#L57"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns default values for the Euler integrator in C/C++/Python, see
+<a class="reference internal" href="#c.diverge_euler_defaults" title="diverge_euler_defaults"><code class="xref c c-var docutils literal notranslate"><span class="pre">diverge_euler_defaults</span></code></a> for values.</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_euler_next">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_next</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">de</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">Vmax</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_next" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_euler.h#L60"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_next</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">de</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">Vmax</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_next" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_euler.h#L63"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>performs adaptive step, without calling any <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a>
 related routines. example usage:</p>
 <div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="c1">// diverge_flow_step_t* st = ...;</span>
@@ -148,6 +149,14 @@ related routines. example usage:</p>
 <span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">diverge_euler_next</span><span class="p">(</span><span class="o">&amp;</span><span class="n">eu</span><span class="p">,</span><span class="w"> </span><span class="n">vertmax</span><span class="p">));</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.diverge_euler_defaults">
+<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_defaults</span></span></span><a class="headerlink" href="#c.diverge_euler_defaults" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-features/src/diverge_euler.h#L80"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>defaults struct accessible only in C, because C++ does not allow named
+member initialization. Look the values up in the source (linked on the
+right).</p>
 </dd></dl>
 
 </section>
