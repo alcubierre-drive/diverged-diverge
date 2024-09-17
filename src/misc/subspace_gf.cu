@@ -42,7 +42,7 @@ __global__ void subspace_gfill_gpu( const double* E, const ccomplex128_t* U,
             bufs[IDX3(0,o1,o2,n_orbs,n_orbs)] = cuCadd( bufs[IDX3(0,o1,o2,n_orbs,n_orbs)],
                                                         bufs[IDX3(i,o1,o2,n_orbs,n_orbs)] );
         }
-        out[IDX3(k,o1,o2,n_orbs,n_orbs)] = bufs[IDX3(0,o1,o2,n_orbs,n_orbs)];
+        out[IDX3(k,o2,o1,n_orbs,n_orbs)] = cuConj(bufs[IDX3(0,o1,o2,n_orbs,n_orbs)]);
     }
 }
 

@@ -24,7 +24,7 @@ TEST_CASE("greensfunction subspace full", "[greens][subspace-full]") {
     subspace_gfill_multi_exec(s, xbuf, Lambda);
     subspace_gfill_multi_free(s);
 
-    CHECK( check_equal(xbuf, gbuf, kdimtot(m->nk,m->nkf)*9) );
+    CHECK( check_equal(xbuf, gbuf, kdimtot(m->nk,m->nkf)*9*2) );
 
     free(xbuf);
     diverge_model_free(m);
@@ -48,10 +48,12 @@ TEST_CASE("greensfunction subspace partial", "[greens][subspace]") {
     subspace_gfill_multi_free(s);
 
     double maxerr = 0.0;
-    for (index_t k=0; k<kdimtot(m->nk,m->nkf); ++k)
+    index_t nk = kdimtot(m->nk,m->nkf);
+    for (index_t l=0; l<2; ++l)
+    for (index_t k=0; k<nk; ++k)
     for (index_t io1=0; io1<2; ++io1)
     for (index_t io2=0; io2<2; ++io2)
-        maxerr = MAX(maxerr, std::abs(xbuf[IDX3(k,io1,io2,2,2)] - gbuf[IDX3(k,orbs[io1],orbs[io2],3,3)]));
+        maxerr = MAX(maxerr, std::abs(xbuf[IDX4(l,k,io1,io2,nk,2,2)] - gbuf[IDX4(l,k,orbs[io1],orbs[io2],nk,3,3)]));
 
     CHECK( maxerr < 1e-12 );
 
