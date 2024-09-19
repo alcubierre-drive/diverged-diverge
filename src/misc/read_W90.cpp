@@ -137,6 +137,8 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
 
 rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len, index_t* n_orb ) {
     vector<rs_hopping_t> res = diverge_read_W90( fname, n_spin, n_orb );
+    if (res.size() == 0)
+        return NULL;
     *len = res.size();
     rs_hopping_t* result = (rs_hopping_t*)malloc(sizeof(rs_hopping_t)*res.size());
     memcpy( result, res.data(), sizeof(rs_hopping_t)*res.size() );
