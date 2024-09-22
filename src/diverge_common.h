@@ -60,8 +60,13 @@ typedef complex64_t gf_complex_t;
  */
 typedef complex128_t gf_complex_t;
 #endif // USE_GF_FLOATS
+
+#ifndef lapack_complex_double
 #define lapack_complex_double complex128_t
+#endif
+#ifndef lapack_complex_float
 #define lapack_complex_float complex64_t
+#endif
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
