@@ -43,8 +43,17 @@ void diverge_generate_symm_trafo( index_t n_spin, const site_descr_t* orbs, inde
     Mat2cd spin_sym = Mat2d::Identity();
     MatXcd orb_sym = MatXcd::Identity(n_spherical,n_spherical);
 
-    vector<sym_op_t> symmetry(n_syms);
-    memcpy( symmetry.data(), syms, sizeof(sym_op_t)*n_syms );
+    vector<sym_op_t> symmetry;
+    for (index_t i=0; i<n_syms; ++i) {
+        // for improper rotation we push back the rotation as well as the mirror
+        if (syms[i].type == 'r') {
+            sym_op_t xop = syms[i];
+            xop.type = 'R', symmetry.push_back(xop);
+            xop.type = 'I', symmetry.push_back(xop);
+        } else {
+            symmetry.push_back(syms[i]);
+        }
+    }
 
     vector<site_descr_t> orbital_content(n_orb);
     memcpy( orbital_content.data(), orbs, sizeof(site_descr_t)*n_orb );
