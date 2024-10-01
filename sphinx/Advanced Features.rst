@@ -35,3 +35,11 @@ unstable interface, which can be included with ``#include
 following signatures:
 
 .. c:autodoc:: misc/unique_distances.h
+
+Hopping Parameters from Hamiltonians
+------------------------------------
+
+The inverse Fourier transform to get hopping parameters from Hamiltonian arrays
+is implemented in the following function:
+
+.. c:autodoc:: misc/ham2hop.h

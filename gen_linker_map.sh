@@ -68,6 +68,7 @@ DIVERGE_UNSTABLE {
         subspace_gfill_multi_exec;
         diverge_largemat_gf;
         diverge_model_unique_distances;
+        diverge_model_ham2hop;
 };
 EOF
 )
