@@ -74,3 +74,14 @@ BITARY_HOST_DEV static inline cbit bitary_get( const cbyte_t* ary, size_t bitidx
     return bit_get( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
 }
 
+BITARY_HOST_DEV static inline void bitary_set_all( cbyte_t* ary, size_t nbit ) {
+    for (size_t i=0; i<nbit; ++i) bitary_set( ary, i );
+}
+
+BITARY_HOST_DEV static inline void bitary_unset_all( cbyte_t* ary, size_t nbit ) {
+    for (size_t i=0; i<nbit; ++i) bitary_unset( ary, i );
+}
+
+BITARY_HOST_DEV static inline void bitary_toggle_all( cbyte_t* ary, size_t nbit ) {
+    for (size_t i=0; i<nbit; ++i) bitary_toggle( ary, i );
+}
