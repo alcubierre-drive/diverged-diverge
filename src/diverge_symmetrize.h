@@ -71,6 +71,36 @@ double diverge_symmetrize_mom_coarse( diverge_model_t* model, double* buf, index
  */
 double diverge_symmetrize_mom_fine( diverge_model_t* model, double* buf, index_t sub, double* aux );
 
+/**
+ * symmetrizes hopping parameters of a divERGe model. Operates on the momentum
+ * mesh associated to the ``model``.
+ *
+ * :param diverge_model_t* model: the divERGe model which needs to have common
+ *                                internals set (using
+ *                                :c:func:`diverge_model_internals_common`) and
+ *                                nonzero number of symmetries/allocated orbital
+ *                                symmetries (:c:member:`diverge_model_t.n_sym`,
+ *                                :c:member:`diverge_model_t.orb_symmetries`).
+ * :param rs_hopping_t* hop: hopping parameters to symmetrize. Reallocates (via
+ *                           ``realloc``) and returns the new memory. If ``hop
+ *                           == NULL``, the function operates on the internal
+ *                           hopping parameters, ignores ``n_hop``, and swaps
+ *                           out the old pointer to the realloced one.
+ * :param index_t* n_hop: pointer to the length of the ``hop`` array. If
+ *                       ``n_hop == NULL`` operate on the model's hopping
+ *                       parameters and ignore ``n_hop`` and ``hop``.
+ * :param double hoplim: absolute value up to which include hopping parameters
+ *                       in the symmetrized hoppings
+ *
+ * :returns: :c:type:`rs_hopping_t` array that is the realloced version of the
+ *                                  input, On exit and if ``!= NULL``,
+ *                                  ``*n_hop`` is set to the new number of
+ *                                  hopping parameters. Otherwise, all relevant
+ *                                  information is updated in the ``model``.
+ */
+rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
+        rs_hopping_t* hop, index_t* n_hop, double hoplim );
+
 #ifdef __cplusplus
 }
 #endif

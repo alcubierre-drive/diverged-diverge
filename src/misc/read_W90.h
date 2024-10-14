@@ -32,7 +32,10 @@ typedef struct rs_hopping_t rs_hopping_t;
  *                        ('outer indices').
  * :param index_t* len: output for the number of hoppings that have been read.
  * :param index_t* n_orb: output for the maximum number of orbitals that were
- *                        found in the hr.dat file. not considered if NULL.
+ *                        found in the hr.dat file. not considered if NULL. In
+ *                        case ``n_orb != NULL`` and ``~(*n_orb) == 0``, swap
+ *                        the orbital indices. Seems to be needed for standard
+ *                        W90 ordering.
  *
  * Example:
  *

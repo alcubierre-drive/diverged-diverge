@@ -9,6 +9,7 @@ bool check_hermicity(complex128_t* data, index_t linsize,index_t batches);
 complex128_t trace(complex128_t* data, index_t linsize, index_t batches);
 complex128_t trace_batch_lin(complex128_t* data, index_t linsize, index_t batches);
 double trace(double* data, index_t linsize, index_t batches);
+bool check_equal(complex64_t* data1, complex64_t* data2, index_t size, float errbnd = 1e-6);
 bool check_equal(complex128_t* data1, complex128_t* data2, index_t size, double errbnd = 1e-12);
 bool check_equal(double* data1, double* data2, index_t size, double errbnd = 1e-12);
 bool check_abs_sorted_equal(complex128_t* data1, complex128_t* data2, index_t size);

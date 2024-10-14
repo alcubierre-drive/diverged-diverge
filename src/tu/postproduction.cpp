@@ -25,6 +25,7 @@ tu_postproduction::tu_postproduction(diverge_flow_step_t* st, bool tu_skip_chann
 :
     skip_channel_calc{tu_skip_channel_calc},
     vertex{st->tu_vertex},
+    internal_vertex{st->tu_step->internal_vertex},
     proj{st->tu_proj},
     model{st->tu_vertex->model}
 {
@@ -94,12 +95,12 @@ tu_postproduction::~tu_postproduction() {
 }
 
 void tu_postproduction::run_and_save(string filename, bool lingaps, bool susc_ff,
-                                            bool susc_full, bool save_self, bool save_full,
-                                            bool save_symmetries) {
+        bool susc_full, bool lingap_atscale, bool save_self, bool save_full,
+        bool save_symmetries) {
     if (!skip_channel_calc) save_channel_leading_ev();
-    if (lingaps) lingap_ff();
+    if (lingaps) lingap_ff(lingap_atscale);
     if (susc_ff || susc_full) calc_susc(susc_ff, susc_full);
-    to_file(filename, save_self, save_full,save_symmetries);
+    to_file(filename, save_self, save_full, save_symmetries);
 }
 
 void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
@@ -165,7 +166,7 @@ void tu_postproduction::save_channel_leading_ev() {
             Dvec, Dval, Dtype, lenD, offD);
 }
 
-void tu_postproduction::lingap_ff() {
+void tu_postproduction::lingap_ff(bool atscale) {
     // only calculates q = 0 linearized gap
     index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
     called_lingap = true;
@@ -191,15 +192,30 @@ void tu_postproduction::lingap_ff() {
     if(vertex->P_flow) {
         P_projection(vertex->projection_helper, vertex, proj);
         if(diverge_mpi_comm_rank()==0) {
-            batched_gemm(vertex->projection_helper, vertex->pp_bubble_int,
+            batched_gemm(vertex->projection_helper, (atscale ? internal_vertex : vertex)->pp_bubble_int,
                     vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff,1.0, 0.0, 1);
-            single_svd( NULL, vertex->product_helper,
-                    vertex->bubble_helper, _val, linsize);
+            char solver_mode = tu_lingap_solver_mode[0];
+            if (solver_mode == 's') {
+                single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, linsize );
+            } else {
+                single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, -linsize );
+                char sort_mode = solver_mode == 'E' ? 'M' : // absolute
+                                 solver_mode == 'e' ? 'A' : // alternating
+                                 solver_mode == 't' ? 'P' : // from largest
+                                 solver_mode == 'b' ? 'N' : // from smallest
+                                                      'm';  // inverse if none of the above
+                VecXd xval = Map<VecXd>(_val, linsize);
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
+                Map<MatXcd>(vertex->bubble_helper,  linsize, linsize).transposeInPlace();
+                single_eigen_sort( vertex->product_helper, _val, linsize, sort_mode );
+                single_eigen_sort( vertex->bubble_helper, xval.data(), linsize, sort_mode );
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
+            }
             for(index_t i = 0; i < tu_n_singular_valuesP;++i) {
                 Sgap_sc[i] = _val[i];
                 for(index_t j = 0; j < linsize; ++j){
                     Ugap_sc[j+linsize*i] = vertex->product_helper[i+linsize*j];
-                    Vgap_sc[j+linsize*i] = std::conj(_val[j+linsize*i]);
+                    Vgap_sc[j+linsize*i] = std::conj(vertex->bubble_helper[j+linsize*i]);
                 }
             }
         }
@@ -208,15 +224,30 @@ void tu_postproduction::lingap_ff() {
         C_projection(vertex->projection_helper, vertex, proj);
 
         if(diverge_mpi_comm_rank()==0) {
-            batched_gemm(vertex->projection_helper, vertex->ph_bubble_int,
+            batched_gemm(vertex->projection_helper, (atscale ? internal_vertex : vertex)->ph_bubble_int,
                     vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff,1.0, 0.0, 1);
-            single_svd( NULL, vertex->product_helper,
-                    vertex->bubble_helper, _val, linsize);
+            char solver_mode = tu_lingap_solver_mode[1];
+            if (solver_mode == 's') {
+                single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, linsize );
+            } else {
+                single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, -linsize );
+                char sort_mode = solver_mode == 'E' ? 'M' : // absolute
+                                 solver_mode == 'e' ? 'A' : // alternating
+                                 solver_mode == 't' ? 'P' : // from largest
+                                 solver_mode == 'b' ? 'N' : // from smallest
+                                                      'm';  // inverse if none of the above
+                VecXd xval = Map<VecXd>(_val, linsize);
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
+                Map<MatXcd>(vertex->bubble_helper,  linsize, linsize).transposeInPlace();
+                single_eigen_sort( vertex->product_helper, _val, linsize, sort_mode );
+                single_eigen_sort( vertex->bubble_helper, xval.data(), linsize, sort_mode );
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
+            }
             for(index_t i = 0; i < tu_n_singular_valuesC;++i) {
                 Sgap_mag[i] = _val[i];
                 for(index_t j = 0; j < linsize; ++j){
                     Ugap_mag[j+linsize*i] = vertex->product_helper[i+linsize*j];
-                    Vgap_mag[j+linsize*i] = std::conj(_val[j+linsize*i]);
+                    Vgap_mag[j+linsize*i] = std::conj(vertex->bubble_helper[j+linsize*i]);
                 }
             }
         }
@@ -236,15 +267,30 @@ void tu_postproduction::lingap_ff() {
         }
 
         if(diverge_mpi_comm_rank()==0) {
-            batched_gemm(vertex->projection_helper, vertex->ph_bubble_int,
+            batched_gemm(vertex->projection_helper, (atscale ? internal_vertex : vertex)->ph_bubble_int,
                     vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff,1.0, 0.0, 1);
-            single_svd( NULL, vertex->product_helper,
-                    vertex->bubble_helper, _val, linsize);
+            char solver_mode = tu_lingap_solver_mode[2];
+            if (solver_mode == 's') {
+                single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, linsize );
+            } else {
+                single_svd( NULL, vertex->product_helper, vertex->bubble_helper, _val, -linsize );
+                char sort_mode = solver_mode == 'E' ? 'M' : // absolute
+                                 solver_mode == 'e' ? 'A' : // alternating
+                                 solver_mode == 't' ? 'P' : // from largest
+                                 solver_mode == 'b' ? 'N' : // from smallest
+                                                      'm';  // inverse if none of the above
+                VecXd xval = Map<VecXd>(_val, linsize);
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
+                Map<MatXcd>(vertex->bubble_helper,  linsize, linsize).transposeInPlace();
+                single_eigen_sort( vertex->product_helper, _val, linsize, sort_mode );
+                single_eigen_sort( vertex->bubble_helper, xval.data(), linsize, sort_mode );
+                Map<MatXcd>(vertex->product_helper, linsize, linsize).transposeInPlace();
+            }
             for(index_t i = 0; i < tu_n_singular_valuesD;++i) {
                 Sgap_charge[i] = _val[i];
                 for(index_t j = 0; j < linsize; ++j){
                     Ugap_charge[j+linsize*i] = vertex->product_helper[i+linsize*j];
-                    Vgap_charge[j+linsize*i] = std::conj(_val[j+linsize*i]);
+                    Vgap_charge[j+linsize*i] = std::conj(vertex->bubble_helper[j+linsize*i]);
                 }
             }
         }

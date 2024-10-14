@@ -32,13 +32,23 @@ void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double
     assert(U != NULL);
     assert(V != NULL);
     assert(E != NULL);
-    assert(N > 0);
-    if (H != NULL)
-        if (U != H)
-            memcpy( U, H, sizeof(complex128_t)*N*N );
-    double* scratch = (double*)calloc(N, sizeof(double));
-    LAPACKE_zgesvd( LAPACK_ROW_MAJOR, 'O', 'A', N, N, U, N, E, NULL, N, V, N, scratch );
-    free(scratch);
+    if (N > 0) {
+        if (H != NULL)
+            if (U != H)
+                memcpy( U, H, sizeof(complex128_t)*N*N );
+        double* scratch = (double*)calloc(N, sizeof(double));
+        LAPACKE_zgesvd( LAPACK_ROW_MAJOR, 'O', 'A', N, N, U, N, E, NULL, N, V, N, scratch );
+        free(scratch);
+    } else {
+        // eigen (non-hermitian)
+        N = std::abs(N);
+        lapack_complex_double* A = (lapack_complex_double*)calloc(N*N, sizeof(complex128_t));
+        memcpy( A, (H == NULL || H == U) ? U : H, sizeof(complex128_t)*N*N );
+        VecXcd Ec = VecXcd::Zero(N);
+        LAPACKE_zgeev( LAPACK_ROW_MAJOR, 'V', 'V', N, A, N, (lapack_complex_double*)Ec.data(), V, N, U, N );
+        Map<VecXd> mE(E, N); mE = Ec.array().real().matrix();
+        free( A );
+    }
 }
 
 #else // LAPACKE/MKL
@@ -53,7 +63,6 @@ void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N 
 
     if (!(H == NULL || H == U))
         mU = Map<MatXcd>(const_cast<complex128_t*>(H), N, N);
-
     Eigen::SelfAdjointEigenSolver<MatXcd> sol( mU.transpose() );
     mU = sol.eigenvectors().transpose();
     mE = sol.eigenvalues();
@@ -63,21 +72,34 @@ void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double
     assert(U != NULL);
     assert(V != NULL);
     assert(E != NULL);
-    assert(N > 0);
 
-    Map<MatXcd> mU(U, N, N);
-    Map<MatXcd> mV(V, N, N);
-    Map<VecXd> mE(E, N);
+    if (N > 0) {
+        Map<MatXcd> mU(U, N, N);
+        Map<MatXcd> mV(V, N, N);
+        Map<VecXd> mE(E, N);
 
-    if (!(H == NULL || H == U))
-        mU = Map<MatXcd>(const_cast<complex128_t*>(H), N, N);
+        if (!(H == NULL || H == U))
+            mU = Map<MatXcd>(const_cast<complex128_t*>(H), N, N);
 
-    Eigen::JacobiSVD<MatXcd> SVD( mU.transpose(),
-            Eigen::DecompositionOptions::ComputeFullU |
-            Eigen::DecompositionOptions::ComputeFullV );
-    mU = SVD.matrixU().transpose();
-    mV = SVD.matrixV();
-    mE = SVD.singularValues();
+        Eigen::JacobiSVD<MatXcd> SVD( mU.transpose(),
+                Eigen::DecompositionOptions::ComputeFullU |
+                Eigen::DecompositionOptions::ComputeFullV );
+        mU = SVD.matrixU().transpose();
+        mV = SVD.matrixV();
+        mE = SVD.singularValues();
+    } else {
+        // do non-hermitian eigen
+        N = std::abs(N);
+        MatXcd A = (H == NULL || H == U) ? Map<const MatXcd>(U, N, N) : Map<const MatXcd>(H, N, N);
+        Map<MatXcd> mU(U, N, N);
+        Map<MatXcd> mV(V, N, N);
+        Map<VecXd> mE(E, N);
+
+        Eigen::ComplexEigenSolver<MatXcd> sol( A.transpose() );
+        mU = sol.eigenvectors().transpose();
+        mV = sol.eigenvectors().inverse();
+        mE = sol.eigenvalues().array().real().matrix();
+    }
 }
 
 

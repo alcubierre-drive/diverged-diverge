@@ -19,9 +19,18 @@ static void unravel(index_t no, index_t ns, index_t idx, index_t* o, index_t* s,
 
 vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_t* n_orb_out ) {
     std::ifstream input(fname, std::ios::in);
-    if(!(input.is_open())) {
-        mpi_err_printf("failed to open W90 file at %s \n", fname)
+
+    if (!(input.is_open())) {
+        mpi_err_printf("failed to open W90 file at %s \n", fname);
+        return {};
     }
+
+    bool swap_orbitals = 0;
+    if (n_orb_out) if (~(*n_orb_out) == 0) {
+        swap_orbitals = true;
+        mpi_log_printf( "W90 reader: swapping orbital order\n" );
+    }
+
     int i = 0;
     int weight_elem = 0;
     string line;
@@ -117,6 +126,11 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
 
     if (n_orb_out != NULL)
         *n_orb_out = n_orb;
+
+    if (swap_orbitals) for (rs_hopping_t& h: hop_elem) {
+        std::swap( h.o1, h.o2 );
+        std::swap( h.s1, h.s2 );
+    }
 
     return hop_elem;
 }

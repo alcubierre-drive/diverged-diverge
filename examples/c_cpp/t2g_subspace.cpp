@@ -19,7 +19,7 @@ static diverge_model_t* t2g_model_gen( index_t nk, index_t nkf );
 
 // this function is passed to the 'main' model in order to destroy the attached
 // one ('helper' model) upon destruction
-static void data_destructor( char* addr ) {
+static void data_destructor( void* addr ) {
     diverge_model_t* t2g_model = (diverge_model_t*)addr;
     diverge_model_free( t2g_model );
 }

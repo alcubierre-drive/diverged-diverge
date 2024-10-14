@@ -4,6 +4,7 @@
 #include "diverge_symmetrize.h"
 #include "diverge_internals_struct.h"
 #include "misc/mpi_functions.h"
+#include <fftw3.h>
 
 #define alloc_aux( size ) \
     bool free_aux = false; \
@@ -246,3 +247,115 @@ double diverge_symmetrize_mom_fine( diverge_model_t* model, double* buf, index_t
     return max_diff;
 }
 
+rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
+        rs_hopping_t* hop_, index_t* n_hop_, double hoplim ) {
+
+    // some preparations
+    if (model->n_sym == 0 || model->orb_symmetries == NULL || !model->internals->has_common_internals) {
+        mpi_wrn_printf( "need symmetries and common internals in order to symmetrize hoppings\n" );
+        return hop_;
+    }
+    diverge_generate_symm_maps(model);
+
+    rs_hopping_t* hop = model->hop;
+    index_t* n_hop = &model->n_hop;
+    int swap_model_hoppings = 1;
+    if (hop_ && n_hop_) {
+        hop = hop_;
+        n_hop = n_hop_;
+        swap_model_hoppings = 0;
+    }
+    mpi_vrb_printf( "initial n_hop = %li\n", *n_hop );
+    index_t nr[3] = {0};
+    index_t nk_tot = 1;
+    for (int d=0; d<3; ++d) {
+        nr[d] = model->nk[d] * model->nkf[d];
+        nk_tot *= nr[d];
+    }
+    const index_t n_orb = model->n_orb;
+    const index_t n_spin = model->n_spin;
+    const index_t n_kpts = kdimtot(model->nk, model->nkf);
+
+    index_t buf_sz = sizeof(complex128_t)*n_kpts*POW2(n_orb*n_spin);
+    fftw_complex* fftw_buf = fftw_malloc(buf_sz);
+    complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
+    index_t stride_fft = POW2(n_orb*n_spin);
+    fftw_iodim64 dims[3];
+    dims[0].n = nr[0], dims[1].n = nr[1], dims[2].n = nr[2];
+    dims[0].is = nr[2]*nr[1]*stride_fft, dims[1].is = nr[2]*stride_fft, dims[2].is = stride_fft;
+    dims[0].os = nr[2]*nr[1]*stride_fft, dims[1].os = nr[2]*stride_fft, dims[2].os = stride_fft;
+    fftw_iodim64 howmany;
+    howmany.n = stride_fft, howmany.is = 1, howmany.os = 1;
+    fftw_plan p_forward = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, FFTW_ESTIMATE);
+    fftw_plan p_backward = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, 1, FFTW_ESTIMATE);
+
+    // fill hoppings
+    memset((void*)fftw_cbuf, 0, buf_sz);
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t idx = 0; idx<*n_hop; ++idx) {
+        index_t o1 = hop[idx].o1,
+                s1 = hop[idx].s1,
+                o2 = hop[idx].o2,
+                s2 = hop[idx].s2;
+        index_t R[3]; for (int i=0; i<3; ++i) R[i] = hop[idx].R[i];
+
+        index_t x_id = (nr[0] + R[0]) % nr[0],
+                y_id = (nr[1] + R[1]) % nr[1],
+                z_id = (nr[2] + R[2]) % nr[2];
+        index_t Ridx = IDX3(x_id, y_id, z_id, nr[1], nr[2]);
+
+        if (cabs(hop[idx].t) > hoplim) {
+            double* out = (double*)(fftw_cbuf + IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb));
+            double* in = (double*)(&hop[idx].t);
+            #pragma omp atomic
+            out[0] += in[0];
+            #pragma omp atomic
+            out[1] += in[1];
+        }
+    }
+
+    // FFT, symmetrize, IFFT
+    fftw_execute( p_forward );
+    diverge_symmetrize_2pt_fine( model, fftw_cbuf, NULL );
+    fftw_execute( p_backward );
+    for (index_t i=0; i<nk_tot*POW2(n_orb*n_spin); ++i) fftw_cbuf[i] *= 1./(double)nk_tot;
+    fftw_destroy_plan( p_forward );
+    fftw_destroy_plan( p_backward );
+
+    // find the new number of hoppings
+    *n_hop = 0;
+    for (index_t Rx=-nr[0]/2; Rx<=nr[0]/2; Rx++)
+    for (index_t Ry=-nr[1]/2; Ry<=nr[1]/2; Ry++)
+    for (index_t Rz=-nr[2]/2; Rz<=nr[2]/2; Rz++)
+    for (index_t o1=0; o1<n_orb; ++o1)
+    for (index_t o2=0; o2<n_orb; ++o2)
+    for (index_t s1=0; s1<n_spin; ++s1)
+    for (index_t s2=0; s2<n_spin; ++s2) {
+        index_t Rx_ = (Rx + nr[0]) % nr[0],
+                Ry_ = (Ry + nr[1]) % nr[1],
+                Rz_ = (Rz + nr[2]) % nr[2];
+        complex128_t elem = fftw_cbuf[IDX7(Rx_,Ry_,Rz_,s1,o1,s2,o2, nr[1],nr[2],n_spin,n_orb,n_spin,n_orb)];
+        if (cabs(elem) > hoplim) (*n_hop)++;
+    }
+
+    hop = realloc(hop, sizeof(rs_hopping_t) * (*n_hop));
+    if (swap_model_hoppings) model->hop = hop;
+    *n_hop = 0;
+    for (index_t Rx=-nr[0]/2; Rx<=nr[0]/2; Rx++)
+    for (index_t Ry=-nr[1]/2; Ry<=nr[1]/2; Ry++)
+    for (index_t Rz=-nr[2]/2; Rz<=nr[2]/2; Rz++)
+    for (index_t o1=0; o1<n_orb; ++o1)
+    for (index_t o2=0; o2<n_orb; ++o2)
+    for (index_t s1=0; s1<n_spin; ++s1)
+    for (index_t s2=0; s2<n_spin; ++s2) {
+        index_t Rx_ = (Rx + nr[0]) % nr[0],
+                Ry_ = (Ry + nr[1]) % nr[1],
+                Rz_ = (Rz + nr[2]) % nr[2];
+        complex128_t elem = fftw_cbuf[IDX7(Rx_,Ry_,Rz_,s1,o1,s2,o2, nr[1],nr[2],n_spin,n_orb,n_spin,n_orb)];
+        if (cabs(elem) > hoplim) hop[(*n_hop)++] = (rs_hopping_t){ {Rx, Ry, Rz}, o1,o2, s1,s2, elem };
+    }
+    mpi_vrb_printf( "final n_hop = %li\n", *n_hop );
+
+    fftw_free( fftw_buf );
+    return hop;
+}

@@ -408,7 +408,7 @@ struct diverge_model_t {
      * used to add additional information to the struct, useful to "hack" or
      * pass user data to function calls like :c:type:`greensfunc_generator_t`.
      */
-    char* data;
+    void* data;
     /**
      * specify how much data is actually added to the struct. This amount of
      * data is saved on calls to :c:func:`diverge_model_to_file`.
@@ -418,7 +418,7 @@ struct diverge_model_t {
      * set a nontrivial destructor for the optional data attached to the struct.
      * ignored if left untouched (NULL)
      */
-    void (*data_destructor)( char* );
+    void (*data_destructor)( void* );
 
     /** handled by code itself. please do not alter. */
     internals_t* internals;

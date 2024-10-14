@@ -68,8 +68,8 @@ typedef enum real_harmonics_t {
  */
 typedef struct sym_op_t {
     /**
-     * single character: possible choices are 'R'(rotation), 'S'(spin rotation),
-     * 'M'(mirror), 'I'(inversion), 'F'(spin flip), 'E'(identity)
+     * single character: possible choices are 'R'(rotation), 'r'(rotoinversion),
+     * 'S'(spin rotation), 'M'(mirror), 'I'(inversion), 'F'(spin flip), 'E'(identity)
      */
     char type;
     /**
@@ -78,7 +78,7 @@ typedef struct sym_op_t {
      */
     double normal_vector[3];
     /**
-     * angle of rotation (relevant for 'R', 'S')
+     * angle of rotation (relevant for 'R', 'r', 'S')
      */
     double angle;
 } sym_op_t;

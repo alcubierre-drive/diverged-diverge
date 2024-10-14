@@ -481,7 +481,7 @@ if not _libs["divERGe"] is None:
         ('gproj', greensfunc_generator_t),
         ('data', c_voidp),
         ('nbytes_data', index_t),
-        ('data_destructor', CFUNCTYPE(UNCHECKED(None), POINTER(c_char))),
+        ('data_destructor', CFUNCTYPE(UNCHECKED(None), c_voidp)),
         ('internals', POINTER(internals_t)),
     ]
 
@@ -547,6 +547,10 @@ if not _libs["divERGe"] is None:
     fukui.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp]
     fukui.restype = c_voidp
 
+    fukui_matrix = _libs["divERGe"].get("diverge_fukui_matrix", "cdecl")
+    fukui_matrix.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp]
+    fukui_matrix.restype = c_voidp
+
     qgt = _libs["divERGe"].get("diverge_qgt", "cdecl")
     qgt.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, c_voidp, index_t, c_int]
     qgt.restype = c_voidp
@@ -554,6 +558,38 @@ if not _libs["divERGe"] is None:
     kmesh_to_bands = _libs["divERGe"].get("diverge_kmesh_to_bands", "cdecl")
     kmesh_to_bands.argtypes = [POINTER(model_t), POINTER(POINTER(index_t)), POINTER(index_t)]
     kmesh_to_bands.restype = POINTER(index_t)
+
+    def kmesh_to_bands_PY( model, crs=False ):
+        """
+        get the ipz_path indices of a :c:struct:`diverge_model_t` in a pythonic
+        way, wrapping both :c:func:`diverge_kmesh_to_bands` and
+        :c:func:`diverge_kmesh_to_bands_crs`.
+
+        :param model: diverge model structure
+        :param crs: use the coarse mesh?
+
+        :return: a tuple ``(n_per_segment, pts, n_pts)``, where
+                 ``n_per_segment`` is the number of indices per ibz_path
+                 segment, ``pts`` is the array of all indices, and ``n_pts`` the
+                 length of ``pts``.
+        :rtype: (numpy array of type :c:type:`index_t`, numpy array of type
+                :c:type:`index_t`, integer)
+        """
+        pts_ptr, n_pts_ptr = POINTER(index_t)(), index_t()
+        n_per_segment_ptr = POINTER(index_t)
+        if crs:
+            n_per_segment_ptr = kmesh_to_bands_crs( model, byref(pts_ptr), byref(n_pts_ptr))
+        else:
+            n_per_segment_ptr = kmesh_to_bands( model, byref(pts_ptr), byref(n_pts_ptr))
+        n_per_segment = view_array( n_per_segment_ptr, dtype=index_t, shape=(model.contents.n_ibz_path,) )
+        pts = view_array( pts_ptr, dtype=index_t, shape=(n_pts_ptr.value,) )
+
+        n_per_segment = np.copy( n_per_segment )
+        pts = np.copy( pts )
+        mem_free( n_per_segment_ptr )
+        mem_free( pts_ptr )
+
+        return n_per_segment, pts, n_pts_ptr.value
 
     kmesh_to_bands_crs = _libs["divERGe"].get("diverge_kmesh_to_bands_crs", "cdecl")
     kmesh_to_bands_crs.argtypes = [POINTER(model_t), POINTER(POINTER(index_t)), POINTER(index_t)]
@@ -833,6 +869,8 @@ if not _libs["divERGe"] is None:
         'tu_channels',
         'tu_symmetry_maps',
         'tu_n_decomp_values',
+        'tu_lingap_atscale',
+        'tu_lingap_solver_mode',
     ]
     struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
@@ -863,6 +901,8 @@ if not _libs["divERGe"] is None:
         ('tu_channels', c_bool),
         ('tu_symmetry_maps', c_bool),
         ('tu_n_decomp_values', index_t),
+        ('tu_lingap_atscale', c_bool),
+        ('tu_lingap_solver_mode', c_char * int(3)),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 
@@ -1043,6 +1083,10 @@ if not _libs["divERGe"] is None:
     symmetrize_mom_fine = _libs["divERGe"].get("diverge_symmetrize_mom_fine", "cdecl")
     symmetrize_mom_fine.argtypes = [POINTER(model_t), POINTER(c_double), index_t, POINTER(c_double)]
     symmetrize_mom_fine.restype = c_double
+
+    symmetrize_hoppings = _libs["divERGe"].get("diverge_symmetrize_hoppings", "cdecl")
+    symmetrize_hoppings.argtypes = [POINTER(model_t), c_voidp, c_voidp, c_double]
+    symmetrize_hoppings.restype = c_voidp
 
     # Additional symmetry related stuff
     merge_rs_orb = _libs["divERGe"].get("merge_rs_orb", "cdecl")
@@ -1396,6 +1440,13 @@ if not _libs["divERGe"] is None:
             if mpi_comm_rank() == 0:
                 self.terminal.flush()
                 self.log.flush()
+
+    def kidxc2f( k, nk, nkf ):
+        kx = k // (nk[1]*nk[2])
+        ky = (k % (nk[1]*nk[2])) // nk[2]
+        kz = k % nk[2]
+        kk = ( kx*nkf[0], ky*nkf[1], kz*nkf[2] )
+        return (kk[0]*nk[1]*nkf[1] + kk[1])*nk[2]*nkf[2] + kk[2]
 
 else: # _libs["divERGe"] is None
     print( info() )

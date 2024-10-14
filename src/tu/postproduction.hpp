@@ -20,8 +20,8 @@ public:
     ~tu_postproduction();
 
     void run_and_save(string filename, bool lingaps, bool susc_ff, bool susc_full,
-            bool save_self, bool save_full,bool save_symmetries);
-    void lingap_ff();
+            bool lingap_atscale, bool save_self, bool save_full, bool save_symmetries);
+    void lingap_ff(bool atscale);
     void calc_susc(bool susz_ff, bool susz_full);
     void save_channel_leading_ev();
 
@@ -30,6 +30,7 @@ public:
     char algo;
     double cutoff;
     bool cutoff_rel;
+    char tu_lingap_solver_mode[4] = "sss";
 
     index_t* lenP;
     index_t* lenC;
@@ -89,6 +90,7 @@ private:
     bool called_suscep_full = false;
     bool skip_channel_calc;
     Vertex* vertex;
+    Vertex* internal_vertex;
     Projection* proj;
     const diverge_model_t* model;
     void _save_channel_leading_ev(complex128_t* channel, complex128_t* vec,

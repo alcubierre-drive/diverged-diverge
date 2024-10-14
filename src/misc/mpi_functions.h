@@ -48,6 +48,13 @@ MPI_Comm diverge_mpi_get_comm( void );
 index_t* diverge_mpi_distribute( index_t sz );
 
 /**
+ * returns array of length two times ``bins`` that must be freed manually. First
+ * half is the count, second the displacement. second half can be safely
+ * ignored.
+ */
+index_t* diverge_distribute( index_t sz, index_t bins );
+
+/**
  * Actual MPI Functions
  * ====================
  *

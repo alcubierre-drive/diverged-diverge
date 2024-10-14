@@ -13,12 +13,17 @@
 
 static int helper_batched_eigen_nchunks = -1;
 static int helper_batched_eigen_shut_up = 0;
+static int helper_batched_eigen_nthreads = -1;
 
 static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
         void* E_, bool real, index_t n, index_t N );
 
 void batched_eigen_shut_up( int silence ) {
     helper_batched_eigen_shut_up = silence;
+}
+
+void batched_eigen_set_nthreads( int nthr ) {
+    helper_batched_eigen_nthreads = nthr;
 }
 
 void batched_eigen( int* devices, int ndevices, complex128_t* H, complex128_t* E, index_t n, index_t N ) {
@@ -96,7 +101,7 @@ static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
     }
 
     if (work_on_cpu) {
-        ndevices = diverge_omp_num_threads();
+        ndevices = helper_batched_eigen_nthreads > 0 ? helper_batched_eigen_nthreads : diverge_omp_num_threads();
         devices = (int*)calloc(ndevices, sizeof(int));
         should_free_device_array = true;
     }

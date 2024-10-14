@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static char h_git_version[512];
-static char h_tag_version[512];
+static char h_git_version[512] = {0};
+static char h_tag_version[512] = {0};
 
 #ifndef GIT_VERSION
 #define NO_GIT_VERSION
@@ -36,19 +36,15 @@ static char h_tag_version[512];
 
 const char* get_version( void ) {
     strncpy( h_git_version, VERSION, 511 );
-    h_git_version[511] = '\0';
     return h_git_version;
 }
 
 const char* tag_version( void ) {
-
     #ifdef TAG_VERSION
     strncpy( h_tag_version, TAG_VERSION, 511 );
     #else
     strcpy( h_tag_version, "dev" );
     #endif
-
-    h_tag_version[511] = '\0';
     return h_tag_version;
 }
 

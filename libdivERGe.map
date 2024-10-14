@@ -6,6 +6,7 @@ DIVERGE_0.7 {
         diverge_compilation_status_mpi;
         diverge_compilation_status_numbers;
         diverge_compilation_status_version;
+        diverge_distribute;
         diverge_embed;
         diverge_euler_defaults_CPP;
         diverge_euler_next;
@@ -14,6 +15,7 @@ DIVERGE_0.7 {
         diverge_flow_step_dlambda;
         diverge_flow_step_euler;
         diverge_flow_step_free;
+        diverge_flow_step_get_channels;
         diverge_flow_step_get_filling_Hself;
         diverge_flow_step_init;
         diverge_flow_step_init_any;
@@ -27,10 +29,12 @@ DIVERGE_0.7 {
         diverge_flow_step_timing_descr;
         diverge_flow_step_timing_descr_vec;
         diverge_flow_step_timing_vec;
+        diverge_flow_step_type;
         diverge_flow_step_vertex;
         diverge_flow_step_vertmax;
         diverge_force_thread_limit;
         diverge_fukui;
+        diverge_fukui_matrix;
         diverge_generate_symm_maps;
         diverge_generate_symm_trafo;
         diverge_greensfunc_generator_default;
@@ -130,6 +134,7 @@ DIVERGE_0.7 {
         diverge_symmetrize_2pt_coarse;
         diverge_symmetrize_2pt_fine;
         diverge_symmetrize_greens;
+        diverge_symmetrize_hoppings;
         diverge_symmetrize_mom_coarse;
         diverge_symmetrize_mom_fine;
         merge_rs_orb;
@@ -187,5 +192,15 @@ DIVERGE_UNSTABLE {
         single_eigen_sort_part;
         single_eigen_sort_N;
         single_gemm;
+        single_square_gemm;
         single_svd;
+        tu_highsym_vertex_store;
+        tu_highsym_vertex_to_file;
+        tu_highsym_vertex_free;
+        subspace_gfill_multi_init;
+        subspace_gfill_multi_free;
+        subspace_gfill_multi_exec;
+        diverge_largemat_gf;
+        diverge_model_unique_distances;
+        diverge_model_ham2hop;
 };

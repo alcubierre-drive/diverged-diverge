@@ -51,21 +51,19 @@ static FILE* h_mpi_log_stderr( void ) {
 }
 
 void mpi_printf( const char* fmt, ... ) {
-    if (diverge_mpi_comm_rank() == 0) {
-        va_list ap;
-        va_start( ap, fmt );
+    va_list ap;
+    va_start( ap, fmt );
+    if (diverge_mpi_comm_rank() == 0)
         vfprintf( h_mpi_log_stdout(), fmt, ap );
-        va_end( ap );
-    }
+    va_end( ap );
 }
 
 void mpi_eprintf( const char* fmt, ... ) {
-    if (diverge_mpi_comm_rank() == 0) {
-        va_list ap;
-        va_start(ap, fmt);
+    va_list ap;
+    va_start(ap, fmt);
+    if (diverge_mpi_comm_rank() == 0)
         vfprintf( h_mpi_log_stderr(), fmt, ap );
-        va_end(ap);
-    }
+    va_end(ap);
 }
 
 static void mpi_veprintf( const char* fmt, va_list ap ) {
@@ -75,12 +73,11 @@ static void mpi_veprintf( const char* fmt, va_list ap ) {
 }
 
 void mpi_fprintf( FILE* file, const char* fmt, ... ) {
-    if (diverge_mpi_comm_rank() == 0) {
-        va_list ap;
-        va_start(ap, fmt);
+    va_list ap;
+    va_start(ap, fmt);
+    if (diverge_mpi_comm_rank() == 0)
         vfprintf( file, fmt, ap );
-        va_end(ap);
-    }
+    va_end(ap);
 }
 
 #ifndef DIVERGE_LOG_COLORLESS

@@ -7,8 +7,7 @@
 
 static MPI_Comm diverge_mpi_comm = NULL;
 
-index_t* diverge_mpi_distribute( index_t sz ) {
-    int nranks = diverge_mpi_comm_size();
+index_t* diverge_distribute( index_t sz, index_t nranks ) {
     index_t* howmany = (index_t*)calloc( 2*nranks, sizeof(index_t) );
     for (index_t s=0; s<sz; ++s)
         howmany[s%nranks]++;
@@ -18,6 +17,10 @@ index_t* diverge_mpi_distribute( index_t sz ) {
         offsets[r] = offsets[r-1] + howmany[r-1];
 
     return howmany;
+}
+
+index_t* diverge_mpi_distribute( index_t sz ) {
+    return diverge_distribute( sz, diverge_mpi_comm_size() );
 }
 
 #ifdef USE_MPI

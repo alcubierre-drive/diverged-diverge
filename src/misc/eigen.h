@@ -9,7 +9,10 @@ extern "C" {
 #endif
 
 void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N );
+// if N<0, use non-hermitian solver (dim=|N|) and copy the *real part* of the eigenvalues
 void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double* S, index_t N );
+
+// ALL THE SORT FUNCTIONS ASSUME FORTRAN ORDER FOR U, IN CONTRAST TO THE SINGLE_EIGEN FUNCTIONS!!!
 
 // sorting options:
 // 0: default ('M')

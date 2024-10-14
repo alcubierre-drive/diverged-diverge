@@ -49,10 +49,11 @@ static inline double fnan_gen( float payload ) {
 }
 
 static inline float fnan_get( double fnan ) {
-    if (!fnan_isnan( fnan ))
-        return NOT_A_NAN;
     float result = 0;
-    memcpy( &result, &fnan, sizeof(result) );
+    if (!fnan_isnan( fnan ))
+        memcpy( &result, &NOT_A_NAN, sizeof(result) );
+    else
+        memcpy( &result, &fnan, sizeof(result) );
     return result;
 }
 

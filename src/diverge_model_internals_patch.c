@@ -35,8 +35,11 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
         errors++;
     }
     if (kdim(model->nkf) > 1) {
-        mpi_err_printf("no support for refined mesh in $N$-patch FRG\n");
-        errors++;
+        mpi_wrn_printf("no support for refined mesh in $N$-patch FRG, reset to (nk*nkf, 1)\n");
+        for (int i=0; i<3; ++i) {
+            model->nk[i] *= model->nkf[i];
+            model->nkf[i] = 1;
+        }
     }
 
     if (errors) {

@@ -7,7 +7,8 @@
 
     <title>Supercells &#8212; divERGe 0.7 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=c058f7c8" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
     <script src="_static/documentation_options.js?v=48f8e935"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
@@ -37,7 +38,7 @@
 <span id="id1"></span><h1>Supercells<a class="headerlink" href="#supercells" title="Link to this heading">¶</a></h1>
 <dl class="c function">
 <dt class="sig sig-object c" id="c.rs_hopping_to_supercell">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rs_hopping_to_supercell</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">nr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.rs_hopping_to_supercell" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/hoppings_to_supercell.h#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rs_hopping_to_supercell</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">nr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.rs_hopping_to_supercell" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hoppings_to_supercell.h#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>map model to a cubic supercell. requires <a class="reference internal" href="Model.html#c.diverge_model_t.hop" title="diverge_model_t.hop"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.hop</span></code></a>,
 <a class="reference internal" href="Model.html#c.diverge_model_t.n_hop" title="diverge_model_t.n_hop"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.n_hop</span></code></a>, and <a class="reference internal" href="Model.html#c.diverge_model_t.lattice" title="diverge_model_t.lattice"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.lattice</span></code></a> to
 be set and modifies those members, as well as
@@ -58,7 +59,7 @@ lattice vectors are given as <span class="math notranslate nohighlight">\(L_i = 
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.rs_hopping_to_fractcell">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rs_hopping_to_fractcell</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">N1</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">N2</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">N3</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.rs_hopping_to_fractcell" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/hoppings_to_supercell.h#L27"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rs_hopping_to_fractcell</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">N1</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">N2</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">N3</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.rs_hopping_to_fractcell" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hoppings_to_supercell.h#L27"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>map hopping parameters and model to supercell and allow matrix supercells
 wrt. to the old lattice vectors. requires <a class="reference internal" href="Model.html#c.diverge_model_t.hop" title="diverge_model_t.hop"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.hop</span></code></a>,
 <a class="reference internal" href="Model.html#c.diverge_model_t.n_hop" title="diverge_model_t.n_hop"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.n_hop</span></code></a>, and <a class="reference internal" href="Model.html#c.diverge_model_t.lattice" title="diverge_model_t.lattice"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.lattice</span></code></a> to
@@ -86,7 +87,7 @@ as nr.</p>
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">divERGe</a></h1>
 
@@ -97,7 +98,16 @@ as nr.</p>
 
 
 
-<h3>Navigation</h3>
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Getting%20Started.html">Getting Started</a></li>
@@ -118,6 +128,7 @@ as nr.</p>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Supercells</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Output.html">Output</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Hacking.html">Hacking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Advanced%20Features.html">Advanced Features</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="Flow.html">Flow</a></li>
@@ -145,16 +156,6 @@ as nr.</p>
   </ul></li>
 </ul>
 </div>
-<search id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -171,8 +172,8 @@ as nr.</p>
       &#169;2024, Jonas B. Profe, Lennart Klebl.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
-      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.0.2</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
       <a href="_sources/Supercells.rst.txt"
