@@ -113,7 +113,7 @@ FlowStep::FlowStep( VertexMemory* V, Loops* L, LoopSymmetrizer* LS, bool P, bool
     } else {
         if (C != D)
             mpi_err_printf( "non-SU2 only uses D *and* C\n" );
-        _norms[0] *= 1./((double)_L->get_nspin());
+        _norms[0] *=  0.5;
         _norms[2] *= -1.0;
     }
 }

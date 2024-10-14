@@ -30,7 +30,7 @@ tu_stepper::tu_stepper(Projection* projin,tu_loop_t* loopin, Vertex* vertexin)
         norm[1] = -1.0;
         norm[2] =  2.0;
     }else{
-        norm[0] = -1./((double)std::abs(vertexin->n_spin));
+        norm[0] = -0.5;
         norm[1] = -1.0;
         norm[2] =  1.0;
     }
