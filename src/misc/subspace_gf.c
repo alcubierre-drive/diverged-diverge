@@ -35,6 +35,10 @@ void subspace_gfill_multi_free( subspace_gfill_multi_t* m ) {
 }
 
 void subspace_gfill_multi_exec( subspace_gfill_multi_t* m, complex128_t* dest, complex128_t Lambda ) {
+    subspace_gfill_multi_exec_mu( m, dest, Lambda, 0.0 );
+}
+
+void subspace_gfill_multi_exec_mu( subspace_gfill_multi_t* m, complex128_t* dest, complex128_t Lambda, double mu_add ) {
     const index_t no = m->n_orbs,
                   *orbs = m->orbs,
                   nk = m->nk,
@@ -50,7 +54,7 @@ void subspace_gfill_multi_exec( subspace_gfill_multi_t* m, complex128_t* dest, c
         for (index_t p=0; p<no; ++p) {
             complex128_t tmp = 0.0;
             for (index_t b=0; b<nb; ++b)
-                tmp += U[IDX3(k,b,orbs[o],nb,nb)] * conj(U[IDX3(k,b,orbs[p],nb,nb)]) / (L - E[IDX2(k,b,nb)]);
+                tmp += U[IDX3(k,b,orbs[o],nb,nb)] * conj(U[IDX3(k,b,orbs[p],nb,nb)]) / (L - E[IDX2(k,b,nb)] + mu_add);
             dest[IDX4(sign, k, o, p, nk, no, no)] = tmp;
         }
     }
@@ -68,7 +72,10 @@ void subspace_gfill_multi_free( subspace_gfill_multi_t* m ) {
     subspace_gfill_multi_free_cu( m );
 }
 void subspace_gfill_multi_exec( subspace_gfill_multi_t* m, complex128_t* dest, complex128_t Lambda ) {
-    subspace_gfill_multi_exec_cu( m, dest, Lambda );
+    subspace_gfill_multi_exec_mu( m, dest, Lambda, 0.0 );
+}
+void subspace_gfill_multi_exec_mu( subspace_gfill_multi_t* m, complex128_t* dest, complex128_t Lambda, double mu_add ) {
+    subspace_gfill_multi_exec_cu( m, dest, Lambda, mu_add );
 }
 
 #endif // USE_CUDA

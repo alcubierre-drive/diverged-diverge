@@ -11,7 +11,7 @@ typedef cuDoubleComplex ccomplex128_t;
 
 // assumes all arrays to be GPU
 __global__ void subspace_gfill_gpu( const double* E, const ccomplex128_t* U,
-        ccomplex128_t Lambda, ccomplex128_t* out, index_t nb,
+        ccomplex128_t Lambda, double mu_add, ccomplex128_t* out, index_t nb,
         const index_t* orbs, index_t n_orbs, index_t b_per_bb ) {
 
     extern __shared__ ccomplex128_t bufs[];
@@ -31,7 +31,7 @@ __global__ void subspace_gfill_gpu( const double* E, const ccomplex128_t* U,
     for (index_t b=bstart; b<bstop; ++b) {
         if (b >= nb) continue;
         ccomplex128_t cLambda_X = Lambda;
-        cLambda_X.x -= E[IDX2(k,b,nb)];
+        cLambda_X.x -= E[IDX2(k,b,nb)] - mu_add;
         *buf = cuCadd( *buf, cuCdiv( cuCmul( U[IDX3(k,b,orbs[o1],nb,nb)], cuConj(U[IDX3(k,b,orbs[o2],nb,nb)]) ), cLambda_X ) );
     }
 
@@ -93,10 +93,10 @@ subspace_gfill_gpu_handle_t* subspace_gfill_gpu_init_dev( double* E, ccomplex128
     return h;
 }
 
-void subspace_gfill_gpu_kwrap( subspace_gfill_gpu_handle_t* h, ccomplex128_t Lambda ) {
+void subspace_gfill_gpu_kwrap( subspace_gfill_gpu_handle_t* h, ccomplex128_t Lambda, double mu_add ) {
     index_t biter = h->nb/h->b_per_bb;
     subspace_gfill_gpu<<<dim3(h->kcount,1,1), dim3(biter, h->n_orbs, h->n_orbs), sizeof(ccomplex128_t)*biter*h->n_orbs*h->n_orbs>>>(
-            h->E, h->U, Lambda, h->out, h->nb, h->orbs, h->n_orbs, h->b_per_bb );
+            h->E, h->U, Lambda, mu_add, h->out, h->nb, h->orbs, h->n_orbs, h->b_per_bb );
 }
 
 void subspace_gfill_gpu_free_dev( subspace_gfill_gpu_handle_t* h ) {
@@ -136,7 +136,7 @@ void subspace_gfill_multi_free_cu( subspace_gfill_multi_t* m ) {
     free( m );
 }
 
-void subspace_gfill_multi_exec_cu( subspace_gfill_multi_t* m, complex128_t* dest, complex128_t Lambda_ ) {
+void subspace_gfill_multi_exec_cu( subspace_gfill_multi_t* m, complex128_t* dest, complex128_t Lambda_, double mu_add ) {
 
     ccomplex128_t Lambda_p, Lambda_m;
     *(complex128_t*)&Lambda_p = Lambda_;
@@ -147,11 +147,11 @@ void subspace_gfill_multi_exec_cu( subspace_gfill_multi_t* m, complex128_t* dest
         threads.push_back( thread( [&]( int device ){
             subspace_gfill_gpu_handle_t* h = m->handles[device];
             cudaSetDevice( h->dev );
-            subspace_gfill_gpu_kwrap( h, Lambda_p );
+            subspace_gfill_gpu_kwrap( h, Lambda_p, mu_add );
             cudaDeviceSynchronize();
             memcpy( dest + h->kdispl*h->n_orbs*h->n_orbs, h->out,
                     sizeof(complex128_t)*h->kcount*h->n_orbs*h->n_orbs );
-            subspace_gfill_gpu_kwrap( h, Lambda_m );
+            subspace_gfill_gpu_kwrap( h, Lambda_m, mu_add );
             cudaDeviceSynchronize();
             memcpy( dest + h->nk*h->n_orbs*h->n_orbs + h->kdispl*h->n_orbs*h->n_orbs, h->out,
                     sizeof(complex128_t)*h->kcount*h->n_orbs*h->n_orbs );

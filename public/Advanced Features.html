@@ -148,6 +148,15 @@ safe to use in a scenario where the target buffer resides in shared memory.</p>
 </div>
 </dd></dl>
 
+<dl class="c function">
+<dt class="sig sig-object c" id="c.subspace_gfill_multi_exec_mu">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subspace_gfill_multi_exec_mu</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.subspace_gfill_multi_t" title="subspace_gfill_multi_t"><span class="n"><span class="pre">subspace_gfill_multi_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">dest</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">Lambda</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">mu_add</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.subspace_gfill_multi_exec_mu" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/subspace_gf.h#L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>same as <a class="reference internal" href="#c.subspace_gfill_multi_exec" title="subspace_gfill_multi_exec"><code class="xref c c-func docutils literal notranslate"><span class="pre">subspace_gfill_multi_exec()</span></code></a> except for an additional chemical
+potential that is subtracted from the eigenvalues. Useful for GPU
+calculations, because there, the eigenvalue buffer is copied to the device
+and <em>not</em> automatically updated.</p>
+</dd></dl>
+
 </section>
 <section id="unique-distances">
 <h2>Unique Distances<a class="headerlink" href="#unique-distances" title="Link to this heading">¶</a></h2>

@@ -88,6 +88,14 @@ void subspace_gfill_multi_free( subspace_gfill_multi_t* m );
  */
 void subspace_gfill_multi_exec( subspace_gfill_multi_t* m, complex128_t* dest, complex128_t Lambda );
 
+/**
+ * same as :c:func:`subspace_gfill_multi_exec` except for an additional chemical
+ * potential that is subtracted from the eigenvalues. Useful for GPU
+ * calculations, because there, the eigenvalue buffer is copied to the device
+ * and *not* automatically updated.
+ */
+void subspace_gfill_multi_exec_mu( subspace_gfill_multi_t* m, complex128_t* dest, complex128_t Lambda, double mu_add );
+
 #ifdef __cplusplus
 }
 #endif
