@@ -202,6 +202,7 @@ DIVERGE_UNSTABLE {
         single_square_gemm;
         single_svd;
         subspace_gfill_multi_exec;
+        subspace_gfill_multi_exec_mu;
         subspace_gfill_multi_free;
         subspace_gfill_multi_init;
         tu_highsym_vertex_free;
