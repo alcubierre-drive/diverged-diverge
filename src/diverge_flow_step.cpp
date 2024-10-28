@@ -337,6 +337,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
     grid::VertexMemory* grid_V = (grid::VertexMemory*)intls->grid_vertex;
     npatch_vertex_t* patch_V = (npatch_vertex_t*)intls->patch_vertex;
     Vertex* tu_V = st->tu_vertex;
+    Projection* tu_Proj = st->tu_proj;
 
     // DEVELOPERS
     //
@@ -382,13 +383,23 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                 toupper(chan) != 'D' &&
                 toupper(chan) != 'S') {
                 mpi_wrn_printf("for TUFRG vertex chan must be one of 'PCDSpcds'. default: 'D'.\n");
-                result.channel = 'D';
+                result.channel = chan = 'D';
             }
-            result.ary = (toupper(chan) == 'P') ? tu_V->Pch :
-                         (toupper(chan) == 'C') ? tu_V->Cch :
-                         (toupper(chan) == 'D') ? tu_V->Dch :
-                                                  tu_V->self_en;
+
+            if (toupper(chan) != 'S') {
+                if (isupper(chan)) {
+                    result.ary = (chan == 'P') ? tu_V->Pch :
+                                 (chan == 'C') ? tu_V->Cch :
+                                /*chan == 'D'*/  tu_V->Dch;
+                } else {
+                    result.ary = tu_V->projection_helper;
+                    if (chan == 'p') P_projection(tu_V->projection_helper, tu_V, tu_Proj);
+                    if (chan == 'c') C_projection(tu_V->projection_helper, tu_V, tu_Proj);
+                    if (chan == 'd') D_projection(tu_V->projection_helper, tu_V, tu_Proj);
+                }
+            }
             if (toupper(chan) == 'S') {
+                result.ary = tu_V->self_en;
                 result.q_0 = 0;
                 result.q_1 = 0;
                 result.nk = tu_V->nkf * tu_V->nk;
