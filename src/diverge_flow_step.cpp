@@ -397,18 +397,16 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                     if (chan == 'c') C_projection(tu_V->projection_helper, tu_V, tu_Proj);
                     if (chan == 'd') D_projection(tu_V->projection_helper, tu_V, tu_Proj);
                 }
-            }
-            if (toupper(chan) == 'S') {
+                result.q_0 = tu_V->my_nk_off;
+                result.q_1 = tu_V->my_nk_off + tu_V->my_nk;
+                result.nk = 0;
+                result.n_orbff = tu_V->n_orbff;
+            } else {
                 result.ary = tu_V->self_en;
                 result.q_0 = 0;
                 result.q_1 = 0;
                 result.nk = tu_V->nkf * tu_V->nk;
                 result.n_orbff = mod->n_orb;
-            } else {
-                result.q_0 = tu_V->my_nk_off;
-                result.q_1 = tu_V->my_nk_off + tu_V->my_nk;
-                result.nk = 0;
-                result.n_orbff = tu_V->n_orbff;
             }
             result.n_spin = mod->n_spin;
             result.backend = 'T';
