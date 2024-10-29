@@ -104,11 +104,11 @@ void diverge_flow_step_free( diverge_flow_step_t* st );
 typedef struct {
     /** pointer to the raw memory behind the vertex */
     complex128_t* ary;
-    /** start and of the 'q' dimension ('k1' in the case of grid-FRG and chan == 'V') */
+    /** start of the 'q' dimension ('k1' in the case of grid-FRG and chan == 'V') */
     index_t q_0;
-    /** stop and of the 'q' dimension ('k1' in the case of grid-FRG and chan == 'V') */
+    /** stop of the 'q' dimension ('k1' in the case of grid-FRG and chan == 'V') */
     index_t q_1;
-    /** number of k points */
+    /** number of k points, not used for TUFRG vertices */
     index_t nk;
     /** number of orbitals & formfactors, returns number of orbitals for patch and grid */
     index_t n_orbff;
