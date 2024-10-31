@@ -1,6 +1,6 @@
 #!/bin/bash
 
-START_LINE_COMPILE_SCRIPT=22
+START_LINE_COMPILE_SCRIPT=24
 make clean
 mkdir -p build_release
 tail -n+${START_LINE_COMPILE_SCRIPT} $0 > build_release/compile.sh
@@ -17,6 +17,8 @@ echo 'DEFINE_VERSION := -DTAG_VERSION=\"'${TAG_VERSION}'\"' > build_release/dive
 docker run -t -i --rm -v `pwd`/build_release:/io \
     ghcr.io/phusion/holy-build-box/hbb-64 \
     /hbb_exe/activate-exec bash /io/compile.sh
+cp build_release/diverge/divERGe .
+cp build_release/diverge/libdivERGe.so .
 exit 0
 
 #!/bin/bash
