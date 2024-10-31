@@ -1,6 +1,6 @@
 #!/bin/bash
 
-START_LINE_COMPILE_SCRIPT=20
+START_LINE_COMPILE_SCRIPT=22
 make clean
 mkdir -p build_release
 tail -n+${START_LINE_COMPILE_SCRIPT} $0 > build_release/compile.sh
@@ -14,7 +14,9 @@ cp -r examples/ build_release/diverge
 cp -r util/ build_release/diverge
 TAG_VERSION="$(git tag --list "v*.*" | tail -n1)"
 echo 'DEFINE_VERSION := -DTAG_VERSION=\"'${TAG_VERSION}'\"' > build_release/diverge/Makefile.local
-docker run -t -i --rm -v `pwd`/build_release:/io ghcr.io/phusion/holy-build-box/hbb-64 /hbb_exe/activate-exec bash /io/compile.sh
+docker run -t -i --rm -v `pwd`/build_release:/io \
+    ghcr.io/phusion/holy-build-box/hbb-64 \
+    /hbb_exe/activate-exec bash /io/compile.sh
 exit 0
 
 #!/bin/bash

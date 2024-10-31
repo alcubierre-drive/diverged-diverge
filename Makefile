@@ -148,8 +148,12 @@ export DIVERGE_MV
 export DIVERGE_CP
 export DIVERGE_MKDIR
 export DIVERGE_RM
-dist: $(NAME) $(NAME_LIB)
+dist:
+	@bash ./build_release.sh
+	@cp build_release/diverge/divERGe .
+	@cp build_release/diverge/libdivERGe.so .
 	$(MAKE) $(MFLAGS) -C util
+	@bash ./release.sh
 
 EXAMPLES := $(shell find examples/ -iname "*.cpp") \
 	$(shell find examples/ -iname "*.c") \
