@@ -126,7 +126,7 @@ types.vim: $(SRC_C) $(SRC_CPP) $(HEADERS) Makefile $(wildcard Makefile.local Mak
 
 clean:
 	-@$(RM) -rf $(NAME) $(NAME_GPU) $(NAME_GPU_LINK) $(NAME_LIB) types.vim
-	-@$(RM) -rf $(shell find . -type f -name '*.o') $(shell find . -type f -name '*.d')
+	-@$(RM) -rf $(shell find . -type f -name '*.o' -not -path './build_release/*') $(shell find . -type f -name '*.d' -not -path './build_release/*')
 	-@$(RM) -rf divERGe.tar.gz divERGe_src.tar
 	# make -C sphinx clean
 
