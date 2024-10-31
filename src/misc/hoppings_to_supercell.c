@@ -118,6 +118,10 @@ void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
         return;
     }
 
+    if (m->n_sym != 0) {
+        mpi_wrn_printf( "found n_sym=%li and orb_symmetries=%p in supercell; this might lead to SIGSEGV\n", m->n_sym, m->orb_symmetries );
+    }
+
     supercell_t* s = supercell_gen( N1, N2, N3 );
 
     mpi_vrb_printf( "model to supercell (%i,%i,%i) (%i,%i,%i), (%i,%i,%i)\n",
