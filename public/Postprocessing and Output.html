@@ -37,7 +37,7 @@
 <span id="id1"></span><h1>Postprocessing and Output<a class="headerlink" href="#postprocessing-and-output" title="Link to this heading">¶</a></h1>
 <dl class="c struct">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t">
-<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_conf_t</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L12"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_conf_t</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L12"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Default values are obtained using
 <a class="reference internal" href="#c.diverge_postprocess_conf_defaults_CPP" title="diverge_postprocess_conf_defaults_CPP"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_postprocess_conf_defaults_CPP()</span></code></a> from C/C++/Python and the
 static constant variable <a class="reference internal" href="#c.diverge_postprocess_conf_defaults" title="diverge_postprocess_conf_defaults"><code class="xref c c-var docutils literal notranslate"><span class="pre">diverge_postprocess_conf_defaults</span></code></a> from C.</p>
@@ -60,103 +60,103 @@ they are given in the (linked) source file <code class="docutils literal notrans
 </div>
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.patch_q_matrices">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L31"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L31"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>include the channelized matrices in the save</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.patch_q_matrices_use_dV">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices_use_dV</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices_use_dV" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L33"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices_use_dV</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices_use_dV" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L33"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>use dV instead of V for the channelized matrices</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.patch_q_matrices_nv">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices_nv</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices_nv" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L35"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices_nv</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices_nv" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L35"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>how many eigenvectors. -1: full (no eigen), 0: all, &gt;0: number</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.patch_q_matrices_max_rel">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices_max_rel</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices_max_rel" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L37"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices_max_rel</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices_max_rel" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L37"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>restrict analysis to q_norm &lt;= &lt;val&gt;. if &lt;0  or &gt;1, no restriction.</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.patch_q_matrices_eigen_which">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices_eigen_which</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices_eigen_which" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_q_matrices_eigen_which</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_q_matrices_eigen_which" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>sort q matrices eigenvalues by ‘M’agnitude, ‘P’ositive, ‘N’egative, or ‘A’lternating values</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.patch_V">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_V</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_V" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L41"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_V</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_V" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L41"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>include vertex in save</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.patch_dV">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_dV</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_dV" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_dV</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_dV" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>include dV in save</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.patch_Lp">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_Lp</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_Lp" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L45"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_Lp</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_Lp" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L45"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>include plus loop in save</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.patch_Lm">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_Lm</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_Lm" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch_Lm</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.patch_Lm" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>include minus loop in save</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.grid_lingap_vertex_file_P">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_lingap_vertex_file_P</span></span></span><span class="p"><span class="pre">[</span></span><span class="n"><span class="pre">MAX_NAME_LENGTH</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_lingap_vertex_file_P" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L50"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_lingap_vertex_file_P</span></span></span><span class="p"><span class="pre">[</span></span><span class="n"><span class="pre">MAX_NAME_LENGTH</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_lingap_vertex_file_P" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L50"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>output the q=0 linearized gap vertex of the P channel to the file (if != “”)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.grid_lingap_vertex_file_C">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_lingap_vertex_file_C</span></span></span><span class="p"><span class="pre">[</span></span><span class="n"><span class="pre">MAX_NAME_LENGTH</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_lingap_vertex_file_C" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L52"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_lingap_vertex_file_C</span></span></span><span class="p"><span class="pre">[</span></span><span class="n"><span class="pre">MAX_NAME_LENGTH</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_lingap_vertex_file_C" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L52"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>output the q=0 linearized gap vertex of the C channel to the file (if != “”)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.grid_lingap_vertex_file_D">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_lingap_vertex_file_D</span></span></span><span class="p"><span class="pre">[</span></span><span class="n"><span class="pre">MAX_NAME_LENGTH</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_lingap_vertex_file_D" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L54"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_lingap_vertex_file_D</span></span></span><span class="p"><span class="pre">[</span></span><span class="n"><span class="pre">MAX_NAME_LENGTH</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_lingap_vertex_file_D" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L54"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>output the q=0 linearized gap vertex of the D channel to the file (if != “”)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.grid_n_singular_values">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_n_singular_values</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_n_singular_values" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L56"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_n_singular_values</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_n_singular_values" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L56"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>number of singular values to save for the lineraized gap solutions</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.grid_use_loop">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_use_loop</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_use_loop" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L58"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_use_loop</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_use_loop" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L58"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>include the loop in the linearized gap solution</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.grid_vertex_file">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_vertex_file</span></span></span><span class="p"><span class="pre">[</span></span><span class="n"><span class="pre">MAX_NAME_LENGTH</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_vertex_file" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L60"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_vertex_file</span></span></span><span class="p"><span class="pre">[</span></span><span class="n"><span class="pre">MAX_NAME_LENGTH</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_vertex_file" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L60"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>write the full vertex to this file (if != “”)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.grid_vertex_chan">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_vertex_chan</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_vertex_chan" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L62"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">grid_vertex_chan</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.grid_vertex_chan" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L62"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>choose the channel to write the vertex in</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_which_solver_mode">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_which_solver_mode</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_which_solver_mode" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L66"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_which_solver_mode</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_which_solver_mode" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L66"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>choose how to handle non hermitian entries of the channel
 diagonalization. options: ‘a’(utomatic), ‘s’(vd), ‘e’(igen), ‘b’(atched
 eigen), ‘B’(atched SVD)</p>
@@ -164,80 +164,80 @@ eigen), ‘B’(atched SVD)</p>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_skip_channel_calc">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_skip_channel_calc</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_skip_channel_calc" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L71"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_skip_channel_calc</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_skip_channel_calc" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L71"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>if true, the eigenvectors of each channel are not calculated. useful for RPA calculations</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_storing_threshold">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_storing_threshold</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_storing_threshold" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L73"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_storing_threshold</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_storing_threshold" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L73"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>sets a theshold above which all eigen/singular vectors will be stored (magnitude)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_storing_relative">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_storing_relative</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_storing_relative" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_storing_relative</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_storing_relative" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>use a relative storing threshold instead of the aboslute one</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_n_singular_values">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_n_singular_values</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_n_singular_values" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L77"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_n_singular_values</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_n_singular_values" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L77"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>number of singular/eigen values to save for the lineraized gap solutions</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_lingap">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_lingap</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_lingap" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L79"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_lingap</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_lingap" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L79"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>calculate the linearized gap solution</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_susceptibilities_full">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_susceptibilities_full</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_susceptibilities_full" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L81"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_susceptibilities_full</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_susceptibilities_full" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L81"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>calculate the susceptibilities from tufrg in o_1-o_4 notation</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_susceptibilities_ff">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_susceptibilities_ff</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_susceptibilities_ff" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L83"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_susceptibilities_ff</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_susceptibilities_ff" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L83"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>calculate the susceptibilities from tufrg in formfactor space</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_selfenergy">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_selfenergy</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_selfenergy" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L85"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_selfenergy</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_selfenergy" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L85"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>store the selfenergy if it was included in the calculation</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_channels">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_channels</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_channels" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L87"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_channels</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_channels" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L87"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>store the vertices in the formfactor basis (<em>requires a lot of memory</em>)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_symmetry_maps">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_symmetry_maps</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_symmetry_maps" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L89"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_symmetry_maps</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_symmetry_maps" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L89"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>store the symmetry transfromations for the left multiindex (works for eigenvectors)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_n_decomp_values">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_n_decomp_values</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_n_decomp_values" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_n_decomp_values</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_n_decomp_values" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>store the N leading values of the channel eigendecomposition/SVD. ignored if zero</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_lingap_atscale">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_lingap_atscale</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_lingap_atscale" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L94"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_lingap_atscale</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_lingap_atscale" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L94"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>use the at-scale propagator instead of the integrated one in the
 linearized gap, useful for RPA</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_lingap_solver_mode">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_lingap_solver_mode</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_lingap_solver_mode" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L99"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_lingap_solver_mode</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_lingap_solver_mode" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L99"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>choose how to handle diagonalizations in the linearized gap equations for
 each of the channels (PCD, as index), useful for RPA. options: <code class="docutils literal notranslate"><span class="pre">'s'</span></code>
 (svd), <code class="docutils literal notranslate"><span class="pre">'E'</span></code> (eigen, sort by absolute value), <code class="docutils literal notranslate"><span class="pre">'e'</span></code> (eigen, sort
@@ -249,19 +249,19 @@ from smallest)</p>
 
 <dl class="c var">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_defaults">
-<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_postprocess_conf_t" title="diverge_postprocess_conf_t"><span class="n"><span class="pre">diverge_postprocess_conf_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_conf_defaults</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_defaults" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L114"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_postprocess_conf_t" title="diverge_postprocess_conf_t"><span class="n"><span class="pre">diverge_postprocess_conf_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_conf_defaults</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_defaults" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L114"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>defaults for C</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_defaults_CPP">
-<a class="reference internal" href="#c.diverge_postprocess_conf_t" title="diverge_postprocess_conf_t"><span class="n"><span class="pre">diverge_postprocess_conf_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_conf_defaults_CPP</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_postprocess_conf_defaults_CPP" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L151"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="#c.diverge_postprocess_conf_t" title="diverge_postprocess_conf_t"><span class="n"><span class="pre">diverge_postprocess_conf_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_conf_defaults_CPP</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_postprocess_conf_defaults_CPP" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L151"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>return default values in C, C++, and Python</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_postprocess_and_write">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_and_write</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><span class="n"><span class="pre">diverge_flow_step_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">st</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_postprocess_and_write" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L155"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_and_write</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><span class="n"><span class="pre">diverge_flow_step_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">st</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_postprocess_and_write" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L155"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Post-processing and output to disk as .dvg file. Those files can be read by
 the <code class="docutils literal notranslate"><span class="pre">diverge.output</span></code> Python library (see <a class="reference internal" href="Simulation%20Output.html#simulation-output"><span class="std std-ref">Simulation Output</span></a>).
 File format specification depends on the chosen backend. In general, the
@@ -285,7 +285,7 @@ use <a class="reference internal" href="#c.diverge_postprocess_and_write_finegra
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_postprocess_and_write_finegrained">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_and_write_finegrained</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><span class="n"><span class="pre">diverge_flow_step_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">st</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_postprocess_conf_t" title="diverge_postprocess_conf_t"><span class="n"><span class="pre">diverge_postprocess_conf_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">cfg</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_postprocess_and_write_finegrained" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_post.h#L188"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_postprocess_and_write_finegrained</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><span class="n"><span class="pre">diverge_flow_step_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">st</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_postprocess_conf_t" title="diverge_postprocess_conf_t"><span class="n"><span class="pre">diverge_postprocess_conf_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">cfg</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_postprocess_and_write_finegrained" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_post.h#L188"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>same as <a class="reference internal" href="#c.diverge_postprocess_and_write" title="diverge_postprocess_and_write"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_postprocess_and_write()</span></code></a> but with control over the
 parameters in <a class="reference internal" href="#c.diverge_postprocess_conf_t" title="diverge_postprocess_conf_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_postprocess_conf_t</span></code></a>.
 <a class="reference internal" href="#c.diverge_postprocess_and_write" title="diverge_postprocess_and_write"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_postprocess_and_write()</span></code></a> uses the defaults

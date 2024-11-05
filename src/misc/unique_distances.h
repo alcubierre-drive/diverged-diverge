@@ -31,6 +31,12 @@ typedef struct diverge_model_t diverge_model_t;
 double* diverge_model_unique_distances( diverge_model_t* m, int Rmax, int dim );
 
 /**
+ * set the precision used to calculate unique distances. not thread safe. useful
+ * in case the model has very large values as lattice constant.
+ */
+void diverge_model_unique_distances_set_precision( double prec );
+
+/**
  * return the length of the unique distance array by checking for quiet NaN (see
  * src/misc/qnan.h). In practice, unique distances can be obtained as follows:
  *
@@ -45,10 +51,7 @@ double* diverge_model_unique_distances( diverge_model_t* m, int Rmax, int dim );
  *
  *  free( dists );
  */
-static inline index_t diverge_model_unique_distances_length( double* dists ) {
-    index_t n_dists = -1; while (!qnan_isnan(dists[++n_dists])) {}
-    return n_dists;
-}
+index_t diverge_model_unique_distances_length( double* dists );
 
 #ifdef __cplusplus
 }

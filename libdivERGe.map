@@ -194,6 +194,8 @@ DIVERGE_UNSTABLE {
         diverge_largemat_gf;
         diverge_model_ham2hop;
         diverge_model_unique_distances;
+        diverge_model_unique_distances_length;
+        diverge_model_unique_distances_set_precision;
         single_eigen;
         single_eigen_sort;
         single_eigen_sort_N;

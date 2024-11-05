@@ -555,6 +555,18 @@ if not _libs["divERGe"] is None:
     qgt.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, c_voidp, index_t, c_int]
     qgt.restype = c_voidp
 
+    unique_distances = _libs["divERGe"].get("diverge_model_unique_distances", "cdecl")
+    unique_distances.argtypes = [POINTER(model_t), c_int, c_int]
+    unique_distances.restype = c_voidp
+
+    unique_distances_set_precision = _libs["divERGe"].get("diverge_model_unique_distances_set_precision", "cdecl")
+    unique_distances_set_precision.argtypes = [c_double]
+    unique_distances_set_precision.restype = None
+
+    unique_distances_length = _libs["divERGe"].get("diverge_model_unique_distances_length", "cdecl")
+    unique_distances_length.argtypes = [c_voidp]
+    unique_distances_length.restype = index_t
+
     kmesh_to_bands = _libs["divERGe"].get("diverge_kmesh_to_bands", "cdecl")
     kmesh_to_bands.argtypes = [POINTER(model_t), POINTER(POINTER(index_t)), POINTER(index_t)]
     kmesh_to_bands.restype = POINTER(index_t)

@@ -7,6 +7,12 @@
 #include "linalg.h"
 LINALG_IMPLEMENT
 
+static double unique_distance_equal = DIVERGE_EPS_MESH;
+
+void diverge_model_unique_distances_set_precision( double prec ) {
+    unique_distance_equal = fabs(prec);
+}
+
 static int compare_dbl( const void* a_, const void* b_ );
 
 double* diverge_model_unique_distances( diverge_model_t* m, int Rmax, int dim ) {
@@ -36,7 +42,7 @@ double* diverge_model_unique_distances( diverge_model_t* m, int Rmax, int dim ) 
 
     index_t last_unique_idx = 0;
     for (index_t idx=1; idx<n_dist; ++idx) {
-        if (fabs(dist[idx] - dist[last_unique_idx]) > DIVERGE_EPS_MESH) {
+        if (fabs(dist[idx] - dist[last_unique_idx]) > unique_distance_equal) {
             dist[++last_unique_idx] = dist[idx];
         }
     }
@@ -55,3 +61,7 @@ static int compare_dbl( const void* a_, const void* b_ ) {
         return 0;
 }
 
+index_t diverge_model_unique_distances_length( double* dists ) {
+    index_t n_dists = -1; while (!qnan_isnan(dists[++n_dists])) {}
+    return n_dists;
+}
