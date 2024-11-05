@@ -8,11 +8,15 @@
 extern "C" {
 #endif
 
-// calculate batched 'zgemd' product
-// out = U * diag(E) * adjoint(U) * alpha + out * beta
-// for the arrays out( num, N, N ), U( num, N, N ), E( num, N )
-
-// TODO implement GPU version
+/**
+ * calculate batched 'zgemd' product
+ *
+ * :math:`O = U * \mathrm{diag}(E) * U^\dagger * \alpha + O * \beta`
+ *
+ * for the arrays out( num, N, N ) (:math:`O`), U( num, N, N ), E( num, N )
+ *
+ * .. note:: currently, no GPU version is implemented.
+ */
 void batched_zgemd_r( complex128_t* out, complex128_t* U, double* E,
         complex128_t alpha, complex128_t beta, index_t N, index_t num );
 
