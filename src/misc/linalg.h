@@ -122,7 +122,8 @@ typedef _Complex double complex128_t;
  * To get used to this mini-library, you can have a look at e.g.
  * src/misc/hoppings_to_supercell.c (mostly integers) or
  * src/diverge_symmetrize_generate_symm_maps.c (3 dimensional double vectors,
- * i.e., claV3d_t).
+ * i.e., claV3d_t). It feels a bit like stack-only Eigen3, but for C (so
+ * functions and no overloads).
  */
 
 #ifndef LINALG_IMPLEMENT
