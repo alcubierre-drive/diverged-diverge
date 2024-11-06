@@ -1,6 +1,40 @@
 #!/bin/bash
+set -e
+set -x
 
-START_LINE_COMPILE_SCRIPT=24
+# For this script to work, you must set up docker correctly: The userns feature
+# is used in order to map the root user in the container to the host user that
+# executes this script. So you have to modify the following configuration files
+# on the host
+#
+# /etc/docker/daemon.json
+#
+# {
+#    "userns-remap": "HOST_BUILD_USER:HOST_BUILD_GROUP"
+# }
+#
+#
+# /etc/subuid
+#
+# HOST_BUILD_USER:HOST_BUILD_UID:65535
+#
+#
+# /etc/subgid
+#
+# HOST_BUILD_USER:HOST_BUILD_GID:65535
+# HOST_BUILD_GROUP:HOST_BUILD_GID:65535
+#
+#
+# with
+#
+# HOST_BUILD_USER the build user name on the host
+# HOST_BUILD_GROUP the build user group on the host
+# HOST_BUILD_UID the build user id on the host
+# HOST_BUILD_GID the build group id on the host
+#
+# The values can be found by executing id as the host user.
+
+START_LINE_COMPILE_SCRIPT=58
 make clean
 mkdir -p build_release
 tail -n+${START_LINE_COMPILE_SCRIPT} $0 > build_release/compile.sh
