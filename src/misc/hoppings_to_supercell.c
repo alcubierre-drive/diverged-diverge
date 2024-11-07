@@ -20,13 +20,6 @@ typedef struct {
 
 #define SGN( i ) ((i)>0 ? 1 : -1)
 
-static inline claV3i_t claV3i_cross( claV3i_t a, claV3i_t b ) {
-    claV3i_t c = {{ a.v[2-1]*b.v[3-1] - a.v[3-1]*b.v[2-1],
-                    a.v[3-1]*b.v[1-1] - a.v[1-1]*b.v[3-1],
-                    a.v[1-1]*b.v[2-1] - a.v[2-1]*b.v[1-1] }};
-    return c;
-}
-
 static void supercell_del( supercell_t* s ) {
     free( s->cells );
     free( s );

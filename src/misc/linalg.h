@@ -48,10 +48,10 @@ typedef _Complex double complex128_t;
  *
  *  LINALG_IMPL( LINALG_PREFIX, 7 )
  *
- * where ``LINALG_PREFIX`` is expanded to ``cla`` (other prefices may be defined
- * by defining  ``LINALG_PREFIX`` or giving something else to ``LINALG_IMPL``),
- * and ``7`` represents the dimension. If you want to only declare functions and
- * not implement them (for e.g. C++), you can write
+ * where ``LINALG_PREFIX`` is expanded to ``cla`` (other prefices may be used by
+ * either defining  ``LINALG_PREFIX`` or giving something else to
+ * ``LINALG_IMPL``), and ``7`` represents the dimension. If you want to only
+ * declare functions and not implement them (for e.g. C++), you can write
  *
  * .. sourcecode:: C++
  *
@@ -70,15 +70,25 @@ typedef _Complex double complex128_t;
  *
  * The funcion names are made from a prefix ``P``, a vector/matrix indicator
  * ``X`` (can be ``V`` or ``M``), a dimension indicator ``D`` (an integer), and
- * a datatype indicator ``T`` (the four datatype indicators are given above). The
- * convention then is ``PXDT``. For example, if the prefix is ``cla`` (the
- * default), all functions operating on three-dimensional double vectors begin
- * with ``claV3d``, and the three dimensional vector data type is called
- * ``claV3d_t``. Each macro invokation of ``LINALG_IMPL`` or ``LINALG_TYPES``
- * declares/defines the following types and functions:
+ * a datatype indicator ``T`` (the four datatype indicators are ``d``:
+ * ``double``, ``cd``: :c:type:`complex128_t`, ``i``: ``int``, ``ll``:
+ * ``int64_t``). The convention then is ``PXDT``. For example, if the prefix is
+ * ``cla`` (the default), all functions operating on three-dimensional double
+ * vectors begin with ``claV3d``, and the three dimensional vector data type is
+ * called ``claV3d_t``.
  *
- *   * ``PVDT_t``: the vector type, member ``T v[D]`` holds the data
+ * Each macro invokation of ``LINALG_IMPL`` or ``LINALG_TYPES`` declares/defines
+ * the following types and functions:
+ *
+ * Vectors: ``PVDT_t``
+ * -------------------
+ * The structure ``PVDT_t`` (e.g. ``claV3d_t`` for a three-dimensional vector
+ * of doubles) has one static array of datatype ``T`` as member: ``T v[D]``.
+ * This member holds the vector's data. The following vector functions are
+ * available:
+ *
  *   * ``PVDT_t PVDT_zero( void )``: generate a zero vector
+ *   * ``PVDT_t PVDT_const( T val )``: generate a constant vector, where each entry is set to ``val``
  *   * ``PVDT_t PVDT_map( T* p )``: map data to a vector (copy)
  *   * ``void PVDT_rmap( PVDT_t v, T* p )``: map vector to data (copy)
  *   * ``PVDT_t PVDT_scale( PVDT_t v, T s )``: return :math:`\boldsymbol{v} \, s`
@@ -90,8 +100,16 @@ typedef _Complex double complex128_t;
  *   * ``T PVDT_dot( PVDT_t a, PVDT_t b )``: scalar product :math:`\boldsymbol{a} \cdot \boldsymbol{b}`
  *   * ``double PVDT_norm2( PVDT_t a )``: squared norm :math:`\boldsymbol{a} \cdot \boldsymbol{a}^*`
  *   * ``double PVDT_norm( PVDT_t a )``: square root of squared norm.
+ *   * ``PVDT_t PVDT_cross( PVDT_t a, PVDT_t b )``: return the cross product
+ *     :math:`\boldsymbol{a} \times \boldsymbol{b}`
  *
- *   * ``PMDT_t``: the matrix type, member ``T m[D][D]`` holds the data
+ * Matrices: ``PMDT_t``
+ * --------------------
+ * The structure ``PMDT_t`` (e.g. ``claM3d_t`` for a :math:`3\times3` matrix of
+ * doubles) has one two-dimensional static array of datatype ``T`` as member:
+ * ``T m[D][D]``. This member holds the matrix' data. The following matrix
+ * (-vector) functions are available:
+ *
  *   * ``PMDT_t PMDT_zero( void )``: zero-init a matrix
  *   * ``PMDT_t PMDT_id( void )``: indentity-init a matrix
  *   * ``PMDT_t PMDT_map( T * p )``: map data to a matrix (copy)
@@ -115,14 +133,18 @@ typedef _Complex double complex128_t;
  *   * ``PVDd_t PMDT_eigvalsh( PMDT_t H )``: return eigenvalues of Hermitian
  *     matrix :math:`\hat{H}` (only floating point)
  *   * ``PVDd_t PMDT_eigh( PMDT_t H, PMDT_t* pU )``: return eigenvalues of Hermitian
- *     matrix :math:`hat{H}` and eigenvectors in ``pU``.
- *   * ``PVDd_t PMDT_svd( PMDT_t H, PMDT_t* pU, PMDT_t* pVT )``: perform an SVD of the matrix ``H``.
- *     return singular values (floating point) as well as left- and right singular vectors ``pU`` and ``pVT``.
+ *     matrix :math:`\hat{H}` and eigenvectors in ``pU``.
+ *   * ``PVDd_t PMDT_svd( PMDT_t H, PMDT_t* pU, PMDT_t* pVT )``: perform an SVD
+ *     of the matrix :math:`\hat{H} = \hat{U} \cdot
+ *     \mathrm{diag}(\boldsymbol{S}) \cdot \hat{V}^T`. return singular values
+ *     :math:`\boldsymbol{S}` (floating point) and left singular vectors
+ *     :math:`\hat{U}` (``pU``) as well as right singular vectors
+ *     :math:`\hat{V}^T` (``pVT``).
  *
  * To get used to this mini-library, you can have a look at e.g.
- * src/misc/hoppings_to_supercell.c (mostly integers) or
+ * src/misc/hoppings_to_supercell.c (mostly integers, i.e., ``claV3i_t``) or
  * src/diverge_symmetrize_generate_symm_maps.c (3 dimensional double vectors,
- * i.e., claV3d_t). It feels a bit like stack-only Eigen3, but for C (so
+ * i.e., ``claV3d_t``). It feels a bit like stack-only Eigen3, but for C (so
  * functions and no overloads).
  */
 
@@ -151,6 +173,7 @@ typedef struct cla_prefix##V##dim##type##_t { \
     LINALG_DATA_TYPE_##type v[dim]; \
 } cla_prefix##V##dim##type##_t; \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_zero( void ); \
+LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_const( LINALG_DATA_TYPE_##type val ); \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT void cla_prefix##V##dim##type##_rmap( cla_prefix##V##dim##type##_t v, LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_scale( cla_prefix##V##dim##type##_t v, LINALG_DATA_TYPE_##type s ); \
@@ -161,6 +184,7 @@ LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_odot( cla_
 LINALG_EXPORT LINALG_DATA_TYPE_##type cla_prefix##V##dim##type##_dot( cla_prefix##V##dim##type##_t a, cla_prefix##V##dim##type##_t b ); \
 LINALG_EXPORT double cla_prefix##V##dim##type##_norm2( cla_prefix##V##dim##type##_t a ); \
 LINALG_EXPORT double cla_prefix##V##dim##type##_norm( cla_prefix##V##dim##type##_t a ); \
+LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_cross( cla_prefix##V##dim##type##_t a, cla_prefix##V##dim##type##_t b ); \
 \
 typedef struct cla_prefix##M##dim##type##_t { \
     LINALG_DATA_TYPE_##type m [dim][dim]; \

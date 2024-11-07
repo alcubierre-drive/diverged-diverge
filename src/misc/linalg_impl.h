@@ -31,6 +31,12 @@ LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_zero( void
     cla_prefix##V##dim##type##_t result = {0}; \
     return result; \
 } \
+LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_const( LINALG_DATA_TYPE_##type val ) { \
+    cla_prefix##V##dim##type##_t result; \
+    for (int i=0; i<dim; ++i) \
+        result.v[i] = val; \
+    return result; \
+} \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( LINALG_DATA_TYPE_##type* p ) { \
     cla_prefix##V##dim##type##_t result; \
     for (int i=0; i<dim; ++i) \
@@ -79,6 +85,13 @@ LINALG_EXPORT double cla_prefix##V##dim##type##_norm2( cla_prefix##V##dim##type#
 } \
 LINALG_EXPORT double cla_prefix##V##dim##type##_norm( cla_prefix##V##dim##type##_t a ) { \
     return sqrt( cla_prefix##V##dim##type##_norm2( a ) ); \
+} \
+LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_cross( cla_prefix##V##dim##type##_t a, cla_prefix##V##dim##type##_t b ) { \
+    cla_prefix##V##dim##type##_t c; \
+    for (int i=0; i<dim; ++i) { \
+        c.v[i] = a.v[(i+1)%dim]*b.v[(i+2)%dim] - a.v[(i+2)%dim]*b.v[(i+1)%dim]; \
+    } \
+    return c; \
 } \
  \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_map( LINALG_DATA_TYPE_##type* p ) { \

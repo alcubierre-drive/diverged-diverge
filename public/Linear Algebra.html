@@ -345,10 +345,10 @@ matrices in 2, 3, and 4 dimensions. More dimensions can be implemented with</p>
 <div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="n">LINALG_IMPL</span><span class="p">(</span><span class="w"> </span><span class="n">LINALG_PREFIX</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="w"> </span><span class="p">)</span>
 </pre></div>
 </div>
-<p>where <code class="docutils literal notranslate"><span class="pre">LINALG_PREFIX</span></code> is expanded to <code class="docutils literal notranslate"><span class="pre">cla</span></code> (other prefices may be defined
-by defining  <code class="docutils literal notranslate"><span class="pre">LINALG_PREFIX</span></code> or giving something else to <code class="docutils literal notranslate"><span class="pre">LINALG_IMPL</span></code>),
-and <code class="docutils literal notranslate"><span class="pre">7</span></code> represents the dimension. If you want to only declare functions and
-not implement them (for e.g. C++), you can write</p>
+<p>where <code class="docutils literal notranslate"><span class="pre">LINALG_PREFIX</span></code> is expanded to <code class="docutils literal notranslate"><span class="pre">cla</span></code> (other prefices may be used by
+either defining  <code class="docutils literal notranslate"><span class="pre">LINALG_PREFIX</span></code> or giving something else to
+<code class="docutils literal notranslate"><span class="pre">LINALG_IMPL</span></code>), and <code class="docutils literal notranslate"><span class="pre">7</span></code> represents the dimension. If you want to only
+declare functions and not implement them (for e.g. C++), you can write</p>
 <div class="highlight-C++ notranslate"><div class="highlight"><pre><span></span><span class="n">LINALG_TYPES</span><span class="p">(</span><span class="w"> </span><span class="n">LINALG_PREFIX</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="w"> </span><span class="p">)</span>
 </pre></div>
 </div>
@@ -363,16 +363,24 @@ support (that relies on LAPACKE). When <code class="docutils literal notranslate
 decomposition functions are declared, but their definition is empty.</p>
 <p>The funcion names are made from a prefix <code class="docutils literal notranslate"><span class="pre">P</span></code>, a vector/matrix indicator
 <code class="docutils literal notranslate"><span class="pre">X</span></code> (can be <code class="docutils literal notranslate"><span class="pre">V</span></code> or <code class="docutils literal notranslate"><span class="pre">M</span></code>), a dimension indicator <code class="docutils literal notranslate"><span class="pre">D</span></code> (an integer), and
-a datatype indicator <code class="docutils literal notranslate"><span class="pre">T</span></code> (the four datatype indicators are given above). The
-convention then is <code class="docutils literal notranslate"><span class="pre">PXDT</span></code>. For example, if the prefix is <code class="docutils literal notranslate"><span class="pre">cla</span></code> (the
-default), all functions operating on three-dimensional double vectors begin
-with <code class="docutils literal notranslate"><span class="pre">claV3d</span></code>, and the three dimensional vector data type is called
-<code class="docutils literal notranslate"><span class="pre">claV3d_t</span></code>. Each macro invokation of <code class="docutils literal notranslate"><span class="pre">LINALG_IMPL</span></code> or <code class="docutils literal notranslate"><span class="pre">LINALG_TYPES</span></code>
-declares/defines the following types and functions:</p>
+a datatype indicator <code class="docutils literal notranslate"><span class="pre">T</span></code> (the four datatype indicators are <code class="docutils literal notranslate"><span class="pre">d</span></code>:
+<code class="docutils literal notranslate"><span class="pre">double</span></code>, <code class="docutils literal notranslate"><span class="pre">cd</span></code>: <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">complex128_t</span></code></a>, <code class="docutils literal notranslate"><span class="pre">i</span></code>: <code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">ll</span></code>:
+<code class="docutils literal notranslate"><span class="pre">int64_t</span></code>). The convention then is <code class="docutils literal notranslate"><span class="pre">PXDT</span></code>. For example, if the prefix is
+<code class="docutils literal notranslate"><span class="pre">cla</span></code> (the default), all functions operating on three-dimensional double
+vectors begin with <code class="docutils literal notranslate"><span class="pre">claV3d</span></code>, and the three dimensional vector data type is
+called <code class="docutils literal notranslate"><span class="pre">claV3d_t</span></code>.</p>
+<p>Each macro invokation of <code class="docutils literal notranslate"><span class="pre">LINALG_IMPL</span></code> or <code class="docutils literal notranslate"><span class="pre">LINALG_TYPES</span></code> declares/defines
+the following types and functions:</p>
+<section id="vectors-pvdt-t">
+<h3>Vectors: <code class="docutils literal notranslate"><span class="pre">PVDT_t</span></code><a class="headerlink" href="#vectors-pvdt-t" title="Link to this heading">¶</a></h3>
+<p>The structure <code class="docutils literal notranslate"><span class="pre">PVDT_t</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">claV3d_t</span></code> for a three-dimensional vector
+of doubles) has one static array of datatype <code class="docutils literal notranslate"><span class="pre">T</span></code> as member: <code class="docutils literal notranslate"><span class="pre">T</span> <span class="pre">v[D]</span></code>.
+This member holds the vector’s data. The following vector functions are
+available:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">PVDT_t</span></code>: the vector type, member <code class="docutils literal notranslate"><span class="pre">T</span> <span class="pre">v[D]</span></code> holds the data</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PVDT_t</span> <span class="pre">PVDT_zero(</span> <span class="pre">void</span> <span class="pre">)</span></code>: generate a zero vector</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PVDT_t</span> <span class="pre">PVDT_const(</span> <span class="pre">T</span> <span class="pre">val</span> <span class="pre">)</span></code>: generate a constant vector, where each entry is set to <code class="docutils literal notranslate"><span class="pre">val</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PVDT_t</span> <span class="pre">PVDT_map(</span> <span class="pre">T*</span> <span class="pre">p</span> <span class="pre">)</span></code>: map data to a vector (copy)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">PVDT_rmap(</span> <span class="pre">PVDT_t</span> <span class="pre">v,</span> <span class="pre">T*</span> <span class="pre">p</span> <span class="pre">)</span></code>: map vector to data (copy)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PVDT_t</span> <span class="pre">PVDT_scale(</span> <span class="pre">PVDT_t</span> <span class="pre">v,</span> <span class="pre">T</span> <span class="pre">s</span> <span class="pre">)</span></code>: return <span class="math notranslate nohighlight">\(\boldsymbol{v} \, s\)</span></p></li>
@@ -384,7 +392,19 @@ declares/defines the following types and functions:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">T</span> <span class="pre">PVDT_dot(</span> <span class="pre">PVDT_t</span> <span class="pre">a,</span> <span class="pre">PVDT_t</span> <span class="pre">b</span> <span class="pre">)</span></code>: scalar product <span class="math notranslate nohighlight">\(\boldsymbol{a} \cdot \boldsymbol{b}\)</span></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">double</span> <span class="pre">PVDT_norm2(</span> <span class="pre">PVDT_t</span> <span class="pre">a</span> <span class="pre">)</span></code>: squared norm <span class="math notranslate nohighlight">\(\boldsymbol{a} \cdot \boldsymbol{a}^*\)</span></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">double</span> <span class="pre">PVDT_norm(</span> <span class="pre">PVDT_t</span> <span class="pre">a</span> <span class="pre">)</span></code>: square root of squared norm.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">PMDT_t</span></code>: the matrix type, member <code class="docutils literal notranslate"><span class="pre">T</span> <span class="pre">m[D][D]</span></code> holds the data</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PVDT_t</span> <span class="pre">PVDT_cross(</span> <span class="pre">PVDT_t</span> <span class="pre">a,</span> <span class="pre">PVDT_t</span> <span class="pre">b</span> <span class="pre">)</span></code>: return the cross product
+<span class="math notranslate nohighlight">\(\boldsymbol{a} \times \boldsymbol{b}\)</span></p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="matrices-pmdt-t">
+<h3>Matrices: <code class="docutils literal notranslate"><span class="pre">PMDT_t</span></code><a class="headerlink" href="#matrices-pmdt-t" title="Link to this heading">¶</a></h3>
+<p>The structure <code class="docutils literal notranslate"><span class="pre">PMDT_t</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">claM3d_t</span></code> for a <span class="math notranslate nohighlight">\(3\times3\)</span> matrix of
+doubles) has one two-dimensional static array of datatype <code class="docutils literal notranslate"><span class="pre">T</span></code> as member:
+<code class="docutils literal notranslate"><span class="pre">T</span> <span class="pre">m[D][D]</span></code>. This member holds the matrix’ data. The following matrix
+(-vector) functions are available:</p>
+<blockquote>
+<div><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">PMDT_t</span> <span class="pre">PMDT_zero(</span> <span class="pre">void</span> <span class="pre">)</span></code>: zero-init a matrix</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PMDT_t</span> <span class="pre">PMDT_id(</span> <span class="pre">void</span> <span class="pre">)</span></code>: indentity-init a matrix</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PMDT_t</span> <span class="pre">PMDT_map(</span> <span class="pre">T</span> <span class="pre">*</span> <span class="pre">p</span> <span class="pre">)</span></code>: map data to a matrix (copy)</p></li>
@@ -408,16 +428,21 @@ declares/defines the following types and functions:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">PVDd_t</span> <span class="pre">PMDT_eigvalsh(</span> <span class="pre">PMDT_t</span> <span class="pre">H</span> <span class="pre">)</span></code>: return eigenvalues of Hermitian
 matrix <span class="math notranslate nohighlight">\(\hat{H}\)</span> (only floating point)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PVDd_t</span> <span class="pre">PMDT_eigh(</span> <span class="pre">PMDT_t</span> <span class="pre">H,</span> <span class="pre">PMDT_t*</span> <span class="pre">pU</span> <span class="pre">)</span></code>: return eigenvalues of Hermitian
-matrix <span class="math notranslate nohighlight">\(hat{H}\)</span> and eigenvectors in <code class="docutils literal notranslate"><span class="pre">pU</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">PVDd_t</span> <span class="pre">PMDT_svd(</span> <span class="pre">PMDT_t</span> <span class="pre">H,</span> <span class="pre">PMDT_t*</span> <span class="pre">pU,</span> <span class="pre">PMDT_t*</span> <span class="pre">pVT</span> <span class="pre">)</span></code>: perform an SVD of the matrix <code class="docutils literal notranslate"><span class="pre">H</span></code>.
-return singular values (floating point) as well as left- and right singular vectors <code class="docutils literal notranslate"><span class="pre">pU</span></code> and <code class="docutils literal notranslate"><span class="pre">pVT</span></code>.</p></li>
+matrix <span class="math notranslate nohighlight">\(\hat{H}\)</span> and eigenvectors in <code class="docutils literal notranslate"><span class="pre">pU</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PVDd_t</span> <span class="pre">PMDT_svd(</span> <span class="pre">PMDT_t</span> <span class="pre">H,</span> <span class="pre">PMDT_t*</span> <span class="pre">pU,</span> <span class="pre">PMDT_t*</span> <span class="pre">pVT</span> <span class="pre">)</span></code>: perform an SVD
+of the matrix <span class="math notranslate nohighlight">\(\hat{H} = \hat{U} \cdot
+\mathrm{diag}(\boldsymbol{S}) \cdot \hat{V}^T\)</span>. return singular values
+<span class="math notranslate nohighlight">\(\boldsymbol{S}\)</span> (floating point) and left singular vectors
+<span class="math notranslate nohighlight">\(\hat{U}\)</span> (<code class="docutils literal notranslate"><span class="pre">pU</span></code>) as well as right singular vectors
+<span class="math notranslate nohighlight">\(\hat{V}^T\)</span> (<code class="docutils literal notranslate"><span class="pre">pVT</span></code>).</p></li>
 </ul>
 </div></blockquote>
 <p>To get used to this mini-library, you can have a look at e.g.
-src/misc/hoppings_to_supercell.c (mostly integers) or
+src/misc/hoppings_to_supercell.c (mostly integers, i.e., <code class="docutils literal notranslate"><span class="pre">claV3i_t</span></code>) or
 src/diverge_symmetrize_generate_symm_maps.c (3 dimensional double vectors,
-i.e., claV3d_t). It feels a bit like stack-only Eigen3, but for C (so
+i.e., <code class="docutils literal notranslate"><span class="pre">claV3d_t</span></code>). It feels a bit like stack-only Eigen3, but for C (so
 functions and no overloads).</p>
+</section>
 </section>
 </dd></dl>
 

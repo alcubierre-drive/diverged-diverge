@@ -66,10 +66,12 @@ BUILD_SOFTWARE=false
 OPENBLAS_VERSION=0.3.28
 EIGEN_VERSION=3.4.0
 FFTW_VERSION=3.3.10
+BOOST_VERSION=1.86.0
 
 # libraries
 SOFTWARE_PATH=/io/software
 mkdir -p ${SOFTWARE_PATH}
+# BUILD_SOFTWARE
 if $BUILD_SOFTWARE; then
 cd ${SOFTWARE_PATH}
 mkdir -p src
@@ -82,14 +84,14 @@ mkdir -p build
 cd build
 env CFLAGS="-fPIC $STATICLIB_CFLAGS" CXXFLAGS="-fPIC $STATICLIB_CXXFLAGS" \
     cmake .. -DCMAKE_INSTALL_PREFIX=${SOFTWARE_PATH} -DUSE_OPENMP=1 -DNOFORTRAN=1
-make -j12
+make -j$(nproc)
 make install
 # EIGEN
 cd ${SOFTWARE_PATH}/src
 curl -LO https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz
-tar xvf eigen-${EIGEN_VERSION}.tar.gz
+tar -xf eigen-${EIGEN_VERSION}.tar.gz
 cd ${SOFTWARE_PATH}/include
-ln -s ../src/eigen-${EIGEN_VERSION} eigen3
+ln -sf ../src/eigen-${EIGEN_VERSION} eigen3
 # FFTW
 cd ${SOFTWARE_PATH}/src
 curl -LO https://www.fftw.org/fftw-${FFTW_VERSION}.tar.gz
@@ -97,20 +99,27 @@ tar xvf fftw-${FFTW_VERSION}.tar.gz
 cd fftw-${FFTW_VERSION}
 env CFLAGS="-fPIC $STATICLIB_CFLAGS" CXXFLAGS="-fPIC $STATICLIB_CXXFLAGS" \
     ./configure --enable-float --prefix=${SOFTWARE_PATH}
-make -j12
+make -j$(nproc)
 make install
 env CFLAGS="-fPIC $STATICLIB_CFLAGS" CXXFLAGS="-fPIC $STATICLIB_CXXFLAGS" \
     ./configure --enable-float --enable-openmp --prefix=${SOFTWARE_PATH}
-make -j12
+make -j$(nproc)
 make install
 env CFLAGS="-fPIC $STATICLIB_CFLAGS" CXXFLAGS="-fPIC $STATICLIB_CXXFLAGS" \
     ./configure --prefix=${SOFTWARE_PATH}
-make -j12
+make -j$(nproc)
 make install
 env CFLAGS="-fPIC $STATICLIB_CFLAGS" CXXFLAGS="-fPIC $STATICLIB_CXXFLAGS" \
     ./configure --enable-openmp --prefix=${SOFTWARE_PATH}
-make -j12
+make -j$(nproc)
 make install
+# BOOST
+cd ${SOFTWARE_PATH}/src
+boost_file=boost_${BOOST_VERSION//\./_}.tar.gz
+curl -LO https://archives.boost.io/release/${BOOST_VERSION}/source/${boost_file}
+tar -xf ${boost_file}
+cd ../include
+ln -sf ../src/${boost_file//\.tar\.gz/}/boost .
 fi # BUILD_SOFTWARE
 
 # diverge
@@ -119,7 +128,8 @@ cd ${DIVERGE_PATH}
 cat >> Makefile.local <<EOF
 INCLUDES += -I${SOFTWARE_PATH}/include -I${SOFTWARE_PATH}/include/openblas
 LIBS := ${SOFTWARE_PATH}/lib64/libopenblas.a ${SOFTWARE_PATH}/lib/libfftw3.a ${SOFTWARE_PATH}/lib/libfftw3_omp.a
-FLAGS += -Ofast -mtune=native -flto -DNDEBUG -DEIGEN_NO_DEBUG
-LDFLAGS += -flto=12 -static-libstdc++ -Wno-lto-type-mismatch -Ofast -mtune=native
+DEFINES += -DNDEBUG -DEIGEN_NO_DEBUG -DUSE_BOOST_SORT -DDIVERGE_OPENBLAS_LIMIT_THREADS=48
+FLAGS += -Ofast -mtune=native -flto
+LDFLAGS += -flto=$(nproc) -static-libstdc++ -Wno-lto-type-mismatch -Ofast -mtune=native
 EOF
-make -j12 test
+make -j$(nproc) test
