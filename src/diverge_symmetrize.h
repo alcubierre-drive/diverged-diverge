@@ -75,6 +75,12 @@ double diverge_symmetrize_mom_fine( diverge_model_t* model, double* buf, index_t
  * symmetrizes hopping parameters of a divERGe model. Operates on the momentum
  * mesh associated to the ``model``.
  *
+ * .. note::
+ *  In case ``hop == NULL``, this function operates on the internal hopping
+ *  parameter array :c:member:`diverge_model_t.hop`. If the model's internals
+ *  struct isn't initialized, we generate it automagically *and delete it again
+ *  thereafter*. For safe operation, we advise to *not* rely on this feature.
+ *
  * :param diverge_model_t* model: the divERGe model which needs to have common
  *                                internals set (using
  *                                :c:func:`diverge_model_internals_common`) and

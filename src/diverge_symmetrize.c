@@ -4,6 +4,7 @@
 #include "diverge_symmetrize.h"
 #include "diverge_internals_struct.h"
 #include "misc/mpi_functions.h"
+#include "diverge_model_internals.h"
 #include <fftw3.h>
 
 #define alloc_aux( size ) \
@@ -249,11 +250,33 @@ double diverge_symmetrize_mom_fine( diverge_model_t* model, double* buf, index_t
 
 rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
         rs_hopping_t* hop_, index_t* n_hop_, double hoplim ) {
-
     // some preparations
-    if (model->n_sym == 0 || model->orb_symmetries == NULL || !model->internals->has_common_internals) {
-        mpi_wrn_printf( "need symmetries and common internals in order to symmetrize hoppings\n" );
+    if (model->n_sym == 0 || model->orb_symmetries == NULL) {
+        mpi_err_printf( "need symmetries in order to symmetrize hoppings\n" );
         return hop_;
+    }
+    int delete_common_internals = 0;
+    index_t nk_old[3] = {0};
+    index_t nkf_old[3] = {0};
+    if (!model->internals->has_common_internals) {
+        mpi_log_printf( "common internals not set, so we generate them…\n" );
+        if (!hop_) {
+            index_t Rmax[3] = {0,0,0};
+            for (rs_hopping_t* h = model->hop; h != model->hop + model->n_hop; ++h)
+                for (int d=0; d<3; ++d) Rmax[d] = MAX(labs(h->R[d]), Rmax[d]);
+            memcpy( nk_old, model->nk, sizeof(nk_old) );
+            memcpy( nkf_old, model->nkf, sizeof(nkf_old) );
+            // this one is quite unstable; we shouldn't rely on it.
+            for (int d=0; d<3; ++d) {
+                model->nk[d] = 2*Rmax[d]+1;
+                model->nkf[d] = 1;
+            }
+            diverge_model_internals_common(model);
+            delete_common_internals = 1;
+        } else {
+            mpi_err_printf( "must operate on internal hoppings (i.e. hop == NULL)\n" );
+            return hop_;
+        }
     }
     diverge_generate_symm_maps(model);
 
@@ -357,5 +380,11 @@ rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
     mpi_vrb_printf( "final n_hop = %li\n", *n_hop );
 
     fftw_free( fftw_buf );
+
+    if (delete_common_internals) {
+        diverge_model_internals_reset(model);
+        memcpy( model->nk, nk_old, sizeof(nk_old) );
+        memcpy( model->nkf, nkf_old, sizeof(nkf_old) );
+    }
     return hop;
 }
