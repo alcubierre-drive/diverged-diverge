@@ -555,6 +555,18 @@ if not _libs["divERGe"] is None:
     qgt.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, c_voidp, index_t, c_int]
     qgt.restype = c_voidp
 
+    model_ham_at_kcidx = _libs["divERGe"].get("diverge_model_ham_at_kcidx", "cdecl")
+    model_ham_at_kcidx.argtypes = [POINTER(model_t), index_t, c_voidp]
+    model_ham_at_kcidx.restype = None
+
+    model_ham_at_kfidx = _libs["divERGe"].get("diverge_model_ham_at_kfidx", "cdecl")
+    model_ham_at_kfidx.argtypes = [POINTER(model_t), index_t, c_voidp]
+    model_ham_at_kfidx.restype = None
+
+    model_ham_at_kpt = _libs["divERGe"].get("diverge_model_ham_at_kpt", "cdecl")
+    model_ham_at_kpt.argtypes = [POINTER(model_t), c_voidp, c_voidp]
+    model_ham_at_kpt.restype = None
+
     unique_distances = _libs["divERGe"].get("diverge_model_unique_distances", "cdecl")
     unique_distances.argtypes = [POINTER(model_t), c_int, c_int]
     unique_distances.restype = c_voidp

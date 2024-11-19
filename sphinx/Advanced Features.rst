@@ -43,3 +43,16 @@ The inverse Fourier transform to get hopping parameters from Hamiltonian arrays
 is implemented in the following function:
 
 .. c:autodoc:: misc/ham2hop.h
+
+Hamiltonians at Specific Momentum Points
+----------------------------------------
+
+To obtain a tight-binding Hamiltonian (from hopping parameters
+:c:member:`diverge_model_t.hop`) at a specific point in momentum space *without*
+setting it up in the entire BZ (as done in :c:member:`diverge_model_t.hfill`),
+one can use the function :c:func:`diverge_model_ham_at_kpt`. In addition, we
+provide wrappers for the coarse and fine mesh indices---these wrappers rely on
+the model internals structure to be set up (via
+:c:func:`diverge_model_internals_common`).
+
+.. c:autodoc:: misc/ham_at_k.h
