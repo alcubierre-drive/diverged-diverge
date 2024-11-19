@@ -25,10 +25,13 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
         return {};
     }
 
-    bool swap_orbitals = 0;
+    bool swap_orbitals = false;
     if (n_orb_out) if (~(*n_orb_out) == 0) {
-        swap_orbitals = true;
+        mpi_wrn_printf( "W90 reader deprecation: If you must swap orbitals, have a look at the documentation!\n" );
+    }
+    if (n_orb_out) if (*n_orb_out == DIVERGE_W90_READER_SWAP_ORBITALS) {
         mpi_log_printf( "W90 reader: swapping orbital order\n" );
+        swap_orbitals = true;
     }
 
     int i = 0;
@@ -87,12 +90,12 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
                         case 1: helper.R[1] = stol(s); break;
                         case 2: helper.R[2] = stol(s); break;
                         case 3: unravel(n_orb, n_spin, stol(s)-1, &o, &sp, outer);
-                                helper.s2 = sp;
-                                helper.o2 = o;
-                                break;
-                        case 4: unravel(n_orb, n_spin, stol(s)-1, &o, &sp, outer);
                                 helper.s1 = sp;
                                 helper.o1 = o;
+                                break;
+                        case 4: unravel(n_orb, n_spin, stol(s)-1, &o, &sp, outer);
+                                helper.s2 = sp;
+                                helper.o2 = o;
                                 break;
                         case 5: helper.t = stod(s); break;
                         case 6: helper.t += I128*stod(s); break;

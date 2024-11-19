@@ -514,7 +514,9 @@ if not _libs["divERGe"] is None:
     read_W90.argtypes = [c_char_p,index_t,POINTER(index_t),POINTER(index_t)]
     read_W90.restype = c_void_p
 
-    def read_W90_PY( fname, nspin ):
+    W90_READER_SWAP_ORBITALS = -1
+
+    def read_W90_PY( fname, nspin, swap_orbitals = False ):
         """
         returns a numpy array of :c:struct:`rs_hopping_t` with the hoppings from
         W90 file. Wraps :c:func:`diverge_read_W90_C` s.t. no messy pointer stuff
@@ -528,6 +530,8 @@ if not _libs["divERGe"] is None:
         """
         length = index_t()
         n_orb = index_t(0)
+        if swap_orbitals:
+            n_orb = index_t(W90_READER_SWAP_ORBITALS)
         ptr = POINTER(rs_hopping_t)
         ptr = read_W90( fname.encode('utf-8'), nspin, byref(length), byref(n_orb) )
         pts_ary = view_array( ptr, dtype=rs_hopping_t, shape=(np.array(length),) )
