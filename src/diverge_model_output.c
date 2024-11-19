@@ -464,8 +464,8 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
 
         for (index_t i=0; i<ni; ++i) {
             double x = (double)i / (double)npath;
-            claV3d_t k0vec = claM3d_matvec( Gvec, s0vec ),
-                     k1vec = claM3d_matvec( Gvec, s1vec );
+            claV3d_t k0vec = claM3d_vecmat( s0vec, Gvec ),
+                     k1vec = claM3d_vecmat( s1vec, Gvec );
             claV3d_t kvec = claV3d_add( k0vec, claV3d_scale(claV3d_sub(k1vec,k0vec),x) );
             if (skip) kvec = claV3d_zero();
             diverge_model_ham_at_kpt( mod, kvec.v, H );
