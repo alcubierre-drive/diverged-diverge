@@ -254,7 +254,7 @@ void tu_postproduction::lingap_ff(bool atscale) {
     }
 
     if(vertex->D_flow) {
-        if(vertex->SU2) {
+        if(vertex->SU2 && vertex->C_flow) {
             complex128_t* helper = (complex128_t*)malloc(sizeof(complex128_t)*POW2(linsize));
             memcpy(helper,vertex->projection_helper,sizeof(complex128_t)*POW2(linsize));
             D_projection(vertex->projection_helper, vertex, proj);

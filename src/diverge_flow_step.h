@@ -41,6 +41,15 @@ diverge_flow_type diverge_flow_step_type( const diverge_flow_step_t* st );
 void diverge_flow_step_get_channels( const diverge_flow_step_t* st, int chans[4] );
 
 /**
+ * Allows for a selective turning off of the feedback in between the channels,
+ * before or at any point during the flow. The format of the Feedback char is
+ * "C|D|CP" which means that in the P channel only the C channel, in the C
+ * channel only the D channel and in the D channel both of the other channels
+ * are included. The separators "|" are reqired!
+ */
+void diverge_turn_off_channel_feedback(diverge_flow_step_t* st, const char* feedback);
+
+/**
  * initialize the flow step instance from a model instance that has its
  * internals set to one method. Everything else works as in
  * :c:func:`diverge_flow_step_init`.

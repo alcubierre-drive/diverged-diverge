@@ -81,6 +81,14 @@ public:
     bool P_flow;
     bool C_flow;
     bool D_flow;
+
+    bool C_to_P = true;
+    bool D_to_P = true;
+    bool P_to_C = true;
+    bool D_to_C = true;
+    bool P_to_D = true;
+    bool C_to_D = true;
+
     const bool use_self;
 
     // helper arrays
