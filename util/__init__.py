@@ -514,7 +514,9 @@ if not _libs["divERGe"] is None:
     read_W90.argtypes = [c_char_p,index_t,POINTER(index_t),POINTER(index_t)]
     read_W90.restype = c_void_p
 
-    def read_W90_PY( fname, nspin ):
+    W90_READER_SWAP_ORBITALS = -1
+
+    def read_W90_PY( fname, nspin, swap_orbitals = False ):
         """
         returns a numpy array of :c:struct:`rs_hopping_t` with the hoppings from
         W90 file. Wraps :c:func:`diverge_read_W90_C` s.t. no messy pointer stuff
@@ -528,6 +530,8 @@ if not _libs["divERGe"] is None:
         """
         length = index_t()
         n_orb = index_t(0)
+        if swap_orbitals:
+            n_orb = index_t(W90_READER_SWAP_ORBITALS)
         ptr = POINTER(rs_hopping_t)
         ptr = read_W90( fname.encode('utf-8'), nspin, byref(length), byref(n_orb) )
         pts_ary = view_array( ptr, dtype=rs_hopping_t, shape=(np.array(length),) )
@@ -554,6 +558,18 @@ if not _libs["divERGe"] is None:
     qgt = _libs["divERGe"].get("diverge_qgt", "cdecl")
     qgt.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, c_voidp, index_t, c_int]
     qgt.restype = c_voidp
+
+    model_ham_at_kcidx = _libs["divERGe"].get("diverge_model_ham_at_kcidx", "cdecl")
+    model_ham_at_kcidx.argtypes = [POINTER(model_t), index_t, c_voidp]
+    model_ham_at_kcidx.restype = None
+
+    model_ham_at_kfidx = _libs["divERGe"].get("diverge_model_ham_at_kfidx", "cdecl")
+    model_ham_at_kfidx.argtypes = [POINTER(model_t), index_t, c_voidp]
+    model_ham_at_kfidx.restype = None
+
+    model_ham_at_kpt = _libs["divERGe"].get("diverge_model_ham_at_kpt", "cdecl")
+    model_ham_at_kpt.argtypes = [POINTER(model_t), c_voidp, c_voidp]
+    model_ham_at_kpt.restype = None
 
     unique_distances = _libs["divERGe"].get("diverge_model_unique_distances", "cdecl")
     unique_distances.argtypes = [POINTER(model_t), c_int, c_int]

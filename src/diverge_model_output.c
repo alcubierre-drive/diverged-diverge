@@ -6,6 +6,7 @@
 #include "misc/number_repr_checks.h"
 #include "misc/mpi_functions.h"
 #include "misc/kmesh_to_bands.h"
+#include "misc/ham_at_k.h"
 
 #include "misc/qnan.h"
 #include "misc/eigen.h"
@@ -440,18 +441,12 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
     }
 
     claM3d_t Gvec = {0};
-    claM3d_t Lvec = claM3d_map(mod->lattice[0]);
     diverge_model_generate_mom_basis(mod->lattice[0], Gvec.m[0]);
 
-    index_t no = mod->n_orb,
-            ns = mod->n_spin,
-            nb = mod->n_orb * mod->n_spin;
+    index_t nb = mod->n_orb * mod->n_spin;
 
     complex128_t* H = (complex128_t*)malloc(sizeof(complex128_t)*POW2(nb));
     complex128_t* U = (complex128_t*)malloc(sizeof(complex128_t)*POW2(nb));
-    #define zero_out(Hbuf) { \
-        memset((void*)Hbuf, 0, sizeof(complex128_t)*POW2(nb)); \
-    }
 
     index_t running_idx = 0;
     index_t nseg = mod->n_ibz_path-1;
@@ -469,17 +464,11 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
 
         for (index_t i=0; i<ni; ++i) {
             double x = (double)i / (double)npath;
-            claV3d_t k0vec = claM3d_matvec( Gvec, s0vec ),
-                     k1vec = claM3d_matvec( Gvec, s1vec );
+            claV3d_t k0vec = claM3d_vecmat( s0vec, Gvec ),
+                     k1vec = claM3d_vecmat( s1vec, Gvec );
             claV3d_t kvec = claV3d_add( k0vec, claV3d_scale(claV3d_sub(k1vec,k0vec),x) );
             if (skip) kvec = claV3d_zero();
-            zero_out(H);
-            for (index_t h=0; h<mod->n_hop; ++h) {
-                rs_hopping_t* hh = mod->hop+h;
-                claV3d_t hR = {{hh->R[0], hh->R[1], hh->R[2]}};
-                claV3d_t Rvec = claM3d_matvec( Lvec, hR );
-                H[IDX4(hh->s1, hh->o1, hh->s2, hh->o2, no, ns, no)] += cexp(-I*claV3d_dot(Rvec,kvec)) * hh->t;
-            }
+            diverge_model_ham_at_kpt( mod, kvec.v, H );
             double* here_buf = buf + (nb+3) * running_idx;
             single_eigen(H, U, here_buf, nb);
             for (index_t b=0; b<nb; ++b) {

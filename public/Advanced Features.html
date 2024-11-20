@@ -257,6 +257,42 @@ of the input Bloch Hamiltonian (obtained via lattice Fourier transform).</p>
 </dd></dl>
 
 </section>
+<section id="hamiltonians-at-specific-momentum-points">
+<h2>Hamiltonians at Specific Momentum Points<a class="headerlink" href="#hamiltonians-at-specific-momentum-points" title="Link to this heading">¶</a></h2>
+<p>To obtain a tight-binding Hamiltonian (from hopping parameters
+<a class="reference internal" href="Model.html#c.diverge_model_t.hop" title="diverge_model_t.hop"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.hop</span></code></a>) at a specific point in momentum space <em>without</em>
+setting it up in the entire BZ (as done in <a class="reference internal" href="Model.html#c.diverge_model_t.hfill" title="diverge_model_t.hfill"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.hfill</span></code></a>),
+one can use the function <a class="reference internal" href="#c.diverge_model_ham_at_kpt" title="diverge_model_ham_at_kpt"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_ham_at_kpt()</span></code></a>. In addition, we
+provide wrappers for the coarse and fine mesh indices—these wrappers rely on
+the model internals structure to be set up (via
+<a class="reference internal" href="Internals.html#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a>).</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_ham_at_kpt">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_ham_at_kpt</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">k</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buf</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_ham_at_kpt" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/ham_at_k.h#L13"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>generate the Hamiltonian at the momentum vector <span class="math notranslate nohighlight">\(\boldsymbol{k}\)</span>
+(described by the array <code class="docutils literal notranslate"><span class="pre">k[3]</span></code>) and write it into <code class="docutils literal notranslate"><span class="pre">buf</span></code> (which needs to
+be of the size <code class="docutils literal notranslate"><span class="pre">POW2(m-&gt;n_orb</span> <span class="pre">*</span> <span class="pre">m-&gt;n_spin)</span></code>). The chemical potential
+<span class="math notranslate nohighlight">\(\mu\)</span> is <em>not</em> included; to do so you have to subtract it from the
+diagonal. The matrix pointed to by <code class="docutils literal notranslate"><span class="pre">buf</span></code> is overwritten.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_ham_at_kcidx">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_ham_at_kcidx</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">k</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buf</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_ham_at_kcidx" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/ham_at_k.h#L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>generate the Hamiltonian at the coarse index <code class="docutils literal notranslate"><span class="pre">k</span></code> and write it into <code class="docutils literal notranslate"><span class="pre">buf</span></code>.
+<code class="docutils literal notranslate"><span class="pre">k</span></code> refers to a coarse mesh index, and <code class="docutils literal notranslate"><span class="pre">buf</span></code> must be sized the same way
+as in <a class="reference internal" href="#c.diverge_model_ham_at_kpt" title="diverge_model_ham_at_kpt"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_ham_at_kpt()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_ham_at_kfidx">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_ham_at_kfidx</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">k</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buf</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_ham_at_kfidx" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/ham_at_k.h#L27"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>generate the Hamiltonian at the fine index <code class="docutils literal notranslate"><span class="pre">k</span></code> and write it into <code class="docutils literal notranslate"><span class="pre">buf</span></code>.
+<code class="docutils literal notranslate"><span class="pre">k</span></code> refers to a fine mesh index, and <code class="docutils literal notranslate"><span class="pre">buf</span></code> must be sized the same way as
+in <a class="reference internal" href="#c.diverge_model_ham_at_kpt" title="diverge_model_ham_at_kpt"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_ham_at_kpt()</span></code></a>.</p>
+</dd></dl>
+
+</section>
 </section>
 
 

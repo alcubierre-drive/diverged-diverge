@@ -31,6 +31,7 @@
 #include "misc/shared_mem.h"
 #include "misc/fukui.h"
 #include "misc/quantum_metric.h"
+#include "misc/ham_at_k.h"
 
 #include "diverge_common.h"
 #include "diverge_model.h"

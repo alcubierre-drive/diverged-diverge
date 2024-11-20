@@ -38,6 +38,6 @@ diverge_model_t* gen_honeycomb_lat_rash(index_t nkx, index_t nky, index_t lx=1,
         index_t ly=1, index_t nkxf = 1, index_t nkyf = 1);
 diverge_model_t* gen_kagome_model( index_t nkx, index_t nky,
         double U = 3.0, double V = 1.0, double VC = -0.7, double VP = 0.5,
-        index_t nsym = 1);
+        index_t nsym = 1 );
 
 #endif // DIVERGE_SKIP_TESTS

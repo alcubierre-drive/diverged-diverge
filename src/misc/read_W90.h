@@ -15,6 +15,10 @@ extern "C" {
 // forward declaration
 typedef struct rs_hopping_t rs_hopping_t;
 
+#ifndef DIVERGE_W90_READER_SWAP_ORBITALS
+#define DIVERGE_W90_READER_SWAP_ORBITALS -1
+#endif
+
 /**
  * reads Wannier90's \*_hr.dat file into divERGe's :c:struct:`rs_hopping_t` data
  * structure.
@@ -33,9 +37,16 @@ typedef struct rs_hopping_t rs_hopping_t;
  * :param index_t* len: output for the number of hoppings that have been read.
  * :param index_t* n_orb: output for the maximum number of orbitals that were
  *                        found in the hr.dat file. not considered if NULL. In
- *                        case ``n_orb != NULL`` and ``~(*n_orb) == 0``, swap
- *                        the orbital indices. Seems to be needed for standard
- *                        W90 ordering.
+ *                        case ``n_orb != NULL`` and ``*n_orb ==
+ *                        DIVERGE_W90_READER_SWAP_ORBITALS``, swap the orbital
+ *                        indices.
+ *
+ * .. note:: In previous versions, setting ``~(*n_orb) == 0`` would swap the
+ *           orbital ordering. Since we recently changed the *default* ordering
+ *           of o1/o2 for the W90 reader, the magic number to get swapped
+ *           ordering changed. In this way, previous codes that explicitly
+ *           swapped the ordering are still correct. If you provide ``~(*n_orb)
+ *           == 0``, a corresponding deprecation warning is issued.
  *
  * Example:
  *
