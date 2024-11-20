@@ -542,55 +542,46 @@ void diverge_flow_step_get_channels( const diverge_flow_step_t* st, int chans[4]
     for (int i=0; i<4; ++i) chans[i] = st->channel_selection[i];
 }
 
-
-void diverge_turn_off_channel_feedback(diverge_flow_step_t* st,
-                                            const char* feedback) {
-    int cnt = 0;
-     switch (st->type) {
-        case diverge_grid:
-            mpi_err_printf("Feature not implemented for grid FRG\n");
-            break;
-        case diverge_patch:
-            mpi_err_printf("Feature not implemented for patch FRG\n");
-            break;
-        case diverge_tu:
-            if (st->intls->tu_data == NULL) {
-                mpi_err_printf("internals for TU FRG not set\n");
-            } else {
-                st->tu_vertex->C_to_P = st->tu_vertex->D_to_P = false;
-                st->tu_vertex->P_to_C = st->tu_vertex->D_to_C = false;
-                st->tu_vertex->C_to_D = st->tu_vertex->P_to_D = false;
-                for (const char* c = feedback; *c; ++c) {
-                    if(*c == '|') cnt += 1;
-                    else {
-                        switch (*c) {
-                            case 'P':
-                                if (cnt == 1) st->tu_vertex->P_to_C=true;
-                                if (cnt == 2) st->tu_vertex->P_to_D=true;
-                                break;
-                            case 'C':
-                                if (cnt == 0) st->tu_vertex->C_to_P=true;
-                                if (cnt == 2) st->tu_vertex->C_to_D=true;
-                                break;
-                            case 'D':
-                                if (cnt == 0) st->tu_vertex->D_to_P=true;
-                                if (cnt == 1) st->tu_vertex->D_to_C=true;
-                                break;
-                            default:
-                                mpi_wrn_printf("unknown option in char*\n");
-                        }
-                    }
-                }
-                if(st->tu_vertex->C_to_P) mpi_vrb_printf("C to P feedback active\n");
-                if(st->tu_vertex->D_to_P) mpi_vrb_printf("D to P feedback active\n");
-                if(st->tu_vertex->P_to_C) mpi_vrb_printf("P to C feedback active\n");
-                if(st->tu_vertex->D_to_C) mpi_vrb_printf("D to C feedback active\n");
-                if(st->tu_vertex->P_to_D) mpi_vrb_printf("P to D feedback active\n");
-                if(st->tu_vertex->C_to_D) mpi_vrb_printf("C to D feedback active\n");
-            }
-            break;
-        default:
-            mpi_err_printf("flow step object incorrectly initialized");
-            break;
+void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* feedback ) {
+    if (st->type != diverge_tu) {
+        mpi_err_printf( "interchannel feedback control only implemented for TUFRG\n" );
+        return;
     }
+    if (st->intls->tu_data == NULL) {
+        mpi_err_printf("internals for TU FRG not set\n");
+        return;
+    }
+    int target_chan = 0;
+    st->tu_vertex->C_to_P = st->tu_vertex->D_to_P = false;
+    st->tu_vertex->P_to_C = st->tu_vertex->D_to_C = false;
+    st->tu_vertex->C_to_D = st->tu_vertex->P_to_D = false;
+    for (const char* c = feedback; *c; ++c) {
+        if (*c == '|') {
+            target_chan += 1;
+        } else {
+            switch (*c) {
+                case 'P':
+                    if (target_chan == 1) st->tu_vertex->P_to_C=true;
+                    if (target_chan == 2) st->tu_vertex->P_to_D=true;
+                    break;
+                case 'C':
+                    if (target_chan == 0) st->tu_vertex->C_to_P=true;
+                    if (target_chan == 2) st->tu_vertex->C_to_D=true;
+                    break;
+                case 'D':
+                    if (target_chan == 0) st->tu_vertex->D_to_P=true;
+                    if (target_chan == 1) st->tu_vertex->D_to_C=true;
+                    break;
+                default:
+                    mpi_wrn_printf( "unknown channel in feedback to chan no.%i\n", target_chan );
+                    break;
+            }
+        }
+    }
+    if(st->tu_vertex->C_to_P) mpi_vrb_printf("C to P feedback active\n");
+    if(st->tu_vertex->D_to_P) mpi_vrb_printf("D to P feedback active\n");
+    if(st->tu_vertex->P_to_C) mpi_vrb_printf("P to C feedback active\n");
+    if(st->tu_vertex->D_to_C) mpi_vrb_printf("D to C feedback active\n");
+    if(st->tu_vertex->P_to_D) mpi_vrb_printf("P to D feedback active\n");
+    if(st->tu_vertex->C_to_D) mpi_vrb_printf("C to D feedback active\n");
 }

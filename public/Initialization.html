@@ -148,8 +148,14 @@ this function is here for. Note that the other version of alltoallv
 </dd></dl>
 
 <dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_fftw_num_threads">
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_fftw_num_threads</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_fftw_num_threads" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_functions.h#L134"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>get the number of threads to use in diverge’s FFTWs</p>
+</dd></dl>
+
+<dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_force_thread_limit">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_force_thread_limit</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">nthr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_force_thread_limit" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_functions.h#L135"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_force_thread_limit</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">nthr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_force_thread_limit" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_functions.h#L138"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>limit the number of threads for <em>every</em> OMP/FFTW parallel region; except for
 cases where the number is specifically set higher.</p>
 </dd></dl>

@@ -3,7 +3,7 @@
 #include "propagator.hpp"
 #include "cuda_init.hpp"
 #include "../misc/batched_eigen.h"
-#include "../misc/init_internal_libs.h"
+#include "../misc/mpi_functions.h"
 #include "../misc/bitary.h"
 #include <iostream>
 #include "../misc/shared_mem.h"

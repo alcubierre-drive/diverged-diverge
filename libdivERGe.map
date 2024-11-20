@@ -10,6 +10,7 @@ DIVERGE_0.8 {
         diverge_embed;
         diverge_euler_defaults_CPP;
         diverge_euler_next;
+        diverge_fftw_num_threads;
         diverge_finalize;
         diverge_flow_step_chanmax;
         diverge_flow_step_dlambda;
@@ -25,6 +26,7 @@ DIVERGE_0.8 {
         diverge_flow_step_ntimings;
         diverge_flow_step_refill;
         diverge_flow_step_refill_Hself;
+        diverge_flow_step_set_interchannel;
         diverge_flow_step_timing;
         diverge_flow_step_timing_descr;
         diverge_flow_step_timing_descr_vec;

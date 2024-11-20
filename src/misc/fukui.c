@@ -5,7 +5,7 @@
 #include "../diverge_model_internals.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_momentum_gen.h"
-#include "init_internal_libs.h"
+#include "mpi_functions.h"
 
 #define LINALG_NO_LAPACKE
 #define LINALG_EXPORT static inline

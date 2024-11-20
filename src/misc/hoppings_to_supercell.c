@@ -2,7 +2,7 @@
 
 #include "hoppings_to_supercell.h"
 #include "../diverge_model.h"
-#include "init_internal_libs.h"
+#include "mpi_functions.h"
 #include <assert.h>
 
 #define LINALG_NO_LAPACKE

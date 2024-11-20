@@ -742,9 +742,9 @@ if not _libs["divERGe"] is None:
     flow_step_init.restype = POINTER(flow_step_t)
 
 
-    flow_step_turn_off_channel_feedback = _libs["divERGe"].get("diverge_turn_off_channel_feedback", "cdecl")
-    flow_step_turn_off_channel_feedback.argtypes = [POINTER(model_t), String]
-    flow_step_turn_off_channel_feedback.restype = None
+    flow_step_set_interchannel = _libs["divERGe"].get("diverge_flow_step_set_interchannel", "cdecl")
+    flow_step_set_interchannel.argtypes = [POINTER(flow_step_t), String]
+    flow_step_set_interchannel.restype = None
 
     flow_step_init_any = _libs["divERGe"].get("diverge_flow_step_init_any", "cdecl")
     flow_step_init_any.argtypes = [POINTER(model_t), String]

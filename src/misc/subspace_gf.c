@@ -1,9 +1,8 @@
 #include "subspace_gf.h"
 #include "shared_mem.h"
+#include "mpi_functions.h"
 
 #ifndef USE_CUDA
-
-#include "init_internal_libs.h"
 
 struct subspace_gfill_multi_t {
     double* E;

@@ -47,7 +47,7 @@ void diverge_flow_step_get_channels( const diverge_flow_step_t* st, int chans[4]
  * channel only the D channel and in the D channel both of the other channels
  * are included. The separators "|" are reqired!
  */
-void diverge_turn_off_channel_feedback(diverge_flow_step_t* st, const char* feedback);
+void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* feedback );
 
 /**
  * initialize the flow step instance from a model instance that has its

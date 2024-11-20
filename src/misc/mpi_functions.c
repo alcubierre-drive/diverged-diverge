@@ -551,3 +551,6 @@ void diverge_mpi_exit( int status ) {
     exit(status);
 }
 
+int diverge_omp_num_threads( void ) { return diverge_internal_omp_num_threads(); }
+void diverge_force_thread_limit( int n ) { diverge_internal_force_thread_limit( n ); }
+int diverge_fftw_num_threads( void ) { return diverge_internal_fftw_num_threads(); }

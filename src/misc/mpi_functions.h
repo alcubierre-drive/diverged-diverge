@@ -132,6 +132,9 @@ void diverge_mpi_gather_double( const double* send, int scnt, double* recv, int 
 /** get the number of threads to use in diverge's OMP loops */
 int diverge_omp_num_threads( void );
 
+/** get the number of threads to use in diverge's FFTWs */
+int diverge_fftw_num_threads( void );
+
 /**
  * limit the number of threads for *every* OMP/FFTW parallel region; except for
  * cases where the number is specifically set higher.

@@ -1,6 +1,6 @@
 #include "largemat_gf.h"
 #include "gemm.h"
-#include "init_internal_libs.h"
+#include "mpi_functions.h"
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_model_internals.h"

@@ -124,7 +124,7 @@ void finalize_internal_libs( void ) {
     mpi_log_set_colors(dvg_previous_log_color);
 }
 
-int diverge_omp_num_threads( void ) {
+int diverge_internal_omp_num_threads( void ) {
     if (!dvg_has_internal_libs_init)
         return 1;
     else
@@ -132,14 +132,14 @@ int diverge_omp_num_threads( void ) {
 }
 
 
-int diverge_fftw_num_threads( void ) {
+int diverge_internal_fftw_num_threads( void ) {
     if (!dvg_has_internal_libs_init)
         return 1;
     else
         return dvg_env.fftw_num_threads.val;
 }
 
-void diverge_force_thread_limit( int nthr ) {
+void diverge_internal_force_thread_limit( int nthr ) {
     init_internal_libs_omp_diverge( nthr );
     init_internal_libs_omp_implicit( nthr );
     init_internal_libs_fftw( nthr );
