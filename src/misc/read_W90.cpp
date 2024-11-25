@@ -26,7 +26,8 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
     }
 
     bool swap_orbitals = false;
-    if (n_orb_out) if (~(*n_orb_out) == 0) {
+    // this case shouldnt occur
+    if (n_orb_out) if (~(*n_orb_out) == 0 && ~(0l) != DIVERGE_W90_READER_SWAP_ORBITALS) {
         mpi_wrn_printf( "W90 reader deprecation: If you must swap orbitals, have a look at the documentation!\n" );
     }
     if (n_orb_out) if (*n_orb_out == DIVERGE_W90_READER_SWAP_ORBITALS) {

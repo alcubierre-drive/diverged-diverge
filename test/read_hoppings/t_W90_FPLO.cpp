@@ -30,7 +30,8 @@ TEST_CASE("FPLO read in","[FPLOreader]") {
     diverge_model_t* fplo_model = diverge_read_fplo( fname_FPLO.c_str() );
 
     index_t len = -1;
-    rs_hopping_t* w90_hop = diverge_read_W90_C( fname_W90.c_str(), 1, &len, NULL );
+    index_t n_orb = DIVERGE_W90_READER_SWAP_ORBITALS;
+    rs_hopping_t* w90_hop = diverge_read_W90_C( fname_W90.c_str(), 1, &len, &n_orb );
     remove( fname_FPLO.c_str() );
     remove( fname_W90.c_str() );
 
@@ -81,10 +82,10 @@ TEST_CASE("W90 read in","[W90reader]") {
         bool found = false;
         if(std::abs(hop[elem].t) > 1e-10) {
             for(index_t trial = 0; trial < model->n_hop; ++trial) {
-                if(hop[elem].o1 == cmp[trial].o1 &&
-                    hop[elem].o2 == cmp[trial].o2 &&
-                    hop[elem].s1 == cmp[trial].s1 &&
-                    hop[elem].s2 == cmp[trial].s2 &&
+                if(hop[elem].o1 == cmp[trial].o2 &&
+                    hop[elem].o2 == cmp[trial].o1 &&
+                    hop[elem].s1 == cmp[trial].s2 &&
+                    hop[elem].s2 == cmp[trial].s1 &&
                     hop[elem].R[0] == cmp[trial].R[0] &&
                     hop[elem].R[1] == cmp[trial].R[1] &&
                     hop[elem].R[2] == cmp[trial].R[2] &&
@@ -115,7 +116,7 @@ TEST_CASE("W90 read in, reversed orbitals", "[W90reader][reversed]") {
     mpi_fil_printf( "generated file '%s' as W90 file for testing. Content:\n%s",
             fname.c_str(), fcontent );
     rs_hopping_t* cmp = model->hop;
-    index_t n_orb = 0x0; n_orb = ~n_orb;
+    index_t n_orb = DIVERGE_W90_READER_SWAP_ORBITALS;
     rs_hopping_t* hop = diverge_read_W90_C(fname.c_str(),n_spin,&len,&n_orb);
     remove( fname.c_str() );
     // check all hoppings exist and are equal
@@ -125,10 +126,10 @@ TEST_CASE("W90 read in, reversed orbitals", "[W90reader][reversed]") {
         if(std::abs(hop[elem].t) > 1e-10) {
             for(index_t trial = 0; trial < model->n_hop; ++trial) {
                 // here we have the swapped hopping elements!!
-                if(hop[elem].o2 == cmp[trial].o1 &&
-                    hop[elem].o1 == cmp[trial].o2 &&
-                    hop[elem].s2 == cmp[trial].s1 &&
-                    hop[elem].s1 == cmp[trial].s2 &&
+                if(hop[elem].o2 == cmp[trial].o2 &&
+                    hop[elem].o1 == cmp[trial].o1 &&
+                    hop[elem].s2 == cmp[trial].s2 &&
+                    hop[elem].s1 == cmp[trial].s1 &&
                     hop[elem].R[0] == cmp[trial].R[0] &&
                     hop[elem].R[1] == cmp[trial].R[1] &&
                     hop[elem].R[2] == cmp[trial].R[2] &&

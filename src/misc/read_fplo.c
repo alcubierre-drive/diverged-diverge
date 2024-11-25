@@ -118,13 +118,6 @@ static void fplo_hop_elemet_free( fplo_hop_element_t* e ) {
     free( e );
 }
 
-static inline claV3d_t claV3d_cross( claV3d_t a, claV3d_t b ) {
-    claV3d_t c = {{ a.v[2-1]*b.v[3-1] - a.v[3-1]*b.v[2-1],
-                    a.v[3-1]*b.v[1-1] - a.v[1-1]*b.v[3-1],
-                    a.v[1-1]*b.v[2-1] - a.v[2-1]*b.v[1-1] }};
-    return c;
-}
-
 static inline claM3d_t claM3d_inv( claM3d_t A ) {
     claM3d_t B = {0};
     for (int i=0; i<3; ++i)
