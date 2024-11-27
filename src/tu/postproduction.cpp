@@ -478,7 +478,7 @@ void tu_postproduction::construct_multiindex_maps(const diverge_model_t* model) 
 
 
 void tu_postproduction::to_file(string filename, bool save_self, bool save_full, bool save_symmetries) {
-    index_t* header = (index_t*)calloc(128,sizeof(index_t));
+    index_t header[256] = {0};
     const char* version = tag_version();
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
     symmstruct_t* symm = tu_data->symm;
@@ -543,7 +543,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     header[i] = vertex->n_bonds, ++i;
     header[i] = model->n_sym, ++i;
 
-    header[i] = 128*sizeof(index_t), ++i;
+    header[i] = 256*sizeof(index_t), ++i;
     header[i] = vertex->n_orbff, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
     header[i] = vertex->n_orbff, ++i;
@@ -687,7 +687,9 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     header[i] = header[i-2] + header[i-1]*sizeof(index_t); ++i;
     header[i] = vertex->n_orbff; ++i;
 
-    assert(i < 126);
+    assert(i < 125);
+    // this flag is to indicate our header is actually 256 long. Only supported after v0.8
+    header[125] = ~(header[125]);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
     header[127] = header[i-1]*sizeof(complex128_t)+header[i-2];
 
@@ -698,7 +700,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     index_t scdou = sizeof(complex128_t);
     index_t new_off = 0;
 
-    new_off = diverge_mpi_write_byte_to_file_master(file, header, new_off, 128*sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, header, new_off, sizeof(header));
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_ofrom, new_off, vertex->n_orbff*sindex);
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_oto, new_off, vertex->n_orbff*sindex);
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_R, new_off, 3*vertex->n_orbff*sindex);
@@ -809,5 +811,4 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_tuffidx, new_off, sindex*vertex->n_orbff);
 
     diverge_mpi_close_file(file);
-    free(header);
 }

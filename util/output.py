@@ -158,6 +158,12 @@ class diverge_model:
 
         #: diverge tag version (serves as file format version)
         self.version = self._displ_count( 125 ).tobytes().decode()
+
+        # we don't do anything with the extended header yet, but this doesn't
+        # really matter. It's implemented such that we won't run out of space
+        if self._f_header[97] and version_compare(self.version, "v0.8") >= 0:
+            self._f_header = numpy_fromfile(fname, dtype=np.longlong, count=256)
+
         #: dimension
         self.dim = self._head(3)
         #: number of kpts as (3,) array of :c:type:`index_t`
@@ -750,6 +756,11 @@ class diverge_post_tu:
 
         #: diverge tag version (serves as file format version)
         self.version = get_array_header( iL, np.byte ).tobytes().decode()
+
+        # we don't do anything with the extended header yet, but this doesn't
+        # really matter. It's implemented such that we won't run out of space
+        if d_header[125] and version_compare(self.version, "v0.8") >= 0:
+            d_header = numpy_fromfile(fname, dtype=np.longlong, count=256)
 
         #: symmetry mapping of full BZ to IBZ (nk)
         self.kmaps_to = get_array_header( iL, np.longlong )

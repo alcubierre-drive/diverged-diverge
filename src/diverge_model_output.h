@@ -101,6 +101,11 @@ typedef struct diverge_model_t diverge_model_t;
  * *Note that [displ, size] accounts for the full displacement and size of
  * the memory layout described above*
  *
+ *  :``header[97]``:       nonzero if the actual header size is ``256 *
+ *                         sizeof(int64_t)``. The extended header is currently
+ *                         unused, but this field is reserved for
+ *                         future extensions.
+ *
  * *if ibz_path is set, else all the following are zero*
  *
  *  :``header[98-99]``:    fatbands [displ, size]

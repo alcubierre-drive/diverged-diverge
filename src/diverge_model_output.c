@@ -55,11 +55,11 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
     uindex_t lmd5sum = 0;
     if (diverge_mpi_comm_rank() == 0) {
         // allocate the header
-        char* buf = (char*)calloc(128,sizeof(index_t));
+        char* buf = (char*)calloc(256,sizeof(index_t));
 
         // print the magic number
         index_t* ibuf = (index_t*)buf;
-        index_t displ = sizeof(index_t)*128;
+        index_t displ = sizeof(index_t)*256;
         int idx = 0;
         ibuf[idx++] = DIVERGE_MODEL_MAGIC_NUMBER;
 
@@ -270,6 +270,10 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         ibuf[122] = offsetof(tu_formfactor_t, d);
         ibuf[123] = offsetof(tu_formfactor_t, ffidx);
         ibuf[124] = sizeof(tu_formfactor_t);
+
+        // extended header
+        idx = 97;
+        ibuf[97] = ~(ibuf[97]);
 
         // file format version
         idx = 125;

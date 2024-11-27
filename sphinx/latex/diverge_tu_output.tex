@@ -12,6 +12,7 @@
 \definecolor{Fcornflower}{HTML}{bbddff}
 \definecolor{Fcmix}{HTML}{0f4880}
 \definecolor{Faqua}{HTML}{5fbf9f}
+\definecolor{youngBlue}{HTML}{3AF7FE}
 \newcommand{\bvec}[1]{\boldsymbol{#1}}
 \usetikzlibrary{calc, arrows, arrows.meta, math}
 
@@ -84,6 +85,7 @@
   \node[anchor=north east] at (0.99,0.99) {\begin{minipage}{3in}%
     \begin{flushright}%
       tu output header: $(128 \times \texttt{int64\_t})$\\
+      \phantom{tu output header:} {\color{youngBlue}$(256 \times \texttt{int64\_t})$}\\
       \small
       white: physical parameters (\tp{variable}) \\
       \textcolor{ForangeRed}{technical parameters} \\
@@ -115,11 +117,12 @@
     \tikzmath{ \dbuf = -0.005 - 3./64; }
     \draw[Fblue, ->, thick] (0.5,\dbuf) -- (0.5,-0.09);
   \end{scope}
-  \begin{scope}[shift={(0.48,-0.059)}, yscale=0.98, xscale=0.06]
+  \begin{scope}[shift={(0.48,-0.12)}, yscale=0.98, xscale=0.06]
     \EcolorizeBox{67}{105}{Faqua!30!white}
-    \EcolorizeBox{105}{107}{ForangeRed!30!white}   
-    \EcolorizeBox{120}{122}{ForangeRed!30!white}   
-    \EcolorizeBox{111}{120}{gray!30!white}   
+    \EcolorizeBox{105}{107}{ForangeRed!30!white}
+    \EcolorizeBox{120}{122}{ForangeRed!30!white}
+    \EcolorizeBox{111}{119}{gray!30!white}
+    \EcolorizeBox{119}{120}{youngBlue}
     \EcolorizeBox{107}{109}{Faqua!30!white}
     \EcolorizeBox{109}{111}{Fblue!30!white}
 
@@ -234,6 +237,7 @@
 
     \draw (Ecell126.east) -- ++(0.2,0.0) node[anchor=west] {magic number (\texttt{'T'==84})};
     \EbracketOne{127}{total filesize}
+    \EbracketOne{125}{\color{youngBlue}extended header (v0.8)}
 
     \tikzmath{\coordA = 0.5*(Ecell67.east) + 0.5*(Ecell79.east) + (0.1,0.0);
               \coordB = 0.5*(Ecell94.east) + 0.5*(Ecell99.east) + (0.1,0.0);}

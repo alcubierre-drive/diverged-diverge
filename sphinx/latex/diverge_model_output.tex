@@ -12,6 +12,7 @@
 \definecolor{Fcornflower}{HTML}{bbddff}
 \definecolor{Fcmix}{HTML}{0f4880}
 \definecolor{Faqua}{HTML}{5fbf9f}
+\definecolor{youngBlue}{HTML}{3AF7FE}
 \newcommand{\bvec}[1]{\boldsymbol{#1}}
 \usetikzlibrary{calc, arrows, arrows.meta, math}
 
@@ -75,6 +76,7 @@
   \node[anchor=north east] at (0.99,0.99) {\begin{minipage}{3in}%
     \begin{flushright}%
       model output header: $(128 \times \texttt{int64\_t})$\\
+      \phantom{model output header:} {\color{youngBlue}$(256 \times \texttt{int64\_t})$}\\
       \small
       white: physical parameters (\tp{variable}) \\
       \textcolor{ForangeRed}{technical parameters} \\
@@ -114,7 +116,8 @@
     \EcolorizeBox{80}{95}{Faqua!30!white}
 
     \EcolorizeBox{67}{80}{gray!30!white}
-    \EcolorizeBox{95}{98}{gray!30!white}
+    \EcolorizeBox{95}{97}{gray!30!white}
+    \EcolorizeBox{97}{98}{youngBlue}
 
     \foreach \idx in {0,1,...,60} {
       \tikzmath{
@@ -228,6 +231,7 @@
 
     \EbracketTwo{100}{101}{\ipd{band structure}}
     \EbracketTwo{98}{99}{\ipd{fatbands} (v0.6)}
+    \EbracketOne{97}{\color{youngBlue}extended header (v0.8)}
 
     \tikzmath{\dbuf=1./6.;
       \coordA = \dbuf*(Ecell102.east) +

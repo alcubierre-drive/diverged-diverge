@@ -178,6 +178,10 @@ diverge_postprocess_conf_t diverge_postprocess_conf_defaults_CPP( void );
  *
  * TUFRG:
  *
+ * as for model output files (see :c:func:`diverge_model_to_file`), the TUFRG
+ * output file has reserved space for the future. If the 125th field is nonzero,
+ * the actual header size is ``256*sizeof(int64_t)``.
+ *
  * .. image:: img/diverge_tu_output.png
  *      :width: 800
  *      :alt: specification for TUFRG output files
