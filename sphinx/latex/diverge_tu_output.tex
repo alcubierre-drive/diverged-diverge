@@ -80,7 +80,7 @@
     real \toplimitEastX;
     real \EastNum;
     \toplimitEast = 58./64.;
-    \EastNum = 61.;
+    \EastNum = 64.;
   }
   \node[anchor=north east] at (0.99,0.99) {\begin{minipage}{3in}%
     \begin{flushright}%
@@ -117,16 +117,17 @@
     \tikzmath{ \dbuf = -0.005 - 3./64; }
     \draw[Fblue, ->, thick] (0.5,\dbuf) -- (0.5,-0.09);
   \end{scope}
-  \begin{scope}[shift={(0.48,-0.12)}, yscale=0.98, xscale=0.06]
+  \begin{scope}[shift={(0.48,-0.09)}, yscale=0.98, xscale=0.06]
     \EcolorizeBox{67}{105}{Faqua!30!white}
     \EcolorizeBox{105}{107}{ForangeRed!30!white}
-    \EcolorizeBox{120}{122}{ForangeRed!30!white}
-    \EcolorizeBox{111}{119}{gray!30!white}
-    \EcolorizeBox{119}{120}{youngBlue}
     \EcolorizeBox{107}{109}{Faqua!30!white}
     \EcolorizeBox{109}{111}{Fblue!30!white}
+    \EcolorizeBox{111}{115}{Faqua!30!white}
+    \EcolorizeBox{115}{122}{gray!30!white}
+    \EcolorizeBox{122}{123}{youngBlue}
+    \EcolorizeBox{123}{125}{ForangeRed!30!white}
 
-    \foreach \idx in {0,1,...,43} {
+    \foreach \idx in {0,1,...,47} {
       \tikzmath{
         \dbuf = 1./64.;
         \ibuf = \idx+66;
@@ -135,18 +136,18 @@
       }
       \draw (\coordA) -- node[midway, below, yshift=0.27em] (Ecell\ibuf) {\scriptsize\ibuf} (\coordB);
     }
-    \draw (0,\toplimitEast-44.0/64.0) -- (1.0,\toplimitEast-44.0/64.0);
+    \draw (0,\toplimitEast-48.0/64.0) -- (1.0,\toplimitEast-48.0/64.0);
     
-    \node[] (q0) at (0.5,\toplimitEast-46.0/64.0) {.};
-    \node[] (q1) at (0.5,\toplimitEast-47.0/64.0) {.};
-    \node[] (q2) at (0.5,\toplimitEast-48.0/64.0) {.};
+    \node[] (q0) at (0.5,\toplimitEast-49.0/64.0) {.};
+    \node[] (q1) at (0.5,\toplimitEast-50.0/64.0) {.};
+    \node[] (q2) at (0.5,\toplimitEast-51.0/64.0) {.};
     
     \foreach \idx in {0,1,...,5} {
       \tikzmath{
         \dbuf = 1./64.;
         \ibuf = \idx+122;
-        \coordA = (0,\toplimitEast-49/64.0-\idx/64.0);
-        \coordB = (1,\toplimitEast-49/64.0-\idx/64.0);
+        \coordA = (0,\toplimitEast-52/64.0-\idx/64.0);
+        \coordB = (1,\toplimitEast-52/64.0-\idx/64.0);
       }
       \draw (\coordA) -- node[midway, below, yshift=0.27em] (Ecell\ibuf) {\scriptsize\ibuf} (\coordB);
     }
@@ -234,6 +235,8 @@
     \EbracketTwo{104}{105}{\ipd{version}}
     \EbracketTwo{106}{107}{\oop{kmaps\_to} (v0.6)}
     \EbracketTwo{108}{109}{\nip{mi\_to\_ffidx} (v0.6)}
+    \EbracketTwo{110}{111}{\oop{bare $\chi_\mathrm{PP}^0$} (v0.8)}
+    \EbracketTwo{112}{113}{\oop{bare $\chi_\mathrm{PH}^0$} (v0.8)}
 
     \draw (Ecell126.east) -- ++(0.2,0.0) node[anchor=west] {magic number (\texttt{'T'==84})};
     \EbracketOne{127}{total filesize}

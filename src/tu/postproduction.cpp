@@ -543,7 +543,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     header[i] = vertex->n_bonds, ++i;
     header[i] = model->n_sym, ++i;
 
-    header[i] = 256*sizeof(index_t), ++i;
+    header[i] = sizeof(header), ++i;
     header[i] = vertex->n_orbff, ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
     header[i] = vertex->n_orbff, ++i;
@@ -687,6 +687,15 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     header[i] = header[i-2] + header[i-1]*sizeof(index_t); ++i;
     header[i] = vertex->n_orbff; ++i;
 
+    header[i] = header[i-2] + header[i-1]*sizeof(index_t); ++i;
+    if (vertex->P_flow && bare_susceptibilities)
+        header[i] = POW2(linsize) * vertex->nk;
+    ++i;
+    header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
+    if ((vertex->C_flow || vertex->D_flow) && bare_susceptibilities)
+        header[i] = POW2(linsize) * vertex->nk;
+    ++i;
+
     assert(i < 125);
     // this flag is to indicate our header is actually 256 long. Only supported after v0.8
     header[125] = ~(header[125]);
@@ -809,6 +818,15 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     }
 
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_tuffidx, new_off, sindex*vertex->n_orbff);
+
+    index_t scdlin = POW2(linsize) * sizeof(complex128_t);
+    if (bare_susceptibilities && vertex->P_flow)
+        new_off = diverge_mpi_write_byte_to_file(file,vertex->pp_bubble_int,new_off+my_nk_off*scdlin,my_nk*scdlin);
+    if (bare_susceptibilities && (vertex->C_flow || vertex->D_flow))
+        new_off = diverge_mpi_write_byte_to_file(file,vertex->ph_bubble_int,new_off+my_nk_off*scdlin,my_nk*scdlin);
+
+    if (new_off != header[127])
+        mpi_wrn_printf( "offset of file (%li) dosn't match size (%li)\n", new_off, header[127] );
 
     diverge_mpi_close_file(file);
 }

@@ -104,6 +104,9 @@ struct diverge_postprocess_conf_t {
      * from smallest)
      */
     char    tu_lingap_solver_mode[4];
+    /** output the (flowing) bare susceptibilities, i.e., the integrated loop
+     * derivative. May result in large files. */
+    bool    tu_susceptibilities_bare;
 
     // DEVELOPERS
     //
@@ -146,6 +149,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_n_decomp_values = 0,
     .tu_lingap_atscale = false,
     .tu_lingap_solver_mode = "sss",
+    .tu_susceptibilities_bare = false,
 };
 #endif
 

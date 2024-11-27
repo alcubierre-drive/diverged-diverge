@@ -31,6 +31,7 @@ public:
     double cutoff;
     bool cutoff_rel;
     char tu_lingap_solver_mode[4] = "sss";
+    bool bare_susceptibilities = false;
 
     index_t* lenP;
     index_t* lenC;
