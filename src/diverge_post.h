@@ -104,8 +104,10 @@ struct diverge_postprocess_conf_t {
      * from smallest)
      */
     char    tu_lingap_solver_mode[4];
-    /** output the (flowing) bare susceptibilities, i.e., the integrated loop
-     * derivative. May result in large files. */
+    /**
+     * output the (flowing) bare susceptibilities, i.e., the integrated loop
+     * derivative. May result in large files.
+     */
     bool    tu_susceptibilities_bare;
 
     // DEVELOPERS
