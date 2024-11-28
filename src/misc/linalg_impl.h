@@ -37,7 +37,7 @@ LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_const( LIN
         result.v[i] = val; \
     return result; \
 } \
-LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( LINALG_DATA_TYPE_##type* p ) { \
+LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( const LINALG_DATA_TYPE_##type* p ) { \
     cla_prefix##V##dim##type##_t result; \
     for (int i=0; i<dim; ++i) \
         result.v[i] = p[i]; \
@@ -94,7 +94,7 @@ LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_cross( cla
     return c; \
 } \
  \
-LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_map( LINALG_DATA_TYPE_##type* p ) { \
+LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_map( const LINALG_DATA_TYPE_##type* p ) { \
     cla_prefix##M##dim##type##_t result; \
     LINALG_DATA_TYPE_##type* ptr = result.m[0]; \
     for (int i=0; i<dim*dim; ++i) \

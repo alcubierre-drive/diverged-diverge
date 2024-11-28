@@ -89,7 +89,7 @@ typedef _Complex double complex128_t;
  *
  *   * ``PVDT_t PVDT_zero( void )``: generate a zero vector
  *   * ``PVDT_t PVDT_const( T val )``: generate a constant vector, where each entry is set to ``val``
- *   * ``PVDT_t PVDT_map( T* p )``: map data to a vector (copy)
+ *   * ``PVDT_t PVDT_map( const T* p )``: map data to a vector (copy)
  *   * ``void PVDT_rmap( PVDT_t v, T* p )``: map vector to data (copy)
  *   * ``PVDT_t PVDT_scale( PVDT_t v, T s )``: return :math:`\boldsymbol{v} \, s`
  *   * ``PVDT_t PVDT_add( PVDT_t a, PVDT_t b )``: return :math:`\boldsymbol{a} + \boldsymbol{b}`
@@ -112,7 +112,7 @@ typedef _Complex double complex128_t;
  *
  *   * ``PMDT_t PMDT_zero( void )``: zero-init a matrix
  *   * ``PMDT_t PMDT_id( void )``: indentity-init a matrix
- *   * ``PMDT_t PMDT_map( T * p )``: map data to a matrix (copy)
+ *   * ``PMDT_t PMDT_map( const T* p )``: map data to a matrix (copy)
  *   * ``void PMDT_rmap( PMDT_t m, T * p )``: map matrix to data (copy)
  *   * ``PMDT_t PMDT_scale( PMDT_t v, T s )``: return :math:`\hat{v} \, s`
  *   * ``PMDT_t PMDT_add( PMDT_t a, PMDT_t b )``: return :math:`\hat{a} + \hat{b}`
@@ -174,7 +174,7 @@ typedef struct cla_prefix##V##dim##type##_t { \
 } cla_prefix##V##dim##type##_t; \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_zero( void ); \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_const( LINALG_DATA_TYPE_##type val ); \
-LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( LINALG_DATA_TYPE_##type * p ); \
+LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( const LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT void cla_prefix##V##dim##type##_rmap( cla_prefix##V##dim##type##_t v, LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_scale( cla_prefix##V##dim##type##_t v, LINALG_DATA_TYPE_##type s ); \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_add( cla_prefix##V##dim##type##_t a, cla_prefix##V##dim##type##_t b ); \
@@ -191,7 +191,7 @@ typedef struct cla_prefix##M##dim##type##_t { \
 } cla_prefix##M##dim##type##_t; \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_zero( void ); \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_id( void ); \
-LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_map( LINALG_DATA_TYPE_##type * p ); \
+LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_map( const LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT void cla_prefix##M##dim##type##_rmap( cla_prefix##M##dim##type##_t m, LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_scale( cla_prefix##M##dim##type##_t v, LINALG_DATA_TYPE_##type s ); \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_add( cla_prefix##M##dim##type##_t a, cla_prefix##M##dim##type##_t b ); \
