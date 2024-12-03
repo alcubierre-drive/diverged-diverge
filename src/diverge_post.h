@@ -109,6 +109,12 @@ struct diverge_postprocess_conf_t {
      * derivative. May result in large files.
      */
     bool    tu_susceptibilities_bare;
+    /**
+     * project the full vertex into the respective diagrammatic channel for
+     * diagonalization (only useful when :c:member:`tu_skip_channel_calc` is
+     * false)
+     */
+    bool    tu_channel_calc_project;
 
     // DEVELOPERS
     //
@@ -152,6 +158,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_lingap_atscale = false,
     .tu_lingap_solver_mode = "sss",
     .tu_susceptibilities_bare = false,
+    .tu_channel_calc_project = false,
 };
 #endif
 

@@ -155,15 +155,22 @@ void tu_postproduction::_save_channel_leading_ev(complex128_t* channel,
 }
 
 void tu_postproduction::save_channel_leading_ev() {
-    if(vertex->P_flow)
-        _save_channel_leading_ev(vertex->Pch,
-            Pvec, Pval, Ptype, lenP, offP);
-    if(vertex->C_flow)
-        _save_channel_leading_ev(vertex->Cch,
-            Cvec, Cval, Ctype, lenC, offC);
-    if(vertex->D_flow)
-        _save_channel_leading_ev(vertex->Dch,
-            Dvec, Dval, Dtype, lenD, offD);
+    // use projection helper as vertex buffer in case channel_calc_project is
+    // on. Otherwise keep this NULL and fall back to the respective channel in
+    // the _save_channel_leading_ev call
+    complex128_t* Vbuf = channel_calc_project ? vertex->projection_helper : NULL;
+    if (vertex->P_flow) {
+        if (channel_calc_project) P_projection(vertex->projection_helper, vertex, proj);
+        _save_channel_leading_ev(Vbuf ? Vbuf : vertex->Pch, Pvec, Pval, Ptype, lenP, offP);
+    }
+    if (vertex->C_flow) {
+        if (channel_calc_project) C_projection(vertex->projection_helper, vertex, proj);
+        _save_channel_leading_ev(Vbuf ? Vbuf : vertex->Cch, Cvec, Cval, Ctype, lenC, offC);
+    }
+    if (vertex->D_flow) {
+        if (channel_calc_project) D_projection(vertex->projection_helper, vertex, proj);
+        _save_channel_leading_ev(Vbuf ? Vbuf : vertex->Dch, Dvec, Dval, Dtype, lenD, offD);
+    }
 }
 
 void tu_postproduction::lingap_ff(bool atscale) {
