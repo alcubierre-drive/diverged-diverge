@@ -41,6 +41,9 @@ void batched_eigen( int* devices, int ndevices, complex128_t* H, complex128_t* E
  */
 void batched_eigen_r( int* devices, int ndevices, complex128_t* H, double* E, index_t dim, index_t Num );
 
+/** force the CPU eigensolver built with Eigen3 for :c:func:`batched_eigen_r` */
+void batched_eigen_r_set_eigen3_mode( int use_eigen3 );
+
 /**
  * set the number of chunks to use in the batched eigen CUDA backend (which
  * operates with 32bit indices, thus enforcing an additional chunking). not

@@ -21,6 +21,8 @@ typedef struct {
 void* batched_eigen_gpu( void* );
 void* batched_eigen_cpu( void* );
 
+void batched_zheevd( const complex128_t* H, complex128_t* U, double* E, index_t num, index_t dim );
+
 #ifdef __cplusplus
 }
 #endif

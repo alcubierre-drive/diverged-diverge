@@ -15,6 +15,16 @@ static int helper_batched_eigen_nchunks = -1;
 static int helper_batched_eigen_shut_up = 0;
 static int helper_batched_eigen_nthreads = -1;
 
+#ifdef USE_EIGEN3_CPU_EIGENSOLVER
+static int helper_batched_eigen_eigen3cpu = 1;
+#else
+static int helper_batched_eigen_eigen3cpu = 0;
+#endif
+
+void batched_eigen_r_set_eigen3_mode( int use_eigen3 ) {
+    helper_batched_eigen_eigen3cpu = use_eigen3;
+}
+
 static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
         void* E_, bool real, index_t n, index_t N );
 
@@ -31,7 +41,10 @@ void batched_eigen( int* devices, int ndevices, complex128_t* H, complex128_t* E
 }
 
 void batched_eigen_r( int* devices, int ndevices, complex128_t* H, double* E, index_t n, index_t N ) {
-    batched_eigen_wrap_r( devices, ndevices, H, E, true, n, N );
+    if (helper_batched_eigen_eigen3cpu)
+        batched_zheevd( H, H, E, N, n );
+    else
+        batched_eigen_wrap_r( devices, ndevices, H, E, true, n, N );
 }
 
 void batched_eigen_set_nchunks( int nchunks ) {

@@ -80,8 +80,14 @@ real numbers (i.e. a <code class="docutils literal notranslate"><span class="pre
 </dd></dl>
 
 <dl class="c function">
+<dt class="sig sig-object c" id="c.batched_eigen_r_set_eigen3_mode">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batched_eigen_r_set_eigen3_mode</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">use_eigen3</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.batched_eigen_r_set_eigen3_mode" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/batched_eigen.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>force the CPU eigensolver built with Eigen3 for <a class="reference internal" href="#c.batched_eigen_r" title="batched_eigen_r"><code class="xref c c-func docutils literal notranslate"><span class="pre">batched_eigen_r()</span></code></a></p>
+</dd></dl>
+
+<dl class="c function">
 <dt class="sig sig-object c" id="c.batched_eigen_set_nchunks">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batched_eigen_set_nchunks</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">nchunks</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.batched_eigen_set_nchunks" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/batched_eigen.h#L44"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batched_eigen_set_nchunks</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">nchunks</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.batched_eigen_set_nchunks" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/batched_eigen.h#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>set the number of chunks to use in the batched eigen CUDA backend (which
 operates with 32bit indices, thus enforcing an additional chunking). not
 thread safe.</p>
@@ -89,20 +95,20 @@ thread safe.</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.batched_eigen_get_nchunks">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batched_eigen_get_nchunks</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.batched_eigen_get_nchunks" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/batched_eigen.h#L50"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batched_eigen_get_nchunks</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.batched_eigen_get_nchunks" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/batched_eigen.h#L53"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>get the number of chunks for CUDA. not thread safe.</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.batched_eigen_set_nthreads">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batched_eigen_set_nthreads</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">nthr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.batched_eigen_set_nthreads" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/batched_eigen.h#L54"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batched_eigen_set_nthreads</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">nthr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.batched_eigen_set_nthreads" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/batched_eigen.h#L57"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>we need this (annoying) function because some LAPACKE implementations won’t
 accept running with the implicitly set number of OMP threads</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.batched_eigen_shut_up">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batched_eigen_shut_up</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">silence</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.batched_eigen_shut_up" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/batched_eigen.h#L60"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batched_eigen_shut_up</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">silence</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.batched_eigen_shut_up" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/batched_eigen.h#L63"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>disable or enable all <code class="docutils literal notranslate"><span class="pre">mpi_..._printf()</span></code> messaged in
 <a class="reference internal" href="#c.batched_eigen" title="batched_eigen"><code class="xref c c-func docutils literal notranslate"><span class="pre">batched_eigen()</span></code></a> and <a class="reference internal" href="#c.batched_eigen_r" title="batched_eigen_r"><code class="xref c c-func docutils literal notranslate"><span class="pre">batched_eigen_r()</span></code></a>. not thread safe.</p>
 </dd></dl>

@@ -4,6 +4,7 @@
 #include "dependency_tree.h"
 #include "shared_mem.h"
 #include "mpi_functions.h"
+#include "batched_eigen.h"
 
 #include "../diverge_common.h"
 #include <fftw3.h>
@@ -31,6 +32,7 @@ static struct {
     tag_t symcheck_mpi;
     tag_t tu_symcheck_mpi;
     tag_t shared_malloc_extra_colors;
+    tag_t batched_eigen_r_eigen3;
 } dvg_env = {0};
 
 static int dvg_has_fftw_init = 0;
@@ -70,10 +72,14 @@ void init_internal_libs( void ) {
     EQUALIZE( symcheck_mpi );
     EQUALIZE( tu_symcheck_mpi );
     EQUALIZE( shared_malloc_extra_colors );
+    EQUALIZE( batched_eigen_r_eigen3 );
 
     init_internal_libs_omp_implicit( dvg_env.omp_implicit_num_threads.val );
     init_internal_libs_omp_diverge( dvg_env.omp_num_threads.val );
     init_internal_libs_fftw( dvg_env.fftw_num_threads.val );
+
+    if (dvg_env.batched_eigen_r_eigen3.set)
+        batched_eigen_r_set_eigen3_mode( 1 );
 
     // logging
     dvg_previous_log_color = mpi_log_get_colors();
@@ -95,6 +101,7 @@ void init_internal_libs( void ) {
     NOTIFY_OR_WARN( shared_malloc_extra_colors, "using extra colors for MPI shared memory distribution\n" );
     NOTIFY_OR_WARN( symcheck_mpi, "enable symmetry check for MPI\n" );
     NOTIFY_OR_WARN( tu_symcheck_mpi, "enable TU symmetry check for MPI\n" );
+    NOTIFY_OR_WARN( batched_eigen_r_eigen3, "batched eigen in Eigen3 mode (CPU only)\n" );
 
     dependency_tree_init();
     shared_malloc_init( dvg_env.shared_malloc_extra_colors.set );
@@ -153,6 +160,7 @@ static void read_environment( void ) {
     char* env_dvg_shared_malloc_extra_colors = getenv( "DIVERGE_SHARED_MALLOC_EXTRA_COLORS" );
     char* env_dvg_symcheck_mpi = getenv( "DIVERGE_SYMCHECK_MPI" );
     char* env_dvg_tu_symcheck_mpi = getenv( "DIVERGE_TU_SYMCHECK_MPI" );
+    char* env_dvg_batched_eigen_r_eigen3 = getenv( "DIVERGE_BATCHED_EIGEN3" );
 
 #define SET_ENV_VAR( nam ) \
     if ((dvg_env.nam.set = (env_dvg_##nam != NULL))) { \
@@ -164,6 +172,7 @@ static void read_environment( void ) {
     SET_ENV_VAR( shared_malloc_extra_colors );
     SET_ENV_VAR( symcheck_mpi );
     SET_ENV_VAR( tu_symcheck_mpi );
+    SET_ENV_VAR( batched_eigen_r_eigen3 );
 
     // and check
 #define CHECK_ENV_VAR( nam, default ) \

@@ -487,6 +487,17 @@ algorithms. Particularly useful for the grid FRG code.</p>
 <dd class="field-odd"><p>use Eigen’s matrix multiplication in batched
 gemms (CPU)</p>
 </dd>
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_EIGEN3_CPU_EIGENSOLVER</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>default to a CPU version of the batched
+eigensolver, built with Eigen3. Can be turned off at run time via
+<a class="reference internal" href="Linear%20Algebra.html#c.batched_eigen_r_set_eigen3_mode" title="batched_eigen_r_set_eigen3_mode"><code class="xref c c-func docutils literal notranslate"><span class="pre">batched_eigen_r_set_eigen3_mode()</span></code></a>.</p>
+</dd>
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE=VAL</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>compile extensive fixed-size
+versions (up to dimension <code class="docutils literal notranslate"><span class="pre">VAL</span></code> up to <code class="docutils literal notranslate"><span class="pre">VAL</span> <span class="pre">=</span> <span class="pre">16</span></code> for the CPU
+eigensolver built with Eigen3. May be faster for small-size matrices,
+but compilation times are terrible.</p>
+</dd>
 <dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_FPLO_READER</span></code><span class="colon">:</span></dt>
 <dd class="field-even"><p>include the (still experimental) <a class="reference internal" href="FPLO.html#c.diverge_read_fplo" title="diverge_read_fplo"><code class="xref c c-func docutils literal notranslate"><span class="pre">FPLO</span> <span class="pre">reader</span></code></a>. requires <a class="reference external" href="https://troydhanson.github.io/uthash/">utlist.h</a> and POSIX regex.h.</p>
 </dd>

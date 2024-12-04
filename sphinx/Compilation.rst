@@ -362,6 +362,13 @@ written (i.e., the variable can be either *defined* or *not*), or
         algorithms. Particularly useful for the grid FRG code.
     :``USE_EIGEN_BATCHED_GEMM``: use Eigen's matrix multiplication in batched
         gemms (CPU)
+    :``USE_EIGEN3_CPU_EIGENSOLVER``: default to a CPU version of the batched
+        eigensolver, built with Eigen3. Can be turned off at run time via
+        :c:func:`batched_eigen_r_set_eigen3_mode`.
+    :``USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE=VAL``: compile extensive fixed-size
+        versions (up to dimension ``VAL`` up to ``VAL = 16`` for the CPU
+        eigensolver built with Eigen3. May be faster for small-size matrices,
+        but compilation times are terrible.
     :``USE_FPLO_READER``: include the (still experimental) :c:func:`FPLO reader
         <diverge_read_fplo>`. requires `utlist.h
         <https://troydhanson.github.io/uthash/>`_ and POSIX regex.h.
