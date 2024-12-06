@@ -41,10 +41,16 @@ void batched_eigen( int* devices, int ndevices, complex128_t* H, complex128_t* E
 }
 
 void batched_eigen_r( int* devices, int ndevices, complex128_t* H, double* E, index_t n, index_t N ) {
-    if (helper_batched_eigen_eigen3cpu)
+#ifdef USE_CUDA
+    if (ndevices == 0 && helper_batched_eigen_eigen3cpu) {
+#else
+    if (helper_batched_eigen_eigen3cpu) {
+#endif
+        mpi_vrb_printf( "dispatching to batched_zheevd eigensolver (Eigen3@CPU)\n" );
         batched_zheevd( H, H, E, N, n );
-    else
+    } else {
         batched_eigen_wrap_r( devices, ndevices, H, E, true, n, N );
+    }
 }
 
 void batched_eigen_set_nchunks( int nchunks ) {
