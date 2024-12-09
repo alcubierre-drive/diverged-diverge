@@ -178,6 +178,7 @@ DIVERGE_UNSTABLE {
         batched_eigen;
         batched_eigen_get_nchunks;
         batched_eigen_r;
+        batched_eigen_r_set_eigen3_mode;
         batched_eigen_set_nchunks;
         batched_eigen_set_nthreads;
         batched_eigen_shut_up;
