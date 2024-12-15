@@ -547,6 +547,19 @@ if not _libs["divERGe"] is None:
     rs_hopping_to_fractcell.argtypes = [c_voidp, c_voidp, c_voidp, c_voidp]
     rs_hopping_to_fractcell.restype = None
 
+    linspace = _libs["divERGe"].get("diverge_linspace", "cdecl")
+    linspace.argtypes = [c_double, c_double, index_t]
+    linspace.restype = c_voidp
+    model_dos = _libs["divERGe"].get("diverge_model_dos", "cdecl")
+    model_dos.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, index_t, c_double]
+    model_dos.restype = c_voidp
+    model_ldos = _libs["divERGe"].get("diverge_model_ldos", "cdecl")
+    model_ldos.argtypes = [POINTER(model_t), c_voidp, c_voidp, index_t, c_voidp, index_t, c_double]
+    model_ldos.restype = c_voidp
+    optimized_dos_set_binfact = _libs["divERGe"].get("diverge_optimized_dos_set_binfact", "cdecl")
+    optimized_dos_set_binfact.argtypes = [c_double]
+    optimized_dos_set_binfact.restype = None
+
     fukui = _libs["divERGe"].get("diverge_fukui", "cdecl")
     fukui.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp]
     fukui.restype = c_voidp

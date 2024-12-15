@@ -46,3 +46,6 @@
 #include "misc/ham2hop.h"
 #include "misc/bitary.h"
 #include "misc/qnan.h"
+
+// density of states
+#include "misc/dos.h"

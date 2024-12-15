@@ -56,3 +56,8 @@ the model internals structure to be set up (via
 :c:func:`diverge_model_internals_common`).
 
 .. c:autodoc:: misc/ham_at_k.h
+
+Density of States
+-----------------
+
+.. c:autodoc:: misc/dos.h

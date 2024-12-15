@@ -293,6 +293,88 @@ in <a class="reference internal" href="#c.diverge_model_ham_at_kpt" title="diver
 </dd></dl>
 
 </section>
+<section id="density-of-states">
+<h2>Density of States<a class="headerlink" href="#density-of-states" title="Link to this heading">¶</a></h2>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_linspace">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_linspace</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">min</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">max</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">num</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_linspace" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L13"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>create a linearly spaced array from <code class="docutils literal notranslate"><span class="pre">min</span></code> to <code class="docutils literal notranslate"><span class="pre">max</span></code> with <code class="docutils literal notranslate"><span class="pre">num</span></code> entries.
+returned array must be free’d by user with <code class="docutils literal notranslate"><span class="pre">free</span></code> or
+<a class="reference internal" href="Allocators.html#c.diverge_mem_free" title="diverge_mem_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_mem_free()</span></code></a>. When <code class="docutils literal notranslate"><span class="pre">num</span></code> is negative, the endpoint is
+excluded. Otherwise it’s included.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_dos">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_dos</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">omega</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_omega</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_dos" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>calculate the DOS given an array of energies or a model that has its
+internals set: <span class="math notranslate nohighlight">\(\rho(\omega) = \sum_{k,b} \Im[ 1/(\omega - i\eta -
+E_{kb}) ]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a><span class="p">*</span></span></span>) – the model to operate on with common
+internals set via <a class="reference internal" href="Internals.html#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a>.</p></li>
+<li><p><strong>E</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="p">*</span></span></span>) – an optional energy array, may be <code class="docutils literal notranslate"><span class="pre">NULL</span></code> in which
+case the internal energy array is used.</p></li>
+<li><p><strong>nb</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – an optional number of bands. is ignored if <code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">==</span> <span class="pre">NULL</span></code>
+or if <code class="docutils literal notranslate"><span class="pre">nb</span> <span class="pre">&lt;=</span> <span class="pre">0</span></code></p></li>
+<li><p><strong>omega</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="p">*</span></span></span>) – frequency array</p></li>
+<li><p><strong>n_omega</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of frequencies</p></li>
+<li><p><strong>eta</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – smearing. If <code class="docutils literal notranslate"><span class="pre">eta</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, use an optimized algorithm that
+only considers energies within a small window for DOS calculation at
+each frequency, assumes linearly spaced array for <code class="docutils literal notranslate"><span class="pre">omega</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">double</span></code> array with the density of states (shape n_omega). Result
+must be free’d with call to <code class="docutils literal notranslate"><span class="pre">free</span></code> or <a class="reference internal" href="Allocators.html#c.diverge_mem_free" title="diverge_mem_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_mem_free()</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_ldos">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_ldos</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">U</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">omega</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_omega</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_ldos" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L44"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>calculate the LDOS given an array of energies and orbital to band matrices or
+a model that has its internals set: <span class="math notranslate nohighlight">\(\rho(\omega,o) = \sum_{k,b} \Im[
+|U_{kb}^o|^2/(\omega - i\eta - E_{kb}) ]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a><span class="p">*</span></span></span>) – the model to operate on with common
+internals set via <a class="reference internal" href="Internals.html#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a>.</p></li>
+<li><p><strong>E</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="p">*</span></span></span>) – an optional energy array, may be <code class="docutils literal notranslate"><span class="pre">NULL</span></code> in which
+case the internal energy array is used.</p></li>
+<li><p><strong>U</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n">complex128_t</span></a><span class="p">*</span></span></span>) – an optional orbital to band array, may be
+<code class="docutils literal notranslate"><span class="pre">NULL</span></code> in which case the internal o2b array is used.</p></li>
+<li><p><strong>nb</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – an optional number of bands. is ignored if <code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">==</span> <span class="pre">NULL</span></code>
+or if <code class="docutils literal notranslate"><span class="pre">nb</span> <span class="pre">&lt;=</span> <span class="pre">0</span></code></p></li>
+<li><p><strong>omega</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="p">*</span></span></span>) – frequency array</p></li>
+<li><p><strong>n_omega</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of frequencies</p></li>
+<li><p><strong>eta</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – smearing. If <code class="docutils literal notranslate"><span class="pre">eta</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, use an optimized algorithm that
+only considers energies within a small window for LDOS calculation at
+each frequency, assumes linearly spaced array for <code class="docutils literal notranslate"><span class="pre">omega</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">double</span></code> array with the local density of states (shape
+(n_omega,nb)). Result must be free’d with call to <code class="docutils literal notranslate"><span class="pre">free</span></code> or
+<a class="reference internal" href="Allocators.html#c.diverge_mem_free" title="diverge_mem_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_mem_free()</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_optimized_dos_set_binfact">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_optimized_dos_set_binfact</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">binfact</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_optimized_dos_set_binfact" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L71"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>set the factor <span class="math notranslate nohighlight">\(F\)</span> that determines the number of bins <span class="math notranslate nohighlight">\(B\)</span> from
+smearing <span class="math notranslate nohighlight">\(\eta\)</span> and omega spacing <span class="math notranslate nohighlight">\(\mathrm{d}\omega\)</span> in the
+optimized algorithms. Defaults to 10.0.</p>
+<p><span class="math notranslate nohighlight">\(B = \eta / \mathrm{d}\omega \cdot F\)</span></p>
+</dd></dl>
+
+</section>
 </section>
 
 
