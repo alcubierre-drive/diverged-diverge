@@ -565,6 +565,9 @@ if not _libs["divERGe"] is None:
     optimized_dos_set_binsearch_algo = _libs["divERGe"].get("diverge_optimized_dos_set_binsearch_algo", "cdecl")
     optimized_dos_set_binsearch_algo.argtypes = [c_int]
     optimized_dos_set_binsearch_algo.restype = None
+    dos_use_gpu = _libs["divERGe"].get("diverge_dos_use_gpu", "cdecl")
+    dos_use_gpu.argtypes = [c_int]
+    dos_use_gpu.restype = None
 
     fukui = _libs["divERGe"].get("diverge_fukui", "cdecl")
     fukui.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp]
