@@ -403,8 +403,8 @@ optimized algorithms. Defaults to 15.0.</p>
 </dd></dl>
 
 <dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_optimized_dos_set_linspaced_algo">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_optimized_dos_set_linspaced_algo</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">binsearch</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_optimized_dos_set_linspaced_algo" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L102"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dt class="sig sig-object c" id="c.diverge_optimized_dos_set_binsearch_algo">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_optimized_dos_set_binsearch_algo</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">binsearch</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_optimized_dos_set_binsearch_algo" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L102"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Set the optimized DOS algorithm to one that doesn’t use binary search
 (<code class="docutils literal notranslate"><span class="pre">binsearch==0</span></code>) when the frequency array is linspaced. Instead, it
 calculates frequency indices explicitly. Might be slower than the binary
