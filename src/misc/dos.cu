@@ -51,6 +51,7 @@ static void ldos_kernel_gpu_dev( const double* E, index_t nE, const cuDoubleComp
     }
     if (threadIdx.x == 1) {
         binlimits[1] = regularize( find_bin_irreg( E, nE, omega[omega_idx]+window ), nE );
+        if (binlimits[1] == nE-1) binlimits[1] = nE;
     }
     if (threadIdx.x == 2) {
         for (index_t o=0; o<nos; ++o) ldos_local[o] = 0;
@@ -60,14 +61,15 @@ static void ldos_kernel_gpu_dev( const double* E, index_t nE, const cuDoubleComp
     index_t bincount_total = binlimits[1] - binlimits[0];
     index_t bincount = bincount_total / LDOS_KERNEL_GPU_DEV_NTHREADS +
         (bincount_total % LDOS_KERNEL_GPU_DEV_NTHREADS != 0);
-    index_t bindispl = binlimits[0] + bincount * threadIdx.x;
+    index_t bindispl = bincount * threadIdx.x;
     for (index_t b=0; b<bincount; ++b) {
         index_t bin = bindispl + b;
         if (bin >= bincount_total) break;
+        bin += binlimits[0];
 
         cuDoubleComplex denom {0};
         denom.x = omega[omega_idx] - E[bin];
-        denom.y = eta;
+        denom.y = -eta;
         cuDoubleComplex nomin {0};
         nomin.x = 1;
         nomin = cuCdiv(nomin, denom);
@@ -81,7 +83,7 @@ static void ldos_kernel_gpu_dev( const double* E, index_t nE, const cuDoubleComp
     index_t odispl = threadIdx.x * ocount;
     for (index_t o=0; o<ocount; ++o)
         if (odispl+o < nos)
-            ldos[IDX2(omega_idx,odispl+o,nos)] += ldos_local[odispl+o];
+            ldos[IDX2(omega_idx,odispl+o,nos)] = ldos_local[odispl+o];
 }
 
 __global__ static void setComplexOne( cuDoubleComplex* ary ) {
@@ -125,6 +127,7 @@ void ldos_kernel_gpu( const double* E_, index_t nE, const complex128_t* U_, inde
         index_t E_displ = regularize( find_bin_irreg( E, nE, omega[omega_displs[dev]]-window ), nE );
         index_t E_displ_count = regularize(
                         find_bin_irreg(E,nE,omega[omega_displs[dev]+omega_counts[dev]-1]+window), nE );
+        if (E_displ_count == nE-1) E_displ_count = nE;
         index_t E_count = E_displ_count - E_displ;
 
         // allocate+copy energies on device
@@ -135,7 +138,7 @@ void ldos_kernel_gpu( const double* E_, index_t nE, const complex128_t* U_, inde
         // allocate+copy/set o2b on device
         cuDoubleComplex* dU;
         CUDA_CHECK( cudaMalloc( (void**)&dU, E_count * sizeof(*dU) * nos ) );
-        if (dU) {
+        if (U) {
             CUDA_CHECK( cudaMemcpy( dU, U + E_displ*nos, E_count*nos*sizeof(*dU), cudaMemcpyHostToDevice ) )
         } else {
             setComplexOne<<<dim3(E_count,1,1),dim3(nos,1,1)>>>( dU );
@@ -148,10 +151,9 @@ void ldos_kernel_gpu( const double* E_, index_t nE, const complex128_t* U_, inde
         CUDA_CHECK( cudaMemcpy( domega, omega+omega_displs[dev], omega_counts[dev]*sizeof(*domega),
                     cudaMemcpyHostToDevice ) );
 
-        // allocate+set ldos on device
+        // allocate ldos on device
         double* dldos;
         CUDA_CHECK( cudaMalloc( (void**)&dldos, omega_counts[dev]*nos*sizeof(*dldos) ) );
-        CUDA_CHECK( cudaMemset( dldos, 0, omega_counts[dev]*nos*sizeof(*dldos) ) );
 
         // call the kernel
         ldos_kernel_gpu_dev<<<dim3(omega_counts[dev],1,1),dim3(LDOS_KERNEL_GPU_DEV_NTHREADS,1,1)>>>( dE,
