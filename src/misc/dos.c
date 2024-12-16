@@ -3,8 +3,8 @@
 #include "../diverge_model_internals.h"
 #include "../diverge_internals_struct.h"
 #include "mpi_functions.h"
-#include "timsort.h"
 #include <omp.h>
+#include "dos_sort.h"
 
 static inline int is_linspaced( const double* ary, index_t n_ary );
 static inline index_t find_bin( double test, double min, double max, index_t num );
@@ -54,7 +54,7 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
             index_t nE = nk_tot*nb;
             double* E_sorted = calloc( nE, sizeof*E_sorted );
             memcpy( E_sorted, E, nE*sizeof*E_sorted );
-            timsort( E_sorted, nE, sizeof*E_sorted, &compare_double );
+            dos_sort_doubles( E_sorted, nE );
 
             // distribute frequencies
             index_t nthr = diverge_omp_num_threads();
@@ -147,7 +147,7 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
             index_t* E_sorter = calloc( nE, sizeof*E_sorter );
             #pragma omp parallel for num_threads(diverge_omp_num_threads())
             for (index_t i=0; i<nE; ++i) E_sorter[i] = i;
-            timsort_r( E_sorter, nE, sizeof*E_sorter, &compare_double_indirect, (void*)E );
+            dos_sort_doubles_indirect( E_sorter, nE, E );
 
             // actual sorting via argsort
             double* E_sorted = calloc( nE, sizeof*E_sorted );
@@ -204,7 +204,7 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
         for (index_t w=0; w<n_omega; ++w)
         for (index_t b=0; b<nb; ++b) {
             #pragma omp atomic
-            ldos[w] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - E[e]));
+            ldos[IDX2(w,b,nb)] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - E[e]));
         }
     }
 
@@ -253,7 +253,7 @@ double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
     index_t n_E = kdimtot(m->nk, m->nkf) * nb;
     double* E_sort = calloc( n_E, sizeof*E_sort );
     memcpy( E_sort, E, n_E*sizeof*E_sort );
-    timsort( E_sort, n_E, sizeof*E_sort, &compare_double );
+    dos_sort_doubles( E_sort, n_E );
 
     double* omega = calloc( n_nu, sizeof*omega );
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
