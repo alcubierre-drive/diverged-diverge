@@ -197,6 +197,7 @@ DIVERGE_UNSTABLE {
         batched_gemm_with_buffers;
         batched_svd;
         batched_zgemd_r;
+        diverge_dos_use_gpu;
         diverge_filling_to_energy;
         diverge_largemat_gf;
         diverge_linspace;
