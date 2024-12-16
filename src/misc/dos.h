@@ -107,6 +107,9 @@ void diverge_optimized_dos_set_binfact( double binfact );
  */
 void diverge_optimized_dos_set_binsearch_algo( int binsearch );
 
+/** set whether GPU is used for DOS calc */
+void diverge_dos_use_gpu( int use_gpu );
+
 #ifdef __cplusplus
 }
 #endif

@@ -5,6 +5,7 @@
 #include "mpi_functions.h"
 #include <omp.h>
 #include "dos_sort.h"
+#include "dos.cu.h"
 
 static inline int is_linspaced( const double* ary, index_t n_ary );
 static inline index_t find_bin( double test, double min, double max, index_t num );
@@ -15,6 +16,11 @@ static inline double cabs2( complex128_t U );
 static inline index_t regularize( index_t idx, index_t sz );
 static double eta_bin_factor = 15.0;
 static int use_binsearch_algo = 1;
+#ifdef USE_CUDA
+static int use_cuda_dos_algo = 1;
+#else
+static int use_cuda_dos_algo = 0;
+#endif
 
 double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb,
         const double* omega, index_t n_omega, double eta ) {
@@ -31,6 +37,9 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
     double* dos = calloc(n_omega, sizeof*dos);
 
     index_t nk_tot = kdimtot(m->nk,m->nkf);
+  if (use_cuda_dos_algo) {
+    ldos_kernel_gpu( E, nk_tot*nb, NULL, 1, omega, n_omega, eta, eta_bin_factor*eta, dos );
+  } else {
     if (optimize) {
         if (!use_binsearch_algo && is_linspaced(omega, n_omega)) {
             double d_omega = omega[1] - omega[0];
@@ -99,6 +108,7 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
             dos[w] += cimag(1./(omega[w] - I*eta - E[e]));
         }
     }
+  }
 
     return dos;
 }
@@ -120,6 +130,9 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
     double* ldos = calloc(n_omega*nb, sizeof*ldos);
 
     index_t nk_tot = kdimtot(m->nk,m->nkf);
+  if (use_cuda_dos_algo) {
+    ldos_kernel_gpu( E, nk_tot*nb, U, nb, omega, n_omega, eta, eta_bin_factor*eta, ldos );
+  } else {
     if (optimize) {
         if (!use_binsearch_algo && is_linspaced(omega, n_omega)) {
             double d_omega = omega[1] - omega[0];
@@ -207,6 +220,7 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
             ldos[IDX2(w,b,nb)] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - E[e]));
         }
     }
+  }
 
     return ldos;
 }
@@ -217,6 +231,10 @@ void diverge_optimized_dos_set_binfact( double binfact ) {
 
 void diverge_optimized_dos_set_binsearch_algo( int binsearch ) {
     use_binsearch_algo = binsearch;
+}
+
+void diverge_dos_use_gpu( int use_gpu ) {
+    use_cuda_dos_algo = use_gpu;
 }
 
 double* diverge_linspace( double min, double max, index_t num ) {
