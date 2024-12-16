@@ -197,6 +197,7 @@ DIVERGE_UNSTABLE {
         batched_gemm_with_buffers;
         batched_svd;
         batched_zgemd_r;
+        diverge_filling_to_energy;
         diverge_largemat_gf;
         diverge_linspace;
         diverge_model_dos;
@@ -206,6 +207,7 @@ DIVERGE_UNSTABLE {
         diverge_model_unique_distances_length;
         diverge_model_unique_distances_set_precision;
         diverge_optimized_dos_set_binfact;
+        diverge_optimized_dos_set_binsearch_algo;
         single_eigen;
         single_eigen_sort;
         single_eigen_sort_N;

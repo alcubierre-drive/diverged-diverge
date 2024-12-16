@@ -19,6 +19,28 @@ typedef struct diverge_model_t diverge_model_t;
 double* diverge_linspace( double min, double max, index_t num );
 
 /**
+ * Calculate an energy array given a filling array, i.e., do the transformation
+ * :math:`\nu \rightarrow E(\nu)` for all ``n_nu`` values in the ``nu`` array.
+ * Allocates and frees sorted copy of energy array.
+ *
+ * :param const diverge_model_t* m: the model to operate on with common
+ *      internals set via :c:func:`diverge_model_internals_common`.
+ * :param const double* E: an optional energy array, may be ``NULL`` in which
+ *      case the internal energy array is used.
+ * :param index_t nb: an optional number of bands. is ignored if ``E == NULL``
+ *      or if ``nb <= 0``
+ * :param const double* nu: filling array of size ``n_nu`` with values between
+ *      zero and one (everything else is truncated to zero-one)
+ * :param index_t n_nu: length of the filling array.
+ *
+ * :returns: ``double`` array with the energies corresponding to the fillings
+ *     (size ``n_nu``) that must be free'd by the user via ``free`` or
+ *     :c:func:`diverge_mem_free`.
+ */
+double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
+        index_t nb, const double* nu, index_t n_nu );
+
+/**
  * calculate the DOS given an array of energies or a model that has its
  * internals set: :math:`\rho(\omega) = \sum_{k,b} \Im[ 1/(\omega - i\eta -
  * E_{kb}) ]`.
@@ -29,7 +51,7 @@ double* diverge_linspace( double min, double max, index_t num );
  *      case the internal energy array is used.
  * :param index_t nb: an optional number of bands. is ignored if ``E == NULL``
  *      or if ``nb <= 0``
- * :param const double* omega: frequency array
+ * :param const double* omega: frequency array in ascending order
  * :param index_t n_omega: number of frequencies
  * :param double eta: smearing. If ``eta < 0``, use an optimized algorithm that
  *      only considers energies within a small window for DOS calculation at
@@ -54,7 +76,7 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
  *      ``NULL`` in which case the internal o2b array is used.
  * :param index_t nb: an optional number of bands. is ignored if ``E == NULL``
  *      or if ``nb <= 0``
- * :param const double* omega: frequency array
+ * :param const double* omega: frequency array in ascending order
  * :param index_t n_omega: number of frequencies
  * :param double eta: smearing. If ``eta < 0``, use an optimized algorithm that
  *      only considers energies within a small window for LDOS calculation at
@@ -71,11 +93,19 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
 /**
  * set the factor :math:`F` that determines the number of bins :math:`B` from
  * smearing :math:`\eta` and omega spacing :math:`\mathrm{d}\omega` in the
- * optimized algorithms. Defaults to 10.0.
+ * optimized algorithms. Defaults to 15.0.
  *
  * :math:`B = \eta / \mathrm{d}\omega \cdot F`
  */
 void diverge_optimized_dos_set_binfact( double binfact );
+
+/**
+ * Set the optimized DOS algorithm to one that doesn't use binary search
+ * (``binsearch==0``) when the frequency array is linspaced. Instead, it
+ * calculates frequency indices explicitly. Might be slower than the binary
+ * search one (``binsearch==1``), but uses less RAM (no copies of E/U needed).
+ */
+void diverge_optimized_dos_set_binsearch_algo( int binsearch );
 
 #ifdef __cplusplus
 }

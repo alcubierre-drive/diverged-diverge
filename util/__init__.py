@@ -550,6 +550,9 @@ if not _libs["divERGe"] is None:
     linspace = _libs["divERGe"].get("diverge_linspace", "cdecl")
     linspace.argtypes = [c_double, c_double, index_t]
     linspace.restype = c_voidp
+    filling_to_energy = _libs["divERGe"].get("diverge_filling_to_energy", "cdecl")
+    filling_to_energy.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, index_t]
+    filling_to_energy.restype = c_voidp
     model_dos = _libs["divERGe"].get("diverge_model_dos", "cdecl")
     model_dos.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, index_t, c_double]
     model_dos.restype = c_voidp
@@ -559,6 +562,9 @@ if not _libs["divERGe"] is None:
     optimized_dos_set_binfact = _libs["divERGe"].get("diverge_optimized_dos_set_binfact", "cdecl")
     optimized_dos_set_binfact.argtypes = [c_double]
     optimized_dos_set_binfact.restype = None
+    optimized_dos_set_binsearch_algo = _libs["divERGe"].get("diverge_optimized_dos_set_binsearch_algo", "cdecl")
+    optimized_dos_set_binsearch_algo.argtypes = [c_int]
+    optimized_dos_set_binsearch_algo.restype = None
 
     fukui = _libs["divERGe"].get("diverge_fukui", "cdecl")
     fukui.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp]

@@ -3,6 +3,221 @@
 #include "../diverge_model_internals.h"
 #include "../diverge_internals_struct.h"
 #include "mpi_functions.h"
+#include "timsort.h"
+#include <omp.h>
+
+static inline int is_linspaced( const double* ary, index_t n_ary );
+static inline index_t find_bin( double test, double min, double max, index_t num );
+static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double test );
+static inline int compare_double( const void* vA, const void* vB );
+static inline int compare_double_indirect( const void* viA, const void* viB, void* ctx );
+static inline double cabs2( complex128_t U );
+static inline index_t regularize( index_t idx, index_t sz );
+static double eta_bin_factor = 15.0;
+static int use_binsearch_algo = 1;
+
+double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb,
+        const double* omega, index_t n_omega, double eta ) {
+    if (!m->internals->has_common_internals) {
+        mpi_err_printf( "need common internals for DOS\n" );
+        return NULL;
+    }
+    if (!E) {
+        nb = (nb <= 0) ? m->n_orb * m->n_spin : nb;
+        E = diverge_model_internals_get_E(m);
+    }
+    int optimize = eta < 0 && n_omega > 1;
+    eta = fabs(eta);
+    double* dos = calloc(n_omega, sizeof*dos);
+
+    index_t nk_tot = kdimtot(m->nk,m->nkf);
+    if (optimize) {
+        if (!use_binsearch_algo && is_linspaced(omega, n_omega)) {
+            double d_omega = omega[1] - omega[0];
+            index_t nbins = lroundl(eta / d_omega * eta_bin_factor);
+            if (nbins < 1) nbins = 1;
+            if (nbins > n_omega) nbins = n_omega;
+
+            #pragma omp parallel for num_threads(diverge_omp_num_threads())
+            for (index_t e=0; e<nk_tot*nb; ++e) {
+                double energy = E[e];
+                index_t ifreq = find_bin(energy, omega[0], omega[n_omega-1], n_omega);
+                for (index_t w=ifreq-nbins; w<=ifreq+nbins; ++w) {
+                    if (w < 0) w = 0;
+                    if (w >= n_omega) break;
+                    #pragma omp atomic
+                    dos[w] += cimag(1./(omega[w] - I*eta - energy));
+                }
+            }
+        } else {
+            // sort energies
+            index_t nE = nk_tot*nb;
+            double* E_sorted = calloc( nE, sizeof*E_sorted );
+            memcpy( E_sorted, E, nE*sizeof*E_sorted );
+            timsort( E_sorted, nE, sizeof*E_sorted, &compare_double );
+
+            // distribute frequencies
+            index_t nthr = diverge_omp_num_threads();
+            index_t* w_count = diverge_distribute( n_omega, nthr );
+            index_t* w_displ = w_count + nthr;
+
+            // temp variable
+            const double eta_bin = eta_bin_factor * eta;
+
+            #pragma omp parallel num_threads(nthr)
+            {
+                index_t t = omp_get_thread_num();
+                int first_omega = 1;
+                index_t E_idx = -1;
+                for (index_t w=0; w<w_count[t]; ++w) {
+                    if (first_omega) {
+                        // find first energy that corresponds to omega-F*eta
+                        E_idx = find_bin_irreg( E_sorted, nE, omega[w_displ[t]+w]-eta_bin );
+                        E_idx = regularize( E_idx, nE );
+                        first_omega = 0;
+                    } else {
+                        // find next energy that corresponds to omega-F*eta
+                        while (E_sorted[E_idx] <= (omega[w_displ[t]+w]-eta_bin) && E_idx < nE)
+                            E_idx++;
+                        E_idx = regularize( E_idx, nE );
+                    }
+                    for (index_t i=0; E_sorted[E_idx+i] <= (omega[w_displ[t]+w]+eta_bin) &&
+                                      (E_idx+i) < nE; ++i) {
+                        dos[w_displ[t]+w] += cimag(1./(omega[w_displ[t]+w] - I*eta - E_sorted[E_idx+i]));
+                    }
+                }
+            }
+
+            free( w_count );
+            free( E_sorted );
+        }
+    } else {
+        #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+        for (index_t e=0; e<nk_tot*nb; ++e)
+        for (index_t w=0; w<n_omega; ++w) {
+            #pragma omp atomic
+            dos[w] += cimag(1./(omega[w] - I*eta - E[e]));
+        }
+    }
+
+    return dos;
+}
+
+double* diverge_model_ldos( const diverge_model_t* m, const double* E,
+        const complex128_t* U, index_t nb, const double* omega, index_t n_omega,
+        double eta ) {
+    if (!m->internals->has_common_internals) {
+        mpi_err_printf( "need common internals for DOS\n" );
+        return NULL;
+    }
+    if (!E || !U) {
+        nb = (nb <= 0) ? m->n_orb * m->n_spin : nb;
+        if (!E) E = diverge_model_internals_get_E(m);
+        if (!U) U = diverge_model_internals_get_U(m);
+    }
+    int optimize = eta < 0 && n_omega > 1;
+    eta = fabs(eta);
+    double* ldos = calloc(n_omega*nb, sizeof*ldos);
+
+    index_t nk_tot = kdimtot(m->nk,m->nkf);
+    if (optimize) {
+        if (!use_binsearch_algo && is_linspaced(omega, n_omega)) {
+            double d_omega = omega[1] - omega[0];
+            index_t nbins = lroundl(eta / d_omega * eta_bin_factor);
+            if (nbins < 1) nbins = 1;
+            if (nbins > n_omega) nbins = n_omega;
+
+            #pragma omp parallel for num_threads(diverge_omp_num_threads())
+            for (index_t e=0; e<nk_tot*nb; ++e) {
+                double energy = E[e];
+                index_t ifreq = find_bin(energy, omega[0], omega[n_omega-1], n_omega);
+                for (index_t w=ifreq-nbins; w<=ifreq+nbins; ++w) {
+                    if (w < 0) w = 0;
+                    if (w >= n_omega) break;
+                    for (index_t b=0; b<nb; ++b) {
+                        #pragma omp atomic
+                        ldos[IDX2(w,b,nb)] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - energy));
+                    }
+                }
+            }
+        } else {
+            // sort energies
+            index_t nE = nk_tot*nb;
+            // argsort
+            index_t* E_sorter = calloc( nE, sizeof*E_sorter );
+            #pragma omp parallel for num_threads(diverge_omp_num_threads())
+            for (index_t i=0; i<nE; ++i) E_sorter[i] = i;
+            timsort_r( E_sorter, nE, sizeof*E_sorter, &compare_double_indirect, (void*)E );
+
+            // actual sorting via argsort
+            double* E_sorted = calloc( nE, sizeof*E_sorted );
+            complex128_t* U_sorted = calloc( nE*nb, sizeof*U_sorted );
+            #pragma omp parallel for num_threads(diverge_omp_num_threads())
+            for (index_t i=0; i<nE; ++i) {
+                E_sorted[i] = E[E_sorter[i]];
+                for (index_t o=0; o<nb; ++o)
+                    U_sorted[IDX2(i,o,nb)] = U[IDX2(E_sorter[i],o,nb)];
+            }
+
+            // distribute frequencies
+            index_t nthr = diverge_omp_num_threads();
+            index_t* w_count = diverge_distribute( n_omega, nthr );
+            index_t* w_displ = w_count + nthr;
+
+            // temp variable
+            const double eta_bin = eta_bin_factor * eta;
+
+            #pragma omp parallel num_threads(nthr)
+            {
+                index_t t = omp_get_thread_num();
+                int first_omega = 1;
+                index_t E_idx = -1;
+                for (index_t w=0; w<w_count[t]; ++w) {
+                    if (first_omega) {
+                        // find first energy that corresponds to omega-F*eta
+                        E_idx = find_bin_irreg( E_sorted, nE, omega[w_displ[t]+w]-eta_bin );
+                        E_idx = regularize( E_idx, nE );
+                        first_omega = 0;
+                    } else {
+                        // find next energy that corresponds to omega-F*eta
+                        while (E_sorted[E_idx] <= (omega[w_displ[t]+w]-eta_bin) && E_idx < nE)
+                            E_idx++;
+                        E_idx = regularize( E_idx, nE );
+                    }
+                    for (index_t i=0; E_sorted[E_idx+i] <= (omega[w_displ[t]+w]+eta_bin) &&
+                                      (E_idx+i) < nE; ++i) {
+                        for (index_t o=0; o<nb; ++o)
+                            ldos[IDX2(w_displ[t]+w, o, nb)] += cabs2(U_sorted[IDX2(E_idx+i, o, nb)]) *
+                                cimag(1./(omega[w_displ[t]+w] - I*eta - E_sorted[E_idx+i]));
+                    }
+                }
+            }
+
+            free( w_count );
+            free( E_sorter );
+            free( E_sorted );
+            free( U_sorted );
+        }
+    } else {
+        #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
+        for (index_t e=0; e<nk_tot*nb; ++e)
+        for (index_t w=0; w<n_omega; ++w)
+        for (index_t b=0; b<nb; ++b) {
+            #pragma omp atomic
+            ldos[w] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - E[e]));
+        }
+    }
+
+    return ldos;
+}
+
+void diverge_optimized_dos_set_binfact( double binfact ) {
+    eta_bin_factor = binfact;
+}
+
+void diverge_optimized_dos_set_binsearch_algo( int binsearch ) {
+    use_binsearch_algo = binsearch;
+}
 
 double* diverge_linspace( double min, double max, index_t num ) {
     int endpoint = num > 0;
@@ -24,6 +239,42 @@ double* diverge_linspace( double min, double max, index_t num ) {
     return res;
 }
 
+double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
+        index_t nb, const double* nu, index_t n_nu ) {
+    if (!m->internals->has_common_internals) {
+        mpi_err_printf( "need common internals for nu to energy\n" );
+        return NULL;
+    }
+    if (!E) {
+        nb = (nb <= 0) ? m->n_orb * m->n_spin : nb;
+        if (!E) E = diverge_model_internals_get_E(m);
+    }
+
+    index_t n_E = kdimtot(m->nk, m->nkf) * nb;
+    double* E_sort = calloc( n_E, sizeof*E_sort );
+    memcpy( E_sort, E, n_E*sizeof*E_sort );
+    timsort( E_sort, n_E, sizeof*E_sort, &compare_double );
+
+    double* omega = calloc( n_nu, sizeof*omega );
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t n=0; n<n_nu; ++n)
+        omega[n] = E_sort[ regularize( lroundl( nu[n] * (double)n_E ), n_E ) ];
+
+    free( E_sort );
+
+    return omega;
+}
+
+static inline int is_linspaced( const double* ary, index_t n_ary ) {
+    if (n_ary <= 2) return 1;
+    double diff = ary[1] - ary[0];
+    if (fabs(diff) < DIVERGE_EPS_MESH) return 0;
+    for (index_t i=2; i<n_ary; ++i)
+        if (fabs((ary[i]-ary[i-1]) - diff) / fabs(diff) > DIVERGE_EPS_MESH)
+            return 0;
+    return 1;
+}
+
 static inline index_t find_bin( double test, double min, double max, index_t num ) {
     if (test <= min) return 0;
     if (test >= max) return num-1;
@@ -33,53 +284,32 @@ static inline index_t find_bin( double test, double min, double max, index_t num
     return result;
 }
 
-static double eta_bin_factor = 10.0;
-void diverge_optimized_dos_set_binfact( double binfact ) {
-    eta_bin_factor = binfact;
+static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double test ) {
+    if (test >= vals[n_vals-1]) return n_vals-1;
+    if (test <= vals[0]) return -1;
+    index_t low = 0,
+            high = n_vals-1;
+    while (low <= high) {
+        index_t mid = low + (high - low)/2;
+        if (vals[mid] <= test)
+            low = mid + 1;
+        else
+            high = mid -1;
+    }
+    return low - 1;
 }
 
-double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb,
-        const double* omega, index_t n_omega, double eta ) {
-    if (!m->internals->has_common_internals) {
-        mpi_err_printf( "need common internals for DOS\n" );
-        return NULL;
-    }
-    if (!E) {
-        nb = (nb <= 0) ? m->n_orb * m->n_spin : nb;
-        E = diverge_model_internals_get_E(m);
-    }
-    int optimize = eta < 0 && n_omega > 1;
-    eta = fabs(eta);
-    double* dos = calloc(n_omega, sizeof*dos);
+static inline int compare_double( const void* vA, const void* vB ) {
+    const double *pA = vA, *pB = vB;
+    if (*pA < *pB) return -1;
+    if (*pA > *pB) return 1;
+    return 0;
+}
 
-    index_t nk_tot = kdimtot(m->nk,m->nkf);
-    if (optimize) {
-        double d_omega = omega[1] - omega[0];
-        index_t nbins = lroundl(eta / d_omega * eta_bin_factor);
-        if (nbins < 1) nbins = 1;
-        if (nbins > n_omega) nbins = n_omega;
-
-        #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (index_t e=0; e<nk_tot*nb; ++e) {
-            double energy = E[e];
-            index_t ifreq = find_bin(energy, omega[0], omega[n_omega-1], n_omega);
-            for (index_t w=ifreq-nbins; w<=ifreq+nbins; ++w) {
-                if (w < 0) w = 0;
-                if (w >= n_omega) break;
-                #pragma omp atomic
-                dos[w] += cimag(1./(omega[w] - I*eta - energy));
-            }
-        }
-    } else {
-        #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
-        for (index_t e=0; e<nk_tot*nb; ++e)
-        for (index_t w=0; w<n_omega; ++w) {
-            #pragma omp atomic
-            dos[w] += cimag(1./(omega[w] - I*eta - E[e]));
-        }
-    }
-
-    return dos;
+static inline int compare_double_indirect( const void* viA, const void* viB, void* ctx ) {
+    const index_t *iA = viA, *iB = viB;
+    const double *E = ctx;
+    return compare_double( E + *iA, E + *iB );
 }
 
 static inline double cabs2( complex128_t U ) {
@@ -87,51 +317,7 @@ static inline double cabs2( complex128_t U ) {
     return POW2(pU[0]) + POW2(pU[1]);
 }
 
-double* diverge_model_ldos( const diverge_model_t* m, const double* E,
-        const complex128_t* U, index_t nb, const double* omega, index_t n_omega,
-        double eta ) {
-    if (!m->internals->has_common_internals) {
-        mpi_err_printf( "need common internals for DOS\n" );
-        return NULL;
-    }
-    if (!E || !U) {
-        nb = (nb <= 0) ? m->n_orb * m->n_spin : nb;
-        if (!E) E = diverge_model_internals_get_E(m);
-        if (!U) U = diverge_model_internals_get_U(m);
-    }
-    int optimize = eta < 0 && n_omega > 1;
-    eta = fabs(eta);
-    double* ldos = calloc(n_omega*nb, sizeof*ldos);
-
-    index_t nk_tot = kdimtot(m->nk,m->nkf);
-    if (optimize) {
-        double d_omega = omega[1] - omega[0];
-        index_t nbins = lroundl(eta / d_omega * eta_bin_factor);
-        if (nbins < 1) nbins = 1;
-        if (nbins > n_omega) nbins = n_omega;
-
-        #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (index_t e=0; e<nk_tot*nb; ++e) {
-            double energy = E[e];
-            index_t ifreq = find_bin(energy, omega[0], omega[n_omega-1], n_omega);
-            for (index_t w=ifreq-nbins; w<=ifreq+nbins; ++w) {
-                if (w < 0) w = 0;
-                if (w >= n_omega) break;
-                for (index_t b=0; b<nb; ++b) {
-                    #pragma omp atomic
-                    ldos[IDX2(w,b,nb)] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - energy));
-                }
-            }
-        }
-    } else {
-        #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
-        for (index_t e=0; e<nk_tot*nb; ++e)
-        for (index_t w=0; w<n_omega; ++w)
-        for (index_t b=0; b<nb; ++b) {
-            #pragma omp atomic
-            ldos[w] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - E[e]));
-        }
-    }
-
-    return ldos;
+static inline index_t regularize( index_t idx, index_t sz ) {
+    return idx >= sz ? (sz - 1) : (idx <= 0) ? 0 : idx;
 }
+
