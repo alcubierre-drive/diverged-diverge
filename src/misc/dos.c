@@ -18,6 +18,113 @@ static int use_cuda_dos_algo = 1;
 static int use_cuda_dos_algo = 0;
 #endif
 
+static inline void dos_kernel_cpu( const double* E, index_t nE, const double* omega,
+        index_t n_omega, double eta, double eta_bin, double* dos ) {
+    // sort energies
+    double* E_sorted = shared_calloc( nE, sizeof*E_sorted );
+    if (shared_exclusive_enter(E_sorted) == 1) {
+        memcpy( E_sorted, E, nE*sizeof*E_sorted );
+        dos_sort_doubles( E_sorted, nE );
+    }
+    shared_exclusive_wait(E_sorted);
+
+    // distribute frequencies
+    index_t nthr = diverge_omp_num_threads();
+    index_t* w_count = diverge_distribute( n_omega, nthr );
+    index_t* w_displ = w_count + nthr;
+
+    #pragma omp parallel num_threads(nthr)
+    {
+        index_t t = omp_get_thread_num();
+        int first_omega = 1;
+        index_t E_idx = -1;
+        for (index_t w=0; w<w_count[t]; ++w) {
+            if (first_omega) {
+                // find first energy that corresponds to omega-F*eta
+                E_idx = find_bin_irreg( E_sorted, nE, omega[w_displ[t]+w]-eta_bin );
+                E_idx = regularize( E_idx, nE );
+                first_omega = 0;
+            } else {
+                // find next energy that corresponds to omega-F*eta
+                while (E_sorted[E_idx] <= (omega[w_displ[t]+w]-eta_bin) && E_idx < nE)
+                    E_idx++;
+                E_idx = regularize( E_idx, nE );
+            }
+            for (index_t i=0; E_sorted[E_idx+i] <= (omega[w_displ[t]+w]+eta_bin) &&
+                              (E_idx+i) < nE; ++i) {
+                dos[w_displ[t]+w] += cimag(1./(omega[w_displ[t]+w] - I*eta - E_sorted[E_idx+i]));
+            }
+        }
+    }
+
+    free( w_count );
+    shared_free( E_sorted );
+}
+
+static inline void ldos_kernel_cpu( const double* E, index_t nE, const complex128_t* U, index_t nb,
+        const double* omega, index_t n_omega, double eta, double eta_bin, double* ldos ) {
+    // argsort
+    index_t* E_sorter = shared_calloc( nE, sizeof*E_sorter );
+    if (shared_exclusive_enter( E_sorter ) == 1) {
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<nE; ++i) E_sorter[i] = i;
+        dos_sort_doubles_indirect( E_sorter, nE, E );
+    }
+    shared_exclusive_wait( E_sorter );
+
+    // actual sorting via argsort
+    double* E_sorted = shared_calloc( nE, sizeof*E_sorted );
+    complex128_t* U_sorted = shared_calloc( nE*nb, sizeof*U_sorted );
+    int enter_E = shared_exclusive_enter( E_sorted ) == 1,
+        enter_U = shared_exclusive_enter( U_sorted ) == 1;
+    if (enter_E && enter_U) {
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<nE; ++i) {
+            E_sorted[i] = E[E_sorter[i]];
+            for (index_t o=0; o<nb; ++o)
+                U_sorted[IDX2(i,o,nb)] = U[IDX2(E_sorter[i],o,nb)];
+        }
+    }
+    shared_exclusive_wait( E_sorted );
+    shared_exclusive_wait( U_sorted );
+    shared_free( E_sorter );
+
+    // distribute frequencies
+    index_t nthr = diverge_omp_num_threads();
+    index_t* w_count = diverge_distribute( n_omega, nthr );
+    index_t* w_displ = w_count + nthr;
+
+    #pragma omp parallel num_threads(nthr)
+    {
+        index_t t = omp_get_thread_num();
+        int first_omega = 1;
+        index_t E_idx = -1;
+        for (index_t w=0; w<w_count[t]; ++w) {
+            if (first_omega) {
+                // find first energy that corresponds to omega-F*eta
+                E_idx = find_bin_irreg( E_sorted, nE, omega[w_displ[t]+w]-eta_bin );
+                E_idx = regularize( E_idx, nE );
+                first_omega = 0;
+            } else {
+                // find next energy that corresponds to omega-F*eta
+                while (E_sorted[E_idx] <= (omega[w_displ[t]+w]-eta_bin) && E_idx < nE)
+                    E_idx++;
+                E_idx = regularize( E_idx, nE );
+            }
+            for (index_t i=0; E_sorted[E_idx+i] <= (omega[w_displ[t]+w]+eta_bin) &&
+                              (E_idx+i) < nE; ++i) {
+                for (index_t o=0; o<nb; ++o)
+                    ldos[IDX2(w_displ[t]+w, o, nb)] += cabs2(U_sorted[IDX2(E_idx+i, o, nb)]) *
+                        cimag(1./(omega[w_displ[t]+w] - I*eta - E_sorted[E_idx+i]));
+            }
+        }
+    }
+
+    free( w_count );
+    shared_free( E_sorted );
+    shared_free( U_sorted );
+}
+
 double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb,
         const double* omega_, index_t n_omega_, double eta ) {
     if (!m->internals->has_common_internals) {
@@ -45,49 +152,7 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
         ldos_kernel_gpu( E, nk_tot*nb, NULL, 1, omega, n_omega, eta, eta_bin_factor*eta, dos );
     } else {
         if (optimize) {
-            // sort energies
-            index_t nE = nk_tot*nb;
-            double* E_sorted = shared_calloc( nE, sizeof*E_sorted );
-            if (shared_exclusive_enter(E_sorted) == 1) {
-                memcpy( E_sorted, E, nE*sizeof*E_sorted );
-                dos_sort_doubles( E_sorted, nE );
-            }
-            shared_exclusive_wait(E_sorted);
-
-            // distribute frequencies
-            index_t nthr = diverge_omp_num_threads();
-            index_t* w_count = diverge_distribute( n_omega, nthr );
-            index_t* w_displ = w_count + nthr;
-
-            // temp variable
-            const double eta_bin = eta_bin_factor * eta;
-
-            #pragma omp parallel num_threads(nthr)
-            {
-                index_t t = omp_get_thread_num();
-                int first_omega = 1;
-                index_t E_idx = -1;
-                for (index_t w=0; w<w_count[t]; ++w) {
-                    if (first_omega) {
-                        // find first energy that corresponds to omega-F*eta
-                        E_idx = find_bin_irreg( E_sorted, nE, omega[w_displ[t]+w]-eta_bin );
-                        E_idx = regularize( E_idx, nE );
-                        first_omega = 0;
-                    } else {
-                        // find next energy that corresponds to omega-F*eta
-                        while (E_sorted[E_idx] <= (omega[w_displ[t]+w]-eta_bin) && E_idx < nE)
-                            E_idx++;
-                        E_idx = regularize( E_idx, nE );
-                    }
-                    for (index_t i=0; E_sorted[E_idx+i] <= (omega[w_displ[t]+w]+eta_bin) &&
-                                      (E_idx+i) < nE; ++i) {
-                        dos[w_displ[t]+w] += cimag(1./(omega[w_displ[t]+w] - I*eta - E_sorted[E_idx+i]));
-                    }
-                }
-            }
-
-            free( w_count );
-            shared_free( E_sorted );
+            dos_kernel_cpu( E, nk_tot*nb, omega, n_omega, eta, eta_bin_factor*eta, dos );
         } else {
             #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
             for (index_t w=0; w<n_omega; ++w)
@@ -135,71 +200,7 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
         ldos_kernel_gpu( E, nk_tot*nb, U, nb, omega, n_omega, eta, eta_bin_factor*eta, ldos );
     } else {
         if (optimize) {
-            // sort energies
-            index_t nE = nk_tot*nb;
-            // argsort
-            index_t* E_sorter = shared_calloc( nE, sizeof*E_sorter );
-            if (shared_exclusive_enter( E_sorter ) == 1) {
-                #pragma omp parallel for num_threads(diverge_omp_num_threads())
-                for (index_t i=0; i<nE; ++i) E_sorter[i] = i;
-                dos_sort_doubles_indirect( E_sorter, nE, E );
-            }
-            shared_exclusive_wait( E_sorter );
-
-            // actual sorting via argsort
-            double* E_sorted = shared_calloc( nE, sizeof*E_sorted );
-            complex128_t* U_sorted = shared_calloc( nE*nb, sizeof*U_sorted );
-            int enter_E = shared_exclusive_enter( E_sorted ) == 1,
-                enter_U = shared_exclusive_enter( U_sorted ) == 1;
-            if (enter_E && enter_U) {
-                #pragma omp parallel for num_threads(diverge_omp_num_threads())
-                for (index_t i=0; i<nE; ++i) {
-                    E_sorted[i] = E[E_sorter[i]];
-                    for (index_t o=0; o<nb; ++o)
-                        U_sorted[IDX2(i,o,nb)] = U[IDX2(E_sorter[i],o,nb)];
-                }
-            }
-            shared_exclusive_wait( E_sorted );
-            shared_exclusive_wait( U_sorted );
-
-            // distribute frequencies
-            index_t nthr = diverge_omp_num_threads();
-            index_t* w_count = diverge_distribute( n_omega, nthr );
-            index_t* w_displ = w_count + nthr;
-
-            // temp variable
-            const double eta_bin = eta_bin_factor * eta;
-
-            #pragma omp parallel num_threads(nthr)
-            {
-                index_t t = omp_get_thread_num();
-                int first_omega = 1;
-                index_t E_idx = -1;
-                for (index_t w=0; w<w_count[t]; ++w) {
-                    if (first_omega) {
-                        // find first energy that corresponds to omega-F*eta
-                        E_idx = find_bin_irreg( E_sorted, nE, omega[w_displ[t]+w]-eta_bin );
-                        E_idx = regularize( E_idx, nE );
-                        first_omega = 0;
-                    } else {
-                        // find next energy that corresponds to omega-F*eta
-                        while (E_sorted[E_idx] <= (omega[w_displ[t]+w]-eta_bin) && E_idx < nE)
-                            E_idx++;
-                        E_idx = regularize( E_idx, nE );
-                    }
-                    for (index_t i=0; E_sorted[E_idx+i] <= (omega[w_displ[t]+w]+eta_bin) &&
-                                      (E_idx+i) < nE; ++i) {
-                        for (index_t o=0; o<nb; ++o)
-                            ldos[IDX2(w_displ[t]+w, o, nb)] += cabs2(U_sorted[IDX2(E_idx+i, o, nb)]) *
-                                cimag(1./(omega[w_displ[t]+w] - I*eta - E_sorted[E_idx+i]));
-                    }
-                }
-            }
-
-            free( w_count );
-            shared_free( E_sorter );
-            shared_free( E_sorted );
-            shared_free( U_sorted );
+            ldos_kernel_cpu( E, nk_tot*nb, U, nb, omega, n_omega, eta, eta_bin_factor*eta, ldos );
         } else {
             #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
             for (index_t w=0; w<n_omega; ++w)
