@@ -89,6 +89,7 @@ DIVERGE_0.8 {
         diverge_mpi_allgather_int;
         diverge_mpi_allgatherv;
         diverge_mpi_allgatherv_bytes;
+        diverge_mpi_allgatherv_double;
         diverge_mpi_allgatherv_index;
         diverge_mpi_allreduce_complex_bor_inplace;
         diverge_mpi_allreduce_complex_sum;
@@ -197,6 +198,7 @@ DIVERGE_UNSTABLE {
         batched_gemm_with_buffers;
         batched_svd;
         batched_zgemd_r;
+        diverge_dos_set_eta_factor;
         diverge_dos_use_gpu;
         diverge_filling_to_energy;
         diverge_largemat_gf;
@@ -207,8 +209,6 @@ DIVERGE_UNSTABLE {
         diverge_model_unique_distances;
         diverge_model_unique_distances_length;
         diverge_model_unique_distances_set_precision;
-        diverge_optimized_dos_set_binfact;
-        diverge_optimized_dos_set_binsearch_algo;
         single_eigen;
         single_eigen_sort;
         single_eigen_sort_N;

@@ -319,6 +319,11 @@ void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rds
     MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_DOUBLE_COMPLEX, recv, rcnt, rdsp, MPI_DOUBLE_COMPLEX, diverge_mpi_comm );
 }
 
+void diverge_mpi_allgatherv_double( double* recv, const int* rcnt, const int* rdsp ) {
+    MPICHK();
+    MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_DOUBLE, recv, rcnt, rdsp, MPI_DOUBLE, diverge_mpi_comm );
+}
+
 void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp ) {
     MPICHK();
     MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_LONG_LONG, recv, rcnt, rdsp, MPI_LONG_LONG, diverge_mpi_comm );
@@ -526,6 +531,9 @@ void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcou
 }
 
 void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rdsp ) {
+    (void)recv; (void)rcnt; (void)rdsp;
+}
+void diverge_mpi_allgatherv_double( double* recv, const int* rcnt, const int* rdsp ) {
     (void)recv; (void)rcnt; (void)rdsp;
 }
 void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp ) {

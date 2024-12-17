@@ -3,19 +3,15 @@
 #include "../diverge_model_internals.h"
 #include "../diverge_internals_struct.h"
 #include "mpi_functions.h"
+#include "shared_mem.h"
 #include <omp.h>
 #include "dos_sort.h"
 #include "dos.cu.h"
 
-static inline int is_linspaced( const double* ary, index_t n_ary );
-static inline index_t find_bin( double test, double min, double max, index_t num );
 static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double test );
-static inline int compare_double( const void* vA, const void* vB );
-static inline int compare_double_indirect( const void* viA, const void* viB, void* ctx );
 static inline double cabs2( complex128_t U );
 static inline index_t regularize( index_t idx, index_t sz );
 static double eta_bin_factor = 15.0;
-static int use_binsearch_algo = 1;
 #ifdef USE_CUDA
 static int use_cuda_dos_algo = 1;
 #else
@@ -23,7 +19,7 @@ static int use_cuda_dos_algo = 0;
 #endif
 
 double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb,
-        const double* omega, index_t n_omega, double eta ) {
+        const double* omega_, index_t n_omega_, double eta ) {
     if (!m->internals->has_common_internals) {
         mpi_err_printf( "need common internals for DOS\n" );
         return NULL;
@@ -32,38 +28,31 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
         nb = (nb <= 0) ? m->n_orb * m->n_spin : nb;
         E = diverge_model_internals_get_E(m);
     }
-    int optimize = eta < 0 && n_omega > 1;
+    int optimize = eta < 0 && n_omega_ > 1;
     eta = fabs(eta);
-    double* dos = calloc(n_omega, sizeof*dos);
+    double* dos_ = calloc(n_omega_, sizeof*dos_);
+
+    // MPI distribution
+    index_t* omega_counts = diverge_mpi_distribute(n_omega_);
+    index_t* omega_displs = omega_counts + diverge_mpi_comm_size();
+
+    const double* omega = omega_ + omega_displs[diverge_mpi_comm_rank()];
+    index_t n_omega = omega_counts[diverge_mpi_comm_rank()];
+    double* dos = dos_ + omega_displs[diverge_mpi_comm_rank()];
 
     index_t nk_tot = kdimtot(m->nk,m->nkf);
-  if (use_cuda_dos_algo) {
-    ldos_kernel_gpu( E, nk_tot*nb, NULL, 1, omega, n_omega, eta, eta_bin_factor*eta, dos );
-  } else {
-    if (optimize) {
-        if (!use_binsearch_algo && is_linspaced(omega, n_omega)) {
-            double d_omega = omega[1] - omega[0];
-            index_t nbins = lroundl(eta / d_omega * eta_bin_factor);
-            if (nbins < 1) nbins = 1;
-            if (nbins > n_omega) nbins = n_omega;
-
-            #pragma omp parallel for num_threads(diverge_omp_num_threads())
-            for (index_t e=0; e<nk_tot*nb; ++e) {
-                double energy = E[e];
-                index_t ifreq = find_bin(energy, omega[0], omega[n_omega-1], n_omega);
-                for (index_t w=ifreq-nbins; w<=ifreq+nbins; ++w) {
-                    if (w < 0) w = 0;
-                    if (w >= n_omega) break;
-                    #pragma omp atomic
-                    dos[w] += cimag(1./(omega[w] - I*eta - energy));
-                }
-            }
-        } else {
+    if (use_cuda_dos_algo) {
+        ldos_kernel_gpu( E, nk_tot*nb, NULL, 1, omega, n_omega, eta, eta_bin_factor*eta, dos );
+    } else {
+        if (optimize) {
             // sort energies
             index_t nE = nk_tot*nb;
-            double* E_sorted = calloc( nE, sizeof*E_sorted );
-            memcpy( E_sorted, E, nE*sizeof*E_sorted );
-            dos_sort_doubles( E_sorted, nE );
+            double* E_sorted = shared_calloc( nE, sizeof*E_sorted );
+            if (shared_exclusive_enter(E_sorted) == 1) {
+                memcpy( E_sorted, E, nE*sizeof*E_sorted );
+                dos_sort_doubles( E_sorted, nE );
+            }
+            shared_exclusive_wait(E_sorted);
 
             // distribute frequencies
             index_t nthr = diverge_omp_num_threads();
@@ -98,23 +87,27 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
             }
 
             free( w_count );
-            free( E_sorted );
-        }
-    } else {
-        #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
-        for (index_t e=0; e<nk_tot*nb; ++e)
-        for (index_t w=0; w<n_omega; ++w) {
-            #pragma omp atomic
-            dos[w] += cimag(1./(omega[w] - I*eta - E[e]));
+            shared_free( E_sorted );
+        } else {
+            #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+            for (index_t w=0; w<n_omega; ++w)
+            for (index_t e=0; e<nk_tot*nb; ++e) {
+                #pragma omp atomic
+                dos[w] += cimag(1./(omega[w] - I*eta - E[e]));
+            }
         }
     }
-  }
 
-    return dos;
+    int* counts = calloc(diverge_mpi_comm_size()*2, sizeof(*counts));
+    for (int i=0; i<diverge_mpi_comm_size()*2; ++i) counts[i] = omega_counts[i];
+    diverge_mpi_allgatherv_double( dos_, counts, counts+diverge_mpi_comm_size() );
+    free( counts );
+    free( omega_counts );
+    return dos_;
 }
 
 double* diverge_model_ldos( const diverge_model_t* m, const double* E,
-        const complex128_t* U, index_t nb, const double* omega, index_t n_omega,
+        const complex128_t* U, index_t nb, const double* omega_, index_t n_omega_,
         double eta ) {
     if (!m->internals->has_common_internals) {
         mpi_err_printf( "need common internals for DOS\n" );
@@ -125,52 +118,49 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
         if (!E) E = diverge_model_internals_get_E(m);
         if (!U) U = diverge_model_internals_get_U(m);
     }
-    int optimize = eta < 0 && n_omega > 1;
+    int optimize = eta < 0 && n_omega_ > 1;
     eta = fabs(eta);
-    double* ldos = calloc(n_omega*nb, sizeof*ldos);
+    double* ldos_ = calloc(n_omega_*nb, sizeof*ldos_);
+
+    // MPI distribution
+    index_t* omega_counts = diverge_mpi_distribute(n_omega_);
+    index_t* omega_displs = omega_counts + diverge_mpi_comm_size();
+
+    const double* omega = omega_ + omega_displs[diverge_mpi_comm_rank()];
+    index_t n_omega = omega_counts[diverge_mpi_comm_rank()];
+    double* ldos = ldos_ + nb*omega_displs[diverge_mpi_comm_rank()];
 
     index_t nk_tot = kdimtot(m->nk,m->nkf);
-  if (use_cuda_dos_algo) {
-    ldos_kernel_gpu( E, nk_tot*nb, U, nb, omega, n_omega, eta, eta_bin_factor*eta, ldos );
-  } else {
-    if (optimize) {
-        if (!use_binsearch_algo && is_linspaced(omega, n_omega)) {
-            double d_omega = omega[1] - omega[0];
-            index_t nbins = lroundl(eta / d_omega * eta_bin_factor);
-            if (nbins < 1) nbins = 1;
-            if (nbins > n_omega) nbins = n_omega;
-
-            #pragma omp parallel for num_threads(diverge_omp_num_threads())
-            for (index_t e=0; e<nk_tot*nb; ++e) {
-                double energy = E[e];
-                index_t ifreq = find_bin(energy, omega[0], omega[n_omega-1], n_omega);
-                for (index_t w=ifreq-nbins; w<=ifreq+nbins; ++w) {
-                    if (w < 0) w = 0;
-                    if (w >= n_omega) break;
-                    for (index_t b=0; b<nb; ++b) {
-                        #pragma omp atomic
-                        ldos[IDX2(w,b,nb)] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - energy));
-                    }
-                }
-            }
-        } else {
+    if (use_cuda_dos_algo) {
+        ldos_kernel_gpu( E, nk_tot*nb, U, nb, omega, n_omega, eta, eta_bin_factor*eta, ldos );
+    } else {
+        if (optimize) {
             // sort energies
             index_t nE = nk_tot*nb;
             // argsort
-            index_t* E_sorter = calloc( nE, sizeof*E_sorter );
-            #pragma omp parallel for num_threads(diverge_omp_num_threads())
-            for (index_t i=0; i<nE; ++i) E_sorter[i] = i;
-            dos_sort_doubles_indirect( E_sorter, nE, E );
+            index_t* E_sorter = shared_calloc( nE, sizeof*E_sorter );
+            if (shared_exclusive_enter( E_sorter ) == 1) {
+                #pragma omp parallel for num_threads(diverge_omp_num_threads())
+                for (index_t i=0; i<nE; ++i) E_sorter[i] = i;
+                dos_sort_doubles_indirect( E_sorter, nE, E );
+            }
+            shared_exclusive_wait( E_sorter );
 
             // actual sorting via argsort
-            double* E_sorted = calloc( nE, sizeof*E_sorted );
-            complex128_t* U_sorted = calloc( nE*nb, sizeof*U_sorted );
-            #pragma omp parallel for num_threads(diverge_omp_num_threads())
-            for (index_t i=0; i<nE; ++i) {
-                E_sorted[i] = E[E_sorter[i]];
-                for (index_t o=0; o<nb; ++o)
-                    U_sorted[IDX2(i,o,nb)] = U[IDX2(E_sorter[i],o,nb)];
+            double* E_sorted = shared_calloc( nE, sizeof*E_sorted );
+            complex128_t* U_sorted = shared_calloc( nE*nb, sizeof*U_sorted );
+            int enter_E = shared_exclusive_enter( E_sorted ) == 1,
+                enter_U = shared_exclusive_enter( U_sorted ) == 1;
+            if (enter_E && enter_U) {
+                #pragma omp parallel for num_threads(diverge_omp_num_threads())
+                for (index_t i=0; i<nE; ++i) {
+                    E_sorted[i] = E[E_sorter[i]];
+                    for (index_t o=0; o<nb; ++o)
+                        U_sorted[IDX2(i,o,nb)] = U[IDX2(E_sorter[i],o,nb)];
+                }
             }
+            shared_exclusive_wait( E_sorted );
+            shared_exclusive_wait( U_sorted );
 
             // distribute frequencies
             index_t nthr = diverge_omp_num_threads();
@@ -207,30 +197,31 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
             }
 
             free( w_count );
-            free( E_sorter );
-            free( E_sorted );
-            free( U_sorted );
-        }
-    } else {
-        #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
-        for (index_t e=0; e<nk_tot*nb; ++e)
-        for (index_t w=0; w<n_omega; ++w)
-        for (index_t b=0; b<nb; ++b) {
-            #pragma omp atomic
-            ldos[IDX2(w,b,nb)] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - E[e]));
+            shared_free( E_sorter );
+            shared_free( E_sorted );
+            shared_free( U_sorted );
+        } else {
+            #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
+            for (index_t w=0; w<n_omega; ++w)
+            for (index_t e=0; e<nk_tot*nb; ++e)
+            for (index_t b=0; b<nb; ++b) {
+                #pragma omp atomic
+                ldos[IDX2(w,b,nb)] += cabs2(U[IDX2(e,b,nb)]) * cimag(1./(omega[w] - I*eta - E[e]));
+            }
         }
     }
-  }
 
-    return ldos;
+    // MPI communication
+    int* counts = calloc(diverge_mpi_comm_size()*2, sizeof(*counts));
+    for (int i=0; i<diverge_mpi_comm_size()*2; ++i) counts[i] = nb*omega_counts[i];
+    diverge_mpi_allgatherv_double( ldos_, counts, counts+diverge_mpi_comm_size() );
+    free( counts );
+    free( omega_counts );
+    return ldos_;
 }
 
-void diverge_optimized_dos_set_binfact( double binfact ) {
-    eta_bin_factor = binfact;
-}
-
-void diverge_optimized_dos_set_binsearch_algo( int binsearch ) {
-    use_binsearch_algo = binsearch;
+void diverge_dos_set_eta_factor( double eta_factor ) {
+    eta_bin_factor = eta_factor;
 }
 
 void diverge_dos_use_gpu( int use_gpu ) {
@@ -283,25 +274,6 @@ double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
     return omega;
 }
 
-static inline int is_linspaced( const double* ary, index_t n_ary ) {
-    if (n_ary <= 2) return 1;
-    double diff = ary[1] - ary[0];
-    if (fabs(diff) < DIVERGE_EPS_MESH) return 0;
-    for (index_t i=2; i<n_ary; ++i)
-        if (fabs((ary[i]-ary[i-1]) - diff) / fabs(diff) > DIVERGE_EPS_MESH)
-            return 0;
-    return 1;
-}
-
-static inline index_t find_bin( double test, double min, double max, index_t num ) {
-    if (test <= min) return 0;
-    if (test >= max) return num-1;
-    index_t result = lroundl( (test - min) / (max - min) * num );
-    if (result < 0) return 0;
-    if (result >= num) return num-1;
-    return result;
-}
-
 static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double test ) {
     if (test >= vals[n_vals-1]) return n_vals-1;
     if (test <= vals[0]) return -1;
@@ -315,19 +287,6 @@ static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double
             high = mid -1;
     }
     return low - 1;
-}
-
-static inline int compare_double( const void* vA, const void* vB ) {
-    const double *pA = vA, *pB = vB;
-    if (*pA < *pB) return -1;
-    if (*pA > *pB) return 1;
-    return 0;
-}
-
-static inline int compare_double_indirect( const void* viA, const void* viB, void* ctx ) {
-    const index_t *iA = viA, *iB = viB;
-    const double *E = ctx;
-    return compare_double( E + *iA, E + *iB );
 }
 
 static inline double cabs2( complex128_t U ) {

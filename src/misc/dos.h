@@ -91,21 +91,16 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
         double eta );
 
 /**
- * set the factor :math:`F` that determines the number of bins :math:`B` from
- * smearing :math:`\eta` and omega spacing :math:`\mathrm{d}\omega` in the
- * optimized algorithms. Defaults to 15.0.
+ * set the factor :math:`e` that determines the width of energies to be
+ * considered for summation at a given frequency :math:`\omega`, i.e.,
  *
- * :math:`B = \eta / \mathrm{d}\omega \cdot F`
+ * :math:`\omega - e\eta \dots \omega + e\eta`
+ *
+ * Defaults to :math:`e = 15`, which is good enough for most features in a
+ * regular DOS, but not good enough for excellent convergence of the Lorentzian
+ * Kernel (which only falls off quadratically).
  */
-void diverge_optimized_dos_set_binfact( double binfact );
-
-/**
- * Set the optimized DOS algorithm to one that doesn't use binary search
- * (``binsearch==0``) when the frequency array is linspaced. Instead, it
- * calculates frequency indices explicitly. Might be slower than the binary
- * search one (``binsearch==1``), but uses less RAM (no copies of E/U needed).
- */
-void diverge_optimized_dos_set_binsearch_algo( int binsearch );
+void diverge_dos_set_eta_factor( double eta_factor );
 
 /** set whether GPU is used for DOS calc */
 void diverge_dos_use_gpu( int use_gpu );

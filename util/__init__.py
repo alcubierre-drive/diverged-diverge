@@ -559,12 +559,9 @@ if not _libs["divERGe"] is None:
     model_ldos = _libs["divERGe"].get("diverge_model_ldos", "cdecl")
     model_ldos.argtypes = [POINTER(model_t), c_voidp, c_voidp, index_t, c_voidp, index_t, c_double]
     model_ldos.restype = c_voidp
-    optimized_dos_set_binfact = _libs["divERGe"].get("diverge_optimized_dos_set_binfact", "cdecl")
-    optimized_dos_set_binfact.argtypes = [c_double]
-    optimized_dos_set_binfact.restype = None
-    optimized_dos_set_binsearch_algo = _libs["divERGe"].get("diverge_optimized_dos_set_binsearch_algo", "cdecl")
-    optimized_dos_set_binsearch_algo.argtypes = [c_int]
-    optimized_dos_set_binsearch_algo.restype = None
+    dos_set_eta_factor = _libs["divERGe"].get("diverge_dos_set_eta_factor", "cdecl")
+    dos_set_eta_factor.argtypes = [c_double]
+    dos_set_eta_factor.restype = None
     dos_use_gpu = _libs["divERGe"].get("diverge_dos_use_gpu", "cdecl")
     dos_use_gpu.argtypes = [c_int]
     dos_use_gpu.restype = None

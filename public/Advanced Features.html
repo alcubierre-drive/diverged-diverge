@@ -394,26 +394,19 @@ each frequency, assumes linearly spaced array for <code class="docutils literal 
 </dd></dl>
 
 <dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_optimized_dos_set_binfact">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_optimized_dos_set_binfact</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">binfact</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_optimized_dos_set_binfact" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L93"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>set the factor <span class="math notranslate nohighlight">\(F\)</span> that determines the number of bins <span class="math notranslate nohighlight">\(B\)</span> from
-smearing <span class="math notranslate nohighlight">\(\eta\)</span> and omega spacing <span class="math notranslate nohighlight">\(\mathrm{d}\omega\)</span> in the
-optimized algorithms. Defaults to 15.0.</p>
-<p><span class="math notranslate nohighlight">\(B = \eta / \mathrm{d}\omega \cdot F\)</span></p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_optimized_dos_set_binsearch_algo">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_optimized_dos_set_binsearch_algo</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">binsearch</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_optimized_dos_set_binsearch_algo" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L102"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Set the optimized DOS algorithm to one that doesn’t use binary search
-(<code class="docutils literal notranslate"><span class="pre">binsearch==0</span></code>) when the frequency array is linspaced. Instead, it
-calculates frequency indices explicitly. Might be slower than the binary
-search one (<code class="docutils literal notranslate"><span class="pre">binsearch==1</span></code>), but uses less RAM (no copies of E/U needed).</p>
+<dt class="sig sig-object c" id="c.diverge_dos_set_eta_factor">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_dos_set_eta_factor</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta_factor</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_dos_set_eta_factor" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L93"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>set the factor <span class="math notranslate nohighlight">\(e\)</span> that determines the width of energies to be
+considered for summation at a given frequency <span class="math notranslate nohighlight">\(\omega\)</span>, i.e.,</p>
+<p><span class="math notranslate nohighlight">\(\omega - e\eta \dots \omega + e\eta\)</span></p>
+<p>Defaults to <span class="math notranslate nohighlight">\(e = 15\)</span>, which is good enough for most features in a
+regular DOS, but not good enough for excellent convergence of the Lorentzian
+Kernel (which only falls off quadratically).</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_dos_use_gpu">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_dos_use_gpu</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">use_gpu</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_dos_use_gpu" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L109"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_dos_use_gpu</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">use_gpu</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_dos_use_gpu" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L104"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>set whether GPU is used for DOS calc</p>
 </dd></dl>
 
