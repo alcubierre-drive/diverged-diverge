@@ -186,8 +186,6 @@ diverge_model_t* kagome_model( index_t nk, index_t nkf , double U , double V) {
     sites[2].amplitude[0] = 1.;
     sites[2].function[0] = orb_s;
 
-    mod->orb_symmetries = (complex128_t*)calloc(20
-                            *POW2(mod->n_orb*mod->n_spin),sizeof(complex128_t));
     index_t symsize = POW2(mod->n_orb*mod->n_spin);
     sym_op_t curr_symm[3];
 

@@ -18,49 +18,6 @@ static int use_cuda_dos_algo = 1;
 static int use_cuda_dos_algo = 0;
 #endif
 
-static inline void dos_kernel_cpu( const double* E, index_t nE, const double* omega,
-        index_t n_omega, double eta, double eta_bin, double* dos ) {
-    // sort energies
-    double* E_sorted = shared_calloc( nE, sizeof*E_sorted );
-    if (shared_exclusive_enter(E_sorted) == 1) {
-        memcpy( E_sorted, E, nE*sizeof*E_sorted );
-        dos_sort_doubles( E_sorted, nE );
-    }
-    shared_exclusive_wait(E_sorted);
-
-    // distribute frequencies
-    index_t nthr = diverge_omp_num_threads();
-    index_t* w_count = diverge_distribute( n_omega, nthr );
-    index_t* w_displ = w_count + nthr;
-
-    #pragma omp parallel num_threads(nthr)
-    {
-        index_t t = omp_get_thread_num();
-        int first_omega = 1;
-        index_t E_idx = -1;
-        for (index_t w=0; w<w_count[t]; ++w) {
-            if (first_omega) {
-                // find first energy that corresponds to omega-F*eta
-                E_idx = find_bin_irreg( E_sorted, nE, omega[w_displ[t]+w]-eta_bin );
-                E_idx = regularize( E_idx, nE );
-                first_omega = 0;
-            } else {
-                // find next energy that corresponds to omega-F*eta
-                while (E_sorted[E_idx] <= (omega[w_displ[t]+w]-eta_bin) && E_idx < nE)
-                    E_idx++;
-                E_idx = regularize( E_idx, nE );
-            }
-            for (index_t i=0; E_sorted[E_idx+i] <= (omega[w_displ[t]+w]+eta_bin) &&
-                              (E_idx+i) < nE; ++i) {
-                dos[w_displ[t]+w] += cimag(1./(omega[w_displ[t]+w] - I*eta - E_sorted[E_idx+i]));
-            }
-        }
-    }
-
-    free( w_count );
-    shared_free( E_sorted );
-}
-
 static inline void ldos_kernel_cpu( const double* E, index_t nE, const complex128_t* U, index_t nb,
         const double* omega, index_t n_omega, double eta, double eta_bin, double* ldos ) {
     // argsort
@@ -82,7 +39,7 @@ static inline void ldos_kernel_cpu( const double* E, index_t nE, const complex12
         for (index_t i=0; i<nE; ++i) {
             E_sorted[i] = E[E_sorter[i]];
             for (index_t o=0; o<nb; ++o)
-                U_sorted[IDX2(i,o,nb)] = U[IDX2(E_sorter[i],o,nb)];
+                U_sorted[IDX2(i,o,nb)] = U ? U[IDX2(E_sorter[i],o,nb)] : 1.0;
         }
     }
     shared_exclusive_wait( E_sorted );
@@ -107,12 +64,12 @@ static inline void ldos_kernel_cpu( const double* E, index_t nE, const complex12
                 first_omega = 0;
             } else {
                 // find next energy that corresponds to omega-F*eta
-                while (E_sorted[E_idx] <= (omega[w_displ[t]+w]-eta_bin) && E_idx < nE)
+                while (E_idx < nE && E_sorted[E_idx] <= (omega[w_displ[t]+w]-eta_bin))
                     E_idx++;
                 E_idx = regularize( E_idx, nE );
             }
-            for (index_t i=0; E_sorted[E_idx+i] <= (omega[w_displ[t]+w]+eta_bin) &&
-                              (E_idx+i) < nE; ++i) {
+            for (index_t i=0; (E_idx+i) < nE &&
+                              E_sorted[E_idx+i] <= (omega[w_displ[t]+w]+eta_bin); ++i) {
                 for (index_t o=0; o<nb; ++o)
                     ldos[IDX2(w_displ[t]+w, o, nb)] += cabs2(U_sorted[IDX2(E_idx+i, o, nb)]) *
                         cimag(1./(omega[w_displ[t]+w] - I*eta - E_sorted[E_idx+i]));
@@ -152,7 +109,7 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
         ldos_kernel_gpu( E, nk_tot*nb, NULL, 1, omega, n_omega, eta, eta_bin_factor*eta, dos );
     } else {
         if (optimize) {
-            dos_kernel_cpu( E, nk_tot*nb, omega, n_omega, eta, eta_bin_factor*eta, dos );
+            ldos_kernel_cpu( E, nk_tot*nb, NULL, 1, omega, n_omega, eta, eta_bin_factor*eta, dos );
         } else {
             #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
             for (index_t w=0; w<n_omega; ++w)
