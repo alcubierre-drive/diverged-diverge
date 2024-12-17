@@ -260,16 +260,19 @@ double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
     }
 
     index_t n_E = kdimtot(m->nk, m->nkf) * nb;
-    double* E_sort = calloc( n_E, sizeof*E_sort );
-    memcpy( E_sort, E, n_E*sizeof*E_sort );
-    dos_sort_doubles( E_sort, n_E );
+    double* E_sort = shared_calloc( n_E, sizeof*E_sort );
+    if (shared_exclusive_enter(E_sort) == 1) {
+        memcpy( E_sort, E, n_E*sizeof*E_sort );
+        dos_sort_doubles( E_sort, n_E );
+    }
+    shared_exclusive_wait( E_sort );
 
     double* omega = calloc( n_nu, sizeof*omega );
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t n=0; n<n_nu; ++n)
         omega[n] = E_sort[ regularize( lroundl( nu[n] * (double)n_E ), n_E ) ];
 
-    free( E_sort );
+    shared_free( E_sort );
 
     return omega;
 }
