@@ -83,7 +83,7 @@ static inline void ldos_kernel_cpu( const double* E, index_t nE, const complex12
 }
 
 double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb,
-        const double* omega_, index_t n_omega_, double eta ) {
+        double* omega_, index_t n_omega_, double eta ) {
     if (!m->internals->has_common_internals) {
         mpi_err_printf( "need common internals for DOS\n" );
         return NULL;
@@ -92,9 +92,24 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
         nb = (nb <= 0) ? m->n_orb * m->n_spin : nb;
         E = diverge_model_internals_get_E(m);
     }
+
+    int reallocate_omega = n_omega_ < 0;
+    n_omega_ = labs(n_omega_);
+
     int optimize = eta < 0 && n_omega_ > 1;
     eta = fabs(eta);
-    double* dos_ = calloc(n_omega_, sizeof*dos_);
+
+    // realloc logic
+    double* dos_ = NULL;
+    double* rdos_ = NULL;
+    if (reallocate_omega) {
+        rdos_ = omega_ = realloc(omega_, sizeof*dos_ * n_omega_ * 2);
+        dos_ = rdos_ + n_omega_;
+        memset( dos_, 0, sizeof*dos_ * n_omega_ );
+    } else {
+        dos_ = rdos_ = calloc(n_omega_, sizeof*dos_);
+    }
+    dos_sort_doubles( omega_, n_omega_ );
 
     // MPI distribution
     index_t* omega_counts = diverge_mpi_distribute(n_omega_);
@@ -125,11 +140,11 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
     diverge_mpi_allgatherv_double( dos_, counts, counts+diverge_mpi_comm_size() );
     free( counts );
     free( omega_counts );
-    return dos_;
+    return rdos_;
 }
 
 double* diverge_model_ldos( const diverge_model_t* m, const double* E,
-        const complex128_t* U, index_t nb, const double* omega_, index_t n_omega_,
+        const complex128_t* U, index_t nb, double* omega_, index_t n_omega_,
         double eta ) {
     if (!m->internals->has_common_internals) {
         mpi_err_printf( "need common internals for DOS\n" );
@@ -140,9 +155,24 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
         if (!E) E = diverge_model_internals_get_E(m);
         if (!U) U = diverge_model_internals_get_U(m);
     }
+
+    int reallocate_omega = n_omega_ < 0;
+    n_omega_ = labs(n_omega_);
+
     int optimize = eta < 0 && n_omega_ > 1;
     eta = fabs(eta);
-    double* ldos_ = calloc(n_omega_*nb, sizeof*ldos_);
+
+    // realloc logic
+    double* ldos_ = NULL;
+    double* rldos_ = NULL;
+    if (reallocate_omega) {
+        rldos_ = omega_ = realloc(omega_, sizeof*ldos_ * n_omega_ * (nb+1));
+        ldos_ = rldos_ + n_omega_;
+        memset( ldos_, 0, sizeof*ldos_ * n_omega_ * nb );
+    } else {
+        ldos_ = rldos_ = calloc(n_omega_*nb, sizeof*ldos_);
+    }
+    dos_sort_doubles( omega_, n_omega_ );
 
     // MPI distribution
     index_t* omega_counts = diverge_mpi_distribute(n_omega_);
@@ -175,7 +205,7 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
     diverge_mpi_allgatherv_double( ldos_, counts, counts+diverge_mpi_comm_size() );
     free( counts );
     free( omega_counts );
-    return ldos_;
+    return rldos_;
 }
 
 void diverge_dos_set_eta_factor( double eta_factor ) {
