@@ -773,7 +773,7 @@ class diverge_post_tu:
         if self.chi0_pp.size > 0:
             self.chi0_pp = self.chi0_pp.reshape( susc_shape )
         #: particle hole susceptibility (bare)
-        self.chi0_ph = get_array_header( iL, np.complex128 ).reshape( susc_shape )
+        self.chi0_ph = get_array_header( iL, np.complex128 )
         if self.chi0_ph.size > 0:
             self.chi0_ph = self.chi0_ph.reshape( susc_shape )
 
