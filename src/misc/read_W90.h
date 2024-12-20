@@ -16,7 +16,7 @@ extern "C" {
 typedef struct rs_hopping_t rs_hopping_t;
 
 #ifndef DIVERGE_W90_READER_SWAP_ORBITALS
-#define DIVERGE_W90_READER_SWAP_ORBITALS -1
+#define DIVERGE_W90_READER_SWAP_ORBITALS -2
 #endif
 
 /**

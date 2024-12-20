@@ -7,15 +7,12 @@
 #include <cassert>
 
 using std::string;
+using std::getline;
 
-static void unravel(index_t no, index_t ns, index_t idx, index_t* o, index_t* s, bool outer) {
-    if (outer) {
-        *s = idx / no; *o = idx - (*s)*no;
-    } else {
-        *o = idx / ns; *s = idx - (*o)*ns;
-    }
+static inline void unravel( index_t idx, index_t no, index_t ns, bool outer, index_t* o, index_t* s ) {
+    *s = outer ? idx / no : idx % ns;
+    *o = outer ? idx % no : idx / ns;
 }
-
 
 vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_t* n_orb_out ) {
     std::ifstream input(fname, std::ios::in);
@@ -26,12 +23,11 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
     }
 
     bool swap_orbitals = false;
-    // this case shouldnt occur
-    if (n_orb_out) if (~(*n_orb_out) == 0 && ~(0l) != DIVERGE_W90_READER_SWAP_ORBITALS) {
-        mpi_wrn_printf( "W90 reader deprecation: If you must swap orbitals, have a look at the documentation!\n" );
+    if (n_orb_out) if (~(*n_orb_out) == 0) {
+        mpi_wrn_printf( "read_W90: not swapping. deprecation. see docs if you _must_ swap orbitals.\n" );
     }
     if (n_orb_out) if (*n_orb_out == DIVERGE_W90_READER_SWAP_ORBITALS) {
-        mpi_log_printf( "W90 reader: swapping orbital order\n" );
+        mpi_log_printf( "read_W90: swapping orbital order\n" );
         swap_orbitals = true;
     }
 
@@ -39,7 +35,7 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
     int weight_elem = 0;
     string line;
     bool outer = n_spin>=0 ? true:false;
-    n_spin = std::abs(n_spin); n_spin = n_spin == 0 ? 1 : n_spin;
+    n_spin = n_spin ? std::abs(n_spin) : 1;
     index_t n_orb = 0;
 
     vector<double> weights;
@@ -47,76 +43,58 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
     index_t len = 0;
     int current_norm = 0;
     index_t R_cmp[3] = {0,0,0};
-    rs_hopping_t helper = { {0,0,0}, 0,0, 0,0, 0. };
+    rs_hopping_t helper = {{0,0,0}, 0,0, 0,0, 0.};
     bool set_r = false;
-    while(std::getline(input,line)) {
+    while (getline(input,line)) {
         std::istringstream iss(line);
         string s;
         if (i == 0) { // skip first line
         } else if (i == 1) { // number of orbitals + spins
-            while ( getline( iss, s, ' ' ) ) {
-                if(s.length() >0) { n_orb = stol(s)/n_spin;
-                }
-            }
+            while (getline( iss, s, ' ' ))
+                if (s.length() > 0) n_orb = stol(s)/n_spin;
         } else if (i==2) { // len
-            while ( getline( iss, s, ' ' )){
-                if(s.length() >0){
-                    len = stol(s);
-                }
-            }
-            mpi_vrb_printf("W90 #Rvecs=%d, n_orb=%d, n_spin=%d\n", len,n_orb,n_spin);
+            while (getline( iss, s, ' ' ))
+                if (s.length() > 0) len = stol(s);
+            mpi_vrb_printf( "W90 #Rvecs=%d, n_orb=%d, n_spin=%d\n", len,n_orb,n_spin );
             hop_elem.reserve( len * POW2( n_orb * n_spin ) );
             weights.resize( len );
             memset( weights.data(), 0, sizeof(double)*weights.size() );
-        } else if ( i > 2 && i < (3+ceil(1.*(len)/15.0))) {
+        } else if ( i > 2 && i < (3+ceil(1.*(len)/15.0)) ) {
             // for each real space vector the corresponding weight,
             // maximally 15 in each line
-            while ( std::getline( iss, s, ' ' ) ) {
-                if (s.length()>0) {
-                    weights[weight_elem] = stol(s);
-                    ++weight_elem;
-                }
-            }
+            while (getline( iss, s, ' ' ))
+                if (s.length() > 0) weights[weight_elem++] = stol(s);
         } else {
             // hoppings
             // r_1, r_2, r_3, o_1, o_2, real(t), imag(t)
             unsigned current_elem = 0;
-            index_t sp,o;
             assert(n_orb != 0);
-            while ( std::getline( iss, s, ' ' ) ) {
+            while (getline( iss, s, ' ' )) {
                 if (s.length() > 0) {
                     // W90 is fortran ordered, diverge is C ordered!
-                    switch(current_elem) {
-                        case 0: helper.R[0] = stol(s); break;
-                        case 1: helper.R[1] = stol(s); break;
-                        case 2: helper.R[2] = stol(s); break;
-                        case 3: unravel(n_orb, n_spin, stol(s)-1, &o, &sp, outer);
-                                helper.s1 = sp;
-                                helper.o1 = o;
-                                break;
-                        case 4: unravel(n_orb, n_spin, stol(s)-1, &o, &sp, outer);
-                                helper.s2 = sp;
-                                helper.o2 = o;
-                                break;
+                    switch (current_elem) {
+                        case 0: case 1: case 2: helper.R[current_elem] = stol(s); break;
+                        case 3: unravel(stol(s)-1, n_orb, n_spin, outer, &helper.o1, &helper.s1); break;
+                        case 4: unravel(stol(s)-1, n_orb, n_spin, outer, &helper.o2, &helper.s2); break;
                         case 5: helper.t = stod(s); break;
                         case 6: helper.t += I128*stod(s); break;
+                        default: break;
                     }
-                    ++current_elem;
+                    current_elem++;
                 }
             }
-            if( !set_r ){
+            if (!set_r) {
                 R_cmp[0] = helper.R[0],
                 R_cmp[1] = helper.R[1],
                 R_cmp[2] = helper.R[2];
                 helper.t /= (double)weights[current_norm];
                 set_r = true;
-            }else{
-                if((helper.R[0]-R_cmp[0]) == 0 && (helper.R[1]-R_cmp[1]) == 0 &&
-                   (helper.R[2]-R_cmp[2]) == 0 ) {
-                    helper.t /= (double)weights[current_norm];
+            } else {
+                if ((helper.R[0]-R_cmp[0]) == 0 && (helper.R[1]-R_cmp[1]) == 0 &&
+                    (helper.R[2]-R_cmp[2]) == 0 ) {
+                     helper.t /= (double)weights[current_norm];
                 } else {
-                    ++current_norm;
-                    helper.t /= (double)weights[current_norm];
+                    helper.t /= (double)weights[++current_norm];
                     R_cmp[0] = helper.R[0],
                     R_cmp[1] = helper.R[1],
                     R_cmp[2] = helper.R[2];
@@ -124,7 +102,7 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
             }
             hop_elem.push_back(helper);
         }
-        i+=1;
+        i++;
     }
     input.close();
 
@@ -132,8 +110,8 @@ vector<rs_hopping_t> diverge_read_W90( const char* fname, index_t n_spin, index_
         *n_orb_out = n_orb;
 
     if (swap_orbitals) for (rs_hopping_t& h: hop_elem) {
-        std::swap( h.o1, h.o2 );
-        std::swap( h.s1, h.s2 );
+        XORSWAP( h.o1, h.o2 );
+        XORSWAP( h.s1, h.s2 );
     }
 
     return hop_elem;

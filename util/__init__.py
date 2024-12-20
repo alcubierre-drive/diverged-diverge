@@ -517,7 +517,7 @@ if not _libs["divERGe"] is None:
     read_W90.argtypes = [c_char_p,index_t,POINTER(index_t),POINTER(index_t)]
     read_W90.restype = c_void_p
 
-    W90_READER_SWAP_ORBITALS = -1
+    W90_READER_SWAP_ORBITALS = -2
 
     def read_W90_PY( fname, nspin, swap_orbitals = False ):
         """
