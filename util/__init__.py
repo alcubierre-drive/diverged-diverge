@@ -152,6 +152,9 @@ if not _libs["divERGe"] is None:
     mpi_loglevel_set = _libs["divERGe"].get("mpi_loglevel_set", "cdecl")
     mpi_loglevel_set.argtypes = [c_int]
     mpi_loglevel_set.restype = None
+    mpi_loglevel_get = _libs["divERGe"].get("mpi_loglevel_get", "cdecl")
+    mpi_loglevel_get.argtypes = None
+    mpi_loglevel_get.restype = c_int
 
     mpi_log_set_colors = _libs["divERGe"].get("mpi_log_set_colors", "cdecl")
     mpi_log_set_colors.argtypes = [c_int]

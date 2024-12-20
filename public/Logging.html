@@ -141,42 +141,48 @@ from python, we provide <a class="reference internal" href="#c.mpi_py_print" tit
 </dd></dl>
 
 <dl class="c function">
+<dt class="sig sig-object c" id="c.mpi_loglevel_get">
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_loglevel_get</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_loglevel_get" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L49"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>get current loglevel</p>
+</dd></dl>
+
+<dl class="c function">
 <dt class="sig sig-object c" id="c.mpi_log_set_colors">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_set_colors</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">colors</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_log_set_colors" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L49"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_set_colors</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">colors</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_log_set_colors" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L52"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>turn colors for all messages on/off</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.mpi_log_get_colors">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_get_colors</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_log_get_colors" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L51"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_get_colors</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_log_get_colors" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L54"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>are colors used in logging?</p>
 </dd></dl>
 
 <dl class="c enum">
 <dt class="sig sig-object c" id="c.mpi_log_control_t">
-<span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_t</span></span></span><a class="headerlink" href="#c.mpi_log_control_t" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L54"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_t</span></span></span><a class="headerlink" href="#c.mpi_log_control_t" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L57"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>more control over logging behavior</p>
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.mpi_log_control_t.mpi_log_control_standard">
-<span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_standard</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#c.mpi_log_control_t.mpi_log_control_standard" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L56"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_standard</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#c.mpi_log_control_t.mpi_log_control_standard" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L59"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>logs to stderr, printf() to stdout</p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.mpi_log_control_t.mpi_log_control_modified">
-<span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_modified</span></span></span><a class="headerlink" href="#c.mpi_log_control_t.mpi_log_control_modified" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L58"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_modified</span></span></span><a class="headerlink" href="#c.mpi_log_control_t.mpi_log_control_modified" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L61"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>logs to stdout, printf() to stdout</p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.mpi_log_control_t.mpi_log_control_stderr">
-<span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_stderr</span></span></span><a class="headerlink" href="#c.mpi_log_control_t.mpi_log_control_stderr" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L60"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_stderr</span></span></span><a class="headerlink" href="#c.mpi_log_control_t.mpi_log_control_stderr" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L63"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>logs to stderr, printf() to stderr</p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.mpi_log_control_t.mpi_log_control_inverted">
-<span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_inverted</span></span></span><a class="headerlink" href="#c.mpi_log_control_t.mpi_log_control_inverted" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L62"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control_inverted</span></span></span><a class="headerlink" href="#c.mpi_log_control_t.mpi_log_control_inverted" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L65"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>logs to stdout, printf() to stderr</p>
 </dd></dl>
 
@@ -184,31 +190,31 @@ from python, we provide <a class="reference internal" href="#c.mpi_py_print" tit
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.mpi_log_control">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpi_log_control_t" title="mpi_log_control_t"><span class="n"><span class="pre">mpi_log_control_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">ctl</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_log_control" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L66"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_log_control</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpi_log_control_t" title="mpi_log_control_t"><span class="n"><span class="pre">mpi_log_control_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">ctl</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_log_control" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L69"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>control the output of diverge using <a class="reference internal" href="#c.mpi_log_control_t" title="mpi_log_control_t"><code class="xref c c-enum docutils literal notranslate"><span class="pre">mpi_log_control_t</span></code></a></p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.mpi_py_print">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_py_print</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">str</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_py_print" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L69"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_py_print</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">str</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_py_print" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L72"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>print to stdout from python including the diverge log prefix</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.mpi_py_eprint">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_py_eprint</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">str</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_py_eprint" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L71"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_py_eprint</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">str</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_py_eprint" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L74"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>print to stderr from python including the diverge log prefix</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.mpi_py_print_all">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_py_print_all</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">str</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_py_print_all" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L74"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_py_print_all</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">str</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_py_print_all" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L77"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>print to stdout from python from all ranks including the diverge log prefix</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.mpi_py_eprint_all">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_py_eprint_all</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">str</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_py_eprint_all" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L76"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpi_py_eprint_all</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">str</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpi_py_eprint_all" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/mpi_log.h#L79"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>print to stderr from python from all ranks including the diverge log prefix</p>
 </dd></dl>
 

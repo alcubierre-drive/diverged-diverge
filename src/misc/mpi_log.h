@@ -47,6 +47,9 @@ void mpi_dbg_printf( const char* logname, int loglevel, const char* fname, int l
 /** set loglevel. all messages below this level are discarded and not printed */
 void mpi_loglevel_set( int loglevel );
 
+/** get current loglevel */
+int mpi_loglevel_get( void );
+
 /** turn colors for all messages on/off */
 void mpi_log_set_colors( int colors );
 /** are colors used in logging? */

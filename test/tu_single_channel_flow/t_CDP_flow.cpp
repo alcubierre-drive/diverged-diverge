@@ -72,7 +72,7 @@ diverge_model_t* RPA_model(int n_spin, int kx = 1, int kxf = 1) {
 }
 
 TEST_CASE("P flow","[RPA]") {
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod1 = RPA_model(1,10,5);
     diverge_model_t* mod2 = RPA_model(1,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
@@ -108,7 +108,7 @@ TEST_CASE("P flow","[RPA]") {
     diverge_model_free( mod2 );
 }
 TEST_CASE("C flow","[RPA]") {
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod1 = RPA_model(1,10,5);
     diverge_model_t* mod2 = RPA_model(1,10,5);
     diverge_model_internals_tu( mod1, 1.01 );

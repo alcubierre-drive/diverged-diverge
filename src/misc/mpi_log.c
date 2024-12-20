@@ -213,6 +213,10 @@ void mpi_loglevel_set( int loglevel ) {
     h_diverge_mpi_loglevel = loglevel;
 }
 
+int mpi_loglevel_get( void ) {
+    return h_diverge_mpi_loglevel;
+}
+
 void mpi_log_set_colors( int colors ) {
     h_diverge_log_colors = colors;
 }

@@ -151,6 +151,7 @@ DIVERGE_0.8 {
         mpi_log_control;
         mpi_log_get_colors;
         mpi_log_set_colors;
+        mpi_loglevel_get;
         mpi_loglevel_set;
         mpi_printf;
         mpi_py_eprint;

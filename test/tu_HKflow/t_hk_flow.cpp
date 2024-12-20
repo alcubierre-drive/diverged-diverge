@@ -104,7 +104,7 @@ TEST_CASE("two orbital model in 1d","[hk]") {
         mpi_err_printf( "cannot test two orbital model in 1d [hk] with more than one MPI rank\n" );
         return;
     }
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod1 = test_model(1);
     diverge_model_t* mod2 = test_model(2);
     diverge_model_internals_tu( mod1, 4.01 );
@@ -204,7 +204,7 @@ TEST_CASE("two orbital model in 1d","[hk]") {
 
 
 TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod2 = test_model(2);
     diverge_model_internals_grid( mod2 );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "grid", "PCD" );
@@ -265,7 +265,7 @@ TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
 }
 
 TEST_CASE("two orbital model in 1d mom","[mhk]") {
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod1 = test_model(1,10,5);
     diverge_model_t* mod2 = test_model(2,10,5);
     diverge_model_internals_tu( mod1, 1.01 );

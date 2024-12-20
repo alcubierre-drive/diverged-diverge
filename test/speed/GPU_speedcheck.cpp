@@ -16,7 +16,7 @@
 
 #ifdef USE_CUDA
 TEST_CASE("loop speed", "[.][loopspeed]") {
-    mpi_loglevel_set(5);
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mom = gen_square_lat_hub(30, 30,2,2,1,-0.1, 3, -0.4,45,45);
     diverge_model_internals_tu(mom, 2.1);
     tu_loop_t PropMom (mom);
@@ -37,28 +37,28 @@ TEST_CASE("loop speed", "[.][loopspeed]") {
     }
     tock = diverge_mpi_wtime();
     mpi_log_printf("time 2 times pp loop reduced %4.4f \n", tock -tick);
-    
+
     diverge_model_free(mom);
     free(lm);
 }
 
 TEST_CASE("loop proj", "[.][projspeed]") {
-    mpi_loglevel_set(5);
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mom = gen_honeycomb_lat_hub(30,30,1,1);
     diverge_model_internals_tu(mom, 2.5);
     Projection ProjMom (mom);
     tu_loop_t LoopMom (mom);
     Vertex VertMom(mom, &ProjMom, &LoopMom);
     complex128_t* r2 = (complex128_t*)calloc(VertMom.full_vert_size,sizeof(complex128_t));
-    
+
     double tick = diverge_mpi_wtime();
     P_projection(r2,&VertMom,&ProjMom);
     C_projection(r2,&VertMom,&ProjMom);
     D_projection(r2,&VertMom,&ProjMom);
-    
+
     double tock = diverge_mpi_wtime();
     mpi_log_printf("time 3 projections took %4.4f \n", tock -tick);
-    
+
     diverge_model_free(mom);
     free(r2);
 }
