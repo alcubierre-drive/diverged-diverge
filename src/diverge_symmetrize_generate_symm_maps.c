@@ -29,22 +29,6 @@ LINALG_IMPLEMENT
 #define SYMNOORM_MIN_ORBITAL_WEIGHT 0.99999
 #endif
 
-#define VECTOR_INIT_CAP( type, ary, cap ) \
-    index_t ary##_cap = (cap); \
-    index_t ary##_sz = 0; \
-    type* ary = (type*)calloc(ary##_cap, sizeof(type));
-
-#define VECTOR_DEFAULT_CAP 1024
-#define VECTOR_INIT( type, ary ) VECTOR_INIT_CAP( type, ary, VECTOR_DEFAULT_CAP )
-
-#define VECTOR_PUSH_BACK( ary, val ) { \
-    if (ary##_sz >= ary##_cap) { \
-        void** p_ary = (void**)&ary; \
-        *p_ary = realloc(ary, sizeof(*ary) * ((ary##_cap <= 0) ? (ary##_cap = 1) : (ary##_cap *= 2))); \
-    } \
-    ary[ ary##_sz++ ] = val; \
-}
-
 static inline bool map_back_to_BZ(claV3d_t* k_point, index_t* idx, const diverge_model_t* model, bool fine) {
     index_t nk[3]; memcpy( nk, model->nk, sizeof(nk) );
     if (fine) { for (int d=0; d<3; ++d) nk[d] *= model->nkf[d]; }

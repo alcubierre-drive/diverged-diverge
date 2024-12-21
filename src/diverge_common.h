@@ -155,6 +155,32 @@ typedef uint64_t uindex_t;
 #undef USE_LAPACKE
 #endif
 
+// not documented, but here's some std::vector-like stuff for
+#ifndef VECTOR_INIT_CAP
+#define VECTOR_INIT_CAP( type, ary, cap ) \
+    index_t ary##_cap = (cap); \
+    index_t ary##_sz = 0; \
+    type* ary = (type*)calloc(ary##_cap, sizeof(type));
+#endif
+
+#ifndef VECTOR_DEFAULT_CAP
+#define VECTOR_DEFAULT_CAP 1024
+#endif
+
+#ifndef VECTOR_INIT
+#define VECTOR_INIT( type, ary ) VECTOR_INIT_CAP( type, ary, VECTOR_DEFAULT_CAP )
+#endif
+
+#ifndef VECTOR_PUSH_BACK
+#define VECTOR_PUSH_BACK( ary, ... ) { \
+    if (ary##_sz >= ary##_cap) { \
+        void** p_ary = (void**)&ary; \
+        *p_ary = realloc(ary, sizeof(*ary) * ((ary##_cap <= 0) ? (ary##_cap = 1) : (ary##_cap *= 2))); \
+    } \
+    ary[ ary##_sz++ ] = __VA_ARGS__; \
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif
