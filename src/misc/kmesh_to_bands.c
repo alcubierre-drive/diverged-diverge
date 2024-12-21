@@ -98,10 +98,17 @@ static index_t* diverge_kmesh_to_bands_both( diverge_model_t* m, index_t**
     for (index_t segment=0; segment<m->n_ibz_path-1; ++segment) {
 
         // find whether we should skip this segment
-        uint32_t skip_segment = 0;
+        int skip_segment = 0;
         for (int add=0; add<2; ++add) {
-            if (qnan_isnan( m->ibz_path[segment+add][0] ))
-                skip_segment = qnan_get( m->ibz_path[segment+add][0] );
+            if (qnan_isnan( m->ibz_path[segment+add][0] )) {
+                skip_segment = (qnan_get( m->ibz_path[segment+add][0] ) ==
+                                qnan_get(diverge_model_ibz_path_skip_segment()));
+                if (!skip_segment) {
+                    mpi_wrn_printf( "segment contains qnan-skip (%u), but not the right one (%u)\n",
+                            qnan_get( m->ibz_path[segment+add][0] ),
+                            qnan_get( diverge_model_ibz_path_skip_segment() ) );
+                }
+            }
         }
 
         if (!skip_segment) {
@@ -116,9 +123,11 @@ static index_t* diverge_kmesh_to_bands_both( diverge_model_t* m, index_t**
 
             index_t *sres = NULL, nsres = 0;
             if (fine)
-                find_bandstructure_segment_indices( start.v, stop.v, m->internals->kfmesh, kdimtot(m->nk, m->nkf), &sres, &nsres );
+                find_bandstructure_segment_indices( start.v, stop.v, m->internals->kfmesh,
+                        kdimtot(m->nk, m->nkf), &sres, &nsres );
             else
-                find_bandstructure_segment_indices( start.v, stop.v, m->internals->kmesh, kdim(m->nk), &sres, &nsres );
+                find_bandstructure_segment_indices( start.v, stop.v, m->internals->kmesh,
+                        kdim(m->nk), &sres, &nsres );
             result = (index_t*)realloc( result, sizeof(index_t) * (sresult + nsres) );
             memcpy( result + sresult, sres, sizeof(index_t)*nsres );
             sresult += nsres;
