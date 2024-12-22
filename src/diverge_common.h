@@ -20,7 +20,7 @@
 #include <complex>
 typedef std::complex<double> complex128_t;
 typedef std::complex<float> complex64_t;
-const complex128_t I128 (0.0,1.0) ;
+static const complex128_t I128(0.0,1.0);
 #endif
 
 extern "C" {
@@ -40,6 +40,7 @@ extern "C" {
 typedef _Complex double complex128_t;
 /** 64bit complex number (two 32bit floating point numbers) */
 typedef _Complex float complex64_t;
+static const complex128_t I128 = I;
 #endif
 
 #endif // __cplusplus
