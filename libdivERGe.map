@@ -133,6 +133,7 @@ DIVERGE_0.8 {
         diverge_postprocess_and_write_finegrained;
         diverge_postprocess_conf_defaults_CPP;
         diverge_qgt;
+        diverge_read_W90;
         diverge_read_W90_C;
         diverge_read_fplo;
         diverge_reset;
@@ -170,7 +171,6 @@ DIVERGE_0.8 {
         shared_malloc_size;
         extern "C++" {
             "diverge_patching_find_fs_pts(diverge_model_t*, double const*, long, long, long)";
-            "diverge_read_W90(char const*, long)";
         };
 local:
         *;

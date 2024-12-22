@@ -14,14 +14,12 @@ misc_included_files=( ${misc_included_files_self[@]/#/src/} )
 exported_symbols=( $(ctags -o- --kinds-C=p ${included_files[@]} |\
     grep -v "^!" | awk '{print $1}' |\
     grep -v "diverge_patching_find_fs_pts$" |\
-    grep -v "diverge_read_W90$" |\
     grep -v "shared_malloc_init$" |\
     grep -v "shared_malloc_finalize$") )
 
 exported_cpp_symbols=$(cat <<EOF
         extern "C++" {
             "diverge_patching_find_fs_pts(diverge_model_t*, double const*, long, long, long)";
-            "diverge_read_W90(char const*, long)";
         };
 EOF
 )

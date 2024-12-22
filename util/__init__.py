@@ -513,7 +513,11 @@ if not _libs["divERGe"] is None:
     read_fplo.argtypes = [String]
     read_fplo.restype = POINTER(model_t)
 
-    read_W90 = _libs["divERGe"].get("diverge_read_W90_C", "cdecl")
+    read_W90_C = _libs["divERGe"].get("diverge_read_W90_C", "cdecl")
+    read_W90_C.argtypes = [c_char_p,index_t,POINTER(index_t),POINTER(index_t)]
+    read_W90_C.restype = c_void_p
+
+    read_W90 = _libs["divERGe"].get("diverge_read_W90", "cdecl")
     read_W90.argtypes = [c_char_p,index_t,POINTER(index_t),POINTER(index_t)]
     read_W90.restype = c_void_p
 

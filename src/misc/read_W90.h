@@ -5,10 +5,6 @@
 #include "../diverge_common.h"
 
 #ifdef __cplusplus
-
-#include <vector>
-using std::vector;
-
 extern "C" {
 #endif
 
@@ -62,21 +58,12 @@ typedef struct rs_hopping_t rs_hopping_t;
  */
 rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len, index_t* n_orb );
 
-#ifdef __cplusplus
-} // extern "C"
-
-/** alias of std::vector<:c:struct:`rs_hopping_t`> */
-typedef vector<rs_hopping_t> vector_rs_hopping_t;
-
 /**
- * .. sourcecode:: C++
- *
- *  vector<rs_hopping_t> diverge_read_W90( const char* fname,
- *      index_t n_spin, index_t* n_orb );
- *
- * C++ function corresponding to :c:func:`diverge_read_W90_C` that facilitates
- * the usage by returning an std::vector<:c:struct:`rs_hopping_t`> instead of messing
- * with pointers.
+ * We do not support the C++ interface any longer. Instead, this function just
+ * calls :c:func:`diverge_read_W90_C`.
  */
-vector_rs_hopping_t diverge_read_W90( const char* fname, index_t n_spin, index_t* n_orb );
+rs_hopping_t* diverge_read_W90( const char* fname, index_t n_spin, index_t* len, index_t* n_orb );
+
+#ifdef __cplusplus
+}
 #endif

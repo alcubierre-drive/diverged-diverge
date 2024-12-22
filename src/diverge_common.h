@@ -182,6 +182,25 @@ typedef uint64_t uindex_t;
 }
 #endif
 
+#ifndef VECTOR_RESERVE
+#define VECTOR_RESERVE( ary, cap ) { \
+    void** p_ary = (void**)&ary; \
+    *p_ary = realloc((ary), sizeof(*ary) * (cap)); \
+    ary##_cap = (cap); \
+}
+#endif
+
+#ifndef VECTOR_RESIZE
+#define VECTOR_RESIZE( ary, sz ) { \
+    VECTOR_RESERVE( ary, sz ); \
+    ary##_sz = (sz); \
+}
+#endif
+
+#ifndef VECTOR_SHRINK_TO_FIT
+#define VECTOR_SHRINK_TO_FIT( ary ) VECTOR_RESIZE( ary, ary##_sz )
+#endif
+
 #ifdef __cplusplus
 }
 #endif

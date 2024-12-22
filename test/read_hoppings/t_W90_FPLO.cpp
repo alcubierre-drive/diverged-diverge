@@ -13,6 +13,9 @@
 #include <cstdio>
 
 #include <string>
+#include <vector>
+
+using std::vector;
 
 #ifdef USE_FPLO_READER
 
