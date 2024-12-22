@@ -10,7 +10,7 @@
 #include "diverge_Eigen3.hpp"
 
 #include "misc/mpi_functions.h"
-#include "misc/kmeans_lloyd.hpp"
+#include "misc/kmeans_lloyd.h"
 #include "misc/bitary.h"
 #include "misc/cmath_helpers.h"
 
@@ -91,22 +91,23 @@ vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double
     // FS algo
     {
         vector<index_t> np_search_vec(np_search);
-        vector<array<double,2>> kmeans_points(np_search);
+        vector<claV2d_t> kmeans_points(np_search);
         for (index_t p=0; p<np_search; ++p) {
             np_search_vec[p] = ibz_to_bz[E_ibz_idx[p]];
             Vec3d kpt = kpt_from_mesh( mod->internals->kmesh, np_search_vec[p] );
             kmeans_points[p] = { kpt(0), kpt(1) };
         }
-        auto kmeans_result = dkm::kmeans_lloyd( kmeans_points, np_ibz );
-        auto kmeans_means = std::get<0>(kmeans_result);
-        auto kmeans_cluster = std::get<1>(kmeans_result);
+        vecVec2d_t kmeans_points_ = { (index_t)kmeans_points.size(), (index_t)kmeans_points.size(),
+            kmeans_points.data() };
+        auto kmeans_result = kmeans_lloyd( kmeans_points_, np_ibz, DIVERGE_EPS_MESH, -1 );
+        auto kmeans_means = kmeans_result.points;
 
         auto find_closest_np_search_idx = [&](index_t cluster_idx)->index_t{
-            Vec2d mean_vec = Map<Vec2d>(kmeans_means[cluster_idx].data());
+            Vec2d mean_vec = Map<Vec2d>(kmeans_means.v[cluster_idx].v);
             double norm = 10.0;
             index_t p_min = -1;
             for (index_t p=0; p<np_search; ++p) {
-                Vec2d np_vec = Map<Vec2d>(kmeans_points[p].data());
+                Vec2d np_vec = Map<Vec2d>(kmeans_points[p].v);
                 double new_norm = (np_vec - mean_vec).norm();
                 if (new_norm < norm) {
                     norm = new_norm;
@@ -118,6 +119,8 @@ vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double
 
         for (index_t p=0; p<np_ibz; ++p)
             k_idx_fs_in_ibz.push_back(np_search_vec[find_closest_np_search_idx(p)]);
+
+        dkm_result_free( kmeans_result );
     }
 
     // setup for full BZ FS
@@ -504,8 +507,6 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
     mpi_vrb_printf("starting autofine using the $k$-means Lloyd algorithm\n");
 
     typedef vector<dvec2_t> points_t;
-    typedef vector<uint32_t> indices_t;
-    typedef tuple<points_t, indices_t> dkm_result_t;
 
     // setting up the variables...
     index_t nk_flat[3];
@@ -568,17 +569,21 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
             if (ncl < gamma*group_counts.at(g)) {
 
                 double tick = diverge_mpi_wtime();
-                dkm_result_t cluster_result = dkm::kmeans_lloyd( vectors, ncl );
+                vecVec2d_t vectors_ = { (index_t)vectors.size(), (index_t)vectors.size(),
+                    (claV2d_t*)vectors.data() };
+                dkm_result_t cluster_result = kmeans_lloyd( vectors_, ncl, DIVERGE_EPS_MESH, -1 );
                 double tock = diverge_mpi_wtime();
                 timings[p] += tock - tick;
-                points_t cluster_points = get<0>(cluster_result);
-                indices_t cluster_idxs = get<1>(cluster_result);
-                vector<index_t> cluster_patches(cluster_points.size());
-                vector<double> cluster_weights(cluster_points.size());
-                for (unsigned i=0; i<cluster_points.size(); ++i)
-                    cluster_patches.at(i) = closest_k_index(cluster_points.at(i), g1, g2, nk_flat);
-                for (unsigned i=0; i<cluster_idxs.size(); ++i) {
-                    uint32_t cl = cluster_idxs[i];
+
+                vecVec2d_t cluster_points = cluster_result.points;
+                vecU32_t cluster_idxs = cluster_result.clusters;
+                vector<index_t> cluster_patches(cluster_points.v_sz);
+                vector<double> cluster_weights(cluster_points.v_sz);
+                for (index_t i=0; i<cluster_points.v_sz; ++i)
+                    cluster_patches.at(i) = closest_k_index(
+                            {cluster_points.v[i].v[0], cluster_points.v[i].v[1]}, g1, g2, nk_flat);
+                for (index_t i=0; i<cluster_idxs.v_sz; ++i) {
+                    uint32_t cl = cluster_idxs.v[i];
                     double w = 1.0;
                     cluster_weights.at(cl) += w;
                 }
@@ -589,6 +594,8 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
                     patches.push_back(cp);
                 for (double cw: cluster_weights)
                     weights.push_back(cw);
+
+                dkm_result_free( cluster_result );
             } else {
                 patches.reserve(patches.size() + group_counts.at(g));
                 weights.reserve(weights.size() + group_counts.at(g));

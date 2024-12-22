@@ -17,6 +17,7 @@
 #endif
 
 static int dvg_has_internal_libs_init = 0;
+int diverge_has_init_internal_libs( void ) { return dvg_has_internal_libs_init; }
 
 #define INT_BIT (CHAR_BIT * sizeof(int))
 typedef struct {

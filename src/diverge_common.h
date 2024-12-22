@@ -156,16 +156,35 @@ typedef uint64_t uindex_t;
 #undef USE_LAPACKE
 #endif
 
-// not documented, but here's some std::vector-like stuff for
+// not documented, but here's some std::vector-like stuff
+
+#ifndef VECTOR_DECL
+#define VECTOR_DECL( type, ary ) \
+    index_t ary##_cap; \
+    index_t ary##_sz; \
+    type* ary;
+#endif
+
+#ifndef VECTOR_DECL_INIT_CAP
+#define VECTOR_DECL_INIT_CAP( type, ary, cap ) { \
+    ary##_cap = (cap); \
+    ary##_sz = 0; \
+    ary = (type*)calloc(ary##_cap, sizeof(type)); \
+}
+#endif
+
 #ifndef VECTOR_INIT_CAP
 #define VECTOR_INIT_CAP( type, ary, cap ) \
-    index_t ary##_cap = (cap); \
-    index_t ary##_sz = 0; \
-    type* ary = (type*)calloc(ary##_cap, sizeof(type));
+    VECTOR_DECL( type, ary ); \
+    VECTOR_DECL_INIT_CAP( type, ary, cap );
 #endif
 
 #ifndef VECTOR_DEFAULT_CAP
 #define VECTOR_DEFAULT_CAP 1024
+#endif
+
+#ifndef VECTOR_DECL_INIT
+#define VECTOR_DECL_INIT( type, ary ) VECTOR_DECL_INIT_CAP( type, ary, VECTOR_DEFAULT_CAP )
 #endif
 
 #ifndef VECTOR_INIT
@@ -199,6 +218,10 @@ typedef uint64_t uindex_t;
 
 #ifndef VECTOR_SHRINK_TO_FIT
 #define VECTOR_SHRINK_TO_FIT( ary ) VECTOR_RESIZE( ary, ary##_sz )
+#endif
+
+#ifndef VECTOR_FREE
+#define VECTOR_FREE( ary ) free( ary )
 #endif
 
 #ifdef __cplusplus

@@ -36,9 +36,14 @@ npatch_qvert_mat_t* npatch_qvert_mat_from_vertex( const npatch_vertex_t* vert,
     index_t* qcounts;
     vhelper_vertex_in_q_channel( vert, loop, chan, dV, &qvert, &qvindex, &qcounts, pnq );
     npatch_qvert_mat_t* result = vhelper_q_vertex_matrix_from_vertex( qvert, qvindex, qcounts, *pnq, loop->nb );
+
     *pnq_sorted = *pnq;
     if (max_q_rel > 0 && max_q_rel < 1)
         vhelper_q_vertex_sort_max( result, pnq_sorted, max_q_rel );
+
+    free( qvert );
+    free( qvindex );
+    free( qcounts );
     return result;
 }
 
