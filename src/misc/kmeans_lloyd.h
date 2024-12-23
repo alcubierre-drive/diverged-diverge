@@ -15,17 +15,6 @@ void dkm_set_use_random_seed( int use );
 typedef struct { double v[2]; } claV2d_t;
 #endif
 
-typedef struct { VECTOR_DECL( claV2d_t, v ) } vecVec2d_t;
-typedef struct { VECTOR_DECL( uint32_t, v ) } vecU32_t;
-
-typedef struct {
-    vecVec2d_t points;
-    vecU32_t clusters;
-} dkm_result_t;
-
-dkm_result_t kmeans_lloyd( const vecVec2d_t data, uint32_t k, double limit, index_t maxiter );
-void dkm_result_free( dkm_result_t r );
-
 typedef struct {
     claV2d_t* points;
     index_t* clusters;
