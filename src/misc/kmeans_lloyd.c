@@ -26,24 +26,6 @@ void dkm_set_use_random_seed( int use ) {
     }
 }
 
-typedef struct { VECTOR_DECL( double, v ) } vecD_t;
-
-/* Calculate the smallest distance between each of the data points and any of the input means. */
-vecD_t closest_distance( const vecVec2d_t means, const vecVec2d_t data) {
-    vecD_t distances;
-    VECTOR_DECL_INIT_CAP( double, distances.v, data.v_sz );
-    for (index_t i=0; i<data.v_sz; ++i) {
-        double closest = claV2d_norm2(claV2d_sub(data.v[i],means.v[0]));
-        for (index_t j=0; j<means.v_sz; ++j) {
-            double distance = claV2d_norm2(claV2d_sub(data.v[i],means.v[j]));
-            if (distance < closest)
-                closest = distance;
-        }
-        VECTOR_PUSH_BACK( distances.v, closest );
-    }
-    return distances;
-}
-
 // Using a very simple PRBS generator, parameters selected according to
 // https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use
 static inline uint64_t LCG_gen( uint64_t* state ) {
@@ -52,7 +34,12 @@ static inline uint64_t LCG_gen( uint64_t* state ) {
     #define LCG_M UINT64_MAX
     return *state = (LCG_A * (*state) + LCG_C) % LCG_M;
 }
+// floating point version
+static inline double LCG_genf( uint64_t* state ) {
+    return LCG_gen( state );
+}
 
+// binary search
 static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double test ) {
     if (test >= vals[n_vals-1]) return n_vals-1;
     if (test <= vals[0]) return -1;
@@ -68,129 +55,118 @@ static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double
     return low - 1;
 }
 
-/* This is an alternate initialization method based on the
- * [kmeans++](https://en.wikipedia.org/wiki/K-means%2B%2B) initialization
- * algorithm. */
-vecVec2d_t random_plusplus(const vecVec2d_t data, uint32_t k, uint64_t seed) {
-    assert(k > 0);
-    assert(data.v_sz > 0);
-    vecVec2d_t means;
-    VECTOR_DECL_INIT( claV2d_t, means.v );
 
-    // Select first mean at random from the set
-    VECTOR_PUSH_BACK( means.v, data.v[LCG_gen(&seed)%data.v_sz] );
-
-    for (uint32_t count=1; count<k; ++count) {
-        // Calculate the distance to the closest mean for each data point
-        vecD_t distances = closest_distance( means, data );
-        // Pick a random point weighted by the distance from existing means,
-        // calc cumsum first
-        for (index_t i=1; i<distances.v_sz; ++i)
-            distances.v[i] += distances.v[i-1];
-
-        index_t gen = find_bin_irreg( distances.v, distances.v_sz,
-                (double)LCG_gen(&seed)/(double)LCG_M*distances.v[distances.v_sz-1] );
-        if (gen <= 0) gen = 0;
-        if (gen >= distances.v_sz) gen = distances.v_sz-1;
-        VECTOR_PUSH_BACK( means.v, data.v[gen] );
-        VECTOR_FREE( distances.v );
-    }
-    return means;
-}
-
-/* Calculate the index of the mean a particular data point is closest to (euclidean distance) */
-uint32_t closest_mean(claV2d_t point, const vecVec2d_t means) {
-    assert(means.v_sz > 0);
-    double smallest_distance = claV2d_norm2(claV2d_sub(point,means.v[0]));
-    index_t index = 0;
-    double distance;
-    for (index_t i=1; i<means.v_sz; ++i) {
-        distance = claV2d_norm2(claV2d_sub(point,means.v[i]));
-        if (distance < smallest_distance) {
-            smallest_distance = distance;
-            index = i;
+// get the squared distance to the closest mean for each point
+void x_closest_distances( double* distances, const claV2d_t* means, index_t k,
+        const claV2d_t* pts, index_t n_pts ) {
+    for (index_t p=0; p<n_pts; ++p) {
+        for (index_t j=0; j<k; ++j) {
+            double dist2 = claV2d_norm2(claV2d_sub(pts[p], means[j]));
+            distances[p] = (j==0) ? dist2 : MIN(distances[p], dist2);
         }
     }
-    return index;
 }
 
-/* Calculate the index of the mean each data point is closest to (euclidean distance). */
-vecU32_t calculate_clusters(const vecVec2d_t data, const vecVec2d_t means) {
-    vecU32_t clusters;
-    VECTOR_DECL_INIT_CAP( uint32_t, clusters.v, data.v_sz );
-    for (index_t i=0; i<data.v_sz; ++i)
-        VECTOR_PUSH_BACK( clusters.v, closest_mean(data.v[i], means) );
-    return clusters;
-}
-
-/* Calculate means based on data points and their cluster assignments. */
-vecVec2d_t calculate_means(const vecVec2d_t data, const vecU32_t clusters,
-        const vecVec2d_t old_means, uint32_t k) {
-    vecVec2d_t means = {0}; VECTOR_RESIZE(means.v, k);
-    vecU32_t count = {0}; VECTOR_RESIZE(count.v, k);
-    memset( means.v, 0, sizeof*means.v * means.v_sz );
-    memset( count.v, 0, sizeof*count.v * count.v_sz );
-
-    for (index_t i=0; i<MIN(clusters.v_sz,data.v_sz); ++i) {
-        count.v[clusters.v[i]]++;
-        means.v[clusters.v[i]] = claV2d_add( means.v[clusters.v[i]], data.v[i] );
+// initialize means with random points that are distributed by maximal distance
+void x_random_plusplus( claV2d_t* means, const claV2d_t* pts, index_t n_pts, index_t k, uint64_t seed ) {
+    double* distances = calloc(n_pts, sizeof*distances);
+    for (index_t c=0; c<k; ++c) {
+        // first mean is random
+        if (!c) {
+            means[c] = pts[LCG_gen(&seed)%n_pts];
+        } else {
+            x_closest_distances( distances, means, c+1, pts, n_pts );
+            // cumsum for the distribution
+            double distances_tot = 0;
+            for (index_t p=0; p<n_pts; ++p) {
+                double dist = distances[p];
+                distances[p] = distances_tot;
+                distances_tot += dist;
+            }
+            // find random new index weighted by distances
+            index_t gen = find_bin_irreg( distances, n_pts, LCG_genf(&seed)/(double)LCG_M*distances_tot );
+            if (gen <= 0) { gen = 0; } if (gen >= n_pts) { gen = n_pts-1; }
+            means[c] = pts[gen];
+        }
     }
-    for (index_t i=0; i<k; ++i) {
-        if (count.v[i] == 0)
-            means.v[i] = old_means.v[i];
-        else
-            means.v[i] = claV2d_scale(means.v[i], 1./(double)count.v[i]);
+    free( distances );
+}
+
+// Calculate the index of the mean a particular data point is closest to (euclidean distance)
+static inline index_t x_closest_mean( claV2d_t pt, const claV2d_t* means, index_t k ) {
+    if (k <= 0) return 0;
+    double dist = claV2d_norm2(claV2d_sub(pt,means[0]));
+    index_t idx = 0;
+    for (index_t i=1; i<k; ++i) {
+        double t_dist = claV2d_norm2(claV2d_sub(pt,means[i]));
+        if (t_dist < dist) {
+            dist = t_dist;
+            idx = i;
+        }
     }
-    VECTOR_FREE( count.v );
-    return means;
+    return idx;
 }
 
-vecD_t deltas( const vecVec2d_t old_means, const vecVec2d_t means ) {
-    vecD_t distances = {0};
-    VECTOR_RESIZE( distances.v, means.v_sz );
-    assert(old_means.v_sz == means.v_sz);
-    for (index_t i=0; i<means.v_sz; ++i)
-        distances.v[i] = claV2d_norm(claV2d_sub(means.v[i],old_means.v[i]));
-    return distances;
+// Calculate the index of the mean each data point is closest to (euclidean distance)
+void x_calc_clusters( index_t* clusters, const claV2d_t* pts, index_t n_pts, const claV2d_t* means, index_t k ) {
+    for (index_t p=0; p<n_pts; ++p)
+        clusters[p] = x_closest_mean( pts[p], means, k );
 }
 
-int deltas_below_limit( const vecD_t deltas, double min_delta ) {
-    for (index_t i=0; i<deltas.v_sz; ++i) if (deltas.v[i] > min_delta) return 0;
-    return 1;
+// Calculate means based on data points and their cluster assignments
+void x_calculate_means( claV2d_t* means, const claV2d_t* pts, index_t n_pts,
+        const index_t* clusters, index_t k, const claV2d_t* old_means ) {
+    index_t* count = calloc(k, sizeof*count);
+    memset( means, 0, sizeof*means * k );
+
+    for (index_t p=0; p<n_pts; ++p) {
+        count[clusters[p]]++;
+        means[clusters[p]] = claV2d_add( means[clusters[p]], pts[p] );
+    }
+    for (index_t i=0; i<k; ++i)
+        means[i] = (count[i] == 0) ? old_means[i] : claV2d_scale(means[i], 1./(double)count[i]);
+
+    free( count );
 }
 
-int deltas_below_limit_diff( const vecVec2d_t old_means, const vecVec2d_t means, double min_delta ) {
-    vecD_t del = deltas( old_means, means );
-    int res = deltas_below_limit( del, min_delta );
-    VECTOR_FREE( del.v );
-    return res;
+// find maximum difference between means1[...] and means2[...]
+double x_means_maxdiff( const claV2d_t* means1, const claV2d_t* means2, index_t k ) {
+    if (k <= 0) return 0.0;
+    double diff = claV2d_norm2(claV2d_sub(means1[0],means2[0]));
+    for (index_t i=1; i<k; ++i) {
+        double t_diff = claV2d_norm2(claV2d_sub(means1[i],means2[i]));
+        if (t_diff < diff) diff = t_diff;
+    }
+    return sqrt(diff);
 }
 
-dkm_result_t kmeans_lloyd( const vecVec2d_t data, uint32_t k, double limit, index_t maxiter ) {
-    uint64_t seed = random_seed;
-    vecVec2d_t means = random_plusplus( data, k, seed );
+// implementation of the algorithm, no fuzz
+x_dkm_result_t x_kmeans_lloyd( const claV2d_t* pts, index_t n_pts, index_t k,
+        double limit, index_t maxiter ) {
+    claV2d_t* means[] = { calloc(k, sizeof(claV2d_t)),
+                          calloc(k, sizeof(claV2d_t)),
+                          calloc(k, sizeof(claV2d_t)) };
+    index_t* clusters = calloc(n_pts, sizeof*clusters);
+    index_t iter = 0;
 
-    vecVec2d_t old_means = {0}, old_old_means = {0};
-    vecU32_t clusters = {0};
-    index_t count = 0;
+    // initialize means random
+    x_random_plusplus( means[0], pts, n_pts, k, random_seed );
     do {
-        VECTOR_FREE( clusters.v );
-        clusters = calculate_clusters( data, means );
-        VECTOR_FREE( old_old_means.v );
-        old_old_means = old_means;
-        old_means = means;
-        means = calculate_means( data, clusters, old_means, k );
-        count++;
-    } while ((!deltas_below_limit_diff( old_means, means, limit ) ||
-              !deltas_below_limit_diff( old_old_means, old_means, limit )) &&
-             (count < maxiter || maxiter < 0));
-    VECTOR_FREE( old_means.v );
-    VECTOR_FREE( old_old_means.v );
-
-    return (dkm_result_t){ means, clusters };
+        // calculate clusters
+        x_calc_clusters( clusters, pts, n_pts, means[0], k );
+        // rotate ptrs s.t. means[2] is oldold, means[1] is old, and means[0] is fresh
+        XORSWAP_PTR( means[2], means[0] ); XORSWAP_PTR( means[1], means[2] );
+        x_calculate_means( means[0], pts, n_pts, clusters, k, means[1] );
+        iter++;
+    } while ( ( (x_means_maxdiff(means[0],means[1],k) > limit)||
+                (x_means_maxdiff(means[1],means[2],k) > limit) ) &&
+              ( (iter < maxiter)||(maxiter < 0) ) );
+    free( means[1] );
+    free( means[2] );
+    return (x_dkm_result_t){ means[0], clusters, k };
 }
 
-void dkm_result_free( dkm_result_t r ) {
-    VECTOR_FREE( r.points.v );
-    VECTOR_FREE( r.clusters.v );
+void x_dkm_result_free( x_dkm_result_t x ) {
+    free( x.points );
+    free( x.clusters );
 }

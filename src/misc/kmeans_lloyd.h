@@ -26,6 +26,16 @@ typedef struct {
 dkm_result_t kmeans_lloyd( const vecVec2d_t data, uint32_t k, double limit, index_t maxiter );
 void dkm_result_free( dkm_result_t r );
 
+typedef struct {
+    claV2d_t* points;
+    index_t* clusters;
+    index_t k;
+} x_dkm_result_t;
+
+x_dkm_result_t x_kmeans_lloyd( const claV2d_t* pts, index_t n_pts, index_t k,
+        double limit, index_t maxiter );
+void x_dkm_result_free( x_dkm_result_t x );
+
 #ifdef __cplusplus
 }
 #endif
