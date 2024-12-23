@@ -6,7 +6,7 @@
 
 template<char channel>
 void Vertex::reco_ft(complex128_t* const buf,
-                    const complex128_t * const existing_r_exp, const uint nr,
+                    const complex128_t * const existing_r_exp, const uindex_t nr,
                         complex128_t * buf_q) const {
     bool was_null = false;
     if(buf_q == nullptr) {
@@ -21,7 +21,7 @@ void Vertex::reco_ft(complex128_t* const buf,
         const index_t my_nk_in_bz = symm->my_nk_in_bz;
         const index_t my_nk_in_bz_off = symm->my_nk_in_bz_off;
 
-        mfill(buf_q,rest*my_nk_in_bz,0.);
+        ZERO_OUT(buf_q,rest*my_nk_in_bz);
         const index_t nsq = POW2(n_spin);
         const index_t legdim = nsq*n_orbff;
         #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())

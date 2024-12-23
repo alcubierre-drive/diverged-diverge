@@ -6,7 +6,7 @@ void t_P_projection(complex128_t* proj_vertex,
                     const Vertex* const vertex,
                     const diverge_model_t* const model) {
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
-    mcopy(proj_vertex, vertex->Pch, vertex->full_vert_size);
+    memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size);
 
     const index_t n_orbff = tu_data->n_orbff;
     const index_t n_orb = model->n_orb;
@@ -119,7 +119,7 @@ void t_C_projection(complex128_t* proj_vertex,
                     const Vertex* const vertex,
                     const diverge_model_t* const model) {
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
-    mcopy(proj_vertex, vertex->Cch, vertex->full_vert_size);
+    memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size);
 
     const index_t n_orbff = tu_data->n_orbff;
     const index_t n_orb = model->n_orb;
@@ -230,7 +230,7 @@ void t_D_projection(complex128_t* proj_vertex,
                     const Vertex* const vertex,
                     const diverge_model_t* const model) {
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
-    mcopy(proj_vertex, vertex->Dch, vertex->full_vert_size);
+    memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size);
 
     const index_t n_orbff = tu_data->n_orbff;
     const index_t n_orb = model->n_orb;

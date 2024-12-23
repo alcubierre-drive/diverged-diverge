@@ -3,6 +3,10 @@
 #include "vertex.hpp"
 #include "projection_handler.hpp"
 
+static inline double max_abs(const complex128_t* start, index_t length) {
+    return Map<const VecXcd>(start, length).lpNorm<Eigen::Infinity>();
+}
+
 Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop, 
                 bool P, bool C, bool D, bool self)
 :
@@ -73,15 +77,15 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
                 C_flow = P_flow = true;
                 mpi_vrb_printf("Interactions only in D \n");
                 D_projection(Dch, this,proj);
-                if(C_flow) mfill(Cch,full_vert_size,0.0);
-                if(P_flow) mfill(Pch,full_vert_size,0.0);
+                if (C_flow) ZERO_OUT(Cch,full_vert_size);
+                if (P_flow) ZERO_OUT(Pch,full_vert_size);
                 C_flow = dummy1; P_flow = dummy2;
             }else if(C_flow) {
                 dummy1 = D_flow; dummy2 = P_flow;
                 P_flow = D_flow = true;
                 mpi_vrb_printf("Interactions only in C \n");
                 C_projection(Cch, this,proj);
-                if(P_flow) mfill(Pch,full_vert_size,0.0);
+                if (P_flow) ZERO_OUT(Pch,full_vert_size);
                 D_flow = dummy1; P_flow = dummy2;
             }else{
                 dummy1 = D_flow; dummy2 = C_flow;
@@ -258,12 +262,13 @@ Vertex::Vertex(const Vertex& other)
     if(P_flow)pp_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
     if(C_flow || D_flow)ph_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
 
-    if(P_flow)mcopy(Pch,other.get_P_ptr_cst(),this->full_vert_size);
-    if(C_flow)mcopy(Cch,other.get_C_ptr_cst(),this->full_vert_size);
-    if(D_flow)mcopy(Dch,other.get_D_ptr_cst(),this->full_vert_size);
-    if(P_flow)mcopy(pp_bubble_int,other.get_PP_bubble_cst(),this->full_bubble_size);
-    if(C_flow || D_flow)mcopy(ph_bubble_int,other.get_PH_bubble_cst(),this->full_bubble_size);
-    if(use_self)mcopy(self_en,other.get_E_ptr_cst(),this->selfenergy_size);
+    if (P_flow) memcpy(Pch,other.get_P_ptr_cst(),sizeof*Pch * this->full_vert_size);
+    if (C_flow) memcpy(Cch,other.get_C_ptr_cst(),sizeof*Cch * this->full_vert_size);
+    if (D_flow) memcpy(Dch,other.get_D_ptr_cst(),sizeof*Dch * this->full_vert_size);
+    if (P_flow) memcpy(pp_bubble_int,other.get_PP_bubble_cst(),sizeof*pp_bubble_int * this->full_bubble_size);
+    if (C_flow||D_flow) memcpy(ph_bubble_int,other.get_PH_bubble_cst(),
+            sizeof*ph_bubble_int * this->full_bubble_size);
+    if (use_self) memcpy(self_en,other.get_E_ptr_cst(),sizeof*self_en * this->selfenergy_size);
     owns = false;
     for(int i = 0; i < 32; ++i)
     for(int j = 0; j < 3; ++j) {
@@ -273,13 +278,14 @@ Vertex::Vertex(const Vertex& other)
 
 
 Vertex& Vertex::operator=(const Vertex& other) {
-    if(P_flow)mcopy(Pch,other.get_P_ptr_cst(),this->full_vert_size);
-    if(C_flow)mcopy(Cch,other.get_C_ptr_cst(),this->full_vert_size);
-    if(D_flow)mcopy(Dch,other.get_D_ptr_cst(),this->full_vert_size);
+    if (P_flow) memcpy(Pch,other.get_P_ptr_cst(),sizeof*Pch * this->full_vert_size);
+    if (C_flow) memcpy(Cch,other.get_C_ptr_cst(),sizeof*Cch * this->full_vert_size);
+    if (D_flow) memcpy(Dch,other.get_D_ptr_cst(),sizeof*Dch * this->full_vert_size);
 
-    if(P_flow)mcopy(pp_bubble_int,other.get_PP_bubble_cst(),this->full_bubble_size);
-    if(C_flow || D_flow)mcopy(ph_bubble_int,other.get_PH_bubble_cst(),this->full_bubble_size);
-    if(use_self)mcopy(self_en,other.get_E_ptr_cst(),this->selfenergy_size);
+    if (P_flow) memcpy(pp_bubble_int,other.get_PP_bubble_cst(),sizeof*pp_bubble_int * this->full_bubble_size);
+    if (C_flow||D_flow) memcpy(ph_bubble_int,other.get_PH_bubble_cst(),
+            sizeof*ph_bubble_int * this->full_bubble_size);
+    if (use_self) memcpy(self_en,other.get_E_ptr_cst(),sizeof*self_en * this->selfenergy_size);
 
     return *this;
 }

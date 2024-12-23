@@ -1,20 +1,25 @@
 /* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
+
 #include "../diverge_model.h"
 #include "../diverge_common.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
+#include "../misc/bitary.h"
+
 #include "diverge_interface.hpp"
 #include "global.hpp"
 #include "cuda_init.hpp"
-#include <fftw3.h>
-#include <thread>
+
 #include "propagator_cpu_mpi.h"
 #include "propagator_cpu_mpi_fft.h"
 #include "propagator_gpu_mpi.h"
 
-#include "../misc/bitary.h"
+#include <fftw3.h>
+#include <thread>
+#include <string>
+using std::string;
 
 inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
@@ -65,7 +70,12 @@ public:
     void ph_loop( complex128_t* L, complex128_t* tmpgpu = nullptr );
     void pp_loop( complex128_t* L, complex128_t* tmpgpu = nullptr );
 
-    DELETE_CONSTRUCTOR_RULE_OF_FIVE(tu_loop_t);
+    tu_loop_t() = delete;
+    tu_loop_t(const tu_loop_t&) = delete;
+    tu_loop_t& operator=(const tu_loop_t&) = delete;
+    tu_loop_t(tu_loop_t&&) = delete;
+    tu_loop_t& operator=(tu_loop_t&&) = delete;
+
 
     gf_complex_t* gf_buf;
     template<bool pp, bool subract = false>

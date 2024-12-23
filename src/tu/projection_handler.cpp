@@ -41,7 +41,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
     if(!vertex->P_flow) return;
     double time_cpyfill = 0.0;double time_reco = 0.0;
     double time_handler_ft = 0.0;double time_add = 0.0;
-    time_cpyfill+=elapsed_time(mcopy(proj_vertex, vertex->Pch, vertex->full_vert_size));
+    time_cpyfill+=elapsed_time(memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size));
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
 
@@ -50,7 +50,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
         if(vertex->C_flow && vertex->C_to_P) {
             time_reco+=elapsed_time(vertex->template reco_ft<'C'>(
                             buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-            time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+            time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
 
             time_handler_ft+=elapsed_time(GPUproj_handler_ft(&(proj->proj_descr),
@@ -66,7 +66,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
         if(vertex->D_flow && vertex->D_to_P) {
             time_reco+=elapsed_time(vertex->template reco_ft<'D'>(
                         buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-            time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+            time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
 
             time_handler_ft+=elapsed_time(GPUproj_handler_ft(&(proj->proj_descr),'P',bufMPI, buf,
@@ -86,7 +86,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
     if(vertex->C_flow && vertex->C_to_P) {
         time_reco+=elapsed_time(vertex->template reco_ft<'C'>(
                     buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_P(bufMPI, buf, proj->get_CP_PC_map_TO(),
             proj->get_CP_PC_map_FROM(), proj->get_CP_PC_prefac_map(),
@@ -101,7 +101,7 @@ void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
     if(vertex->D_flow && vertex->D_to_P) {
         time_reco+=elapsed_time(vertex->template reco_ft<'D'>(
                     buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_P(bufMPI, buf, proj->get_D_to_P_map_TO(),
             proj->get_D_to_P_map_FROM(), proj->get_D_to_P_prefac_map(),
@@ -122,7 +122,7 @@ void D_projection(complex128_t* proj_vertex,
     if(!vertex->D_flow) return;
     double time_cpyfill = 0.0;double time_reco = 0.0;
     double time_handler_ft = 0.0;double time_add = 0.0;
-    time_cpyfill+=elapsed_time(mcopy(proj_vertex, vertex->Dch, vertex->full_vert_size));
+    time_cpyfill+=elapsed_time(memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size));
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
     #ifdef USE_CUDA
@@ -131,7 +131,7 @@ void D_projection(complex128_t* proj_vertex,
         if(vertex->C_flow && vertex->C_to_D) {
             time_reco+=elapsed_time(vertex->template reco_ft<'C'>(buf,
                         proj->my_prefac_reco,proj->get_nr(),bufMPI));
-            time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+            time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             time_handler_ft+=elapsed_time(GPUproj_handler_ft(&(proj->proj_descr),'D',bufMPI, buf,
                     proj->get_CD_DC_map_TO_padded(),
@@ -145,7 +145,7 @@ void D_projection(complex128_t* proj_vertex,
         if(vertex->P_flow && vertex->P_to_D) {
             time_reco+=elapsed_time(vertex->template reco_ft<'P'>(
                         buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-            time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+            time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             time_handler_ft+=elapsed_time(GPUproj_handler_ft(&(proj->proj_descr),'D',bufMPI, buf,
                     proj->get_P_to_D_map_TO_padded(),
@@ -163,7 +163,7 @@ void D_projection(complex128_t* proj_vertex,
     if(vertex->C_flow && vertex->C_to_D) {
         time_reco+=elapsed_time(vertex->template reco_ft<'C'>(buf,
                     proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_D(bufMPI,buf,proj->get_CD_DC_map_TO(),
                 proj->get_CD_DC_map_FROM(), proj->get_CD_DC_prefac_map(),
@@ -177,7 +177,7 @@ void D_projection(complex128_t* proj_vertex,
     if(vertex->P_flow && vertex->P_to_D) {
         time_reco+=elapsed_time(vertex->template reco_ft<'P'>(buf,
                     proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_D(bufMPI,buf,proj->get_P_to_D_map_TO(),
                 proj->get_P_to_D_map_FROM(), proj->get_P_to_D_prefac_map(),
@@ -198,17 +198,17 @@ void C_projection(complex128_t* proj_vertex,
     if(!vertex->C_flow) return;
     double time_cpyfill = 0.0;double time_reco = 0.0;
     double time_handler_ft = 0.0;double time_add = 0.0;
-    time_cpyfill+=elapsed_time(mcopy(proj_vertex, vertex->Cch, vertex->full_vert_size));
+    time_cpyfill+=elapsed_time(memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size));
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
-        
+
     #ifdef USE_CUDA
     if(vertex->my_nk > (index_t)tu_num_of_devices)
     {
         if(vertex->P_flow && vertex->P_to_C) {
             time_reco+=elapsed_time(vertex->template reco_ft<'P'>(buf,
                         proj->my_prefac_reco,proj->get_nr(),bufMPI));
-            time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+            time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             time_handler_ft+=elapsed_time(GPUproj_handler_ft(&(proj->proj_descr),'C',bufMPI, buf,
                     proj->get_CP_PC_map_TO_padded(),
@@ -222,7 +222,7 @@ void C_projection(complex128_t* proj_vertex,
         if(vertex->D_flow && vertex->D_to_C) {
             time_reco+=elapsed_time(vertex->template reco_ft<'D'>(buf,
                         proj->my_prefac_reco,proj->get_nr(),bufMPI));
-            time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+            time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             
             time_handler_ft+=elapsed_time(GPUproj_handler_ft(
@@ -242,7 +242,7 @@ void C_projection(complex128_t* proj_vertex,
     if(vertex->D_flow && vertex->D_to_C) {
         time_reco+=elapsed_time(vertex->template reco_ft<'D'>(
                     buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_C(bufMPI,buf, proj->get_CD_DC_map_TO(),
                 proj->get_CD_DC_map_FROM(), proj->get_CD_DC_prefac_map(),
@@ -256,7 +256,7 @@ void C_projection(complex128_t* proj_vertex,
     if(vertex->P_flow && vertex->P_to_C) {
         time_reco+=elapsed_time(vertex->template reco_ft<'P'>(
                     buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_C(bufMPI,buf, proj->get_CP_PC_map_TO(),
                 proj->get_CP_PC_map_FROM(), proj->get_CP_PC_prefac_map(),
@@ -276,13 +276,13 @@ void P_projection_no_GPU(complex128_t* proj_vertex,
     if(!vertex->P_flow) return;
     double time_cpyfill = 0.0;double time_reco = 0.0;
     double time_handler_ft = 0.0;double time_add = 0.0;
-    time_cpyfill+=elapsed_time(mcopy(proj_vertex, vertex->Pch, vertex->full_vert_size));
+    time_cpyfill+=elapsed_time(memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size));
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
     if(vertex->C_flow && vertex->C_to_P) {
         time_reco+=elapsed_time(vertex->template reco_ft<'C'>(buf,
                     proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_P(bufMPI, buf, proj->get_CP_PC_map_TO(),
             proj->get_CP_PC_map_FROM(), proj->get_CP_PC_prefac_map(),
@@ -297,7 +297,7 @@ void P_projection_no_GPU(complex128_t* proj_vertex,
     if(vertex->D_flow && vertex->D_to_P) {
         time_reco+=elapsed_time(vertex->template reco_ft<'D'>(buf,
                     proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_P(bufMPI, buf, proj->get_D_to_P_map_TO(),
             proj->get_D_to_P_map_FROM(), proj->get_D_to_P_prefac_map(),
@@ -318,13 +318,13 @@ void D_projection_no_GPU(complex128_t* proj_vertex,
     if(!vertex->D_flow) return;
     double time_cpyfill = 0.0;double time_reco = 0.0;
     double time_handler_ft = 0.0;double time_add = 0.0;
-    time_cpyfill+=elapsed_time(mcopy(proj_vertex, vertex->Dch, vertex->full_vert_size));
+    time_cpyfill+=elapsed_time(memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size));
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
     if(vertex->C_flow && vertex->C_to_D) {
         time_reco+=elapsed_time(vertex->template reco_ft<'C'>(
                     buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_D(bufMPI,buf,proj->get_CD_DC_map_TO(),
                 proj->get_CD_DC_map_FROM(), proj->get_CD_DC_prefac_map(),
@@ -338,7 +338,7 @@ void D_projection_no_GPU(complex128_t* proj_vertex,
     if(vertex->P_flow && vertex->P_to_D) {
         time_reco+=elapsed_time(vertex->template reco_ft<'P'>(
                     buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_D(bufMPI,buf,proj->get_P_to_D_map_TO(),
                 proj->get_P_to_D_map_FROM(), proj->get_P_to_D_prefac_map(),
@@ -359,13 +359,13 @@ void C_projection_no_GPU(complex128_t* proj_vertex,
     if(!vertex->C_flow) return;
     double time_cpyfill = 0.0;double time_reco = 0.0;
     double time_handler_ft = 0.0;double time_add = 0.0;
-    time_cpyfill+=elapsed_time(mcopy(proj_vertex, vertex->Cch, vertex->full_vert_size));
+    time_cpyfill+=elapsed_time(memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size));
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
     if(vertex->D_flow && vertex->D_to_C) {
         time_reco+=elapsed_time(vertex->template reco_ft<'D'>(
                     buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_C(bufMPI,buf, proj->get_CD_DC_map_TO(),
                 proj->get_CD_DC_map_FROM(), proj->get_CD_DC_prefac_map(),
@@ -379,7 +379,7 @@ void C_projection_no_GPU(complex128_t* proj_vertex,
     if(vertex->P_flow && vertex->P_to_C) {
         time_reco+=elapsed_time(vertex->template reco_ft<'P'>(
                     buf,proj->my_prefac_reco,proj->get_nr(),bufMPI));
-        time_cpyfill+=elapsed_time(mfill_0(bufMPI,
+        time_cpyfill+=elapsed_time(ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         time_handler_ft+=elapsed_time(_to_C(bufMPI,buf, proj->get_CP_PC_map_TO(),
                 proj->get_CP_PC_map_FROM(), proj->get_CP_PC_prefac_map(),

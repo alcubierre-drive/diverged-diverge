@@ -3,14 +3,6 @@
 #include "vertex.hpp"
 #include "projection_handler.hpp"
 
-inline double max_abs(const complex128_t* const start, const long length)
-{
-    return (double)std::abs(
-                *std::max_element(start, start+length,
-                [](complex128_t A, complex128_t B){return std::abs(A)<std::abs(B);})
-            );
-}
-
 static inline complex128_t ff(const double* k, const double* r){
     return exp(-I128*(k[0]*r[0]+k[1]*r[1]+k[2]*r[2]));
 }
@@ -66,7 +58,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
     const index_t n_bonds = tu_data->n_bonds;
 
     const index_t* nkd = model->nk;
-    mfill(full_V, full_size, 0.);
+    ZERO_OUT(full_V, full_size);
     complex128_t* buffer;
     buffer = (complex128_t*)calloc(nk*POW2(n_orbff*POW2(n_spin)),sizeof(complex128_t));
 
@@ -205,7 +197,7 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, Projection* proj) {
     complex128_t* buf = (complex128_t*)calloc(POW4(n_orb*n_spin), sizeof(complex128_t));
     const index_t* nkd = model->nk;
     if(D_flow) {
-        mfill(Dch, full_vert_size, 0.);
+        ZERO_OUT(Dch, full_vert_size);
         // D-channel q = k_1 - k_3 = k_4 - k_2
         for(index_t q = 0; q < my_nk; ++q)
         for(index_t k1 = 0; k1 < nk; ++k1)
@@ -236,7 +228,7 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, Projection* proj) {
     }
 
     if(C_flow) {
-        mfill(Cch, full_vert_size, 0.);
+        ZERO_OUT(Cch, full_vert_size);
         C_projection(Cch,this,proj);
         for(index_t i = 0; i < full_vert_size; ++i) {Cch[i] *= -1.0;}
         // C-channel q = k_1 - k_4 = k_3 - k_2
@@ -269,7 +261,7 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, Projection* proj) {
 
 
     if(P_flow) {
-        mfill(Pch, full_vert_size, 0.);
+        ZERO_OUT(Pch, full_vert_size);
         P_projection(Pch,this,proj);
         for(index_t i = 0; i < full_vert_size; ++i) {Pch[i] *= -1.0;}
         // P-channel q = k_1 + k_2 = k_3 + k_4

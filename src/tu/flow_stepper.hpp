@@ -15,6 +15,9 @@
 #include "projection_handler.hpp"
 #include "../misc/batched_gemms.h"
 
+#include <string>
+using std::string;
+
 void vertex_product(complex128_t* result, const complex128_t* const  B,
                     const complex128_t* const C, complex128_t* helper,
                     char* GPUbuffer[32][3] ,

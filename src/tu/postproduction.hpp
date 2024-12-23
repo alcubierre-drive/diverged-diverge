@@ -9,6 +9,9 @@
 #include "projection_wrapper.hpp"
 #include "projection_handler.hpp"
 
+#include <string>
+using std::string;
+
 #ifndef TU_MAGIC_NUMBER_POST_PROCESSING
 #define TU_MAGIC_NUMBER_POST_PROCESSING 'T'
 #endif

@@ -48,7 +48,7 @@ void selfEnergy::fft_interpolate(complex128_t * const self_en) {
     index_t nkff[3];
     for (int i=0; i<3; ++i) nkff[i] = model->nk[i] * model->nkf[i];
     // pad with zeros
-    mfill_0(ff_helper,nktot*POW2(n_orb*n_spin));
+    ZERO_OUT( ff_helper, nktot*POW2(n_orb*n_spin) );
     const double pref = 1./(double)nk;
 
     float hx = (model->nk[0]>1) ? (float)model->nk[0]/2. : 2;
@@ -147,9 +147,8 @@ void selfEnergy::selfenergy_flow_rs(complex128_t* self_en,
     // selfenergy flow equation
     const index_t blocksize_self = POW2(n_orb*n_spin);
     const complex128_t prefac = pref_subst/(2.0*M_PI);
-    //set all elements to zero
-
-    mfill(self_en, blocksize_self, 0.0);
+    // set all elements to zero
+    ZERO_OUT( self_en, blocksize_self );
 
     // D-channel -> real part as D is freq. independent =>
     // same for all frequencies
@@ -256,7 +255,7 @@ void selfEnergy::selfenergy_flow_rs_SU2(complex128_t* self_en,
     const index_t blocksize_self = POW2(n_orb*n_spin);
     const double prefac = pref_subst/(2.0*M_PI);
     //set all elements to zero
-    mfill(self_en, blocksize_self, 0.0);
+    ZERO_OUT( self_en, blocksize_self );
 
     if(D_flow) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -361,9 +360,9 @@ void selfEnergy::selfenergy_flow_mom(complex128_t* const self_en,
 {
     // selfenergy flow equation
     const index_t blocksize_self = POW2(n_orb*n_spin)*nktot;
-    mfill(self_en, blocksize_self, 0.0);
-    mfill(ff_helper, blocksize_self, 0.0);
-    mfill_0(interpol_helper,n_orbff*POW2(n_spin));
+    ZERO_OUT( self_en, blocksize_self );
+    ZERO_OUT( ff_helper, blocksize_self );
+    ZERO_OUT( interpol_helper, n_orbff*POW2(n_spin) );
     if(diverge_mpi_comm_rank() == 0) {
         if(D_flow) {
             #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
@@ -409,7 +408,7 @@ void selfEnergy::selfenergy_flow_mom(complex128_t* const self_en,
     if(P_flow) {
         reco<'P'>(reco_helper,P_in,1.0,0.0);
 
-        mcopy(greensfkt_helper,GF,POW2(n_spin*n_orb)*nk);
+        memcpy(greensfkt_helper,GF,sizeof(*greensfkt_helper) * POW2(n_spin*n_orb)*nk);
         fftw_execute_dft_helper(ifft_vert_oop,reco_helper,interpol_helper);
         fftw_execute_dft_helper(fft_self_oop,greensfkt_helper,ff_helper);
 
@@ -466,7 +465,7 @@ void selfEnergy::selfenergy_flow_mom(complex128_t* const self_en,
     if(C_flow) {
         reco<'C'>(reco_helper,C_in,1.0,0.0);
 
-        mcopy(greensfkt_helper,GF,POW2(n_spin*n_orb)*nk);
+        memcpy(greensfkt_helper,GF, sizeof(*greensfkt_helper)*POW2(n_spin*n_orb)*nk);
         fftw_execute_dft_helper(ifft_vert_oop,reco_helper,interpol_helper);
         fftw_execute_dft_helper(ifft_self_oop,greensfkt_helper,ff_helper);
 
@@ -552,13 +551,13 @@ void selfEnergy::selfenergy_flow_mom_SU2(complex128_t* self_en,
     // selfenergy flow equation
     const index_t blocksize_self = nktot*POW2(n_spin*n_orb);
     //set all elements to zero
-    mfill(self_en, blocksize_self, 0.0);
-    mfill(ff_helper, blocksize_self, 0.0);
+    ZERO_OUT( self_en, blocksize_self );
+    ZERO_OUT( ff_helper, blocksize_self );
 
 
     // D-channel -> real part as D is freq. independent => same for all frequencies
     // again catch the zero frequency independently
-    mfill_0(interpol_helper,n_orbff*POW2(n_spin));
+    ZERO_OUT( interpol_helper, n_orbff*POW2(n_spin) );
     if(diverge_mpi_comm_rank() == 0) {
         if(D_flow || C_flow ) {
             #pragma omp parallel for schedule(dynamic) num_threads(diverge_omp_num_threads())
@@ -622,7 +621,7 @@ void selfEnergy::selfenergy_flow_mom_SU2(complex128_t* self_en,
     }
 
     if(C_flow || D_flow) {
-        mcopy(greensfkt_helper,GF,POW2(n_spin*n_orb)*nk);
+        memcpy(greensfkt_helper,GF, sizeof(*greensfkt_helper)*POW2(n_spin*n_orb)*nk);
         fftw_execute_dft_helper(ifft_vert_oop,reco_helper,interpol_helper);
         fftw_execute_dft_helper(ifft_self_oop,greensfkt_helper,ff_helper);
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
@@ -668,7 +667,7 @@ void selfEnergy::selfenergy_flow_mom_SU2(complex128_t* self_en,
     if(P_flow) {
         reco<'P'>(reco_helper,P_in,1.0,0.0);
 
-        mcopy(greensfkt_helper,GF,POW2(n_spin*n_orb)*nk);
+        memcpy(greensfkt_helper,GF, sizeof(*greensfkt_helper)*POW2(n_spin*n_orb)*nk);
         fftw_execute_dft_helper(ifft_vert_oop,reco_helper,interpol_helper);
         fftw_execute_dft_helper(fft_self_oop,greensfkt_helper,ff_helper);
 

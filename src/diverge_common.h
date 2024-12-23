@@ -142,6 +142,13 @@ typedef uint64_t uindex_t;
  */
 #define XORSWAP_PTR(a, b) ( (&(a) == &(b)) ? (a) : XORSWAP_PTR_UNSAFE_(a, b) )
 
+/**
+ * zero out an array of arbitrary POD type (pointed to by ``ptr``) with ``sz``
+ * elements by calling ``memset``
+ */
+#define ZERO_OUT( ptr, sz ) memset( (void*)(ptr), 0, sizeof(*(ptr)) * (sz) )
+
+
 #ifndef BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB
 #define BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB 4ul
 #endif // BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB

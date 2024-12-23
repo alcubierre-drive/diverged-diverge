@@ -126,9 +126,9 @@ void cuda_setup_projections(cuda_proj_descr_t* cp,index_t ntasks, index_t my_nk)
         cp->_threadkpts_proj[dev_i]+=1; rest-=1; dev_i+=1;
     }
     std::fill(cp->_qstart_proj, cp->_qstart_proj+tu_num_of_devices, 0);
-    for(uint ii = 1; ii< (size_t)tu_num_of_devices;++ii)
+    for(int ii=1; ii<tu_num_of_devices;++ii)
         cp->_qstart_proj[ii] = cp->_threadkpts_proj[ii-1]+cp->_qstart_proj[ii-1];
-    for(uint ii = 0; ii< (size_t)tu_num_of_devices;++ii)
+    for(int ii=0; ii<tu_num_of_devices;++ii)
         mpi_vrb_printf("TU:proj GPU %d: nq=%4d (+%4d)\n", ii, cp->_threadkpts_proj[ii] , cp->_qstart_proj[ii]);
 
     #endif
@@ -155,9 +155,9 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
         cp->_tasks_prop[dev_i]+=1; rest-=1; dev_i+=1;
     }
     std::fill(cp->_off_prop, cp->_off_prop+tu_num_of_devices, 0);
-    for(uint ii = 1; ii< (size_t)tu_num_of_devices;++ii)
+    for(int ii=1; ii<tu_num_of_devices; ++ii)
         cp->_off_prop[ii] = cp->_tasks_prop[ii-1]+cp->_off_prop[ii-1];
-    for(uint ii = 0; ii< (size_t)tu_num_of_devices;++ii)
+    for(int ii=0; ii<tu_num_of_devices; ++ii)
         mpi_vrb_printf("TU:prop GPU %d: ntasks=%9d (+%9d)\n", ii, cp->_tasks_prop[ii], cp->_off_prop[ii]);
     mpi_vrb_printf("TU:prop CPU  : ntasks=%9d (+%9d)\n", cp->_tasks_cpu, cp->_off_cpu);
     if(!cp->dims_set) {

@@ -126,12 +126,10 @@ template<char channel>
 inline void selfEnergy::reco(complex128_t* const buf, const complex128_t* const inp,
                                 const double a, const double b)
 {
-    if(std::abs(b) < 1e-10) {
-        mfill_0(buf,POW2(n_orbff*n_spin*n_spin)*nk);
-    }
+    if (std::abs(b) < 1e-10)
+        ZERO_OUT( buf, POW2(n_orbff*n_spin*n_spin)*nk );
     const index_t rest = POW2(n_orbff*POW2(n_spin));
-    if(symm->use_symmetries)
-    {
+    if (symm->use_symmetries) {
         const index_t my_nk_in_bz = symm->my_nk_in_bz;
         const index_t my_nk_in_bz_off = symm->my_nk_in_bz_off;
 

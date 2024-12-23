@@ -88,18 +88,18 @@ TEST_CASE("P flow","[RPA]") {
     double Lambda = 1.0;
     double dLambda = -0.1;
     diverge_flow_step_euler( s2, Lambda, dLambda );
-    
+
     s1->tu_loop->GF_zero_T(Lambda*I128);
     P_projection(v1->projection_helper, v1, s1->tu_proj);
     s1->tu_loop->pp_loop(v3->pp_bubble_int,v3->bubble_helper);
     vertex_product(v3->Pch, v1->projection_helper,
                 v3->pp_bubble_int,v1->product_helper,
                 v3->GPU_gemm_buffer,v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0);
-    mfill(v3->Cch,v3->full_vert_size,0.0);
-    mfill(v3->Dch,v3->full_vert_size,0.0);
+    ZERO_OUT(v3->Cch,v3->full_vert_size);
+    ZERO_OUT(v3->Dch,v3->full_vert_size);
     add(*v1,*v3, dLambda);
     P_projection(v1->projection_helper, v1, s1->tu_proj);
-    
+
     CHECK(check_equal(v1->projection_helper,v2->Pch,v1->full_vert_size));
     CHECK(check_equal(v1->pp_bubble_int,v2->pp_bubble_int,v1->full_vert_size));
     diverge_flow_step_free( s1 );
@@ -124,16 +124,16 @@ TEST_CASE("C flow","[RPA]") {
     double Lambda = 1.0;
     double dLambda = -0.1;
     diverge_flow_step_euler( s2, Lambda, dLambda );
-    
+
     s1->tu_loop->GF_zero_T(Lambda*I128);
     C_projection(v1->projection_helper, v1, s1->tu_proj);
     s1->tu_loop->ph_loop(v3->ph_bubble_int,v3->bubble_helper);
     vertex_product(v3->Cch, v1->projection_helper,
                 v3->ph_bubble_int,v1->product_helper,
                 v3->GPU_gemm_buffer,v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0);
-    mfill(v3->Pch,v3->full_vert_size,0.0);
-    mfill(v3->Dch,v3->full_vert_size,0.0);
-    add(*v1,*v3, dLambda);    
+    ZERO_OUT(v3->Pch,v3->full_vert_size);
+    ZERO_OUT(v3->Dch,v3->full_vert_size);
+    add(*v1,*v3, dLambda);
     C_projection(v1->projection_helper,v1,s1->tu_proj);
     CHECK(check_equal(v1->projection_helper,v2->Cch,v1->full_vert_size));
     CHECK(check_equal(v1->ph_bubble_int,v2->ph_bubble_int,v1->full_vert_size));

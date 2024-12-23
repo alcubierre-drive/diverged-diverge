@@ -3,6 +3,7 @@
 #include "projection_wrapper.hpp"
 #include <set>
 #include <map>
+#include <numeric>
 
 Projection::~Projection() {
     free(my_prefac_proj);
@@ -20,12 +21,30 @@ static inline vector<size_t> sort_permutation( const vector<array<index_t,2>>& _
     return p;
 }
 
+template <typename T, typename S>
+void apply_permutation_in_place( vector<T>& vec, const vector<S>& p) {
+    vector<bool> done(vec.size());
+    for (uindex_t i=0; i<vec.size(); ++i) {
+        if (done[i])
+            continue;
+        done[i] = true;
+        uindex_t prev_j = i;
+        uindex_t j = p[i];
+        while (i != j) {
+            std::swap(vec[prev_j], vec[j]);
+            done[j] = true;
+            prev_j = j;
+            j = p[j];
+        }
+    }
+}
+
 static inline void sort_and_filter(vector<array<index_t,2>>& _t, vector<index_t>& _t_p,
                               vector<array<index_t,2>>& _fhelp, vector<index_t>& _f,
                               vector<std::array<index_t,2>>& _rhelp,vector<index_t>& _r,
                               vector<index_t>& _len,
                               vector<index_t>& _off){
-    auto p = sort_permutation(_t);
+    vector<size_t> p = sort_permutation(_t);
     apply_permutation_in_place(_t,p);
     apply_permutation_in_place(_fhelp,p);
     apply_permutation_in_place(_rhelp,p);

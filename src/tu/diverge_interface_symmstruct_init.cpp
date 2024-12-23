@@ -3,6 +3,7 @@
 #include "diverge_interface.hpp"
 #include "../diverge_momentum_gen.h"
 #include "../diverge_symmetrize.h"
+#include "../misc/bitary.h"
 
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 typedef Eigen::Matrix<complex128_t,-1,-1,Eigen::RowMajor> CMatXcd;
@@ -118,9 +119,7 @@ void init_ibz(diverge_model_t* model) {
     index_t nk = kdim(model->nk);
 
     index_t* mom_maps_to = model->internals->symm_map_mom_crs;
-    bool* is_mapped_to_ibz = (bool*)malloc(sizeof(bool)*nk);
-    for(uint i = 0; i < nk; ++i)
-        is_mapped_to_ibz[i] = false;
+    cbyte_t* is_mapped_to_ibz = bitary_alloc(nk);
 
     complex128_t* orb_symmetries = (complex128_t*)model->orb_symmetries;
     double* rs_symmetries = (double*)model->rs_symmetries;
@@ -147,15 +146,15 @@ void init_ibz(diverge_model_t* model) {
     symm->which_symmetry_used.resize(nk);
 
     for(index_t ii=0; ii<nk; ++ii) {
-        if (!is_mapped_to_ibz[ii]) {
+        if (!bitary_get( is_mapped_to_ibz, ii )) {
             symm->idx_ibz_in_fullmesh.push_back(ii);
-            is_mapped_to_ibz[ii] = true;
+            bitary_set( is_mapped_to_ibz, ii );
             symm->which_symmetry_used[ii] = {which_is_identity, symm->inv_symmetry[which_is_identity]};
             symm->kmaps_to[ii] = current_ibz_idx;
             for (index_t s=0; s<n_sym; ++s) {
                 index_t idx = mom_maps_to[s+n_sym*ii];
-                if (!is_mapped_to_ibz[idx]) {
-                    is_mapped_to_ibz[idx] = true;
+                if (!bitary_get( is_mapped_to_ibz, idx )) {
+                    bitary_set( is_mapped_to_ibz, idx );
                     symm->which_symmetry_used[idx] = {s, symm->inv_symmetry[s]};
                     symm->kmaps_to[idx] = current_ibz_idx;
                 }
@@ -165,7 +164,7 @@ void init_ibz(diverge_model_t* model) {
     }
     //! Test that all k-points have an IBZ map
     for (index_t i=0; i< nk; ++i) {
-        if (!is_mapped_to_ibz[i])
+        if (!bitary_get( is_mapped_to_ibz, i ))
             mpi_wrn_printf("No IBZ-BZ-map at idx: %li\n", i);
     }
     free(is_mapped_to_ibz);

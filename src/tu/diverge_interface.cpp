@@ -74,7 +74,9 @@ inline void fill_existing_ff(diverge_model_t* model) {
         Vec3i ff = Map<Eigen::Matrix<index_t,3,1>>(tu_ff[i].R).cast<int>();
         index_t idx = std::distance(tu_data->existing_ff.begin(),
                         std::find_if(tu_data->existing_ff.begin(),
-                        tu_data->existing_ff.end(), vec3i_cmp(ff)));
+                            tu_data->existing_ff.end(), [ff](const Vec3i& vec)->bool{
+                                return (vec-ff).lpNorm<1>() == 0;
+                            }));
         if(idx == (index_t)tu_data->existing_ff.size()) {
             tu_data->existing_ff.push_back(ff);
             tu_ff[i].ffidx = idx;
@@ -237,8 +239,10 @@ void init_ff_struct(const double max_dist, diverge_model_t* model) {
                 helper(3) = sto;
 
                 if (dist.norm() < max_dist+1e-10 &&
-                    std::find_if(bond_lookup.begin(), bond_lookup.end(), vec_cmp(helper)) 
-                                    == bond_lookup.end()) {
+                    std::find_if(bond_lookup.begin(), bond_lookup.end(),
+                                 [helper](const Vec4d& elem)->bool{
+                                    return (elem-helper).lpNorm<1>() < 1e-3;
+                                 }) == bond_lookup.end()) {
                     #pragma omp critical(write_into)
                     {
                         bond_lookup.push_back(helper);
@@ -357,8 +361,10 @@ static void fill_unique_ff(diverge_model_t* model){
         trial(1) = wrap_on_fine(trial(1),model->nk[1]*model->nkf[1]);
         trial(2) = wrap_on_fine(trial(2),model->nk[2]*model->nkf[2]);
         index_t idx = std::distance(tu_data->unique_ff_combi.begin(),
-                    std::find_if(tu_data->unique_ff_combi.begin()
-                        ,tu_data->unique_ff_combi.end(), vec3i_cmp(trial)));
+                        std::find_if(tu_data->unique_ff_combi.begin(),
+                            tu_data->unique_ff_combi.end(), [trial](const Vec3i& vec)->bool{
+                                return (trial-vec).lpNorm<1>() == 0;
+                            }));
         if(idx == (index_t)tu_data->unique_ff_combi.size())
             tu_data->unique_ff_combi.push_back(trial);
         tu_data->ff_idx_to_unique_ff_elem[ff1+nff*ff3] = idx;
