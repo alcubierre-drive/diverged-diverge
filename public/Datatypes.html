@@ -157,6 +157,13 @@ is not defined. Otherwise, <a class="reference internal" href="#c.complex64_t" t
 allow <code class="docutils literal notranslate"><span class="pre">ptr1</span> <span class="pre">^=</span> <span class="pre">ptr2</span></code>, that’s why we need a second macro)</p>
 </dd></dl>
 
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.ZERO_OUT">
+<span class="sig-name descname"><span class="n"><span class="pre">ZERO_OUT</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ptr</span></span>, <span class="n"><span class="pre">sz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.ZERO_OUT" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L145"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>zero out an array of arbitrary POD type (pointed to by <code class="docutils literal notranslate"><span class="pre">ptr</span></code>) with <code class="docutils literal notranslate"><span class="pre">sz</span></code>
+elements by calling <code class="docutils literal notranslate"><span class="pre">memset</span></code></p>
+</dd></dl>
+
 </section>
 
 

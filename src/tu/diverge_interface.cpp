@@ -6,6 +6,9 @@
 #include <set>
 #include <map>
 #include <cmath>
+#include <array>
+
+using std::array;
 
 #include "../misc/qnan.h"
 #include "../diverge_model_internals.h"

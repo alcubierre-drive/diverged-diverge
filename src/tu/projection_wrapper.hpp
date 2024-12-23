@@ -8,8 +8,10 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
 #include "diverge_interface.hpp"
-#include "global.hpp"
 #include "cuda_init.hpp"
+
+#include <vector>
+using std::vector;
 
 class Projection
 {

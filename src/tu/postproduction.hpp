@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "global.hpp"
 #include "../diverge_model.h"
 #include "../diverge_flow_step.h"
 #include "vertex.hpp"
@@ -10,7 +9,10 @@
 #include "projection_handler.hpp"
 
 #include <string>
+#include <vector>
+
 using std::string;
+using std::vector;
 
 #ifndef TU_MAGIC_NUMBER_POST_PROCESSING
 #define TU_MAGIC_NUMBER_POST_PROCESSING 'T'
@@ -79,9 +81,9 @@ private:
 
     void construct_multiindex_maps(const diverge_model_t* model);
 
-    std::vector<index_t> mi_map_idx;
-    std::vector<complex128_t> mi_map_pref_in_in;
-    std::vector<complex128_t> mi_map_pref_in_out;
+    vector<index_t> mi_map_idx;
+    vector<complex128_t> mi_map_pref_in_in;
+    vector<complex128_t> mi_map_pref_in_out;
 
     index_t tu_suscP=0;
     index_t tu_suscC=0;

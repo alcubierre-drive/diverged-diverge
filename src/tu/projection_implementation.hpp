@@ -7,10 +7,11 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
 #include "diverge_interface.hpp"
-#include "global.hpp"
 #include "vertex.hpp"
 #include "projection_wrapper.hpp"
 
+#include <vector>
+using std::vector;
 
 void _to_C(complex128_t* proj_vertex, const complex128_t* const I_channel,
             const vector<array<index_t, 2>>& rsmap_to,

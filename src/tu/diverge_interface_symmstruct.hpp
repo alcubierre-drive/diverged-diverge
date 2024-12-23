@@ -4,7 +4,12 @@
 #include "../diverge_common.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
-#include "global.hpp"
+
+#include <vector>
+#include <array>
+
+using std::vector;
+using std::array;
 
 struct symmstruct_t{
     // if true, the vectors are filled

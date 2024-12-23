@@ -14,7 +14,6 @@
 #include "../model_examples/model_constructor.hpp"
 
 #include "../../src/tu/diverge_interface.hpp"
-#include "../../src/tu/global.hpp"
 #include "../../src/tu/propagator.hpp"
 
 TEST_CASE("MPI shared memory exclusive", "[shared_mem][exclusive]") {

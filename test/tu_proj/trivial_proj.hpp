@@ -1,7 +1,6 @@
 #ifndef DIVERGE_SKIP_TESTS
 
 #pragma once
-#include "../../src/tu/global.hpp"
 #include "../../src/tu/vertex.hpp"
 #include "../../src/tu/projection_wrapper.hpp"
 #include "../../src/diverge_model.h"

@@ -8,10 +8,13 @@
 #include "../diverge_Eigen3.hpp"
 #include "../diverge_symmetrize.h"
 #include "diverge_interface.hpp"
-#include "global.hpp"
 #include "vertex.hpp"
 #include "projection_wrapper.hpp"
+
 #include <fftw3.h>
+#include <vector>
+
+using std::vector;
 
 class selfEnergy
 {

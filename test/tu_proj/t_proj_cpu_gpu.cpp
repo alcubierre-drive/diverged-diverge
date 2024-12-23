@@ -5,7 +5,6 @@
 #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.hpp"
 #include "../model_examples/old.h"
-#include "../../src/tu/global.hpp"
 #include "../../src/tu/vertex.hpp"
 #include "../../src/tu/projection_wrapper.hpp"
 #include "../../src/tu/projection_handler.hpp"

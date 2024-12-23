@@ -5,7 +5,6 @@
 #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.hpp"
 #include "../model_examples/old.h"
-#include "../../src/tu/global.hpp"
 #include "../../src/tu/propagator.hpp"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.hpp"

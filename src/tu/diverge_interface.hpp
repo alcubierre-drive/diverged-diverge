@@ -6,10 +6,12 @@
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
-#include "global.hpp"
 #include "../misc/mpi_functions.h"
 #include "diverge_interface_symmstruct.hpp"
 #include <cassert>
+#include <vector>
+
+using std::vector;
 
 typedef enum {
     tu_fft_algorithm_greedy,

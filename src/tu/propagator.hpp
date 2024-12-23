@@ -9,7 +9,6 @@
 #include "../misc/bitary.h"
 
 #include "diverge_interface.hpp"
-#include "global.hpp"
 #include "cuda_init.hpp"
 
 #include "propagator_cpu_mpi.h"
@@ -19,7 +18,10 @@
 #include <fftw3.h>
 #include <thread>
 #include <string>
+#include <vector>
+
 using std::string;
+using std::vector;
 
 inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())

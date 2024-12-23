@@ -7,7 +7,6 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
 #include "diverge_interface.hpp"
-#include "global.hpp"
 #include "vertex.hpp"
 #include "propagator.hpp"
 #include "selfenergy.hpp"
@@ -16,7 +15,10 @@
 #include "../misc/batched_gemms.h"
 
 #include <string>
+#include <vector>
+
 using std::string;
+using std::vector;
 
 void vertex_product(complex128_t* result, const complex128_t* const  B,
                     const complex128_t* const C, complex128_t* helper,
