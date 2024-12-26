@@ -3,19 +3,6 @@
 #define EIGEN_NO_CUDA
 
 #include "propagator.hpp"
-#include "../misc/cuda_error.h"
-
-#include <cuComplex.h>
-
-#include <algorithm>
-#include <numeric>
-#include <thread>
-#include <iostream>
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
-
-#include <thrust/copy.h>
-#include <thrust/fill.h>
 #include "cuda_init.hpp"
 
 static inline __device__ index_t mem_offset() {
