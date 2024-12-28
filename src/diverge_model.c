@@ -9,7 +9,7 @@
 #include "misc/dependency_tree.h"
 #include "misc/qnan.h"
 #include "misc/init_internal_libs.h"
-#include "misc/timsort.h"
+#include "misc/mergesort.h"
 #include <fftw3.h>
 #include <assert.h>
 
@@ -167,8 +167,10 @@ static inline int rs_vertex_compar_chan( const void* v1_, const void* v2_ ) {
 
 static inline void sort_rs_vertex_elements(diverge_model_t* model) {
     if (model->n_vert_chan[0] != -1) return;
-    timsort_r( model->vert, model->n_vert, sizeof(rs_vertex_t), &rs_vertex_compar_R, model->nk );
-    timsort( model->vert, model->n_vert, sizeof(rs_vertex_t), &rs_vertex_compar_chan );
+    mergesort_r( model->vert, model->n_vert, sizeof(rs_vertex_t), &rs_vertex_compar_R, model->nk,
+            diverge_omp_num_threads(), 0 );
+    mergesort( model->vert, model->n_vert, sizeof(rs_vertex_t), &rs_vertex_compar_chan,
+            diverge_omp_num_threads(), 0 );
     char chans[] = "CDP";
     rs_vertex_t* vptr = model->vert;
     const rs_vertex_t* vptr_end = model->vert + model->n_vert;

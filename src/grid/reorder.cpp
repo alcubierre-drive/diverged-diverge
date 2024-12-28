@@ -4,24 +4,7 @@
 #include <vector>
 #include <cassert>
 #include <cstring>
-
-#include <algorithm>
-#ifdef USE_BOOST_SORT
-
-// ignore boost warnings
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-#include <boost/sort/sort.hpp>
-#pragma GCC diagnostic pop
-#define _CUSTOM_SORT_(begin, end, comp) boost::sort::block_indirect_sort(begin, end, comp, diverge_omp_num_threads())
-#define _CUSTOM_STABLE_SORT_(begin, end, comp) boost::sort::parallel_stable_sort(begin, end, comp, diverge_omp_num_threads())
-
-#else // USE_BOOST_SORT
-
-#define _CUSTOM_SORT_(begin, end, comp) std::sort(begin, end, comp)
-#define _CUSTOM_STABLE_SORT_(begin, end, comp) std::stable_sort(begin, end, comp)
-
-#endif // USE_BOOST_SORT
+#include "../misc/mergesort.h"
 
 namespace grid {
 
@@ -110,20 +93,25 @@ int rank_of_index( index_t index, const dist_info* dist ) {
     return -1;
 }
 
-// no boost warning about negative size_t stuff on intel compilers
-#ifdef __INTEL_COMPILER
-#pragma warning disable 68
-#endif
-void sort_trafo_index_remote( trafo_index* start, trafo_index* stop ) {
-    _CUSTOM_SORT_( start, stop, []( const trafo_index& a, const trafo_index& b ) {
-                return a.remote_index<b.remote_index;
-            } );
+static inline int cmp_trafo_index_remote_index( const void* vA, const void* vB ) {
+    const trafo_index *pA = (const trafo_index*)vA, *pB = (const trafo_index*)vB;
+    if (pA->remote_index < pB->remote_index)
+        return -1;
+    else if (pA->remote_index > pB->remote_index)
+        return 1;
+    else
+        return 0;
+}
+void sort_trafo_index_remote( trafo_index* start, index_t size ) {
+    mergesort( start, size, sizeof*start, &cmp_trafo_index_remote_index, diverge_omp_num_threads(), 0 );
 }
 
-void sort_trafo_index_rank( trafo_index* start, trafo_index* stop ) {
-    _CUSTOM_STABLE_SORT_( start, stop, []( const trafo_index& a, const trafo_index& b ) {
-                return a.remote_rank<b.remote_rank;
-            } );
+static inline int cmp_trafo_index_remote_rank( const void* vA, const void* vB ) {
+    const trafo_index *pA = (const trafo_index*)vA, *pB = (const trafo_index*)vB;
+    return pA->remote_rank - pB->remote_rank;
+}
+void sort_trafo_index_rank( trafo_index* start, index_t size ) {
+    mergesort( start, size, sizeof*start, &cmp_trafo_index_remote_rank, diverge_omp_num_threads(), 0 );
 }
 
 }

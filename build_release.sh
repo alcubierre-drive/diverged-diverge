@@ -66,7 +66,6 @@ BUILD_SOFTWARE=false
 OPENBLAS_VERSION=0.3.28
 EIGEN_VERSION=3.4.0
 FFTW_VERSION=3.3.10
-BOOST_VERSION=1.86.0
 
 # libraries
 SOFTWARE_PATH=/io/software
@@ -113,13 +112,6 @@ env CFLAGS="-fPIC $STATICLIB_CFLAGS" CXXFLAGS="-fPIC $STATICLIB_CXXFLAGS" \
     ./configure --enable-openmp --prefix=${SOFTWARE_PATH}
 make -j$(nproc)
 make install
-# BOOST
-cd ${SOFTWARE_PATH}/src
-boost_file=boost_${BOOST_VERSION//\./_}.tar.gz
-curl -LO https://archives.boost.io/release/${BOOST_VERSION}/source/${boost_file}
-tar -xf ${boost_file}
-cd ../include
-ln -sf ../src/${boost_file//\.tar\.gz/}/boost .
 fi # BUILD_SOFTWARE
 
 # diverge
@@ -128,7 +120,7 @@ cd ${DIVERGE_PATH}
 cat >> Makefile.local <<EOF
 INCLUDES += -I${SOFTWARE_PATH}/include -I${SOFTWARE_PATH}/include/openblas
 LIBS := ${SOFTWARE_PATH}/lib64/libopenblas.a ${SOFTWARE_PATH}/lib/libfftw3.a ${SOFTWARE_PATH}/lib/libfftw3_omp.a
-DEFINES += -DNDEBUG -DEIGEN_NO_DEBUG -DUSE_BOOST_SORT -DDIVERGE_OPENBLAS_LIMIT_THREADS=48
+DEFINES += -DNDEBUG -DEIGEN_NO_DEBUG -DDIVERGE_OPENBLAS_LIMIT_THREADS=48
 FLAGS += -Ofast -mtune=native -flto
 LDFLAGS += -flto=$(nproc) -static-libstdc++ -Wno-lto-type-mismatch -Ofast -mtune=native
 EOF

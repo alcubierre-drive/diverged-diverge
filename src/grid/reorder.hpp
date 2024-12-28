@@ -40,8 +40,8 @@ typedef struct {
     int remote_rank;
 } trafo_index;
 
-void sort_trafo_index_remote( trafo_index* start, trafo_index* stop );
-void sort_trafo_index_rank( trafo_index* start, trafo_index* stop );
+void sort_trafo_index_remote( trafo_index* start, index_t size );
+void sort_trafo_index_rank( trafo_index* start, index_t size );
 
 template<typename IdxFunTypeNew, typename IdxFunTypeOld>
 index_t debug_map( index_t nk, index_t nb, IdxFunTypeNew newindex_tFun, IdxFunTypeOld oldindex_tFun ) {
@@ -76,8 +76,8 @@ void gen_maps( index_t* send_map, int* send_displs, int* send_counts,
         recv_map_[loc].remote_rank = rank_of_index( recv_map_[loc].remote_index, dist );
     }
 
-    sort_trafo_index_remote( send_map_, send_map_+stop-start );
-    sort_trafo_index_rank( recv_map_, recv_map_+stop-start );
+    sort_trafo_index_remote( send_map_, stop-start );
+    sort_trafo_index_rank( recv_map_, stop-start );
 
     for (int r=0; r<dist->nranks; ++r) {
         send_counts[r] = 0;

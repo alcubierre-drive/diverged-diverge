@@ -358,8 +358,6 @@ written (i.e., the variable can be either *defined* or *not*), or
         magic number (relevant for output) to VAL
     :``USE_ALTERNATIVE_TIME``: use an alternative method of measuring time when
         compiling without MPI
-    :``USE_BOOST_SORT``: use boost's implementation of parallel sort/stable sort
-        algorithms. Particularly useful for the grid FRG code.
     :``USE_EIGEN_BATCHED_GEMM``: use Eigen's matrix multiplication in batched
         gemms (CPU)
     :``USE_EIGEN3_CPU_EIGENSOLVER``: default to a CPU version of the batched

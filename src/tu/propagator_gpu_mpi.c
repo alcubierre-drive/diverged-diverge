@@ -2,6 +2,7 @@
 
 #include "propagator_gpu_mpi.h"
 #include "../misc/mpi_functions.h"
+#include "../misc/mergesort.h"
 #include <assert.h>
 
 static inline void atomic_set_complex128_t( complex128_t* dest_, const complex128_t* src_ ) {
@@ -320,6 +321,11 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
     }
 }
 
+static inline int cmp_send_pack_dest_rank( const void* vA, const void* vB ) {
+    const pack_t *pA = vA, *pB = vB;
+    return pA->dest_rank - pB->dest_rank;
+}
+
 static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
 
     double tick, tock;
@@ -374,7 +380,8 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
     }
 
     // sort the send pack
-    sort_pack( t->send_pack, t->send_pack + t->n_touched );
+    mergesort( t->send_pack, t->n_touched, sizeof*t->send_pack,
+            &cmp_send_pack_dest_rank, diverge_omp_num_threads(), 0 );
 
     // set the send indices and communicate
     for (index_t s=0; s<t->n_touched; ++s)
