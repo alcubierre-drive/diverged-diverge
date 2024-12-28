@@ -23,7 +23,7 @@
 using std::string;
 using std::vector;
 
-inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
+static inline void scale_loop(complex128_t* const loop, const double pref, const index_t len) {
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t idx=0; idx<len; ++idx) loop[idx] *= pref;
 }

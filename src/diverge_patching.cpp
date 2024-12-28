@@ -26,11 +26,7 @@ static Mat3d latt_matrix( diverge_model_t* mod );
 static inline index_t kpt_to_idx( const Vec3d& kpt, const Mat3d& latt, const index_t nk[3] );
 static inline Vec3d kpt_from_mesh( const double* kmesh, index_t k );
 
-struct KmeshWrapper {
-    KmeshWrapper( const double* ptr ) : ptr(ptr) {}
-    const double *ptr;
-    Vec3d operator[]( index_t k ) const { return Map<Vec3d>(const_cast<double*>(ptr) + 3*k); }
-};
+#define Kmesh( k ) Map<const Vec3d>(mod->internals->kmesh + 3*(k))
 
 static vector<index_t> find_ibz_pts( diverge_model_t* mod );
 
@@ -96,7 +92,7 @@ vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double
             Vec3d kpt = kpt_from_mesh( mod->internals->kmesh, np_search_vec[p] );
             kmeans_points[p] = { kpt(0), kpt(1) };
         }
-        x_dkm_result_t kmeans_result = x_kmeans_lloyd( kmeans_points.data(), kmeans_points.size(), np_ibz, DIVERGE_EPS_MESH, -1 );
+        dkm_result_t kmeans_result = kmeans_lloyd( kmeans_points.data(), kmeans_points.size(), np_ibz, DIVERGE_EPS_MESH, -1 );
         claV2d_t* kmeans_means = kmeans_result.points;
 
         auto find_closest_np_search_idx = [&](index_t cluster_idx)->index_t{
@@ -117,7 +113,7 @@ vector<index_t> diverge_patching_find_fs_pts( diverge_model_t* mod, const double
         for (index_t p=0; p<np_ibz; ++p)
             k_idx_fs_in_ibz.push_back(np_search_vec[find_closest_np_search_idx(p)]);
 
-        x_dkm_result_free( kmeans_result );
+        dkm_result_free( kmeans_result );
     }
 
     // setup for full BZ FS
@@ -566,7 +562,7 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
             if (ncl < gamma*group_counts.at(g)) {
 
                 double tick = diverge_mpi_wtime();
-                x_dkm_result_t cluster_result = x_kmeans_lloyd( (claV2d_t*)vectors.data(), vectors.size(), ncl, DIVERGE_EPS_MESH, -1 );
+                dkm_result_t cluster_result = kmeans_lloyd( (claV2d_t*)vectors.data(), vectors.size(), ncl, DIVERGE_EPS_MESH, -1 );
                 double tock = diverge_mpi_wtime();
                 timings[p] += tock - tick;
 
@@ -590,7 +586,7 @@ void diverge_patching_autofine( diverge_model_t* mod, mom_patching_t* patch,
                 for (double cw: cluster_weights)
                     weights.push_back(cw);
 
-                x_dkm_result_free( cluster_result );
+                dkm_result_free( cluster_result );
             } else {
                 patches.reserve(patches.size() + group_counts.at(g));
                 weights.reserve(weights.size() + group_counts.at(g));
@@ -677,7 +673,6 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
     }
 
     cbyte_t* reached = bitary_alloc( np );
-    KmeshWrapper Kmesh(mod->internals->kmesh);
 
     // find patching 'ibz'
     vector<index_t> ibz;
@@ -691,7 +686,7 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
             ibz.push_back(i);
             bz_to_ibz[i] = ibz_count;
             for (uindex_t ss=0; ss<sym.size(); ++ss) {
-                index_t candidate_k = kpt_to_idx( sym[ss] * Kmesh[patches[i]], latt, nk_flat );
+                index_t candidate_k = kpt_to_idx( sym[ss] * Kmesh(patches[i]), latt, nk_flat );
                 index_t* found = std::find( patches, patches+np, candidate_k );
                 index_t candidate = found - patches;
                 if (candidate < np && candidate >= 0 && candidate != i) {
@@ -711,7 +706,7 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
     for (index_t i=0; i<ibz_count; ++i) {
         bz_which_sym[ibz[i]].push_back(-1);
         for (uindex_t ss=0; ss<sym.size(); ++ss) {
-            index_t candidate_k = kpt_to_idx( sym[ss] * Kmesh[patches[ibz[i]]], latt, nk_flat );
+            index_t candidate_k = kpt_to_idx( sym[ss] * Kmesh(patches[ibz[i]]), latt, nk_flat );
             index_t* found = std::find( patches, patches+np, candidate_k );
             index_t candidate = found - patches;
             if (candidate < np && candidate >= 0 && candidate != i)
@@ -742,7 +737,7 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
                 if (ibz_sym == -1)
                     new_map.push_back(ibz_refine[refine]);
                 else
-                    new_map.push_back(kpt_to_idx( sym[ibz_sym] * Kmesh[ibz_refine[refine]], latt, nk_flat ));
+                    new_map.push_back(kpt_to_idx( sym[ibz_sym] * Kmesh(ibz_refine[refine]), latt, nk_flat ));
             }
         }
         if (ibz_sym_vec.size() > 1u) {
