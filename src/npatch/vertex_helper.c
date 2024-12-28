@@ -3,6 +3,7 @@
 #include "vertex_helper.h"
 #include "loop.h"
 #include "../misc/mpi_functions.h"
+#include "../misc/mergesort.h"
 
 static inline index_t _k1m2( index_t k1, index_t k2, index_t nk_flat ) {
     return ((k1 / nk_flat - k2 / nk_flat + nk_flat) % nk_flat)*nk_flat +
@@ -43,6 +44,59 @@ static inline void qkkp_init( qkkp_t *q, index_t p1, index_t p2, index_t p3,
             break;
     }
 }
+
+typedef struct { complex128_t first; qkkp_t second; } v_element_t;
+static inline int cmp_v_element_second( const void* vA, const void* vB ) {
+    const v_element_t *pA = (const v_element_t*)vA, *pB = (const v_element_t*)vB;
+    if (pA->second.q < pB->second.q)        return -1;
+    else if (pA->second.q > pB->second.q)   return 1;
+    else {
+        if (pA->second.k < pB->second.k)        return -1;
+        else if (pA->second.k > pB->second.k)   return 1;
+        else {
+            if (pA->second.kp < pB->second.kp)      return -1;
+            else if (pA->second.kp > pB->second.kp) return 1;
+            else                                    return 0;
+        }
+    }
+}
+static void vhelper_vertex_sort_in_q( complex128_t* vertex, qkkp_t* vindex, index_t np,
+        index_t nb, index_t** pqcounts, index_t* pnq ) {
+
+    index_t np3 = np*np*np;
+    index_t no4 = nb*nb*nb*nb;
+    index_t size = np3 * no4;
+
+    v_element_t* vsort = calloc(size, sizeof*vsort);
+    #pragma omp parallel for schedule(static) collapse(2) num_threads(diverge_omp_num_threads())
+    for (index_t p3=0; p3<np3; ++p3) for (index_t o4=0; o4<no4; ++o4)
+        vsort[p3*no4+o4] = (v_element_t){ vertex[p3*no4+o4], vindex[p3] };
+
+    mergesort( vsort, size, sizeof*vsort, &cmp_v_element_second, diverge_omp_num_threads(), 0 );
+
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
+    for (index_t p3=0; p3<np3; ++p3) {
+        for (index_t o4=0; o4<no4; ++o4) {
+            vertex[p3*no4+o4] = vsort[p3*no4+o4].first;
+        }
+        vindex[p3] = vsort[p3*no4].second;
+    }
+    free( vsort );
+
+    index_t* qcounts = (index_t*)calloc(np*np, sizeof(index_t));
+    qcounts[0] = 1;
+    index_t nq = 0;
+    for (index_t p3=1; p3<np3; ++p3) {
+        if (vindex[p3-1].q != vindex[p3].q)
+            nq++;
+        qcounts[nq]++;
+    }
+    nq++;
+
+    *pqcounts = qcounts;
+    *pnq = nq;
+}
+
 
 void vhelper_vertex_in_q_channel( const npatch_vertex_t* vert, const npatch_loop_t* loop,
         char chan, bool dV, complex128_t** pvert, qkkp_t** pvindex,
@@ -94,7 +148,7 @@ void vhelper_vertex_in_q_channel( const npatch_vertex_t* vert, const npatch_loop
 }
 
 
-index_t* vhelper_qkkp_to_ary( const qkkp_t* q, index_t nq ) {
+static inline index_t* vhelper_qkkp_to_ary( const qkkp_t* q, index_t nq ) {
     index_t* r = (index_t*)malloc(sizeof(index_t)*nq*3);
     index_t i=0;
     for (index_t qq=0; qq<nq; ++qq) {
@@ -103,4 +157,182 @@ index_t* vhelper_qkkp_to_ary( const qkkp_t* q, index_t nq ) {
         r[i++] = q[qq].kp;
     }
     return r;
+}
+
+static inline index_t unique_k( qkkp_t* arr, index_t size ) {
+    if (size == 0) return 0;
+    index_t j = 0;
+    for (index_t i=1; i<size; ++i)
+        if (arr[i].k != arr[j].k)
+            arr[++j] = arr[i];
+    return j+1;
+}
+
+static inline int cmp_qkkp_k( const void* vA, const void* vB ) {
+    const qkkp_t *pA = vA, *pB = vB;
+    if (pA->k < pB->k)      return -1;
+    else if (pA->k > pB->k) return 1;
+    else return 0;
+}
+
+static inline index_t unique_kp( qkkp_t* arr, index_t size ) {
+    if (size == 0) return 0;
+    index_t j = 0;
+    for (index_t i=1; i<size; ++i)
+        if (arr[i].kp != arr[j].kp)
+            arr[++j] = arr[i];
+    return j+1;
+}
+
+static inline int cmp_qkkp_kp( const void* vA, const void* vB ) {
+    const qkkp_t *pA = vA, *pB = vB;
+    if (pA->kp < pB->kp)        return -1;
+    else if (pA->kp > pB->kp)   return 1;
+    else                        return 0;
+}
+
+static inline index_t unique( index_t* arr, index_t size ) {
+    if (size == 0) return 0;
+    index_t j = 0;
+    for (index_t i=1; i<size; ++i)
+        if (arr[i] != arr[j])
+            arr[++j] = arr[i];
+    return j+1;
+}
+
+static inline int cmp_index( const void* vA, const void* vB ) {
+    const index_t *pA = vA, *pB = vB;
+    if (*pA < *pB)      return -1;
+    else if (*pA > *pB) return 1;
+    else                return 0;
+}
+
+static inline index_t find_bin_irreg( const index_t* vals, index_t n_vals, index_t test ) {
+    if (test >= vals[n_vals-1]) return n_vals-1;
+    if (test <= vals[0]) return 0;
+    index_t low = 0,
+            high = n_vals-1;
+    while (low <= high) {
+        index_t mid = low + (high - low)/2;
+        if (vals[mid] <= test)
+            low = mid + 1;
+        else
+            high = mid -1;
+    }
+    return low - 1;
+}
+
+npatch_qvert_mat_t* vhelper_q_vertex_matrix_from_vertex( const complex128_t* q_vertex,
+        const qkkp_t* q_vindex, const index_t* q_counts, index_t nq,
+        index_t nb ) {
+
+    index_t* q_displs = calloc(nq, sizeof(index_t));
+    for (index_t q=0; q<nq; ++q) if (q>0) q_displs[q] = q_displs[q-1] + q_counts[q-1];
+
+    npatch_qvert_mat_t* result = malloc(sizeof(npatch_qvert_mat_t)*nq);
+
+    for (index_t q=0; q<nq; ++q) {
+        VECTOR_INIT_CAP( index_t, k_kp_vector, q_counts[q] );
+
+        qkkp_t* qvi = calloc(q_counts[q], sizeof*qvi);
+        memcpy( qvi, q_vindex + q_displs[q], sizeof(qkkp_t)*q_counts[q] );
+        mergesort( qvi, q_counts[q], sizeof*qvi, cmp_qkkp_k, diverge_omp_num_threads(), 0 );
+        index_t qc = unique_k( qvi, q_counts[q] );
+        for (index_t i=0; i<qc; ++i)
+            VECTOR_PUSH_BACK( k_kp_vector, qvi[i].k );
+
+        memcpy( qvi, q_vindex + q_displs[q], sizeof(qkkp_t)*q_counts[q] );
+        mergesort( qvi, q_counts[q], sizeof*qvi, cmp_qkkp_kp, diverge_omp_num_threads(), 0 );
+        qc = unique_kp( qvi, q_counts[q] );
+        for (index_t i=0; i<qc; ++i)
+            VECTOR_PUSH_BACK( k_kp_vector, qvi[i].kp );
+        free( qvi );
+
+        mergesort( k_kp_vector, k_kp_vector_sz, sizeof*k_kp_vector, &cmp_index, diverge_omp_num_threads(), 0 );
+        k_kp_vector_sz = unique( k_kp_vector, k_kp_vector_sz );
+        VECTOR_SHRINK_TO_FIT( k_kp_vector );
+
+        index_t nkkp = k_kp_vector_sz;
+        index_t matrix_size = POW2(nkkp) * POW4(nb);
+
+        complex128_t* matrix = calloc(matrix_size, sizeof*matrix);
+        for (index_t qq=0; qq<q_counts[q]; ++qq) {
+            const qkkp_t* qvv = q_vindex + q_displs[q] + qq;
+            index_t ki = find_bin_irreg( k_kp_vector, k_kp_vector_sz, qvv->k );
+            index_t kpi = find_bin_irreg( k_kp_vector, k_kp_vector_sz, qvv->kp );
+            for (index_t o12=0; o12<nb*nb; ++o12)
+            for (index_t o34=0; o34<nb*nb; ++o34)
+                matrix[(ki*nb*nb+o12) * (nkkp*nb*nb) + kpi*nb*nb+o34] =
+                    q_vertex[(q_displs[q]+qq)*nb*nb*nb*nb+o12*nb*nb+o34];
+        }
+
+
+        result[q].data = matrix; // no call to free(matrix);
+        result[q].k_kp_descr = k_kp_vector; // no call to VECTOR_FREE( k_kp_vector );
+        result[q].n_k_kp = nkkp;
+        result[q].nb = nb;
+        result[q].q = q_vindex[q_displs[q]].q;
+        result[q].eigen = false;
+        result[q].values = NULL;
+        result[q].nv = -1;
+    }
+
+    free(q_displs);
+
+    return result;
+}
+
+complex128_t* vhelper_q_vertex_matrices_to_buffer( npatch_qvert_mat_t* qvm, index_t nq, index_t Nmax ) {
+    complex128_t* result = calloc(Nmax*Nmax*nq, sizeof*result);
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
+    for (index_t q=0; q<nq; ++q) {
+        index_t N_orig = qvm[q].nb * qvm[q].nb * qvm[q].n_k_kp;
+        for (index_t i=0; i<MIN(N_orig,Nmax); ++i)
+        for (index_t j=0; j<MIN(N_orig,Nmax); ++j)
+            result[IDX3(q,i,j,Nmax,Nmax)] = qvm[q].data[IDX2(i,j,N_orig)];
+    }
+    return result;
+}
+
+static inline double cabs2( const complex128_t* in ) {
+    const double* din = (const double*)in;
+    return POW2(din[0]) + POW2(din[1]);
+}
+
+static inline double q_vertex_norm( const complex128_t* data, index_t matrix_size ) {
+    double norm = 0;
+    for (index_t i=0; i<POW2(matrix_size); ++i) norm += cabs2(&data[i]);
+    return sqrt(norm) / (double)matrix_size;
+}
+
+typedef struct {
+    double norm;
+    index_t idx;
+} norm_t;
+
+static inline int cmp_norm( const void* vA, const void* vB ) {
+    const norm_t *pA = vA, *pB = vB;
+    if (pA->norm < pB->norm)        return 1;
+    else if (pA->norm > pB->norm)   return -1;
+    else                            return 0;
+}
+
+void vhelper_q_vertex_sort_max( npatch_qvert_mat_t* qvm, index_t* pnq, double max_rel ) {
+    norm_t* norms = calloc(*pnq, sizeof*norms);
+    #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
+    for (index_t q=0; q<*pnq; ++q)
+        norms[q] = (norm_t){ q_vertex_norm( qvm[q].data, qvm[q].n_k_kp*qvm[q].nb*qvm[q].nb ), q };
+
+    mergesort( norms, *pnq, sizeof*norms, &cmp_norm, diverge_omp_num_threads(), 0 );
+
+    index_t qmax = 0;
+    for (index_t q=0; q<*pnq; ++q) if (norms[q].norm >= norms[0].norm*max_rel) qmax++;
+
+    npatch_qvert_mat_t* buf = calloc(*pnq, sizeof*buf);
+    for (index_t q=0; q<*pnq; ++q) buf[q] = qvm[norms[q].idx];
+    for (index_t q=0; q<*pnq; ++q) qvm[q] = buf[q];
+
+    *pnq = qmax;
+    free( buf );
+    free( norms );
 }
