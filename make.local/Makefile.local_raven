@@ -1,10 +1,7 @@
 # module load cuda/11.6 intel/21.6.0 mkl/2022.1 fftw-serial/3.3.10 openmpi/4.1 boost/1.73 gcc/11  
 USE_CUDA := true
-INC_TEST := true
-DEFINES += -DUSE_BOOST_SORT
 
-INCLUDES += -I$(HOME)/software/boost_1_76_0/ -I$(CUDA_HOME)/include \
-            -I$(HOME)/software -I$(FFTW_HOME)/include -I$(MKL_HOME)/include
+INCLUDES += -I$(CUDA_HOME)/include -I$(HOME)/software -I$(FFTW_HOME)/include -I$(MKL_HOME)/include
 
 LDFLAGS := -L$(CUDA_HOME)/lib64 -lcudart -lcuda -lcufft -lcublas -lcusolver \
         -lcusolverMg -lcrypto -lssl \
