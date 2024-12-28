@@ -297,13 +297,11 @@ static inline int cmp_dbl( const void* vA, const void* vB ) {
     else if (*pA > *pB) return 1;
     else return 0;
 }
-
 static inline int cmp_dbl_indirect( const void* vA, const void* vB, void* ctx ) {
     const index_t *pA = vA, *pB = vB;
     const double* ary = ctx;
     return cmp_dbl( &ary[*pA], &ary[*pB] );
 }
-
 static inline void dos_sort_doubles( double* start, index_t size ) {
     mergesort( start, size, sizeof*start, &cmp_dbl, diverge_omp_num_threads(), 0 );
 }

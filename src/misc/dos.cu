@@ -1,9 +1,11 @@
 #include "dos.cu.h"
-#include "dos_sort.h"
 #include "cuda_error.h"
 #include <cuComplex.h>
 #include <omp.h>
 #include "shared_mem.h"
+#include "mergesort.h"
+
+static inline void dos_sort_doubles_indirect( index_t* start, index_t size, const double* vals );
 
 __host__ __device__
 static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double test ) {
@@ -231,3 +233,19 @@ void ldos_kernel_gpu( const double* E_, index_t nE, const complex128_t* U_, inde
     shared_free( U );
     shared_free( E );
 }
+
+static inline int cmp_dbl( const void* vA, const void* vB ) {
+    const double *pA = (const double*)vA, *pB = (const double*)vB;
+    if (*pA < *pB) return -1;
+    else if (*pA > *pB) return 1;
+    else return 0;
+}
+static inline int cmp_dbl_indirect( const void* vA, const void* vB, void* ctx ) {
+    const index_t *pA = (const index_t*)vA, *pB = (const index_t*)vB;
+    const double* ary = (const double*)ctx;
+    return cmp_dbl( &ary[*pA], &ary[*pB] );
+}
+static inline void dos_sort_doubles_indirect( index_t* start, index_t size, const double* vals ) {
+    mergesort_r( start, size, sizeof*start, &cmp_dbl_indirect, (void*)vals, diverge_omp_num_threads(), 0 );
+}
+
