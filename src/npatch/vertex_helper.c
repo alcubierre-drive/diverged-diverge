@@ -307,8 +307,8 @@ typedef struct {
 } norm_t;
 
 #undef MERGESORT_COMP
-#define MERGESORT_COMP( x, y ) ( (x.norm < y.norm) ? -1 : \
-                                 (x.norm > y.norm) ? 1 : 0 )
+#define MERGESORT_COMP( x, y ) ( (x.norm > y.norm) ? -1 : \
+                                 (x.norm < y.norm) ? 1 : 0 )
 MERGESORT_IMPL( mergesort_norm, norm_t )
 
 void vhelper_q_vertex_sort_max( npatch_qvert_mat_t* qvm, index_t* pnq, double max_rel ) {
