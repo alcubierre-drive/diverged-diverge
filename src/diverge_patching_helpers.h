@@ -5,16 +5,9 @@
 #include "diverge_common.h"
 
 #ifdef __cplusplus
-inline double cabs( complex128_t x ) {
-    return std::abs(*(complex128_t*)&x);
-}
+inline double cabs( complex128_t x ) { return std::abs(x); }
 extern "C" {
 #endif
-
-typedef union {
-    complex128_t k;
-    double kr[3];
-} kpoint_union_t;
 
 #ifndef NPATCH_PERIODIC_NORM_NG
 #define NPATCH_PERIODIC_NORM_NG 2

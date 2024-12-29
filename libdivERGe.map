@@ -125,6 +125,7 @@ DIVERGE_0.8 {
         diverge_mpi_wtime;
         diverge_omp_num_threads;
         diverge_patching_autofine;
+        diverge_patching_find_fs_pts;
         diverge_patching_find_fs_pts_C;
         diverge_patching_free;
         diverge_patching_from_indices;
@@ -169,9 +170,7 @@ DIVERGE_0.8 {
         shared_malloc_barrier;
         shared_malloc_rank;
         shared_malloc_size;
-        extern "C++" {
-            "diverge_patching_find_fs_pts(diverge_model_t*, double const*, long, long, long)";
-        };
+
 local:
         *;
 };

@@ -26,8 +26,8 @@ static claM2cd_t t_spin(char TYPE, claV3d_t a, double theta, index_t n_spin);
 static claM25cd_t t_orbital(char TYPE, claV3d_t a, claV3d_t euler);
 
 static inline claM25cd_t Wigner_dMatrix(claV3d_t euler_angles);
-static inline claM25cd_t Mirror_xz();
-static inline claM25cd_t Parity();
+static inline claM25cd_t Mirror_xz( void );
+static inline claM25cd_t Parity( void );
 
 static claV3d_t gen_euler_angle(claV3d_t a, double theta);
 static spherical_harmonic_t* gen_spherical_harmonics( const site_descr_t* orbs, index_t n_orb );
@@ -197,7 +197,7 @@ static inline claM25cd_t Wigner_dMatrix(claV3d_t euler_angles_) {
     return D;
 }
 
-static inline claM25cd_t Mirror_xz() {
+static inline claM25cd_t Mirror_xz( void ) {
     claM25cd_t Ml = {0};
     index_t off = 0;
     for (int l=0; l<5; ++l) {
@@ -210,7 +210,7 @@ static inline claM25cd_t Mirror_xz() {
     return Ml;
 }
 
-static inline claM25cd_t Parity() {
+static inline claM25cd_t Parity( void ) {
     claM25cd_t Pmat = claM25cd_id();
     index_t off = 0;
     for (int l=0; l<5; ++l) {

@@ -13,14 +13,10 @@ misc_included_files=( ${misc_included_files_self[@]/#/src/} )
 
 exported_symbols=( $(ctags -o- --kinds-C=p ${included_files[@]} |\
     grep -v "^!" | awk '{print $1}' |\
-    grep -v "diverge_patching_find_fs_pts$" |\
     grep -v "shared_malloc_init$" |\
     grep -v "shared_malloc_finalize$") )
 
 exported_cpp_symbols=$(cat <<EOF
-        extern "C++" {
-            "diverge_patching_find_fs_pts(diverge_model_t*, double const*, long, long, long)";
-        };
 EOF
 )
 
@@ -36,7 +32,9 @@ echo "local:
 };" >> $OUTFILE
 
 exported_unstable_symbols=( $(ctags -o- --kinds-C=p ${misc_included_files[@]} |\
-    grep -v "^!" | awk '{print $1}') )
+    grep -v "^!" | awk '{print $1}' |\
+    grep -v "_dos_sort_doubles_$" |\
+    grep -v "_dos_sort_doubles_indirect_$") )
 
 echo "DIVERGE_UNSTABLE {" >> $OUTFILE
 echo "    global:" >> $OUTFILE

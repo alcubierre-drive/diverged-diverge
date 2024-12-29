@@ -86,15 +86,20 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
     model->internals->patch_pmesh = (complex128_t*)malloc(sizeof(complex128_t)*np);
     complex128_t* pmesh = model->internals->patch_pmesh;
     index_t* patches = model->patching->patches;
-    kpoint_union_t* kun = (kpoint_union_t*) model->internals->kmesh;
+
+    double* dpmesh = (double*)pmesh;
     for (index_t p=0; p<np; ++p)
-        pmesh[p] = kun[patches[p]].k;
+    for (index_t d=0; d<2; ++d)
+        dpmesh[IDX2(p,d,2)] = model->internals->kmesh[IDX2(patches[p],d,3)];
 
     model->internals->patch_kmesh = (complex128_t*)malloc(sizeof(complex128_t)*model->internals->patch_nk);
     complex128_t* pkmesh = model->internals->patch_kmesh;
+
+    double* dpkmesh = (double*)pkmesh;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t k=0; k<model->internals->patch_nk; ++k)
-        pkmesh[k] = kun[k].k;
+    for (index_t d=0; d<2; ++d)
+        dpkmesh[IDX2(k,d,2)] = model->internals->kmesh[IDX2(k,d,3)];
 
     model->internals->patch_k3map = (index_t*)malloc(sizeof(index_t)*POW3(np));
     index_t* k3map = model->internals->patch_k3map;

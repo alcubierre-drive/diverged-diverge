@@ -11,17 +11,6 @@
 // as the number of bands nb.
 
 #ifdef __cplusplus
-#include <vector>
-using std::vector;
-
-/** alias of std::vector<:c:type:`index_t`> */
-typedef vector<index_t> vector_index_t;
-/**
- * uses internal energy array if NULL is provided for E. Works like
- * :c:func:`diverge_patching_find_fs_pts_C` but from C++, i.e., returning an
- * std::vector<:c:type:`index_t`> instead of messing with pointers.
- */
-vector_index_t diverge_patching_find_fs_pts( diverge_model_t* mod, const double* E, index_t nb, index_t np_ibz, index_t np_search );
 extern "C" {
 #endif // __cplusplus
 
@@ -44,6 +33,14 @@ extern "C" {
  */
 void diverge_patching_find_fs_pts_C( diverge_model_t* mod, double* E, index_t nb,
         index_t np_ibz, index_t np_search, index_t** pts, index_t* npts );
+
+/**
+ * uses internal energy array if NULL is provided for E. Works like
+ * :c:func:`diverge_patching_find_fs_pts_C` but from C++, i.e., returning an
+ * std::vector<:c:type:`index_t`> instead of messing with pointers.
+ */
+index_t* diverge_patching_find_fs_pts( diverge_model_t* mod, const double* E, index_t nb,
+        index_t np_ibz, index_t np_search );
 
 /**
  * allocates everything inside the ``mom_patching_t*`` struct given Fermi
