@@ -105,7 +105,6 @@ index_t* diverge_patching_find_fs_pts( diverge_model_t* mod, const double* E, in
     // find IBZ
     index_t nk_ibz; index_t* ibz_to_bz = find_ibz_pts( mod, &nk_ibz );
 
-
     // flattened minimum energies on IBZ
     double* E_ibz = calloc(nk_ibz, sizeof*E_ibz);
     // ibz indices for each energy
@@ -113,7 +112,7 @@ index_t* diverge_patching_find_fs_pts( diverge_model_t* mod, const double* E, in
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t ibz=0; ibz<nk_ibz; ++ibz) {
         E_ibz[ibz] = fabs(E[IDX2(ibz_to_bz[ibz],0,nb)]); // find min in next line
-        for (index_t b=1; b<nb; ++b) E_ibz[ibz] = MIN(E_ibz[ibz], E[IDX2(ibz_to_bz[ibz],b,nb)]);
+        for (index_t b=1; b<nb; ++b) E_ibz[ibz] = MIN(E_ibz[ibz], fabs(E[IDX2(ibz_to_bz[ibz],b,nb)]));
         E_ibz_idx[ibz] = ibz;
     }
 
@@ -565,12 +564,7 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
                             kpt_from_mesh(mod->internals->kmesh,patches[i])), latt, nk_flat );
                 // find
                 index_t candidate = -1;
-                for (index_t p=0; p<np; ++p) {
-                    if (patches[p] == candidate_k && p != i) {
-                        candidate = p;
-                        break;
-                    }
-                }
+                for (index_t p=0; p<np; ++p) if ((patches[p] == candidate_k) && (p != i)) { candidate = p; break; }
                 // and set if found
                 if (candidate != -1) {
                     if (!bitary_get(reached,candidate)) {
@@ -593,12 +587,7 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
                         kpt_from_mesh(mod->internals->kmesh,patches[ibz[i]])), latt, nk_flat );
             // find
             index_t candidate = -1;
-            for (index_t p=0; p<np; ++p) {
-                if (patches[p] == candidate_k && p != i) {
-                    candidate = p;
-                    break;
-                }
-            }
+            for (index_t p=0; p<np; ++p) if ((patches[p] == candidate_k) && (p != i)) { candidate = p; break; }
             if (candidate != -1)
                 VECTOR_PUSH_BACK( bz_which_sym[candidate].v, ss );
         }

@@ -151,18 +151,15 @@ void vhelper_vertex_in_q_channel( const npatch_vertex_t* vert, const npatch_loop
 }
 
 #undef MERGESORT_COMP
-#define MERGESORT_COMP( x, y ) (((x).k - (y).k) < 0 ? -1 : \
-                                ((x).k - (y).k) > 0 ? 1 : 0)
+#define MERGESORT_COMP( x, y ) (x.k < y.k ? -1 : x.k > y.k ? 1 : 0)
 MERGESORT_IMPL( mergesort_qkkp_k, qkkp_t )
 
 #undef MERGESORT_COMP
-#define MERGESORT_COMP( x, y ) (((x).kp - (y).kp) < 0 ? -1 : \
-                                ((x).kp - (y).kp) > 0 ? 1 : 0)
+#define MERGESORT_COMP( x, y ) (x.kp < y.kp ? -1 : x.kp > y.kp ? 1 : 0)
 MERGESORT_IMPL( mergesort_qkkp_kp, qkkp_t )
 
 #undef MERGESORT_COMP
-#define MERGESORT_COMP( x, y ) (((x)-(y)) < 0 ? -1 : \
-                                ((x)-(y)) > 0 ? 1 : 0)
+#define MERGESORT_COMP( x, y ) (x < y ? -1 : x > y ? 1 : 0)
 MERGESORT_IMPL( mergesort_index, index_t )
 
 static inline index_t* vhelper_qkkp_to_ary( const qkkp_t* q, index_t nq ) {
