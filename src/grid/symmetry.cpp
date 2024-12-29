@@ -291,10 +291,9 @@ int rank_from_index( const vector<index_t>& qstarts, const vector<index_t>& qsto
     return -1;
 }
 
-static inline int cmp_symop_target_rank( const void* vA, const void* vB ) {
-    const SymmetryOperation *pA = (const SymmetryOperation*)vA, *pB = (const SymmetryOperation*)vB;
-    return pA->target_rank - pB->target_rank;
-}
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) ( (x).target_rank - (y).target_rank )
+MERGESORT_IMPL( mergesort, SymmetryOperation )
 
 SymmetryCommunicatorFactory::SymmetryCommunicatorFactory( SymmetryTransform* st, dist_info* mpi_info,
         const index_t* k1m2, const index_t* k1p2, index_t qstart, index_t qstop, index_t nk, index_t nb ) {
@@ -344,8 +343,8 @@ SymmetryCommunicatorFactory::SymmetryCommunicatorFactory( SymmetryTransform* st,
             _symops_C[i][l].target_rank = rank_from_index( _qstarts, _qstops, mC[l], _nk, _nb );
         }
         _st->clean_mem(i);
-        mergesort( _symops_P[i], _loop_size, sizeof*_symops_P[i], &cmp_symop_target_rank, diverge_omp_num_threads(), 0 );
-        mergesort( _symops_C[i], _loop_size, sizeof*_symops_C[i], &cmp_symop_target_rank, diverge_omp_num_threads(), 0 );
+        mergesort( _symops_P[i], _loop_size, diverge_omp_num_threads(), 0 );
+        mergesort( _symops_C[i], _loop_size, diverge_omp_num_threads(), 0 );
     }
 }
 

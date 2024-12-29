@@ -115,6 +115,9 @@ void diverge_dos_set_eta_factor( double eta_factor );
 /** set whether GPU is used for DOS calc */
 void diverge_dos_use_gpu( int use_gpu );
 
+void _dos_sort_doubles_( double* start, index_t size );
+void _dos_sort_doubles_indirect_( index_t* start, index_t size, const double* vals );
+
 #ifdef __cplusplus
 }
 #endif

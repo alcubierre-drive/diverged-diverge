@@ -8,8 +8,6 @@
 #include "mergesort.h"
 #include "dos.cu.h"
 
-static inline void dos_sort_doubles( double* start, index_t size );
-static inline void dos_sort_doubles_indirect( index_t* start, index_t size, const double* vals );
 static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double test );
 static inline double cabs2( complex128_t U );
 static inline index_t regularize( index_t idx, index_t sz );
@@ -27,7 +25,7 @@ static inline void ldos_kernel_cpu( const double* E, index_t nE, const complex12
     if (shared_exclusive_enter( E_sorter ) == 1) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t i=0; i<nE; ++i) E_sorter[i] = i;
-        dos_sort_doubles_indirect( E_sorter, nE, E );
+        _dos_sort_doubles_indirect_( E_sorter, nE, E );
     }
     shared_exclusive_wait( E_sorter );
 
@@ -111,7 +109,7 @@ double* diverge_model_dos( const diverge_model_t* m, const double* E, index_t nb
     } else {
         dos_ = rdos_ = calloc(n_omega_, sizeof*dos_);
     }
-    dos_sort_doubles( omega_, n_omega_ );
+    _dos_sort_doubles_( omega_, n_omega_ );
 
     // MPI distribution
     index_t* omega_counts = diverge_mpi_distribute(n_omega_);
@@ -174,7 +172,7 @@ double* diverge_model_ldos( const diverge_model_t* m, const double* E,
     } else {
         ldos_ = rldos_ = calloc(n_omega_*nb, sizeof*ldos_);
     }
-    dos_sort_doubles( omega_, n_omega_ );
+    _dos_sort_doubles_( omega_, n_omega_ );
 
     // MPI distribution
     index_t* omega_counts = diverge_mpi_distribute(n_omega_);
@@ -253,7 +251,7 @@ double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
     double* E_sort = shared_calloc( n_E, sizeof*E_sort );
     if (shared_exclusive_enter(E_sort) == 1) {
         memcpy( E_sort, E, n_E*sizeof*E_sort );
-        dos_sort_doubles( E_sort, n_E );
+        _dos_sort_doubles_( E_sort, n_E );
     }
     shared_exclusive_wait( E_sort );
 
@@ -291,21 +289,22 @@ static inline index_t regularize( index_t idx, index_t sz ) {
     return idx >= sz ? (sz - 1) : (idx <= 0) ? 0 : idx;
 }
 
-static inline int cmp_dbl( const void* vA, const void* vB ) {
-    const double *pA = vA, *pB = vB;
-    if (*pA < *pB) return -1;
-    else if (*pA > *pB) return 1;
-    else return 0;
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) ( ((x)-(y)) < 0 ? -1 : \
+                                 ((x)-(y)) > 0 ? 1 : 0 )
+MERGESORT_IMPL( mergesort, double )
+
+#undef MERGESORT_COMP_R
+#define MERGESORT_COMP_R( x, y, A ) ( \
+        (((const double*)(A))[(x)] - ((const double*)(A))[(y)]) < 0 ? -1 : \
+        (((const double*)(A))[(x)] - ((const double*)(A))[(y)]) > 0 ? 1 : 0 \
+)
+MERGESORT_IMPL_R( mergesort, index_t )
+
+void _dos_sort_doubles_( double* start, index_t size ) {
+    mergesort( start, size, diverge_omp_num_threads(), 0 );
 }
-static inline int cmp_dbl_indirect( const void* vA, const void* vB, void* ctx ) {
-    const index_t *pA = vA, *pB = vB;
-    const double* ary = ctx;
-    return cmp_dbl( &ary[*pA], &ary[*pB] );
-}
-static inline void dos_sort_doubles( double* start, index_t size ) {
-    mergesort( start, size, sizeof*start, &cmp_dbl, diverge_omp_num_threads(), 0 );
-}
-static inline void dos_sort_doubles_indirect( index_t* start, index_t size, const double* vals ) {
-    mergesort_r( start, size, sizeof*start, &cmp_dbl_indirect, (void*)vals, diverge_omp_num_threads(), 0 );
+void _dos_sort_doubles_indirect_( index_t* start, index_t size, const double* vals ) {
+    mergesort_r( start, size, (void*)vals, diverge_omp_num_threads(), 0 );
 }
 

@@ -93,25 +93,22 @@ int rank_of_index( index_t index, const dist_info* dist ) {
     return -1;
 }
 
-static inline int cmp_trafo_index_remote_index( const void* vA, const void* vB ) {
-    const trafo_index *pA = (const trafo_index*)vA, *pB = (const trafo_index*)vB;
-    if (pA->remote_index < pB->remote_index)
-        return -1;
-    else if (pA->remote_index > pB->remote_index)
-        return 1;
-    else
-        return 0;
-}
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) ( \
+    ((x).remote_index - (y).remote_index) < 0 ? -1 : \
+    ((x).remote_index - (y).remote_index) > 0 ? 1 : 0 \
+)
+MERGESORT_IMPL( mergesort_remote, trafo_index )
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) ( (x).remote_rank - (y).remote_rank )
+MERGESORT_IMPL( mergesort_rank, trafo_index )
+
 void sort_trafo_index_remote( trafo_index* start, index_t size ) {
-    mergesort( start, size, sizeof*start, &cmp_trafo_index_remote_index, diverge_omp_num_threads(), 0 );
+    mergesort_remote( start, size, diverge_omp_num_threads(), 0 );
 }
 
-static inline int cmp_trafo_index_remote_rank( const void* vA, const void* vB ) {
-    const trafo_index *pA = (const trafo_index*)vA, *pB = (const trafo_index*)vB;
-    return pA->remote_rank - pB->remote_rank;
-}
 void sort_trafo_index_rank( trafo_index* start, index_t size ) {
-    mergesort( start, size, sizeof*start, &cmp_trafo_index_remote_rank, diverge_omp_num_threads(), 0 );
+    mergesort_rank( start, size, diverge_omp_num_threads(), 0 );
 }
 
 }

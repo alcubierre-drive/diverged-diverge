@@ -46,8 +46,7 @@ static inline void qkkp_init( qkkp_t *q, index_t p1, index_t p2, index_t p3,
 }
 
 typedef struct { complex128_t first; qkkp_t second; } v_element_t;
-static inline int cmp_v_element_second( const void* vA, const void* vB ) {
-    const v_element_t *pA = (const v_element_t*)vA, *pB = (const v_element_t*)vB;
+static inline int cmp_v_element_second( const v_element_t* pA, const v_element_t* pB ) {
     if (pA->second.q < pB->second.q)        return -1;
     else if (pA->second.q > pB->second.q)   return 1;
     else {
@@ -60,6 +59,10 @@ static inline int cmp_v_element_second( const void* vA, const void* vB ) {
         }
     }
 }
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) cmp_v_element_second( &(x), &(y) )
+MERGESORT_IMPL( mergesort_velem, v_element_t )
+
 static void vhelper_vertex_sort_in_q( complex128_t* vertex, qkkp_t* vindex, index_t np,
         index_t nb, index_t** pqcounts, index_t* pnq ) {
 
@@ -72,7 +75,7 @@ static void vhelper_vertex_sort_in_q( complex128_t* vertex, qkkp_t* vindex, inde
     for (index_t p3=0; p3<np3; ++p3) for (index_t o4=0; o4<no4; ++o4)
         vsort[p3*no4+o4] = (v_element_t){ vertex[p3*no4+o4], vindex[p3] };
 
-    mergesort( vsort, size, sizeof*vsort, &cmp_v_element_second, diverge_omp_num_threads(), 0 );
+    mergesort_velem( vsort, size, diverge_omp_num_threads(), 0 );
 
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t p3=0; p3<np3; ++p3) {
@@ -147,6 +150,20 @@ void vhelper_vertex_in_q_channel( const npatch_vertex_t* vert, const npatch_loop
     vhelper_vertex_sort_in_q( vertex, vindex, np, nb, pqcounts, pnq );
 }
 
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) (((x).k - (y).k) < 0 ? -1 : \
+                                ((x).k - (y).k) > 0 ? 1 : 0)
+MERGESORT_IMPL( mergesort_qkkp_k, qkkp_t )
+
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) (((x).kp - (y).kp) < 0 ? -1 : \
+                                ((x).kp - (y).kp) > 0 ? 1 : 0)
+MERGESORT_IMPL( mergesort_qkkp_kp, qkkp_t )
+
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) (((x)-(y)) < 0 ? -1 : \
+                                ((x)-(y)) > 0 ? 1 : 0)
+MERGESORT_IMPL( mergesort_index, index_t )
 
 static inline index_t* vhelper_qkkp_to_ary( const qkkp_t* q, index_t nq ) {
     index_t* r = (index_t*)malloc(sizeof(index_t)*nq*3);
@@ -168,13 +185,6 @@ static inline index_t unique_k( qkkp_t* arr, index_t size ) {
     return j+1;
 }
 
-static inline int cmp_qkkp_k( const void* vA, const void* vB ) {
-    const qkkp_t *pA = vA, *pB = vB;
-    if (pA->k < pB->k)      return -1;
-    else if (pA->k > pB->k) return 1;
-    else return 0;
-}
-
 static inline index_t unique_kp( qkkp_t* arr, index_t size ) {
     if (size == 0) return 0;
     index_t j = 0;
@@ -184,13 +194,6 @@ static inline index_t unique_kp( qkkp_t* arr, index_t size ) {
     return j+1;
 }
 
-static inline int cmp_qkkp_kp( const void* vA, const void* vB ) {
-    const qkkp_t *pA = vA, *pB = vB;
-    if (pA->kp < pB->kp)        return -1;
-    else if (pA->kp > pB->kp)   return 1;
-    else                        return 0;
-}
-
 static inline index_t unique( index_t* arr, index_t size ) {
     if (size == 0) return 0;
     index_t j = 0;
@@ -198,13 +201,6 @@ static inline index_t unique( index_t* arr, index_t size ) {
         if (arr[i] != arr[j])
             arr[++j] = arr[i];
     return j+1;
-}
-
-static inline int cmp_index( const void* vA, const void* vB ) {
-    const index_t *pA = vA, *pB = vB;
-    if (*pA < *pB)      return -1;
-    else if (*pA > *pB) return 1;
-    else                return 0;
 }
 
 static inline index_t find_bin_irreg( const index_t* vals, index_t n_vals, index_t test ) {
@@ -236,19 +232,19 @@ npatch_qvert_mat_t* vhelper_q_vertex_matrix_from_vertex( const complex128_t* q_v
 
         qkkp_t* qvi = calloc(q_counts[q], sizeof*qvi);
         memcpy( qvi, q_vindex + q_displs[q], sizeof(qkkp_t)*q_counts[q] );
-        mergesort( qvi, q_counts[q], sizeof*qvi, cmp_qkkp_k, diverge_omp_num_threads(), 0 );
+        mergesort_qkkp_k( qvi, q_counts[q], diverge_omp_num_threads(), 0 );
         index_t qc = unique_k( qvi, q_counts[q] );
         for (index_t i=0; i<qc; ++i)
             VECTOR_PUSH_BACK( k_kp_vector, qvi[i].k );
 
         memcpy( qvi, q_vindex + q_displs[q], sizeof(qkkp_t)*q_counts[q] );
-        mergesort( qvi, q_counts[q], sizeof*qvi, cmp_qkkp_kp, diverge_omp_num_threads(), 0 );
+        mergesort_qkkp_kp( qvi, q_counts[q], diverge_omp_num_threads(), 0 );
         qc = unique_kp( qvi, q_counts[q] );
         for (index_t i=0; i<qc; ++i)
             VECTOR_PUSH_BACK( k_kp_vector, qvi[i].kp );
         free( qvi );
 
-        mergesort( k_kp_vector, k_kp_vector_sz, sizeof*k_kp_vector, &cmp_index, diverge_omp_num_threads(), 0 );
+        mergesort_index( k_kp_vector, k_kp_vector_sz, diverge_omp_num_threads(), 0 );
         k_kp_vector_sz = unique( k_kp_vector, k_kp_vector_sz );
         VECTOR_SHRINK_TO_FIT( k_kp_vector );
 
@@ -310,12 +306,10 @@ typedef struct {
     index_t idx;
 } norm_t;
 
-static inline int cmp_norm( const void* vA, const void* vB ) {
-    const norm_t *pA = vA, *pB = vB;
-    if (pA->norm < pB->norm)        return 1;
-    else if (pA->norm > pB->norm)   return -1;
-    else                            return 0;
-}
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) ( (x.norm < y.norm) ? -1 : \
+                                 (x.norm > y.norm) ? 1 : 0 )
+MERGESORT_IMPL( mergesort_norm, norm_t )
 
 void vhelper_q_vertex_sort_max( npatch_qvert_mat_t* qvm, index_t* pnq, double max_rel ) {
     norm_t* norms = calloc(*pnq, sizeof*norms);
@@ -323,7 +317,7 @@ void vhelper_q_vertex_sort_max( npatch_qvert_mat_t* qvm, index_t* pnq, double ma
     for (index_t q=0; q<*pnq; ++q)
         norms[q] = (norm_t){ q_vertex_norm( qvm[q].data, qvm[q].n_k_kp*qvm[q].nb*qvm[q].nb ), q };
 
-    mergesort( norms, *pnq, sizeof*norms, &cmp_norm, diverge_omp_num_threads(), 0 );
+    mergesort_norm( norms, *pnq, diverge_omp_num_threads(), 0 );
 
     index_t qmax = 0;
     for (index_t q=0; q<*pnq; ++q) if (norms[q].norm >= norms[0].norm*max_rel) qmax++;

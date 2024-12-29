@@ -153,24 +153,22 @@ greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* mode
     return greensfunc_op_cpu;
 }
 
-static inline int rs_vertex_compar_R( const void* v1_, const void* v2_, void* data_ ) {
-    const index_t* nk = data_;
-    const rs_vertex_t *v1 = v1_, *v2 = v2_;
-    return IDX3( v1->R[0], v1->R[1], v1->R[2], nk[1], nk[2] ) -
-           IDX3( v2->R[0], v2->R[1], v2->R[2], nk[1], nk[2] );
-}
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) ( (x).chan - (y).chan )
+MERGESORT_IMPL( mergesort, rs_vertex_t )
 
-static inline int rs_vertex_compar_chan( const void* v1_, const void* v2_ ) {
-    const rs_vertex_t *v1 = v1_, *v2 = v2_;
-    return v1->chan - v2->chan;
-}
+#undef MERGESORT_COMP_R
+#define MERGESORT_COMP_R( x, y, ctx ) ( \
+    IDX3((x).R[0],(x).R[1],(x).R[2],((index_t*)(ctx))[1], ((index_t*)(ctx))[2]) - \
+    IDX3((y).R[0],(y).R[1],(y).R[2],((index_t*)(ctx))[1], ((index_t*)(ctx))[2]) \
+)
+MERGESORT_IMPL_R( mergesort, rs_vertex_t )
+
 
 static inline void sort_rs_vertex_elements(diverge_model_t* model) {
     if (model->n_vert_chan[0] != -1) return;
-    mergesort_r( model->vert, model->n_vert, sizeof(rs_vertex_t), &rs_vertex_compar_R, model->nk,
-            diverge_omp_num_threads(), 0 );
-    mergesort( model->vert, model->n_vert, sizeof(rs_vertex_t), &rs_vertex_compar_chan,
-            diverge_omp_num_threads(), 0 );
+    mergesort_r( model->vert, model->n_vert, model->nk, diverge_omp_num_threads(), 0 );
+    mergesort( model->vert, model->n_vert, diverge_omp_num_threads(), 0 );
     char chans[] = "CDP";
     rs_vertex_t* vptr = model->vert;
     const rs_vertex_t* vptr_end = model->vert + model->n_vert;
