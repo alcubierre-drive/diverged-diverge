@@ -15,11 +15,12 @@ extern "C" {
 #endif // __cplusplus
 
 /**
- * C interface to the function :cpp:func:`diverge_patching_find_fs_pts`. must
- * free the pts memory with ``free(*pts)``.
+ * old C interface to the patching find function
+ * :c:func:`diverge_patching_find_fs_pts`. must free the pts memory with
+ * ``free(*pts)``.
  *
  * :param diverge_model_t mod: model to operate on
- * :param double E: energy array. May be NULL for operation on model internals
+ * :param const double* E: energy array. May be NULL for operation on model internals
  * :param index_t nb: number of bands. May be -1 for operation on model
  *                    internals
  * :param index_t np_ibz: number of patches to generate in the irreducible BZ
@@ -31,13 +32,20 @@ extern "C" {
  * :param index_t* npts: output pointer for the length of the fermi surface
  *                       array.
  */
-void diverge_patching_find_fs_pts_C( diverge_model_t* mod, double* E, index_t nb,
+void diverge_patching_find_fs_pts_C( diverge_model_t* mod, const double* E, index_t nb,
         index_t np_ibz, index_t np_search, index_t** pts, index_t* npts );
 
 /**
  * uses internal energy array if NULL is provided for E. Works like
- * :c:func:`diverge_patching_find_fs_pts_C` but from C++, i.e., returning an
- * std::vector<:c:type:`index_t`> instead of messing with pointers.
+ * :c:func:`diverge_patching_find_fs_pts_C`, but with the number of patches
+ * encoded in the array itself: The (zero-based) index of the first element of
+ * the returned array that equals ``-1`` yields the number of elements.
+ *
+ * .. note::
+ *      In previous versions of divERGe, we exposed a C++ interface in this
+ *      function (:c:func:`diverge_patching_find_fs_pts`). This behavior has
+ *      changed, it is now a C function and the interface is adapted
+ *      accordingly.
  */
 index_t* diverge_patching_find_fs_pts( diverge_model_t* mod, const double* E, index_t nb,
         index_t np_ibz, index_t np_search );

@@ -172,7 +172,7 @@ index_t* diverge_patching_find_fs_pts( diverge_model_t* mod, const double* E, in
 }
 
 // C interface of previous versions
-void diverge_patching_find_fs_pts_C( diverge_model_t* mod, double* E, index_t nb,
+void diverge_patching_find_fs_pts_C( diverge_model_t* mod, const double* E, index_t nb,
         index_t np_ibz, index_t np_search, index_t** pts, index_t* npts ) {
     *pts = diverge_patching_find_fs_pts( mod, E, nb, np_ibz, np_search );
     *npts = 0;
