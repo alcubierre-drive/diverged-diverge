@@ -27,7 +27,7 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
     info->nkf = model->nkf[0] * model->nkf[1] * model->nkf[2];
     info->nktot = model->nk[0] * model->nk[1] * model->nk[2]*
                  model->nkf[0] * model->nkf[1] * model->nkf[2];
-    info->symm = new symmstruct_t;
+    info->symm = (symmstruct_t*)calloc(1, sizeof*info->symm);
     info->use_reduced_loop = true;
     info->use_cuda_mpi_loop = false;
     info->tu_selfenergy_flow = false;
@@ -51,7 +51,7 @@ void diverge_model_internals_tu(diverge_model_t* model, double max_dist) {
 
 void tu_data_destructor(void* tu_da) {
     tu_data_t* tu_data = (tu_data_t*) tu_da;
-    delete tu_data->symm;
+    symmstruct_delete( tu_data->symm );
     free(tu_data->bond_sizes);
     free(tu_data->bond_offsets);
     free(tu_data->ff_idx_to_unique_ff_elem);

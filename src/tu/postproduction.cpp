@@ -461,16 +461,16 @@ void tu_postproduction::construct_multiindex_maps(const diverge_model_t* model) 
     index_t nkibz = tu_data->nkibz;
     index_t n_orbff = tu_data->n_orbff;
 
-    mi_map_pref_in_in.resize(nkibz*symm->mi_maps_to.size());
-    mi_map_pref_in_out.resize(nkibz*symm->mi_maps_to.size());
-    mi_map_idx.resize(nkibz*symm->mi_maps_to.size());
+    mi_map_pref_in_in.resize(nkibz*symm->mi_maps_to_sz);
+    mi_map_pref_in_out.resize(nkibz*symm->mi_maps_to_sz);
+    mi_map_idx.resize(nkibz*symm->mi_maps_to_sz);
 
     #pragma omp parallel for schedule(dynamic) collapse(2)
     for(index_t idx = 0; idx<n_orbff*POW2(n_spin)*model->n_sym;++idx)
     for(index_t q = 0; q < nkibz; ++q) {
         Map<Vec3d> kp(model->internals->kmesh+3*symm->idx_ibz_in_fullmesh[q]);
         const complex128_t pref_sym =
-                exp(-I128*kp.dot(symm->beyond_UC[idx]));
+                exp(-I128*kp.dot(Map<const Vec3d>(symm->beyond_UC + 3*idx)));
 
         for(index_t to = 0; to < symm->mi_map_len[idx]; ++to) {
             mi_map_idx[q+nkibz*(to+symm->mi_map_off[idx])] = symm->mi_maps_to[to + symm->mi_map_off[idx]]+n_orbff*POW2(n_spin)*q;
@@ -660,9 +660,9 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
 
     if (save_symmetries && symm->use_symmetries) {
         construct_multiindex_maps(model);
-        header[i] = symm->mi_map_len.size();++i;
+        header[i] = symm->mi_cnt;++i;
         header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
-        header[i] = symm->mi_map_off.size();++i;
+        header[i] = symm->mi_cnt;++i;
         header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
         header[i] = mi_map_idx.size();++i;
         header[i] = header[i-2] + header[i-1]*sizeof(index_t), ++i;
@@ -688,7 +688,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
 
     header[i] = header[i-2] + header[i-1]*sizeof(char); ++i;
     if (save_symmetries && symm->use_symmetries)
-        header[i] = symm->kmaps_to.size();
+        header[i] = symm->nk;
     i++;
 
     header[i] = header[i-2] + header[i-1]*sizeof(index_t); ++i;
@@ -723,7 +723,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->bond_sizes, new_off, vertex->n_orb*sindex);
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->bond_offsets, new_off, vertex->n_orb*sindex);
 
-    new_off = diverge_mpi_write_byte_to_file_master(file, symm->idx_ibz_in_fullmesh.data(), new_off, tu_data->nkibz*sindex);
+    new_off = diverge_mpi_write_byte_to_file_master(file, symm->idx_ibz_in_fullmesh, new_off, tu_data->nkibz*sindex);
     // P vertex write
     if(!skip_channel_calc) {
         new_off = diverge_mpi_write_byte_to_file(file, lenP, new_off + my_nk_off*sindex, my_nk*sindex);
@@ -810,8 +810,8 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     }
     if(save_symmetries && symm->use_symmetries) {
         mpi_log_printf("saving symm!\n");
-        new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_len.data(), new_off,sindex*symm->mi_map_len.size());
-        new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_off.data(), new_off,sindex*symm->mi_map_off.size());
+        new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_len, new_off,sindex*symm->mi_cnt);
+        new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_off, new_off,sindex*symm->mi_cnt);
         new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_idx.data(), new_off,sindex*mi_map_idx.size());
         new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_pref_in_in.data(), new_off,scdou*mi_map_pref_in_in.size());
         new_off = diverge_mpi_write_byte_to_file_master(file, mi_map_pref_in_out.data(), new_off,scdou*mi_map_pref_in_out.size());
@@ -820,8 +820,7 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     new_off = diverge_mpi_write_byte_to_file_master(file, version, new_off, strlen(version));
 
     if (save_symmetries && symm->use_symmetries) {
-        new_off = diverge_mpi_write_byte_to_file_master(file, symm->kmaps_to.data(), new_off,
-                symm->kmaps_to.size() * sindex);
+        new_off = diverge_mpi_write_byte_to_file_master(file, symm->kmaps_to, new_off, symm->nk * sindex);
     }
 
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_tuffidx, new_off, sindex*vertex->n_orbff);
