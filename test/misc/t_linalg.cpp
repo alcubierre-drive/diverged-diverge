@@ -1,4 +1,5 @@
 #ifndef DIVERGE_SKIP_TESTS
+#ifndef DIVERGE_SKIP_TESTS_LINALG
 
 #include "../catch.hpp"
 #include "../../src/diverge_common.h"
@@ -170,4 +171,5 @@ TEST_CASE("batched svd", "[batched][svd]") {
     free(S);
 }
 
+#endif // DIVERGE_SKIP_TESTS_LINALG
 #endif // DIVERGE_SKIP_TESTS

@@ -5,13 +5,16 @@
 #include "../diverge_common.h"
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
-#include "../diverge_Eigen3.hpp"
 #include "../misc/mpi_functions.h"
 #include "diverge_interface_symmstruct.h"
-#include <cassert>
-#include <vector>
 
-using std::vector;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef SKIP_CLAV3I_T
+typedef struct claV3i_t { int v[3]; } claV3i_t;
+#endif
 
 typedef enum {
     tu_fft_algorithm_greedy,
@@ -19,6 +22,8 @@ typedef enum {
     tu_fft_algorithm_mpi,
     tu_fft_algorithm_mpi_new,
 } tu_fft_algorithm_t;
+
+typedef struct tu_data_t tu_data_t;
 
 struct tu_data_t {
     symmstruct_t* symm;
@@ -55,31 +60,30 @@ struct tu_data_t {
     bool propagator_extra_cpu_timings;
 
     // reduction of computational cost of the loop
-    vector<Vec3i> existing_ff;
-    vector<Vec3i> existing_ff_fine;
+    VECTOR_DECL( claV3i_t, existing_ff )
+    VECTOR_DECL( claV3i_t, existing_ff_fine )
 
-    vector<Vec3i> unique_ff_combi;
+    VECTOR_DECL( claV3i_t, unique_ff_combi )
     index_t* ff_idx_to_unique_ff_elem;
 
-    vector<index_t> unique_mi_l;
-    vector<index_t> unique_mi_r;
-    vector<index_t> lmap_l;
-    vector<index_t> lmap_r;
-    vector<index_t> lmap_off;
-    vector<index_t> lmap_len;
-
-    vector<double> bosonic_freq;
-    double doping_per_UC = 0.0;
+    VECTOR_DECL( index_t, unique_mi_l )
+    VECTOR_DECL( index_t, unique_mi_r )
+    VECTOR_DECL( index_t, lmap_l )
+    VECTOR_DECL( index_t, lmap_r )
+    VECTOR_DECL( index_t, lmap_off )
+    VECTOR_DECL( index_t, lmap_len )
 };
 
 // tu info struct contains all relevant informations for the TU code
 // which do not strictly belong to the model
-extern "C" void init_MPI_dist(diverge_model_t* model);
-void init_ff_struct(const double max_dist, diverge_model_t* model);
-void generate_reduced_loop_maps(diverge_model_t* model);
-// helper function for fixed particle number flows
-void init_doping_per_UC(diverge_model_t* model);
+void init_MPI_dist( diverge_model_t* model );
+void init_ff_struct( const double max_dist, diverge_model_t* model );
+void generate_reduced_loop_maps( diverge_model_t* model );
 
+// below functions act as constructor/destructor for tu_data_t
+// void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
+void tu_data_destructor( void* model );
 
-
-void tu_data_destructor(void* model);
+#ifdef __cplusplus
+}
+#endif

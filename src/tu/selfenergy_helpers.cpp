@@ -18,14 +18,14 @@ selfEnergy::selfEnergy(Vertex* vertex)
     nktot{nk*nkf},
     my_nk{vertex->my_nk},
     my_nk_off{vertex->my_nk_off},
-    nff{(index_t)tu_data->existing_ff.size()},
+    nff{(index_t)tu_data->existing_ff_sz},
     SU2{model->SU2 > 0},
     ob_to_orbff{tu_data->ob_to_orbff},
     existing_ff{tu_data->existing_ff},
+    existing_ff_sz{tu_data->existing_ff_sz},
     tu_ff{model->tu_ff},
     bond_sizes{tu_data->bond_sizes},
     bond_offsets{tu_data->bond_offsets},
-    bos_freq{tu_data->bosonic_freq.data()},
     symm{vertex->symm},
     P_flow{vertex->P_flow},
     C_flow{vertex->C_flow},
@@ -38,18 +38,17 @@ selfEnergy::selfEnergy(Vertex* vertex)
         greensfkt_helper = (complex128_t*)calloc(POW2(n_spin*n_orb)*nktot,sizeof(complex128_t));
         generate_fftw_plans();
         ffkmesh = (complex128_t*) calloc(nk*nff, sizeof(complex128_t));
-        const vector<Vec3i>& existing_ff = tu_data->existing_ff;
 
         #pragma omp parallel for collapse(2) schedule(dynamic) num_threads(diverge_omp_num_threads())
-        for(index_t rv = 0; rv < nff; ++rv)
-        for(index_t kx = 0; kx < model->nk[0]; ++kx)
-        for(index_t ky = 0; ky < model->nk[1]; ++ky)
-        for(index_t kz = 0; kz < model->nk[2]; ++kz) {
+        for (index_t rv=0; rv<nff; ++rv)
+        for (index_t kx=0; kx<model->nk[0]; ++kx)
+        for (index_t ky=0; ky<model->nk[1]; ++ky)
+        for (index_t kz=0; kz<model->nk[2]; ++kz) {
             index_t k = IDX3(kx, ky, kz, model->nk[1], model->nk[2]);
             ffkmesh[k+nk*rv] = exp(2.*M_PI*I128
-                                *(existing_ff[rv](0)*kx/(double)model->nk[0]
-                                    +existing_ff[rv](1)*ky/(double)model->nk[1]
-                                    +existing_ff[rv](2)*kz/(double)model->nk[2]));
+                                *(existing_ff[rv].v[0]*kx/(double)model->nk[0]
+                                 +existing_ff[rv].v[1]*ky/(double)model->nk[1]
+                                 +existing_ff[rv].v[2]*kz/(double)model->nk[2]));
         }
     }
 }

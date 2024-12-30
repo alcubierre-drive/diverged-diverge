@@ -2,16 +2,6 @@
 #include "read_fplo.h"
 #include "../diverge_common.h"
 
-#ifndef USE_FPLO_READER
-
-diverge_model_t* diverge_read_fplo( const char* fname ) {
-    (void)fname;
-    mpi_err_printf( "FPLO reader not compiled in, compile with USE_FPLO_READER\n" );
-    return NULL;
-}
-
-#else // USE_FPLO_READER
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +12,7 @@ diverge_model_t* diverge_read_fplo( const char* fname ) {
 LINALG_IMPLEMENT
 
 #include <regex.h>
-#include <utlist.h>
+#include "utlist.h"
 
 typedef struct {
     rs_hopping_t* hop;
@@ -369,4 +359,3 @@ static void fplo_hamiltonian_free( fplo_hamiltonian_t* h ) {
     }
 }
 
-#endif // USE_FPLO_READER

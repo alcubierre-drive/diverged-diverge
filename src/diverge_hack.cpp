@@ -4,7 +4,7 @@
 #include "diverge_model.h"
 #include "diverge_internals_struct.h"
 
-#include "tu/diverge_interface.hpp"
+#include "tu/diverge_interface.h"
 #include "npatch/vertex.h"
 #include "npatch/flow_step.h"
 #include "grid/vertex_memory.hpp"

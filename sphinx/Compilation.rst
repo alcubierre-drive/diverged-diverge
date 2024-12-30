@@ -367,9 +367,6 @@ written (i.e., the variable can be either *defined* or *not*), or
         versions (up to dimension ``VAL`` up to ``VAL = 16`` for the CPU
         eigensolver built with Eigen3. May be faster for small-size matrices,
         but compilation times are terrible.
-    :``USE_FPLO_READER``: include the (still experimental) :c:func:`FPLO reader
-        <diverge_read_fplo>`. requires `utlist.h
-        <https://troydhanson.github.io/uthash/>`_ and POSIX regex.h.
     :``USE_GF_FLOATS``: save Green's function in single point precision. should
         work for the npatch backend.
     :``USE_MKL``: use ``#include <mkl.h>`` instead of ``#include <lapacke.h>``

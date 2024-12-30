@@ -9,8 +9,7 @@ extern "C" {
 /**
  * Memory that is shared among all ranks on a single node. Must be enabled with
  * the compilation flags -DUSE_MPI and -DUSE_SHARED_MEM (see :ref:`Compilation`).
- * reasonably recent linux kernel + headers required (memfd); as well as the
- * uthash.h library somewhere in your CPATH.
+ * reasonably recent linux kernel + headers required (memfd).
  *
  * There are three backends for shared memory (swapped through :ref:`Compilation
  * DEFINES`):

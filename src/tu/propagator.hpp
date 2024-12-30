@@ -8,7 +8,7 @@
 #include "../diverge_Eigen3.hpp"
 #include "../misc/bitary.h"
 
-#include "diverge_interface.hpp"
+#include "diverge_interface.h"
 #include "cuda_init.hpp"
 
 #include "propagator_cpu_mpi.h"

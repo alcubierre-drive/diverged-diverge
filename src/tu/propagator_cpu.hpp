@@ -238,7 +238,7 @@ void tu_loop_t::S_loop_static_red(complex128_t* loop, index_t ntasks, index_t ta
         return;
     }
 
-    if(ntasks == -1) ntasks = (index_t)tu_data->unique_mi_l.size(), taskoff = 0;
+    if(ntasks == -1) ntasks = (index_t)tu_data->unique_mi_l_sz, taskoff = 0;
     const double prefac = -1.0/(2.0*M_PI);
     const index_t* vnk = model->nk;
     const index_t* vnkf = model->nkf;

@@ -7,7 +7,7 @@
 #include "../diverge_Eigen3.hpp"
 #include "../diverge_common.h"
 #include "../misc/mpi_functions.h"
-#include "diverge_interface.hpp"
+#include "diverge_interface.h"
 #include "projection_wrapper.hpp"
 #include "propagator.hpp"
 

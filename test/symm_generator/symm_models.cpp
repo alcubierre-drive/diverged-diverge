@@ -10,7 +10,7 @@
 
 #include "../../src/grid/vertex_memory.hpp"
 
-#include "../../src/tu/diverge_interface.hpp"
+#include "../../src/tu/diverge_interface.h"
 #include "../../src/tu/diverge_interface_symmstruct.h"
 #include "../../src/tu/vertex.hpp"
 #include "../../src/tu/projection_wrapper.hpp"

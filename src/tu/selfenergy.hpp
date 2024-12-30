@@ -7,7 +7,7 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
 #include "../diverge_symmetrize.h"
-#include "diverge_interface.hpp"
+#include "diverge_interface.h"
 #include "vertex.hpp"
 #include "projection_wrapper.hpp"
 
@@ -102,12 +102,12 @@ private:
     complex128_t* ffkmesh;
 
     const index_t* ob_to_orbff;
-    const vector<Vec3i>& existing_ff;
+    const claV3i_t* existing_ff;
+    const index_t existing_ff_sz;
 
     const tu_formfactor_t* tu_ff;
     const index_t* bond_sizes;
     const index_t* bond_offsets;
-    const double* bos_freq;
     const symmstruct_t* symm;
     const bool P_flow;
     const bool C_flow;

@@ -13,7 +13,7 @@
 #include "../../src/diverge_internals_struct.h" // kdimtot
 #include "../model_examples/model_constructor.hpp"
 
-#include "../../src/tu/diverge_interface.hpp"
+#include "../../src/tu/diverge_interface.h"
 #include "../../src/tu/propagator.hpp"
 
 TEST_CASE("MPI shared memory exclusive", "[shared_mem][exclusive]") {

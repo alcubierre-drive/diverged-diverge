@@ -305,11 +305,11 @@ void tu_postproduction::lingap_ff(bool atscale) {
     free(_val);
 }
 
-static inline void fill_Rvec_from_vec(const diverge_model_t* model, const Vec3i* Rptr, double* Rvec) {
+static inline void fill_Rvec_from_vec(const diverge_model_t* model, const claV3i_t* Rptr, double* Rvec) {
     Map<const Mat3d> L(model->lattice[0]);
-    index_t nff = ((tu_data_t*)model->internals->tu_data)->existing_ff.size();
+    index_t nff = ((tu_data_t*)model->internals->tu_data)->existing_ff_sz;
     for (index_t i=0; i<nff; ++i)
-        Map<Vec3d>(Rvec+3*i) = L * Rptr[i].cast<double>();
+        Map<Vec3d>(Rvec+3*i) = L * Map<const Vec3i>(Rptr[i].v).cast<double>();
 }
 
 static void _susc_o14k(const diverge_model_t* const model,
@@ -327,10 +327,10 @@ static void _susc_o14k(const diverge_model_t* const model,
     const index_t* bond_sizes = tu_data->bond_sizes;
     const index_t* bond_offsets = tu_data->bond_offsets;
     const index_t* ob_to_orbff = tu_data->ob_to_orbff;
-    const index_t nff = tu_data->existing_ff.size();
+    const index_t nff = tu_data->existing_ff_sz;
 
     double* R = (double*)malloc(3*nff*sizeof(double));
-    fill_Rvec_from_vec(model, tu_data->existing_ff.data(), R);
+    fill_Rvec_from_vec(model, tu_data->existing_ff, R);
 
     complex128_t* FS_ff = (complex128_t*)calloc(nff,sizeof(complex128_t));
     #pragma omp parallel for num_threads(diverge_omp_num_threads())

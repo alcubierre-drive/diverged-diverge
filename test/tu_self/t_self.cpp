@@ -3,7 +3,7 @@
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
-#include "../../src/tu/diverge_interface.hpp"
+#include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/propagator.hpp"
 #include "../../src/diverge_flow_step.h"

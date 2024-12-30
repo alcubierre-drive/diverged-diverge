@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <uthash.h>
 
+#include "uthash.h"
 #include "mpi_functions.h"
 
 static int status = 0;
@@ -255,8 +255,8 @@ void shared_malloc_barrier( void ) {
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <uthash.h>
 
+#include "uthash.h"
 #include "mpi_functions.h"
 #include "md5.h"
 

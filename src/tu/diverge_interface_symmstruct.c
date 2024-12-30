@@ -13,6 +13,9 @@
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
 
+#define SKIP_CLAV3I_T
+#include "diverge_interface.h"
+
 static void symmstruct_serialize( const symmstruct_t* symm, char** ptr, uindex_t* nbytes );
 static symmstruct_t* symmstruct_deserialize( const char* ptr );
 static int symmstruct_equal( const symmstruct_t* A, const symmstruct_t* B );
@@ -48,32 +51,6 @@ void symmstruct_delete( symmstruct_t* symm ) {
 
 static inline int approx_id( const double* A, index_t sz );
 static inline int capprox_id( const complex128_t* A, index_t sz );
-
-struct tu_data_t {
-    symmstruct_t* symm;
-    bool use_reduced_loop;
-    bool use_cuda_mpi_loop;
-    index_t nk;
-    index_t nkf;
-    index_t nktot;
-    index_t nkibz;
-
-    index_t my_nk;
-    index_t my_nk_off;
-
-    index_t n_orbff;
-    index_t n_bonds;
-    index_t* bond_sizes;
-    index_t* bond_offsets;
-    index_t* ob_to_orbff;
-
-    index_t* mi_to_ofrom;
-    index_t* mi_to_oto;
-    index_t* mi_to_ffidx;
-    index_t* mi_to_R;
-    index_t* mi_to_tuffidx;
-};
-typedef struct tu_data_t tu_data_t;
 
 static bool init_inv_symmerty_map( diverge_model_t* model ) {
     tu_data_t* tu_data = model->internals->tu_data;

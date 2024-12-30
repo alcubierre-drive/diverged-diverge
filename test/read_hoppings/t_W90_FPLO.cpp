@@ -17,8 +17,6 @@
 
 using std::vector;
 
-#ifdef USE_FPLO_READER
-
 TEST_CASE("FPLO read in","[FPLOreader]") {
     std::string fname_W90 = gen_graphene_hr_dat(0);
     std::string fname_FPLO = gen_graphene_hr_dat(1);
@@ -59,8 +57,6 @@ TEST_CASE("FPLO read in","[FPLOreader]") {
     diverge_model_free( fplo_model );
     free( w90_hop );
 }
-
-#endif
 
 TEST_CASE("W90 read in","[W90reader]") {
     diverge_model_t* model = gen_honeycomb_lat_hub(2,2,1,1,1,0,0,0);

@@ -7,7 +7,7 @@
 #include "../diverge_common.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
-#include "diverge_interface.hpp"
+#include "diverge_interface.h"
 #include "cuda_init.hpp"
 
 #include <vector>

@@ -1,4 +1,5 @@
 #ifndef DIVERGE_SKIP_TESTS
+#ifndef DIVERGE_SKIP_TESTS_LINALG
 
 #include "../catch.hpp"
 #include "../../src/diverge_common.h"
@@ -390,4 +391,5 @@ MATRIX_DECOMPOSITION_TEST_CASE( 2, complex128_t, cd )
 MATRIX_DECOMPOSITION_TEST_CASE( 3, complex128_t, cd )
 MATRIX_DECOMPOSITION_TEST_CASE( 4, complex128_t, cd )
 
+#endif // DIVERGE_SKIP_TESTS_LINALG
 #endif // DIVERGE_SKIP_TESTS

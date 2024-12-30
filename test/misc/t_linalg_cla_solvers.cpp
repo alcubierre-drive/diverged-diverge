@@ -1,4 +1,5 @@
 #ifndef DIVERGE_SKIP_TESTS
+#ifndef DIVERGE_SKIP_TESTS_LINALG
 
 #include "t_linalg_cla_solvers.hpp"
 
@@ -59,4 +60,5 @@ SVD_IMPL( 2, cd )
 SVD_IMPL( 3, cd )
 SVD_IMPL( 4, cd )
 
+#endif // DIVERGE_SKIP_TESTS_LINALG
 #endif // DIVERGE_SKIP_TESTS
