@@ -43,7 +43,7 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
 
     PropMom.S_ph_loop_static_simple_gpu(helper);
     PropMom.merge_gpu_cpu_loop(lmg, helper);
-    
+
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
     CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom.nk));
     CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom.nk));
@@ -53,10 +53,10 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
     memset((void*)lmrg,0,POW2(n_orbffm*mom->n_spin)*PropMom.nk*sizeof(complex128_t));
     PropMom.S_pp_loop_static_simple_gpu(helper);
     PropMom.merge_gpu_cpu_loop(lmg, helper);
-    cuda_reset_prop_descr(&(PropMom.cuda_descr),POW4(PropMom.n_spin), PropMom.tu_data->unique_mi_l.size(),0.0);
+    cuda_reset_prop_descr(&(PropMom.cuda_descr),POW4(PropMom.n_spin), PropMom.tu_data->unique_mi_l_sz, 0.0);
     PropMom.S_pp_loop_static_red_gpu(helper);
     PropMom.merge_gpu_cpu_loop(lmrg, helper);
-    
+
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
     CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom.nk));
     CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom.nk));
@@ -135,7 +135,7 @@ TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu]")
     memset((void*)lmrg,0,POW2(n_orbffm*mom->n_spin)*PropMom.nk*sizeof(complex128_t));
     PropMom.S_pp_loop_static_simple_gpu(helper);
     PropMom.merge_gpu_cpu_loop(lmg, helper);
-    cuda_reset_prop_descr(&(PropMom.cuda_descr),POW4(PropMom.n_spin), PropMom.tu_data->unique_mi_l.size(),0.0);
+    cuda_reset_prop_descr(&(PropMom.cuda_descr),POW4(PropMom.n_spin), PropMom.tu_data->unique_mi_l_sz, 0.0);
     PropMom.S_pp_loop_static_red_gpu(helper);
     PropMom.merge_gpu_cpu_loop(lmrg, helper);
 
