@@ -100,3 +100,5 @@ class VertexMemory {
 };
 
 }
+
+extern "C" void grid_VertexMemory_set_sub_D( void* vtx, int which[3] );

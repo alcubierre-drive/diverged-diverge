@@ -7,7 +7,8 @@
 #include "tu/diverge_interface.h"
 #include "npatch/vertex.h"
 #include "npatch/flow_step.h"
-#include "grid/vertex_memory.hpp"
+/* #include "grid/vertex_memory.hpp" */
+extern void grid_VertexMemory_set_sub_D( void* vtx, int which[3] );
 #include "misc/kmeans_lloyd.h"
 #include "misc/batched_eigen.h"
 #include "misc/shared_mem.h"
@@ -114,8 +115,7 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("grid_set_sub_D") {
         int ivec[3] = {0};
         parse_vector_int( ivec, 3, val );
-        grid::VertexMemory* V = (grid::VertexMemory*)INTERNALS->grid_vertex;
-        if (V) V->set_sub_D( ivec );
+        if (INTERNALS->grid_vertex) grid_VertexMemory_set_sub_D( INTERNALS->grid_vertex, ivec );
     }
     CHECKKEY("npatch_vertex_resym") {
         npatch_flow_step_set_vertex_resym( atoi(val) );
@@ -245,7 +245,7 @@ static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex12
     // do loop
     shared_malloc_barrier();
     for (int sign=0; sign<2; ++sign) {
-        complex128_t L = sign ? Lambda : std::conj(Lambda);
+        complex128_t L = sign ? Lambda : conj(Lambda);
         #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
         for (index_t krel=0; krel<kcount; ++krel)
         for (index_t o=0; o<nb; ++o)
@@ -253,7 +253,7 @@ static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex12
             index_t k = krel + kdispl;
             complex128_t tmp = 0.0;
             for (index_t b=0; b<nb; ++b)
-                tmp += U[IDX3(k,b,o,nb,nb)] * std::conj(U[IDX3(k,b,p,nb,nb)]) / (L - E[IDX2(k,b,nb)]);
+                tmp += U[IDX3(k,b,o,nb,nb)] * conj(U[IDX3(k,b,p,nb,nb)]) / (L - E[IDX2(k,b,nb)]);
             buf[IDX4(sign, k, o, p, nkf, nb, nb)] = tmp;
         }
     }

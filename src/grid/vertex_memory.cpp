@@ -544,3 +544,8 @@ void VertexMemory::_change_basis_k123( complex128_t* V, complex128_t* U ) {
 }
 
 }
+
+void grid_VertexMemory_set_sub_D( void* vtx, int which[3] ) {
+    grid::VertexMemory* V = (grid::VertexMemory*)vtx;
+    V->set_sub_D( which );
+}
