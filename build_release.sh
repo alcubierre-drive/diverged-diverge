@@ -120,7 +120,7 @@ cd ${DIVERGE_PATH}
 cat >> Makefile.local <<EOF
 INCLUDES += -I${SOFTWARE_PATH}/include -I${SOFTWARE_PATH}/include/openblas
 LIBS := ${SOFTWARE_PATH}/lib64/libopenblas.a ${SOFTWARE_PATH}/lib/libfftw3.a ${SOFTWARE_PATH}/lib/libfftw3_omp.a
-DEFINES += -DNDEBUG -DEIGEN_NO_DEBUG -DDIVERGE_OPENBLAS_LIMIT_THREADS=48
+DEFINES += -DNDEBUG -DEIGEN_NO_DEBUG -DDIVERGE_OPENBLAS_LIMIT_THREADS=48 -DUSE_EIGEN3_CPU_EIGENSOLVER
 FLAGS += -Ofast -mtune=native -flto
 LDFLAGS += -flto=$(nproc) -static-libstdc++ -Wno-lto-type-mismatch -Ofast -mtune=native
 EOF
