@@ -3,7 +3,7 @@
 #define EIGEN_NO_CUDA
 
 #include "propagator.hpp"
-#include "cuda_init.hpp"
+#include "cuda_init.h"
 
 static inline __device__ index_t mem_offset() {
     return blockIdx.x*blockDim.x + threadIdx.x;

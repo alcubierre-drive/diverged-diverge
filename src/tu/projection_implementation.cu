@@ -17,7 +17,7 @@
 
 #include <thrust/copy.h>
 #include <thrust/fill.h>
-#include "cuda_init.hpp"
+#include "cuda_init.h"
 #include "../misc/mpi_log.h"
 
 static inline __device__ size_t mem_offset() {

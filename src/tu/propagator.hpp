@@ -9,7 +9,7 @@
 #include "../misc/bitary.h"
 
 #include "diverge_interface.h"
-#include "cuda_init.hpp"
+#include "cuda_init.h"
 
 #include "propagator_cpu_mpi.h"
 #include "propagator_cpu_mpi_fft.h"
@@ -125,7 +125,7 @@ public:
     void reconstruct_from_reduced(complex128_t* L) const;
 
     vector<index_t> c2fmap;
-    cuda_prop_descr_t cuda_descr;
+    cuda_prop_descr_t cuda_descr = cuda_prop_defaults_CPP();
 
     // only CPU timings
     vector<double> extra_timings( void );

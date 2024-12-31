@@ -1,7 +1,7 @@
 /* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "projection_handler.hpp"
-#include "cuda_init.hpp"
+#include "cuda_init.h"
 
 inline void add_to_all_frq(complex128_t* const to, const complex128_t* const inc,
                            index_t rest) {

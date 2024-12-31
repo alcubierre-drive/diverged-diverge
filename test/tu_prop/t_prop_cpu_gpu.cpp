@@ -6,7 +6,7 @@
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/propagator.hpp"
-#include "../../src/tu/cuda_init.hpp"
+#include "../../src/tu/cuda_init.h"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"

@@ -1,11 +1,10 @@
 /* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "propagator.hpp"
-#include "cuda_init.hpp"
+#include "cuda_init.h"
 #include "../misc/batched_eigen.h"
 #include "../misc/mpi_functions.h"
 #include "../misc/bitary.h"
-#include <iostream>
 #include "../misc/shared_mem.h"
 
 // this function is needed for the C MPI kernel

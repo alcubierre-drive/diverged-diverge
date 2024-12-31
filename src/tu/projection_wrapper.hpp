@@ -8,10 +8,12 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
 #include "diverge_interface.h"
-#include "cuda_init.hpp"
+#include "cuda_init.h"
 
 #include <vector>
+#include <array>
 using std::vector;
+using std::array;
 
 class Projection
 {
@@ -81,7 +83,7 @@ class Projection
         const complex128_t * get_my_prefac_proj_rk() const {return my_prefac_proj_rk;}
 
         complex128_t * my_prefac_reco;
-        cuda_proj_descr_t proj_descr;
+        cuda_proj_descr_t proj_descr = cuda_proj_defaults_CPP();
 
     private:
         void init_CP_PC_proj(const diverge_model_t* const);
