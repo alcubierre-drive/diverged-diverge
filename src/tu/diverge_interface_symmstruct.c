@@ -634,7 +634,7 @@ static inline int approx_id( const double* A, index_t sz ) {
     double maxdiff = 0.0;
     for (index_t i=0; i<sz; ++i)
     for (index_t j=0; j<sz; ++j) {
-        double diff = fabs(A[IDX2(i,j,sz)] - (i==j)?1.0:0.0);
+        double diff = fabs(A[IDX2(i,j,sz)] - ((i==j)?1.0:0.0));
         maxdiff = MAX(diff,maxdiff);
     }
     return maxdiff < SYMNORM_MATRIX_ZERO;
@@ -644,7 +644,7 @@ static inline int capprox_id( const complex128_t* A, index_t sz ) {
     double maxdiff = 0.0;
     for (index_t i=0; i<sz; ++i)
     for (index_t j=0; j<sz; ++j) {
-        double diff = cabs( A[IDX2(i,j,sz)] - (complex128_t)((i==j)?1.0:0.0) );
+        double diff = cabs( A[IDX2(i,j,sz)] - (((i==j)?1.0:0.0)) );
         maxdiff = MAX(diff,maxdiff);
     }
     return maxdiff < SYMNORM_MATRIX_ZERO;
