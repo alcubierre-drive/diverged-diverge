@@ -58,10 +58,29 @@ void hashtable_insert( hashtable_t* t, index_t key, void* val ) {
     t->tab[IDX2(d,h,t->width)] = (map_t){.key=key, .val=val};
 }
 
+void hashtable_insert_safe( hashtable_t* t, index_t key, void* val ) {
+    index_t h = hash(key) % t->width;
+    index_t d = 0;
+    while (d < t->depth) {
+        if (t->tab[IDX2(d,h,t->width)].key == HASHTABLE_EMPTY ||
+            t->tab[IDX2(d,h,t->width)].key == key) break;
+        d++;
+    }
+    if (d == t->depth)
+        hashtable_increase_depth( t, t->depth*2 );
+    t->tab[IDX2(d,h,t->width)] = (map_t){.key=key, .val=val};
+}
+
 void hashtable_iterate( hashtable_t* t, void (*func)(index_t, void*, void*), void* ctx ) {
     for (index_t i=0; i<t->width*t->depth; ++i)
         if (t->tab[i].key != HASHTABLE_EMPTY)
             (*func)( t->tab[i].key, t->tab[i].val, ctx );
+}
+
+void hashtable_iterate_addr( hashtable_t* t, void (*func)(index_t*, void**, void*), void* ctx ) {
+    for (index_t i=0; i<t->width*t->depth; ++i)
+        if (t->tab[i].key != HASHTABLE_EMPTY)
+            (*func)( &t->tab[i].key, &t->tab[i].val, ctx );
 }
 
 void* hashtable_find( hashtable_t* t, index_t key ) {

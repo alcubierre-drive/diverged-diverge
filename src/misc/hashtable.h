@@ -14,7 +14,9 @@ hashtable_t* hashtable_init( index_t width, index_t depth );
 void hashtable_free( hashtable_t* t );
 
 void hashtable_insert( hashtable_t* t, index_t key, void* val );
+void hashtable_insert_safe( hashtable_t* t, index_t key, void* val );
 void hashtable_iterate( hashtable_t* t, void (*func)(index_t, void*, void*), void* ctx );
+void hashtable_iterate_addr( hashtable_t* t, void (*func)(index_t*, void**, void*), void* ctx );
 void* hashtable_find( hashtable_t* t, index_t key );
 void* hashtable_pop( hashtable_t* t, index_t key );
 void hashtable_delete( hashtable_t* t, index_t key );
