@@ -10,7 +10,7 @@ LINALG_IMPLEMENT
 #include "../misc/qnan.h"
 #include "../diverge_model_internals.h"
 #include "../misc/mergesort.h"
-#include "../misc/uthash.h"
+#include "../misc/btree.h"
 #include <assert.h>
 
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
@@ -426,17 +426,6 @@ void sort_loopmaps(diverge_model_t* model) {
     free( idx );
 }
 
-typedef struct {
-    index_t id;
-    UT_hash_handle hh;
-} stored_combination_t;
-
-typedef struct {
-    index_t index;
-    index_t reduced;
-    UT_hash_handle hh;
-} index_to_reduced_t;
-
 typedef struct { VECTOR_DECL( claV2ll_t, v ) } vec_claV2ll_t;
 
 void generate_reduced_loop_maps(diverge_model_t* model) {
@@ -465,8 +454,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     VECTOR_INIT( vec_claV2ll_t, _lmap );
     index_t nff = tu_data->existing_ff_sz;
     // iterate over all unique pair combinations
-    stored_combination_t* stored_combinations = NULL;
-    index_to_reduced_t* index_to_reduced = NULL;
+    btree_t* index_to_reduced = NULL;
     index_t curr_idx = 0;
     for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
     for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
@@ -475,30 +463,19 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
         index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
                           mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
                           n_orb,n_orb,n_orb,n_orb);
-        stored_combination_t* found = NULL;
-        HASH_FIND( hh, stored_combinations, &trial, sizeof(trial), found );
-        if (found == NULL) {
-            stored_combination_t* t = malloc(sizeof*t);
-            t->id = trial;
-            HASH_ADD( hh, stored_combinations, id, sizeof(index_t), t );
-
-            index_to_reduced_t* r = malloc(sizeof*r);
-            r->index = trial; r->reduced = curr_idx;
-            HASH_ADD( hh, index_to_reduced, index, sizeof(index_t), r );
-
-            curr_idx++;
+        btree_t* found = btree_find( index_to_reduced, trial );
+        if (!found) {
+            btree_t* node = btree_insert( index_to_reduced, trial );
+            if (!index_to_reduced) index_to_reduced = node; // set head
+            node->val = curr_idx++;
 
             claV2ll_t l = {{m1,m3}};
             vec_claV2ll_t b = {0};
             VECTOR_PUSH_BACK( b.v, l );
             VECTOR_PUSH_BACK( _lmap, b );
         } else {
-            index_to_reduced_t* r = NULL;
-            HASH_FIND( hh, index_to_reduced, &trial, sizeof(trial), r );
-            assert( r != NULL );
-            index_t idx = r->reduced;
             claV2ll_t l = {{m1,m3}};
-            VECTOR_PUSH_BACK( _lmap[idx].v, l );
+            VECTOR_PUSH_BACK( _lmap[found->val].v, l );
         }
     }
 
@@ -528,17 +505,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
 
     for (index_t i=0; i<_lmap_sz; ++i) VECTOR_FREE( _lmap[i].v );
     VECTOR_FREE( _lmap );
-    index_to_reduced_t *ir, *ir_tmp;
-    HASH_ITER( hh, index_to_reduced, ir, ir_tmp ) {
-        HASH_DEL( index_to_reduced, ir );
-        free( ir );
-    }
-    stored_combination_t *sc, *sc_tmp;
-    HASH_ITER( hh, stored_combinations, sc, sc_tmp ) {
-        HASH_DEL( stored_combinations, sc );
-        free( sc );
-    }
-
+    btree_free( index_to_reduced );
 }
 
 void init_MPI_dist(diverge_model_t* model) {

@@ -12,7 +12,6 @@
 LINALG_IMPLEMENT
 
 #include <regex.h>
-#include "utlist.h"
 
 typedef struct {
     rs_hopping_t* hop;
@@ -67,13 +66,28 @@ typedef struct fplo_hop_element_t {
 
 static fplo_hop_element_t* fplo_hop_element_init( void );
 static void fplo_hop_element_push( fplo_hop_element_t* e, fplo_single_hopping_t h );
-static void fplo_hop_elemet_free( fplo_hop_element_t* e );
+static void fplo_hop_element_free( fplo_hop_element_t* e );
+static fplo_hop_element_t* fplo_hop_element_append( fplo_hop_element_t* head, fplo_hop_element_t* elm ) {
+    if (!head) return (head = elm);
+    fplo_hop_element_t* tmp = head;
+    while (tmp->next != NULL) tmp = tmp->next;
+    tmp->next = elm;
+    return head;
+}
 
 typedef struct fplo_position_t fplo_position_t;
 typedef struct fplo_position_t {
     double pos[3];
     fplo_position_t* next;
 } fplo_position_t;
+
+static fplo_position_t* fplo_position_append( fplo_position_t* head, fplo_position_t* elm ) {
+    if (!head) return (head = elm);
+    fplo_position_t* tmp = head;
+    while (tmp->next != NULL) tmp = tmp->next;
+    tmp->next = elm;
+    return head;
+}
 
 typedef struct {
     double lattice_vectors[3][3];
@@ -103,7 +117,7 @@ static void fplo_hop_element_push( fplo_hop_element_t* e, fplo_single_hopping_t 
     e->hops[e->n_hops++] = h;
 }
 
-static void fplo_hop_elemet_free( fplo_hop_element_t* e ) {
+static void fplo_hop_element_free( fplo_hop_element_t* e ) {
     free( e->hops );
     free( e );
 }
@@ -209,7 +223,7 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
                 parse_sect_hop = 1;
                 parse_sect_hop_next_line_set_orbitals = 1;
             } else if (!strcmp(str, "end Tij, Hij")) {
-                LL_APPEND(fplo_hops, current_hopping);
+                fplo_hops = fplo_hop_element_append( fplo_hops, current_hopping );
                 current_hopping = NULL;
                 parse_sect_hop = 0;
             } else {
@@ -239,7 +253,7 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
             if (parse_centers) {
                 fplo_position_t* p = calloc(1, sizeof(fplo_position_t));
                 int nscan = sscanf(line, " %le %le %le", &p->pos[0], &p->pos[1], &p->pos[2]);
-                LL_APPEND(fplo_pos, p);
+                fplo_pos = fplo_position_append( fplo_pos, p );
                 if (nscan != 3) {
                     mpi_err_printf( "could not read position (l.%i)\n", linenum );
                     errors++;
@@ -292,15 +306,11 @@ static fplo_hamiltonian_t* fplo_hamiltonian_read( const char* fplo_file ) {
     fplo_intermediate_output_t io = fplo_intermediate_read( fplo_file );
     if (!io.valid) {
         mpi_err_printf( "got invalid +hamdata, return NULL\n" );
-        fplo_position_t *pos = NULL, *ptmp = NULL;
-        LL_FOREACH_SAFE( io.fplo_pos, pos, ptmp ) {
-            LL_DELETE( io.fplo_pos, pos );
-            free(pos);
+        for (fplo_position_t* p=io.fplo_pos; p; ) {
+            fplo_position_t* x=p; p=p->next; free(x);
         }
-        fplo_hop_element_t *hop = NULL, *htmp = NULL;
-        LL_FOREACH_SAFE( io.fplo_hops, hop, htmp ) {
-            LL_DELETE( io.fplo_hops, hop );
-            fplo_hop_elemet_free( hop );
+        for (fplo_hop_element_t* h=io.fplo_hops; h; ) {
+            fplo_hop_element_t* x=h; h=h->next; fplo_hop_element_free(x);
         }
         return NULL;
     }
@@ -313,26 +323,23 @@ static fplo_hamiltonian_t* fplo_hamiltonian_read( const char* fplo_file ) {
     claM3d_t rlattice = claM3d_inv(lattice);
 
     h->pos = calloc( h->n_orb*3, sizeof(double) );
-    fplo_position_t *pos = NULL, *ptmp = NULL;
     index_t n_pos = 0;
-    LL_FOREACH_SAFE( io.fplo_pos, pos, ptmp ) {
-        memcpy( h->pos+(n_pos++*3), pos->pos, sizeof(double)*3 );
-        LL_DELETE( io.fplo_pos, pos );
-        free(pos);
+    for (fplo_position_t* p=io.fplo_pos; p; ) {
+        fplo_position_t* x=p; p=p->next;
+        memcpy( h->pos+(n_pos++*3), x->pos, sizeof(double)*3 );
+        free(x);
     }
 
-    fplo_hop_element_t *hop = NULL, *htmp = NULL;
-    LL_FOREACH( io.fplo_hops, hop ) {
+    for (fplo_hop_element_t* hop=io.fplo_hops; hop; hop = hop->next)
         h->n_hop += hop->n_hops;
-    }
     h->hop = calloc(h->n_hop, sizeof(rs_hopping_t));
     h->n_hop = 0;
-    hop = NULL;
-    LL_FOREACH_SAFE( io.fplo_hops, hop, htmp ) {
+    for (fplo_hop_element_t* hop=io.fplo_hops; hop; ) {
         index_t o1 = hop->o1-1,
                 o2 = hop->o2-1;
         for (index_t i=0; i<hop->n_hops; ++i) {
-            claV3d_t Rvec = claV3d_add( claV3d_map(hop->hops[i].R), claV3d_sub(claV3d_map(h->pos+o1*3), claV3d_map(h->pos+o2*3)) );
+            claV3d_t Rvec = claV3d_add( claV3d_map(hop->hops[i].R),
+                    claV3d_sub(claV3d_map(h->pos+o1*3), claV3d_map(h->pos+o2*3)) );
             claV3d_t Rivec = claM3d_matvec( rlattice, Rvec );
             index_t Ri[3] = {0};
             for (int x=0; x<3; ++x) {
@@ -345,8 +352,8 @@ static fplo_hamiltonian_t* fplo_hamiltonian_read( const char* fplo_file ) {
             };
             h->hop[h->n_hop++] = rhop;
         }
-        LL_DELETE( io.fplo_hops, hop );
-        fplo_hop_elemet_free( hop );
+        fplo_hop_element_t* x = hop; hop = hop->next;
+        fplo_hop_element_free( x );
     }
     return h;
 }

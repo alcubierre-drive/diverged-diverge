@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "uthash.h"
+#include "hashtable.h"
 #include "mpi_functions.h"
 
 static int status = 0;
@@ -51,8 +51,6 @@ typedef struct {
     int rank, size;
     MPI_Win win;
     MPI_Comm comm;
-
-    UT_hash_handle hh;
 } shmem_t;
 
 typedef struct {
@@ -61,7 +59,7 @@ typedef struct {
     int shrank, shsize;
     MPI_Comm shcomm;
 
-    shmem_t* pool;
+    hashtable_t* pool;
 } shmem_pool_t;
 
 static int shmem_pool_more_colors = 0;
@@ -156,14 +154,18 @@ static shmem_pool_t* shared_mem_pool = NULL;
 void shared_malloc_init( int more_colors ) {
     shmem_pool_more_colors = more_colors;
     shared_mem_pool = shmem_pool_init();
+    shared_mem_pool->pool = hashtable_init( 1024, 16 );
+}
+
+static inline void hashtable_iter_free_shmem( index_t key, void* val, void* ctx ) {
+    (void)ctx; (void)key; shmem_free( val );
 }
 void shared_malloc_finalize( void ) {
     if (!shared_mem_pool) return;
-    shmem_t *mem = NULL, *tmp = NULL;
-    HASH_ITER(hh, shared_mem_pool->pool, mem, tmp) {
-        HASH_DEL(shared_mem_pool->pool, mem);
-        shmem_free( mem );
-    }
+
+    hashtable_iterate( shared_mem_pool->pool, &hashtable_iter_free_shmem, NULL );
+    hashtable_free( shared_mem_pool->pool );
+
     shmem_pool_destroy( shared_mem_pool );
 }
 
@@ -177,25 +179,22 @@ void* shared_calloc( long long cnt, long long sz ) {
 void* shared_malloc( long long sz ) {
     if (!shared_mem_pool) return NULL;
     shmem_t* memptr = shmem_alloc( shared_mem_pool, sz );
-    HASH_ADD_PTR( shared_mem_pool->pool, ptr, memptr );
+    hashtable_insert( shared_mem_pool->pool, (index_t)memptr->ptr, memptr );
     return memptr->ptr;
 }
 
 void shared_free( void* ptr ) {
     if (!shared_mem_pool) return;
     if (!ptr) return;
-    shmem_t* memptr = NULL;
-    HASH_FIND_PTR( shared_mem_pool->pool, &ptr, memptr );
+    shmem_t* memptr = hashtable_pop( shared_mem_pool->pool, (index_t)ptr );
     if (!memptr) return;
-    HASH_DEL( shared_mem_pool->pool, memptr );
     shmem_free( memptr );
 }
 
 int shared_exclusive_enter( void* ptr ) {
     if (!shared_mem_pool) return -1;
     if (!ptr) return -1;
-    shmem_t* memptr = NULL;
-    HASH_FIND_PTR( shared_mem_pool->pool, &ptr, memptr );
+    shmem_t* memptr = hashtable_find( shared_mem_pool->pool, (index_t)ptr );
     if (!memptr) return -1;
 
     MPICALL(Win_lock, MPI_LOCK_SHARED, 0, MPI_MODE_NOCHECK, memptr->win);
@@ -207,8 +206,7 @@ int shared_exclusive_enter( void* ptr ) {
 void shared_exclusive_wait( void* ptr ) {
     if (!shared_mem_pool) return;
     if (!ptr) return;
-    shmem_t* memptr = NULL;
-    HASH_FIND_PTR( shared_mem_pool->pool, &ptr, memptr );
+    shmem_t* memptr = hashtable_find( shared_mem_pool->pool, (index_t)ptr );
     if (!memptr) return;
 
     MPICALL(Win_unlock, 0, memptr->win);
@@ -226,15 +224,19 @@ int shared_malloc_size( void ) {
     return shared_mem_pool->shsize;
 }
 
+static inline void shared_mem_pool_win_lock( index_t key, void* val, void* ctx ) {
+    (void)key; (void)ctx;
+    MPICALL(Win_lock, MPI_LOCK_SHARED, 0, MPI_MODE_NOCHECK, ((shmem_t*)val)->win);
+}
+static inline void shared_mem_pool_win_unlock( index_t key, void* val, void* ctx ) {
+    (void)key; (void)ctx;
+    MPICALL(Win_unlock, 0, ((shmem_t*)val)->win);
+}
 void shared_malloc_barrier( void ) {
     if (!shared_mem_pool) return;
-
     MPICALL(Barrier, shared_mem_pool->shcomm);
-    shmem_t* m = NULL;
-    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next)
-        MPICALL(Win_lock, MPI_LOCK_SHARED, 0, MPI_MODE_NOCHECK, m->win);
-    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next)
-        MPICALL(Win_unlock, 0, m->win );
+    hashtable_iterate(shared_mem_pool->pool, &shared_mem_pool_win_lock, NULL);
+    hashtable_iterate(shared_mem_pool->pool, &shared_mem_pool_win_unlock, NULL);
     MPICALL(Barrier, shared_mem_pool->shcomm);
 }
 
@@ -256,7 +258,7 @@ void shared_malloc_barrier( void ) {
 #include <string.h>
 #include <stdint.h>
 
-#include "uthash.h"
+#include "hashtable.h"
 #include "mpi_functions.h"
 #include "md5.h"
 
@@ -326,10 +328,7 @@ static int mpi_proc_info_compar( const void* pa, const void* pb ) {
 }
 
 typedef struct {
-    union {
-        void* ptr;
-        int64_t id;
-    };
+    void* ptr;
     sem_t* sem;
     size_t sz;
     int fd;
@@ -340,8 +339,6 @@ typedef struct {
 #ifdef SHARED_MEM_POSIX_IMPL
     char name[256];
 #endif
-
-    UT_hash_handle hh;
 } shmem_t;
 
 typedef struct {
@@ -350,7 +347,7 @@ typedef struct {
     int shrank, shsize;
     MPI_Comm shcomm;
 
-    shmem_t* pool;
+    hashtable_t* pool;
 } shmem_pool_t;
 
 static int shmem_pool_more_colors = 0;
@@ -515,14 +512,17 @@ static void shmem_free( shmem_t* m ) {
 void shared_malloc_init( int more_colors ) {
     shmem_pool_more_colors = more_colors;
     shared_mem_pool = shmem_pool_init();
+    shared_mem_pool->pool = hashtable_init( 1024, 16 );
+}
+
+static inline void pool_free_func( index_t key, void* val, void* ctx ) {
+    (void)key; (void)ctx;
+    shmem_free( val );
 }
 void shared_malloc_finalize( void ) {
     if (!shared_mem_pool) return;
-    shmem_t *mem = NULL, *tmp = NULL;
-    HASH_ITER(hh, shared_mem_pool->pool, mem, tmp) {
-        HASH_DEL(shared_mem_pool->pool, mem);
-        shmem_free( mem );
-    }
+    hashtable_iterate(shared_mem_pool->pool, &pool_free_func, NULL);
+    hashtable_free(shared_mem_pool->pool);
     shmem_pool_destroy( shared_mem_pool );
 }
 
@@ -536,27 +536,22 @@ void* shared_calloc( long long cnt, long long sz ) {
 void* shared_malloc( long long sz ) {
     if (!shared_mem_pool) return NULL;
     shmem_t* memptr = shmem_alloc( shared_mem_pool, sz );
-    HASH_ADD_INT( shared_mem_pool->pool, id, memptr );
+    hashtable_insert( shared_mem_pool->pool, (index_t)memptr->ptr, memptr );
     return memptr->ptr;
 }
 
 void shared_free( void* ptr ) {
     if (!shared_mem_pool) return;
     if (!ptr) return;
-    int64_t id = (int64_t)ptr;
-    shmem_t* memptr = NULL;
-    HASH_FIND_INT( shared_mem_pool->pool, &id, memptr );
+    shmem_t* memptr = hashtable_pop( shared_mem_pool->pool, (index_t)ptr );
     if (!memptr) return;
-    HASH_DEL( shared_mem_pool->pool, memptr );
     shmem_free( memptr );
 }
 
 int shared_exclusive_enter( void* ptr ) {
     if (!shared_mem_pool) return -1;
     if (!ptr) return -1;
-    int64_t id = (int64_t)ptr;
-    shmem_t* memptr = NULL;
-    HASH_FIND_INT( shared_mem_pool->pool, &id, memptr );
+    shmem_t* memptr = hashtable_find( shared_mem_pool->pool, (index_t)ptr );
     if (!memptr) return -1;
 
     if (memptr->rank == 0)
@@ -567,9 +562,7 @@ int shared_exclusive_enter( void* ptr ) {
 void shared_exclusive_wait( void* ptr ) {
     if (!shared_mem_pool) return;
     if (!ptr) return;
-    int64_t id = (int64_t)ptr;
-    shmem_t* memptr = NULL;
-    HASH_FIND_INT( shared_mem_pool->pool, &id, memptr );
+    shmem_t* memptr = hashtable_find( shared_mem_pool->pool, (index_t)ptr );
     if (!memptr) return;
 
     if (memptr->rank == 0)
@@ -589,15 +582,22 @@ int shared_malloc_size( void ) {
     return shared_mem_pool->shsize;
 }
 
+static inline void pool_sem_post( index_t key, void* val, void* ctx ) {
+    (void)key; (void)ctx; if (!val) return;
+    shmem_t* m = val;
+    if (m->rank == 0) for (int i=0; i<m->size; ++i) sem_post( m->sem );
+}
+static inline void pool_sem_wait( index_t key, void* val, void* ctx ) {
+    (void)key; (void)ctx; if (!val) return;
+    shmem_t* m = val;
+    sem_wait( m->sem );
+}
 void shared_malloc_barrier( void ) {
     if (!shared_mem_pool) return;
 
     MPICALL(Barrier, shared_mem_pool->shcomm);
-    shmem_t* m = NULL;
-    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next)
-        if (m->rank == 0) for (int i=0; i<m->size; ++i) sem_post( m->sem );
-    for (m = shared_mem_pool->pool; m != NULL; m = m->hh.next)
-        sem_wait( m->sem );
+    hashtable_iterate(shared_mem_pool->pool, &pool_sem_post, NULL);
+    hashtable_iterate(shared_mem_pool->pool, &pool_sem_wait, NULL);
     MPICALL(Barrier, shared_mem_pool->shcomm);
 }
 
