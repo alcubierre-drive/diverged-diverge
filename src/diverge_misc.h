@@ -1,6 +1,6 @@
 /* divERGe implements various ERG examples */
 /* framework for FRG simulations on real materials */
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl */
 
 /* This program is free software: you can redistribute it and/or modify */
 /* it under the terms of the GNU General Public License as published by */
