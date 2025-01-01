@@ -53,6 +53,13 @@ void shared_free( void* ptr );
  *    // do something exclusively
  *  }
  *  shared_exclusive_wait(ptr);
+ *
+ * .. note::
+ *  When using the MPI implementation of shared memory
+ *  (``SHARED_MEM_MPI_IMPL``), entering *multiple* exclusive regions at the same
+ *  time does not work due to synchronization issues. Therefore,
+ *  :c:func:`shared_exclusive_wait` includes a call to
+ *  :c:func:`shared_malloc_barrier`.
  */
 int shared_exclusive_enter( void* ptr );
 

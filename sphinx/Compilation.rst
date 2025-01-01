@@ -110,11 +110,9 @@ DEFINES` are, in addition, listed here:
                          (Hamiltonian, Orbital/Band matrices) into
                          :ref:`node-global shared memory <Shared Memory>`,
                          i.e., creating a shared memory pool that is used by
-                         all MPI ranks on a single node. This flag requires
-                         the `uthash.h library
-                         <https://troydhanson.github.io/uthash/>`_ somewhere in
-                         your include path as well as some more recent linux
-                         kernel features (``memfd_create``, ``mmap``).
+                         all MPI ranks on a single node. This flag requires some
+                         more recent linux kernel features (``memfd_create``,
+                         ``mmap``).
     :``USE_MPI_FFTW``: use the MPI backend for FFTW in the TU propagator calculation.
                        this usually comes with an enormeous speedup
     :``MPI_VERBOSE_ALLOCATION_PRINT``: be extra verbose on TU propagator
@@ -382,10 +380,8 @@ written (i.e., the variable can be either *defined* or *not*), or
     :``USE_SHARED_MEM``: experimental support for putting some objects
         (Hamiltonian, Orbital/Band matrices) into node-global shared memory,
         i.e., creating a shared memory pool that is used by all MPI ranks on a
-        single node. This flag requires the `uthash.h library
-        <https://troydhanson.github.io/uthash/>`_ somewhere in your include path
-        as well as some more recent linux kernel features (``memfd_create``,
-        ``mmap``).
+        single node. This flag requires some more recent linux kernel features
+        (``memfd_create``, ``mmap``).
     :``SHARED_MEM_MPI_IMPL``: use ``MPI_Win_XXX`` (and friends) for the
         implementation of the shared memory. Might behave strangely on clusters
         where pinning to certain sockets is enforced.

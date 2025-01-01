@@ -154,8 +154,7 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         }
         m->gfill = &diverge_shared_gf;
         free(INTERNALS->greens);
-        INTERNALS->greens = (gf_complex_t*)shared_malloc(sizeof(gf_complex_t) *
-                kdimtot(m->nk, m->nkf) * POW2(m->n_orb*m->n_spin) * 2);
+        INTERNALS->greens = shared_malloc(sizeof(gf_complex_t)*kdimtot(m->nk,m->nkf)*POW2(m->n_orb*m->n_spin)*2);
         INTERNALS->greens_shared = 1;
     }
     CHECKKEY("model_internals_eigensolve_ignore") {

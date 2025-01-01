@@ -1,7 +1,5 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-// TODO(LK) append an interface to this MPI shared memory to the memory pool
-
 #include "shared_mem.h"
 
 #if defined(USE_SHARED_MEM) && defined(USE_MPI)
@@ -154,7 +152,7 @@ static shmem_pool_t* shared_mem_pool = NULL;
 void shared_malloc_init( int more_colors ) {
     shmem_pool_more_colors = more_colors;
     shared_mem_pool = shmem_pool_init();
-    shared_mem_pool->pool = hashtable_init( 1024, 16 );
+    shared_mem_pool->pool = hashtable_init( 128, 8 );
 }
 
 static inline void hashtable_iter_free_shmem( index_t key, void* val, void* ctx ) {
@@ -210,7 +208,6 @@ void shared_exclusive_wait( void* ptr ) {
     if (!memptr) return;
 
     MPICALL(Win_unlock, 0, memptr->win);
-
     shared_malloc_barrier();
 }
 
@@ -512,7 +509,7 @@ static void shmem_free( shmem_t* m ) {
 void shared_malloc_init( int more_colors ) {
     shmem_pool_more_colors = more_colors;
     shared_mem_pool = shmem_pool_init();
-    shared_mem_pool->pool = hashtable_init( 1024, 16 );
+    shared_mem_pool->pool = hashtable_init( 128, 8 );
 }
 
 static inline void pool_free_func( index_t key, void* val, void* ctx ) {
@@ -568,7 +565,6 @@ void shared_exclusive_wait( void* ptr ) {
     if (memptr->rank == 0)
         for (int i=0; i<memptr->size; ++i) sem_post( memptr->sem );
     sem_wait( memptr->sem );
-
     shared_malloc_barrier();
 }
 

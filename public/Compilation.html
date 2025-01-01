@@ -140,10 +140,9 @@ DEFINE keys (i.e. adding <code class="docutils literal notranslate"><span class=
 (Hamiltonian, Orbital/Band matrices) into
 <a class="reference internal" href="Shared%20Memory.html#shared-memory"><span class="std std-ref">node-global shared memory</span></a>,
 i.e., creating a shared memory pool that is used by
-all MPI ranks on a single node. This flag requires
-the <a class="reference external" href="https://troydhanson.github.io/uthash/">uthash.h library</a> somewhere in
-your include path as well as some more recent linux
-kernel features (<code class="docutils literal notranslate"><span class="pre">memfd_create</span></code>, <code class="docutils literal notranslate"><span class="pre">mmap</span></code>).</p>
+all MPI ranks on a single node. This flag requires some
+more recent linux kernel features (<code class="docutils literal notranslate"><span class="pre">memfd_create</span></code>,
+<code class="docutils literal notranslate"><span class="pre">mmap</span></code>).</p>
 </dd>
 <dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_MPI_FFTW</span></code><span class="colon">:</span></dt>
 <dd class="field-even"><p>use the MPI backend for FFTW in the TU propagator calculation.
@@ -522,9 +521,8 @@ Eigen.</p>
 <dd class="field-odd"><p>experimental support for putting some objects
 (Hamiltonian, Orbital/Band matrices) into node-global shared memory,
 i.e., creating a shared memory pool that is used by all MPI ranks on a
-single node. This flag requires the <a class="reference external" href="https://troydhanson.github.io/uthash/">uthash.h library</a> somewhere in your include path
-as well as some more recent linux kernel features (<code class="docutils literal notranslate"><span class="pre">memfd_create</span></code>,
-<code class="docutils literal notranslate"><span class="pre">mmap</span></code>).</p>
+single node. This flag requires some more recent linux kernel features
+(<code class="docutils literal notranslate"><span class="pre">memfd_create</span></code>, <code class="docutils literal notranslate"><span class="pre">mmap</span></code>).</p>
 </dd>
 <dt class="field-even"><code class="docutils literal notranslate"><span class="pre">SHARED_MEM_MPI_IMPL</span></code><span class="colon">:</span></dt>
 <dd class="field-even"><p>use <code class="docutils literal notranslate"><span class="pre">MPI_Win_XXX</span></code> (and friends) for the

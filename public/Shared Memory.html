@@ -80,32 +80,40 @@ to stdlib’s calloc</p>
 <span class="n">shared_exclusive_wait</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When using the MPI implementation of shared memory
+(<code class="docutils literal notranslate"><span class="pre">SHARED_MEM_MPI_IMPL</span></code>), entering <em>multiple</em> exclusive regions at the same
+time does not work due to synchronization issues. Therefore,
+<a class="reference internal" href="#c.shared_exclusive_wait" title="shared_exclusive_wait"><code class="xref c c-func docutils literal notranslate"><span class="pre">shared_exclusive_wait()</span></code></a> includes a call to
+<a class="reference internal" href="#c.shared_malloc_barrier" title="shared_malloc_barrier"><code class="xref c c-func docutils literal notranslate"><span class="pre">shared_malloc_barrier()</span></code></a>.</p>
+</div>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.shared_exclusive_wait">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shared_exclusive_wait</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">ptr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_exclusive_wait" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C/src/misc/shared_mem.h#L59"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shared_exclusive_wait</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">ptr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_exclusive_wait" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C/src/misc/shared_mem.h#L66"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>wait for an operation entered via <a class="reference internal" href="#c.shared_exclusive_enter" title="shared_exclusive_enter"><code class="xref c c-func docutils literal notranslate"><span class="pre">shared_exclusive_enter()</span></code></a> to finish
 on all ranks.</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.shared_malloc_rank">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shared_malloc_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_malloc_rank" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C/src/misc/shared_mem.h#L65"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shared_malloc_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_malloc_rank" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C/src/misc/shared_mem.h#L72"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>return the rank on one node. useful for worksharing when operating on shared
 memory.</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.shared_malloc_size">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shared_malloc_size</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_malloc_size" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C/src/misc/shared_mem.h#L70"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shared_malloc_size</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_malloc_size" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C/src/misc/shared_mem.h#L77"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>return the number of ranks on one node. useful for worksharing when operating
 on shared memory.</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.shared_malloc_barrier">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shared_malloc_barrier</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_malloc_barrier" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C/src/misc/shared_mem.h#L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shared_malloc_barrier</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_malloc_barrier" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C/src/misc/shared_mem.h#L82"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>barrier that must be reached by each rank on one node before execution
 continues</p>
 </dd></dl>
