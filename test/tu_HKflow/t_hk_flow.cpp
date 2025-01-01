@@ -12,7 +12,6 @@
 #include "../../src/tu/projection_wrapper.hpp"
 #include "../../src/tu/projection_handler.hpp"
 #include "../../src/grid/vertex_memory.hpp"
-#include "../../src/tu/selfenergy.hpp"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"

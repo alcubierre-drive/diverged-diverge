@@ -3,6 +3,22 @@
 #include "vertex.hpp"
 #include "projection_handler.hpp"
 
+diverge_model_t* Vertex_get_model( void* V_ ) { return static_cast<Vertex*>(V_)->model; }
+const tu_data_t* Vertex_get_tu_data( void* V_ ) { return static_cast<Vertex*>(V_)->tu_data; }
+index_t Vertex_get_n_orb( void* V_ ) { return static_cast<Vertex*>(V_)->n_orb; }
+index_t Vertex_get_n_spin( void* V_ ) { return static_cast<Vertex*>(V_)->n_spin; }
+index_t Vertex_get_n_orbff( void* V_ ) { return static_cast<Vertex*>(V_)->n_orbff; }
+index_t Vertex_get_nk( void* V_ ) { return static_cast<Vertex*>(V_)->nk; }
+index_t Vertex_get_nkf( void* V_ ) { return static_cast<Vertex*>(V_)->nkf; }
+index_t Vertex_get_my_nk( void* V_ ) { return static_cast<Vertex*>(V_)->my_nk; }
+index_t Vertex_get_my_nk_off( void* V_ ) { return static_cast<Vertex*>(V_)->my_nk_off; }
+const symmstruct_t* Vertex_get_symm( void* V_ ) { return static_cast<Vertex*>(V_)->symm; }
+bool Vertex_get_P_flow( void* V_ ) { return static_cast<Vertex*>(V_)->P_flow; }
+bool Vertex_get_C_flow( void* V_ ) { return static_cast<Vertex*>(V_)->C_flow; }
+bool Vertex_get_D_flow( void* V_ ) { return static_cast<Vertex*>(V_)->D_flow; }
+complex128_t* Vertex_get_product_helper( void* V_ ) { return static_cast<Vertex*>(V_)->product_helper; }
+complex128_t* Vertex_get_bubble_helper( void* V_ ) { return static_cast<Vertex*>(V_)->bubble_helper; }
+
 static inline double max_abs(const complex128_t* start, index_t length) {
     return Map<const VecXcd>(start, length).lpNorm<Eigen::Infinity>();
 }

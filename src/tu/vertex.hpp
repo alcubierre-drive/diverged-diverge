@@ -4,14 +4,36 @@
 
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
-#include "../diverge_Eigen3.hpp"
 #include "../diverge_common.h"
 #include "../misc/mpi_functions.h"
 #include "diverge_interface.h"
+
+// this is a temporary interface for the C-style selfenergy
+#ifdef __cplusplus
+extern "C" {
+#endif
+diverge_model_t* Vertex_get_model( void* V_ );
+const tu_data_t* Vertex_get_tu_data( void* V_ );
+index_t Vertex_get_n_orb( void* V_ );
+index_t Vertex_get_n_spin( void* V_ );
+index_t Vertex_get_n_orbff( void* V_ );
+index_t Vertex_get_nk( void* V_ );
+index_t Vertex_get_nkf( void* V_ );
+index_t Vertex_get_my_nk( void* V_ );
+index_t Vertex_get_my_nk_off( void* V_ );
+const symmstruct_t* Vertex_get_symm( void* V_ );
+bool Vertex_get_P_flow( void* V_ );
+bool Vertex_get_C_flow( void* V_ );
+bool Vertex_get_D_flow( void* V_ );
+complex128_t* Vertex_get_product_helper( void* V_ );
+complex128_t* Vertex_get_bubble_helper( void* V_ );
+#ifdef __cplusplus
+}
+
+#include "../diverge_Eigen3.hpp"
+
 #include "projection_wrapper.hpp"
 #include "propagator.hpp"
-
-
 
 class Vertex
 {
@@ -109,3 +131,5 @@ vector<double> max(const Vertex &inp);
 #ifndef SKIP_VERTEX_RECO_INCLUDE
 #include "vertex_reco.hpp"
 #endif
+
+#endif // __cplusplus

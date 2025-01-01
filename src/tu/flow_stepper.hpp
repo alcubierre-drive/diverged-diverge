@@ -9,7 +9,7 @@
 #include "diverge_interface.h"
 #include "vertex.hpp"
 #include "propagator.hpp"
-#include "selfenergy.hpp"
+#include "selfenergy.h"
 #include "projection_wrapper.hpp"
 #include "projection_handler.hpp"
 #include "../misc/batched_gemms.h"
@@ -34,11 +34,11 @@ public:
     ~tu_stepper(){
         delete internal_vertex;
         if(channel_selection[3]) {
-            delete self;
+            selfenergy_free(self);
             free(coarseGF);
         }
     }
-    selfEnergy* self;
+    selfenergy_t* self;
     Vertex* internal_vertex;
 
     vector<double> get_timings( void ) const {

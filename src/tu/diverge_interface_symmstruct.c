@@ -24,9 +24,6 @@ static int symmstruct_equal( const symmstruct_t* A, const symmstruct_t* B );
 #define SYMNORM_MATRIX_ZERO 1.e-7
 #endif
 
-// TODO
-void init_MPI_dist( diverge_model_t* m );
-
 void symmstruct_delete( symmstruct_t* symm ) {
     free( symm->inv_symmetry );
     free( symm->mi_prefac_in_out );

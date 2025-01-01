@@ -38,7 +38,7 @@ tu_stepper::tu_stepper(Projection* projin,tu_loop_t* loopin, Vertex* vertexin)
 
     if(channel_selection[3]){
         coarseGF = (complex128_t*)calloc(nk*POW2(vertexin->n_orb*vertexin->n_spin),sizeof(complex128_t));
-        self = new selfEnergy(vertexin);
+        self = selfenergy_init((void*)vertexin);
     }
 }
 
@@ -185,8 +185,8 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
     }
     if (channel_selection[3]) {
         tick = diverge_mpi_wtime();
-        self->selfenergy_flow(internal_vertex->self_en, inout->Pch,
-                        inout->Cch, inout->Dch, coarseGF, 1.);
+        selfenergy_flow( self, internal_vertex->self_en, inout->Pch,
+                        inout->Cch, inout->Dch, coarseGF, 1. );
         tock = diverge_mpi_wtime();
         w_time_self += tock-tick;
     }
