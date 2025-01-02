@@ -81,7 +81,7 @@ void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
                     sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))*n_projpref, cudaMemcpyDefault, down));
         CUDA_CHECK(cudaMemcpyAsync(rs_to, rsmap_to, sizeof(index_t)*rsmap_to_sz*2,
                     cudaMemcpyDefault,down));
-        CUDA_CHECK(cudaMemcpyAsync(rs_from, rsmap_from, sizeof(index_t)*rsmap_to_sz,
+        CUDA_CHECK(cudaMemcpyAsync(rs_from, rsmap_from, sizeof(index_t)*rsmap_to_sz*2,
                     cudaMemcpyDefault,down));
         CUDA_CHECK(cudaMemcpyAsync(mom, mom_in, sizeof(index_t)*mom_in_sz,cudaMemcpyDefault,down));
         for(size_t cq = 0; cq < cp->_threadkpts_proj[dev];++cq) {
