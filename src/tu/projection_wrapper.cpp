@@ -2,6 +2,8 @@
 
 #include "projection_wrapper.hpp"
 #include "../misc/btree.h"
+#include "../misc/mergesort.h"
+#include "../misc/bitary.h"
 
 Projection::~Projection() {
     free(my_prefac_proj);
@@ -9,43 +11,52 @@ Projection::~Projection() {
     free(my_prefac_proj_rk);
 }
 
-static inline vector<size_t> sort_permutation( const vector<array<index_t,2>>& _t) {
-    vector<size_t> p(_t.size());
-    for (size_t i=0; i<_t.size(); ++i) p[i] = i;
-    std::sort(p.begin(), p.end(), [&](uindex_t i, uindex_t j){
-            if (_t[i][1] == _t[j][1])
-                return _t[i][0] < _t[j][0];
-            return _t[i][1] < _t[j][1]; });
+// TODO
+typedef struct { index_t v[2]; } claV2ll_t;
+
+static inline int mergesort_permutation_r_comp( size_t i, size_t j, const claV2ll_t* _t ) {
+    if (_t[i].v[1] == _t[j].v[1])
+        return (_t[i].v[0] < _t[j].v[0]) ? -1 : (_t[i].v[0] > _t[j].v[0]) ? 1 : 0;
+    return (_t[i].v[1] < _t[j].v[1]) ? -1 : (_t[i].v[1] > _t[j].v[1]) ? 1 : 0;
+}
+#undef MERGESORT_COMP_R
+#define MERGESORT_COMP_R(i,j,_vt) mergesort_permutation_r_comp(i,j,(const claV2ll_t*)_vt)
+MERGESORT_IMPL_R( mergesort_permutation, size_t )
+
+static inline size_t* sort_permutation( const claV2ll_t* _t, size_t _t_sz ) {
+    size_t* p = (size_t*)calloc(_t_sz, sizeof*p);
+    for (size_t i=0; i<_t_sz; ++i) p[i] = i;
+    mergesort_permutation_r(p, _t_sz, (void*)_t, diverge_omp_num_threads(), 0);
     return p;
 }
 
-template <typename T, typename S>
-void apply_permutation_in_place( vector<T>& vec, const vector<S>& p) {
-    vector<bool> done(vec.size());
-    for (uindex_t i=0; i<vec.size(); ++i) {
-        if (done[i])
-            continue;
-        done[i] = true;
-        uindex_t prev_j = i;
-        uindex_t j = p[i];
+static inline void apply_permutation_in_place( claV2ll_t* vec, const size_t* p, size_t p_sz ) {
+    cbyte_t* done = bitary_alloc(p_sz);
+    for (size_t i=0; i<p_sz; ++i) {
+        if (bitary_get(done, i)) continue;
+        bitary_set(done,i);
+        size_t prev_j = i;
+        size_t j = p[i];
         while (i != j) {
-            std::swap(vec[prev_j], vec[j]);
-            done[j] = true;
+            claV2ll_t tmp; tmp = vec[prev_j]; vec[prev_j] = vec[j]; vec[j] = tmp;
+            bitary_set(done,j);
             prev_j = j;
             j = p[j];
         }
     }
+    free(done);
 }
 
 static inline void sort_and_filter(vector<array<index_t,2>>& _t, vector<index_t>& _t_p,
                               vector<array<index_t,2>>& _fhelp, vector<index_t>& _f,
-                              vector<std::array<index_t,2>>& _rhelp,vector<index_t>& _r,
+                              vector<array<index_t,2>>& _rhelp, vector<index_t>& _r,
                               vector<index_t>& _len,
                               vector<index_t>& _off){
-    vector<size_t> p = sort_permutation(_t);
-    apply_permutation_in_place(_t,p);
-    apply_permutation_in_place(_fhelp,p);
-    apply_permutation_in_place(_rhelp,p);
+    size_t* p = sort_permutation((claV2ll_t*)_t.data(), _t.size());
+    apply_permutation_in_place((claV2ll_t*)_t.data(), p, _t.size());
+    apply_permutation_in_place((claV2ll_t*)_fhelp.data(), p, _t.size());
+    apply_permutation_in_place((claV2ll_t*)_rhelp.data(), p, _t.size());
+    free( p );
     uindex_t msize = _t.size();
     _t_p.resize(2*msize);
     memcpy((void*)_t_p.data(),(void*)&(_t[0][0]), 2*msize*sizeof(index_t));
