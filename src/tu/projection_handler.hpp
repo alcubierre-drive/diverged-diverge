@@ -9,7 +9,7 @@
 #include "diverge_interface.h"
 #include "vertex.hpp"
 #include "projection_wrapper.hpp"
-#include "projection_implementation.hpp"
+#include "projection_implementation.h"
 
 void P_projection(complex128_t* proj_vertex, Vertex* const vertex,
                 const Projection* const proj);

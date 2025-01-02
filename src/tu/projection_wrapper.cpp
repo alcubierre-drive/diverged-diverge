@@ -2,7 +2,6 @@
 
 #include "projection_wrapper.hpp"
 #include "../misc/btree.h"
-#include <numeric>
 
 Projection::~Projection() {
     free(my_prefac_proj);
@@ -12,7 +11,7 @@ Projection::~Projection() {
 
 static inline vector<size_t> sort_permutation( const vector<array<index_t,2>>& _t) {
     vector<size_t> p(_t.size());
-    std::iota(p.begin(), p.end(), 0);
+    for (size_t i=0; i<_t.size(); ++i) p[i] = i;
     std::sort(p.begin(), p.end(), [&](uindex_t i, uindex_t j){
             if (_t[i][1] == _t[j][1])
                 return _t[i][0] < _t[j][0];
@@ -74,7 +73,7 @@ static inline void sort_and_filter(vector<array<index_t,2>>& _t, vector<index_t>
         _off[i] = _off[i-1] + _len[i-1];
     for(uindex_t k = 0; k < _len.size(); ++k) {
         vector<uindex_t> p(_len[k]);
-        std::iota(p.begin(), p.end(), 0);
+        for (size_t i=0; i<p.size(); ++i) p[i] = i;
         std::sort(p.begin(), p.end(),
                     [&](uindex_t i, uindex_t j){ if(_fhelp[i+_off[k]][1] == _fhelp[j+_off[k]][1])
                                                     return _fhelp[i+_off[k]][0] < _fhelp[j+_off[k]][0];
