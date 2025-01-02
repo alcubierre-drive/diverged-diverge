@@ -454,7 +454,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     VECTOR_INIT( vec_claV2ll_t, _lmap );
     index_t nff = tu_data->existing_ff_sz;
     // iterate over all unique pair combinations
-    btree_t* index_to_reduced = NULL;
+    xbtree_t* index_to_reduced = xbtree_init( MAX(tu_data->n_orbff,1024) );
     index_t curr_idx = 0;
     for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
     for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
@@ -463,10 +463,9 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
         index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
                           mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
                           n_orb,n_orb,n_orb,n_orb);
-        btree_t* found = btree_find( index_to_reduced, trial );
+        btree_t* found = xbtree_find( index_to_reduced, trial );
         if (!found) {
-            btree_t* node = btree_insert( index_to_reduced, trial );
-            if (!index_to_reduced) index_to_reduced = node; // set head
+            btree_t* node = xbtree_insert( index_to_reduced, trial );
             node->val = curr_idx++;
 
             claV2ll_t l = {{m1,m3}};
@@ -505,7 +504,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
 
     for (index_t i=0; i<_lmap_sz; ++i) VECTOR_FREE( _lmap[i].v );
     VECTOR_FREE( _lmap );
-    btree_free( index_to_reduced );
+    xbtree_free( index_to_reduced );
 }
 
 void init_MPI_dist(diverge_model_t* model) {

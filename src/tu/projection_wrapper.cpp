@@ -1,7 +1,7 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "projection_wrapper.hpp"
-#include "../misc/hashtable.h"
+#include "../misc/btree.h"
 #include <numeric>
 
 Projection::~Projection() {
@@ -525,35 +525,34 @@ typedef struct {
     const index_t* nk;
     vector<Vec3i>* p_existing_r;
 } index_to_reduced_iterate_t;
-static inline void index_to_reduced_iterate( index_t* i, void** val, void* ctx ) {
+static inline void index_to_reduced_iterate( btree_t* node, void* ctx ) {
     index_to_reduced_iterate_t* ir = (index_to_reduced_iterate_t*)ctx;
-    *((index_t*)val) = ir->idx++;
-    ir->p_existing_r->push_back(unravel_idx(*i,ir->nk));
+    node->val = ir->idx++;
+    ir->p_existing_r->push_back(unravel_idx(node->key,ir->nk));
 }
 void Projection::init_to_mom_map_existing_r(const diverge_model_t* model) {
     index_t t_sz = (PC_r.size() + DC_r.size() + DP_r.size() + PD_r.size())/4;
-    mpi_vrb_printf( "init hash table of size %lix16\n", MAX(t_sz,1024) );
-    hashtable_t* t = hashtable_init( MAX(t_sz,1024), 16 );
+    xbtree_t* t = xbtree_init( MAX(t_sz,1024) );
 
-    for (index_t i: PC_r) hashtable_insert_safe( t, i, NULL );
-    for (index_t i: DC_r) hashtable_insert_safe( t, i, NULL );
-    for (index_t i: DP_r) hashtable_insert_safe( t, i, NULL );
-    for (index_t i: PD_r) hashtable_insert_safe( t, i, NULL );
+    for (index_t i: PC_r) xbtree_find_or_insert( t, i );
+    for (index_t i: DC_r) xbtree_find_or_insert( t, i );
+    for (index_t i: DP_r) xbtree_find_or_insert( t, i );
+    for (index_t i: PD_r) xbtree_find_or_insert( t, i );
 
     index_to_reduced_iterate_t ir = { 0, model->nk, &existing_r };
-    hashtable_iterate_addr( t, &index_to_reduced_iterate, &ir );
+    xbtree_iter( t, &index_to_reduced_iterate, &ir );
 
     _nr = ir.idx;
     m_PC_CP_mom.resize(PC_r.size());
-    for (uindex_t i=0; i<PC_r.size(); ++i) m_PC_CP_mom[i] = (index_t)hashtable_find( t, PC_r[i] );
+    for (uindex_t i=0; i<PC_r.size(); ++i) m_PC_CP_mom[i] = xbtree_find( t, PC_r[i] )->val;
     m_DC_CD_mom.resize(DC_r.size());
-    for (uindex_t i=0; i<DC_r.size(); ++i) m_DC_CD_mom[i] = (index_t)hashtable_find( t, DC_r[i] );
+    for (uindex_t i=0; i<DC_r.size(); ++i) m_DC_CD_mom[i] = xbtree_find( t, DC_r[i] )->val;
     m_P_to_D_mom.resize(PD_r.size());
-    for (uindex_t i=0; i<PD_r.size(); ++i) m_P_to_D_mom[i] = (index_t)hashtable_find( t, PD_r[i] );
+    for (uindex_t i=0; i<PD_r.size(); ++i) m_P_to_D_mom[i] = xbtree_find( t, PD_r[i] )->val;
     m_D_to_P_mom.resize(DP_r.size());
-    for (uindex_t i=0; i<DP_r.size(); ++i) m_D_to_P_mom[i] = (index_t)hashtable_find( t, DP_r[i] );
+    for (uindex_t i=0; i<DP_r.size(); ++i) m_D_to_P_mom[i] = xbtree_find( t, DP_r[i] )->val;
 
-    hashtable_free(t);
+    xbtree_free(t);
 }
 
 void Projection::mpi_communicate() {
