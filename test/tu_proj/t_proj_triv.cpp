@@ -6,8 +6,8 @@
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
-#include "../../src/tu/projection_handler.hpp"
+#include "../../src/tu/projection_wrapper.h"
+#include "../../src/tu/projection_handler.h"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
@@ -21,9 +21,9 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     diverge_model_t* mom = gen_square_lat_hub(6,6,1,1);
     diverge_model_internals_tu(mom, 1.1);
 
-    Projection ProjMom (mom);
+    Projection* ProjMom = projection_init(mom);
     tu_loop_t LoopMom (mom);
-    Vertex VertMom(mom, &ProjMom, &LoopMom);
+    Vertex VertMom(mom, ProjMom, &LoopMom);
 
     std::random_device rd{};
     std::mt19937 re{rd()};
@@ -48,18 +48,19 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     complex128_t* r2 = (complex128_t*)calloc(VertOrb.full_vert_size,sizeof(complex128_t));
     complex128_t* r1 = (complex128_t*)calloc(VertOrb.full_vert_size,sizeof(complex128_t));
 
-    P_projection(r2,&VertMom,&ProjMom);
+    P_projection(r2,&VertMom,ProjMom);
     t_P_projection(r1,&VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
 
-    C_projection(r2,&VertMom,&ProjMom);
+    C_projection(r2,&VertMom,ProjMom);
     t_C_projection(r1,&VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
 
-    D_projection(r2,&VertMom,&ProjMom);
+    D_projection(r2,&VertMom,ProjMom);
     t_D_projection(r1,&VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
 
+    projection_free( ProjMom );
     diverge_model_free(mom);
     free(r1);
     free(r2);
@@ -70,9 +71,9 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
     diverge_model_t* mom = gen_honeycomb_lat_hub(6,6,1,1);
     diverge_model_internals_tu(mom, 0.7);
 
-    Projection ProjMom (mom);
+    Projection* ProjMom = projection_init(mom);
     tu_loop_t LoopMom (mom);
-    Vertex VertMom(mom, &ProjMom, &LoopMom);
+    Vertex VertMom(mom, ProjMom, &LoopMom);
 
         std::random_device rd{};
         std::mt19937 re{rd()};
@@ -97,18 +98,19 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
     complex128_t* r2 = (complex128_t*)calloc(VertOrb.full_vert_size,sizeof(complex128_t));
     complex128_t* r1 = (complex128_t*)calloc(VertOrb.full_vert_size,sizeof(complex128_t));
 
-    P_projection(r2,&VertMom,&ProjMom);
+    P_projection(r2,&VertMom,ProjMom);
     t_P_projection(r1,&VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
 
-    C_projection(r2,&VertMom,&ProjMom);
+    C_projection(r2,&VertMom,ProjMom);
     t_C_projection(r1,&VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
 
-    D_projection(r2,&VertMom,&ProjMom);
+    D_projection(r2,&VertMom,ProjMom);
     t_D_projection(r1,&VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
 
+    projection_free( ProjMom );
     diverge_model_free(mom);
     free(r1);
     free(r2);

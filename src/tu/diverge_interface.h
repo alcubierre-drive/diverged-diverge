@@ -12,8 +12,9 @@
 extern "C" {
 #endif
 
-#ifndef SKIP_CLAV3I_T
+#ifndef SKIP_CLA_TYPES
 typedef struct claV3i_t { int v[3]; } claV3i_t;
+typedef struct claV2ll_t { index_t v[2]; } claV2ll_t;
 #endif
 
 typedef enum {

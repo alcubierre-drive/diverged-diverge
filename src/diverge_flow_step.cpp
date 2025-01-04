@@ -90,7 +90,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
                 mpi_err_printf("internals for TU FRG not set\n");
                 goto end_error;
             }
-            st->tu_proj = new Projection(mod);
+            st->tu_proj = projection_init(mod);
             st->tu_loop = new tu_loop_t(mod);
             st->tu_vertex = new Vertex(mod, st->tu_proj,st->tu_loop, st->channel_selection[0],
                     st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
@@ -150,7 +150,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
             break;
         case diverge_tu:
             delete st->tu_vertex;
-            delete st->tu_proj;
+            projection_free( st->tu_proj );
             delete st->tu_step;
             delete st->tu_loop;
             break;

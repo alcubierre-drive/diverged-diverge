@@ -6,8 +6,8 @@
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
-#include "../../src/tu/projection_handler.hpp"
+#include "../../src/tu/projection_wrapper.h"
+#include "../../src/tu/projection_handler.h"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
@@ -21,9 +21,9 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
     diverge_model_t* mom = gen_honeycomb_lat_hub(4,4,1,1);
     diverge_model_internals_tu(mom, 22);
 
-    Projection ProjMom (mom);
+    Projection* ProjMom = projection_init(mom);
     tu_loop_t LoopMom (mom);
-    Vertex VertMom(mom, &ProjMom, &LoopMom);
+    Vertex VertMom(mom, ProjMom, &LoopMom);
 
     std::random_device rd{};
     std::mt19937 re{rd()};
@@ -39,18 +39,19 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
     complex128_t* r2 = (complex128_t*)calloc(VertMom.full_vert_size,sizeof(complex128_t));
     complex128_t* r1 = (complex128_t*)calloc(VertMom.full_vert_size,sizeof(complex128_t));
 
-    P_projection(r2,&VertMom,&ProjMom);
-    P_projection_no_GPU(r1,&VertMom,&ProjMom);
+    P_projection(r2,&VertMom,ProjMom);
+    P_projection_no_GPU(r1,&VertMom,ProjMom);
     CHECK(check_equal(r1,r2,POW2(VertMom.n_orbff)*VertMom.my_nk));
 
-    C_projection(r2,&VertMom,&ProjMom);
-    C_projection_no_GPU(r1,&VertMom,&ProjMom);
+    C_projection(r2,&VertMom,ProjMom);
+    C_projection_no_GPU(r1,&VertMom,ProjMom);
     CHECK(check_equal(r1,r2,POW2(VertMom.n_orbff)*VertMom.my_nk));
 
-    D_projection(r2,&VertMom,&ProjMom);
-    D_projection_no_GPU(r1,&VertMom,&ProjMom);
+    D_projection(r2,&VertMom,ProjMom);
+    D_projection_no_GPU(r1,&VertMom,ProjMom);
     CHECK(check_equal(r1,r2,POW2(VertMom.n_orbff)*VertMom.my_nk));
 
+    projection_free(ProjMom);
     diverge_model_free(mom);
     free(r1);
     free(r2);

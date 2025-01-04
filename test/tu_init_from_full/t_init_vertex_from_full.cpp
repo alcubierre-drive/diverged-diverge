@@ -13,7 +13,7 @@
 #include "../../src/tu/diverge_interface.h"
 #include "../../src/tu/diverge_interface_symmstruct.h"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
+#include "../../src/tu/projection_wrapper.h"
 #include "../../src/tu/flow_stepper.hpp"
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/diverge_symmetrize.h"
@@ -62,9 +62,9 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
     step1->tu_vertex->project_fullV(mod1, hbuf);
 
     mod1->ffill = &full_vertex;
-    Projection proj (mod1);
+    Projection* proj = projection_init(mod1);
     tu_loop_t loop (mod1);
-    Vertex v2(mod1, &proj,&loop);
+    Vertex v2(mod1, proj,&loop);
     v2.project_fullV(mod1, buf);
     CHECK(check_equal(buf,hbuf,size));
 
@@ -72,6 +72,7 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
     free(hbuf);
     mod1->data = NULL;
     diverge_flow_step_free(step1);
+    projection_free( proj );
     diverge_model_free( mod1 );
 }
 

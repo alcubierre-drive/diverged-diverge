@@ -13,7 +13,7 @@
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
 
-#define SKIP_CLAV3I_T
+#define SKIP_CLA_TYPES
 #include "diverge_interface.h"
 
 static void symmstruct_serialize( const symmstruct_t* symm, char** ptr, uindex_t* nbytes );

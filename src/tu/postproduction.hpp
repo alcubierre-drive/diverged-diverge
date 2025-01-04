@@ -5,8 +5,8 @@
 #include "../diverge_model.h"
 #include "../diverge_flow_step.h"
 #include "vertex.hpp"
-#include "projection_wrapper.hpp"
-#include "projection_handler.hpp"
+#include "projection_wrapper.h"
+#include "projection_handler.h"
 
 #include <string>
 #include <vector>

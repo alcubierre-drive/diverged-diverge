@@ -10,8 +10,8 @@
 #include "vertex.hpp"
 #include "propagator.hpp"
 #include "selfenergy.h"
-#include "projection_wrapper.hpp"
-#include "projection_handler.hpp"
+#include "projection_wrapper.h"
+#include "projection_handler.h"
 #include "../misc/batched_gemms.h"
 
 #include <string>

@@ -4,7 +4,7 @@
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
 
-#define SKIP_CLAV3I_T
+#define SKIP_CLA_TYPES
 #include "diverge_interface.h"
 
 #include "../misc/qnan.h"

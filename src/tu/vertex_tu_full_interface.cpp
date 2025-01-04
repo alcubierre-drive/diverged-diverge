@@ -1,7 +1,7 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "vertex.hpp"
-#include "projection_handler.hpp"
+#include "projection_handler.h"
 
 static inline complex128_t ff(const double* k, const double* r){
     return exp(-I128*(k[0]*r[0]+k[1]*r[1]+k[2]*r[2]));

@@ -32,7 +32,7 @@ complex128_t* Vertex_get_bubble_helper( void* V_ );
 
 #include "../diverge_Eigen3.hpp"
 
-#include "projection_wrapper.hpp"
+#include "projection_wrapper.h"
 #include "propagator.hpp"
 
 class Vertex

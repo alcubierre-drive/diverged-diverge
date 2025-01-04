@@ -1,7 +1,7 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "vertex.hpp"
-#include "projection_handler.hpp"
+#include "projection_handler.h"
 
 diverge_model_t* Vertex_get_model( void* V_ ) { return static_cast<Vertex*>(V_)->model; }
 const tu_data_t* Vertex_get_tu_data( void* V_ ) { return static_cast<Vertex*>(V_)->tu_data; }
@@ -70,7 +70,7 @@ Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop,
         index_t bubble_nk_local = (tu_data->use_cuda_mpi_loop && tu_data->use_reduced_loop) ? nk : nk_local;
         bubble_helper = (complex128_t*)calloc(POW2(n_orbff)*bubble_nk_local*POW4(n_spin), sizeof(complex128_t));
         memsize += POW2(n_orbff)*nk_local*POW4(n_spin);
-        nk_local = my_nk > proj->get_nr() ? my_nk : proj->get_nr();
+        nk_local = my_nk > proj->nr ? my_nk : proj->nr;
         product_helper = (complex128_t*)calloc(POW2(n_orbff)*nk_local*POW4(n_spin), sizeof(complex128_t));
         memsize += POW2(n_orbff)*nk_local*POW4(n_spin);
         projection_helper = (complex128_t*)calloc(POW2(n_orbff)*my_nk*POW4(n_spin), sizeof(complex128_t));
@@ -362,11 +362,11 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         index_t proj_memoffset_managed[7] = {0};
         index_t proj_memtype[7] = {0};
 
-        proj_memsize[0] = ensure_align(sizeof(cuDoubleComplex)*proj->get_nr()*my_nk); // prefacs
-        proj_memsize[1] = ensure_align(sizeof(index_t)*proj->get_CP_PC_map_TO_padded().size()); // rs_to
-        proj_memsize[2] = ensure_align(sizeof(index_t)*proj->get_CP_PC_map_FROM().size()); // rs_from
-        proj_memsize[3] = ensure_align(sizeof(index_t)*proj->get_CP_PC_prefac_map().size()); // mom
-        proj_memsize[4] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))*proj->get_nr()); // buf_ondev
+        proj_memsize[0] = ensure_align(sizeof(cuDoubleComplex)*proj->nr*my_nk); // prefacs
+        proj_memsize[1] = ensure_align(sizeof(index_t)*proj->PC_CP_t_padded.size()); // rs_to
+        proj_memsize[2] = ensure_align(sizeof(index_t)*proj->PC_CP_f.size()); // rs_from
+        proj_memsize[3] = ensure_align(sizeof(index_t)*proj->PC_CP_mom.size()); // mom
+        proj_memsize[4] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))*proj->nr); // buf_ondev
         proj_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))); // buf_res0
         proj_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))); // buf_res1
 

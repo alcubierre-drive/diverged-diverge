@@ -10,7 +10,7 @@
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
+#include "../../src/tu/projection_wrapper.h"
 
 #ifndef USE_GF_FLOATS
 #ifndef USE_MPI
@@ -23,10 +23,10 @@ TEST_CASE("momentum vs realspace tu_loop_t", "[prop][prop_orbVSreal]")
 
     tu_loop_t PropMom (mom);
     tu_loop_t PropOrb (orb);
-    Projection ProjMom (mom);
-    Vertex VertMom(mom, &ProjMom, &PropMom);
-    Projection ProjOrb (orb);
-    Vertex Vertorb(mom, &ProjOrb, &PropOrb);
+    Projection* ProjMom = projection_init(mom);
+    Vertex VertMom(mom, ProjMom, &PropMom);
+    Projection* ProjOrb = projection_init(orb);
+    Vertex Vertorb(mom, ProjOrb, &PropOrb);
 
 
     index_t n_orbffo = PropOrb.n_orbff;
@@ -66,6 +66,8 @@ TEST_CASE("momentum vs realspace tu_loop_t", "[prop][prop_orbVSreal]")
     CHECK(std::abs(trace(lmr,n_orbffm,PropMom.nk)
                   -trace(lm,n_orbffm,PropMom.nk)) < 1e-10);
 
+    projection_free( ProjMom );
+    projection_free( ProjOrb );
     diverge_model_free(orb);
     diverge_model_free(mom);
     free(lo);
@@ -84,11 +86,10 @@ TEST_CASE("momentum vs realspace basis tu_loop_t", "[prop][prop_basis]")
 
     tu_loop_t PropMom (mom);
     tu_loop_t PropOrb (orb);
-    Projection ProjMom (mom);
-    Vertex VertMom(mom, &ProjMom, &PropMom);
-    Projection ProjOrb (orb);
-    Vertex Vertorb(mom, &ProjOrb, &PropOrb);
-
+    Projection* ProjMom = projection_init(mom);
+    Vertex VertMom(mom, ProjMom, &PropMom);
+    Projection* ProjOrb = projection_init(orb);
+    Vertex Vertorb(mom, ProjOrb, &PropOrb);
 
     index_t n_orbffo = PropOrb.n_orbff;
     index_t n_orbffm = PropMom.n_orbff;
@@ -136,6 +137,8 @@ TEST_CASE("momentum vs realspace basis tu_loop_t", "[prop][prop_basis]")
     CHECK(std::abs(trace(lmr,n_orbffm,PropMom.nk)
                   -trace(lm,n_orbffm,PropMom.nk)) < 1e-9);
 
+    projection_free( ProjMom );
+    projection_free( ProjOrb );
     diverge_model_free(orb);
     diverge_model_free(mom);
     free(lo);
@@ -150,8 +153,8 @@ TEST_CASE("momentum loop variants", "[prop][prop_var]")
     diverge_model_internals_tu(mom, 1.1);
 
     tu_loop_t PropMom (mom);
-    Projection ProjMom (mom);
-    Vertex VertMom(mom, &ProjMom, &PropMom);
+    Projection* ProjMom = projection_init(mom);
+    Vertex VertMom(mom, ProjMom, &PropMom);
 
     index_t n_orbffm = PropMom.n_orbff;
     complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
@@ -165,6 +168,7 @@ TEST_CASE("momentum loop variants", "[prop][prop_var]")
     PropMom.S_loop_static_red<true>(lmr);
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
 
+    projection_free( ProjMom );
     diverge_model_free(mom);
     free(lmr);
     free(lm);
@@ -178,8 +182,8 @@ TEST_CASE("momentum loop variants refine", "[prop][prop_ref][cmp]")
     diverge_model_internals_tu(mom, 1.1);
 
     tu_loop_t PropMom (mom);
-    Projection ProjMom (mom);
-    Vertex VertMom(mom, &ProjMom, &PropMom);
+    Projection* ProjMom = projection_init(mom);
+    Vertex VertMom(mom, ProjMom, &PropMom);
 
     index_t n_orbffm = PropMom.n_orbff;
     complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
@@ -193,6 +197,7 @@ TEST_CASE("momentum loop variants refine", "[prop][prop_ref][cmp]")
     PropMom.S_loop_static_red<true>(lmr);
     bool PP_equal = check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk);
 
+    projection_free( ProjMom );
     diverge_model_free(mom);
     free(lmr);
     free(lm);

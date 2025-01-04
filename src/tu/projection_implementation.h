@@ -12,10 +12,6 @@
 extern "C" {
 #endif
 
-#ifndef SKIP_CLAV2LL_T
-typedef struct { index_t v[2]; } claV2ll_t;
-#endif
-
 void _to_C( complex128_t* proj_vertex, const complex128_t* I_channel,
         const claV2ll_t* rsmap_to, index_t rsmap_to_sz, const index_t* rsmap_from,
         const index_t* mom, const index_t* rsmap_off, const index_t* rsmap_len,

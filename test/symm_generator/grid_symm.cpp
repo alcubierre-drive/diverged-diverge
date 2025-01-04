@@ -10,7 +10,7 @@
 #include "../../src/tu/propagator.hpp"
 #include "../../src/grid/loops.hpp"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
+#include "../../src/tu/projection_wrapper.h"
 #include "../helper_functions.hpp"
 
 

@@ -10,7 +10,7 @@
 #include "../../src/tu/propagator.hpp"
 #include "../../src/grid/loops.hpp"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
+#include "../../src/tu/projection_wrapper.h"
 #include "../helper_functions.hpp"
 
 void unproject_loop(complex128_t* buf,complex128_t* loop,const diverge_model_t* model) {
@@ -74,8 +74,8 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     complex128_t* Lrecog = (complex128_t*)calloc(fsize,sizeof(complex128_t));
 
     tu_loop_t tu_loop(mod_tu);
-    Projection ProjMom (mod_tu);
-    Vertex VertMom(mod_tu, &ProjMom, &tu_loop);
+    Projection* ProjMom = projection_init(mod_tu);
+    Vertex VertMom(mod_tu, ProjMom, &tu_loop);
     
     grid::Loops grid_loop (mod_grid);
     tu_loop.GF_zero_T(I128*0.1);
@@ -116,6 +116,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     free(Ltu);
     free(Lrecog);
     free(Lreco);
+    projection_free( ProjMom );
     diverge_model_free(mod_tu);
     diverge_model_free(mod_grid);
 }
