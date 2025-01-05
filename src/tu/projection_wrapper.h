@@ -19,24 +19,28 @@ struct Projection {
     complex128_t* my_prefac_proj_rk;
 
     VECTOR_DECL( claV2ll_t, PC_CP_t )
+    VECTOR_DECL( claV2ll_t, PC_CP_t_padded )
     index_t* PC_CP_f;
     VECTOR_DECL( index_t, PC_CP_mom )
     index_t* PC_CP_d;
     index_t* PC_CP_l;
 
     VECTOR_DECL( claV2ll_t, DC_CD_t )
+    VECTOR_DECL( claV2ll_t, DC_CD_t_padded )
     index_t* DC_CD_f;
     VECTOR_DECL( index_t, DC_CD_mom )
     index_t* DC_CD_d;
     index_t* DC_CD_l;
 
     VECTOR_DECL( claV2ll_t, D_to_P_t )
+    VECTOR_DECL( claV2ll_t, D_to_P_t_padded )
     index_t* D_to_P_f;
     VECTOR_DECL( index_t, D_to_P_mom )
     index_t* D_to_P_d;
     index_t* D_to_P_l;
 
     VECTOR_DECL( claV2ll_t, P_to_D_t )
+    VECTOR_DECL( claV2ll_t, P_to_D_t_padded )
     index_t* P_to_D_f;
     VECTOR_DECL( index_t, P_to_D_mom )
     index_t* P_to_D_d;
