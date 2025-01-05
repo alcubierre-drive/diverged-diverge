@@ -3,6 +3,7 @@
 #include "../misc/btree.h"
 #include "../misc/mergesort.h"
 #include "../misc/bitary.h"
+#include <assert.h>
 
 #define LINALG_NO_LAPACKE
 #include "../misc/linalg.h"
@@ -315,6 +316,7 @@ static void init_CP_PC_proj( Projection* p, const diverge_model_t* model ) {
     p->PC_CP_t_cap = v_PC_CP_t.v_cap;
 
     p->PC_CP_f = v_PC_CP_f.v;
+    p->PC_CP_f_sz = v_PC_CP_f.v_sz;
     p->PC_CP_t_padded = v_PC_CP_t_padded.v;
     p->PC_CP_l = v_PC_CP_l.v;
     p->PC_CP_d = v_PC_CP_d.v;
@@ -403,6 +405,7 @@ static void init_CD_DC_proj( Projection* p, const diverge_model_t* model ) {
     p->DC_CD_t_cap = v_DC_CD_t.v_cap;
 
     p->DC_CD_f = v_DC_CD_f.v;
+    p->DC_CD_f_sz = v_DC_CD_f.v_sz;
     p->DC_CD_t_padded = v_DC_CD_t_padded.v;
     p->DC_CD_l = v_DC_CD_l.v;
     p->DC_CD_d = v_DC_CD_d.v;
@@ -491,6 +494,7 @@ static void init_D_to_P_proj( Projection* p, const diverge_model_t* model ) {
     p->D_to_P_t_cap = v_D_to_P_t.v_cap;
 
     p->D_to_P_f = v_D_to_P_f.v;
+    p->D_to_P_f_sz = v_D_to_P_f.v_sz;
     p->D_to_P_t_padded = v_D_to_P_t_padded.v;
     p->D_to_P_l = v_D_to_P_l.v;
     p->D_to_P_d = v_D_to_P_d.v;
@@ -580,6 +584,7 @@ static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
     p->P_to_D_t_cap = v_P_to_D_t.v_cap;
 
     p->P_to_D_f = v_P_to_D_f.v;
+    p->P_to_D_f_sz = v_P_to_D_f.v_sz;
     p->P_to_D_t_padded = v_P_to_D_t_padded.v;
     p->P_to_D_l = v_P_to_D_l.v;
     p->P_to_D_d = v_P_to_D_d.v;
@@ -637,7 +642,8 @@ void mpi_communicate( Projection* p ) {
 #define MPICOPY( XX ) \
     if (diverge_mpi_comm_rank() == 0) { \
         n_len = p-> XX##_t_sz; \
-        n_tot = p-> XX##_l[n_len-1] + p-> XX##_d[n_len-1]; \
+        n_tot = p-> XX##_f_sz; \
+        assert( n_tot == p-> XX##_l[n_len-1] + p-> XX##_d[n_len-1] ); \
     } \
     diverge_mpi_bcast_bytes( &n_len, sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( &n_tot, sizeof(index_t), 0 ); \
@@ -648,6 +654,7 @@ void mpi_communicate( Projection* p ) {
         p-> XX##_t_padded = calloc(n_len, sizeof*p-> XX##_t_padded * 2); \
         VECTOR_RESIZE( p-> XX##_mom, n_tot ); \
         p-> XX##_f = calloc(n_tot, sizeof*p-> XX##_f); \
+        p-> XX##_f_sz = n_tot; \
     } \
     diverge_mpi_bcast_bytes( p-> XX##_d, n_len*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_l, n_len*sizeof(index_t), 0 ); \

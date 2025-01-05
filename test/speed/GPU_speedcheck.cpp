@@ -45,19 +45,20 @@ TEST_CASE("loop proj", "[.][projspeed]") {
     MPILoglevelWrapper LL(5);
     diverge_model_t* mom = gen_honeycomb_lat_hub(30,30,1,1);
     diverge_model_internals_tu(mom, 2.5);
-    Projection ProjMom (mom);
+    Projection* ProjMom = projection_init(mom);
     tu_loop_t LoopMom (mom);
-    Vertex VertMom(mom, &ProjMom, &LoopMom);
+    Vertex VertMom(mom, ProjMom, &LoopMom);
     complex128_t* r2 = (complex128_t*)calloc(VertMom.full_vert_size,sizeof(complex128_t));
 
     double tick = diverge_mpi_wtime();
-    P_projection(r2,&VertMom,&ProjMom);
-    C_projection(r2,&VertMom,&ProjMom);
-    D_projection(r2,&VertMom,&ProjMom);
+    P_projection(r2,&VertMom,ProjMom);
+    C_projection(r2,&VertMom,ProjMom);
+    D_projection(r2,&VertMom,ProjMom);
 
     double tock = diverge_mpi_wtime();
     mpi_log_printf("time 3 projections took %4.4f \n", tock -tick);
 
+    projection_free( ProjMom );
     diverge_model_free(mom);
     free(r2);
 }
