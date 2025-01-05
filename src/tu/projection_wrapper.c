@@ -57,9 +57,7 @@ typedef struct { const claV2ll_t* _fhelp; const index_t* _off; uindex_t k; } mer
 static inline int mergesort_fhelp_comp( uindex_t i, uindex_t j, const mergesort_fhelp_t* h ) {
     const claV2ll_t fi = h->_fhelp[i+h->_off[h->k]],
                     fj = h->_fhelp[j+h->_off[h->k]];
-    if (fi.v[1] == fj.v[1])
-        return fi.v[0] < fi.v[0] ? -1 : fi.v[0] > fi.v[0] ? 1 : 0;
-    return fi.v[1] < fi.v[1] ? -1 : fi.v[1] > fi.v[1] ? 1 : 0;
+    return (fi.v[1] == fj.v[1]) ? (fi.v[0] - fj.v[0]) : (fi.v[1] - fj.v[1]);
 }
 #undef MERGESORT_COMP_R
 #define MERGESORT_COMP_R( x, y, ctx ) mergesort_fhelp_comp( (x), (y), (const mergesort_fhelp_t*)ctx )
@@ -111,11 +109,10 @@ static inline vec_claV2ll_t sort_and_filter( vec_claV2ll_t* _t,
         for (index_t i=0; i<p_sz; ++i) p[i] = i;
         mergesort_fhelp_t ctx = { _fhelp->v, _off->v, k };
         mergesort_fhelp_r( p, p_sz, (void*)&ctx, diverge_omp_num_threads(), 0 );
-        for (index_t q=0; q<_len->v[k]; ++q) {
-            _f->v[2*(q+_off->v[k])] = _fhelp->v[_off->v[k]+p[q]].v[0];
-            _f->v[2*(q+_off->v[k])+1] = _fhelp->v[_off->v[k]+p[q]].v[1];
-            _r->v[2*(q+_off->v[k])] = _rhelp->v[_off->v[k]+p[q]].v[0];
-            _r->v[2*(q+_off->v[k])+1] = _rhelp->v[_off->v[k]+p[q]].v[1];
+        for (index_t q=0; q<_len->v[k]; ++q)
+        for (int d=0; d<2; ++d) {
+            _f->v[2*(q+_off->v[k])+d] = _fhelp->v[_off->v[k]+p[q]].v[d];
+            _r->v[2*(q+_off->v[k])+d] = _rhelp->v[_off->v[k]+p[q]].v[d];
         }
         _len->v[k] *= 2; _off->v[k] *= 2;
         VECTOR_FREE( p );
@@ -192,7 +189,7 @@ Projection* projection_init( const diverge_model_t* model ) {
     mpi_communicate( p );
     init_prefac_vector( p, model );
 
-    const index_t ntasks = p->DC_CD_t_sz*p->nr*POW4(model->n_spin);
+    const index_t ntasks = (p->DC_CD_f_sz/2)*p->nr*POW4(model->n_spin);
     cuda_setup_projections( &p->proj_descr, ntasks, tu_data->my_nk );
     return p;
 }
@@ -331,7 +328,6 @@ static void init_CP_PC_proj( Projection* p, const diverge_model_t* model ) {
     p->PC_r = v_PC_r.v;
     p->PC_r_sz = v_PC_r.v_sz;
     p->PC_r_cap = v_PC_r.v_cap;
-
     VECTOR_FREE( f_helper );
     VECTOR_FREE( r_helper );
 }
