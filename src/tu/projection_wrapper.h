@@ -20,28 +20,24 @@ struct Projection {
 
     VECTOR_DECL( claV2ll_t, PC_CP_t )
     index_t* PC_CP_f;
-    index_t* PC_CP_t_padded;
     VECTOR_DECL( index_t, PC_CP_mom )
     index_t* PC_CP_d;
     index_t* PC_CP_l;
 
     VECTOR_DECL( claV2ll_t, DC_CD_t )
     index_t* DC_CD_f;
-    index_t* DC_CD_t_padded;
     VECTOR_DECL( index_t, DC_CD_mom )
     index_t* DC_CD_d;
     index_t* DC_CD_l;
 
     VECTOR_DECL( claV2ll_t, D_to_P_t )
     index_t* D_to_P_f;
-    index_t* D_to_P_t_padded;
     VECTOR_DECL( index_t, D_to_P_mom )
     index_t* D_to_P_d;
     index_t* D_to_P_l;
 
     VECTOR_DECL( claV2ll_t, P_to_D_t )
     index_t* P_to_D_f;
-    index_t* P_to_D_t_padded;
     VECTOR_DECL( index_t, P_to_D_mom )
     index_t* P_to_D_d;
     index_t* P_to_D_l;

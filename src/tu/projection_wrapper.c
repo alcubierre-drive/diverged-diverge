@@ -68,7 +68,9 @@ MERGESORT_IMPL_R( mergesort_fhelp, uindex_t )
 typedef struct { VECTOR_DECL( claV2ll_t, v ) } vec_claV2ll_t;
 typedef struct { VECTOR_DECL( index_t, v ) } vec_index_t;
 
-static inline void sort_and_filter( vec_claV2ll_t* _t, vec_index_t* _t_p,
+static inline int claV2ll_equal( claV2ll_t a, claV2ll_t b ) { return a.v[0] == b.v[0] && a.v[1] == b.v[1]; }
+
+static inline void sort_and_filter( vec_claV2ll_t* _t,
         vec_claV2ll_t* _fhelp, vec_index_t* _f,
         vec_claV2ll_t* _rhelp, vec_index_t* _r,
         vec_index_t* _len, vec_index_t* _off ) {
@@ -79,25 +81,26 @@ static inline void sort_and_filter( vec_claV2ll_t* _t, vec_index_t* _t_p,
     free( p );
 
     uindex_t msize = _t->v_sz;
-    VECTOR_RESIZE( _t_p->v, 2*msize );
-    memcpy( _t_p->v, _t->v, 2*msize*sizeof(index_t) );
+    claV2ll_t* _t_p = calloc(msize, sizeof*_t_p);
+    memcpy( _t_p, _t->v, msize*sizeof(claV2ll_t) );
 
     VECTOR_RESIZE( _t->v, 0 );
-    index_t l = _t_p->v[0], r = _t_p->v[1];
+    claV2ll_t lr = _t_p[0];
     index_t len = 0;
-    VECTOR_RESIZE( _f->v, _t_p->v_sz );
-    VECTOR_RESIZE( _r->v, _t_p->v_sz );
+    VECTOR_RESIZE( _f->v, msize*2 );
+    VECTOR_RESIZE( _r->v, msize*2 );
     for (uindex_t i=0; i<msize; ++i) {
-        if (_t_p->v[2*i] == l && _t_p->v[2*i+1] == r) {
+        if (claV2ll_equal(_t_p[i], lr)) {
             len++;
         } else {
             VECTOR_PUSH_BACK( _len->v, len ); len = 1;
-            VECTOR_PUSH_BACK( _t->v, (claV2ll_t){{l,r}} );
-            l = _t_p->v[2*i]; r = _t_p->v[2*i+1];
+            VECTOR_PUSH_BACK( _t->v, lr );
+            lr = _t_p[i];
         }
     }
+    free( _t_p );
     VECTOR_PUSH_BACK( _len->v, len );
-    VECTOR_PUSH_BACK( _t->v, (claV2ll_t){{l,r}} );
+    VECTOR_PUSH_BACK( _t->v, lr );
 
     VECTOR_RESIZE( _off->v, _len->v_sz );
     _off->v[0] = 0;
@@ -199,28 +202,24 @@ void projection_free( Projection* p ) {
 
     free(p->PC_CP_t);
     free(p->PC_CP_f);
-    free(p->PC_CP_t_padded);
     free(p->PC_CP_mom);
     free(p->PC_CP_d);
     free(p->PC_CP_l);
 
     free(p->DC_CD_t);
     free(p->DC_CD_f);
-    free(p->DC_CD_t_padded);
     free(p->DC_CD_mom);
     free(p->DC_CD_d);
     free(p->DC_CD_l);
 
     free(p->D_to_P_t);
     free(p->D_to_P_f);
-    free(p->D_to_P_t_padded);
     free(p->D_to_P_mom);
     free(p->D_to_P_d);
     free(p->D_to_P_l);
 
     free(p->P_to_D_t);
     free(p->P_to_D_f);
-    free(p->P_to_D_t_padded);
     free(p->P_to_D_mom);
     free(p->P_to_D_d);
     free(p->P_to_D_l);
@@ -302,13 +301,12 @@ static void init_CP_PC_proj( Projection* p, const diverge_model_t* model ) {
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
                   v_r_helper = { .v = r_helper, .v_sz = r_helper_sz, .v_cap = r_helper_cap };
 
-    vec_index_t v_PC_CP_t_padded = {0},
-                v_PC_CP_f = {0},
+    vec_index_t v_PC_CP_f = {0},
                 v_PC_r = {0},
                 v_PC_CP_l = {0},
                 v_PC_CP_d = {0};
 
-    sort_and_filter( &v_PC_CP_t, &v_PC_CP_t_padded, &v_f_helper, &v_PC_CP_f,
+    sort_and_filter( &v_PC_CP_t, &v_f_helper, &v_PC_CP_f,
             &v_r_helper, &v_PC_r, &v_PC_CP_l, &v_PC_CP_d );
 
     p->PC_CP_t = v_PC_CP_t.v;
@@ -317,7 +315,6 @@ static void init_CP_PC_proj( Projection* p, const diverge_model_t* model ) {
 
     p->PC_CP_f = v_PC_CP_f.v;
     p->PC_CP_f_sz = v_PC_CP_f.v_sz;
-    p->PC_CP_t_padded = v_PC_CP_t_padded.v;
     p->PC_CP_l = v_PC_CP_l.v;
     p->PC_CP_d = v_PC_CP_d.v;
 
@@ -391,13 +388,12 @@ static void init_CD_DC_proj( Projection* p, const diverge_model_t* model ) {
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
                   v_r_helper = { .v = r_helper, .v_sz = r_helper_sz, .v_cap = r_helper_cap };
 
-    vec_index_t v_DC_CD_t_padded = {0},
-                v_DC_CD_f = {0},
+    vec_index_t v_DC_CD_f = {0},
                 v_DC_r = {0},
                 v_DC_CD_l = {0},
                 v_DC_CD_d = {0};
 
-    sort_and_filter( &v_DC_CD_t, &v_DC_CD_t_padded, &v_f_helper, &v_DC_CD_f,
+    sort_and_filter( &v_DC_CD_t, &v_f_helper, &v_DC_CD_f,
             &v_r_helper, &v_DC_r, &v_DC_CD_l, &v_DC_CD_d );
 
     p->DC_CD_t = v_DC_CD_t.v;
@@ -406,7 +402,6 @@ static void init_CD_DC_proj( Projection* p, const diverge_model_t* model ) {
 
     p->DC_CD_f = v_DC_CD_f.v;
     p->DC_CD_f_sz = v_DC_CD_f.v_sz;
-    p->DC_CD_t_padded = v_DC_CD_t_padded.v;
     p->DC_CD_l = v_DC_CD_l.v;
     p->DC_CD_d = v_DC_CD_d.v;
 
@@ -480,13 +475,12 @@ static void init_D_to_P_proj( Projection* p, const diverge_model_t* model ) {
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
                   v_r_helper = { .v = r_helper, .v_sz = r_helper_sz, .v_cap = r_helper_cap };
 
-    vec_index_t v_D_to_P_t_padded = {0},
-                v_D_to_P_f = {0},
+    vec_index_t v_D_to_P_f = {0},
                 v_DP_r = {0},
                 v_D_to_P_l = {0},
                 v_D_to_P_d = {0};
 
-    sort_and_filter( &v_D_to_P_t, &v_D_to_P_t_padded, &v_f_helper, &v_D_to_P_f,
+    sort_and_filter( &v_D_to_P_t, &v_f_helper, &v_D_to_P_f,
             &v_r_helper, &v_DP_r, &v_D_to_P_l, &v_D_to_P_d );
 
     p->D_to_P_t = v_D_to_P_t.v;
@@ -495,7 +489,6 @@ static void init_D_to_P_proj( Projection* p, const diverge_model_t* model ) {
 
     p->D_to_P_f = v_D_to_P_f.v;
     p->D_to_P_f_sz = v_D_to_P_f.v_sz;
-    p->D_to_P_t_padded = v_D_to_P_t_padded.v;
     p->D_to_P_l = v_D_to_P_l.v;
     p->D_to_P_d = v_D_to_P_d.v;
 
@@ -570,13 +563,12 @@ static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
                   v_r_helper = { .v = r_helper, .v_sz = r_helper_sz, .v_cap = r_helper_cap };
 
-    vec_index_t v_P_to_D_t_padded = {0},
-                v_P_to_D_f = {0},
+    vec_index_t v_P_to_D_f = {0},
                 v_PD_r = {0},
                 v_P_to_D_l = {0},
                 v_P_to_D_d = {0};
 
-    sort_and_filter( &v_P_to_D_t, &v_P_to_D_t_padded, &v_f_helper, &v_P_to_D_f,
+    sort_and_filter( &v_P_to_D_t, &v_f_helper, &v_P_to_D_f,
             &v_r_helper, &v_PD_r, &v_P_to_D_l, &v_P_to_D_d );
 
     p->P_to_D_t = v_P_to_D_t.v;
@@ -585,7 +577,6 @@ static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
 
     p->P_to_D_f = v_P_to_D_f.v;
     p->P_to_D_f_sz = v_P_to_D_f.v_sz;
-    p->P_to_D_t_padded = v_P_to_D_t_padded.v;
     p->P_to_D_l = v_P_to_D_l.v;
     p->P_to_D_d = v_P_to_D_d.v;
 
@@ -651,7 +642,6 @@ void mpi_communicate( Projection* p ) {
         p-> XX##_d = calloc(n_len, sizeof*p-> XX##_d); \
         p-> XX##_l = calloc(n_len, sizeof*p-> XX##_l); \
         VECTOR_RESIZE( p-> XX##_t, n_len ); \
-        p-> XX##_t_padded = calloc(n_len, sizeof*p-> XX##_t_padded * 2); \
         VECTOR_RESIZE( p-> XX##_mom, n_tot ); \
         p-> XX##_f = calloc(n_tot, sizeof*p-> XX##_f); \
         p-> XX##_f_sz = n_tot; \
@@ -659,7 +649,6 @@ void mpi_communicate( Projection* p ) {
     diverge_mpi_bcast_bytes( p-> XX##_d, n_len*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_l, n_len*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_t, n_len*sizeof(claV2ll_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_t_padded, n_len*2*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_mom, n_tot*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_f, n_tot*sizeof(index_t), 0 );
 
