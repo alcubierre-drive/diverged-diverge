@@ -46,7 +46,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
 
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'P', bufMPI, buf,
                         (index_t*)proj->PC_CP_t, proj->PC_CP_t_sz,
-                        proj->PC_CP_f, proj->PC_CP_mom,
+                        proj->PC_CP_f, proj->PC_CP_f_sz, proj->PC_CP_mom,
                         proj->PC_CP_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
 
@@ -61,7 +61,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
 
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'P', bufMPI, buf,
                         (index_t*)proj->D_to_P_t, proj->D_to_P_t_sz,
-                        proj->D_to_P_f, proj->D_to_P_mom,
+                        proj->D_to_P_f, proj->D_to_P_f_sz, proj->D_to_P_mom,
                         proj->D_to_P_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
 
@@ -118,7 +118,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'D', bufMPI, buf,
                         (index_t*)proj->DC_CD_t, proj->DC_CD_t_sz,
-                        proj->DC_CD_f, proj->DC_CD_mom,
+                        proj->DC_CD_f, proj->DC_CD_f_sz, proj->DC_CD_mom,
                         proj->DC_CD_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
@@ -131,7 +131,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'D', bufMPI, buf,
                         (index_t*)proj->P_to_D_t, proj->P_to_D_t_sz,
-                        proj->P_to_D_f, proj->P_to_D_mom,
+                        proj->P_to_D_f, proj->P_to_D_f_sz, proj->P_to_D_mom,
                         proj->P_to_D_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
              TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
@@ -187,7 +187,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'C', bufMPI, buf,
                     (index_t*)proj->PC_CP_t, proj->PC_CP_t_sz,
-                    proj->PC_CP_f, proj->PC_CP_mom,
+                    proj->PC_CP_f, proj->PC_CP_f_sz, proj->PC_CP_mom,
                     proj->PC_CP_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin, vertex->my_nk, proj->nr));
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
@@ -200,7 +200,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'C', bufMPI, buf,
                     (index_t*)proj->DC_CD_t, proj->DC_CD_t_sz,
-                    proj->DC_CD_f, proj->DC_CD_mom,
+                    proj->DC_CD_f, proj->DC_CD_f_sz, proj->DC_CD_mom,
                     proj->DC_CD_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin, vertex->my_nk, proj->nr));
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
