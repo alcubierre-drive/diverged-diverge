@@ -53,15 +53,15 @@ static inline void apply_permutation_in_place( claV2ll_t* vec, const size_t* p, 
     free(done);
 }
 
-typedef struct { const claV2ll_t* _fhelp; const index_t* _off; uindex_t k; } mergesort_fhelp_t;
-static inline int mergesort_fhelp_comp( uindex_t i, uindex_t j, const mergesort_fhelp_t* h ) {
+typedef struct { const claV2ll_t* _fhelp; const index_t* _off; uindex_t k; } serisort_fhelp_t;
+static inline int serisort_fhelp_comp( uindex_t i, uindex_t j, const serisort_fhelp_t* h ) {
     const claV2ll_t fi = h->_fhelp[i+h->_off[h->k]],
                     fj = h->_fhelp[j+h->_off[h->k]];
     return (fi.v[1] == fj.v[1]) ? (fi.v[0] - fj.v[0]) : (fi.v[1] - fj.v[1]);
 }
-#undef MERGESORT_COMP_R
-#define MERGESORT_COMP_R( x, y, ctx ) mergesort_fhelp_comp( (x), (y), (const mergesort_fhelp_t*)ctx )
-MERGESORT_IMPL_R( mergesort_fhelp, uindex_t )
+#undef SERISORT_COMP_R
+#define SERISORT_COMP_R( x, y, ctx ) serisort_fhelp_comp( (x), (y), (const serisort_fhelp_t*)ctx )
+SERISORT_IMPL_R( serisort_fhelp, uindex_t )
 
 typedef struct { VECTOR_DECL( claV2ll_t, v ) } vec_claV2ll_t;
 typedef struct { VECTOR_DECL( index_t, v ) } vec_index_t;
@@ -102,22 +102,29 @@ static inline vec_claV2ll_t sort_and_filter( vec_claV2ll_t* _t,
     VECTOR_RESIZE( _r->v, msize*2 );
     VECTOR_RESIZE( _off->v, _len->v_sz );
     _off->v[0] = 0;
-    for (index_t i=1; i<_len->v_sz; ++i)
+    index_t maxlen = _len->v[0];
+    for (index_t i=1; i<_len->v_sz; ++i) {
         _off->v[i] = _off->v[i-1] + _len->v[i-1];
+        maxlen = MAX(maxlen, _len->v[i]);
+    }
+    uindex_t* pp = calloc(maxlen, sizeof*pp);
+    uindex_t* pt = calloc(maxlen, sizeof*pt);
     for (index_t k=0; k<_len->v_sz; ++k) {
-        VECTOR_INIT_CAP( uindex_t, p, _len->v[k] ); p_sz = _len->v[k];
-        for (index_t i=0; i<p_sz; ++i) p[i] = i;
-        mergesort_fhelp_t ctx = { _fhelp->v, _off->v, k };
-        // TODO this is slow
-        mergesort_fhelp_r( p, p_sz, (void*)&ctx, diverge_omp_num_threads(), 0 );
+        // set the index array
+        for (index_t i=0; i<_len->v[k]; ++i) pp[i] = i;
+        // sort it
+        serisort_fhelp_t ctx = { _fhelp->v, _off->v, k };
+        serisort_fhelp_sr( pp, _len->v[k], (void*)&ctx, pt );
+        // and push back the sorted stuff
         for (index_t q=0; q<_len->v[k]; ++q)
         for (int d=0; d<2; ++d) {
-            _f->v[2*(q+_off->v[k])+d] = _fhelp->v[_off->v[k]+p[q]].v[d];
-            _r->v[2*(q+_off->v[k])+d] = _rhelp->v[_off->v[k]+p[q]].v[d];
+            _f->v[2*(q+_off->v[k])+d] = _fhelp->v[_off->v[k]+pp[q]].v[d];
+            _r->v[2*(q+_off->v[k])+d] = _rhelp->v[_off->v[k]+pp[q]].v[d];
         }
         _len->v[k] *= 2; _off->v[k] *= 2;
-        VECTOR_FREE( p );
     }
+    free( pp );
+    free( pt );
 
     return _t_p;
 }

@@ -129,6 +129,92 @@ static inline void MERGESORT_BUILD_NAME( MERGESORT_NAME, _recurse_r ) ( \
    MERGESORT_BUILD_NAME( MERGESORT_NAME, _recurse_aux_r ) (X, n, ctx, tmp); \
 }
 
+#ifndef SERISORT_COMP
+#define SERISORT_COMP( x, y ) ((x)-(y))
+#endif
+#ifndef SERISORT_COMP_R
+#define SERISORT_COMP_R( x, y, ctx ) ((x)-(y))
+#endif
+
+#define SERISORT_BUILD_NAME( X, Y ) X##Y
+
+#define SERISORT_IMPL(SERISORT_NAME, SERISORT_TYPE) \
+static inline void SERISORT_BUILD_NAME( SERISORT_NAME, _s ) ( \
+        SERISORT_TYPE* X, size_t n, SERISORT_TYPE* tmp ); \
+\
+static inline void SERISORT_BUILD_NAME( SERISORT_NAME, ) ( SERISORT_TYPE* base, \
+        size_t nel ) { \
+    SERISORT_TYPE* tmp = (SERISORT_TYPE*)calloc(nel, sizeof(SERISORT_TYPE)); \
+    SERISORT_BUILD_NAME( SERISORT_NAME, _s ) (base, nel, tmp); \
+    free( tmp ); \
+} \
+ \
+static inline void SERISORT_BUILD_NAME( SERISORT_NAME, _s_aux ) ( \
+        SERISORT_TYPE* X, size_t n, SERISORT_TYPE* tmp ) { \
+    size_t i = 0; \
+    size_t j = n/2; \
+    size_t ti = 0; \
+ \
+    while (i<n/2 && j<n) { \
+        if (SERISORT_COMP( X[i], X[j] ) <= 0) \
+            tmp[ti++] = X[i++]; \
+        else \
+            tmp[ti++] = X[j++]; \
+    } \
+    while (i<n/2) tmp[ti++] = X[i++]; \
+    while (j<n) tmp[ti++] = X[j++]; \
+ \
+    memcpy( X, tmp, n*sizeof(SERISORT_TYPE) ); \
+} \
+ \
+static inline void SERISORT_BUILD_NAME( SERISORT_NAME, _s ) ( \
+        SERISORT_TYPE* X, size_t n, SERISORT_TYPE* tmp ) { \
+    if (n < 2) return; \
+    SERISORT_BUILD_NAME( SERISORT_NAME, _s ) (X, n/2, tmp); \
+    SERISORT_BUILD_NAME( SERISORT_NAME, _s ) (X+(n/2), n-(n/2), tmp+(n/2)); \
+    SERISORT_BUILD_NAME( SERISORT_NAME, _s_aux ) (X, n, tmp); \
+} \
+
+
+#define SERISORT_IMPL_R(SERISORT_NAME, SERISORT_TYPE) \
+ \
+static inline void SERISORT_BUILD_NAME( SERISORT_NAME, _sr ) ( \
+        SERISORT_TYPE* X, size_t n, void* ctx, SERISORT_TYPE* tmp ); \
+ \
+static inline void SERISORT_BUILD_NAME( SERISORT_NAME, _r ) ( SERISORT_TYPE* base, \
+        size_t nel, void* ctx ) { \
+    SERISORT_TYPE* tmp = (SERISORT_TYPE*)calloc(nel, sizeof(SERISORT_TYPE)); \
+    SERISORT_BUILD_NAME( SERISORT_NAME, _sr ) (base, nel, ctx, tmp); \
+    free( tmp ); \
+} \
+ \
+static inline void SERISORT_BUILD_NAME( SERISORT_NAME, _sr_aux ) ( \
+        SERISORT_TYPE* X, size_t n, void* ctx, SERISORT_TYPE* tmp ) { \
+    (void)ctx; \
+    size_t i = 0; \
+    size_t j = n/2; \
+    size_t ti = 0; \
+ \
+    while (i<n/2 && j<n) { \
+        if (SERISORT_COMP_R( X[i], X[j], ctx ) <= 0) \
+            tmp[ti++] = X[i++]; \
+        else \
+            tmp[ti++] = X[j++]; \
+    } \
+    while (i<n/2) tmp[ti++] = X[i++]; \
+    while (j<n) tmp[ti++] = X[j++]; \
+ \
+    memcpy( X, tmp, n*sizeof(SERISORT_TYPE) ); \
+} \
+ \
+static inline void SERISORT_BUILD_NAME( SERISORT_NAME, _sr ) ( \
+        SERISORT_TYPE* X, size_t n, void* ctx, SERISORT_TYPE* tmp ) { \
+    if (n < 2) return; \
+    SERISORT_BUILD_NAME( SERISORT_NAME, _sr ) (X, n/2, ctx, tmp); \
+    SERISORT_BUILD_NAME( SERISORT_NAME, _sr ) (X+(n/2), n-(n/2), ctx, tmp+(n/2)); \
+    SERISORT_BUILD_NAME( SERISORT_NAME, _sr_aux ) (X, n, ctx, tmp); \
+}
+
 #ifdef __cplusplus
 }
 #endif
