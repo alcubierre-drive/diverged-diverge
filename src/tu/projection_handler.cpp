@@ -46,7 +46,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
 
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'P', bufMPI, buf,
                         (index_t*)proj->PC_CP_t_padded, proj->PC_CP_f, proj->PC_CP_mom,
-                        proj->PC_CP_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
+                        proj->PC_CP_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
 
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
@@ -60,7 +60,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
 
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'P', bufMPI, buf,
                         (index_t*)proj->D_to_P_t_padded, proj->D_to_P_f, proj->D_to_P_mom,
-                        proj->D_to_P_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
+                        proj->D_to_P_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
 
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
@@ -115,7 +115,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'D', bufMPI, buf,
                         (index_t*)proj->DC_CD_t_padded, proj->DC_CD_f, proj->DC_CD_mom,
-                        proj->DC_CD_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
+                        proj->DC_CD_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -127,7 +127,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'D', bufMPI, buf,
                         (index_t*)proj->P_to_D_t_padded, proj->P_to_D_f, proj->P_to_D_mom,
-                        proj->P_to_D_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
+                        proj->P_to_D_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
              TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -181,7 +181,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'C', bufMPI, buf,
                     (index_t*)proj->PC_CP_t_padded, proj->PC_CP_f, proj->PC_CP_mom,
-                    proj->PC_CP_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
+                    proj->PC_CP_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin, vertex->my_nk, proj->nr));
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -193,7 +193,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'C', bufMPI, buf,
                     (index_t*)proj->DC_CD_t_padded, proj->DC_CD_f, proj->DC_CD_mom,
-                    proj->DC_CD_mom_sz, proj->my_prefac_proj, vertex->n_orbff,
+                    proj->DC_CD_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin, vertex->my_nk, proj->nr));
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));

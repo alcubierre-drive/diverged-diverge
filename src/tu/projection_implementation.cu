@@ -75,9 +75,6 @@ void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
         cudaStream_t down = ii.tu_gpu_downstream[dev];
         cudaStream_t swap;
 
-        // TODO
-        printf( "dev %i has mapsize %li\n", dev, mapsize );
-
         CUDA_CHECK(cudaMemcpyAsync(prefacs, proj_prefac, sizeof(cuDoubleComplex)*n_projpref*my_nk,
                     cudaMemcpyDefault,down));
         CUDA_CHECK(cudaMemcpyAsync(buf_ondev, I_channel,
