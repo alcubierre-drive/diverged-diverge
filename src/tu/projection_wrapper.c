@@ -192,29 +192,6 @@ Projection* projection_init( const diverge_model_t* model ) {
     const index_t ntasks = (p->DC_CD_t_padded_sz/2)*p->nr*POW4(model->n_spin);
     cuda_setup_projections( &p->proj_descr, ntasks, tu_data->my_nk );
 
-#define PRSZ( X ) mpi_vrb_printf( #X " size: %lu\n", X##_sz )
-    PRSZ( p->PC_CP_t );
-    PRSZ( p->PC_CP_t_padded );
-    PRSZ( p->PC_CP_mom );
-
-    PRSZ( p->DC_CD_t );
-    PRSZ( p->DC_CD_t_padded );
-    PRSZ( p->DC_CD_mom );
-
-    PRSZ( p->D_to_P_t );
-    PRSZ( p->D_to_P_t_padded );
-    PRSZ( p->D_to_P_mom );
-
-    PRSZ( p->P_to_D_t );
-    PRSZ( p->P_to_D_t_padded );
-    PRSZ( p->P_to_D_mom );
-
-    PRSZ( p->existing_r );
-    PRSZ( p->PC_r );
-    PRSZ( p->DC_r );
-    PRSZ( p->DP_r );
-    PRSZ( p->PD_r );
-
     return p;
 }
 

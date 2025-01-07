@@ -67,7 +67,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         timings(time_cpyfill,time_reco,time_handler_ft,time_add);
-        return ;
+        return;
     }
     #endif // USE_CUDA
     if(vertex->C_flow && vertex->C_to_P) {
@@ -133,7 +133,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         timings(time_cpyfill,time_reco,time_handler_ft,time_add);
-        return ;
+        return;
     }
     #endif // USE_CUDA
     if(vertex->C_flow && vertex->C_to_D) {
@@ -199,7 +199,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         timings(time_cpyfill,time_reco,time_handler_ft,time_add);
-        return ;
+        return;
     }
     #endif // USE_CUDA
 
