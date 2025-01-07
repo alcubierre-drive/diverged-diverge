@@ -322,14 +322,15 @@ static index_t ensure_align(index_t numToRound) {
 void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
     (void)proj;(void)loop;
 #ifdef USE_CUDA
-    if(!tu_has_gpu_setup || !loop->cuda_descr.prop_has_gpu_setup || !proj->proj_descr.proj_has_gpu_setup) {
+    if (!tu_gpu_info().tu_has_gpu_setup || !loop->cuda_descr.prop_has_gpu_setup ||
+        !proj->proj_descr.proj_has_gpu_setup) {
         mpi_err_printf("CUDA initailized wrongly. TUFRG will fail!\n");
         return ;
     }
     if(loop->cuda_descr.prop_memory_set_local) {
         mpi_err_printf("Memory for loop already allocated, free it first!\n");
         loop->cuda_descr.prop_memory_set_local = false;
-        for(int i = 0; i<tu_num_of_devices;++i) {
+        for (int i = 0; i<tu_gpu_info().tu_num_of_devices;++i) {
             cudaFree(loop->cuda_descr.mi_to_R[i]);
             cudaFree(loop->cuda_descr.c_to_f_q[i]);
             cudaFree(loop->cuda_descr.nkdev[i]);
@@ -343,7 +344,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
     has_gpu_memory = true;
     index_t nktot = nk * nkf;
     size_t available_memory[256] = {0};
-    for(int i = 0; i<tu_num_of_devices;++i) {
+    for(int i = 0; i<tu_gpu_info().tu_num_of_devices;++i) {
         size_t total;
         CUDA_CHECK( cudaSetDevice( i ) );
         CUDA_CHECK( cudaMemGetInfo( &available_memory[i], &total ) );
@@ -522,7 +523,7 @@ Vertex::~Vertex()
     }
 #ifdef USE_CUDA
     if(has_gpu_memory) {
-        for(int i = 0; i<tu_num_of_devices;++i) {
+        for(int i = 0; i<tu_gpu_info().tu_num_of_devices;++i) {
             CUDA_CHECK( cudaFree(GPU_memory_pool[i]) );
             CUDA_CHECK( cudaFree(GPU_memory_pool_managed[i]) );
         }

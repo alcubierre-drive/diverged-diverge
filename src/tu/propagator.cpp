@@ -373,8 +373,8 @@ void tu_loop_t::cpu_fft_algorithm_init( tu_fft_algorithm_t greens,
 
 tu_loop_t::~tu_loop_t() {
     #ifdef USE_CUDA
-    if(cuda_descr.prop_memory_set_local) {
-        for(int i = 0; i<tu_num_of_devices;++i) {
+    if (cuda_descr.prop_memory_set_local) {
+        for (int i=0; i<tu_gpu_info().tu_num_of_devices; ++i) {
             cudaFree(cuda_descr.mi_to_R[i]);
             cudaFree(cuda_descr.c_to_f_q[i]);
             cudaFree(cuda_descr.nkdev[i]);
@@ -739,7 +739,7 @@ void tu_loop_t::S_loop_static_red_gpu_mpi( complex128_t* L, bool pp ) {
         has_tasks_off_saved = true;
         memcpy( tasks_prop, cuda_descr._tasks_prop, sizeof(tasks_prop) );
         memcpy( off_prop, cuda_descr._off_prop, sizeof(off_prop) );
-        for (int i=0; i<tu_num_of_devices; ++i) {
+        for (int i=0; i<tu_gpu_info().tu_num_of_devices; ++i) {
             index_t* tasks_count = diverge_mpi_distribute( tasks_prop[i] );
             index_t* tasks_displ = tasks_count + diverge_mpi_comm_size();
 
@@ -842,7 +842,7 @@ void tu_loop_t::allocate_GPU_memory() {
     index_t prop_memsize[11] = {0};
     const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
 
-    for(int i = 0; i<tu_num_of_devices;++i) {
+    for(int i = 0; i<tu_gpu_info().tu_num_of_devices;++i) {
         cudaSetDevice(i);
         index_t my_nk_tot = (tu_data->use_reduced_loop && tu_data->use_cuda_mpi_loop) ? nkibz : my_nk;
         prop_memsize[0] = ensure_align(sizeof(index_t)*n_orbff*3); // mi_to_R

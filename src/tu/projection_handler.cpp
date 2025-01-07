@@ -37,7 +37,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
     complex128_t* bufMPI = vertex->bubble_helper;
 
     #ifdef USE_CUDA
-    if(vertex->my_nk > (index_t)tu_num_of_devices) {
+    if (vertex->my_nk > (index_t)tu_gpu_info().tu_num_of_devices) {
         if(vertex->C_flow && vertex->C_to_P) {
             TICK_TOCK(time_reco, vertex->template reco_ft<'C'>(
                             buf,proj->my_prefac_reco,proj->nr,bufMPI));
@@ -107,8 +107,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
     #ifdef USE_CUDA
-    if(vertex->my_nk > (index_t)tu_num_of_devices)
-    {
+    if (vertex->my_nk > (index_t)tu_gpu_info().tu_num_of_devices) {
         if(vertex->C_flow && vertex->C_to_D) {
             TICK_TOCK(time_reco, vertex->template reco_ft<'C'>(buf,
                         proj->my_prefac_reco,proj->nr,bufMPI));
@@ -174,8 +173,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
     complex128_t* bufMPI = vertex->bubble_helper;
 
     #ifdef USE_CUDA
-    if(vertex->my_nk > (index_t)tu_num_of_devices)
-    {
+    if (vertex->my_nk > (index_t)tu_gpu_info().tu_num_of_devices) {
         if(vertex->P_flow && vertex->P_to_C) {
             TICK_TOCK(time_reco, vertex->template reco_ft<'P'>(buf,
                         proj->my_prefac_reco,proj->nr,bufMPI));

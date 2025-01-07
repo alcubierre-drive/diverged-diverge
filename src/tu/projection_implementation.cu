@@ -51,15 +51,16 @@ __global__ void Proj_to_D_ft(__restrict__ cuDoubleComplex* const TO,
 void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
         complex128_t* proj_vertex, const complex128_t* I_channel,
         const index_t* rsmap_to, const index_t* rsmap_from, const index_t* mom_in,
-        const index_t mapsize, index_t mom_in_sz, const complex128_t* proj_prefac,
-        const index_t n_orbff, const index_t n_spin, const index_t my_nk, const size_t n_projpref ) {
+        const index_t mapsize, const complex128_t* proj_prefac, const index_t n_orbff,
+        const index_t n_spin, const index_t my_nk, const size_t n_projpref ) {
     if (channel != 'P' && channel != 'D' && channel != 'C') return;
     cuda_setup();
     const index_t blocksize = POW2(n_orbff*POW2(n_spin));
+    tu_gpu_info_t ii = tu_gpu_info();
     cudaDeviceSynchronize();
 
-    #pragma omp parallel for num_threads(tu_num_of_devices)
-    for (int dev=0; dev<tu_num_of_devices; ++dev) {
+    #pragma omp parallel for num_threads(ii.tu_num_of_devices)
+    for (int dev=0; dev<ii.tu_num_of_devices; ++dev) {
         cudaSetDevice(dev);
 
         cuDoubleComplex* prefacs = cp->prefacs[dev];
@@ -70,9 +71,11 @@ void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
         cuDoubleComplex* buf_res0 = cp->buf_res0[dev];
         cuDoubleComplex* buf_res1 = cp->buf_res1[dev];
         cuDoubleComplex* buf_resh;
-        cudaStream_t up = tu_gpu_stream[dev];
-        cudaStream_t down = tu_gpu_downstream[dev];
+        cudaStream_t up = ii.tu_gpu_stream[dev];
+        cudaStream_t down = ii.tu_gpu_downstream[dev];
         cudaStream_t swap;
+
+        printf( "dev %i has mapsize %li\n", dev, mapsize );
 
         CUDA_CHECK(cudaMemcpyAsync(prefacs, proj_prefac, sizeof(cuDoubleComplex)*n_projpref*my_nk,
                     cudaMemcpyDefault,down));
@@ -108,7 +111,7 @@ void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
         }
         cudaDeviceSynchronize();
 
-        cudaSetDevice(tu_deviceid[0]);
+        cudaSetDevice(ii.tu_deviceid[0]);
     }
     cudaDeviceSynchronize();
 }

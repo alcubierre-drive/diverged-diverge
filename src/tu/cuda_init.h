@@ -132,11 +132,14 @@ void cuda_setup_prop_descr( cuda_prop_descr_t* cp, index_t task_spin,
 void cuda_delete_prop_descr( cuda_prop_descr_t* cp );
 
 // globals
-extern bool tu_has_gpu_setup;
-extern int tu_num_of_devices;
-extern int tu_deviceid[32];
-extern cudaStream_t* tu_gpu_stream;
-extern cudaStream_t* tu_gpu_downstream;
+typedef struct {
+    int tu_deviceid[32];
+    int tu_num_of_devices;
+    bool tu_has_gpu_setup;
+    cudaStream_t* tu_gpu_stream;
+    cudaStream_t* tu_gpu_downstream;
+} tu_gpu_info_t;
+tu_gpu_info_t tu_gpu_info( void );
 
 void cuda_setup( void );
 void cuda_setup_projections( cuda_proj_descr_t* cp, index_t ntasks, index_t my_nk );
