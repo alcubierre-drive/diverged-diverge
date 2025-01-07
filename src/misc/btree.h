@@ -32,6 +32,9 @@ static inline void btree_iter( btree_t* head, void (*iter)(btree_t*, void*), voi
 }
 void btree_free( btree_t* head );
 
+btree_t* btree_minimum( btree_t* head );
+btree_t* btree_next( btree_t* node );
+
 // a bit more, can do find_or_insert and operates on contiguous memory
 typedef struct xbtree_t xbtree_t;
 struct xbtree_t {
@@ -58,6 +61,10 @@ static inline void xbtree_iter( xbtree_t* x, void (*iter)(btree_t*, void*), void
         btree_iter( head->children[btree_right], iter, ctx );
         (*iter)( head, ctx );
     }
+}
+static inline void xbtree_iter_ascending( xbtree_t* x, void (*iter)(btree_t*, void*), void* ctx ) {
+    for (btree_t* start=btree_minimum(x->head); start!=NULL; start=btree_next(start))
+        (*iter)( start, ctx );
 }
 
 #ifdef __cplusplus

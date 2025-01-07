@@ -39,6 +39,28 @@ void btree_free( btree_t* head ) {
     btree_iter( head, &btree_iter_free, NULL );
 }
 
+btree_t* btree_minimum( btree_t* head ) {
+    if (!head) return NULL;
+    btree_t* tmp = head;
+    while (tmp->children[btree_left]) tmp = tmp->children[btree_left];
+    return tmp;
+}
+
+btree_t* btree_next( btree_t* node ) {
+    if (!node) return NULL;
+    btree_t* next;
+    if (!node->children[btree_right]) {
+        next = node;
+        while (next->parent && next == next->parent->children[btree_right])
+            next = next->parent;
+        next = next->parent;
+    } else {
+        next = node->children[btree_right];
+        while (next->children[btree_left]) next = next->children[btree_left];
+    }
+    return next;
+}
+
 xbtree_t* xbtree_init( size_t nreserve ) {
     xbtree_t* x = calloc(1, sizeof*x);
     x->n_mem = 1;
