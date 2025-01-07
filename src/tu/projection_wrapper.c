@@ -603,7 +603,7 @@ static void init_to_mom_map_existing_r( Projection* p ) {
     for (index_t i=0; i<p->PD_r_sz; ++i) xbtree_find_or_insert( t, p->PD_r[i] );
 
     VECTOR_RESERVE( p->existing_r, MAX(t_sz,1024) );
-    xbtree_iter( t, &index_to_reduced_iterate, p );
+    xbtree_iter_ascending( t, &index_to_reduced_iterate, p );
 
     p->nr = p->existing_r_sz;
     VECTOR_RESIZE( p->PC_CP_mom, p->PC_r_sz );
