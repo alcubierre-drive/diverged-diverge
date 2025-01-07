@@ -97,6 +97,7 @@ static inline vec_claV2ll_t sort_and_filter( vec_claV2ll_t* _t,
     }
     VECTOR_PUSH_BACK( _len->v, len );
     VECTOR_PUSH_BACK( _t->v, lr );
+    VECTOR_SHRINK_TO_FIT( _t->v );
 
     VECTOR_RESIZE( _f->v, msize*2 );
     VECTOR_RESIZE( _r->v, msize*2 );
@@ -589,15 +590,13 @@ static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
     VECTOR_FREE( r_helper );
 }
 
+static inline void tree_count( btree_t* node, void* ctx ) { (void)node; index_t* pcount = ctx; (*pcount)++; }
 
-static inline claV3i_t unravel_idx( index_t a, const index_t* nk ) {
-    return (claV3i_t){{a/(nk[1]*nk[2]), (a%(nk[1]*nk[2]))/nk[2], a%nk[2]}};
-}
-
+#define UNRAVEL_IDX3( a, nk ) (claV3i_t){{a/(nk[1]*nk[2]), (a%(nk[1]*nk[2]))/nk[2], a%nk[2]}}
 static inline void index_to_reduced_iterate( btree_t* node, void* ctx ) {
     Projection* p = ctx;
-    node->val = p->existing_r_sz;
-    VECTOR_PUSH_BACK( p->existing_r, unravel_idx( node->key, p->nk ) );
+    node->val = p->nr;
+    p->existing_r[p->nr++] = UNRAVEL_IDX3( node->key, p->nk );
 }
 
 static void init_to_mom_map_existing_r( Projection* p ) {
@@ -609,48 +608,46 @@ static void init_to_mom_map_existing_r( Projection* p ) {
     for (index_t i=0; i<p->DP_r_sz; ++i) xbtree_find_or_insert( t, p->DP_r[i] );
     for (index_t i=0; i<p->PD_r_sz; ++i) xbtree_find_or_insert( t, p->PD_r[i] );
 
-    VECTOR_RESERVE( p->existing_r, MAX(t_sz,1024) );
+    index_t tree_size = 0; xbtree_iter( t, &tree_count, &tree_size );
+    p->existing_r = calloc( tree_size, sizeof*p->existing_r );
     xbtree_iter_ascending( t, &index_to_reduced_iterate, p );
 
-    p->nr = p->existing_r_sz;
-    VECTOR_RESIZE( p->PC_CP_mom, p->PC_r_sz );
+    p->PC_CP_mom = calloc(p->PC_r_sz, sizeof*p->PC_CP_mom);
     for (index_t i=0; i<p->PC_r_sz; ++i) p->PC_CP_mom[i] = xbtree_find( t, p->PC_r[i] )->val;
-    VECTOR_RESIZE( p->DC_CD_mom, p->DC_r_sz );
+    p->DC_CD_mom = calloc(p->DC_r_sz, sizeof*p->DC_CD_mom);
     for (index_t i=0; i<p->DC_r_sz; ++i) p->DC_CD_mom[i] = xbtree_find( t, p->DC_r[i] )->val;
-    VECTOR_RESIZE( p->P_to_D_mom, p->PD_r_sz );
+    p->P_to_D_mom = calloc(p->PD_r_sz, sizeof*p->P_to_D_mom);
     for (index_t i=0; i<p->PD_r_sz; ++i) p->P_to_D_mom[i] = xbtree_find( t, p->PD_r[i] )->val;
-    VECTOR_RESIZE( p->D_to_P_mom, p->DP_r_sz );
+    p->D_to_P_mom = calloc(p->DP_r_sz, sizeof*p->D_to_P_mom);
     for (index_t i=0; i<p->DP_r_sz; ++i) p->D_to_P_mom[i] = xbtree_find( t, p->DP_r[i] )->val;
 
     xbtree_free(t);
 }
 
 void mpi_communicate( Projection* p ) {
-    index_t t_sz, t_padded_sz, mom_sz;
+    index_t t_sz, t_padded_sz;
 
 #define MPICOPY( XX ) \
     if (diverge_mpi_comm_rank() == 0) { \
         t_sz = p-> XX##_t_sz; \
         t_padded_sz = p-> XX##_t_padded_sz; \
-        mom_sz = p-> XX##_mom_sz; \
     } \
     diverge_mpi_bcast_bytes( &t_sz, sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( &t_padded_sz, sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( &mom_sz, sizeof(index_t), 0 ); \
     if (diverge_mpi_comm_rank() != 0) { \
         p-> XX##_d = calloc(t_sz, sizeof*p-> XX##_d); \
         p-> XX##_l = calloc(t_sz, sizeof*p-> XX##_l); \
         VECTOR_RESIZE( p-> XX##_t, t_sz ); \
         VECTOR_RESIZE( p-> XX##_t_padded, t_padded_sz ); \
-        VECTOR_RESIZE( p-> XX##_mom, mom_sz ); \
-        p-> XX##_f = calloc(mom_sz, sizeof*p-> XX##_f); \
+        p-> XX##_mom = calloc(t_padded_sz*2, sizeof*p-> XX##_mom); \
+        p-> XX##_f = calloc(t_padded_sz*2, sizeof*p-> XX##_f); \
     } \
     diverge_mpi_bcast_bytes( p-> XX##_d, t_sz*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_l, t_sz*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_t, t_sz*sizeof(claV2ll_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_t_padded, t_padded_sz*sizeof(claV2ll_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_mom, mom_sz*sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_f, mom_sz*sizeof(index_t), 0 );
+    diverge_mpi_bcast_bytes( p-> XX##_mom, t_padded_sz*2*sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_f, t_padded_sz*2*sizeof(index_t), 0 );
 
     MPICOPY( PC_CP )
     MPICOPY( DC_CD )
@@ -658,8 +655,7 @@ void mpi_communicate( Projection* p ) {
     MPICOPY( P_to_D )
 
     diverge_mpi_bcast_bytes( &p->nr, sizeof(p->nr), 0 );
-    if (diverge_mpi_comm_rank() != 0)
-        VECTOR_RESIZE( p->existing_r, p->nr );
+    if (diverge_mpi_comm_rank() != 0) p->existing_r = calloc(p->nr, sizeof*p->existing_r);
     diverge_mpi_bcast_bytes( p->existing_r, p->nr*sizeof(claV3i_t), 0 );
 }
 

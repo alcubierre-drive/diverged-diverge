@@ -18,35 +18,34 @@ struct Projection {
     complex128_t* my_prefac_proj;
 
     VECTOR_DECL( claV2ll_t, PC_CP_t )
-    VECTOR_DECL( claV2ll_t, PC_CP_t_padded )
-    index_t* PC_CP_f;
-    VECTOR_DECL( index_t, PC_CP_mom )
     index_t* PC_CP_d;
     index_t* PC_CP_l;
+    VECTOR_DECL( claV2ll_t, PC_CP_t_padded )
+    index_t* PC_CP_f;
+    index_t* PC_CP_mom;
 
     VECTOR_DECL( claV2ll_t, DC_CD_t )
-    VECTOR_DECL( claV2ll_t, DC_CD_t_padded )
-    index_t* DC_CD_f;
-    VECTOR_DECL( index_t, DC_CD_mom )
     index_t* DC_CD_d;
     index_t* DC_CD_l;
+    VECTOR_DECL( claV2ll_t, DC_CD_t_padded )
+    index_t* DC_CD_f;
+    index_t* DC_CD_mom;
 
     VECTOR_DECL( claV2ll_t, D_to_P_t )
-    VECTOR_DECL( claV2ll_t, D_to_P_t_padded )
-    index_t* D_to_P_f;
-    VECTOR_DECL( index_t, D_to_P_mom )
     index_t* D_to_P_d;
     index_t* D_to_P_l;
+    VECTOR_DECL( claV2ll_t, D_to_P_t_padded )
+    index_t* D_to_P_f;
+    index_t* D_to_P_mom;
 
     VECTOR_DECL( claV2ll_t, P_to_D_t )
-    VECTOR_DECL( claV2ll_t, P_to_D_t_padded )
-    index_t* P_to_D_f;
-    VECTOR_DECL( index_t, P_to_D_mom )
     index_t* P_to_D_d;
     index_t* P_to_D_l;
+    VECTOR_DECL( claV2ll_t, P_to_D_t_padded )
+    index_t* P_to_D_f;
+    index_t* P_to_D_mom;
 
     index_t nk[3];
-    index_t nr;
     index_t n_orb;
     index_t n_bonds;
     index_t n_orbff;
@@ -55,7 +54,9 @@ struct Projection {
     const index_t* ob_to_orbff;
     const tu_formfactor_t* tu_ff;
 
-    VECTOR_DECL( claV3i_t, existing_r )
+    claV3i_t* existing_r;
+    index_t nr;
+
     VECTOR_DECL( index_t, PC_r )
     VECTOR_DECL( index_t, DC_r )
     VECTOR_DECL( index_t, DP_r )

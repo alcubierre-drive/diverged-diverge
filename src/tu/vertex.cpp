@@ -366,7 +366,7 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         proj_memsize[0] = ensure_align(sizeof(cuDoubleComplex)*proj->nr*my_nk); // prefacs
         proj_memsize[1] = ensure_align(sizeof(index_t)*proj->PC_CP_t_padded_sz*2); // rs_to
         proj_memsize[2] = ensure_align(sizeof(index_t)*proj->PC_CP_t_padded_sz*2); // rs_from
-        proj_memsize[3] = ensure_align(sizeof(index_t)*proj->PC_CP_mom_sz); // mom
+        proj_memsize[3] = ensure_align(sizeof(index_t)*proj->PC_CP_t_padded_sz*2); // mom
         proj_memsize[4] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))*proj->nr); // buf_ondev
         proj_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))); // buf_res0
         proj_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))); // buf_res1
