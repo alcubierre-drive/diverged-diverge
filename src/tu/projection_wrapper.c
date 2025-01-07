@@ -192,7 +192,7 @@ Projection* projection_init( const diverge_model_t* model ) {
     const index_t ntasks = (p->DC_CD_t_padded_sz/2)*p->nr*POW4(model->n_spin);
     cuda_setup_projections( &p->proj_descr, ntasks, tu_data->my_nk );
 
-#define PRSZ( X ) printf( #X " size: %lu\n", X##_sz )
+#define PRSZ( X ) mpi_vrb_printf( #X " size: %lu\n", X##_sz )
     PRSZ( p->PC_CP_t );
     PRSZ( p->PC_CP_t_padded );
     PRSZ( p->PC_CP_mom );
@@ -646,29 +646,31 @@ static void init_to_mom_map_existing_r( Projection* p ) {
 }
 
 void mpi_communicate( Projection* p ) {
-    index_t n_len, n_tot;
+    index_t t_sz, t_padded_sz, mom_sz;
 
 #define MPICOPY( XX ) \
     if (diverge_mpi_comm_rank() == 0) { \
-        n_len = p-> XX##_t_sz; \
-        n_tot = p-> XX##_t_padded_sz; \
+        t_sz = p-> XX##_t_sz; \
+        t_padded_sz = p-> XX##_t_padded_sz; \
+        mom_sz = p-> XX##_mom_sz; \
     } \
-    diverge_mpi_bcast_bytes( &n_len, sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( &n_tot, sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( &t_sz, sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( &t_padded_sz, sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( &mom_sz, sizeof(index_t), 0 ); \
     if (diverge_mpi_comm_rank() != 0) { \
-        p-> XX##_d = calloc(n_len, sizeof*p-> XX##_d); \
-        p-> XX##_l = calloc(n_len, sizeof*p-> XX##_l); \
-        VECTOR_RESIZE( p-> XX##_t, n_len ); \
-        VECTOR_RESIZE( p-> XX##_t_padded, n_tot ); \
-        VECTOR_RESIZE( p-> XX##_mom, n_tot ); \
-        p-> XX##_f = calloc(n_tot, sizeof*p-> XX##_f); \
+        p-> XX##_d = calloc(t_sz, sizeof*p-> XX##_d); \
+        p-> XX##_l = calloc(t_sz, sizeof*p-> XX##_l); \
+        VECTOR_RESIZE( p-> XX##_t, t_sz ); \
+        VECTOR_RESIZE( p-> XX##_t_padded, t_padded_sz ); \
+        VECTOR_RESIZE( p-> XX##_mom, mom_sz ); \
+        p-> XX##_f = calloc(mom_sz, sizeof*p-> XX##_f); \
     } \
-    diverge_mpi_bcast_bytes( p-> XX##_d, n_len*sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_l, n_len*sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_t, n_len*sizeof(claV2ll_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_t_padded, n_tot*sizeof(claV2ll_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_mom, n_tot*sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_f, n_tot*sizeof(index_t), 0 );
+    diverge_mpi_bcast_bytes( p-> XX##_d, t_sz*sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_l, t_sz*sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_t, t_sz*sizeof(claV2ll_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_t_padded, t_padded_sz*sizeof(claV2ll_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_mom, mom_sz*sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_f, mom_sz*sizeof(index_t), 0 );
 
     MPICOPY( PC_CP )
     MPICOPY( DC_CD )
