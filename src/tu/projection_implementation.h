@@ -34,10 +34,9 @@ void _to_D( complex128_t* proj_vertex, const complex128_t* I_channel,
 #ifdef USE_CUDA
 void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
         complex128_t* proj_vertex, const complex128_t* I_channel,
-        const index_t* rsmap_to, index_t rsmap_to_sz, const index_t* rsmap_from,
-        const index_t* mom_in, index_t mom_in_sz,
-        const complex128_t* proj_prefac, const index_t realsp_size, const index_t num_spin,
-        const index_t my_nkpts_vertex, const size_t n_projpref );
+        const index_t* rsmap_to, const index_t* rsmap_from, const index_t* mom_in,
+        index_t mapsize, const complex128_t* proj_prefac, const index_t realsp_size,
+        const index_t num_spin, const index_t my_nkpts_vertex, const size_t n_projpref );
 #endif
 
 #ifdef __cplusplus

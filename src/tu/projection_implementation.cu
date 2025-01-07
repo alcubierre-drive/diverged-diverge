@@ -50,10 +50,9 @@ __global__ void Proj_to_D_ft(__restrict__ cuDoubleComplex* const TO,
 
 void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
         complex128_t* proj_vertex, const complex128_t* I_channel,
-        const index_t* rsmap_to, index_t rsmap_to_sz, const index_t* rsmap_from,
-        const index_t* mom_in, index_t mom_in_sz,
-        const complex128_t* proj_prefac, const index_t n_orbff, const index_t n_spin,
-        const index_t my_nk, const size_t n_projpref ) {
+        const index_t* rsmap_to, const index_t* rsmap_from, const index_t* mom_in,
+        const index_t mapsize, index_t mom_in_sz, const complex128_t* proj_prefac,
+        const index_t n_orbff, const index_t n_spin, const index_t my_nk, const size_t n_projpref ) {
     if (channel != 'P' && channel != 'D' && channel != 'C') return;
     cuda_setup();
     const index_t blocksize = POW2(n_orbff*POW2(n_spin));
@@ -79,30 +78,27 @@ void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
                     cudaMemcpyDefault,down));
         CUDA_CHECK(cudaMemcpyAsync(buf_ondev, I_channel,
                     sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))*n_projpref, cudaMemcpyDefault, down));
-        CUDA_CHECK(cudaMemcpyAsync(rs_to, rsmap_to, sizeof(index_t)*rsmap_to_sz*2,
-                    cudaMemcpyDefault,down));
-        CUDA_CHECK(cudaMemcpyAsync(rs_from, rsmap_from, sizeof(index_t)*rsmap_to_sz*2,
-                    cudaMemcpyDefault,down));
-        CUDA_CHECK(cudaMemcpyAsync(mom, mom_in, sizeof(index_t)*mom_in_sz,cudaMemcpyDefault,down));
+        CUDA_CHECK(cudaMemcpyAsync(rs_to, rsmap_to, sizeof(index_t)*mapsize*2, cudaMemcpyDefault,down));
+        CUDA_CHECK(cudaMemcpyAsync(rs_from, rsmap_from, sizeof(index_t)*mapsize*2, cudaMemcpyDefault,down));
+        CUDA_CHECK(cudaMemcpyAsync(mom, mom_in, sizeof(index_t)*mapsize*2, cudaMemcpyDefault,down));
         for(size_t cq = 0; cq < cp->_threadkpts_proj[dev];++cq) {
 
             CUDA_CHECK(cudaMemsetAsync(buf_res0,0,sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin)),down));
             size_t qTO = cp->_qstart_proj[dev]+cq;
-            if (channel == 'P') {
-                Proj_to_P_ft<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                                dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>
-                        (buf_res0, buf_ondev, n_orbff,my_nk, n_spin,
-                                 qTO,rsmap_to_sz,n_projpref,rs_to, rs_from, mom, prefacs);
-            }else if(channel == 'C') {
-                Proj_to_C_ft<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                             dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>
-                        (buf_res0, buf_ondev, n_orbff,my_nk, n_spin,
-                                 qTO,rsmap_to_sz,n_projpref,rs_to, rs_from, mom, prefacs);
-            }else if(channel == 'D') {
-                Proj_to_D_ft<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                             dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>
-                        (buf_res0, buf_ondev, n_orbff,my_nk, n_spin,
-                                 qTO,rsmap_to_sz,n_projpref,rs_to, rs_from, mom, prefacs);
+            switch (channel) {
+                case 'P': Proj_to_P_ft<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
+                                         dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(buf_res0,
+                            buf_ondev, n_orbff, my_nk, n_spin, qTO, mapsize, n_projpref, rs_to, rs_from, mom,
+                            prefacs); break;
+                case 'C': Proj_to_C_ft<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
+                                         dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(buf_res0,
+                            buf_ondev, n_orbff, my_nk, n_spin, qTO, mapsize, n_projpref, rs_to, rs_from, mom,
+                            prefacs); break;
+                case 'D': Proj_to_D_ft<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
+                                         dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(buf_res0,
+                            buf_ondev, n_orbff, my_nk, n_spin, qTO, mapsize, n_projpref, rs_to, rs_from, mom,
+                            prefacs); break;
+                default: break;
             }
             CUDA_CHECK(cudaMemcpyAsync(proj_vertex+qTO*blocksize,
                     buf_res0, sizeof(cuDoubleComplex)*blocksize,

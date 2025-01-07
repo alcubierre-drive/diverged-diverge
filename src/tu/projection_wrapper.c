@@ -82,9 +82,9 @@ static inline vec_claV2ll_t sort_and_filter( vec_claV2ll_t* _t,
     vec_claV2ll_t _t_p = {0};
     VECTOR_RESIZE( _t_p.v, msize );
     memcpy( _t_p.v, _t->v, msize*sizeof(claV2ll_t) );
+    claV2ll_t lr = _t->v[0];
 
     VECTOR_RESIZE( _t->v, 0 );
-    claV2ll_t lr = _t_p.v[0];
     index_t len = 0;
     for (uindex_t i=0; i<msize; ++i) {
         if (claV2ll_equal(_t_p.v[i], lr)) {
@@ -607,11 +607,7 @@ static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
 
 
 static inline claV3i_t unravel_idx( index_t a, const index_t* nk ) {
-    index_t x = a / (nk[1]*nk[2]);
-    a -= x * nk[1] * nk[2];
-    index_t y = a / nk[2];
-    index_t z = a - y * nk[2];
-    return (claV3i_t){{x,y,z}};
+    return (claV3i_t){{a/(nk[1]*nk[2]), (a%(nk[1]*nk[2]))/nk[2], a%nk[2]}};
 }
 
 static inline void index_to_reduced_iterate( btree_t* node, void* ctx ) {
