@@ -3,22 +3,22 @@
 #include "vertex.hpp"
 #include "projection_handler.h"
 
-diverge_model_t* Vertex_get_model( void* V_ ) { return static_cast<Vertex*>(V_)->model; }
-const tu_data_t* Vertex_get_tu_data( void* V_ ) { return static_cast<Vertex*>(V_)->tu_data; }
-index_t Vertex_get_n_orb( void* V_ ) { return static_cast<Vertex*>(V_)->n_orb; }
-index_t Vertex_get_n_spin( void* V_ ) { return static_cast<Vertex*>(V_)->n_spin; }
-index_t Vertex_get_n_orbff( void* V_ ) { return static_cast<Vertex*>(V_)->n_orbff; }
-index_t Vertex_get_nk( void* V_ ) { return static_cast<Vertex*>(V_)->nk; }
-index_t Vertex_get_nkf( void* V_ ) { return static_cast<Vertex*>(V_)->nkf; }
-index_t Vertex_get_my_nk( void* V_ ) { return static_cast<Vertex*>(V_)->my_nk; }
-index_t Vertex_get_my_nk_off( void* V_ ) { return static_cast<Vertex*>(V_)->my_nk_off; }
-const symmstruct_t* Vertex_get_symm( void* V_ ) { return static_cast<Vertex*>(V_)->symm; }
-bool Vertex_get_P_flow( void* V_ ) { return static_cast<Vertex*>(V_)->P_flow; }
-bool Vertex_get_C_flow( void* V_ ) { return static_cast<Vertex*>(V_)->C_flow; }
-bool Vertex_get_D_flow( void* V_ ) { return static_cast<Vertex*>(V_)->D_flow; }
-complex128_t* Vertex_get_product_helper( void* V_ ) { return static_cast<Vertex*>(V_)->product_helper; }
-complex128_t* Vertex_get_bubble_helper( void* V_ ) { return static_cast<Vertex*>(V_)->bubble_helper; }
-index_t Vertex_get_full_vert_size( void* V_ ) { return static_cast<Vertex*>(V_)->full_vert_size; }
+diverge_model_t* Vertex_get_model( const Vertex* V ) { return V->model; }
+const tu_data_t* Vertex_get_tu_data( const Vertex* V ) { return V->tu_data; }
+index_t Vertex_get_n_orb( const Vertex* V ) { return V->n_orb; }
+index_t Vertex_get_n_spin( const Vertex* V ) { return V->n_spin; }
+index_t Vertex_get_n_orbff( const Vertex* V ) { return V->n_orbff; }
+index_t Vertex_get_nk( const Vertex* V ) { return V->nk; }
+index_t Vertex_get_nkf( const Vertex* V ) { return V->nkf; }
+index_t Vertex_get_my_nk( const Vertex* V ) { return V->my_nk; }
+index_t Vertex_get_my_nk_off( const Vertex* V ) { return V->my_nk_off; }
+const symmstruct_t* Vertex_get_symm( const Vertex* V ) { return V->symm; }
+bool Vertex_get_P_flow( const Vertex* V ) { return V->P_flow; }
+bool Vertex_get_C_flow( const Vertex* V ) { return V->C_flow; }
+bool Vertex_get_D_flow( const Vertex* V ) { return V->D_flow; }
+complex128_t* Vertex_get_product_helper( const Vertex* V ) { return V->product_helper; }
+complex128_t* Vertex_get_bubble_helper( const Vertex* V ) { return V->bubble_helper; }
+index_t Vertex_get_full_vert_size( const Vertex* V ) { return V->full_vert_size; }
 
 static inline double max_abs(const complex128_t* start, index_t length) {
     return Map<const VecXcd>(start, length).lpNorm<Eigen::Infinity>();
@@ -731,27 +731,28 @@ vector<double> max(const Vertex &inp)
     return maximal_vals;
 }
 
-void Vertex_reco_ft( void* V_, char chan, complex128_t* buf,
+void Vertex_reco_ft( const Vertex* V, char chan, complex128_t* buf,
         const complex128_t* existing_r_exp, index_t nr, complex128_t* bufMPI/*=NULL*/ ) {
-    Vertex* V = (Vertex*)V_;
-    switch (chan) {
-        case 'P': V->reco_ft<'P'>( buf, existing_r_exp, nr, bufMPI ); break;
-        case 'C': V->reco_ft<'C'>( buf, existing_r_exp, nr, bufMPI ); break;
-        case 'D': V->reco_ft<'D'>( buf, existing_r_exp, nr, bufMPI ); break;
-        default: break;
-    }
+    if (chan == 'P') V->reco_ft<'P'>( buf, existing_r_exp, nr, bufMPI );
+    if (chan == 'C') V->reco_ft<'C'>( buf, existing_r_exp, nr, bufMPI );
+    if (chan == 'D') V->reco_ft<'D'>( buf, existing_r_exp, nr, bufMPI );
 }
 
-int Vertex_get_X_flow( void* V_, char X ) {
-    Vertex* V = (Vertex*)V_;
+void Vertex_reco( const Vertex* V, char chan, complex128_t* buf,
+        const complex128_t* inp/*=NULL*/ ) {
+    if (chan == 'P') V->reco<'P'>( buf, inp );
+    if (chan == 'C') V->reco<'C'>( buf, inp );
+    if (chan == 'D') V->reco<'D'>( buf, inp );
+}
+
+int Vertex_get_X_flow( const Vertex* V, char X ) {
     if (X == 'P') return V->P_flow;
     if (X == 'C') return V->C_flow;
     if (X == 'D') return V->D_flow;
     return 0;
 }
 
-int Vertex_get_X_to_Y_proj( void* V_, char X, char Y ) {
-    Vertex* V = (Vertex*)V_;
+int Vertex_get_X_to_Y_proj( const Vertex* V, char X, char Y ) {
     char XY[3] = {0}; XY[0] = X; XY[1] = Y;
     if (!strcmp(XY,"PC")) return V->P_to_C;
     if (!strcmp(XY,"PD")) return V->P_to_D;
@@ -762,8 +763,7 @@ int Vertex_get_X_to_Y_proj( void* V_, char X, char Y ) {
     return 0;
 }
 
-complex128_t* Vertex_get_chan( void* V_, char X ) {
-    Vertex* V = (Vertex*)V_;
+complex128_t* Vertex_get_chan( const Vertex* V, char X ) {
     if (X == 'P') return V->Pch;
     if (X == 'C') return V->Cch;
     if (X == 'D') return V->Dch;

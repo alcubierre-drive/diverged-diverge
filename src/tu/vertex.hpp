@@ -7,38 +7,50 @@
 #include "../diverge_common.h"
 #include "../misc/mpi_functions.h"
 #include "diverge_interface.h"
+#include "projection.h"
 
 // this is a temporary interface for the C-style selfenergy
 #ifdef __cplusplus
+typedef class Vertex Vertex;
+typedef class tu_loop_t tu_loop_t;
 extern "C" {
+#else
+typedef struct Vertex Vertex;
+typedef struct tu_loop_t tu_loop_t;
 #endif
-diverge_model_t* Vertex_get_model( void* V_ );
-const tu_data_t* Vertex_get_tu_data( void* V_ );
-index_t Vertex_get_n_orb( void* V_ );
-index_t Vertex_get_n_spin( void* V_ );
-index_t Vertex_get_n_orbff( void* V_ );
-index_t Vertex_get_nk( void* V_ );
-index_t Vertex_get_nkf( void* V_ );
-index_t Vertex_get_my_nk( void* V_ );
-index_t Vertex_get_my_nk_off( void* V_ );
-const symmstruct_t* Vertex_get_symm( void* V_ );
-bool Vertex_get_P_flow( void* V_ );
-bool Vertex_get_C_flow( void* V_ );
-bool Vertex_get_D_flow( void* V_ );
-complex128_t* Vertex_get_product_helper( void* V_ );
-complex128_t* Vertex_get_bubble_helper( void* V_ );
-void Vertex_reco_ft( void* V_, char chan, complex128_t* buf,
+
+Vertex* Vertex_init( diverge_model_t* modelin, projection_t* proj, tu_loop_t* loop,
+        bool P, bool C, bool D, bool self );
+Vertex* Vertex_copy( const Vertex* other );
+void Vertex_free( Vertex* V );
+
+diverge_model_t* Vertex_get_model( const Vertex* V );
+const tu_data_t* Vertex_get_tu_data( const Vertex* V );
+index_t Vertex_get_n_orb( const Vertex* V );
+index_t Vertex_get_n_spin( const Vertex* V );
+index_t Vertex_get_n_orbff( const Vertex* V );
+index_t Vertex_get_nk( const Vertex* V );
+index_t Vertex_get_nkf( const Vertex* V );
+index_t Vertex_get_my_nk( const Vertex* V );
+index_t Vertex_get_my_nk_off( const Vertex* V );
+const symmstruct_t* Vertex_get_symm( const Vertex* V );
+bool Vertex_get_P_flow( const Vertex* V );
+bool Vertex_get_C_flow( const Vertex* V );
+bool Vertex_get_D_flow( const Vertex* V );
+complex128_t* Vertex_get_product_helper( const Vertex* V );
+complex128_t* Vertex_get_bubble_helper( const Vertex* V );
+void Vertex_reco( const Vertex* V, char chan, complex128_t* buf,
+        const complex128_t* inp/*=NULL*/ );
+void Vertex_reco_ft( const Vertex* V, char chan, complex128_t* buf,
         const complex128_t* existing_r_exp, index_t nr, complex128_t* bufMPI/*=NULL*/ );
-int Vertex_get_X_flow( void* V_, char X );
-int Vertex_get_X_to_Y_proj( void* V_, char X, char Y );
-complex128_t* Vertex_get_chan( void* V_, char X );
-index_t Vertex_get_full_vert_size( void* V_ );
+int Vertex_get_X_flow( const Vertex* V, char X );
+int Vertex_get_X_to_Y_proj( const Vertex* V, char X, char Y );
+complex128_t* Vertex_get_chan( const Vertex* V, char X );
+index_t Vertex_get_full_vert_size( const Vertex* V );
 #ifdef __cplusplus
 }
 
 #include "../diverge_Eigen3.hpp"
-
-#include "projection.h"
 #include "propagator.hpp"
 
 class Vertex
@@ -59,14 +71,8 @@ public:
     void reco_ft(complex128_t* const buf, const complex128_t * const existing_r_exp, const uindex_t nr,
                             complex128_t * bufMPI = nullptr) const;
 
-    void init_U_from_fullV(diverge_model_t* model, projection_t* proj);
     void project_fullV(const diverge_model_t* const mod_ptr, complex128_t*,
                         const double * frq = nullptr) const;
-
-    void initialize_GPU_memory(projection_t* proj, tu_loop_t* loop);
-
-    void init_U(bool enforce_exchange);
-    void unset_U();
 
     complex128_t* Pch = nullptr;
     complex128_t* Cch = nullptr;
@@ -125,6 +131,9 @@ public:
     complex128_t* product_helper;
 private:
     bool owns;
+    void init_U_from_fullV(diverge_model_t* model, projection_t* proj);
+    void initialize_GPU_memory(projection_t* proj, tu_loop_t* loop);
+    void init_U(bool enforce_exchange);
 };
 
 
