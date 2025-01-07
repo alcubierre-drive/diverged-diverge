@@ -18,6 +18,7 @@ bool Vertex_get_C_flow( void* V_ ) { return static_cast<Vertex*>(V_)->C_flow; }
 bool Vertex_get_D_flow( void* V_ ) { return static_cast<Vertex*>(V_)->D_flow; }
 complex128_t* Vertex_get_product_helper( void* V_ ) { return static_cast<Vertex*>(V_)->product_helper; }
 complex128_t* Vertex_get_bubble_helper( void* V_ ) { return static_cast<Vertex*>(V_)->bubble_helper; }
+index_t Vertex_get_full_vert_size( void* V_ ) { return static_cast<Vertex*>(V_)->full_vert_size; }
 
 static inline double max_abs(const complex128_t* start, index_t length) {
     return Map<const VecXcd>(start, length).lpNorm<Eigen::Infinity>();
@@ -728,4 +729,43 @@ vector<double> max(const Vertex &inp)
         maximal_vals[4] = diverge_mpi_max(&max_trial);
     }
     return maximal_vals;
+}
+
+void Vertex_reco_ft( void* V_, char chan, complex128_t* buf,
+        const complex128_t* existing_r_exp, index_t nr, complex128_t* bufMPI/*=NULL*/ ) {
+    Vertex* V = (Vertex*)V_;
+    switch (chan) {
+        case 'P': V->reco_ft<'P'>( buf, existing_r_exp, nr, bufMPI ); break;
+        case 'C': V->reco_ft<'C'>( buf, existing_r_exp, nr, bufMPI ); break;
+        case 'D': V->reco_ft<'D'>( buf, existing_r_exp, nr, bufMPI ); break;
+        default: break;
+    }
+}
+
+int Vertex_get_X_flow( void* V_, char X ) {
+    Vertex* V = (Vertex*)V_;
+    if (X == 'P') return V->P_flow;
+    if (X == 'C') return V->C_flow;
+    if (X == 'D') return V->D_flow;
+    return 0;
+}
+
+int Vertex_get_X_to_Y_proj( void* V_, char X, char Y ) {
+    Vertex* V = (Vertex*)V_;
+    char XY[3] = {0}; XY[0] = X; XY[1] = Y;
+    if (!strcmp(XY,"PC")) return V->P_to_C;
+    if (!strcmp(XY,"PD")) return V->P_to_D;
+    if (!strcmp(XY,"CP")) return V->C_to_P;
+    if (!strcmp(XY,"CD")) return V->C_to_D;
+    if (!strcmp(XY,"DP")) return V->D_to_P;
+    if (!strcmp(XY,"DC")) return V->D_to_C;
+    return 0;
+}
+
+complex128_t* Vertex_get_chan( void* V_, char X ) {
+    Vertex* V = (Vertex*)V_;
+    if (X == 'P') return V->Pch;
+    if (X == 'C') return V->Cch;
+    if (X == 'D') return V->Dch;
+    return NULL;
 }

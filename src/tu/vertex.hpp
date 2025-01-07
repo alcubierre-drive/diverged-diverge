@@ -27,6 +27,12 @@ bool Vertex_get_C_flow( void* V_ );
 bool Vertex_get_D_flow( void* V_ );
 complex128_t* Vertex_get_product_helper( void* V_ );
 complex128_t* Vertex_get_bubble_helper( void* V_ );
+void Vertex_reco_ft( void* V_, char chan, complex128_t* buf,
+        const complex128_t* existing_r_exp, index_t nr, complex128_t* bufMPI/*=NULL*/ );
+int Vertex_get_X_flow( void* V_, char X );
+int Vertex_get_X_to_Y_proj( void* V_, char X, char Y );
+complex128_t* Vertex_get_chan( void* V_, char X );
+index_t Vertex_get_full_vert_size( void* V_ );
 #ifdef __cplusplus
 }
 
