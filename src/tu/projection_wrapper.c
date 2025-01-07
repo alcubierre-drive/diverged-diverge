@@ -86,8 +86,6 @@ static inline vec_claV2ll_t sort_and_filter( vec_claV2ll_t* _t,
     VECTOR_RESIZE( _t->v, 0 );
     claV2ll_t lr = _t_p.v[0];
     index_t len = 0;
-    VECTOR_RESIZE( _f->v, msize*2 );
-    VECTOR_RESIZE( _r->v, msize*2 );
     for (uindex_t i=0; i<msize; ++i) {
         if (claV2ll_equal(_t_p.v[i], lr)) {
             len++;
@@ -100,6 +98,8 @@ static inline vec_claV2ll_t sort_and_filter( vec_claV2ll_t* _t,
     VECTOR_PUSH_BACK( _len->v, len );
     VECTOR_PUSH_BACK( _t->v, lr );
 
+    VECTOR_RESIZE( _f->v, msize*2 );
+    VECTOR_RESIZE( _r->v, msize*2 );
     VECTOR_RESIZE( _off->v, _len->v_sz );
     _off->v[0] = 0;
     for (index_t i=1; i<_len->v_sz; ++i)
@@ -189,8 +189,32 @@ Projection* projection_init( const diverge_model_t* model ) {
     mpi_communicate( p );
     init_prefac_vector( p, model );
 
-    const index_t ntasks = (p->DC_CD_f_sz/2)*p->nr*POW4(model->n_spin);
+    const index_t ntasks = (p->DC_CD_t_padded_sz/2)*p->nr*POW4(model->n_spin);
     cuda_setup_projections( &p->proj_descr, ntasks, tu_data->my_nk );
+
+#define PRSZ( X ) printf( #X " size: %lu\n", X##_sz )
+    PRSZ( p->PC_CP_t );
+    PRSZ( p->PC_CP_t_padded );
+    PRSZ( p->PC_CP_mom );
+
+    PRSZ( p->DC_CD_t );
+    PRSZ( p->DC_CD_t_padded );
+    PRSZ( p->DC_CD_mom );
+
+    PRSZ( p->D_to_P_t );
+    PRSZ( p->D_to_P_t_padded );
+    PRSZ( p->D_to_P_mom );
+
+    PRSZ( p->P_to_D_t );
+    PRSZ( p->P_to_D_t_padded );
+    PRSZ( p->P_to_D_mom );
+
+    PRSZ( p->existing_r );
+    PRSZ( p->PC_r );
+    PRSZ( p->DC_r );
+    PRSZ( p->DP_r );
+    PRSZ( p->PD_r );
+
     return p;
 }
 
@@ -289,15 +313,17 @@ static void init_CP_PC_proj( Projection* p, const diverge_model_t* model ) {
         VECTOR_SHRINK_TO_FIT( my_t );
         VECTOR_SHRINK_TO_FIT( my_rv );
         VECTOR_SHRINK_TO_FIT( my_help_f );
+
         #pragma omp critical
         {
-            for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->PC_CP_t, my_t[i] );
-            for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
-            for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
+        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->PC_CP_t, my_t[i] );
+        for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
+        for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
         }
+
         VECTOR_FREE( my_t );
-        VECTOR_FREE( my_rv );
         VECTOR_FREE( my_help_f );
+        VECTOR_FREE( my_rv );
     }
 
     vec_claV2ll_t v_PC_CP_t = { .v = p->PC_CP_t, .v_sz = p->PC_CP_t_sz, .v_cap = p->PC_CP_t_cap },
@@ -312,22 +338,14 @@ static void init_CP_PC_proj( Projection* p, const diverge_model_t* model ) {
     vec_claV2ll_t padded = sort_and_filter( &v_PC_CP_t, &v_f_helper, &v_PC_CP_f,
             &v_r_helper, &v_PC_r, &v_PC_CP_l, &v_PC_CP_d );
 
-    p->PC_CP_t = v_PC_CP_t.v;
-    p->PC_CP_t_sz = v_PC_CP_t.v_sz;
-    p->PC_CP_t_cap = v_PC_CP_t.v_cap;
-
-    p->PC_CP_t_padded = padded.v;
-    p->PC_CP_t_padded_sz = padded.v_sz;
-    p->PC_CP_t_padded_cap = padded.v_cap;
+    VECTOR_COPY( p->PC_CP_t, v_PC_CP_t.v );
+    VECTOR_COPY( p->PC_CP_t_padded, padded.v );
+    VECTOR_COPY( p->PC_r, v_PC_r.v );
 
     p->PC_CP_f = v_PC_CP_f.v;
-    p->PC_CP_f_sz = v_PC_CP_f.v_sz;
     p->PC_CP_l = v_PC_CP_l.v;
     p->PC_CP_d = v_PC_CP_d.v;
 
-    p->PC_r = v_PC_r.v;
-    p->PC_r_sz = v_PC_r.v_sz;
-    p->PC_r_cap = v_PC_r.v_cap;
     VECTOR_FREE( f_helper );
     VECTOR_FREE( r_helper );
 }
@@ -380,15 +398,17 @@ static void init_CD_DC_proj( Projection* p, const diverge_model_t* model ) {
         VECTOR_SHRINK_TO_FIT( my_t );
         VECTOR_SHRINK_TO_FIT( my_rv );
         VECTOR_SHRINK_TO_FIT( my_help_f );
+
         #pragma omp critical
         {
-            for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->DC_CD_t, my_t[i] );
-            for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
-            for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
+        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->DC_CD_t, my_t[i] );
+        for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
+        for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
         }
+
         VECTOR_FREE( my_t );
-        VECTOR_FREE( my_rv );
         VECTOR_FREE( my_help_f );
+        VECTOR_FREE( my_rv );
     }
     vec_claV2ll_t v_DC_CD_t = { .v = p->DC_CD_t, .v_sz = p->DC_CD_t_sz, .v_cap = p->DC_CD_t_cap },
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
@@ -402,22 +422,14 @@ static void init_CD_DC_proj( Projection* p, const diverge_model_t* model ) {
     vec_claV2ll_t padded = sort_and_filter( &v_DC_CD_t, &v_f_helper, &v_DC_CD_f,
             &v_r_helper, &v_DC_r, &v_DC_CD_l, &v_DC_CD_d );
 
-    p->DC_CD_t = v_DC_CD_t.v;
-    p->DC_CD_t_sz = v_DC_CD_t.v_sz;
-    p->DC_CD_t_cap = v_DC_CD_t.v_cap;
-
-    p->DC_CD_t_padded = padded.v;
-    p->DC_CD_t_padded_sz = padded.v_sz;
-    p->DC_CD_t_padded_cap = padded.v_cap;
+    VECTOR_COPY( p->DC_CD_t, v_DC_CD_t.v );
+    VECTOR_COPY( p->DC_CD_t_padded, padded.v );
+    VECTOR_COPY( p->DC_r, v_DC_r.v );
 
     p->DC_CD_f = v_DC_CD_f.v;
-    p->DC_CD_f_sz = v_DC_CD_f.v_sz;
     p->DC_CD_l = v_DC_CD_l.v;
     p->DC_CD_d = v_DC_CD_d.v;
 
-    p->DC_r = v_DC_r.v;
-    p->DC_r_sz = v_DC_r.v_sz;
-    p->DC_r_cap = v_DC_r.v_cap;
     VECTOR_FREE( f_helper );
     VECTOR_FREE( r_helper );
 }
@@ -471,15 +483,17 @@ static void init_D_to_P_proj( Projection* p, const diverge_model_t* model ) {
         VECTOR_SHRINK_TO_FIT( my_t );
         VECTOR_SHRINK_TO_FIT( my_rv );
         VECTOR_SHRINK_TO_FIT( my_help_f );
+
         #pragma omp critical
         {
-            for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->D_to_P_t, my_t[i] );
-            for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
-            for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
+        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->D_to_P_t, my_t[i] );
+        for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
+        for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
         }
+
         VECTOR_FREE( my_t );
-        VECTOR_FREE( my_rv );
         VECTOR_FREE( my_help_f );
+        VECTOR_FREE( my_rv );
     }
     vec_claV2ll_t v_D_to_P_t = { .v = p->D_to_P_t, .v_sz = p->D_to_P_t_sz, .v_cap = p->D_to_P_t_cap },
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
@@ -493,22 +507,14 @@ static void init_D_to_P_proj( Projection* p, const diverge_model_t* model ) {
     vec_claV2ll_t padded = sort_and_filter( &v_D_to_P_t, &v_f_helper, &v_D_to_P_f,
             &v_r_helper, &v_DP_r, &v_D_to_P_l, &v_D_to_P_d );
 
-    p->D_to_P_t = v_D_to_P_t.v;
-    p->D_to_P_t_sz = v_D_to_P_t.v_sz;
-    p->D_to_P_t_cap = v_D_to_P_t.v_cap;
-
-    p->D_to_P_t_padded = padded.v;
-    p->D_to_P_t_padded_sz = padded.v_sz;
-    p->D_to_P_t_padded_cap = padded.v_cap;
+    VECTOR_COPY( p->D_to_P_t, v_D_to_P_t.v );
+    VECTOR_COPY( p->D_to_P_t_padded, padded.v );
+    VECTOR_COPY( p->DP_r, v_DP_r.v );
 
     p->D_to_P_f = v_D_to_P_f.v;
-    p->D_to_P_f_sz = v_D_to_P_f.v_sz;
     p->D_to_P_l = v_D_to_P_l.v;
     p->D_to_P_d = v_D_to_P_d.v;
 
-    p->DP_r = v_DP_r.v;
-    p->DP_r_sz = v_DP_r.v_sz;
-    p->DP_r_cap = v_DP_r.v_cap;
     VECTOR_FREE( f_helper );
     VECTOR_FREE( r_helper );
 }
@@ -563,15 +569,17 @@ static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
         VECTOR_SHRINK_TO_FIT( my_t );
         VECTOR_SHRINK_TO_FIT( my_rv );
         VECTOR_SHRINK_TO_FIT( my_help_f );
+
         #pragma omp critical
         {
-            for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->P_to_D_t, my_t[i] );
-            for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
-            for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
+        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->P_to_D_t, my_t[i] );
+        for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
+        for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
         }
+
         VECTOR_FREE( my_t );
-        VECTOR_FREE( my_rv );
         VECTOR_FREE( my_help_f );
+        VECTOR_FREE( my_rv );
     }
     vec_claV2ll_t v_P_to_D_t = { .v = p->P_to_D_t, .v_sz = p->P_to_D_t_sz, .v_cap = p->P_to_D_t_cap },
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
@@ -585,22 +593,14 @@ static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
     vec_claV2ll_t padded = sort_and_filter( &v_P_to_D_t, &v_f_helper, &v_P_to_D_f,
             &v_r_helper, &v_PD_r, &v_P_to_D_l, &v_P_to_D_d );
 
-    p->P_to_D_t = v_P_to_D_t.v;
-    p->P_to_D_t_sz = v_P_to_D_t.v_sz;
-    p->P_to_D_t_cap = v_P_to_D_t.v_cap;
-
-    p->P_to_D_t_padded = padded.v;
-    p->P_to_D_t_padded_sz = padded.v_sz;
-    p->P_to_D_t_padded_cap = padded.v_cap;
+    VECTOR_COPY( p->P_to_D_t, v_P_to_D_t.v );
+    VECTOR_COPY( p->P_to_D_t_padded, padded.v );
+    VECTOR_COPY( p->PD_r, v_PD_r.v );
 
     p->P_to_D_f = v_P_to_D_f.v;
-    p->P_to_D_f_sz = v_P_to_D_f.v_sz;
     p->P_to_D_l = v_P_to_D_l.v;
     p->P_to_D_d = v_P_to_D_d.v;
 
-    p->PD_r = v_PD_r.v;
-    p->PD_r_sz = v_PD_r.v_sz;
-    p->PD_r_cap = v_PD_r.v_cap;
     VECTOR_FREE( f_helper );
     VECTOR_FREE( r_helper );
 }
@@ -651,8 +651,7 @@ void mpi_communicate( Projection* p ) {
 #define MPICOPY( XX ) \
     if (diverge_mpi_comm_rank() == 0) { \
         n_len = p-> XX##_t_sz; \
-        n_tot = p-> XX##_f_sz; \
-        assert( n_tot == p-> XX##_l[n_len-1] + p-> XX##_d[n_len-1] ); \
+        n_tot = p-> XX##_t_padded_sz; \
     } \
     diverge_mpi_bcast_bytes( &n_len, sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( &n_tot, sizeof(index_t), 0 ); \
@@ -660,13 +659,14 @@ void mpi_communicate( Projection* p ) {
         p-> XX##_d = calloc(n_len, sizeof*p-> XX##_d); \
         p-> XX##_l = calloc(n_len, sizeof*p-> XX##_l); \
         VECTOR_RESIZE( p-> XX##_t, n_len ); \
+        VECTOR_RESIZE( p-> XX##_t_padded, n_tot ); \
         VECTOR_RESIZE( p-> XX##_mom, n_tot ); \
         p-> XX##_f = calloc(n_tot, sizeof*p-> XX##_f); \
-        p-> XX##_f_sz = n_tot; \
     } \
     diverge_mpi_bcast_bytes( p-> XX##_d, n_len*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_l, n_len*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_t, n_len*sizeof(claV2ll_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_t_padded, n_tot*sizeof(claV2ll_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_mom, n_tot*sizeof(index_t), 0 ); \
     diverge_mpi_bcast_bytes( p-> XX##_f, n_tot*sizeof(index_t), 0 );
 

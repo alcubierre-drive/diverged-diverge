@@ -231,6 +231,14 @@ typedef uint64_t uindex_t;
 #define VECTOR_FREE( ary ) free( ary )
 #endif
 
+#ifndef VECTOR_COPY
+#define VECTOR_COPY( a, b ) { \
+    a = b; \
+    a##_sz = b##_sz; \
+    a##_cap = b##_cap; \
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif

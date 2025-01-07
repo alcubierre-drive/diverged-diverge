@@ -46,8 +46,6 @@ struct Projection {
     index_t* P_to_D_d;
     index_t* P_to_D_l;
 
-    index_t PC_CP_f_sz, DC_CD_f_sz, D_to_P_f_sz, P_to_D_f_sz;
-
     index_t nk[3];
     index_t nr;
     index_t n_orb;
