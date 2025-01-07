@@ -10,9 +10,9 @@
 #include <cuda_runtime.h>
 #include <cufft.h>
 #else
-typedef void cufftHandle;
-typedef void cudaStream_t;
-typedef void cuDoubleComplex;
+typedef struct cufftHandle cufftHandle;
+typedef struct cudaStream_t cudaStream_t;
+typedef struct cuDoubleComplex cuDoubleComplex;
 #endif
 
 #ifdef __cplusplus

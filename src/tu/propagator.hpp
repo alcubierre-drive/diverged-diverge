@@ -28,6 +28,7 @@ static inline void scale_loop(complex128_t* const loop, const double pref, const
     for (index_t idx=0; idx<len; ++idx) loop[idx] *= pref;
 }
 
+extern "C" {
 void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L,
     const complex128_t* const GF, const complex128_t* const GFconj,
     const index_t n_orb, const index_t n_bonds, const index_t* const bond_sizes,
@@ -59,6 +60,7 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* cons
     const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
     const index_t n_unique_pairs, cbyte_t* L_touched_map );
+}
 
 class tu_loop_t {
 public:

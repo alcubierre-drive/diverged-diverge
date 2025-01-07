@@ -2,7 +2,7 @@
 
 #define EIGEN_NO_CUDA
 
-#include "propagator.hpp"
+#include "propagator_details.h"
 #include "cuda_init.h"
 
 static inline __device__ index_t mem_offset() {
@@ -65,7 +65,7 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
         cufftDoubleComplex* loopfft = (cufftDoubleComplex*) cp->buf_GG[dev];
         CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft[dev], cp->fft_workspace[dev]));
         CUFFT_CHECK(cufftSetStream(cp->gpu_fft[dev], down));
-        
+
         const index_t _GF_size = sizeof(cuDoubleComplex)*n_orb*n_spin*nktot*n_orb*n_spin;
         CUDA_CHECK(cudaMemcpyAsync(nkdev,nkref, sizeof(index_t)*3,cudaMemcpyDefault,down));
         CUDA_CHECK(cudaMemcpyAsync(mi_to_R,mi_to_Rin, sizeof(index_t)*n_orbff*3,cudaMemcpyDefault,down));
