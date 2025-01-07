@@ -10,7 +10,7 @@
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.h"
+#include "../../src/tu/projection.h"
 
 #ifndef USE_GF_FLOATS
 #ifndef USE_MPI

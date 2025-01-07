@@ -11,7 +11,7 @@
 #include "../../src/grid/vertex_memory.hpp"
 
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.h"
+#include "../../src/tu/projection.h"
 #include "../../src/tu/flow_stepper.hpp"
 #include "../../src/npatch/symmetrize_vertex.h"
 

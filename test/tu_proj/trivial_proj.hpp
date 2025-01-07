@@ -2,7 +2,7 @@
 
 #pragma once
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.h"
+#include "../../src/tu/projection.h"
 #include "../../src/diverge_model.h"
 #include "../helper_functions.hpp"
 

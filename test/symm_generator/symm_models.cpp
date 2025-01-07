@@ -13,7 +13,7 @@
 #include "../../src/tu/diverge_interface.h"
 #include "../../src/tu/diverge_interface_symmstruct.h"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.h"
+#include "../../src/tu/projection.h"
 #include "../../src/tu/flow_stepper.hpp"
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/diverge_symmetrize.h"

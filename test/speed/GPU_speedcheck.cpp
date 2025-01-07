@@ -10,7 +10,7 @@
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.h"
+#include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
 
 #ifdef USE_CUDA

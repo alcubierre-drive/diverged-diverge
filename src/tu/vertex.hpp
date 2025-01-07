@@ -38,7 +38,7 @@ index_t Vertex_get_full_vert_size( void* V_ );
 
 #include "../diverge_Eigen3.hpp"
 
-#include "projection_wrapper.h"
+#include "projection.h"
 #include "propagator.hpp"
 
 class Vertex

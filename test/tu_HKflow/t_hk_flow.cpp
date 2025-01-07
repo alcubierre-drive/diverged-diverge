@@ -9,7 +9,7 @@
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.hpp"
 #include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.h"
+#include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
 #include "../../src/grid/vertex_memory.hpp"
 #include "../model_examples/model_constructor.hpp"

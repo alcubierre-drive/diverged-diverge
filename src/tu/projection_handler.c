@@ -2,7 +2,7 @@
 
 #include "cuda_init.h"
 #include "projection_handler.h"
-#include "projection_wrapper.h"
+#include "projection.h"
 #include "vertex.hpp"
 
 static inline void complex128_array_add( complex128_t* out, const complex128_t* in, index_t sz ) {

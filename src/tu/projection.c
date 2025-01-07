@@ -10,7 +10,7 @@
 LINALG_IMPLEMENT
 
 #define SKIP_CLA_TYPES
-#include "projection_wrapper.h"
+#include "projection.h"
 
 static void init_CP_PC_proj( projection_t* p, const diverge_model_t* model );
 static void init_CD_DC_proj( projection_t* p, const diverge_model_t* model );
