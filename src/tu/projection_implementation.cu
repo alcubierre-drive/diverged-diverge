@@ -59,11 +59,6 @@ void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
     tu_gpu_info_t ii = tu_gpu_info();
     cudaDeviceSynchronize();
 
-    // TODO
-    for (index_t ii=0; ii<2*mapsize; ++ii) printf( "%li ", rsmap_to[ii] ); printf( "\n" );
-    for (index_t ii=0; ii<2*mapsize; ++ii) printf( "%li ", rsmap_from[ii] ); printf( "\n" );
-    for (index_t ii=0; ii<2*mapsize; ++ii) printf( "%li ", mom_in[ii] ); printf( "\n" );
-
     #pragma omp parallel for num_threads(ii.tu_num_of_devices)
     for (int dev=0; dev<ii.tu_num_of_devices; ++dev) {
         cudaSetDevice(dev);

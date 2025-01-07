@@ -319,7 +319,7 @@ void vhelper_q_vertex_sort_max( npatch_qvert_mat_t* qvm, index_t* pnq, double ma
     index_t qmax = 0;
     for (index_t q=0; q<*pnq; ++q) if (norms[q].norm >= norms[0].norm*max_rel) qmax++;
 
-    npatch_qvert_mat_t* buf = calloc(*pnq, sizeof*buf);
+    npatch_qvert_mat_t* buf = malloc(*pnq * sizeof*buf);
     for (index_t q=0; q<*pnq; ++q) buf[q] = qvm[norms[q].idx];
     for (index_t q=0; q<*pnq; ++q) qvm[q] = buf[q];
 

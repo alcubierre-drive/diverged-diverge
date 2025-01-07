@@ -16,7 +16,6 @@ struct Projection {
     cuda_proj_descr_t proj_descr;
     complex128_t* my_prefac_reco;
     complex128_t* my_prefac_proj;
-    complex128_t* my_prefac_proj_rk;
 
     VECTOR_DECL( claV2ll_t, PC_CP_t )
     VECTOR_DECL( claV2ll_t, PC_CP_t_padded )

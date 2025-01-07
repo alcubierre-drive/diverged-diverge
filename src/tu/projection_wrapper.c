@@ -108,6 +108,7 @@ static inline vec_claV2ll_t sort_and_filter( vec_claV2ll_t* _t,
         VECTOR_INIT_CAP( uindex_t, p, _len->v[k] ); p_sz = _len->v[k];
         for (index_t i=0; i<p_sz; ++i) p[i] = i;
         mergesort_fhelp_t ctx = { _fhelp->v, _off->v, k };
+        // TODO this is slow
         mergesort_fhelp_r( p, p_sz, (void*)&ctx, diverge_omp_num_threads(), 0 );
         for (index_t q=0; q<_len->v[k]; ++q)
         for (int d=0; d<2; ++d) {
@@ -198,7 +199,6 @@ Projection* projection_init( const diverge_model_t* model ) {
 void projection_free( Projection* p ) {
     free(p->my_prefac_reco);
     free(p->my_prefac_proj);
-    free(p->my_prefac_proj_rk);
 
     free(p->PC_CP_t);
     free(p->PC_CP_t_padded);
@@ -662,25 +662,22 @@ static void init_prefac_vector( Projection* p, const diverge_model_t* model ) {
     index_t nk = kdim(model->nk);
     complex128_t* prefac_proj = calloc(nk*p->nr, sizeof(complex128_t));
 
-    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+    #pragma omp parallel for collapse(4) num_threads(diverge_omp_num_threads())
     for (index_t rv=0; rv<p->nr; ++rv)
     for (index_t kx=0; kx<model->nk[0]; ++kx)
     for (index_t ky=0; ky<model->nk[1]; ++ky)
     for (index_t kz=0; kz<model->nk[2]; ++kz) {
         index_t k = IDX3(kx, ky, kz, model->nk[1], model->nk[2]);
         prefac_proj[k+nk*rv] = cexp(2.*M_PI*I*(
-                    p->existing_r[rv].v[0]*kx/(double)model->nk[0] +
-                    p->existing_r[rv].v[1]*ky/(double)model->nk[1] +
-                    p->existing_r[rv].v[2]*kz/(double)model->nk[2] ));
+                    (double)p->existing_r[rv].v[0]*kx/(double)model->nk[0] +
+                    (double)p->existing_r[rv].v[1]*ky/(double)model->nk[1] +
+                    (double)p->existing_r[rv].v[2]*kz/(double)model->nk[2] ));
     }
     p->my_prefac_proj = calloc(tu_data->my_nk*p->nr, sizeof(complex128_t));
-    p->my_prefac_proj_rk = calloc(tu_data->my_nk*p->nr, sizeof(complex128_t));
     #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t rv=0; rv<p->nr; ++rv)
     for (index_t k=0; k<tu_data->my_nk; ++k) {
         p->my_prefac_proj[k+tu_data->my_nk*rv] =
-            prefac_proj[tu_data->symm->idx_ibz_in_fullmesh[k+tu_data->my_nk_off] + rv*nk];
-        p->my_prefac_proj_rk[rv + p->nr*k] =
             prefac_proj[tu_data->symm->idx_ibz_in_fullmesh[k+tu_data->my_nk_off] + rv*nk];
     }
 
