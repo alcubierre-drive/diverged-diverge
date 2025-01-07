@@ -12,7 +12,7 @@ void vertex_product(complex128_t* result, const complex128_t* const  B,
     batched_gemm_with_buffers(helper, B, result, GPUbuffer, productsize,prefac, 0.0, nbatch);
 }
 
-tu_stepper::tu_stepper(Projection* projin,tu_loop_t* loopin, Vertex* vertexin)
+tu_stepper::tu_stepper(projection_t* projin,tu_loop_t* loopin, Vertex* vertexin)
 :
     loop{loopin},
     proj{projin},

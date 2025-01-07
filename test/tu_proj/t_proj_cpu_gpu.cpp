@@ -21,7 +21,7 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
     diverge_model_t* mom = gen_honeycomb_lat_hub(4,4,1,1);
     diverge_model_internals_tu(mom, 22);
 
-    Projection* ProjMom = projection_init(mom);
+    projection_t* ProjMom = projection_init(mom);
     tu_loop_t LoopMom (mom);
     Vertex VertMom(mom, ProjMom, &LoopMom);
 

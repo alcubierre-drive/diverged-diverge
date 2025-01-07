@@ -21,8 +21,8 @@ TEST_CASE("momentum vs realspace projections ", "[proj][proj_orbVSreal]")
     diverge_model_internals_tu(orb, 1.2);
     diverge_model_internals_tu(mom, 1.2);
 
-    Projection* ProjMom = projection_init(mom);
-    Projection* ProjOrb = projection_init(orb);
+    projection_t* ProjMom = projection_init(mom);
+    projection_t* ProjOrb = projection_init(orb);
 
     tu_loop_t LoopMom (mom);
     tu_loop_t LoopOrb (orb);
@@ -94,8 +94,8 @@ TEST_CASE("momentum vs mixed projections ", "[proj][proj_mixVSreal]")
     diverge_model_internals_tu(orb, 1.2);
     diverge_model_internals_tu(mom, 1.2);
 
-    Projection* ProjMom = projection_init(mom);
-    Projection* ProjOrb = projection_init(orb);
+    projection_t* ProjMom = projection_init(mom);
+    projection_t* ProjOrb = projection_init(orb);
 
     tu_loop_t LoopMom (mom);
     tu_loop_t LoopOrb (orb);
@@ -168,8 +168,8 @@ TEST_CASE("momentum vs mixed projections graphene", "[proj][proj_mixVSrealgr]")
     diverge_model_internals_tu(orb, 1.2);
     diverge_model_internals_tu(mom, 1.2);
 
-    Projection* ProjMom = projection_init(mom);
-    Projection* ProjOrb = projection_init(orb);
+    projection_t* ProjMom = projection_init(mom);
+    projection_t* ProjOrb = projection_init(orb);
 
     tu_loop_t LoopMom (mom);
     tu_loop_t LoopOrb (orb);

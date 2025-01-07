@@ -12,38 +12,38 @@
 extern "C" {
 #endif
 
-struct Projection {
+struct projection_t {
     cuda_proj_descr_t proj_descr;
     complex128_t* my_prefac_reco;
     complex128_t* my_prefac_proj;
 
-    VECTOR_DECL( claV2ll_t, PC_CP_t )
-    index_t* PC_CP_d;
-    index_t* PC_CP_l;
-    VECTOR_DECL( claV2ll_t, PC_CP_t_padded )
-    index_t* PC_CP_f;
-    index_t* PC_CP_mom;
+    VECTOR_DECL( claV2ll_t, PC_CP_to )
+    index_t* PC_CP_displ; // (PC_CP_to_sz,) describes _padded, _from, _mom
+    index_t* PC_CP_count; // (PC_CP_to_sz,)
+    VECTOR_DECL( claV2ll_t, PC_CP_to_padded )
+    index_t* PC_CP_from; // (PC_CP_to_padded_sz, 2)
+    index_t* PC_CP_mom; // (PC_CP_to_padded_sz, 2)
 
-    VECTOR_DECL( claV2ll_t, DC_CD_t )
-    index_t* DC_CD_d;
-    index_t* DC_CD_l;
-    VECTOR_DECL( claV2ll_t, DC_CD_t_padded )
-    index_t* DC_CD_f;
-    index_t* DC_CD_mom;
+    VECTOR_DECL( claV2ll_t, DC_CD_to )
+    index_t* DC_CD_displ; // (DC_CD_to_sz,) describes _padded, _from, _mom
+    index_t* DC_CD_count; // (DC_CD_to_sz,)
+    VECTOR_DECL( claV2ll_t, DC_CD_to_padded )
+    index_t* DC_CD_from; // (DC_CD_to_padded_sz, 2)
+    index_t* DC_CD_mom; // (DC_CD_to_padded_sz, 2)
 
-    VECTOR_DECL( claV2ll_t, D_to_P_t )
-    index_t* D_to_P_d;
-    index_t* D_to_P_l;
-    VECTOR_DECL( claV2ll_t, D_to_P_t_padded )
-    index_t* D_to_P_f;
-    index_t* D_to_P_mom;
+    VECTOR_DECL( claV2ll_t, D_to_P_to )
+    index_t* D_to_P_displ; // (D_to_P_to_sz,) describes _padded, _from, _mom
+    index_t* D_to_P_count; // (D_to_P_to_sz,)
+    VECTOR_DECL( claV2ll_t, D_to_P_to_padded )
+    index_t* D_to_P_from; // (D_to_P_to_padded_sz, 2)
+    index_t* D_to_P_mom; // (D_to_P_to_padded_sz, 2)
 
-    VECTOR_DECL( claV2ll_t, P_to_D_t )
-    index_t* P_to_D_d;
-    index_t* P_to_D_l;
-    VECTOR_DECL( claV2ll_t, P_to_D_t_padded )
-    index_t* P_to_D_f;
-    index_t* P_to_D_mom;
+    VECTOR_DECL( claV2ll_t, P_to_D_to )
+    index_t* P_to_D_displ; // (P_to_D_to_sz,) describes _padded, _from, _mom
+    index_t* P_to_D_count; // (P_to_D_to_sz,)
+    VECTOR_DECL( claV2ll_t, P_to_D_to_padded )
+    index_t* P_to_D_from; // (P_to_D_to_padded_sz, 2)
+    index_t* P_to_D_mom; // (P_to_D_to_padded_sz, 2)
 
     index_t nk[3];
     index_t n_orb;
@@ -62,10 +62,10 @@ struct Projection {
     VECTOR_DECL( index_t, DP_r )
     VECTOR_DECL( index_t, PD_r )
 };
-typedef struct Projection Projection;
+typedef struct projection_t projection_t;
 
-Projection* projection_init( const diverge_model_t* model );
-void projection_free( Projection* p );
+projection_t* projection_init( const diverge_model_t* model );
+void projection_free( projection_t* p );
 
 #ifdef __cplusplus
 }

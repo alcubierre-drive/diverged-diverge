@@ -176,6 +176,7 @@ LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_zero( void
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_const( LINALG_DATA_TYPE_##type val ); \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( const LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT void cla_prefix##V##dim##type##_rmap( cla_prefix##V##dim##type##_t v, LINALG_DATA_TYPE_##type * p ); \
+LINALG_EXPORT int cla_prefix##V##dim##type##_equal( cla_prefix##V##dim##type##_t a, cla_prefix##V##dim##type##_t b ); \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_scale( cla_prefix##V##dim##type##_t v, LINALG_DATA_TYPE_##type s ); \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_add( cla_prefix##V##dim##type##_t a, cla_prefix##V##dim##type##_t b ); \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_sub( cla_prefix##V##dim##type##_t a, cla_prefix##V##dim##type##_t b ); \
@@ -193,6 +194,7 @@ LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_zero( void
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_id( void ); \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_map( const LINALG_DATA_TYPE_##type * p ); \
 LINALG_EXPORT void cla_prefix##M##dim##type##_rmap( cla_prefix##M##dim##type##_t m, LINALG_DATA_TYPE_##type * p ); \
+LINALG_EXPORT int cla_prefix##M##dim##type##_equal( cla_prefix##M##dim##type##_t a, cla_prefix##M##dim##type##_t b ); \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_scale( cla_prefix##M##dim##type##_t v, LINALG_DATA_TYPE_##type s ); \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_add( cla_prefix##M##dim##type##_t a, cla_prefix##M##dim##type##_t b ); \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_sub( cla_prefix##M##dim##type##_t a, cla_prefix##M##dim##type##_t b ); \

@@ -74,7 +74,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     complex128_t* Lrecog = (complex128_t*)calloc(fsize,sizeof(complex128_t));
 
     tu_loop_t tu_loop(mod_tu);
-    Projection* ProjMom = projection_init(mod_tu);
+    projection_t* ProjMom = projection_init(mod_tu);
     Vertex VertMom(mod_tu, ProjMom, &tu_loop);
     
     grid::Loops grid_loop (mod_grid);

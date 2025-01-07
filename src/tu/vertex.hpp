@@ -38,7 +38,7 @@ complex128_t* Vertex_get_bubble_helper( void* V_ );
 class Vertex
 {
 public:
-    Vertex(diverge_model_t* model, Projection* proj, tu_loop_t* loop, bool P = true,
+    Vertex(diverge_model_t* model, projection_t* proj, tu_loop_t* loop, bool P = true,
             bool C = true, bool D = true, bool self = false);
     ~Vertex(void);
 
@@ -53,11 +53,11 @@ public:
     void reco_ft(complex128_t* const buf, const complex128_t * const existing_r_exp, const uindex_t nr,
                             complex128_t * bufMPI = nullptr) const;
 
-    void init_U_from_fullV(diverge_model_t* model, Projection* proj);
+    void init_U_from_fullV(diverge_model_t* model, projection_t* proj);
     void project_fullV(const diverge_model_t* const mod_ptr, complex128_t*,
                         const double * frq = nullptr) const;
 
-    void initialize_GPU_memory(Projection* proj, tu_loop_t* loop);
+    void initialize_GPU_memory(projection_t* proj, tu_loop_t* loop);
 
     void init_U(bool enforce_exchange);
     void unset_U();

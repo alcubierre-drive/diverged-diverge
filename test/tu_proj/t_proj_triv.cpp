@@ -21,7 +21,7 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     diverge_model_t* mom = gen_square_lat_hub(6,6,1,1);
     diverge_model_internals_tu(mom, 1.1);
 
-    Projection* ProjMom = projection_init(mom);
+    projection_t* ProjMom = projection_init(mom);
     tu_loop_t LoopMom (mom);
     Vertex VertMom(mom, ProjMom, &LoopMom);
 
@@ -71,7 +71,7 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
     diverge_model_t* mom = gen_honeycomb_lat_hub(6,6,1,1);
     diverge_model_internals_tu(mom, 0.7);
 
-    Projection* ProjMom = projection_init(mom);
+    projection_t* ProjMom = projection_init(mom);
     tu_loop_t LoopMom (mom);
     Vertex VertMom(mom, ProjMom, &LoopMom);
 

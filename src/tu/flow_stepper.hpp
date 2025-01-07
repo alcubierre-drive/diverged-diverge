@@ -28,7 +28,7 @@ void vertex_product(complex128_t* result, const complex128_t* const  B,
 
 class tu_stepper{
 public:
-    tu_stepper(Projection*, tu_loop_t* loop, Vertex* Vertex);
+    tu_stepper(projection_t*, tu_loop_t* loop, Vertex* Vertex);
     vector<double> tu_step_euler(Vertex* inout, double lambda, double dlambda);
 
     ~tu_stepper(){
@@ -68,7 +68,7 @@ public:
 
 private:
     tu_loop_t* loop;
-    Projection* proj;
+    projection_t* proj;
     bool channel_selection[4];
     double norm[3];
     index_t prodsize;

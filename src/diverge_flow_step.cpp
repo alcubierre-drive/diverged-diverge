@@ -337,7 +337,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
     grid::VertexMemory* grid_V = (grid::VertexMemory*)intls->grid_vertex;
     npatch_vertex_t* patch_V = (npatch_vertex_t*)intls->patch_vertex;
     Vertex* tu_V = st->tu_vertex;
-    Projection* tu_Proj = st->tu_proj;
+    projection_t* tu_Proj = st->tu_proj;
 
     // DEVELOPERS
     //

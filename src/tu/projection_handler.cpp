@@ -29,7 +29,7 @@ static void timings( double time_cpyfill, double time_reco, double time_handler_
 }
 #endif
 
-void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Projection* proj) {
+void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
     if(!vertex->P_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -45,8 +45,8 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
 
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'P', bufMPI, buf,
-                        (index_t*)proj->PC_CP_t_padded, proj->PC_CP_f, proj->PC_CP_mom,
-                        proj->PC_CP_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
+                        (index_t*)proj->PC_CP_to_padded, proj->PC_CP_from, proj->PC_CP_mom,
+                        proj->PC_CP_to_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
 
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
@@ -59,8 +59,8 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
 
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'P', bufMPI, buf,
-                        (index_t*)proj->D_to_P_t_padded, proj->D_to_P_f, proj->D_to_P_mom,
-                        proj->D_to_P_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
+                        (index_t*)proj->D_to_P_to_padded, proj->D_to_P_from, proj->D_to_P_mom,
+                        proj->D_to_P_to_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
 
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
@@ -75,10 +75,10 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_P(bufMPI, buf, proj->PC_CP_t,
-            proj->PC_CP_t_sz, proj->PC_CP_f,
-            proj->PC_CP_mom, proj->PC_CP_d,
-            proj->PC_CP_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_P(bufMPI, buf, proj->PC_CP_to,
+            proj->PC_CP_to_sz, proj->PC_CP_from,
+            proj->PC_CP_mom, proj->PC_CP_displ,
+            proj->PC_CP_count, proj->my_prefac_proj, vertex->n_orbff,
             vertex->n_spin,vertex->nk,vertex->my_nk, proj->nr));
 
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
@@ -89,10 +89,10 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_P(bufMPI, buf, proj->D_to_P_t,
-                    proj->D_to_P_t_sz, proj->D_to_P_f,
-                    proj->D_to_P_mom, proj->D_to_P_d,
-                    proj->D_to_P_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_P(bufMPI, buf, proj->D_to_P_to,
+                    proj->D_to_P_to_sz, proj->D_to_P_from,
+                    proj->D_to_P_mom, proj->D_to_P_displ,
+                    proj->D_to_P_count, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
             vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -100,7 +100,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Projection* proj) {
+void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
     if(!vertex->D_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -114,8 +114,8 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'D', bufMPI, buf,
-                        (index_t*)proj->DC_CD_t_padded, proj->DC_CD_f, proj->DC_CD_mom,
-                        proj->DC_CD_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
+                        (index_t*)proj->DC_CD_to_padded, proj->DC_CD_from, proj->DC_CD_mom,
+                        proj->DC_CD_to_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -126,8 +126,8 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'D', bufMPI, buf,
-                        (index_t*)proj->P_to_D_t_padded, proj->P_to_D_f, proj->P_to_D_mom,
-                        proj->P_to_D_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
+                        (index_t*)proj->P_to_D_to_padded, proj->P_to_D_from, proj->P_to_D_mom,
+                        proj->P_to_D_to_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                         vertex->n_spin, vertex->my_nk, proj->nr));
              TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -141,10 +141,10 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                     proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_D(bufMPI,buf,proj->DC_CD_t,
-                    proj->DC_CD_t_sz, proj->DC_CD_f,
-                    proj->DC_CD_mom, proj->DC_CD_d,
-                    proj->DC_CD_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_D(bufMPI,buf,proj->DC_CD_to,
+                    proj->DC_CD_to_sz, proj->DC_CD_from,
+                    proj->DC_CD_mom, proj->DC_CD_displ,
+                    proj->DC_CD_count, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin,vertex->nk,vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -154,10 +154,10 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                     proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_D(bufMPI,buf,proj->P_to_D_t,
-                proj->P_to_D_t_sz, proj->P_to_D_f,
-                proj->P_to_D_mom, proj->P_to_D_d,
-                proj->P_to_D_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_D(bufMPI,buf,proj->P_to_D_to,
+                proj->P_to_D_to_sz, proj->P_to_D_from,
+                proj->P_to_D_mom, proj->P_to_D_displ,
+                proj->P_to_D_count, proj->my_prefac_proj, vertex->n_orbff,
                 vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -165,7 +165,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Projection* proj) {
+void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
     if(!vertex->C_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -180,8 +180,8 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'C', bufMPI, buf,
-                    (index_t*)proj->PC_CP_t_padded, proj->PC_CP_f, proj->PC_CP_mom,
-                    proj->PC_CP_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
+                    (index_t*)proj->PC_CP_to_padded, proj->PC_CP_from, proj->PC_CP_mom,
+                    proj->PC_CP_to_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin, vertex->my_nk, proj->nr));
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -192,8 +192,8 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
             TICK_TOCK(time_handler_ft, GPUproj_handler_ft(&(proj->proj_descr), 'C', bufMPI, buf,
-                    (index_t*)proj->DC_CD_t_padded, proj->DC_CD_f, proj->DC_CD_mom,
-                    proj->DC_CD_t_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
+                    (index_t*)proj->DC_CD_to_padded, proj->DC_CD_from, proj->DC_CD_mom,
+                    proj->DC_CD_to_padded_sz, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin, vertex->my_nk, proj->nr));
             TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -208,10 +208,10 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_C(bufMPI,buf, proj->DC_CD_t,
-                proj->DC_CD_t_sz, proj->DC_CD_f,
-                proj->DC_CD_mom, proj->DC_CD_d,
-                proj->DC_CD_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_C(bufMPI,buf, proj->DC_CD_to,
+                proj->DC_CD_to_sz, proj->DC_CD_from,
+                proj->DC_CD_mom, proj->DC_CD_displ,
+                proj->DC_CD_count, proj->my_prefac_proj, vertex->n_orbff,
                 vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -221,10 +221,10 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_C(bufMPI,buf, proj->PC_CP_t,
-                proj->PC_CP_t_sz, proj->PC_CP_f,
-                proj->PC_CP_mom, proj->PC_CP_d,
-                proj->PC_CP_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_C(bufMPI,buf, proj->PC_CP_to,
+                proj->PC_CP_to_sz, proj->PC_CP_from,
+                proj->PC_CP_mom, proj->PC_CP_displ,
+                proj->PC_CP_count, proj->my_prefac_proj, vertex->n_orbff,
                 vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -232,7 +232,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const Project
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void P_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const Projection* proj) {
+void P_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
     if(!vertex->P_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -243,10 +243,10 @@ void P_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
                     proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_P(bufMPI, buf, proj->PC_CP_t,
-            proj->PC_CP_t_sz, proj->PC_CP_f,
-            proj->PC_CP_mom, proj->PC_CP_d,
-            proj->PC_CP_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_P(bufMPI, buf, proj->PC_CP_to,
+            proj->PC_CP_to_sz, proj->PC_CP_from,
+            proj->PC_CP_mom, proj->PC_CP_displ,
+            proj->PC_CP_count, proj->my_prefac_proj, vertex->n_orbff,
             vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
 
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
@@ -257,10 +257,10 @@ void P_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
                     proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_P(bufMPI, buf, proj->D_to_P_t,
-            proj->D_to_P_t_sz, proj->D_to_P_f,
-            proj->D_to_P_mom, proj->D_to_P_d,
-            proj->D_to_P_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_P(bufMPI, buf, proj->D_to_P_to,
+            proj->D_to_P_to_sz, proj->D_to_P_from,
+            proj->D_to_P_mom, proj->D_to_P_displ,
+            proj->D_to_P_count, proj->my_prefac_proj, vertex->n_orbff,
             vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
             vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -268,7 +268,7 @@ void P_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void D_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const Projection* proj) {
+void D_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
     if(!vertex->D_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -279,10 +279,10 @@ void D_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_D(bufMPI, buf, proj->DC_CD_t,
-                    proj->DC_CD_t_sz, proj->DC_CD_f,
-                    proj->DC_CD_mom, proj->DC_CD_d,
-                    proj->DC_CD_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_D(bufMPI, buf, proj->DC_CD_to,
+                    proj->DC_CD_to_sz, proj->DC_CD_from,
+                    proj->DC_CD_mom, proj->DC_CD_displ,
+                    proj->DC_CD_count, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -292,10 +292,10 @@ void D_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_D(bufMPI, buf, proj->P_to_D_t,
-                proj->P_to_D_t_sz, proj->P_to_D_f,
-                proj->P_to_D_mom, proj->P_to_D_d,
-                proj->P_to_D_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_D(bufMPI, buf, proj->P_to_D_to,
+                proj->P_to_D_to_sz, proj->P_to_D_from,
+                proj->P_to_D_mom, proj->P_to_D_displ,
+                proj->P_to_D_count, proj->my_prefac_proj, vertex->n_orbff,
                 vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -303,7 +303,7 @@ void D_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void C_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const Projection* proj) {
+void C_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
     if(!vertex->C_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -314,10 +314,10 @@ void C_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_C(bufMPI, buf, proj->DC_CD_t,
-                proj->DC_CD_t_sz, proj->DC_CD_f,
-                proj->DC_CD_mom, proj->DC_CD_d,
-                proj->DC_CD_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_C(bufMPI, buf, proj->DC_CD_to,
+                proj->DC_CD_to_sz, proj->DC_CD_from,
+                proj->DC_CD_mom, proj->DC_CD_displ,
+                proj->DC_CD_count, proj->my_prefac_proj, vertex->n_orbff,
                 vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -327,10 +327,10 @@ void C_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
-        TICK_TOCK(time_handler_ft, _to_C(bufMPI, buf, proj->PC_CP_t,
-                    proj->PC_CP_t_sz, proj->PC_CP_f,
-                    proj->PC_CP_mom, proj->PC_CP_d,
-                    proj->PC_CP_l, proj->my_prefac_proj, vertex->n_orbff,
+        TICK_TOCK(time_handler_ft, _to_C(bufMPI, buf, proj->PC_CP_to,
+                    proj->PC_CP_to_sz, proj->PC_CP_from,
+                    proj->PC_CP_mom, proj->PC_CP_displ,
+                    proj->PC_CP_count, proj->my_prefac_proj, vertex->n_orbff,
                     vertex->n_spin, vertex->nk, vertex->my_nk, proj->nr));
         TICK_TOCK(time_add, complex128_array_add(proj_vertex, bufMPI,
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));

@@ -17,7 +17,7 @@
 #include "../helper_functions.hpp"
 
 #ifndef USE_GF_FLOATS
-void init_random_PCD(diverge_model_t* model, Vertex* vertex, Projection * proj, double* value) {
+void init_random_PCD(diverge_model_t* model, Vertex* vertex, projection_t * proj, double* value) {
     tu_data_t* tu_data = (tu_data_t*)(model -> internals-> tu_data);
     symmstruct_t* symm = tu_data->symm;
     double* Rveco = (double*)calloc(model->n_tu_ff*3,sizeof(double));
@@ -63,9 +63,9 @@ TEST_CASE("self energy Realspace vs k space SU2 static","[self][self_kVSr_SU2]")
     tu_loop_t PropOrb (orb);
     tu_loop_t PropMix (mix);
 
-    Projection* ProjOrb = projection_init(orb);
-    Projection* ProjMom = projection_init(mom);
-    Projection* ProjMix = projection_init(mix);
+    projection_t* ProjOrb = projection_init(orb);
+    projection_t* ProjMom = projection_init(mom);
+    projection_t* ProjMix = projection_init(mix);
 
     Vertex VertOrb(orb, ProjOrb,&PropOrb, true,true,true,true);
     Vertex VertMom(mom, ProjMom,&PropMom, true,true,true,true);
@@ -128,8 +128,8 @@ TEST_CASE("self energy honey","[self][self_honey]") {
     tu_loop_t PropOrb (orb);
     tu_loop_t PropMix (mix);
 
-    Projection* ProjOrb = projection_init(orb);
-    Projection* ProjMix = projection_init(mix);
+    projection_t* ProjOrb = projection_init(orb);
+    projection_t* ProjMix = projection_init(mix);
 
     Vertex VertOrb(orb, ProjOrb,&PropOrb, true,true,true,true);
     Vertex VertMix(mix, ProjMix,&PropMix,  true,true,true,true);
@@ -190,8 +190,8 @@ TEST_CASE("self energy honey sym","[self][self_honey]") {
     tu_loop_t PropOrb (orb);
     tu_loop_t PropMix (mix);
 
-    Projection* ProjOrb = projection_init(orb);
-    Projection* ProjMix = projection_init(mix);
+    projection_t* ProjOrb = projection_init(orb);
+    projection_t* ProjMix = projection_init(mix);
 
     Vertex VertOrb(orb, ProjOrb,&PropOrb, true,true,true,true);
     Vertex VertMix(mix, ProjMix,&PropMix,  true,true,true,true);
@@ -247,8 +247,8 @@ TEST_CASE("self energy honey rash","[self][self_rash]") {
     CHECK(std::abs(trace(mix->internals->ham,mix->n_orb*mix->n_spin,PropMix.nk)
                   -trace(orb->internals->ham,orb->n_orb*orb->n_spin,PropOrb.nk)) < 1e-8);
 
-    Projection* ProjOrb = projection_init(orb);
-    Projection* ProjMix = projection_init(mix);
+    projection_t* ProjOrb = projection_init(orb);
+    projection_t* ProjMix = projection_init(mix);
 
     Vertex VertOrb(orb, ProjOrb,&PropOrb, true,true,true,true);
     Vertex VertMix(mix, ProjMix,&PropMix,  true,true,true,true);
@@ -317,8 +317,8 @@ TEST_CASE("self energy honey rash ref","[self][self_ref]") {
     CHECK(std::abs(trace(mix->internals->ham,mix->n_orb*mix->n_spin,PropMix.nktot)
                   -trace(orb->internals->ham,orb->n_orb*orb->n_spin,PropOrb.nktot)) < 1e-8);
 
-    Projection* ProjOrb = projection_init(orb);
-    Projection* ProjMix = projection_init(mix);
+    projection_t* ProjOrb = projection_init(orb);
+    projection_t* ProjMix = projection_init(mix);
 
     Vertex VertOrb(orb, ProjOrb,&PropOrb, true,true,true,true);
     Vertex VertMix(mix, ProjMix,&PropMix,  true,true,true,true);
@@ -368,8 +368,8 @@ TEST_CASE("self energy hub ref","[self][self_href]") {
     CHECK(std::abs(trace(mix->internals->ham,mix->n_orb*mix->n_spin,PropMix.nktot)
                   -trace(orb->internals->ham,orb->n_orb*orb->n_spin,PropOrb.nktot)) < 1e-8);
 
-    Projection* ProjOrb = projection_init(orb);
-    Projection* ProjMix = projection_init(mix);
+    projection_t* ProjOrb = projection_init(orb);
+    projection_t* ProjMix = projection_init(mix);
 
     Vertex VertOrb(orb, ProjOrb,&PropOrb, true,true,true,true);
     Vertex VertMix(mix, ProjMix,&PropMix,  true,true,true,true);

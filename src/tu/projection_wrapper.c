@@ -12,124 +12,21 @@ LINALG_IMPLEMENT
 #define SKIP_CLA_TYPES
 #include "projection_wrapper.h"
 
-static void init_CP_PC_proj( Projection* p, const diverge_model_t* model );
-static void init_CD_DC_proj( Projection* p, const diverge_model_t* model );
-static void init_D_to_P_proj( Projection* p, const diverge_model_t* model );
-static void init_P_to_D_proj( Projection* p, const diverge_model_t* model );
-static void mpi_communicate( Projection* p );
-static void init_to_mom_map_existing_r( Projection* p );
-static void init_prefac_vector( Projection* p, const diverge_model_t* model );
+static void init_CP_PC_proj( projection_t* p, const diverge_model_t* model );
+static void init_CD_DC_proj( projection_t* p, const diverge_model_t* model );
+static void init_D_to_P_proj( projection_t* p, const diverge_model_t* model );
+static void init_P_to_D_proj( projection_t* p, const diverge_model_t* model );
+static void mpi_communicate( projection_t* p );
+static void init_to_mom_map_existing_r( projection_t* p );
+static void init_prefac_vector( projection_t* p, const diverge_model_t* model );
 
-static inline int mergesort_permutation_r_comp( size_t i, size_t j, const claV2ll_t* _t ) {
-    if (_t[i].v[1] == _t[j].v[1])
-        return (_t[i].v[0] < _t[j].v[0]) ? -1 : (_t[i].v[0] > _t[j].v[0]) ? 1 : 0;
-    return (_t[i].v[1] < _t[j].v[1]) ? -1 : (_t[i].v[1] > _t[j].v[1]) ? 1 : 0;
-}
-#undef MERGESORT_COMP_R
-#define MERGESORT_COMP_R(i,j,_vt) mergesort_permutation_r_comp(i,j,(const claV2ll_t*)_vt)
-MERGESORT_IMPL_R( mergesort_permutation, size_t )
-
-static inline size_t* sort_permutation( const claV2ll_t* _t, size_t _t_sz ) {
-    size_t* p = (size_t*)calloc(_t_sz, sizeof*p);
-    for (size_t i=0; i<_t_sz; ++i) p[i] = i;
-    mergesort_permutation_r(p, _t_sz, (void*)_t, diverge_omp_num_threads(), 0);
-    return p;
-}
-
-static inline void apply_permutation_in_place( claV2ll_t* vec, const size_t* p, size_t p_sz ) {
-    cbyte_t* done = bitary_alloc(p_sz);
-    for (size_t i=0; i<p_sz; ++i) {
-        if (bitary_get(done, i)) continue;
-        bitary_set(done,i);
-        size_t prev_j = i;
-        size_t j = p[i];
-        while (i != j) {
-            claV2ll_t tmp; tmp = vec[prev_j]; vec[prev_j] = vec[j]; vec[j] = tmp;
-            bitary_set(done,j);
-            prev_j = j;
-            j = p[j];
-        }
-    }
-    free(done);
-}
-
-typedef struct { const claV2ll_t* _fhelp; const index_t* _off; uindex_t k; } serisort_fhelp_t;
-static inline int serisort_fhelp_comp( uindex_t i, uindex_t j, const serisort_fhelp_t* h ) {
-    const claV2ll_t fi = h->_fhelp[i+h->_off[h->k]],
-                    fj = h->_fhelp[j+h->_off[h->k]];
-    return (fi.v[1] == fj.v[1]) ? (fi.v[0] - fj.v[0]) : (fi.v[1] - fj.v[1]);
-}
-#undef SERISORT_COMP_R
-#define SERISORT_COMP_R( x, y, ctx ) serisort_fhelp_comp( (x), (y), (const serisort_fhelp_t*)ctx )
-SERISORT_IMPL_R( serisort_fhelp, uindex_t )
+static index_t* sort_permutation( const claV2ll_t* to, index_t to_sz );
+static inline void apply_permutation_in_place( claV2ll_t* vec, const index_t* p, index_t p_sz );
 
 typedef struct { VECTOR_DECL( claV2ll_t, v ) } vec_claV2ll_t;
 typedef struct { VECTOR_DECL( index_t, v ) } vec_index_t;
-
-static inline int claV2ll_equal( claV2ll_t a, claV2ll_t b ) { return a.v[0] == b.v[0] && a.v[1] == b.v[1]; }
-
-static inline vec_claV2ll_t sort_and_filter( vec_claV2ll_t* _t,
-        vec_claV2ll_t* _fhelp, vec_index_t* _f,
-        vec_claV2ll_t* _rhelp, vec_index_t* _r,
-        vec_index_t* _len, vec_index_t* _off ) {
-    size_t* p = sort_permutation( _t->v, _t->v_sz );
-    apply_permutation_in_place( _t->v, p, _t->v_sz );
-    apply_permutation_in_place( _fhelp->v, p, _t->v_sz );
-    apply_permutation_in_place( _rhelp->v, p, _t->v_sz );
-    free( p );
-
-    uindex_t msize = _t->v_sz;
-    vec_claV2ll_t _t_p = {0};
-    VECTOR_RESIZE( _t_p.v, msize );
-    memcpy( _t_p.v, _t->v, msize*sizeof(claV2ll_t) );
-    claV2ll_t lr = _t->v[0];
-
-    VECTOR_RESIZE( _t->v, 0 );
-    index_t len = 0;
-    for (uindex_t i=0; i<msize; ++i) {
-        if (claV2ll_equal(_t_p.v[i], lr)) {
-            len++;
-        } else {
-            VECTOR_PUSH_BACK( _len->v, len ); len = 1;
-            VECTOR_PUSH_BACK( _t->v, lr );
-            lr = _t_p.v[i];
-        }
-    }
-    VECTOR_PUSH_BACK( _len->v, len );
-    VECTOR_PUSH_BACK( _t->v, lr );
-    VECTOR_SHRINK_TO_FIT( _t->v );
-
-    VECTOR_RESIZE( _f->v, msize*2 );
-    VECTOR_RESIZE( _r->v, msize*2 );
-    VECTOR_RESIZE( _off->v, _len->v_sz );
-    _off->v[0] = 0;
-    index_t maxlen = _len->v[0];
-    for (index_t i=1; i<_len->v_sz; ++i) {
-        _off->v[i] = _off->v[i-1] + _len->v[i-1];
-        maxlen = MAX(maxlen, _len->v[i]);
-    }
-    uindex_t* pp = calloc(maxlen, sizeof*pp);
-    uindex_t* pt = calloc(maxlen, sizeof*pt);
-    for (index_t k=0; k<_len->v_sz; ++k) {
-        // set the index array
-        for (index_t i=0; i<_len->v[k]; ++i) pp[i] = i;
-        // sort it
-        serisort_fhelp_t ctx = { _fhelp->v, _off->v, k };
-        serisort_fhelp_sr( pp, _len->v[k], (void*)&ctx, pt );
-        // and push back the sorted stuff
-        for (index_t q=0; q<_len->v[k]; ++q)
-        for (int d=0; d<2; ++d) {
-            _f->v[2*(q+_off->v[k])+d] = _fhelp->v[_off->v[k]+pp[q]].v[d];
-            _r->v[2*(q+_off->v[k])+d] = _rhelp->v[_off->v[k]+pp[q]].v[d];
-        }
-        _len->v[k] *= 2; _off->v[k] *= 2;
-    }
-    free( pp );
-    free( pt );
-
-    return _t_p;
-}
-
+static vec_claV2ll_t sort_and_filter( vec_claV2ll_t* to, vec_claV2ll_t* from_help, vec_index_t* from,
+        vec_claV2ll_t* rvec_help, vec_index_t* rvec, vec_index_t* count, vec_index_t* displ );
 
 static inline claV3i_t subtract_2( const tu_formfactor_t* tu_ff, index_t b1, index_t b2 ) {
     return (claV3i_t){{ tu_ff[b1].R[0]-tu_ff[b2].R[0],
@@ -151,12 +48,8 @@ static inline claV3i_t set_to( const tu_formfactor_t* tu_ff, index_t b1, int pre
 
 #define TO_IDX( a, nk ) IDX3( (a).v[0], (a).v[1], (a).v[2], (nk)[1], (nk)[2] )
 
-static inline int claV3i_equal( claV3i_t a, claV3i_t b ) {
-    return (a.v[0] == b.v[0]) && (a.v[1] == b.v[1]) && (a.v[2] == b.v[2]);
-}
-
-Projection* projection_init( const diverge_model_t* model ) {
-    Projection* p = (Projection*)calloc(1, sizeof*p);
+projection_t* projection_init( const diverge_model_t* model ) {
+    projection_t* p = (projection_t*)calloc(1, sizeof*p);
     p->proj_descr = cuda_proj_defaults_CPP();
 
     tu_data_t* tu_data = model->internals->tu_data;
@@ -198,43 +91,43 @@ Projection* projection_init( const diverge_model_t* model ) {
     mpi_communicate( p );
     init_prefac_vector( p, model );
 
-    const index_t ntasks = (p->DC_CD_t_padded_sz/2)*p->nr*POW4(model->n_spin);
+    const index_t ntasks = (p->DC_CD_to_padded_sz/2)*p->nr*POW4(model->n_spin);
     cuda_setup_projections( &p->proj_descr, ntasks, tu_data->my_nk );
 
     return p;
 }
 
-void projection_free( Projection* p ) {
+void projection_free( projection_t* p ) {
     free(p->my_prefac_reco);
     free(p->my_prefac_proj);
 
-    free(p->PC_CP_t);
-    free(p->PC_CP_t_padded);
-    free(p->PC_CP_f);
+    free(p->PC_CP_to);
+    free(p->PC_CP_to_padded);
+    free(p->PC_CP_from);
     free(p->PC_CP_mom);
-    free(p->PC_CP_d);
-    free(p->PC_CP_l);
+    free(p->PC_CP_displ);
+    free(p->PC_CP_count);
 
-    free(p->DC_CD_t);
-    free(p->DC_CD_t_padded);
-    free(p->DC_CD_f);
+    free(p->DC_CD_to);
+    free(p->DC_CD_to_padded);
+    free(p->DC_CD_from);
     free(p->DC_CD_mom);
-    free(p->DC_CD_d);
-    free(p->DC_CD_l);
+    free(p->DC_CD_displ);
+    free(p->DC_CD_count);
 
-    free(p->D_to_P_t);
-    free(p->D_to_P_t_padded);
-    free(p->D_to_P_f);
+    free(p->D_to_P_to);
+    free(p->D_to_P_to_padded);
+    free(p->D_to_P_from);
     free(p->D_to_P_mom);
-    free(p->D_to_P_d);
-    free(p->D_to_P_l);
+    free(p->D_to_P_displ);
+    free(p->D_to_P_count);
 
-    free(p->P_to_D_t);
-    free(p->P_to_D_t_padded);
-    free(p->P_to_D_f);
+    free(p->P_to_D_to);
+    free(p->P_to_D_to_padded);
+    free(p->P_to_D_from);
     free(p->P_to_D_mom);
-    free(p->P_to_D_d);
-    free(p->P_to_D_l);
+    free(p->P_to_D_displ);
+    free(p->P_to_D_count);
 
     free(p->existing_r);
     free(p->PC_r);
@@ -255,11 +148,11 @@ static inline void mesh_normalize_4( claV3i_t* v, const index_t* nk ) {
     for (short d=0; d<3; ++d) { v->v[d] += nk[d]*4; v->v[d] %= nk[d]; }
 }
 
-static void init_CP_PC_proj( Projection* p, const diverge_model_t* model ) {
+static void init_CP_PC_proj( projection_t* p, const diverge_model_t* model ) {
     if (diverge_mpi_comm_rank() != 0) return;
     VECTOR_INIT( claV2ll_t, f_helper );
     VECTOR_INIT( claV2ll_t, r_helper );
-    VECTOR_RESERVE( p->PC_CP_t, POW2(p->n_orbff) );
+    VECTOR_RESERVE( p->PC_CP_to, POW2(p->n_orbff) );
     // calculate site dependent index map
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
@@ -301,7 +194,7 @@ static void init_CP_PC_proj( Projection* p, const diverge_model_t* model ) {
 
         #pragma omp critical
         {
-        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->PC_CP_t, my_t[i] );
+        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->PC_CP_to, my_t[i] );
         for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
         for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
         }
@@ -311,36 +204,36 @@ static void init_CP_PC_proj( Projection* p, const diverge_model_t* model ) {
         VECTOR_FREE( my_rv );
     }
 
-    vec_claV2ll_t v_PC_CP_t = { .v = p->PC_CP_t, .v_sz = p->PC_CP_t_sz, .v_cap = p->PC_CP_t_cap },
+    vec_claV2ll_t v_PC_CP_to = { .v = p->PC_CP_to, .v_sz = p->PC_CP_to_sz, .v_cap = p->PC_CP_to_cap },
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
                   v_r_helper = { .v = r_helper, .v_sz = r_helper_sz, .v_cap = r_helper_cap };
 
-    vec_index_t v_PC_CP_f = {0},
+    vec_index_t v_PC_CP_from = {0},
                 v_PC_r = {0},
-                v_PC_CP_l = {0},
-                v_PC_CP_d = {0};
+                v_PC_CP_count = {0},
+                v_PC_CP_displ = {0};
 
-    vec_claV2ll_t padded = sort_and_filter( &v_PC_CP_t, &v_f_helper, &v_PC_CP_f,
-            &v_r_helper, &v_PC_r, &v_PC_CP_l, &v_PC_CP_d );
+    vec_claV2ll_t padded = sort_and_filter( &v_PC_CP_to, &v_f_helper, &v_PC_CP_from,
+            &v_r_helper, &v_PC_r, &v_PC_CP_count, &v_PC_CP_displ );
 
-    VECTOR_COPY( p->PC_CP_t, v_PC_CP_t.v );
-    VECTOR_COPY( p->PC_CP_t_padded, padded.v );
+    VECTOR_COPY( p->PC_CP_to, v_PC_CP_to.v );
+    VECTOR_COPY( p->PC_CP_to_padded, padded.v );
     VECTOR_COPY( p->PC_r, v_PC_r.v );
 
-    p->PC_CP_f = v_PC_CP_f.v;
-    p->PC_CP_l = v_PC_CP_l.v;
-    p->PC_CP_d = v_PC_CP_d.v;
+    p->PC_CP_from = v_PC_CP_from.v;
+    p->PC_CP_count = v_PC_CP_count.v;
+    p->PC_CP_displ = v_PC_CP_displ.v;
 
     VECTOR_FREE( f_helper );
     VECTOR_FREE( r_helper );
 }
 
 
-static void init_CD_DC_proj( Projection* p, const diverge_model_t* model ) {
+static void init_CD_DC_proj( projection_t* p, const diverge_model_t* model ) {
     if (diverge_mpi_comm_rank() != 0) return;
     VECTOR_INIT( claV2ll_t, f_helper );
     VECTOR_INIT( claV2ll_t, r_helper );
-    VECTOR_RESERVE( p->DC_CD_t, POW2(p->n_orbff) );
+    VECTOR_RESERVE( p->DC_CD_to, POW2(p->n_orbff) );
     // calculate site dependent index map
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
@@ -386,7 +279,7 @@ static void init_CD_DC_proj( Projection* p, const diverge_model_t* model ) {
 
         #pragma omp critical
         {
-        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->DC_CD_t, my_t[i] );
+        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->DC_CD_to, my_t[i] );
         for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
         for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
         }
@@ -395,35 +288,35 @@ static void init_CD_DC_proj( Projection* p, const diverge_model_t* model ) {
         VECTOR_FREE( my_help_f );
         VECTOR_FREE( my_rv );
     }
-    vec_claV2ll_t v_DC_CD_t = { .v = p->DC_CD_t, .v_sz = p->DC_CD_t_sz, .v_cap = p->DC_CD_t_cap },
+    vec_claV2ll_t v_DC_CD_to = { .v = p->DC_CD_to, .v_sz = p->DC_CD_to_sz, .v_cap = p->DC_CD_to_cap },
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
                   v_r_helper = { .v = r_helper, .v_sz = r_helper_sz, .v_cap = r_helper_cap };
 
-    vec_index_t v_DC_CD_f = {0},
+    vec_index_t v_DC_CD_from = {0},
                 v_DC_r = {0},
-                v_DC_CD_l = {0},
-                v_DC_CD_d = {0};
+                v_DC_CD_count = {0},
+                v_DC_CD_displ = {0};
 
-    vec_claV2ll_t padded = sort_and_filter( &v_DC_CD_t, &v_f_helper, &v_DC_CD_f,
-            &v_r_helper, &v_DC_r, &v_DC_CD_l, &v_DC_CD_d );
+    vec_claV2ll_t padded = sort_and_filter( &v_DC_CD_to, &v_f_helper, &v_DC_CD_from,
+            &v_r_helper, &v_DC_r, &v_DC_CD_count, &v_DC_CD_displ );
 
-    VECTOR_COPY( p->DC_CD_t, v_DC_CD_t.v );
-    VECTOR_COPY( p->DC_CD_t_padded, padded.v );
+    VECTOR_COPY( p->DC_CD_to, v_DC_CD_to.v );
+    VECTOR_COPY( p->DC_CD_to_padded, padded.v );
     VECTOR_COPY( p->DC_r, v_DC_r.v );
 
-    p->DC_CD_f = v_DC_CD_f.v;
-    p->DC_CD_l = v_DC_CD_l.v;
-    p->DC_CD_d = v_DC_CD_d.v;
+    p->DC_CD_from = v_DC_CD_from.v;
+    p->DC_CD_count = v_DC_CD_count.v;
+    p->DC_CD_displ = v_DC_CD_displ.v;
 
     VECTOR_FREE( f_helper );
     VECTOR_FREE( r_helper );
 }
 
-static void init_D_to_P_proj( Projection* p, const diverge_model_t* model ) {
+static void init_D_to_P_proj( projection_t* p, const diverge_model_t* model ) {
     if (diverge_mpi_comm_rank() != 0) return;
     VECTOR_INIT( claV2ll_t, f_helper );
     VECTOR_INIT( claV2ll_t, r_helper );
-    VECTOR_RESERVE( p->D_to_P_t, POW2(p->n_orbff) );
+    VECTOR_RESERVE( p->D_to_P_to, POW2(p->n_orbff) );
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         VECTOR_INIT_CAP( claV2ll_t, my_t, POW2(p->n_orbff)/diverge_omp_num_threads() );
@@ -471,7 +364,7 @@ static void init_D_to_P_proj( Projection* p, const diverge_model_t* model ) {
 
         #pragma omp critical
         {
-        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->D_to_P_t, my_t[i] );
+        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->D_to_P_to, my_t[i] );
         for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
         for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
         }
@@ -480,35 +373,35 @@ static void init_D_to_P_proj( Projection* p, const diverge_model_t* model ) {
         VECTOR_FREE( my_help_f );
         VECTOR_FREE( my_rv );
     }
-    vec_claV2ll_t v_D_to_P_t = { .v = p->D_to_P_t, .v_sz = p->D_to_P_t_sz, .v_cap = p->D_to_P_t_cap },
+    vec_claV2ll_t v_D_to_P_to = { .v = p->D_to_P_to, .v_sz = p->D_to_P_to_sz, .v_cap = p->D_to_P_to_cap },
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
                   v_r_helper = { .v = r_helper, .v_sz = r_helper_sz, .v_cap = r_helper_cap };
 
-    vec_index_t v_D_to_P_f = {0},
+    vec_index_t v_D_to_P_from = {0},
                 v_DP_r = {0},
-                v_D_to_P_l = {0},
-                v_D_to_P_d = {0};
+                v_D_to_P_count = {0},
+                v_D_to_P_displ = {0};
 
-    vec_claV2ll_t padded = sort_and_filter( &v_D_to_P_t, &v_f_helper, &v_D_to_P_f,
-            &v_r_helper, &v_DP_r, &v_D_to_P_l, &v_D_to_P_d );
+    vec_claV2ll_t padded = sort_and_filter( &v_D_to_P_to, &v_f_helper, &v_D_to_P_from,
+            &v_r_helper, &v_DP_r, &v_D_to_P_count, &v_D_to_P_displ );
 
-    VECTOR_COPY( p->D_to_P_t, v_D_to_P_t.v );
-    VECTOR_COPY( p->D_to_P_t_padded, padded.v );
+    VECTOR_COPY( p->D_to_P_to, v_D_to_P_to.v );
+    VECTOR_COPY( p->D_to_P_to_padded, padded.v );
     VECTOR_COPY( p->DP_r, v_DP_r.v );
 
-    p->D_to_P_f = v_D_to_P_f.v;
-    p->D_to_P_l = v_D_to_P_l.v;
-    p->D_to_P_d = v_D_to_P_d.v;
+    p->D_to_P_from = v_D_to_P_from.v;
+    p->D_to_P_count = v_D_to_P_count.v;
+    p->D_to_P_displ = v_D_to_P_displ.v;
 
     VECTOR_FREE( f_helper );
     VECTOR_FREE( r_helper );
 }
 
-static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
+static void init_P_to_D_proj( projection_t* p, const diverge_model_t* model ) {
     if (diverge_mpi_comm_rank() != 0) return;
     VECTOR_INIT( claV2ll_t, f_helper );
     VECTOR_INIT( claV2ll_t, r_helper );
-    VECTOR_RESERVE( p->P_to_D_t, POW2(p->n_orbff) );
+    VECTOR_RESERVE( p->P_to_D_to, POW2(p->n_orbff) );
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         VECTOR_INIT_CAP( claV2ll_t, my_t, POW2(p->n_orbff)/diverge_omp_num_threads() );
@@ -557,7 +450,7 @@ static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
 
         #pragma omp critical
         {
-        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->P_to_D_t, my_t[i] );
+        for (index_t i=0; i<my_t_sz; ++i) VECTOR_PUSH_BACK( p->P_to_D_to, my_t[i] );
         for (index_t i=0; i<my_help_f_sz; ++i) VECTOR_PUSH_BACK( f_helper, my_help_f[i] );
         for (index_t i=0; i<my_rv_sz; ++i) VECTOR_PUSH_BACK( r_helper, my_rv[i] );
         }
@@ -566,25 +459,25 @@ static void init_P_to_D_proj( Projection* p, const diverge_model_t* model ) {
         VECTOR_FREE( my_help_f );
         VECTOR_FREE( my_rv );
     }
-    vec_claV2ll_t v_P_to_D_t = { .v = p->P_to_D_t, .v_sz = p->P_to_D_t_sz, .v_cap = p->P_to_D_t_cap },
+    vec_claV2ll_t v_P_to_D_to = { .v = p->P_to_D_to, .v_sz = p->P_to_D_to_sz, .v_cap = p->P_to_D_to_cap },
                   v_f_helper = { .v = f_helper, .v_sz = f_helper_sz, .v_cap = f_helper_cap },
                   v_r_helper = { .v = r_helper, .v_sz = r_helper_sz, .v_cap = r_helper_cap };
 
-    vec_index_t v_P_to_D_f = {0},
+    vec_index_t v_P_to_D_from = {0},
                 v_PD_r = {0},
-                v_P_to_D_l = {0},
-                v_P_to_D_d = {0};
+                v_P_to_D_count = {0},
+                v_P_to_D_displ = {0};
 
-    vec_claV2ll_t padded = sort_and_filter( &v_P_to_D_t, &v_f_helper, &v_P_to_D_f,
-            &v_r_helper, &v_PD_r, &v_P_to_D_l, &v_P_to_D_d );
+    vec_claV2ll_t padded = sort_and_filter( &v_P_to_D_to, &v_f_helper, &v_P_to_D_from,
+            &v_r_helper, &v_PD_r, &v_P_to_D_count, &v_P_to_D_displ );
 
-    VECTOR_COPY( p->P_to_D_t, v_P_to_D_t.v );
-    VECTOR_COPY( p->P_to_D_t_padded, padded.v );
+    VECTOR_COPY( p->P_to_D_to, v_P_to_D_to.v );
+    VECTOR_COPY( p->P_to_D_to_padded, padded.v );
     VECTOR_COPY( p->PD_r, v_PD_r.v );
 
-    p->P_to_D_f = v_P_to_D_f.v;
-    p->P_to_D_l = v_P_to_D_l.v;
-    p->P_to_D_d = v_P_to_D_d.v;
+    p->P_to_D_from = v_P_to_D_from.v;
+    p->P_to_D_count = v_P_to_D_count.v;
+    p->P_to_D_displ = v_P_to_D_displ.v;
 
     VECTOR_FREE( f_helper );
     VECTOR_FREE( r_helper );
@@ -594,12 +487,12 @@ static inline void tree_count( btree_t* node, void* ctx ) { (void)node; index_t*
 
 #define UNRAVEL_IDX3( a, nk ) (claV3i_t){{a/(nk[1]*nk[2]), (a%(nk[1]*nk[2]))/nk[2], a%nk[2]}}
 static inline void index_to_reduced_iterate( btree_t* node, void* ctx ) {
-    Projection* p = ctx;
+    projection_t* p = ctx;
     node->val = p->nr;
     p->existing_r[p->nr++] = UNRAVEL_IDX3( node->key, p->nk );
 }
 
-static void init_to_mom_map_existing_r( Projection* p ) {
+static void init_to_mom_map_existing_r( projection_t* p ) {
     index_t t_sz = (p->PC_r_sz + p->DC_r_sz + p->DP_r_sz + p->PD_r_sz)/4;
     xbtree_t* t = xbtree_init( MAX(t_sz,1024) );
 
@@ -624,30 +517,30 @@ static void init_to_mom_map_existing_r( Projection* p ) {
     xbtree_free(t);
 }
 
-void mpi_communicate( Projection* p ) {
-    index_t t_sz, t_padded_sz;
+void mpi_communicate( projection_t* p ) {
+    index_t to_sz, to_padded_sz;
 
 #define MPICOPY( XX ) \
     if (diverge_mpi_comm_rank() == 0) { \
-        t_sz = p-> XX##_t_sz; \
-        t_padded_sz = p-> XX##_t_padded_sz; \
+        to_sz = p-> XX##_to_sz; \
+        to_padded_sz = p-> XX##_to_padded_sz; \
     } \
-    diverge_mpi_bcast_bytes( &t_sz, sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( &t_padded_sz, sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( &to_sz, sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( &to_padded_sz, sizeof(index_t), 0 ); \
     if (diverge_mpi_comm_rank() != 0) { \
-        p-> XX##_d = calloc(t_sz, sizeof*p-> XX##_d); \
-        p-> XX##_l = calloc(t_sz, sizeof*p-> XX##_l); \
-        VECTOR_RESIZE( p-> XX##_t, t_sz ); \
-        VECTOR_RESIZE( p-> XX##_t_padded, t_padded_sz ); \
-        p-> XX##_mom = calloc(t_padded_sz*2, sizeof*p-> XX##_mom); \
-        p-> XX##_f = calloc(t_padded_sz*2, sizeof*p-> XX##_f); \
+        p-> XX##_displ = calloc(to_sz, sizeof*p-> XX##_displ); \
+        p-> XX##_count = calloc(to_sz, sizeof*p-> XX##_count); \
+        VECTOR_RESIZE( p-> XX##_to, to_sz ); \
+        VECTOR_RESIZE( p-> XX##_to_padded, to_padded_sz ); \
+        p-> XX##_mom = calloc(to_padded_sz*2, sizeof*p-> XX##_mom); \
+        p-> XX##_from = calloc(to_padded_sz*2, sizeof*p-> XX##_from); \
     } \
-    diverge_mpi_bcast_bytes( p-> XX##_d, t_sz*sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_l, t_sz*sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_t, t_sz*sizeof(claV2ll_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_t_padded, t_padded_sz*sizeof(claV2ll_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_mom, t_padded_sz*2*sizeof(index_t), 0 ); \
-    diverge_mpi_bcast_bytes( p-> XX##_f, t_padded_sz*2*sizeof(index_t), 0 );
+    diverge_mpi_bcast_bytes( p-> XX##_displ, to_sz*sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_count, to_sz*sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_to, to_sz*sizeof(claV2ll_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_to_padded, to_padded_sz*sizeof(claV2ll_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_mom, to_padded_sz*2*sizeof(index_t), 0 ); \
+    diverge_mpi_bcast_bytes( p-> XX##_from, to_padded_sz*2*sizeof(index_t), 0 );
 
     MPICOPY( PC_CP )
     MPICOPY( DC_CD )
@@ -659,7 +552,7 @@ void mpi_communicate( Projection* p ) {
     diverge_mpi_bcast_bytes( p->existing_r, p->nr*sizeof(claV3i_t), 0 );
 }
 
-static void init_prefac_vector( Projection* p, const diverge_model_t* model ) {
+static void init_prefac_vector( projection_t* p, const diverge_model_t* model ) {
 
     tu_data_t* tu_data = model->internals->tu_data;
     index_t nk = kdim(model->nk);
@@ -696,3 +589,104 @@ static void init_prefac_vector( Projection* p, const diverge_model_t* model ) {
     free(prefac_proj);
 }
 
+static inline int mergesort_permutation_r_comp( index_t i, index_t j, const claV2ll_t* _t ) {
+    if (_t[i].v[1] == _t[j].v[1])
+        return (_t[i].v[0] < _t[j].v[0]) ? -1 : (_t[i].v[0] > _t[j].v[0]) ? 1 : 0;
+    return (_t[i].v[1] < _t[j].v[1]) ? -1 : (_t[i].v[1] > _t[j].v[1]) ? 1 : 0;
+}
+#undef MERGESORT_COMP_R
+#define MERGESORT_COMP_R(i,j,_vt) mergesort_permutation_r_comp(i,j,(const claV2ll_t*)_vt)
+MERGESORT_IMPL_R( mergesort_permutation, index_t )
+static index_t* sort_permutation( const claV2ll_t* to, index_t to_sz ) {
+    index_t* p = (index_t*)calloc(to_sz, sizeof*p);
+    for (index_t i=0; i<to_sz; ++i) p[i] = i;
+    mergesort_permutation_r(p, to_sz, (void*)to, diverge_omp_num_threads(), 0);
+    return p;
+}
+
+static inline void apply_permutation_in_place( claV2ll_t* vec, const index_t* p, index_t p_sz ) {
+    cbyte_t* done = bitary_alloc(p_sz);
+    for (index_t i=0; i<p_sz; ++i) {
+        if (bitary_get(done, i)) continue;
+        bitary_set(done,i);
+        index_t prev_j = i;
+        index_t j = p[i];
+        while (i != j) {
+            claV2ll_t tmp; tmp = vec[prev_j]; vec[prev_j] = vec[j]; vec[j] = tmp;
+            bitary_set(done,j);
+            prev_j = j;
+            j = p[j];
+        }
+    }
+    free(done);
+}
+
+typedef struct { const claV2ll_t* _fhelp; const index_t* _off; index_t k; } serisort_fhelp_t;
+static inline int serisort_fhelp_comp( index_t i, index_t j, const serisort_fhelp_t* h ) {
+    const claV2ll_t fi = h->_fhelp[i+h->_off[h->k]],
+                    fj = h->_fhelp[j+h->_off[h->k]];
+    return (fi.v[1] == fj.v[1]) ? (fi.v[0] - fj.v[0]) : (fi.v[1] - fj.v[1]);
+}
+#undef SERISORT_COMP_R
+#define SERISORT_COMP_R( x, y, ctx ) serisort_fhelp_comp( (x), (y), (const serisort_fhelp_t*)ctx )
+SERISORT_IMPL_R( serisort_fhelp, index_t )
+
+static vec_claV2ll_t sort_and_filter( vec_claV2ll_t* to, vec_claV2ll_t* from_help, vec_index_t* from,
+        vec_claV2ll_t* rvec_help, vec_index_t* rvec, vec_index_t* count, vec_index_t* displ ) {
+    index_t* p = sort_permutation( to->v, to->v_sz );
+    apply_permutation_in_place( to->v, p, to->v_sz );
+    apply_permutation_in_place( from_help->v, p, to->v_sz );
+    apply_permutation_in_place( rvec_help->v, p, to->v_sz );
+    free( p );
+
+    index_t msize = to->v_sz;
+    vec_claV2ll_t to_padded = {0};
+    VECTOR_RESIZE( to_padded.v, msize );
+    memcpy( to_padded.v, to->v, msize*sizeof(claV2ll_t) );
+    claV2ll_t lr = to->v[0];
+
+    VECTOR_RESIZE( to->v, 0 );
+    index_t len = 0;
+    for (index_t i=0; i<msize; ++i) {
+        if (claV2ll_equal(to_padded.v[i], lr)) {
+            len++;
+        } else {
+            VECTOR_PUSH_BACK( count->v, len ); len = 1;
+            VECTOR_PUSH_BACK( to->v, lr );
+            lr = to_padded.v[i];
+        }
+    }
+    VECTOR_PUSH_BACK( count->v, len );
+    VECTOR_PUSH_BACK( to->v, lr );
+    VECTOR_SHRINK_TO_FIT( to->v );
+
+    VECTOR_RESIZE( from->v, msize*2 );
+    VECTOR_RESIZE( rvec->v, msize*2 );
+    VECTOR_RESIZE( displ->v, count->v_sz );
+    displ->v[0] = 0;
+    index_t maxlen = count->v[0];
+    for (index_t i=1; i<count->v_sz; ++i) {
+        displ->v[i] = displ->v[i-1] + count->v[i-1];
+        maxlen = MAX(maxlen, count->v[i]);
+    }
+    index_t* pp = calloc(maxlen, sizeof*pp);
+    index_t* pt = calloc(maxlen, sizeof*pt);
+    for (index_t k=0; k<count->v_sz; ++k) {
+        // set the index array
+        for (index_t i=0; i<count->v[k]; ++i) pp[i] = i;
+        // sort it
+        serisort_fhelp_t ctx = { from_help->v, displ->v, k };
+        serisort_fhelp_sr( pp, count->v[k], (void*)&ctx, pt );
+        // and push back the sorted stuff
+        for (index_t q=0; q<count->v[k]; ++q)
+        for (int d=0; d<2; ++d) {
+            from->v[2*(q+displ->v[k])+d] = from_help->v[displ->v[k]+pp[q]].v[d];
+            rvec->v[2*(q+displ->v[k])+d] = rvec_help->v[displ->v[k]+pp[q]].v[d];
+        }
+        count->v[k] *= 2; displ->v[k] *= 2;
+    }
+    free( pp );
+    free( pt );
+
+    return to_padded;
+}

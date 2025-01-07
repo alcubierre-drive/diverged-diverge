@@ -98,7 +98,7 @@ private:
     bool skip_channel_calc;
     Vertex* vertex;
     Vertex* internal_vertex;
-    Projection* proj;
+    projection_t* proj;
     const diverge_model_t* model;
     void _save_channel_leading_ev(complex128_t* channel, complex128_t* vec,
                     double* val, char* type, index_t* len, index_t* off);

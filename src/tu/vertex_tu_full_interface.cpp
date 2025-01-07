@@ -183,7 +183,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
     free(buffer);
 }
 
-void Vertex::init_U_from_fullV(diverge_model_t* model, Projection* proj) {
+void Vertex::init_U_from_fullV(diverge_model_t* model, projection_t* proj) {
     mpi_wrn_printf("initialization from full \n")
     double* Rvec = (double*)calloc(3*model->n_tu_ff,sizeof(double));
     double* kmesh = model->internals->kmesh;

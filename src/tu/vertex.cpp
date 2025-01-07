@@ -23,7 +23,7 @@ static inline double max_abs(const complex128_t* start, index_t length) {
     return Map<const VecXcd>(start, length).lpNorm<Eigen::Infinity>();
 }
 
-Vertex::Vertex(diverge_model_t* modelin, Projection* proj, tu_loop_t* loop, 
+Vertex::Vertex(diverge_model_t* modelin, projection_t* proj, tu_loop_t* loop, 
                 bool P, bool C, bool D, bool self)
 :
     model{modelin},
@@ -319,7 +319,7 @@ static index_t ensure_align(index_t numToRound) {
 }
 #endif
 
-void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
+void Vertex::initialize_GPU_memory(projection_t* proj, tu_loop_t* loop) {
     (void)proj;(void)loop;
 #ifdef USE_CUDA
     if (!tu_gpu_info().tu_has_gpu_setup || !loop->cuda_descr.prop_has_gpu_setup ||
@@ -364,9 +364,9 @@ void Vertex::initialize_GPU_memory(Projection* proj, tu_loop_t* loop) {
         index_t proj_memtype[7] = {0};
 
         proj_memsize[0] = ensure_align(sizeof(cuDoubleComplex)*proj->nr*my_nk); // prefacs
-        proj_memsize[1] = ensure_align(sizeof(index_t)*proj->PC_CP_t_padded_sz*2); // rs_to
-        proj_memsize[2] = ensure_align(sizeof(index_t)*proj->PC_CP_t_padded_sz*2); // rs_from
-        proj_memsize[3] = ensure_align(sizeof(index_t)*proj->PC_CP_t_padded_sz*2); // mom
+        proj_memsize[1] = ensure_align(sizeof(index_t)*proj->PC_CP_to_padded_sz*2); // rs_to
+        proj_memsize[2] = ensure_align(sizeof(index_t)*proj->PC_CP_to_padded_sz*2); // rs_from
+        proj_memsize[3] = ensure_align(sizeof(index_t)*proj->PC_CP_to_padded_sz*2); // mom
         proj_memsize[4] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))*proj->nr); // buf_ondev
         proj_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))); // buf_res0
         proj_memsize[6] = ensure_align(sizeof(cuDoubleComplex)*POW2(n_orbff*POW2(n_spin))); // buf_res1
