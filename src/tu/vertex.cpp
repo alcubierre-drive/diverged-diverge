@@ -87,7 +87,8 @@ Vertex::Vertex(diverge_model_t* modelin, projection_t* proj, tu_loop_t* loop,
     }else{
         init_U(model -> internals -> enforce_exchange);
         if(!(P_flow && C_flow && D_flow)) {
-            mpi_wrn_printf("Not all channels included - please ensure a suitable choice of formfactors\n")
+            mpi_wrn_printf("not all channels (P:%i,C:%i,D:%i): ensure correct formfactors\n",
+                    P_flow, C_flow, D_flow);
             bool dummy1, dummy2;
             if(D_flow) {
                 dummy1 = C_flow; dummy2 = P_flow;
