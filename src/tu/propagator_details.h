@@ -37,10 +37,6 @@ struct tu_prop_t {
     index_t c2fmap_sz;
     cuda_prop_descr_t cuda_descr;
 
-    // only CPU timings
-    tu_prop_timing_t extra_timings[64];
-    int n_extra_timings;
-    bool extra_timings_enabled;
     bool cFRG_loop;
 
     tu_fft_algorithm_t which_fft_simple, which_fft_red, which_fft_greens;
@@ -99,6 +95,11 @@ struct tu_prop_t {
     // those are shared between the two pp/ph
     pack_t* gpu_mpi_dist_recv_pack;
     index_t gpu_mpi_dist_recv_pack_sz;
+
+    // only CPU timings
+    tu_prop_timing_t extra_timings[64];
+    int n_extra_timings;
+    bool extra_timings_enabled;
 };
 
 /* ================== *
