@@ -150,14 +150,14 @@ void tu_prop_free( tu_prop_t* t ) {
     #ifdef USE_CUDA
     if (t->cuda_descr.prop_memory_set_local) {
         for (int i=0; i<tu_gpu_info().tu_num_of_devices; ++i) {
-            cudaFree(t->cuda_descr.mi_to_R[i]);
-            cudaFree(t->cuda_descr.c_to_f_q[i]);
-            cudaFree(t->cuda_descr.nkdev[i]);
-            cudaFree(t->cuda_descr.GF_fft[i]);
-            cudaFree(t->cuda_descr.GF_fft_conj[i]);
-            cudaFree(t->cuda_descr.buf_GG[i]);
-            cudaFree(t->cuda_descr.buf_res[i]);
-            cudaFree(t->cuda_descr.fft_workspace[i]);
+            CUDA_CHECK( cudaFree(t->cuda_descr.mi_to_R[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.c_to_f_q[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.nkdev[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.GF_fft[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.GF_fft_conj[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.buf_GG[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.buf_res[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.fft_workspace[i]) );
         }
     }
     CUDA_CHECK(cudaHostUnregister(t->GF_fft_plus));
@@ -312,6 +312,18 @@ tu_prop_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ) {
 
 #ifdef USE_CUDA
 
+typedef struct {
+    tu_prop_t* t;
+    complex128_t* L;
+    void (*gpu_loop)(tu_prop_t*, complex128_t*);
+} gpu_thread_t;
+
+void* gpu_thread_fun( void* data ) {
+    gpu_thread_t* g = data;
+    g->gpu_loop( g->t, g->L );
+    return NULL;
+}
+
 void tu_prop_ph_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
     if (t->nktot==1) {
         S_loop_static_rs( t, false, false, L );
@@ -334,29 +346,25 @@ void tu_prop_ph_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
         // set the right function pointer, either _red or _simple
         void (*cpu_loop)(tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
             t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
-        void (*gpu_loop)(tu_prop_t*, complex128_t*) =
-            t->tu_data->use_reduced_loop ? &S_ph_loop_static_red_gpu : &S_ph_loop_static_simple_gpu;
+        gpu_thread_t gt = {.t = t, .L = L, .gpu_loop = t->tu_data->use_reduced_loop ?
+            &S_ph_loop_static_red_gpu : &S_ph_loop_static_simple_gpu };
 
-        #pragma omp parallel num_threads(2)
-        {
-            #pragma omp single nowait
-            (*cpu_loop)( t, false, false, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
-                    !t->cuda_descr.prop_has_gpu_setup );
-            #pragma omp single nowait
-            (*gpu_loop)( t, L );
-        }
+        pthread_t gpu_thread = {0};
+        pthread_create( &gpu_thread, NULL, &gpu_thread_fun, &gt );
+        (*cpu_loop)( t, false, false, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                !t->cuda_descr.prop_has_gpu_setup );
+        pthread_join( gpu_thread, NULL );
 
         if (t->cFRG_loop) {
             swap_GF_cfrg( t );
             if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1( t, L, tmpgpu );
-            #pragma omp parallel num_threads(2)
-            {
-                #pragma omp single nowait
-                (*cpu_loop)( t, false, true, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
-                        !t->cuda_descr.prop_has_gpu_setup );
-                #pragma omp single nowait
-                (*gpu_loop)( t, L );
-            }
+
+            gpu_thread = (pthread_t){0};
+            pthread_create( &gpu_thread, NULL, &gpu_thread_fun, &gt );
+            (*cpu_loop)( t, false, true, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                    !t->cuda_descr.prop_has_gpu_setup );
+            pthread_join( gpu_thread, NULL );
+
             swap_GF_cfrg( t );
             if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step2( t, L, tmpgpu );
         } else {
@@ -388,29 +396,25 @@ void tu_prop_pp_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
         // set the right function pointer, either _red or _simple
         void (*cpu_loop)(tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
             t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
-        void (*gpu_loop)(tu_prop_t*, complex128_t*) =
-            t->tu_data->use_reduced_loop ? &S_pp_loop_static_red_gpu : &S_pp_loop_static_simple_gpu;
+        gpu_thread_t gt = {.t = t, .L = L, .gpu_loop = t->tu_data->use_reduced_loop ?
+            &S_pp_loop_static_red_gpu : &S_pp_loop_static_simple_gpu };
 
-        #pragma omp parallel num_threads(2)
-        {
-            #pragma omp single nowait
-            (*cpu_loop)( t, true, false, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
-                    !t->cuda_descr.prop_has_gpu_setup );
-            #pragma omp single nowait
-            (*gpu_loop)( t, L );
-        }
+        pthread_t gpu_thread = {0};
+        pthread_create( &gpu_thread, NULL, &gpu_thread_fun, &gt );
+        (*cpu_loop)( t, true, false, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                !t->cuda_descr.prop_has_gpu_setup );
+        pthread_join( gpu_thread, NULL );
 
         if (t->cFRG_loop) {
             swap_GF_cfrg( t );
             if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1( t, L, tmpgpu );
-            #pragma omp parallel num_threads(2)
-            {
-                #pragma omp single nowait
-                (*cpu_loop)( t, true, true, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
-                        !t->cuda_descr.prop_has_gpu_setup );
-                #pragma omp single nowait
-                (*gpu_loop)( t, L );
-            }
+
+            gpu_thread = (pthread_t){0};
+            pthread_create( &gpu_thread, NULL, &gpu_thread_fun, &gt );
+            (*cpu_loop)( t, true, true, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                    !t->cuda_descr.prop_has_gpu_setup );
+            pthread_join( gpu_thread, NULL );
+
             swap_GF_cfrg( t );
             if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step2( t, L, tmpgpu );
         } else {
