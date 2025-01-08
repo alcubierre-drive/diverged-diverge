@@ -206,11 +206,11 @@ void GF_zero_T_any( tu_prop_t* t, greensfunc_generator_t gf, complex128_t lambda
                     // fill self-energy
                     for (index_t ij=0; ij<nb2; ++ij) Sbuf[ij] = self_energy[IDX2(kk,ij,nb2)];
                     // invert the free GF
-                    cfmatrix_invert( gbuf+nb2*k, nb, Gbuf );
+                    cfmatrix_invert_F( gbuf+nb2*k, nb, Gbuf );
                     // subtract the selfenergy from the inverted GF
                     for (index_t ij=0; ij<nb2; ++ij) Gbuf[ij] -= Sbuf[ij];
                     // and invert it back to gbuf
-                    cfmatrix_invert( Gbuf, nb, gbuf+nb2*k );
+                    cfmatrix_invert_F( Gbuf, nb, gbuf+nb2*k );
                 }
                 free( Sbuf );
                 free( Gbuf );
