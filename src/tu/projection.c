@@ -134,6 +134,7 @@ void projection_free( projection_t* p ) {
     free(p->DC_r);
     free(p->DP_r);
     free(p->PD_r);
+    free(p);
 }
 
 static inline void mesh_normalize_1( claV3i_t* v, const index_t* nk ) {

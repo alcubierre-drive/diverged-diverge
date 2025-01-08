@@ -131,8 +131,7 @@ void S_pp_loop_static_red_gpu( tu_prop_t* t, complex128_t* L ) {
 
     const index_t* vnk = t->model->nk;
     const index_t* vnkf = t->model->nkf;
-    index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]),
-                                         (vnk[2]*vnkf[2])};
+    index_t dims[] = {(vnk[0]*vnkf[0]), (vnk[1]*vnkf[1]), (vnk[2]*vnkf[2])};
     pp_bubble_momenta_handler_fft_red(&t->cuda_descr, L, t->GF_fft_plus, t->GF_fft_conj_plus,
                             t->n_orb, t->n_orbff, t->n_spin, t->nktot, t->my_nk, t->c2fmap,
                             dims, t->mi_to_ofrom, t->mi_to_oto, t->mi_to_R, t->tu_data->unique_mi_l,

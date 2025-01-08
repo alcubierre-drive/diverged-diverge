@@ -100,7 +100,7 @@ void cuda_reset_prop_descr(cuda_prop_descr_t* cp,index_t tasks_spin, index_t tas
         mpi_err_printf("wrong call order. call cuda_setup_prop_descr(...) first!\n");
         return ;
     }
-    cp->prop_has_gpu_setup = false;
+    cuda_delete_prop_descr(cp);
     cuda_setup_prop_descr(cp,tasks_spin,tasks_dist,NULL,offload_cpu);
 }
 
