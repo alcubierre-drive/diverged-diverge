@@ -3,12 +3,13 @@
 
 typedef struct { index_t s1, s2, s3, s4, m; } task_t;
 
-void S_loop_static_simple( tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
+void S_loop_static_simple( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
         complex128_t* loop, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ ) {
 
     const bool pp = pp_;
     const bool subtract = subtract_;
+    const tu_prop_t* t = t_;
 
     if (t->which_fft_simple == tu_fft_algorithm_mpi_new) {
         tu_mpi_loop_calc( t->mpi_loop, loop, ntasks, taskoff, rescale, pp, true, subtract );
@@ -199,7 +200,7 @@ void S_loop_static_simple( tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
             fftw_execute_dft( pp ? t->fft_many_forward : t->fft_many_backward,
                 (fftw_complex*)t->buffer_ggm_many, (fftw_complex*)t->buffer_ggp_many );
             if (t->extra_timings_enabled) tock = diverge_mpi_wtime();
-            t->extra_timings[4].t += tock - tick;
+            t_->extra_timings[4].t += tock - tick;
         }
 
         // put into loop
@@ -232,12 +233,13 @@ void S_loop_static_simple( tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
         scale_loop(loop, prefac, t->my_nk*POW4(t->n_spin)*POW2(t->n_orbff));
 }
 
-void S_loop_static_red( tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
+void S_loop_static_red( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
         complex128_t* loop, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ ) {
 
     const bool pp = pp_;
     const bool subtract = subtract_;
+    const tu_prop_t* t = t_;
 
     if (t->which_fft_red == tu_fft_algorithm_mpi_new) {
         tu_mpi_loop_calc( t->mpi_loop, loop, ntasks, taskoff, rescale, pp, false, subtract );
@@ -418,7 +420,7 @@ void S_loop_static_red( tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
             fftw_execute_dft( pp ? t->fft_many_forward : t->fft_many_backward,
                 (fftw_complex*)t->buffer_ggm_many, (fftw_complex*)t->buffer_ggp_many );
             if (t->extra_timings_enabled) tock = diverge_mpi_wtime();
-            t->extra_timings[4].t += tock-tick;
+            t_->extra_timings[4].t += tock-tick;
         }
 
         // put into loop

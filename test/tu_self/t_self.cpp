@@ -397,7 +397,7 @@ TEST_CASE("self energy hub ref","[self][self_href]") {
     selfenergy_flow(selfMix, VertMix.self_en, VertMix.Pch, VertMix.Cch,
                     VertMix.Dch, gfmix, 1.0);
 
-    fftw_execute_dft_helper(selfOrb->ifft_self_ip, gfmix2, gfmix2);
+    fftw_execute_dft_helper(selfenergy_get_ifft_self_ip(selfOrb), gfmix2, gfmix2);
     selfenergy_fft_interpolate(selfOrb, gfmix2);
 
     CHECK(std::abs(trace(gfmix,PropMix.n_orb*VertOrb.n_spin,PropMix.nktot)

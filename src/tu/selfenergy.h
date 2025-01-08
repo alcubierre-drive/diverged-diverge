@@ -24,6 +24,8 @@ void selfenergy_flow( selfenergy_t* s, complex128_t* self_en,
         const complex128_t* D_in, const complex128_t* GF,
         const double prefac_sub );
 void selfenergy_fft_interpolate( selfenergy_t* s, complex128_t* self_en );
+// needed for tests
+fftw_plan selfenergy_get_ifft_self_ip( selfenergy_t* s );
 
 #ifdef __cplusplus
 }

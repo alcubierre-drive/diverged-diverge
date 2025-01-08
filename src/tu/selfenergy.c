@@ -1015,3 +1015,7 @@ static void generate_fftw_plans( selfenergy_t* s ) {
         (fftw_complex*)(s->reco_helper), dims, 1, s->nk, (fftw_complex*)(s->reco_helper),
         dims, 1, s->nk, FFTW_FORWARD, FFTW_ESTIMATE);
 }
+
+fftw_plan selfenergy_get_ifft_self_ip( selfenergy_t* s ) {
+    return s->ifft_self_ip;
+}
