@@ -28,11 +28,11 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
 
 
     index_t n_orbffm = PropMom->n_orbff;
-    complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
-    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
-    complex128_t* helper = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
-    complex128_t* lmg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
-    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk,sizeof(complex128_t));
+    complex128_t* helper = (complex128_t*)calloc(POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmg = (complex128_t*)calloc(POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk,sizeof(complex128_t));
 
     tu_prop_GF_zero_T( PropMom, I128*0.1, NULL );
     S_loop_static_simple( PropMom, false, false, lm, -1, 0, true );
@@ -48,18 +48,18 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
     CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
     CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
-    ZERO_OUT( lmg, POW2(n_orbffm*mom->n_spin)*PropMom->nk );
-    ZERO_OUT( lmrg, POW2(n_orbffm*mom->n_spin)*PropMom->nk );
+    ZERO_OUT( lmg, POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk );
+    ZERO_OUT( lmrg, POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk );
 
     S_loop_static_simple( PropMom, true, false, lm, -1, 0, true );
     S_loop_static_red( PropMom, true, false, lmr, -1, 0, true );
-    S_pp_loop_static_red_gpu( PropMom, helper );
-    merge_gpu_cpu_loop( PropMom, lmrg, helper );
-
-    cuda_reset_prop_descr(&(PropMom->cuda_descr),POW4(PropMom->n_spin), POW2(PropMom->n_orbff),0.0);
-
     S_pp_loop_static_simple_gpu( PropMom, helper );
     merge_gpu_cpu_loop( PropMom, lmg, helper );
+
+    cuda_reset_prop_descr(&(PropMom->cuda_descr),POW4(PropMom->n_spin), PropMom->tu_data->unique_mi_l_sz,0.0);
+
+    S_pp_loop_static_red_gpu( PropMom, helper );
+    merge_gpu_cpu_loop( PropMom, lmrg, helper );
 
     CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
     CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
@@ -106,7 +106,7 @@ TEST_CASE("momentum loop cpu gpu offloading", "[prop][prop_offload]")
 }
 
 
-TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu]")
+TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu_nofull]")
 {
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
@@ -130,7 +130,6 @@ TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu]")
     merge_gpu_cpu_loop(PropMom, lmrg, helper);
 
     cuda_reset_prop_descr(&(PropMom->cuda_descr),POW4(PropMom->n_spin), POW2(PropMom->n_orbff),0.0);
-
     S_ph_loop_static_simple_gpu(PropMom, helper);
     merge_gpu_cpu_loop(PropMom, lmg, helper);
 
@@ -144,6 +143,7 @@ TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu]")
     S_loop_static_red( PropMom, true, false, lmr, -1, 0, true );
     S_pp_loop_static_simple_gpu(PropMom, helper);
     merge_gpu_cpu_loop(PropMom, lmg, helper);
+
     cuda_reset_prop_descr(&(PropMom->cuda_descr),POW4(PropMom->n_spin), PropMom->tu_data->unique_mi_l_sz, 0.0);
     S_pp_loop_static_red_gpu(PropMom, helper);
     merge_gpu_cpu_loop(PropMom, lmrg, helper);
