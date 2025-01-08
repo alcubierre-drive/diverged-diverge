@@ -1,4 +1,6 @@
 #include "propagator_details.h"
+#include "../misc/shared_mem.h"
+#include "../misc/invert.h"
 
 void reconstruct_from_reduced( const tu_prop_t* t, complex128_t* loop ) {
     index_t n_unique = t->tu_data->unique_mi_l_sz;
@@ -183,39 +185,52 @@ void swap_GF_cfrg( tu_prop_t* t ) {
     XORSWAP_PTR( t->GF_fft_conj_plus, t->cFRG_GF_fft_conj_plus );
 }
 
-// TODO
-/*
-void tu_loop_t::GF_zero_T_any( greensfunc_generator_t gf, complex128_t lambda, complex128_t* self_energy, gf_complex_t* gbuf ) {
-    greensfunc_op_t res = gf( model, lambda, gbuf );
+void GF_zero_T_any( tu_prop_t* t, greensfunc_generator_t gf, complex128_t lambda,
+        complex128_t* self_energy, gf_complex_t* gbuf ) {
+    greensfunc_op_t res = gf( t->model, lambda, gbuf );
     if (res != greensfunc_op_cpu) mpi_err_printf( "GPU GFs not supported\n" );
-    index_t nb = n_spin*n_orb;
-    index_t nb2 = POW2(n_spin*n_orb);
-    // TODO(LK) this is broken for shared_mem GF. Since it's a hack only, what
-    // the heck? Or should we fix it?
 
-    typedef Matrix<gf_complex_t,-1,-1> MatXgfct;
-    if (self_energy != nullptr) {
-        #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for(index_t k=0; k<nktot*2; ++k) {
-            index_t kk = k >= nktot ? k - nktot : k;
-            Map<MatXcd> S(self_energy+nb2*kk,nb,nb);
-            Map<MatXgfct> GF0(gbuf+nb2*k,nb,nb);
-            GF0 = GF0.inverse() - S.cast<gf_complex_t>();
-            GF0 = GF0.inverse();
+    if (self_energy) {
+        int enter = 1;
+        if (t->model->internals->greens_shared) enter = shared_exclusive_enter(gbuf);
+        if (enter) {
+            const index_t nb = t->n_spin*t->n_orb;
+            const index_t nb2 = POW2(nb), nktot = t->nktot;
+            #pragma omp parallel num_threads(diverge_omp_num_threads())
+            {
+                gf_complex_t* Sbuf = calloc(nb2, sizeof*Sbuf);
+                gf_complex_t* Gbuf = calloc(nb2, sizeof*Gbuf);
+                #pragma omp parallel for
+                for (index_t k=0; k<nktot*2; ++k) {
+                    index_t kk = k >= nktot ? k - nktot : k;
+                    // fill self-energy
+                    for (index_t ij=0; ij<nb2; ++ij) Sbuf[ij] = self_energy[IDX2(kk,ij,nb2)];
+                    // invert the free GF
+                    cfmatrix_invert( gbuf+nb2*k, nb, Gbuf );
+                    // subtract the selfenergy from the inverted GF
+                    for (index_t ij=0; ij<nb2; ++ij) Gbuf[ij] -= Sbuf[ij];
+                    // and invert it back to gbuf
+                    cfmatrix_invert( Gbuf, nb, gbuf+nb2*k );
+                }
+                free( Sbuf );
+                free( Gbuf );
+            }
         }
+        if (t->model->internals->greens_shared) shared_exclusive_wait(gbuf);
     }
 }
 
-void tu_loop_t::GF_zero_T_FFT_any( complex128_t* gfft_plus, complex128_t* gfft_conj_plus, gf_complex_t* gbuf ) {
+void GF_zero_T_FFT_any( tu_prop_t* t, complex128_t* gfft_plus,
+        complex128_t* gfft_conj_plus, gf_complex_t* gbuf ) {
 
-    if (which_fft_greens == tu_fft_algorithm_mpi_new) {
-        tu_mpi_gf_fft_and_transpose( mpi_gf, gbuf );
+    if (t->which_fft_greens == tu_fft_algorithm_mpi_new) {
+        tu_mpi_gf_fft_and_transpose( t->mpi_gf, gbuf );
         return;
     }
 
-    const gf_complex_t weight = 1./(double)nktot;
-    index_t nb = n_spin*n_orb;
-    index_t nb2 = POW2(n_spin*n_orb);
+    const gf_complex_t weight = 1./(double)t->nktot;
+    const index_t nb = t->n_spin*t->n_orb;
+    const index_t nb2 = POW2(nb), nktot = t->nktot;
 
     #pragma omp parallel for collapse(2) schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t o=0; o<nb; ++o)
@@ -229,17 +244,16 @@ void tu_loop_t::GF_zero_T_FFT_any( complex128_t* gfft_plus, complex128_t* gfft_c
     for (index_t k=0; k<nktot; ++k)
         gfft_conj_plus[IDX3(o,b,k,nb,nktot)] = gbuf[IDX3(k,b,o,nb,nb) + nb2*nktot] * weight;
     if (nktot > 1) {
-        if (which_fft_greens == tu_fft_algorithm_mpi) {
-            fftw_mpi_plan_execute( fft_nons2_backward_mpi, gfft_plus, gfft_plus, false );
-            fftw_mpi_plan_execute( fft_nons2_backward_mpi, gfft_conj_plus, gfft_conj_plus, false );
+        if (t->which_fft_greens == tu_fft_algorithm_mpi) {
+            fftw_mpi_plan_execute( t->fft_nons2_backward_mpi, gfft_plus, gfft_plus, false );
+            fftw_mpi_plan_execute( t->fft_nons2_backward_mpi, gfft_conj_plus, gfft_conj_plus, false );
         } else {
             double tick = 0, tock = 0;
-            if (extra_timings_enabled) tick = diverge_mpi_wtime();
-            fftw_execute_dft( fft_nons2_backward,(fftw_complex*)gfft_plus,(fftw_complex*)gfft_plus );
-            fftw_execute_dft( fft_nons2_backward,(fftw_complex*)gfft_conj_plus,(fftw_complex*)gfft_conj_plus );
-            if (extra_timings_enabled) tock = diverge_mpi_wtime();
-            extra_tvec->at(0) += tock - tick;
+            if (t->extra_timings_enabled) tick = diverge_mpi_wtime();
+            fftw_execute_dft( t->fft_nons2_backward,(fftw_complex*)gfft_plus,(fftw_complex*)gfft_plus );
+            fftw_execute_dft( t->fft_nons2_backward,(fftw_complex*)gfft_conj_plus,(fftw_complex*)gfft_conj_plus );
+            if (t->extra_timings_enabled) tock = diverge_mpi_wtime(),
+                                          t->extra_timings[0].t += tock - tick;
         }
     }
 }
-*/

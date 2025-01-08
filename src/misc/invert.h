@@ -10,6 +10,7 @@ extern "C" {
 
 void matrix_invert( const double* A, index_t sz, double* Ainv );
 void cmatrix_invert( const complex128_t* A, index_t sz, complex128_t* Ainv );
+void cfmatrix_invert( const gf_complex_t* A, index_t sz, gf_complex_t* Ainv );
 
 #ifdef __cplusplus
 }

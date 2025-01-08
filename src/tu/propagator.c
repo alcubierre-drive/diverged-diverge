@@ -53,7 +53,7 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
         t->which_fft_greens = tu_fft_algorithm_mpi;
         mpi_wrn_printf( "TU-loop: cannot use new MPI GF algo with CUDA\n" );
     }
-    #endif
+    #endif // USE_CUDA
     if (sizeof(complex128_t) != sizeof(gf_complex_t) &&
         (t->which_fft_simple != tu_fft_algorithm_mpi_new ||
          t->which_fft_red != tu_fft_algorithm_mpi_new)) {
@@ -131,7 +131,7 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
         CUDA_CHECK(cudaHostRegister( t->cFRG_GF_fft_conj_plus, t->nktot*POW2(t->n_spin*t->n_orb)*
                     sizeof(fftw_complex), cudaHostRegisterDefault));
     }
-    #endif
+    #endif // USE_CUDA
 
     t->c2fmap = calloc(t->my_nk, sizeof*t->c2fmap);
     t->c2fmap_sz = t->my_nk;
@@ -168,7 +168,7 @@ void tu_prop_free( tu_prop_t* t ) {
         CUDA_CHECK(cudaHostUnregister(t->cFRG_GF_fft_plus));
         CUDA_CHECK(cudaHostUnregister(t->cFRG_GF_fft_conj_plus));
     }
-    #endif
+    #endif // USE_CUDA
 
     if (t->do_GF_fft_allocs) {
         fftw_free(t->GF_fft_plus);
@@ -198,3 +198,196 @@ void tu_prop_free( tu_prop_t* t ) {
     free( t );
 }
 
+void tu_prop_GF_zero_T( tu_prop_t* t, complex128_t lambda, complex128_t* self_energy ) {
+    GF_zero_T_any( t, t->model->gfill, lambda, self_energy, t->gf_buf );
+    GF_zero_T_FFT_any( t, t->GF_fft_plus, t->GF_fft_conj_plus, t->gf_buf );
+    if (t->cFRG_loop) {
+        GF_zero_T_any( t, t->model->gproj, lambda, self_energy, t->gf_buf_cfrg );
+        GF_zero_T_FFT_any( t, t->cFRG_GF_fft_plus, t->cFRG_GF_fft_conj_plus, t->gf_buf_cfrg );
+    }
+}
+
+void tu_prop_GF_for_self( tu_prop_t* t, complex128_t* coarseGF ) {
+    const index_t nb = (t->n_spin*t->n_orb), nk = t->nk;
+    const index_t nb2 = POW2(nb);
+    #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
+    for (index_t b=0; b<nb; ++b)
+    for (index_t o=0; o<nb; ++o)
+    for (index_t k=0; k<nk; ++k)
+        coarseGF[k+nk*(o+nb*b)] = t->gf_buf[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
+    if (t->cFRG_loop) {
+        #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
+        for (index_t b=0; b<nb; ++b)
+        for (index_t o=0; o<nb; ++o)
+        for (index_t k=0; k<nk; ++k)
+            coarseGF[k+nk*(o+nb*b)] -= t->gf_buf_cfrg[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
+    }
+}
+
+#ifdef USE_CUDA
+
+void tu_prop_ph_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
+    if (t->nktot==1) {
+        S_loop_static_rs( t, false, false, L );
+        if (t->cFRG_loop) {
+            swap_GF_cfrg( t );
+            S_loop_static_rs( t, false, false, L );
+            swap_GF_cfrg( t );
+        }
+    } else {
+        bool do_free = false;
+        if (t->cuda_descr.prop_has_gpu_setup && tmpgpu == NULL) {
+            do_free = true;
+            index_t my_nk_tot = (t->tu_data->use_cuda_mpi_loop && t->tu_data->use_reduced_loop) ?
+                t->nkibz : t->my_nk;
+            CUDA_CHECK( cudaMallocHost((void**)&tmpgpu,
+                        my_nk_tot*POW2(t->n_orbff*POW2(t->n_spin))*sizeof(*tmpgpu)) );
+        }
+        ZERO_OUT( L, t->my_nk*POW2(t->n_orbff*POW2(t->n_spin)) );
+
+        // set the right function pointer, either _red or _simple
+        void (*cpu_loop)(const tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
+            t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
+        void (*gpu_loop)(tu_prop_t*, complex128_t*) =
+            t->tu_data->use_reduced_loop ? &S_ph_loop_static_red_gpu : &S_ph_loop_static_simple_gpu;
+
+        #pragma omp parallel num_threads(2)
+        {
+            #pragma omp single nowait
+            (*cpu_loop)( t, false, false, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                    !t->cuda_descr.prop_has_gpu_setup );
+            #pragma omp single nowait
+            (*gpu_loop)( t, L );
+        }
+
+        if (t->cFRG_loop) {
+            swap_GF_cfrg( t );
+            if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1( t, L, tmpgpu );
+            #pragma omp parallel num_threads(2)
+            {
+                #pragma omp single nowait
+                (*cpu_loop)( t, false, true, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                        !t->cuda_descr.prop_has_gpu_setup );
+                #pragma omp single nowait
+                (*gpu_loop)( t, L );
+            }
+            swap_GF_cfrg( t );
+            if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step2( t, L, tmpgpu );
+        } else {
+            if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop( t, L, tmpgpu );
+        }
+        if (do_free) CUDA_CHECK( cudaFreeHost(tmpgpu) );
+    }
+}
+
+void tu_prop_pp_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
+    if (t->nktot==1) {
+        S_loop_static_rs( t, true, false, L );
+        if (t->cFRG_loop) {
+            swap_GF_cfrg( t );
+            S_loop_static_rs( t, true, false, L );
+            swap_GF_cfrg( t );
+        }
+    } else {
+        bool do_free = false;
+        if (t->cuda_descr.prop_has_gpu_setup && tmpgpu == NULL) {
+            do_free = true;
+            index_t my_nk_tot = (t->tu_data->use_cuda_mpi_loop && t->tu_data->use_reduced_loop) ?
+                t->nkibz : t->my_nk;
+            CUDA_CHECK( cudaMallocHost((void**)&tmpgpu,
+                        my_nk_tot*POW2(t->n_orbff*POW2(t->n_spin))*sizeof(*tmpgpu)) );
+        }
+        ZERO_OUT( L, t->my_nk*POW2(t->n_orbff*POW2(t->n_spin)) );
+
+        // set the right function pointer, either _red or _simple
+        void (*cpu_loop)(const tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
+            t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
+        void (*gpu_loop)(tu_prop_t*, complex128_t*) =
+            t->tu_data->use_reduced_loop ? &S_pp_loop_static_red_gpu : &S_pp_loop_static_simple_gpu;
+
+        #pragma omp parallel num_threads(2)
+        {
+            #pragma omp single nowait
+            (*cpu_loop)( t, true, false, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                    !t->cuda_descr.prop_has_gpu_setup );
+            #pragma omp single nowait
+            (*gpu_loop)( t, L );
+        }
+
+        if (t->cFRG_loop) {
+            swap_GF_cfrg( t );
+            if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step1( t, L, tmpgpu );
+            #pragma omp parallel num_threads(2)
+            {
+                #pragma omp single nowait
+                (*cpu_loop)( t, true, true, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                        !t->cuda_descr.prop_has_gpu_setup );
+                #pragma omp single nowait
+                (*gpu_loop)( t, L );
+            }
+            swap_GF_cfrg( t );
+            if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop_cfrg_step2( t, L, tmpgpu );
+        } else {
+            if (t->cuda_descr.prop_has_gpu_setup) merge_gpu_cpu_loop( t, L, tmpgpu );
+        }
+        if (do_free) CUDA_CHECK( cudaFreeHost(tmpgpu) );
+    }
+}
+
+#else // USE_CUDA
+
+void tu_prop_ph_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
+    (void)tmpgpu;
+
+    // set the right function pointer, either _red or _simple
+    void (*cpu_loop)(const tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
+            t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
+
+    if (t->nktot==1) {
+        S_loop_static_rs( t, false, false, L );
+    } else {
+        bool rescale = !t->cuda_descr.prop_has_gpu_setup;
+        if (t->cFRG_loop) rescale = false;
+        ZERO_OUT( L, t->my_nk*POW2(t->n_orbff*POW2(t->n_spin)) );
+        (*cpu_loop)( t, false, false, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu, rescale );
+    }
+    if (t->cFRG_loop) {
+        swap_GF_cfrg( t );
+        if (t->nktot==1) {
+            S_loop_static_rs( t, false, true, L );
+        } else {
+            (*cpu_loop)( t, false, true, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                                    !t->cuda_descr.prop_has_gpu_setup );
+        }
+        swap_GF_cfrg( t );
+    }
+}
+
+void tu_prop_pp_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
+    (void)tmpgpu;
+
+    // set the right function pointer, either _red or _simple
+    void (*cpu_loop)(const tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
+            t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
+
+    if (t->nktot==1) {
+        S_loop_static_rs( t, true, false, L );
+    } else {
+        bool rescale = !t->cuda_descr.prop_has_gpu_setup;
+        if (t->cFRG_loop) rescale = false;
+        ZERO_OUT( L, t->my_nk*POW2(t->n_orbff*POW2(t->n_spin)) );
+        (*cpu_loop)( t, true, false, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu, rescale );
+    }
+    if (t->cFRG_loop) {
+        swap_GF_cfrg( t );
+        if (t->nktot==1) {
+            S_loop_static_rs( t, true, true, L );
+        } else {
+            (*cpu_loop)( t, true, true, L, t->cuda_descr._tasks_cpu, t->cuda_descr._off_cpu,
+                                    !t->cuda_descr.prop_has_gpu_setup );
+        }
+        swap_GF_cfrg( t );
+    }
+}
+
+#endif // USE_CUDA
