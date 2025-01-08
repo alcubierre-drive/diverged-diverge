@@ -91,8 +91,8 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
                 goto end_error;
             }
             st->tu_proj = projection_init(mod);
-            st->tu_loop = new tu_loop_t(mod);
-            st->tu_vertex = new Vertex(mod, st->tu_proj,st->tu_loop, st->channel_selection[0],
+            st->tu_loop = tu_prop_init(mod);
+            st->tu_vertex = new Vertex(mod, st->tu_proj, st->tu_loop, st->channel_selection[0],
                     st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
             st->tu_step = new tu_stepper(st->tu_proj, st->tu_loop, st->tu_vertex);
             break;
@@ -152,7 +152,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
             delete st->tu_vertex;
             projection_free( st->tu_proj );
             delete st->tu_step;
-            delete st->tu_loop;
+            tu_prop_free( st->tu_loop );
             break;
         default:
         case diverge_flow_type_invalid:

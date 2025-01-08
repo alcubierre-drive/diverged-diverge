@@ -12,14 +12,14 @@
 // this is a temporary interface for the C-style selfenergy
 #ifdef __cplusplus
 typedef class Vertex Vertex;
-typedef class tu_loop_t tu_loop_t;
+typedef class tu_prop_t tu_prop_t;
 extern "C" {
 #else
 typedef struct Vertex Vertex;
-typedef struct tu_loop_t tu_loop_t;
+typedef struct tu_prop_t tu_prop_t;
 #endif
 
-Vertex* Vertex_init( diverge_model_t* modelin, projection_t* proj, tu_loop_t* loop,
+Vertex* Vertex_init( diverge_model_t* modelin, projection_t* proj, tu_prop_t* loop,
         bool P, bool C, bool D, bool self );
 Vertex* Vertex_copy( const Vertex* other );
 void Vertex_free( Vertex* V );
@@ -51,12 +51,13 @@ index_t Vertex_get_full_vert_size( const Vertex* V );
 }
 
 #include "../diverge_Eigen3.hpp"
-#include "propagator.hpp"
+#include <vector>
+using std::vector;
 
 class Vertex
 {
 public:
-    Vertex(diverge_model_t* model, projection_t* proj, tu_loop_t* loop, bool P = true,
+    Vertex(diverge_model_t* model, projection_t* proj, tu_prop_t* loop, bool P = true,
             bool C = true, bool D = true, bool self = false);
     ~Vertex(void);
 
@@ -132,7 +133,7 @@ public:
 private:
     bool owns;
     void init_U_from_fullV(diverge_model_t* model, projection_t* proj);
-    void initialize_GPU_memory(projection_t* proj, tu_loop_t* loop);
+    void initialize_GPU_memory(projection_t* proj, tu_prop_t* loop);
     void init_U(bool enforce_exchange);
 };
 

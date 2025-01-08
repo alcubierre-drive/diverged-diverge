@@ -12,7 +12,7 @@ void vertex_product(complex128_t* result, const complex128_t* const  B,
     batched_gemm_with_buffers(helper, B, result, GPUbuffer, productsize,prefac, 0.0, nbatch);
 }
 
-tu_stepper::tu_stepper(projection_t* projin,tu_loop_t* loopin, Vertex* vertexin)
+tu_stepper::tu_stepper(projection_t* projin, tu_prop_t* loopin, Vertex* vertexin)
 :
     loop{loopin},
     proj{projin},
@@ -50,10 +50,10 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
     // create GF buffers here s.t. the buffers can be used in
     // loop->p?_loop *and* be overwritten
     if (channel_selection[3]) {
-        loop->GF_zero_T(lambda*I128, inout->self_en);
-        loop->get_GF_for_self(coarseGF);
+        tu_prop_GF_zero_T(loop, lambda*I128, inout->self_en);
+        tu_prop_GF_for_self(loop, coarseGF);
     } else {
-        loop->GF_zero_T(lambda*I128);
+        tu_prop_GF_zero_T(loop, lambda*I128, NULL);
     }
     tock = diverge_mpi_wtime();
     w_time_GF += tock-tick;
@@ -61,7 +61,7 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
         if(inout->SU2){
             if(channel_selection[1] || channel_selection[2]){
                 tick = diverge_mpi_wtime();
-                loop->ph_loop(internal_vertex->ph_bubble_int,internal_vertex->bubble_helper);
+                tu_prop_ph_loop( loop, internal_vertex->ph_bubble_int, internal_vertex->bubble_helper );
                 tock = diverge_mpi_wtime();
                 w_time_loop += tock-tick;
                 if(channel_selection[2] && channel_selection[1]){
@@ -130,7 +130,7 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
 
             tick = diverge_mpi_wtime();
             if(channel_selection[1] || channel_selection[2]) {
-                loop->ph_loop(internal_vertex->ph_bubble_int,internal_vertex->bubble_helper);
+                tu_prop_ph_loop( loop, internal_vertex->ph_bubble_int, internal_vertex->bubble_helper );
             }
             tock = diverge_mpi_wtime();
             w_time_loop += tock-tick;
@@ -164,7 +164,7 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
             w_time_projection += tock-tick;
 
             tick = diverge_mpi_wtime();
-            loop->pp_loop(internal_vertex->pp_bubble_int,internal_vertex->bubble_helper);
+            tu_prop_pp_loop( loop, internal_vertex->pp_bubble_int, internal_vertex->bubble_helper );
             tock = diverge_mpi_wtime();
             w_time_loop += tock-tick;
 

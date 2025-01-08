@@ -227,6 +227,7 @@ void tu_prop_set_extra_timings( tu_prop_t* t, bool enabled ) { t->extra_timings_
 
 tu_prop_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ) {
     if (!t->extra_timings_enabled) { *ntimings = 0; return NULL; }
+    t->n_extra_timings = 11; // reset
     double tvec[3] = {0};
     if (t->fft_nons2_backward_mpi) {
         fftw_mpi_plan_timings( t->fft_nons2_backward_mpi, tvec );

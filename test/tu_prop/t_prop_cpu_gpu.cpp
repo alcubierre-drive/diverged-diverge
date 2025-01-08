@@ -5,7 +5,8 @@
 #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
-#include "../../src/tu/propagator.hpp"
+#include "../../src/tu/propagator.h"
+#include "../../src/tu/propagator_details.h"
 #include "../../src/tu/cuda_init.h"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
@@ -21,46 +22,50 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
 
-    tu_loop_t PropMom (mom);
+    tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex VertMom(mom, ProjMom, &PropMom);
+    Vertex VertMom(mom, ProjMom, PropMom);
 
 
-    index_t n_orbffm = PropMom.n_orbff;
-    complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* helper = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
+    index_t n_orbffm = PropMom->n_orbff;
+    complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* helper = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
 
-    PropMom.GF_zero_T(I128*0.1);
-    PropMom.S_loop_static_simple<false>(lm);
-    PropMom.S_loop_static_red<false>(lmr);
-    PropMom.S_ph_loop_static_red_gpu(helper);
-    PropMom.merge_gpu_cpu_loop(lmrg, helper);
+    tu_prop_GF_zero_T( PropMom, I128*0.1, NULL );
+    S_loop_static_simple( PropMom, false, false, lm, -1, 0, true );
+    S_loop_static_red( PropMom, false, false, lmr, -1, 0, true );
+    S_ph_loop_static_red_gpu( PropMom, helper );
+    merge_gpu_cpu_loop( PropMom, lmrg, helper );
 
-    cuda_reset_prop_descr(&(PropMom.cuda_descr),POW4(PropMom.n_spin), POW2(PropMom.n_orbff),0.0);
+    cuda_reset_prop_descr(&(PropMom->cuda_descr),POW4(PropMom->n_spin), POW2(PropMom->n_orbff),0.0);
 
-    PropMom.S_ph_loop_static_simple_gpu(helper);
-    PropMom.merge_gpu_cpu_loop(lmg, helper);
+    S_ph_loop_static_simple_gpu( PropMom, helper );
+    merge_gpu_cpu_loop( PropMom, lmg, helper );
 
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
-    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom.nk));
-    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom.nk));
-    PropMom.S_loop_static_simple<true>(lm);
-    PropMom.S_loop_static_red<true>(lmr);
-    memset((void*)lmg,0,POW2(n_orbffm*mom->n_spin)*PropMom.nk*sizeof(complex128_t));
-    memset((void*)lmrg,0,POW2(n_orbffm*mom->n_spin)*PropMom.nk*sizeof(complex128_t));
-    PropMom.S_pp_loop_static_simple_gpu(helper);
-    PropMom.merge_gpu_cpu_loop(lmg, helper);
-    cuda_reset_prop_descr(&(PropMom.cuda_descr),POW4(PropMom.n_spin), PropMom.tu_data->unique_mi_l_sz, 0.0);
-    PropMom.S_pp_loop_static_red_gpu(helper);
-    PropMom.merge_gpu_cpu_loop(lmrg, helper);
+    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
+    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
+    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
+    ZERO_OUT( lmg, POW2(n_orbffm*mom->n_spin)*PropMom->nk );
+    ZERO_OUT( lmrg, POW2(n_orbffm*mom->n_spin)*PropMom->nk );
 
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
-    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom.nk));
-    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, true, false, lm, -1, 0, true );
+    S_loop_static_red( PropMom, true, false, lmr, -1, 0, true );
+    S_pp_loop_static_red_gpu( PropMom, helper );
+    merge_gpu_cpu_loop( PropMom, lmrg, helper );
 
+    cuda_reset_prop_descr(&(PropMom->cuda_descr),POW4(PropMom->n_spin), POW2(PropMom->n_orbff),0.0);
+
+    S_pp_loop_static_simple_gpu( PropMom, helper );
+    merge_gpu_cpu_loop( PropMom, lmg, helper );
+
+    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
+    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
+    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
+
+    tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
     free(lmr);
@@ -75,24 +80,25 @@ TEST_CASE("momentum loop cpu gpu offloading", "[prop][prop_offload]")
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
-    tu_loop_t PropMom (mom);
+    tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex VertMom(mom, ProjMom, &PropMom);
+    Vertex VertMom(mom, ProjMom, PropMom);
 
-    index_t n_orbffm = PropMom.n_orbff;
-    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
+    index_t n_orbffm = PropMom->n_orbff;
+    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
 
-    PropMom.GF_zero_T(I128*0.1);
+    tu_prop_GF_zero_T( PropMom, I128*0.1, NULL );
 
-    PropMom.S_loop_static_simple<false>(lmr);
-    PropMom.ph_loop(lmrg);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, false, false, lmr, -1, 0, true );
+    tu_prop_ph_loop(PropMom, lmrg, NULL);
+    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
-    PropMom.S_loop_static_simple<true>(lmr);
-    PropMom.pp_loop(lmrg);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, true, false, lmr, -1, 0, true );
+    tu_prop_pp_loop(PropMom, lmrg, NULL);
+    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
+    tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
     free(lmr);
@@ -105,46 +111,48 @@ TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu]")
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
 
-    tu_loop_t PropMom (mom);
+    tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex VertMom(mom, ProjMom, &PropMom);
-    PropMom.cuda_descr.prop_preload_full_gf = false;
+    Vertex VertMom(mom, ProjMom, PropMom);
+    PropMom->cuda_descr.prop_preload_full_gf = false;
 
-    index_t n_orbffm = PropMom.n_orbff;
-    complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* helper = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
+    index_t n_orbffm = PropMom->n_orbff;
+    complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* helper = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
 
-    PropMom.GF_zero_T(I128*0.1);
-    PropMom.S_loop_static_simple<false>(lm);
-    PropMom.S_loop_static_red<false>(lmr);
-    PropMom.S_ph_loop_static_red_gpu(helper);
-    PropMom.merge_gpu_cpu_loop(lmrg, helper);
+    tu_prop_GF_zero_T( PropMom, I128*0.1, NULL );
+    S_loop_static_simple( PropMom, false, false, lm, -1, 0, true );
+    S_loop_static_red( PropMom, false, false, lmr, -1, 0, true );
+    S_ph_loop_static_red_gpu(PropMom, helper);
+    merge_gpu_cpu_loop(PropMom, lmrg, helper);
 
-    cuda_reset_prop_descr(&(PropMom.cuda_descr),POW4(PropMom.n_spin), POW2(PropMom.n_orbff),0.0);
+    cuda_reset_prop_descr(&(PropMom->cuda_descr),POW4(PropMom->n_spin), POW2(PropMom->n_orbff),0.0);
 
-    PropMom.S_ph_loop_static_simple_gpu(helper);
-    PropMom.merge_gpu_cpu_loop(lmg, helper);
+    S_ph_loop_static_simple_gpu(PropMom, helper);
+    merge_gpu_cpu_loop(PropMom, lmg, helper);
 
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
-    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom.nk));
-    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom.nk));
-    PropMom.S_loop_static_simple<true>(lm);
-    PropMom.S_loop_static_red<true>(lmr);
-    memset((void*)lmg,0,POW2(n_orbffm*mom->n_spin)*PropMom.nk*sizeof(complex128_t));
-    memset((void*)lmrg,0,POW2(n_orbffm*mom->n_spin)*PropMom.nk*sizeof(complex128_t));
-    PropMom.S_pp_loop_static_simple_gpu(helper);
-    PropMom.merge_gpu_cpu_loop(lmg, helper);
-    cuda_reset_prop_descr(&(PropMom.cuda_descr),POW4(PropMom.n_spin), PropMom.tu_data->unique_mi_l_sz, 0.0);
-    PropMom.S_pp_loop_static_red_gpu(helper);
-    PropMom.merge_gpu_cpu_loop(lmrg, helper);
+    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
+    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
+    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
+    ZERO_OUT(lmg, POW2(n_orbffm*mom->n_spin)*PropMom->nk);
+    ZERO_OUT(lmrg, POW2(n_orbffm*mom->n_spin)*PropMom->nk);
 
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom.nk));
-    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom.nk));
-    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, true, false, lm, -1, 0, true );
+    S_loop_static_red( PropMom, true, false, lmr, -1, 0, true );
+    S_pp_loop_static_simple_gpu(PropMom, helper);
+    merge_gpu_cpu_loop(PropMom, lmg, helper);
+    cuda_reset_prop_descr(&(PropMom->cuda_descr),POW4(PropMom->n_spin), PropMom->tu_data->unique_mi_l_sz, 0.0);
+    S_pp_loop_static_red_gpu(PropMom, helper);
+    merge_gpu_cpu_loop(PropMom, lmrg, helper);
 
+    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
+    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
+    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
+
+    tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
     free(lmr);
@@ -159,25 +167,26 @@ TEST_CASE("momentum loop cpu gpu offloading no full GF", "[prop][prop_offload]")
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
-    tu_loop_t PropMom (mom);
+    tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex VertMom(mom, ProjMom, &PropMom);
-    PropMom.cuda_descr.prop_preload_full_gf = false;
+    Vertex VertMom(mom, ProjMom, PropMom);
+    PropMom->cuda_descr.prop_preload_full_gf = false;
 
-    index_t n_orbffm = PropMom.n_orbff;
-    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
+    index_t n_orbffm = PropMom->n_orbff;
+    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
 
-    PropMom.GF_zero_T(I128*0.1);
+    tu_prop_GF_zero_T( PropMom, I128*0.1, NULL );
 
-    PropMom.S_loop_static_simple<false>(lmr);
-    PropMom.ph_loop(lmrg);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, false, false, lmr, -1, 0, true );
+    tu_prop_ph_loop(PropMom, lmrg, NULL);
+    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
-    PropMom.S_loop_static_simple<true>(lmr);
-    PropMom.pp_loop(lmrg);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, true, false, lmr, -1, 0, true );
+    tu_prop_pp_loop(PropMom, lmrg, NULL);
+    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
+    tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
     free(lmr);
@@ -190,24 +199,25 @@ TEST_CASE("momentum loop cpu gpu offloading simple", "[prop][prop_offload]")
     diverge_model_internals_tu(mom, 1.5);
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
     ((tu_data_t*)mom->internals->tu_data)->use_reduced_loop = false;
-    tu_loop_t PropMom (mom);
+    tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex VertMom(mom, ProjMom, &PropMom);
+    Vertex VertMom(mom, ProjMom, PropMom);
 
-    index_t n_orbffm = PropMom.n_orbff;
-    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
+    index_t n_orbffm = PropMom->n_orbff;
+    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
 
-    PropMom.GF_zero_T(I128*0.1);
+    tu_prop_GF_zero_T( PropMom, I128*0.1, NULL );
 
-    PropMom.S_loop_static_simple<false>(lmr);
-    PropMom.ph_loop(lmrg);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, false, false, lmr, -1, 0, true );
+    tu_prop_ph_loop(PropMom, lmrg, NULL);
+    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
-    PropMom.S_loop_static_simple<true>(lmr);
-    PropMom.pp_loop(lmrg);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, true, false, lmr, -1, 0, true );
+    tu_prop_pp_loop(PropMom, lmrg, NULL);
+    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
+    tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
     free(lmr);
@@ -219,25 +229,26 @@ TEST_CASE("momentum loop cpu gpu offloading no full GF simple", "[prop][prop_off
     diverge_model_internals_tu(mom, 1.5);
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
     ((tu_data_t*)mom->internals->tu_data)->use_reduced_loop = false;
-    tu_loop_t PropMom (mom);
+    tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex VertMom(mom, ProjMom, &PropMom);
-    PropMom.cuda_descr.prop_preload_full_gf = false;
+    Vertex VertMom(mom, ProjMom, PropMom);
+    PropMom->cuda_descr.prop_preload_full_gf = false;
 
-    index_t n_orbffm = PropMom.n_orbff;
-    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
-    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom.nk,sizeof(complex128_t));
+    index_t n_orbffm = PropMom->n_orbff;
+    complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
+    complex128_t* lmrg = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
 
-    PropMom.GF_zero_T(I128*0.1);
+    tu_prop_GF_zero_T( PropMom, I128*0.1, NULL );
 
-    PropMom.S_loop_static_simple<false>(lmr);
-    PropMom.ph_loop(lmrg);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, false, false, lmr, -1, 0, true );
+    tu_prop_ph_loop(PropMom, lmrg, NULL);
+    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
-    PropMom.S_loop_static_simple<true>(lmr);
-    PropMom.pp_loop(lmrg);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom.nk));
+    S_loop_static_simple( PropMom, true, false, lmr, -1, 0, true );
+    tu_prop_pp_loop(PropMom, lmrg, NULL);
+    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
+    tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
     free(lmr);

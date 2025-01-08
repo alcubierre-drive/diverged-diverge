@@ -63,11 +63,12 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
 
     mod1->ffill = &full_vertex;
     projection_t* proj = projection_init(mod1);
-    tu_loop_t loop (mod1);
-    Vertex v2(mod1, proj,&loop);
+    tu_prop_t* loop = tu_prop_init(mod1);
+    Vertex v2(mod1, proj, loop);
     v2.project_fullV(mod1, buf);
     CHECK(check_equal(buf,hbuf,size));
 
+    tu_prop_free( loop );
     free(buf);
     free(hbuf);
     mod1->data = NULL;

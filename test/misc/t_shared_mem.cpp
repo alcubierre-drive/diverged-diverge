@@ -14,7 +14,8 @@
 #include "../model_examples/model_constructor.hpp"
 
 #include "../../src/tu/diverge_interface.h"
-#include "../../src/tu/propagator.hpp"
+#include "../../src/tu/propagator.h"
+#include "../../src/tu/propagator_details.h"
 
 TEST_CASE("MPI shared memory exclusive", "[shared_mem][exclusive]") {
     mpi_log_printf_all( "shared malloc: overall rank %i, shared rank %i, shared sz %i\n",
@@ -108,21 +109,21 @@ class tu_loop_test_t {
     public:
         tu_loop_test_t( diverge_model_t* mod ) {
             _mod = mod;
-            _loop = new tu_loop_t( mod );
+            _loop = tu_prop_init( mod );
         }
         ~tu_loop_test_t() {
-            delete _loop;
+            tu_prop_free( _loop );
         }
         index_t size( void ) {
             return POW2(_loop->n_orbff*POW2(_mod->n_spin)) * _loop->nk;
         }
         void calculate( complex128_t* buf, complex128_t L ) {
-            _loop->GF_zero_T(L);
-            _loop->ph_loop( buf, NULL );
+            tu_prop_GF_zero_T( _loop, L, NULL );
+            tu_prop_ph_loop( _loop, buf, NULL );
         }
     private:
         diverge_model_t* _mod;
-        tu_loop_t* _loop;
+        tu_prop_t* _loop;
 };
 
 TEST_CASE("MPI shared memory GF->loop", "[shared_mem][loop]") {

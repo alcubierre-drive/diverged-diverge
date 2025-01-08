@@ -5,7 +5,7 @@
 #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
-#include "../../src/tu/propagator.hpp"
+#include "../../src/tu/propagator.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.hpp"
 #include "../../src/tu/vertex.hpp"
@@ -87,9 +87,9 @@ TEST_CASE("P flow","[RPA]") {
     double dLambda = -0.1;
     diverge_flow_step_euler( s2, Lambda, dLambda );
 
-    s1->tu_loop->GF_zero_T(Lambda*I128);
+    tu_prop_GF_zero_T( s1->tu_loop, Lambda*I128, NULL );
     P_projection(v1->projection_helper, v1, s1->tu_proj);
-    s1->tu_loop->pp_loop(v3->pp_bubble_int,v3->bubble_helper);
+    tu_prop_pp_loop( s1->tu_loop, v3->pp_bubble_int, v3->bubble_helper);
     vertex_product(v3->Pch, v1->projection_helper,
                 v3->pp_bubble_int,v1->product_helper,
                 v3->GPU_gemm_buffer,v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0);
@@ -123,9 +123,9 @@ TEST_CASE("C flow","[RPA]") {
     double dLambda = -0.1;
     diverge_flow_step_euler( s2, Lambda, dLambda );
 
-    s1->tu_loop->GF_zero_T(Lambda*I128);
+    tu_prop_GF_zero_T(s1->tu_loop, Lambda*I128, NULL);
     C_projection(v1->projection_helper, v1, s1->tu_proj);
-    s1->tu_loop->ph_loop(v3->ph_bubble_int,v3->bubble_helper);
+    tu_prop_ph_loop( s1->tu_loop, v3->ph_bubble_int, v3->bubble_helper);
     vertex_product(v3->Cch, v1->projection_helper,
                 v3->ph_bubble_int,v1->product_helper,
                 v3->GPU_gemm_buffer,v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0);

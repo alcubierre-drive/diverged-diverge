@@ -8,7 +8,7 @@
 #include "../diverge_Eigen3.hpp"
 #include "diverge_interface.h"
 #include "vertex.hpp"
-#include "propagator.hpp"
+#include "propagator.h"
 #include "selfenergy.h"
 #include "projection.h"
 #include "projection_handler.h"
@@ -28,7 +28,7 @@ void vertex_product(complex128_t* result, const complex128_t* const  B,
 
 class tu_stepper{
 public:
-    tu_stepper(projection_t*, tu_loop_t* loop, Vertex* Vertex);
+    tu_stepper(projection_t*, tu_prop_t* loop, Vertex* Vertex);
     vector<double> tu_step_euler(Vertex* inout, double lambda, double dlambda);
 
     ~tu_stepper(){
@@ -44,13 +44,17 @@ public:
     vector<double> get_timings( void ) const {
         vector<double> result = { w_time_GF, w_time_loop, w_time_projection,
             w_time_product, w_time_add_find_max, w_time_self, w_time_full};
-        for (const double& t: loop->extra_timings()) result.push_back(t);
+        int ntimings = 0;
+        tu_prop_timing_t* timings = tu_prop_get_extra_timings( loop, &ntimings );
+        for (int i=0; i<ntimings; ++i) result.push_back(timings[i].t);
         return result;
     }
     vector<string> get_timings_descr( void ) const {
         vector<string> result = { "Greens function", "loop", "projection",
             "contract", "max and add", "self", "full step" };
-        for (const string& s: loop->extra_timings_descr()) result.push_back(s);
+        int ntimings = 0;
+        tu_prop_timing_t* timings = tu_prop_get_extra_timings( loop, &ntimings );
+        for (int i=0; i<ntimings; ++i) result.push_back(timings[i].name);
         return result;
     }
     index_t get_num_calls( void ) const {
@@ -67,7 +71,7 @@ public:
 
 
 private:
-    tu_loop_t* loop;
+    tu_prop_t* loop;
     projection_t* proj;
     bool channel_selection[4];
     double norm[3];

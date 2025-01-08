@@ -6,6 +6,7 @@
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/vertex.hpp"
+#include "../../src/tu/propagator.h"
 #include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
 #include "../model_examples/model_constructor.hpp"
@@ -22,8 +23,8 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
     diverge_model_internals_tu(mom, 22);
 
     projection_t* ProjMom = projection_init(mom);
-    tu_loop_t LoopMom (mom);
-    Vertex VertMom(mom, ProjMom, &LoopMom);
+    tu_prop_t* LoopMom = tu_prop_init(mom);
+    Vertex VertMom(mom, ProjMom, LoopMom);
 
     std::random_device rd{};
     std::mt19937 re{rd()};
@@ -51,6 +52,7 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
     D_projection_no_GPU(r1,&VertMom,ProjMom);
     CHECK(check_equal(r1,r2,POW2(VertMom.n_orbff)*VertMom.my_nk));
 
+    tu_prop_free(LoopMom);
     projection_free(ProjMom);
     diverge_model_free(mom);
     free(r1);

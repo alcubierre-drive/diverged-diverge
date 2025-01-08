@@ -2,6 +2,7 @@
 
 #include "vertex.hpp"
 #include "projection_handler.h"
+#include "propagator_details.h"
 
 diverge_model_t* Vertex_get_model( const Vertex* V ) { return V->model; }
 const tu_data_t* Vertex_get_tu_data( const Vertex* V ) { return V->tu_data; }
@@ -24,7 +25,7 @@ static inline double max_abs(const complex128_t* start, index_t length) {
     return Map<const VecXcd>(start, length).lpNorm<Eigen::Infinity>();
 }
 
-Vertex::Vertex(diverge_model_t* modelin, projection_t* proj, tu_loop_t* loop, 
+Vertex::Vertex(diverge_model_t* modelin, projection_t* proj, tu_prop_t* loop, 
                 bool P, bool C, bool D, bool self)
 :
     model{modelin},
@@ -321,7 +322,7 @@ static index_t ensure_align(index_t numToRound) {
 }
 #endif
 
-void Vertex::initialize_GPU_memory(projection_t* proj, tu_loop_t* loop) {
+void Vertex::initialize_GPU_memory(projection_t* proj, tu_prop_t* loop) {
     (void)proj;(void)loop;
 #ifdef USE_CUDA
     if (!tu_gpu_info().tu_has_gpu_setup || !loop->cuda_descr.prop_has_gpu_setup ||

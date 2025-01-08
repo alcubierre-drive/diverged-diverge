@@ -6,6 +6,7 @@
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/vertex.hpp"
+#include "../../src/tu/propagator.h"
 #include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
 #include "../model_examples/model_constructor.hpp"
@@ -22,8 +23,8 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     diverge_model_internals_tu(mom, 1.1);
 
     projection_t* ProjMom = projection_init(mom);
-    tu_loop_t LoopMom (mom);
-    Vertex VertMom(mom, ProjMom, &LoopMom);
+    tu_prop_t* LoopMom = tu_prop_init(mom);
+    Vertex VertMom(mom, ProjMom, LoopMom);
 
     std::random_device rd{};
     std::mt19937 re{rd()};
@@ -60,6 +61,7 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     t_D_projection(r1,&VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
 
+    tu_prop_free( LoopMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
     free(r1);
@@ -72,8 +74,8 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
     diverge_model_internals_tu(mom, 0.7);
 
     projection_t* ProjMom = projection_init(mom);
-    tu_loop_t LoopMom (mom);
-    Vertex VertMom(mom, ProjMom, &LoopMom);
+    tu_prop_t* LoopMom = tu_prop_init(mom);
+    Vertex VertMom(mom, ProjMom, LoopMom);
 
         std::random_device rd{};
         std::mt19937 re{rd()};
@@ -110,6 +112,7 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
     t_D_projection(r1,&VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
 
+    tu_prop_free( LoopMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
     free(r1);

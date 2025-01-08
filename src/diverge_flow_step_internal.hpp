@@ -11,7 +11,7 @@
 
 #include "tu/vertex.hpp"
 #include "tu/projection.h"
-#include "tu/propagator.hpp"
+#include "tu/propagator.h"
 #include "tu/flow_stepper.hpp"
 
 #include "npatch/loop.h"
@@ -40,7 +40,7 @@ struct diverge_flow_step_t {
 
     // tu structs
     projection_t* tu_proj;
-    tu_loop_t* tu_loop;
+    tu_prop_t* tu_loop;
     Vertex* tu_vertex;
     tu_stepper* tu_step;
 

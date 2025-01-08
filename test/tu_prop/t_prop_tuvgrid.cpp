@@ -7,7 +7,7 @@
 #include "../model_examples/old.h"
 #include "../../src/diverge_model_internals.h"
 #include "../model_examples/model_constructor.hpp"
-#include "../../src/tu/propagator.hpp"
+#include "../../src/tu/propagator.h"
 #include "../../src/grid/loops.hpp"
 #include "../../src/tu/vertex.hpp"
 #include "../../src/tu/projection.h"
@@ -73,13 +73,13 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     complex128_t* Lreco = (complex128_t*)calloc(fsize,sizeof(complex128_t));
     complex128_t* Lrecog = (complex128_t*)calloc(fsize,sizeof(complex128_t));
 
-    tu_loop_t tu_loop(mod_tu);
+    tu_prop_t* tu_loop = tu_prop_init(mod_tu);
     projection_t* ProjMom = projection_init(mod_tu);
-    Vertex VertMom(mod_tu, ProjMom, &tu_loop);
+    Vertex VertMom(mod_tu, ProjMom, tu_loop);
     
     grid::Loops grid_loop (mod_grid);
-    tu_loop.GF_zero_T(I128*0.1);
-    tu_loop.ph_loop(Ltu);
+    tu_prop_GF_zero_T( tu_loop, I128*0.1, NULL );
+    tu_prop_ph_loop( tu_loop, Ltu, NULL );
     Lgrid = grid_loop.X_C(0.1);
     memset((void*)Lrecog,0,fsize*sizeof(complex128_t));
     memcpy(Lrecog + grid_loop.get_qstart()*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop.get_qsize()*nk*sizeof(complex128_t));
@@ -97,7 +97,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     }
 
 
-    tu_loop.pp_loop(Ltu);
+    tu_prop_pp_loop( tu_loop, Ltu, NULL );
     Lgrid = grid_loop.X_P(0.1);
     memset((void*)Lrecog,0,fsize*sizeof(complex128_t));
     memcpy(Lrecog + grid_loop.get_qstart()*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop.get_qsize()*nk*sizeof(complex128_t));
@@ -116,6 +116,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     free(Ltu);
     free(Lrecog);
     free(Lreco);
+    tu_prop_free(tu_loop);
     projection_free( ProjMom );
     diverge_model_free(mod_tu);
     diverge_model_free(mod_grid);
