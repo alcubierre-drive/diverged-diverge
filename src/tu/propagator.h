@@ -22,8 +22,7 @@ typedef struct {
     double t;
     char name[56];
 } tu_prop_timing_t;
-// TODO these are missing
-tu_prop_timing_t* tu_prop_get_extra_timings( const tu_prop_t* t, int* ntimings ); // dont free
+tu_prop_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ); // dont free
 void tu_prop_set_extra_timings( tu_prop_t* t, bool enabled );
 
 #ifdef __cplusplus

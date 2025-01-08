@@ -38,7 +38,7 @@ struct tu_prop_t {
     cuda_prop_descr_t cuda_descr;
 
     // only CPU timings
-    tu_prop_timing_t* extra_timings;
+    tu_prop_timing_t extra_timings[64];
     int n_extra_timings;
     bool extra_timings_enabled;
     bool cFRG_loop;
@@ -108,10 +108,10 @@ struct tu_prop_t {
 // these are in propagator_cpu.c
 void S_loop_static_rs( const tu_prop_t* t, bool pp, bool subract/*=false*/,
         complex128_t* L );
-void S_loop_static_simple( const tu_prop_t* t, bool pp, bool subtract/*=false*/,
+void S_loop_static_simple( tu_prop_t* t, bool pp, bool subtract/*=false*/,
         complex128_t* L, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ );
-void S_loop_static_red( const tu_prop_t* t, bool pp, bool subtract/*=false*/,
+void S_loop_static_red( tu_prop_t* t, bool pp, bool subtract/*=false*/,
         complex128_t* L, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ );
 

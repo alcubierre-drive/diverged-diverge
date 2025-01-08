@@ -3,7 +3,7 @@
 
 typedef struct { index_t s1, s2, s3, s4, m; } task_t;
 
-void S_loop_static_simple( const tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
+void S_loop_static_simple( tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
         complex128_t* loop, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ ) {
 
@@ -232,7 +232,7 @@ void S_loop_static_simple( const tu_prop_t* t, bool pp_, bool subtract_/*=false*
         scale_loop(loop, prefac, t->my_nk*POW4(t->n_spin)*POW2(t->n_orbff));
 }
 
-void S_loop_static_red( const tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
+void S_loop_static_red( tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
         complex128_t* loop, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ ) {
 

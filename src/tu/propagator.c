@@ -6,7 +6,7 @@
 #include "cuda_init.h"
 #include "../misc/shared_mem.h"
 
-static tu_prop_timing_t extra_timings[32];
+#include <assert.h>
 
 tu_prop_t* tu_prop_init( diverge_model_t* model ) {
     tu_prop_t* t = calloc(1, sizeof*t);
@@ -86,7 +86,6 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
 
     t->chunksize_max = (t->tu_data->mpi_fft_chunksize < 0) ?
         diverge_omp_num_threads() : t->tu_data->mpi_fft_chunksize;
-    t->extra_timings = extra_timings;
     t->extra_timings_enabled = t->tu_data->propagator_extra_cpu_timings;
     t->n_extra_timings = 11;
     index_t task_spin = POW4(t->n_spin);
@@ -224,6 +223,92 @@ void tu_prop_GF_for_self( tu_prop_t* t, complex128_t* coarseGF ) {
     }
 }
 
+void tu_prop_set_extra_timings( tu_prop_t* t, bool enabled ) { t->extra_timings_enabled = enabled; }
+
+tu_prop_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ) {
+    if (!t->extra_timings_enabled) { *ntimings = 0; return NULL; }
+    double tvec[3] = {0};
+    if (t->fft_nons2_backward_mpi) {
+        fftw_mpi_plan_timings( t->fft_nons2_backward_mpi, tvec );
+        for (int i=1; i<4; ++i) t->extra_timings[i].t = tvec[i-1];
+    }
+    if (!t->mpi_loop) {
+        if (t->fft_many_backward_mpi) {
+            fftw_mpi_plan_timings( t->fft_many_backward_mpi, tvec );
+            for (int i=5; i<8; ++i) t->extra_timings[i].t = tvec[i-5];
+        }
+        if (t->fft_many_forward_mpi) {
+            fftw_mpi_plan_timings( t->fft_many_forward_mpi, tvec );
+            for (int i=8; i<11; ++i) t->extra_timings[i].t = tvec[i-8];
+        }
+    } else {
+        t->n_extra_timings = 4;
+        for (int i=0; i<TU_MPI_LOOP_TIMING_NUM; ++i)
+            t->extra_timings[t->n_extra_timings++].t = t->mpi_loop->timings[i];
+    }
+    // overwrite first couple of timings of GF is the MPI one
+    if (t->mpi_gf)
+        for (int i=0; i<TU_MPI_GF_TIMING_NUM; ++i)
+            t->extra_timings[i].t = t->mpi_gf->timings[i];
+
+    if (t->gpu_mpi_dist_pp)
+        for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( t->gpu_mpi_dist_pp ); ++i)
+            t->extra_timings[t->n_extra_timings++].t = tu_prop_gpu_mpi_dist_timing( t->gpu_mpi_dist_pp, i );
+    if (t->gpu_mpi_dist_ph)
+        for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( t->gpu_mpi_dist_ph ); ++i)
+            t->extra_timings[t->n_extra_timings++].t = tu_prop_gpu_mpi_dist_timing( t->gpu_mpi_dist_ph, i );
+
+    *ntimings = t->n_extra_timings;
+
+    // and the names
+    int name_idx = 0;
+    if (!t->mpi_gf) {
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft GF serial", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft GF mpi reorder", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft GF mpi fft", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft GF mpi comm", 55 );
+    } else {
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_gf_timing_trans", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_gf_timing_ffttrans", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_gf_timing_fft", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_gf_timing_comm", 55 );
+    }
+    if (!t->mpi_loop) {
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft many serial", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi+ reorder", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi+ fft", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi+ comm", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi- reorder", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi- fft", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi- comm", 55 );
+    } else {
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_prepare", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_reorder", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_transpose", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_fft", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_insert", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_mpibufprep", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_comm", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_insert_missing", 55 );
+        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_postproc", 55 );
+    }
+    if (t->gpu_mpi_dist_pp)
+        for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( t->gpu_mpi_dist_pp ); ++i) {
+            strcpy( t->extra_timings[name_idx].name, "pp:" );
+            strncat( t->extra_timings[name_idx].name, tu_prop_gpu_mpi_dist_timing_name(t->gpu_mpi_dist_pp,i), 55 );
+            name_idx++;
+        }
+    if (t->gpu_mpi_dist_ph)
+        for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( t->gpu_mpi_dist_ph ); ++i) {
+            strcpy( t->extra_timings[name_idx].name, "ph:" );
+            strncat( t->extra_timings[name_idx].name, tu_prop_gpu_mpi_dist_timing_name(t->gpu_mpi_dist_ph,i), 55 );
+            name_idx++;
+        }
+
+    assert( name_idx == t->n_extra_timings );
+    return t->extra_timings;
+}
+
 #ifdef USE_CUDA
 
 void tu_prop_ph_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
@@ -246,7 +331,7 @@ void tu_prop_ph_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
         ZERO_OUT( L, t->my_nk*POW2(t->n_orbff*POW2(t->n_spin)) );
 
         // set the right function pointer, either _red or _simple
-        void (*cpu_loop)(const tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
+        void (*cpu_loop)(tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
             t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
         void (*gpu_loop)(tu_prop_t*, complex128_t*) =
             t->tu_data->use_reduced_loop ? &S_ph_loop_static_red_gpu : &S_ph_loop_static_simple_gpu;
@@ -300,7 +385,7 @@ void tu_prop_pp_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
         ZERO_OUT( L, t->my_nk*POW2(t->n_orbff*POW2(t->n_spin)) );
 
         // set the right function pointer, either _red or _simple
-        void (*cpu_loop)(const tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
+        void (*cpu_loop)(tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
             t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
         void (*gpu_loop)(tu_prop_t*, complex128_t*) =
             t->tu_data->use_reduced_loop ? &S_pp_loop_static_red_gpu : &S_pp_loop_static_simple_gpu;
@@ -340,7 +425,7 @@ void tu_prop_ph_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
     (void)tmpgpu;
 
     // set the right function pointer, either _red or _simple
-    void (*cpu_loop)(const tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
+    void (*cpu_loop)(tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
             t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
 
     if (t->nktot==1) {
@@ -367,7 +452,7 @@ void tu_prop_pp_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
     (void)tmpgpu;
 
     // set the right function pointer, either _red or _simple
-    void (*cpu_loop)(const tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
+    void (*cpu_loop)(tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
             t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
 
     if (t->nktot==1) {
