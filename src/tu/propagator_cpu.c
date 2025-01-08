@@ -3,9 +3,12 @@
 
 typedef struct { index_t s1, s2, s3, s4, m; } task_t;
 
-void S_loop_static_simple( const tu_prop_t* t, bool pp, bool subtract/*=false*/,
+void S_loop_static_simple( const tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
         complex128_t* loop, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ ) {
+
+    const bool pp = pp_;
+    const bool subtract = subtract_;
 
     if (t->which_fft_simple == tu_fft_algorithm_mpi_new) {
         tu_mpi_loop_calc( t->mpi_loop, loop, ntasks, taskoff, rescale, pp, true, subtract );
@@ -229,9 +232,12 @@ void S_loop_static_simple( const tu_prop_t* t, bool pp, bool subtract/*=false*/,
         scale_loop(loop, prefac, t->my_nk*POW4(t->n_spin)*POW2(t->n_orbff));
 }
 
-void S_loop_static_red( const tu_prop_t* t, bool pp, bool subtract/*=false*/,
+void S_loop_static_red( const tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
         complex128_t* loop, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ ) {
+
+    const bool pp = pp_;
+    const bool subtract = subtract_;
 
     if (t->which_fft_red == tu_fft_algorithm_mpi_new) {
         tu_mpi_loop_calc( t->mpi_loop, loop, ntasks, taskoff, rescale, pp, false, subtract );
@@ -446,10 +452,13 @@ void S_loop_static_red( const tu_prop_t* t, bool pp, bool subtract/*=false*/,
     }
 }
 
-void S_loop_static_rs( const tu_prop_t* t, bool pp, bool subtract/*=false*/,
+void S_loop_static_rs( const tu_prop_t* t, bool pp_, bool subtract_/*=false*/,
         complex128_t* L ) {
 
+    const bool pp = pp_;
+    const bool subtract = subtract_;
     const double prefac = -1.0/(2.0*M_PI);
+
     #pragma omp parallel for collapse(3) schedule(dynamic) num_threads(diverge_omp_num_threads())
     for (index_t s3=0; s3<t->n_spin; ++s3)
     for (index_t s4=0; s4<t->n_spin; ++s4)
