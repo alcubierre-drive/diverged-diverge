@@ -315,13 +315,13 @@ tu_prop_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ) {
 
 typedef struct {
     tu_prop_t* t;
-    complex128_t* L;
+    complex128_t* tmpgpu;
     void (*gpu_loop)(tu_prop_t*, complex128_t*);
 } gpu_thread_t;
 
 void* gpu_thread_fun( void* data ) {
     gpu_thread_t* g = data;
-    g->gpu_loop( g->t, g->L );
+    g->gpu_loop( g->t, g->tmpgpu );
     return NULL;
 }
 
@@ -347,7 +347,7 @@ void tu_prop_ph_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
         // set the right function pointer, either _red or _simple
         void (*cpu_loop)(tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
             t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
-        gpu_thread_t gt = {.t = t, .L = tmpgpu, .gpu_loop = t->tu_data->use_reduced_loop ?
+        gpu_thread_t gt = {.t = t, .tmpgpu = tmpgpu, .gpu_loop = t->tu_data->use_reduced_loop ?
             &S_ph_loop_static_red_gpu : &S_ph_loop_static_simple_gpu };
 
         pthread_t gpu_thread = {0};
@@ -397,7 +397,7 @@ void tu_prop_pp_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
         // set the right function pointer, either _red or _simple
         void (*cpu_loop)(tu_prop_t*, bool, bool, complex128_t*, index_t, index_t, bool) =
             t->tu_data->use_reduced_loop ? &S_loop_static_red : &S_loop_static_simple;
-        gpu_thread_t gt = {.t = t, .L = tmpgpu, .gpu_loop = t->tu_data->use_reduced_loop ?
+        gpu_thread_t gt = {.t = t, .tmpgpu = tmpgpu, .gpu_loop = t->tu_data->use_reduced_loop ?
             &S_pp_loop_static_red_gpu : &S_pp_loop_static_simple_gpu };
 
         pthread_t gpu_thread = {0};

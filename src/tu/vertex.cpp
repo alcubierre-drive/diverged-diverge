@@ -282,13 +282,12 @@ Vertex::Vertex(const Vertex& other)
     if(P_flow)pp_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
     if(C_flow || D_flow)ph_bubble_int = (complex128_t*)calloc(full_bubble_size, sizeof(complex128_t));
 
-    if (P_flow) memcpy(Pch,other.get_P_ptr_cst(),sizeof*Pch * this->full_vert_size);
-    if (C_flow) memcpy(Cch,other.get_C_ptr_cst(),sizeof*Cch * this->full_vert_size);
-    if (D_flow) memcpy(Dch,other.get_D_ptr_cst(),sizeof*Dch * this->full_vert_size);
-    if (P_flow) memcpy(pp_bubble_int,other.get_PP_bubble_cst(),sizeof*pp_bubble_int * this->full_bubble_size);
-    if (C_flow||D_flow) memcpy(ph_bubble_int,other.get_PH_bubble_cst(),
-            sizeof*ph_bubble_int * this->full_bubble_size);
-    if (use_self) memcpy(self_en,other.get_E_ptr_cst(),sizeof*self_en * this->selfenergy_size);
+    if (P_flow) memcpy(Pch,other.Pch,sizeof*Pch * this->full_vert_size);
+    if (C_flow) memcpy(Cch,other.Cch,sizeof*Cch * this->full_vert_size);
+    if (D_flow) memcpy(Dch,other.Dch,sizeof*Dch * this->full_vert_size);
+    if (P_flow) memcpy(pp_bubble_int,other.pp_bubble_int,sizeof*pp_bubble_int * this->full_bubble_size);
+    if (C_flow||D_flow) memcpy(ph_bubble_int,other.ph_bubble_int, sizeof*ph_bubble_int * this->full_bubble_size);
+    if (use_self) memcpy(self_en,other.self_en,sizeof*self_en * this->selfenergy_size);
     owns = false;
     for(int i = 0; i < 32; ++i)
     for(int j = 0; j < 3; ++j) {
@@ -298,14 +297,13 @@ Vertex::Vertex(const Vertex& other)
 
 
 Vertex& Vertex::operator=(const Vertex& other) {
-    if (P_flow) memcpy(Pch,other.get_P_ptr_cst(),sizeof*Pch * this->full_vert_size);
-    if (C_flow) memcpy(Cch,other.get_C_ptr_cst(),sizeof*Cch * this->full_vert_size);
-    if (D_flow) memcpy(Dch,other.get_D_ptr_cst(),sizeof*Dch * this->full_vert_size);
+    if (P_flow) memcpy(Pch,other.Pch,sizeof*Pch * this->full_vert_size);
+    if (C_flow) memcpy(Cch,other.Cch,sizeof*Cch * this->full_vert_size);
+    if (D_flow) memcpy(Dch,other.Dch,sizeof*Dch * this->full_vert_size);
 
-    if (P_flow) memcpy(pp_bubble_int,other.get_PP_bubble_cst(),sizeof*pp_bubble_int * this->full_bubble_size);
-    if (C_flow||D_flow) memcpy(ph_bubble_int,other.get_PH_bubble_cst(),
-            sizeof*ph_bubble_int * this->full_bubble_size);
-    if (use_self) memcpy(self_en,other.get_E_ptr_cst(),sizeof*self_en * this->selfenergy_size);
+    if (P_flow) memcpy(pp_bubble_int,other.pp_bubble_int, sizeof*pp_bubble_int * this->full_bubble_size);
+    if (C_flow||D_flow) memcpy(ph_bubble_int,other.ph_bubble_int, sizeof*ph_bubble_int * this->full_bubble_size);
+    if (use_self) memcpy(self_en,other.self_en, sizeof*self_en * this->selfenergy_size);
 
     return *this;
 }

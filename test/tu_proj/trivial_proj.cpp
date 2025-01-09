@@ -24,7 +24,7 @@ void t_P_projection(complex128_t* proj_vertex,
     const index_t* bond_offsets = tu_data->bond_offsets;
     const index_t* ob_to_orbff = tu_data->ob_to_orbff;
     const double* kmesh = model->internals->kmesh;
-    const complex128_t* const C = vertex->get_C_ptr_cst();
+    const complex128_t* const C = vertex->Cch;
     const complex128_t prefac = 1.0/POW2((double)nk);
 
     complex128_t* full_channel = (complex128_t*)malloc(nk*n_orbff*n_orbff*sizeof(complex128_t));
@@ -68,7 +68,7 @@ void t_P_projection(complex128_t* proj_vertex,
             }
         }
     }
-    const complex128_t* const D = vertex->get_D_ptr_cst();
+    const complex128_t* const D = vertex->Dch;
     memset((void*)full_channel,0,nk*n_orbff*n_orbff*sizeof(complex128_t));
     memcpy(full_channel+n_orbff*n_orbff*my_nk_off,D,n_orbff*n_orbff*my_nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(full_channel, nk*n_orbff*n_orbff);
@@ -135,7 +135,7 @@ void t_C_projection(complex128_t* proj_vertex,
     const index_t* bond_offsets = tu_data->bond_offsets;
     const index_t* ob_to_orbff = tu_data->ob_to_orbff;
     const double* kmesh = model->internals->kmesh;
-    const complex128_t* const P = vertex->get_P_ptr_cst();
+    const complex128_t* const P = vertex->Pch;
     const complex128_t prefac = 1.0/POW2((double)nk);
     complex128_t* full_channel = (complex128_t*)malloc(nk*n_orbff*n_orbff*sizeof(complex128_t));
     memset((void*)full_channel,0,nk*n_orbff*n_orbff*sizeof(complex128_t));
@@ -178,7 +178,7 @@ void t_C_projection(complex128_t* proj_vertex,
             }
         }
     }
-    const complex128_t* const D = vertex->get_D_ptr_cst();
+    const complex128_t* const D = vertex->Dch;
     memset((void*)full_channel,0,nk*n_orbff*n_orbff*sizeof(complex128_t));
     memcpy(full_channel+n_orbff*n_orbff*my_nk_off,D,n_orbff*n_orbff*my_nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(full_channel, nk*n_orbff*n_orbff);
@@ -247,7 +247,7 @@ void t_D_projection(complex128_t* proj_vertex,
     const index_t* bond_offsets = tu_data->bond_offsets;
     const index_t* ob_to_orbff = tu_data->ob_to_orbff;
     const double* kmesh = model->internals->kmesh;
-    const complex128_t* const C = vertex->get_C_ptr_cst();
+    const complex128_t* const C = vertex->Cch;
     const complex128_t prefac = 1.0/POW2((double)nk);
     complex128_t* full_channel = (complex128_t*)malloc(nk*n_orbff*n_orbff*sizeof(complex128_t));
     memset((void*)full_channel,0,nk*n_orbff*n_orbff*sizeof(complex128_t));
@@ -292,7 +292,7 @@ void t_D_projection(complex128_t* proj_vertex,
             }
         }
     }
-    const complex128_t* const P = vertex->get_P_ptr_cst();
+    const complex128_t* const P = vertex->Pch;
     memset((void*)full_channel,0,nk*n_orbff*n_orbff*sizeof(complex128_t));
     memcpy(full_channel+n_orbff*n_orbff*my_nk_off,P,n_orbff*n_orbff*my_nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(full_channel, nk*n_orbff*n_orbff);

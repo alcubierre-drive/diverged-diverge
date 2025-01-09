@@ -82,14 +82,6 @@ public:
 
     complex128_t* self_en = nullptr;
 
-    const complex128_t* get_P_ptr_cst()const{return Pch;}
-    const complex128_t* get_C_ptr_cst()const{return Cch;}
-    const complex128_t* get_D_ptr_cst()const{return Dch;}
-    const complex128_t* get_E_ptr_cst()const{return self_en;}
-
-    const complex128_t* get_PP_bubble_cst()const{return pp_bubble_int;}
-    const complex128_t* get_PH_bubble_cst()const{return ph_bubble_int;}
-
     diverge_model_t* model;
     const tu_data_t* const tu_data;
     const index_t n_orbff;
