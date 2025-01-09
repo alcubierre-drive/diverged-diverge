@@ -7,6 +7,7 @@
 #include "../misc/shared_mem.h"
 
 #include <assert.h>
+#include <pthread.h>
 
 tu_prop_t* tu_prop_init( diverge_model_t* model ) {
     tu_prop_t* t = calloc(1, sizeof*t);
