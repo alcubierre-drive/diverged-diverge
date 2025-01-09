@@ -1,5 +1,9 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#define LINALG_NO_LAPACKE
+#include "../misc/linalg.h"
+LINALG_IMPLEMENT
+
 #include "diverge_interface_symmstruct.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_momentum_gen.h"
@@ -9,11 +13,7 @@
 #include "../misc/gemm.h"
 #include "../misc/mpi_functions.h"
 
-#define LINALG_NO_LAPACKE
-#include "../misc/linalg.h"
-LINALG_IMPLEMENT
-
-#define SKIP_CLA_TYPES
+// this must follow the LINALG include to pre-define the types
 #include "diverge_interface.h"
 
 static void symmstruct_serialize( const symmstruct_t* symm, char** ptr, uindex_t* nbytes );

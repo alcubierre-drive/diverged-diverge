@@ -1,6 +1,7 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-#pragma once
+#ifndef __LINALG_H__
+#define __LINALG_H__
 
 #ifdef __cplusplus
 #include <complex>
@@ -217,3 +218,5 @@ LINALG_EXPORT cla_prefix##V##dim##d_t cla_prefix##M##dim##type##_svd( cla_prefix
 #ifndef __cplusplus
 #include "linalg_impl.h"
 #endif
+
+#endif//__LINALG_H__

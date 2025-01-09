@@ -1,15 +1,15 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#define LINALG_NO_LAPACKE
+#include "../misc/linalg.h"
+LINALG_IMPLEMENT
+
 #include "../misc/btree.h"
 #include "../misc/mergesort.h"
 #include "../misc/bitary.h"
 #include <assert.h>
 
-#define LINALG_NO_LAPACKE
-#include "../misc/linalg.h"
-LINALG_IMPLEMENT
-
-#define SKIP_CLA_TYPES
+// this must follow the LINALG include to pre-define the types
 #include "projection.h"
 
 static void init_CP_PC_proj( projection_t* p, const diverge_model_t* model );

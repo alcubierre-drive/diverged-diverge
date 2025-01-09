@@ -12,10 +12,10 @@
 extern "C" {
 #endif
 
-#ifndef SKIP_CLA_TYPES
+#ifndef __LINALG_H__
 typedef struct claV3i_t { int v[3]; } claV3i_t;
 typedef struct claV2ll_t { index_t v[2]; } claV2ll_t;
-#endif
+#endif//__LINALG_H__
 
 typedef enum {
     tu_fft_algorithm_greedy,
