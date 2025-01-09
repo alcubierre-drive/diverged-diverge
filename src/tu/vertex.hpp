@@ -65,11 +65,9 @@ public:
     Vertex(const Vertex& other);
     Vertex& operator=(const Vertex& other);
 
-    template<char channel>
-    void reco(complex128_t* const buf, const complex128_t* inp = nullptr) const;
+    void reco( const char channel, complex128_t* const buf, const complex128_t* inp = nullptr) const;
 
-    template<char channel>
-    void reco_ft(complex128_t* const buf, const complex128_t * const existing_r_exp, const uindex_t nr,
+    void reco_ft( const char channel, complex128_t* const buf, const complex128_t * const existing_r_exp, const uindex_t nr,
                             complex128_t * bufMPI = nullptr) const;
 
     void project_fullV(const diverge_model_t* const mod_ptr, complex128_t*,
@@ -143,9 +141,5 @@ void set(Vertex &f,const Vertex &initial,const Vertex &inp, const double factor)
 void multiply(Vertex &f,const Vertex &inp, const double factor);
 double infinity_norm(const Vertex &inp);
 vector<double> max(const Vertex &inp);
-
-#ifndef SKIP_VERTEX_RECO_INCLUDE
-#include "vertex_reco.hpp"
-#endif
 
 #endif // __cplusplus

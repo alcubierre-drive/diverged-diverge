@@ -4,45 +4,17 @@
 #include "projection_handler.h"
 
 static inline complex128_t ff(const double* k, const double* r){
-    return exp(-I128*(k[0]*r[0]+k[1]*r[1]+k[2]*r[2]));
+    return std::exp(-I128*(k[0]*r[0]+k[1]*r[1]+k[2]*r[2]));
 }
 
 static inline void fill_Rvec(const diverge_model_t* model, double* Rvec) {
     const tu_formfactor_t* tu_ff = model->tu_ff;
-    for(index_t i = 0; i < model->n_tu_ff; ++i) {
-        Rvec[3*i+0] = tu_ff[i].R[0] * model->lattice[0][0]
-                            +tu_ff[i].R[1] * model->lattice[1][0]
-                            +tu_ff[i].R[2] * model->lattice[2][0];
-        Rvec[3*i+1] = tu_ff[i].R[0] * model->lattice[0][1]
-                            +tu_ff[i].R[1] * model->lattice[1][1]
-                            +tu_ff[i].R[2] * model->lattice[2][1];
-        Rvec[3*i+2] = tu_ff[i].R[0] * model->lattice[0][2]
-                            +tu_ff[i].R[1] * model->lattice[1][2]
-                            +tu_ff[i].R[2] * model->lattice[2][2];
-    }
+    for (index_t i=0; i<model->n_tu_ff; ++i)
+    for (index_t d=0; d<3; ++d)
+        Rvec[IDX2(i,d,3)] = tu_ff[i].R[0] * model->lattice[0][d]
+                          + tu_ff[i].R[1] * model->lattice[1][d]
+                          + tu_ff[i].R[2] * model->lattice[2][d];
 }
-
-static inline index_t add_mom(index_t k1, index_t k2, const index_t* nkd){
-    index_t k1x = k1 / (nkd[1]*nkd[2]);
-    index_t k1y = (k1-k1x*nkd[0]*nkd[2]) / (nkd[2]);
-    index_t k1z = k1 % nkd[2];
-    index_t k2x = k2 / (nkd[1]*nkd[2]);
-    index_t k2y = (k2-k2x*nkd[1]*nkd[2]) / (nkd[2]);
-    index_t k2z = k2 % nkd[2];
-    return (k1z+k2z)%nkd[2] + nkd[2] * ((k1y+k2y)%nkd[1]) + nkd[2]*nkd[1]*((k1x+k2x)%nkd[0]);
-}
-static inline index_t sub_mom(index_t k1, index_t k2, const index_t* nkd){
-    index_t k1x = k1 / (nkd[1]*nkd[2]);
-    index_t k1y = (k1-k1x*nkd[1]*nkd[2]) / (nkd[2]);
-    index_t k1z = k1 % nkd[2];
-    index_t k2x = k2 / (nkd[1]*nkd[2]);
-    index_t k2y = (k2-k2x*nkd[1]*nkd[2]) / (nkd[2]);
-    index_t k2z = k2 % nkd[2];
-    return (k1z-k2z+nkd[2])%nkd[2] + nkd[2] * ((k1y-k2y+nkd[1])%nkd[1])
-                    + nkd[2]*nkd[1]*((k1x-k2x+nkd[0])%nkd[0]);
-}
-
-
 
 void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* full_V,
                             const double * frq) const {
@@ -65,7 +37,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
     index_t no = n_orb*n_spin;
     // unproject P
     if(P_flow) {
-        reco<'P'>(buffer);
+        reco('P', buffer);
         #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t s1 = 0; s1<n_spin;++s1)
         for(index_t s2 = 0; s2<n_spin;++s2)
@@ -76,7 +48,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
         for(index_t k2 = 0; k2<nk;++k2)
         for(index_t k1 = 0; k1<nk;++k1)
         {
-            index_t q_P = add_mom(k1,k2,nkd);
+            index_t q_P = k1p2(k1,k2,nkd);
 
             for(index_t b1 = 0; b1<bond_sizes[o1];++b1)
             for(index_t b3 = 0; b3<bond_sizes[o3];++b3)
@@ -102,7 +74,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
     }
     // unproject C
     if(C_flow) {
-        reco<'C'>(buffer);
+        reco('C', buffer);
         #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t s1 = 0; s1<n_spin;++s1)
         for(index_t s2 = 0; s2<n_spin;++s2)
@@ -124,7 +96,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
                 for(index_t k3 = 0; k3<nk;++k3)
                 {
                     index_t idxV = IDX7(k1,k2,k3,so1,so2,so3,so4, nk,nk,no,no,no,no);
-                    index_t idxC = sub_mom(k3,k2,nkd)
+                    index_t idxC = k1m2(k3,k2,nkd)
                         +nk*(ob_to_orbff[b1+n_bonds*o1]
                                 +n_orbff*(s1+n_spin*(s2+n_spin*(
                             ob_to_orbff[b3+n_bonds*o3]+n_orbff*(s3+n_spin*
@@ -140,7 +112,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
     }
     // unproject D
     if(D_flow) {
-        reco<'D'>(buffer);
+        reco('D', buffer);
         #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for(index_t s1 = 0; s1<n_spin;++s1)
         for(index_t s2 = 0; s2<n_spin;++s2)
@@ -162,7 +134,7 @@ void Vertex::project_fullV(const diverge_model_t* const model, complex128_t* ful
                 for(index_t k3 = 0; k3<nk;++k3)
                 {
                     index_t idxV = IDX7(k1,k2,k3,so1,so2,so3,so4, nk,nk,no,no,no,no);
-                    index_t idxD = sub_mom(k1,k3,nkd)
+                    index_t idxD = k1m2(k1,k3,nkd)
                         +nk*(ob_to_orbff[b1+n_bonds*o1]
                             +n_orbff*(s1+n_spin*(s2+n_spin*(
                             ob_to_orbff[b4+n_bonds*o4]+n_orbff*(s3+n_spin*
@@ -202,8 +174,8 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, projection_t* proj) {
         for(index_t q = 0; q < my_nk; ++q)
         for(index_t k1 = 0; k1 < nk; ++k1)
         for(index_t k4 = 0; k4 < nk; ++k4) {
-            index_t k3 = sub_mom(k1,symm->idx_ibz_in_fullmesh[q+my_nk_off],nkd);
-            index_t k2 = sub_mom(k4,symm->idx_ibz_in_fullmesh[q+my_nk_off],nkd);
+            index_t k3 = k1m2(k1,symm->idx_ibz_in_fullmesh[q+my_nk_off],nkd);
+            index_t k2 = k1m2(k4,symm->idx_ibz_in_fullmesh[q+my_nk_off],nkd);
             (*(model->ffill))( model, k1, k2, k3, buf );
             #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for (index_t s4=0; s4<n_spin; ++s4)
@@ -235,7 +207,7 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, projection_t* proj) {
         for(index_t q = 0; q < my_nk; ++q)
         for(index_t k1 = 0; k1 < nk; ++k1)
         for(index_t k3 = 0; k3 < nk; ++k3) {
-            index_t k2 = sub_mom(k3,symm->idx_ibz_in_fullmesh[q+my_nk_off],nkd);
+            index_t k2 = k1m2(k3,symm->idx_ibz_in_fullmesh[q+my_nk_off],nkd);
             (*(model->ffill))( model, k1, k2, k3, buf );
             #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for (index_t s4=0; s4<n_spin; ++s4)
@@ -268,7 +240,7 @@ void Vertex::init_U_from_fullV(diverge_model_t* model, projection_t* proj) {
         for(index_t q = 0; q < my_nk; ++q)
         for(index_t k1 = 0; k1 < nk; ++k1)
         for(index_t k3 = 0; k3 < nk; ++k3) {
-            index_t k2 = sub_mom(symm->idx_ibz_in_fullmesh[q+my_nk_off], k1, nkd);
+            index_t k2 = k1m2(symm->idx_ibz_in_fullmesh[q+my_nk_off], k1, nkd);
             (*(model->ffill))( model, k1, k2, k3, buf );
             #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for (index_t s4=0; s4<n_spin; ++s4)

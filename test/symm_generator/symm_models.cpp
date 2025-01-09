@@ -154,24 +154,24 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
     double maxdiff = 0.0;
     CHECK( test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10 );
 
-    step1->tu_vertex->reco<'P'>(reco_vert1);
-    step2->tu_vertex->reco<'P'>(reco_vert2);
+    step1->tu_vertex->reco('P', reco_vert1);
+    step2->tu_vertex->reco('P', reco_vert2);
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
 
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(reco_vert1);
-    step2->tu_vertex->reco<'C'>(reco_vert2);
+    step1->tu_vertex->reco('C', reco_vert1);
+    step2->tu_vertex->reco('C', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(reco_vert1);
-    step2->tu_vertex->reco<'D'>(reco_vert2);
+    step1->tu_vertex->reco('D', reco_vert1);
+    step2->tu_vertex->reco('D', reco_vert2);
     maxdiff = 0.0;
 
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
@@ -221,23 +221,23 @@ TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
     }
     CHECK(maxdiff < 1e-8);
     maxdiff = 0.0;
-    step1->tu_vertex->reco<'P'>(reco_vert1);
-    step2->tu_vertex->reco<'P'>(reco_vert2);
+    step1->tu_vertex->reco('P', reco_vert1);
+    step2->tu_vertex->reco('P', reco_vert2);
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(reco_vert1);
-    step2->tu_vertex->reco<'C'>(reco_vert2);
+    step1->tu_vertex->reco('C', reco_vert1);
+    step2->tu_vertex->reco('C', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(reco_vert1);
-    step2->tu_vertex->reco<'D'>(reco_vert2);
+    step1->tu_vertex->reco('D', reco_vert1);
+    step2->tu_vertex->reco('D', reco_vert2);
     maxdiff = 0.0;
 
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
@@ -279,24 +279,24 @@ TEST_CASE("check symm hub","[symm_2pnt][symm_hub]") {
         Lambda += dLambda;
     }
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(reco_vert1);
-    step2->tu_vertex->reco<'P'>(reco_vert2);
+    step1->tu_vertex->reco('P', reco_vert1);
+    step2->tu_vertex->reco('P', reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(reco_vert1);
-    step2->tu_vertex->reco<'C'>(reco_vert2);
+    step1->tu_vertex->reco('C', reco_vert1);
+    step2->tu_vertex->reco('C', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(reco_vert1);
-    step2->tu_vertex->reco<'D'>(reco_vert2);
+    step1->tu_vertex->reco('D', reco_vert1);
+    step2->tu_vertex->reco('D', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
@@ -338,24 +338,24 @@ TEST_CASE("check symm hub ref","[symm_2pnt][symm_hub][symm_ref]") {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(reco_vert1);
-    step2->tu_vertex->reco<'P'>(reco_vert2);
+    step1->tu_vertex->reco('P', reco_vert1);
+    step2->tu_vertex->reco('P', reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(reco_vert1);
-    step2->tu_vertex->reco<'C'>(reco_vert2);
+    step1->tu_vertex->reco('C', reco_vert1);
+    step2->tu_vertex->reco('C', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(reco_vert1);
-    step2->tu_vertex->reco<'D'>(reco_vert2);
+    step1->tu_vertex->reco('D', reco_vert1);
+    step2->tu_vertex->reco('D', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
@@ -397,24 +397,24 @@ TEST_CASE("check symm honey ref","[symm_2pnt][symm_honey][symm_ref]") {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(reco_vert1);
-    step2->tu_vertex->reco<'P'>(reco_vert2);
+    step1->tu_vertex->reco('P', reco_vert1);
+    step2->tu_vertex->reco('P', reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(reco_vert1);
-    step2->tu_vertex->reco<'C'>(reco_vert2);
+    step1->tu_vertex->reco('C', reco_vert1);
+    step2->tu_vertex->reco('C', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(reco_vert1);
-    step2->tu_vertex->reco<'D'>(reco_vert2);
+    step1->tu_vertex->reco('D', reco_vert1);
+    step2->tu_vertex->reco('D', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
@@ -456,24 +456,24 @@ TEST_CASE("check symm rashba ref","[symm_2pnt][symm_rashba][symm_ref]") {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(reco_vert1);
-    step2->tu_vertex->reco<'P'>(reco_vert2);
+    step1->tu_vertex->reco('P', reco_vert1);
+    step2->tu_vertex->reco('P', reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(reco_vert1);
-    step2->tu_vertex->reco<'C'>(reco_vert2);
+    step1->tu_vertex->reco('C', reco_vert1);
+    step2->tu_vertex->reco('C', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(reco_vert1);
-    step2->tu_vertex->reco<'D'>(reco_vert2);
+    step1->tu_vertex->reco('D', reco_vert1);
+    step2->tu_vertex->reco('D', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
@@ -513,24 +513,24 @@ TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
     CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
     CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(reco_vert1);
-    step2->tu_vertex->reco<'P'>(reco_vert2);
+    step1->tu_vertex->reco('P', reco_vert1);
+    step2->tu_vertex->reco('P', reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(reco_vert1);
-    step2->tu_vertex->reco<'C'>(reco_vert2);
+    step1->tu_vertex->reco('C', reco_vert1);
+    step2->tu_vertex->reco('C', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(reco_vert1);
-    step2->tu_vertex->reco<'D'>(reco_vert2);
+    step1->tu_vertex->reco('D', reco_vert1);
+    step2->tu_vertex->reco('D', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
@@ -570,24 +570,24 @@ TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
     CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
     CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(reco_vert1);
-    step2->tu_vertex->reco<'P'>(reco_vert2);
+    step1->tu_vertex->reco('P', reco_vert1);
+    step2->tu_vertex->reco('P', reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(reco_vert1);
-    step2->tu_vertex->reco<'C'>(reco_vert2);
+    step1->tu_vertex->reco('C', reco_vert1);
+    step2->tu_vertex->reco('C', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(reco_vert1);
-    step2->tu_vertex->reco<'D'>(reco_vert2);
+    step1->tu_vertex->reco('D', reco_vert1);
+    step2->tu_vertex->reco('D', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
@@ -631,24 +631,24 @@ TEST_CASE("check symm triangular p+p- ref","[symm_2pnt][symm_tri][symm_ref]") {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    step1->tu_vertex->reco<'P'>(reco_vert1);
-    step2->tu_vertex->reco<'P'>(reco_vert2);
+    step1->tu_vertex->reco('P', reco_vert1);
+    step2->tu_vertex->reco('P', reco_vert2);
     double maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'C'>(reco_vert1);
-    step2->tu_vertex->reco<'C'>(reco_vert2);
+    step1->tu_vertex->reco('C', reco_vert1);
+    step2->tu_vertex->reco('C', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CHECK(maxdiff < 1e-8);
-    step1->tu_vertex->reco<'D'>(reco_vert1);
-    step2->tu_vertex->reco<'D'>(reco_vert2);
+    step1->tu_vertex->reco('D', reco_vert1);
+    step2->tu_vertex->reco('D', reco_vert2);
     maxdiff = 0.0;
     for(uint i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
