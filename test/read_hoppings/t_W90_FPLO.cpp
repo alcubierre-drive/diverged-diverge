@@ -29,6 +29,8 @@ TEST_CASE("FPLO read in","[FPLOreader]") {
             fname_FPLO.c_str(), fcontent );
 
     diverge_model_t* fplo_model = diverge_read_fplo( fname_FPLO.c_str() );
+    CHECK( fplo_model != NULL );
+    if (!fplo_model) return;
 
     index_t len = -1;
     index_t n_orb = DIVERGE_W90_READER_SWAP_ORBITALS;
