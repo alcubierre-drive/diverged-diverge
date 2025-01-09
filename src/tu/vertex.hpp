@@ -61,9 +61,8 @@ public:
             bool C = true, bool D = true, bool self = false);
     ~Vertex(void);
 
-
     Vertex(const Vertex& other);
-    Vertex& operator=(const Vertex& other);
+    Vertex& operator=(const Vertex& other) = delete;
 
     void reco( const char channel, complex128_t* const buf, const complex128_t* inp = nullptr) const;
 

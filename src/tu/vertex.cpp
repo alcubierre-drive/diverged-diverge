@@ -123,7 +123,7 @@ Vertex::Vertex(diverge_model_t* modelin, projection_t* proj, tu_prop_t* loop,
     }
     if(!C_flow){free(Cch); Cch = nullptr; memsize -= 2*full_vert_size;}
     if(!D_flow){free(Dch); Dch = nullptr; memsize -= 2*full_vert_size;}
-    
+
     mpi_vrb_printf("TU euler requires %.1f GB\n", memsize * sizeof(complex128_t) / POW3(1024.))
     mpi_vrb_printf("TU vertex size: %.1f GB\n",  (double)full_vert_size *sizeof(complex128_t) / POW3(1024.));
 }
@@ -295,18 +295,6 @@ Vertex::Vertex(const Vertex& other)
     }
 }
 
-
-Vertex& Vertex::operator=(const Vertex& other) {
-    if (P_flow) memcpy(Pch,other.Pch,sizeof*Pch * this->full_vert_size);
-    if (C_flow) memcpy(Cch,other.Cch,sizeof*Cch * this->full_vert_size);
-    if (D_flow) memcpy(Dch,other.Dch,sizeof*Dch * this->full_vert_size);
-
-    if (P_flow) memcpy(pp_bubble_int,other.pp_bubble_int, sizeof*pp_bubble_int * this->full_bubble_size);
-    if (C_flow||D_flow) memcpy(ph_bubble_int,other.ph_bubble_int, sizeof*ph_bubble_int * this->full_bubble_size);
-    if (use_self) memcpy(self_en,other.self_en, sizeof*self_en * this->selfenergy_size);
-
-    return *this;
-}
 #ifndef CUDA_MEM_ALIGN
 #define CUDA_MEM_ALIGN 256
 #endif
