@@ -200,17 +200,17 @@ void GF_zero_T_any( tu_prop_t* t, greensfunc_generator_t gf, complex128_t lambda
             {
                 gf_complex_t* Sbuf = calloc(nb2, sizeof*Sbuf);
                 gf_complex_t* Gbuf = calloc(nb2, sizeof*Gbuf);
-                #pragma omp parallel for
-                for (index_t k=0; k<nktot*2; ++k) {
-                    index_t kk = k >= nktot ? k - nktot : k;
+                #pragma omp for collapse(2)
+                for (index_t l=0; l<2; ++l)
+                for (index_t k=0; k<nktot; ++k) {
                     // fill self-energy
-                    for (index_t ij=0; ij<nb2; ++ij) Sbuf[ij] = self_energy[IDX2(kk,ij,nb2)];
+                    for (index_t ij=0; ij<nb2; ++ij) Sbuf[ij] = self_energy[IDX2(k,ij,nb2)];
                     // invert the free GF
-                    cfmatrix_invert_F( gbuf+nb2*k, nb, Gbuf );
+                    cfmatrix_invert_F( gbuf+(l*nktot+k)*nb2, nb, Gbuf );
                     // subtract the selfenergy from the inverted GF
                     for (index_t ij=0; ij<nb2; ++ij) Gbuf[ij] -= Sbuf[ij];
                     // and invert it back to gbuf
-                    cfmatrix_invert_F( Gbuf, nb, gbuf+nb2*k );
+                    cfmatrix_invert_F( Gbuf, nb, gbuf+(l*nktot+k)*nb2 );
                 }
                 free( Sbuf );
                 free( Gbuf );

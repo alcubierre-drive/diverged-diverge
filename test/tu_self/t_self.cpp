@@ -444,6 +444,9 @@ TEST_CASE("self energy Realspace vs k space SU2 flow","[self][self_flow]"){
         diverge_flow_step_euler( stepm, Lambda, dLambda );
         Lambda += dLambda;
     }
+    mpi_log_printf( "trace_orb:%.5e, trace_mom:%.5e\n",
+            std::abs(trace(stepo->tu_vertex->self_en,stepo->tu_vertex->n_orb,stepo->tu_vertex->nk)),
+            std::abs(trace(stepm->tu_vertex->self_en,stepm->tu_vertex->n_orb,stepm->tu_vertex->nk)) );
     CHECK(std::abs(trace(stepo->tu_vertex->self_en,stepo->tu_vertex->n_orb,stepo->tu_vertex->nk)
                   -trace(stepm->tu_vertex->self_en,stepm->tu_vertex->n_orb,stepm->tu_vertex->nk)) < 1e-8);
     diverge_flow_step_free(stepo);

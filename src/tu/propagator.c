@@ -330,7 +330,7 @@ void tu_prop_ph_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
         S_loop_static_rs( t, false, false, L );
         if (t->cFRG_loop) {
             swap_GF_cfrg( t );
-            S_loop_static_rs( t, false, false, L );
+            S_loop_static_rs( t, false, true, L );
             swap_GF_cfrg( t );
         }
     } else {
@@ -380,7 +380,7 @@ void tu_prop_pp_loop( tu_prop_t* t, complex128_t* L, complex128_t* tmpgpu ) {
         S_loop_static_rs( t, true, false, L );
         if (t->cFRG_loop) {
             swap_GF_cfrg( t );
-            S_loop_static_rs( t, true, false, L );
+            S_loop_static_rs( t, true, true, L );
             swap_GF_cfrg( t );
         }
     } else {
