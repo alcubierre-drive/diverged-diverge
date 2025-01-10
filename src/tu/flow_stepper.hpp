@@ -7,7 +7,7 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_Eigen3.hpp"
 #include "diverge_interface.h"
-#include "vertex.hpp"
+#include "vertex.h"
 #include "propagator.h"
 #include "selfenergy.h"
 #include "projection.h"
@@ -32,7 +32,7 @@ public:
     vector<double> tu_step_euler(Vertex* inout, double lambda, double dlambda);
 
     ~tu_stepper(){
-        delete internal_vertex;
+        Vertex_free(internal_vertex);
         if(channel_selection[3]) {
             selfenergy_free(self);
             free(coarseGF);

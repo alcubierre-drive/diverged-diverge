@@ -6,7 +6,7 @@
 #include "npatch/output.h"
 #include "grid/vertex_memory.hpp"
 #include "grid/post_processing.hpp"
-#include "tu/vertex.hpp"
+#include "tu/vertex.h"
 #include "tu/postproduction.hpp"
 
 static void grid_pp( diverge_flow_step_t* st,

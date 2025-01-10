@@ -8,7 +8,7 @@
 #include "../../src/tu/propagator.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.hpp"
-#include "../../src/tu/vertex.hpp"
+#include "../../src/tu/vertex_details.h"
 #include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
 #include "../model_examples/model_constructor.hpp"
@@ -95,7 +95,7 @@ TEST_CASE("P flow","[RPA]") {
                 v3->GPU_gemm_buffer,v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0);
     ZERO_OUT(v3->Cch,v3->full_vert_size);
     ZERO_OUT(v3->Dch,v3->full_vert_size);
-    add(*v1,*v3, dLambda);
+    add(v1,v3, dLambda);
     P_projection(v1->projection_helper, v1, s1->tu_proj);
 
     CHECK(check_equal(v1->projection_helper,v2->Pch,v1->full_vert_size));
@@ -131,7 +131,7 @@ TEST_CASE("C flow","[RPA]") {
                 v3->GPU_gemm_buffer,v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0);
     ZERO_OUT(v3->Pch,v3->full_vert_size);
     ZERO_OUT(v3->Dch,v3->full_vert_size);
-    add(*v1,*v3, dLambda);
+    add(v1,v3, dLambda);
     C_projection(v1->projection_helper,v1,s1->tu_proj);
     CHECK(check_equal(v1->projection_helper,v2->Cch,v1->full_vert_size));
     CHECK(check_equal(v1->ph_bubble_int,v2->ph_bubble_int,v1->full_vert_size));

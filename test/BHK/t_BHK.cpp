@@ -10,7 +10,7 @@
 
 #include "../../src/grid/vertex_memory.hpp"
 
-#include "../../src/tu/vertex.hpp"
+#include "../../src/tu/vertex_details.h"
 #include "../../src/tu/projection.h"
 #include "../../src/tu/flow_stepper.hpp"
 #include "../../src/npatch/symmetrize_vertex.h"
@@ -186,7 +186,7 @@ static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
 
     switch (bhk_mode) {
         case bhk_mode_tu:
-            step->tu_vertex->project_fullV(mod,vertex); break;
+            Vertex_project_fullV( step->tu_vertex, mod, vertex ); break;
         case bhk_mode_grid:
             ((grid::VertexMemory*)step->intls->grid_vertex)->get_vertex( vertex, 'V' ); break;
         case bhk_mode_patch:

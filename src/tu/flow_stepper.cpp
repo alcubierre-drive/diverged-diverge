@@ -1,6 +1,7 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "flow_stepper.hpp"
+#include "vertex_details.h"
 #include "../misc/mpi_functions.h"
 
 void vertex_product(complex128_t* result, const complex128_t* const  B,
@@ -34,11 +35,11 @@ tu_stepper::tu_stepper(projection_t* projin, tu_prop_t* loopin, Vertex* vertexin
         norm[1] = -1.0;
         norm[2] =  1.0;
     }
-    internal_vertex=new Vertex(*vertexin);
+    internal_vertex=Vertex_copy(vertexin);
 
     if(channel_selection[3]){
         coarseGF = (complex128_t*)calloc(nk*POW2(vertexin->n_orb*vertexin->n_spin),sizeof(complex128_t));
-        self = selfenergy_init((void*)vertexin);
+        self = selfenergy_init(vertexin);
     }
 }
 
@@ -191,8 +192,9 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
         w_time_self += tock-tick;
     }
     tick = diverge_mpi_wtime();
-    add(*inout,*internal_vertex, dlambda);
-    vector<double> ret = max(*inout);
+    add(inout, internal_vertex, dlambda);
+    vector<double> ret = {0,0,0,0,0,0};
+    max(inout, ret.data());
 
     tock = diverge_mpi_wtime();
     w_time_add_find_max += tock-tick;

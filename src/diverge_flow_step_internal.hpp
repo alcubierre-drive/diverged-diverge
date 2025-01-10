@@ -9,7 +9,7 @@
 #include "grid/loops.hpp"
 #include "grid/flow_step.hpp"
 
-#include "tu/vertex.hpp"
+#include "tu/vertex.h"
 #include "tu/projection.h"
 #include "tu/propagator.h"
 #include "tu/flow_stepper.hpp"

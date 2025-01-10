@@ -9,7 +9,7 @@
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/tu/propagator.h"
 #include "../../src/grid/loops.hpp"
-#include "../../src/tu/vertex.hpp"
+#include "../../src/tu/vertex.h"
 #include "../../src/tu/projection.h"
 #include "../helper_functions.hpp"
 
@@ -75,8 +75,8 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
 
     tu_prop_t* tu_loop = tu_prop_init(mod_tu);
     projection_t* ProjMom = projection_init(mod_tu);
-    Vertex VertMom(mod_tu, ProjMom, tu_loop);
-    
+    Vertex* VertMom = Vertex_init(mod_tu, ProjMom, tu_loop, 1,1,1,0);
+
     grid::Loops grid_loop (mod_grid);
     tu_prop_GF_zero_T( tu_loop, I128*0.1, NULL );
     tu_prop_ph_loop( tu_loop, Ltu, NULL );
@@ -116,8 +116,9 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     free(Ltu);
     free(Lrecog);
     free(Lreco);
+    Vertex_free(VertMom);
     tu_prop_free(tu_loop);
-    projection_free( ProjMom );
+    projection_free(ProjMom);
     diverge_model_free(mod_tu);
     diverge_model_free(mod_grid);
 }

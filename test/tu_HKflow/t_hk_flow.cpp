@@ -7,7 +7,7 @@
 #include "../model_examples/old.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.hpp"
-#include "../../src/tu/vertex.hpp"
+#include "../../src/tu/vertex_details.h"
 #include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
 #include "../../src/grid/vertex_memory.hpp"
@@ -117,7 +117,7 @@ TEST_CASE("two orbital model in 1d","[hk]") {
 
     index_t fsize = POW4(mod2->n_orb*mod2->n_spin);
     complex128_t* vertex = (complex128_t*)calloc(fsize,sizeof(complex128_t));
-    s2->tu_vertex->project_fullV(mod2,vertex);
+    Vertex_project_fullV( s2->tu_vertex, mod2, vertex );
     index_t norb = mod2->n_orb*mod2->n_spin;
     for(index_t s4 = 0; s4<mod2->n_spin;++s4)
     for(index_t s3 = 0; s3<mod2->n_spin;++s3)

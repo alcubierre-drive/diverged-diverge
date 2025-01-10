@@ -9,6 +9,8 @@
 #include "diverge_model_internals.h"
 #include "misc/dependency_tree.h"
 
+#include "tu/vertex_details.h"
+
 #include "grid/vertex_memory.hpp"
 
 #include "npatch/vertex.h"
@@ -92,7 +94,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
             }
             st->tu_proj = projection_init(mod);
             st->tu_loop = tu_prop_init(mod);
-            st->tu_vertex = new Vertex(mod, st->tu_proj, st->tu_loop, st->channel_selection[0],
+            st->tu_vertex = Vertex_init(mod, st->tu_proj, st->tu_loop, st->channel_selection[0],
                     st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
             st->tu_step = new tu_stepper(st->tu_proj, st->tu_loop, st->tu_vertex);
             break;

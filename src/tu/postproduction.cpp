@@ -3,6 +3,7 @@
 #include "../misc/version.h"
 
 #include "postproduction.hpp"
+#include "vertex_details.h"
 #include "../misc/batched_eigen.h"
 #include "../misc/batched_svd.h"
 #include "../misc/batched_gemms.h"
@@ -399,7 +400,7 @@ void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
         P_projection(vertex->projection_helper, vertex, proj);
         vertex_product(suscff, vertex->pp_bubble_int,vertex->projection_helper,
                 vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff, vertex->my_nk,1.0);
-        vertex->reco('P', suscPp_ff, suscff);
+        Vertex_reco(vertex, 'P', suscPp_ff, suscff);
         if(called_suscep_full) {
             suscPp = (complex128_t*)calloc(size,sizeof(complex128_t));
             _susc_o14k(model,suscPp_ff,suscPp);
@@ -412,7 +413,7 @@ void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
         C_projection(vertex->projection_helper, vertex, proj);
         vertex_product(suscff, vertex->ph_bubble_int,vertex->projection_helper,
                 vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff, vertex->my_nk,1.0);
-        vertex->reco('C', suscMa_ff, suscff);
+        Vertex_reco(vertex, 'C', suscMa_ff, suscff);
         if(called_suscep_full) {
             suscMa = (complex128_t*)calloc(size,sizeof(complex128_t));
             _susc_o14k(model,suscMa_ff,suscMa);
@@ -434,7 +435,7 @@ void tu_postproduction::calc_susc(bool susc_ff, bool susc_full) {
         }
         vertex_product(suscff, vertex->ph_bubble_int,vertex->projection_helper,
                 vertex->product_helper, POW2(vertex->n_spin)*vertex->n_orbff, vertex->my_nk,1.0);
-        vertex->reco('D', suscCh_ff, suscff);
+        Vertex_reco(vertex, 'D', suscCh_ff, suscff);
         if(called_suscep_full) {
             suscCh = (complex128_t*)calloc(size,sizeof(complex128_t));
             _susc_o14k(model,suscCh_ff,suscCh);
@@ -787,23 +788,23 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
         index_t vsize = POW2(linsize)*vertex->nk*sizeof(complex128_t);
         complex128_t* helper = (complex128_t*)malloc(vsize);
         if(vertex->P_flow) {
-            vertex->reco('P', helper);
+            Vertex_reco(vertex, 'P', helper, NULL);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(vertex->C_flow) {
-            vertex->reco('C', helper);
+            Vertex_reco(vertex, 'C', helper, NULL);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(vertex->D_flow) {
-            vertex->reco('D', helper);
+            Vertex_reco(vertex, 'D', helper, NULL);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(vertex->P_flow) {
-            vertex->reco('P', helper, vertex->pp_bubble_int);
+            Vertex_reco(vertex, 'P', helper, vertex->pp_bubble_int);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(vertex->C_flow || vertex->D_flow) {
-            vertex->reco('C', helper, vertex->ph_bubble_int);
+            Vertex_reco(vertex, 'C', helper, vertex->ph_bubble_int);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         free(helper);

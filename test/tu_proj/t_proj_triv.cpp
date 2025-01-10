@@ -5,7 +5,7 @@
 #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
-#include "../../src/tu/vertex.hpp"
+#include "../../src/tu/vertex_details.h"
 #include "../../src/tu/propagator.h"
 #include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
@@ -24,43 +24,45 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
 
     projection_t* ProjMom = projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
-    Vertex VertMom(mom, ProjMom, LoopMom);
+    Vertex* VertMom = Vertex_init( mom, ProjMom, LoopMom, 1,1,1,0 );
 
     std::random_device rd{};
     std::mt19937 re{rd()};
     std::normal_distribution<double> unif{0, 5.0};
 
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-    for(index_t j = 0; j < VertMom.full_vert_size; ++j) {
-        VertMom.Pch[j] = unif(re)+I128*unif(re);
-        VertMom.Cch[j] = unif(re)+I128*unif(re);
-        VertMom.Dch[j] = unif(re)+I128*unif(re);
+    for(index_t j = 0; j < VertMom->full_vert_size; ++j) {
+        VertMom->Pch[j] = unif(re)+I128*unif(re);
+        VertMom->Cch[j] = unif(re)+I128*unif(re);
+        VertMom->Dch[j] = unif(re)+I128*unif(re);
     }
 
-    Vertex VertOrb(VertMom);
+    Vertex* VertOrb = Vertex_copy( VertMom );
 
-    CHECK(std::abs(trace(VertOrb.Pch,VertOrb.n_orbff,VertOrb.my_nk)
-                  -trace(VertMom.Pch,VertMom.n_orbff,VertMom.my_nk)) < 1e-10);
-    CHECK(std::abs(trace(VertOrb.Cch,VertOrb.n_orbff,VertOrb.my_nk)
-                  -trace(VertMom.Cch,VertMom.n_orbff,VertMom.my_nk)) < 1e-10);
-    CHECK(std::abs(trace(VertOrb.Dch,VertOrb.n_orbff,VertOrb.my_nk)
-                  -trace(VertMom.Dch,VertMom.n_orbff,VertMom.my_nk)) < 1e-10);
+    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
+                  -trace(VertMom->Pch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
+    CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->my_nk)
+                  -trace(VertMom->Cch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
+    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->my_nk)
+                  -trace(VertMom->Dch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
 
-    complex128_t* r2 = (complex128_t*)calloc(VertOrb.full_vert_size,sizeof(complex128_t));
-    complex128_t* r1 = (complex128_t*)calloc(VertOrb.full_vert_size,sizeof(complex128_t));
+    complex128_t* r2 = (complex128_t*)calloc(VertOrb->full_vert_size,sizeof(complex128_t));
+    complex128_t* r1 = (complex128_t*)calloc(VertOrb->full_vert_size,sizeof(complex128_t));
 
-    P_projection(r2,&VertMom,ProjMom);
-    t_P_projection(r1,&VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
+    P_projection(r2,VertMom,ProjMom);
+    t_P_projection(r1,VertOrb,mom);
+    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
-    C_projection(r2,&VertMom,ProjMom);
-    t_C_projection(r1,&VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
+    C_projection(r2,VertMom,ProjMom);
+    t_C_projection(r1,VertOrb,mom);
+    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
-    D_projection(r2,&VertMom,ProjMom);
-    t_D_projection(r1,&VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
+    D_projection(r2,VertMom,ProjMom);
+    t_D_projection(r1,VertOrb,mom);
+    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
+    Vertex_free( VertOrb );
+    Vertex_free( VertMom );
     tu_prop_free( LoopMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
@@ -75,43 +77,45 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
 
     projection_t* ProjMom = projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
-    Vertex VertMom(mom, ProjMom, LoopMom);
+    Vertex* VertMom = Vertex_init( mom, ProjMom, LoopMom, 1,1,1,0 );
 
-        std::random_device rd{};
-        std::mt19937 re{rd()};
-        std::normal_distribution<double> unif{0, 5.0};
+    std::random_device rd{};
+    std::mt19937 re{rd()};
+    std::normal_distribution<double> unif{0, 5.0};
 
     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-    for(index_t j = 0; j < VertMom.full_vert_size; ++j) {
-        VertMom.Pch[j] = unif(re)+I128*unif(re);
-        VertMom.Cch[j] = unif(re)+I128*unif(re);
-        VertMom.Dch[j] = unif(re)+I128*unif(re);
+    for(index_t j = 0; j < VertMom->full_vert_size; ++j) {
+        VertMom->Pch[j] = unif(re)+I128*unif(re);
+        VertMom->Cch[j] = unif(re)+I128*unif(re);
+        VertMom->Dch[j] = unif(re)+I128*unif(re);
     }
 
-    Vertex VertOrb(VertMom);
+    Vertex* VertOrb = Vertex_copy( VertMom );
 
-    CHECK(std::abs(trace(VertOrb.Pch,VertOrb.n_orbff,VertOrb.my_nk)
-                  -trace(VertMom.Pch,VertMom.n_orbff,VertMom.my_nk)) < 1e-10);
-    CHECK(std::abs(trace(VertOrb.Cch,VertOrb.n_orbff,VertOrb.my_nk)
-                  -trace(VertMom.Cch,VertMom.n_orbff,VertMom.my_nk)) < 1e-10);
-    CHECK(std::abs(trace(VertOrb.Dch,VertOrb.n_orbff,VertOrb.my_nk)
-                  -trace(VertMom.Dch,VertMom.n_orbff,VertMom.my_nk)) < 1e-10);
+    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
+                  -trace(VertMom->Pch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
+    CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->my_nk)
+                  -trace(VertMom->Cch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
+    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->my_nk)
+                  -trace(VertMom->Dch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
 
-    complex128_t* r2 = (complex128_t*)calloc(VertOrb.full_vert_size,sizeof(complex128_t));
-    complex128_t* r1 = (complex128_t*)calloc(VertOrb.full_vert_size,sizeof(complex128_t));
+    complex128_t* r2 = (complex128_t*)calloc(VertOrb->full_vert_size,sizeof(complex128_t));
+    complex128_t* r1 = (complex128_t*)calloc(VertOrb->full_vert_size,sizeof(complex128_t));
 
-    P_projection(r2,&VertMom,ProjMom);
-    t_P_projection(r1,&VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
+    P_projection(r2,VertMom,ProjMom);
+    t_P_projection(r1,VertOrb,mom);
+    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
-    C_projection(r2,&VertMom,ProjMom);
-    t_C_projection(r1,&VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
+    C_projection(r2,VertMom,ProjMom);
+    t_C_projection(r1,VertOrb,mom);
+    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
-    D_projection(r2,&VertMom,ProjMom);
-    t_D_projection(r1,&VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb.n_orbff)*VertOrb.my_nk));
+    D_projection(r2,VertMom,ProjMom);
+    t_D_projection(r1,VertOrb,mom);
+    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
+    Vertex_free( VertOrb );
+    Vertex_free( VertMom );
     tu_prop_free( LoopMom );
     projection_free( ProjMom );
     diverge_model_free(mom);

@@ -7,6 +7,7 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_symmetrize.h"
 #include "diverge_interface.h"
+#include "vertex.h"
 
 #include <fftw3.h>
 
@@ -16,7 +17,7 @@ extern "C" {
 
 typedef struct selfenergy_t selfenergy_t;
 
-selfenergy_t* selfenergy_init( void* vertex_ptr );
+selfenergy_t* selfenergy_init( Vertex* vertex_ptr );
 void selfenergy_free( selfenergy_t* s );
 
 void selfenergy_flow( selfenergy_t* s, complex128_t* self_en,

@@ -4,7 +4,7 @@
 
 #include "../diverge_model.h"
 #include "../diverge_flow_step.h"
-#include "vertex.hpp"
+#include "vertex.h"
 #include "projection.h"
 #include "projection_handler.h"
 

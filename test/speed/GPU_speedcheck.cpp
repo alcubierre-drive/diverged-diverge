@@ -10,7 +10,7 @@
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
-#include "../../src/tu/vertex.hpp"
+#include "../../src/tu/vertex_details.h"
 #include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
 
@@ -47,17 +47,18 @@ TEST_CASE("loop proj", "[.][projspeed]") {
     diverge_model_internals_tu(mom, 2.5);
     projection_t* ProjMom = projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
-    Vertex VertMom(mom, ProjMom, LoopMom);
-    complex128_t* r2 = (complex128_t*)calloc(VertMom.full_vert_size,sizeof(complex128_t));
+    Vertex* VertMom = Vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
+    complex128_t* r2 = (complex128_t*)calloc(VertMom->full_vert_size,sizeof(complex128_t));
 
     double tick = diverge_mpi_wtime();
-    P_projection(r2,&VertMom,ProjMom);
-    C_projection(r2,&VertMom,ProjMom);
-    D_projection(r2,&VertMom,ProjMom);
+    P_projection(r2,VertMom,ProjMom);
+    C_projection(r2,VertMom,ProjMom);
+    D_projection(r2,VertMom,ProjMom);
 
     double tock = diverge_mpi_wtime();
     mpi_log_printf("time 3 projections took %4.4f \n", tock -tick);
 
+    Vertex_free( VertMom );
     tu_prop_free( LoopMom );
     projection_free( ProjMom );
     diverge_model_free(mom);

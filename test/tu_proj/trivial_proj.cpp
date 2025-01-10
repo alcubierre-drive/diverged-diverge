@@ -1,6 +1,7 @@
 #ifndef DIVERGE_SKIP_TESTS
 
 #include "trivial_proj.hpp"
+#include "../../src/tu/vertex_details.h"
 
 void t_P_projection(complex128_t* proj_vertex,
                     const Vertex* const vertex,

@@ -1,7 +1,8 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "selfenergy.h"
-#include "vertex.hpp"
+#include "vertex.h"
+#include "vertex_details.h"
 
 struct selfenergy_t {
     fftw_plan ifft_self_oop;
@@ -85,21 +86,21 @@ static inline index_t rpb1pb3(const index_t* nk, index_t x, index_t y, index_t z
                               const index_t* vb1, const index_t* vb3);
 static inline index_t rpb1(const index_t* nk, index_t x, index_t y, index_t z, const index_t* vb1);
 
-selfenergy_t* selfenergy_init( void* V ) {
+selfenergy_t* selfenergy_init( Vertex* V ) {
     selfenergy_t* s = calloc(1, sizeof*s);
 
-    s->model = Vertex_get_model( V );
-    s->tu_data = Vertex_get_tu_data( V );
-    s->n_orb = Vertex_get_n_orb( V );
-    s->n_spin = Vertex_get_n_spin( V );
+    s->model = V->model;
+    s->tu_data = V->tu_data;
+    s->n_orb = V->n_orb;
+    s->n_spin = V->n_spin;
     s->ns = POW2(s->n_spin);
-    s->n_orbff = Vertex_get_n_orbff( V );
+    s->n_orbff = V->n_orbff;
     s->n_bonds = s->tu_data->n_bonds;
-    s->nk = Vertex_get_nk( V );
-    s->nkf = Vertex_get_nkf( V );
+    s->nk = V->nk;
+    s->nkf = V->nkf;
     s->nktot = s->nk * s->nkf;
-    s->my_nk = Vertex_get_my_nk( V );
-    s->my_nk_off = Vertex_get_my_nk_off( V );
+    s->my_nk = V->my_nk;
+    s->my_nk_off = V->my_nk_off;
     s->nff = s->tu_data->existing_ff_sz;
     s->SU2 = (s->model->SU2 > 0);
     s->ob_to_orbff = s->tu_data->ob_to_orbff;
@@ -108,13 +109,13 @@ selfenergy_t* selfenergy_init( void* V ) {
     s->tu_ff = s->model->tu_ff;
     s->bond_sizes = s->tu_data->bond_sizes;
     s->bond_offsets = s->tu_data->bond_offsets;
-    s->symm = Vertex_get_symm( V );
-    s->P_flow = Vertex_get_P_flow( V );
-    s->C_flow = Vertex_get_C_flow( V );
-    s->D_flow = Vertex_get_D_flow( V );
+    s->symm = V->symm;
+    s->P_flow = V->P_flow;
+    s->C_flow = V->C_flow;
+    s->D_flow = V->D_flow;
 
-    s->reco_helper = Vertex_get_product_helper( V );
-    s->interpol_helper = Vertex_get_bubble_helper( V );
+    s->reco_helper = V->product_helper;
+    s->interpol_helper = V->bubble_helper;
     s->ff_helper = calloc(POW2(s->n_orb*s->n_spin)*s->nktot,sizeof(complex128_t));
     if (s->nk!=1) {
         s->greensfkt_helper = calloc(POW2(s->n_spin*s->n_orb)*s->nktot,sizeof(complex128_t));

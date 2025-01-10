@@ -8,8 +8,6 @@
 #include "../../src/diverge_model_internals.h"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/grid/loops.hpp"
-#include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection.h"
 #include "../helper_functions.hpp"
 
 
