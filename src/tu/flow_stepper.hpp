@@ -20,26 +20,20 @@
 using std::string;
 using std::vector;
 
-void vertex_product(complex128_t* result, const complex128_t* const  B,
-                    const complex128_t* const C, complex128_t* helper,
-                    char* GPUbuffer[32][3] ,
-                    const index_t productsize, const index_t nbatch,
-                    const double prefac = 1.0);
-
 class tu_stepper{
 public:
-    tu_stepper(projection_t*, tu_prop_t* loop, Vertex* Vertex);
-    vector<double> tu_step_euler(Vertex* inout, double lambda, double dlambda);
+    tu_stepper(projection_t*, tu_prop_t* loop, tu_vertex_t* tu_vertex_t);
+    vector<double> tu_step_euler(tu_vertex_t* inout, double lambda, double dlambda);
 
     ~tu_stepper(){
-        Vertex_free(internal_vertex);
+        tu_vertex_free(internal_vertex);
         if(channel_selection[3]) {
             selfenergy_free(self);
             free(coarseGF);
         }
     }
     selfenergy_t* self;
-    Vertex* internal_vertex;
+    tu_vertex_t* internal_vertex;
 
     vector<double> get_timings( void ) const {
         vector<double> result = { w_time_GF, w_time_loop, w_time_projection,

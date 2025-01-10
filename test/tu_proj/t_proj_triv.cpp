@@ -24,7 +24,7 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
 
     projection_t* ProjMom = projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
-    Vertex* VertMom = Vertex_init( mom, ProjMom, LoopMom, 1,1,1,0 );
+    tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, LoopMom, 1,1,1,0 );
 
     std::random_device rd{};
     std::mt19937 re{rd()};
@@ -37,7 +37,7 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
         VertMom->Dch[j] = unif(re)+I128*unif(re);
     }
 
-    Vertex* VertOrb = Vertex_copy( VertMom );
+    tu_vertex_t* VertOrb = tu_vertex_copy( VertMom );
 
     CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
@@ -61,8 +61,8 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     t_D_projection(r1,VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
-    Vertex_free( VertOrb );
-    Vertex_free( VertMom );
+    tu_vertex_free( VertOrb );
+    tu_vertex_free( VertMom );
     tu_prop_free( LoopMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
@@ -77,7 +77,7 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
 
     projection_t* ProjMom = projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
-    Vertex* VertMom = Vertex_init( mom, ProjMom, LoopMom, 1,1,1,0 );
+    tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, LoopMom, 1,1,1,0 );
 
     std::random_device rd{};
     std::mt19937 re{rd()};
@@ -90,7 +90,7 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
         VertMom->Dch[j] = unif(re)+I128*unif(re);
     }
 
-    Vertex* VertOrb = Vertex_copy( VertMom );
+    tu_vertex_t* VertOrb = tu_vertex_copy( VertMom );
 
     CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
@@ -114,8 +114,8 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
     t_D_projection(r1,VertOrb,mom);
     CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
-    Vertex_free( VertOrb );
-    Vertex_free( VertMom );
+    tu_vertex_free( VertOrb );
+    tu_vertex_free( VertMom );
     tu_prop_free( LoopMom );
     projection_free( ProjMom );
     diverge_model_free(mom);

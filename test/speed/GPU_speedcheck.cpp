@@ -47,7 +47,7 @@ TEST_CASE("loop proj", "[.][projspeed]") {
     diverge_model_internals_tu(mom, 2.5);
     projection_t* ProjMom = projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
-    Vertex* VertMom = Vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
+    tu_vertex_t* VertMom = tu_vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
     complex128_t* r2 = (complex128_t*)calloc(VertMom->full_vert_size,sizeof(complex128_t));
 
     double tick = diverge_mpi_wtime();
@@ -58,7 +58,7 @@ TEST_CASE("loop proj", "[.][projspeed]") {
     double tock = diverge_mpi_wtime();
     mpi_log_printf("time 3 projections took %4.4f \n", tock -tick);
 
-    Vertex_free( VertMom );
+    tu_vertex_free( VertMom );
     tu_prop_free( LoopMom );
     projection_free( ProjMom );
     diverge_model_free(mom);

@@ -3,11 +3,12 @@
 #include "vertex.h"
 #include "vertex_details.h"
 #include "propagator_details.h"
+#include "../misc/batched_gemms.h"
 #include "../misc/gemm.h"
 
-Vertex* Vertex_init( diverge_model_t* modelin, projection_t* proj, tu_prop_t* loop,
+tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, projection_t* proj, tu_prop_t* loop,
         bool P/*=true*/, bool C/*=true*/, bool D/*=true*/, bool self/*=false*/ ) {
-    Vertex* V = calloc(1, sizeof*V);
+    tu_vertex_t* V = calloc(1, sizeof*V);
     V->model = modelin;
     V->tu_data = V->model->internals->tu_data;
     V->n_orbff = V->tu_data->n_orbff;
@@ -69,11 +70,11 @@ Vertex* Vertex_init( diverge_model_t* modelin, projection_t* proj, tu_prop_t* lo
         V->ph_bubble_int = calloc(V->full_vert_size, sizeof(complex128_t));
         memsize += 2*V->full_vert_size;
     }
-    Vertex_initialize_GPU_memory( V, proj, loop );
+    tu_vertex_initialize_GPU_memory( V, proj, loop );
     if (V->model->ffill != NULL) {
-        Vertex_init_U_from_fullV( V, V->model, proj );
+        tu_vertex_init_U_from_fullV( V, V->model, proj );
     } else {
-        Vertex_init_U( V, V->model->internals->enforce_exchange );
+        tu_vertex_init_U( V, V->model->internals->enforce_exchange );
         if (!(V->P_flow && V->C_flow && V->D_flow)) {
             mpi_wrn_printf("not all channels (P:%i,C:%i,D:%i): ensure correct formfactors\n",
                     V->P_flow, V->C_flow, V->D_flow);
@@ -116,7 +117,7 @@ Vertex* Vertex_init( diverge_model_t* modelin, projection_t* proj, tu_prop_t* lo
     return V;
 }
 
-void Vertex_free( Vertex* V ) {
+void tu_vertex_free( tu_vertex_t* V ) {
     free(V->Cch);
     free(V->Pch);
     free(V->Dch);
@@ -139,8 +140,8 @@ void Vertex_free( Vertex* V ) {
     free( V );
 }
 
-Vertex* Vertex_copy( const Vertex* O ) {
-    Vertex* V = calloc(1, sizeof*V);
+tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
+    tu_vertex_t* V = calloc(1, sizeof*V);
 
     V->model = O->model;
     V->tu_data = O->tu_data;
@@ -196,7 +197,7 @@ Vertex* Vertex_copy( const Vertex* O ) {
     return V;
 }
 
-void add(Vertex* result, const Vertex* inp, const double factor) {
+void tu_vertex_add(tu_vertex_t* result, const tu_vertex_t* inp, const double factor) {
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         if (result->P_flow) {
@@ -227,7 +228,7 @@ void add(Vertex* result, const Vertex* inp, const double factor) {
     }
 }
 
-void set(Vertex* f, const Vertex* initial, const Vertex* inp, const double factor) {
+void tu_vertex_set(tu_vertex_t* f, const tu_vertex_t* initial, const tu_vertex_t* inp, const double factor) {
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         if (f->P_flow) {
@@ -258,7 +259,7 @@ void set(Vertex* f, const Vertex* initial, const Vertex* inp, const double facto
     }
 }
 
-void multiply(Vertex* f, const Vertex* inp, const double factor) {
+void tu_vertex_multiply(tu_vertex_t* f, const tu_vertex_t* inp, const double factor) {
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         if (f->P_flow) {
@@ -297,7 +298,7 @@ static inline double max_abs( const complex128_t* start, index_t length ) {
     return max;
 }
 
-void max(const Vertex* V, double out[6]) {
+void tu_vertex_max(const tu_vertex_t* V, double out[6]) {
     if (V->P_flow) {
         double max_trial = max_abs(V->Pch,V->full_vert_size);
         out[0] = diverge_mpi_max(&max_trial);
@@ -325,16 +326,16 @@ void max(const Vertex* V, double out[6]) {
     }
 }
 
-double infinity_norm( const Vertex* V ) {
+double tu_vertex_infinity_norm( const tu_vertex_t* V ) {
     double maxs[6] = {0};
-    max( V, maxs );
+    tu_vertex_max( V, maxs );
 
     double max = maxs[0];
     for (int i=1; i<6; ++i) max = MAX(max, maxs[i]);
     return max;
 }
 
-void Vertex_reco_ft( const Vertex* V, char chan, complex128_t* buf,
+void tu_vertex_reco_ft( const tu_vertex_t* V, char chan, complex128_t* buf,
         const complex128_t* existing_r_exp, index_t nr, complex128_t* buf_q/*=NULL*/ ) {
     const char channel = chan;
     bool was_null = false;
@@ -450,7 +451,7 @@ void Vertex_reco_ft( const Vertex* V, char chan, complex128_t* buf,
     if (was_null) free(buf_q);
 }
 
-void Vertex_reco( const Vertex* V, char chan, complex128_t* buf_q,
+void tu_vertex_reco( const tu_vertex_t* V, char chan, complex128_t* buf_q,
         const complex128_t* inp/*=NULL*/ ) {
     const char channel = chan;
     const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));
@@ -557,4 +558,16 @@ void Vertex_reco( const Vertex* V, char chan, complex128_t* buf_q,
         }
     }
     diverge_mpi_allreduce_complex_sum_inplace(buf_q, V->nk*rest);
+}
+
+void tu_vertex_product( complex128_t* result, const complex128_t* B,
+        const complex128_t* C, complex128_t* helper, index_t productsize,
+        index_t nbatch, double prefac, bool buffered, char* GPUbuffer[32][3] ) {
+    if (buffered) {
+        batched_gemm_with_buffers(B, C, helper, GPUbuffer, productsize, 1., 0., nbatch);
+        batched_gemm_with_buffers(helper, B, result, GPUbuffer, productsize, prefac, 0., nbatch);
+    } else {
+        batched_gemm(B, C, helper, productsize, 1., 0., nbatch);
+        batched_gemm(helper, B, result, productsize, prefac, 0., nbatch);
+    }
 }

@@ -4,16 +4,7 @@
 #include "vertex_details.h"
 #include "../misc/mpi_functions.h"
 
-void vertex_product(complex128_t* result, const complex128_t* const  B,
-                    const complex128_t* const C, complex128_t* helper,
-                    char* GPUbuffer[32][3],
-                    const index_t productsize, const index_t nbatch,
-                    const double prefac) {
-    batched_gemm_with_buffers(B, C, helper, GPUbuffer, productsize,1.0, 0.0, nbatch);
-    batched_gemm_with_buffers(helper, B, result, GPUbuffer, productsize,prefac, 0.0, nbatch);
-}
-
-tu_stepper::tu_stepper(projection_t* projin, tu_prop_t* loopin, Vertex* vertexin)
+tu_stepper::tu_stepper(projection_t* projin, tu_prop_t* loopin, tu_vertex_t* vertexin)
 :
     loop{loopin},
     proj{projin},
@@ -35,7 +26,7 @@ tu_stepper::tu_stepper(projection_t* projin, tu_prop_t* loopin, Vertex* vertexin
         norm[1] = -1.0;
         norm[2] =  1.0;
     }
-    internal_vertex=Vertex_copy(vertexin);
+    internal_vertex=tu_vertex_copy(vertexin);
 
     if(channel_selection[3]){
         coarseGF = (complex128_t*)calloc(nk*POW2(vertexin->n_orb*vertexin->n_spin),sizeof(complex128_t));
@@ -43,7 +34,7 @@ tu_stepper::tu_stepper(projection_t* projin, tu_prop_t* loopin, Vertex* vertexin
     }
 }
 
-vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dlambda) {
+vector<double> tu_stepper::tu_step_euler(tu_vertex_t* inout, double lambda, double dlambda) {
     double flow_step_tick = diverge_mpi_wtime();
     double tick, tock;
     num_calls += 1;
@@ -72,9 +63,9 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
                     w_time_projection += tock-tick;
 
                     tick = diverge_mpi_wtime();
-                    vertex_product(internal_vertex->Cch, internal_vertex->Dch,
-                                internal_vertex->ph_bubble_int,inout->product_helper,
-                                internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[1]);
+                    tu_vertex_product(internal_vertex->Cch, internal_vertex->Dch,
+                                internal_vertex->ph_bubble_int, inout->product_helper,
+                                prodsize,my_nk,norm[1], true, internal_vertex->GPU_gemm_buffer);
                     tock = diverge_mpi_wtime();
                     w_time_product += tock-tick;
 
@@ -87,9 +78,9 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
                     w_time_projection += tock-tick;
 
                     tick = diverge_mpi_wtime();
-                    vertex_product(internal_vertex->Dch, internal_vertex->projection_helper,
+                    tu_vertex_product(internal_vertex->Dch, internal_vertex->projection_helper,
                                 internal_vertex->ph_bubble_int,inout->product_helper,
-                                internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[2]);
+                                prodsize,my_nk,norm[2], true, internal_vertex->GPU_gemm_buffer);
                     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
                     for(index_t ii = 0; ii <  inout->full_vert_size;++ii)
                         internal_vertex->Dch[ii] += 0.5*internal_vertex->Cch[ii];
@@ -102,9 +93,9 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
                     w_time_projection += tock-tick;
 
                     tick = diverge_mpi_wtime();
-                    vertex_product(internal_vertex->Cch, internal_vertex->projection_helper,
+                    tu_vertex_product(internal_vertex->Cch, internal_vertex->projection_helper,
                                 internal_vertex->ph_bubble_int,inout->product_helper,
-                                internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[1]);
+                                prodsize,my_nk,norm[1], true, internal_vertex->GPU_gemm_buffer);
                     tock = diverge_mpi_wtime();
                     w_time_product += tock-tick;
                 }else{
@@ -114,9 +105,9 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
                     w_time_projection += tock-tick;
 
                     tick = diverge_mpi_wtime();
-                    vertex_product(internal_vertex->Dch, internal_vertex->projection_helper,
+                    tu_vertex_product(internal_vertex->Dch, internal_vertex->projection_helper,
                                 internal_vertex->ph_bubble_int,inout->product_helper,
-                                internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[2]);
+                                prodsize,my_nk,norm[2], true, internal_vertex->GPU_gemm_buffer);
                     tock = diverge_mpi_wtime();
                     w_time_product += tock-tick;
                 }
@@ -138,9 +129,9 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
 
             tick = diverge_mpi_wtime();
             if(channel_selection[1])
-                vertex_product(internal_vertex->Cch, internal_vertex->projection_helper,
+                tu_vertex_product(internal_vertex->Cch, internal_vertex->projection_helper,
                         internal_vertex->ph_bubble_int,inout->product_helper,
-                        internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[1]);
+                        prodsize,my_nk,norm[1], true, internal_vertex->GPU_gemm_buffer);
             tock = diverge_mpi_wtime();
             w_time_product += tock-tick;
 
@@ -152,9 +143,9 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
 
             tick = diverge_mpi_wtime();
             if(channel_selection[2])
-                vertex_product(internal_vertex->Dch,internal_vertex->projection_helper,
+                tu_vertex_product(internal_vertex->Dch,internal_vertex->projection_helper,
                             internal_vertex->ph_bubble_int, inout->product_helper,
-                            internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[2]);
+                            prodsize,my_nk,norm[2], true, internal_vertex->GPU_gemm_buffer);
             tock = diverge_mpi_wtime();
             w_time_product += tock-tick;
         }
@@ -170,9 +161,9 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
             w_time_loop += tock-tick;
 
             tick = diverge_mpi_wtime();
-            vertex_product(internal_vertex->Pch, inout->projection_helper,
+            tu_vertex_product(internal_vertex->Pch, inout->projection_helper,
                         internal_vertex->pp_bubble_int,inout->product_helper,
-                        internal_vertex->GPU_gemm_buffer,prodsize,my_nk,norm[0]);
+                        prodsize,my_nk,norm[0], true, internal_vertex->GPU_gemm_buffer);
             tock = diverge_mpi_wtime();
             w_time_product += tock-tick;
         }
@@ -192,9 +183,9 @@ vector<double> tu_stepper::tu_step_euler(Vertex* inout, double lambda, double dl
         w_time_self += tock-tick;
     }
     tick = diverge_mpi_wtime();
-    add(inout, internal_vertex, dlambda);
+    tu_vertex_add(inout, internal_vertex, dlambda);
     vector<double> ret = {0,0,0,0,0,0};
-    max(inout, ret.data());
+    tu_vertex_max(inout, ret.data());
 
     tock = diverge_mpi_wtime();
     w_time_add_find_max += tock-tick;

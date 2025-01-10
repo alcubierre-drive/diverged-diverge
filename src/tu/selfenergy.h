@@ -17,7 +17,7 @@ extern "C" {
 
 typedef struct selfenergy_t selfenergy_t;
 
-selfenergy_t* selfenergy_init( Vertex* vertex_ptr );
+selfenergy_t* selfenergy_init( tu_vertex_t* vertex_ptr );
 void selfenergy_free( selfenergy_t* s );
 
 void selfenergy_flow( selfenergy_t* s, complex128_t* self_en,

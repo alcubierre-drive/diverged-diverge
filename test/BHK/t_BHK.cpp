@@ -186,7 +186,7 @@ static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
 
     switch (bhk_mode) {
         case bhk_mode_tu:
-            Vertex_project_fullV( step->tu_vertex, mod, vertex ); break;
+            tu_vertex_project_fullV( step->tu_vertex, mod, vertex ); break;
         case bhk_mode_grid:
             ((grid::VertexMemory*)step->intls->grid_vertex)->get_vertex( vertex, 'V' ); break;
         case bhk_mode_patch:

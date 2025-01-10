@@ -96,8 +96,8 @@ private:
     bool called_suscep_ff = false;
     bool called_suscep_full = false;
     bool skip_channel_calc;
-    Vertex* vertex;
-    Vertex* internal_vertex;
+    tu_vertex_t* vertex;
+    tu_vertex_t* internal_vertex;
     projection_t* proj;
     const diverge_model_t* model;
     void _save_channel_leading_ev(complex128_t* channel, complex128_t* vec,

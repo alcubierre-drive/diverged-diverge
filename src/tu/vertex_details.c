@@ -27,7 +27,7 @@ static inline index_t ensure_align(index_t numToRound) {
 
 #define MAX3( A, B, C ) MAX(MAX(A,B),C)
 
-void Vertex_initialize_GPU_memory( Vertex* V, projection_t* proj, tu_prop_t* loop ) {
+void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, projection_t* proj, tu_prop_t* loop ) {
     (void)V; (void)proj; (void)loop;
 #ifdef USE_CUDA
     if (!tu_gpu_info().tu_has_gpu_setup || !loop->cuda_descr.prop_has_gpu_setup ||
@@ -216,7 +216,7 @@ void Vertex_initialize_GPU_memory( Vertex* V, projection_t* proj, tu_prop_t* loo
 }
 
 
-void Vertex_init_U_from_fullV( Vertex* V, diverge_model_t* model, projection_t* proj ) {
+void tu_vertex_init_U_from_fullV( tu_vertex_t* V, diverge_model_t* model, projection_t* proj ) {
     mpi_wrn_printf("initialization from full\n")
     double* Rvec = calloc(model->n_tu_ff, sizeof(double)*3);
     double* kmesh = model->internals->kmesh;
@@ -327,7 +327,7 @@ void Vertex_init_U_from_fullV( Vertex* V, diverge_model_t* model, projection_t* 
     free(buf);
 }
 
-void Vertex_init_U( Vertex* V, bool enforce_exchange ) {
+void tu_vertex_init_U( tu_vertex_t* V, bool enforce_exchange ) {
     complex128_t* helper_crossing = NULL;
     complex128_t* helper = calloc(POW2(V->n_orb)*V->nk*POW4(V->n_spin), sizeof(complex128_t));
     if (enforce_exchange) {
@@ -465,7 +465,7 @@ void Vertex_init_U( Vertex* V, bool enforce_exchange ) {
     free(helper_crossing);
 }
 
-void Vertex_project_fullV( const Vertex* V, const diverge_model_t* model, complex128_t* full_V ) {
+void tu_vertex_project_fullV( const tu_vertex_t* V, const diverge_model_t* model, complex128_t* full_V ) {
     double* Rvec = calloc(model->n_tu_ff,sizeof(double)*3);
     double* kmesh = model->internals->kmesh;
     fill_Rvec(model,Rvec);
@@ -483,7 +483,7 @@ void Vertex_project_fullV( const Vertex* V, const diverge_model_t* model, comple
     index_t no = V->n_orb*V->n_spin;
     // unproject P
     if (V->P_flow) {
-        Vertex_reco( V, 'P', buffer, NULL );
+        tu_vertex_reco( V, 'P', buffer, NULL );
         #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for (index_t s1=0; s1<V->n_spin; ++s1)
         for (index_t s2=0; s2<V->n_spin; ++s2)
@@ -516,7 +516,7 @@ void Vertex_project_fullV( const Vertex* V, const diverge_model_t* model, comple
     }
     // unproject C
     if (V->C_flow) {
-        Vertex_reco( V, 'C', buffer, NULL );
+        tu_vertex_reco( V, 'C', buffer, NULL );
         #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for (index_t s1=0; s1<V->n_spin; ++s1)
         for (index_t s2=0; s2<V->n_spin; ++s2)
@@ -549,7 +549,7 @@ void Vertex_project_fullV( const Vertex* V, const diverge_model_t* model, comple
     }
     // unproject D
     if (V->D_flow) {
-        Vertex_reco( V, 'D', buffer, NULL );
+        tu_vertex_reco( V, 'D', buffer, NULL );
         #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for (index_t s1=0; s1<V->n_spin; ++s1)
         for (index_t s2=0; s2<V->n_spin; ++s2)

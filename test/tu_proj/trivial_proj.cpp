@@ -4,7 +4,7 @@
 #include "../../src/tu/vertex_details.h"
 
 void t_P_projection(complex128_t* proj_vertex,
-                    const Vertex* const vertex,
+                    const tu_vertex_t* const vertex,
                     const diverge_model_t* const model) {
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
     memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size);
@@ -117,7 +117,7 @@ void t_P_projection(complex128_t* proj_vertex,
 
 
 void t_C_projection(complex128_t* proj_vertex,
-                    const Vertex* const vertex,
+                    const tu_vertex_t* const vertex,
                     const diverge_model_t* const model) {
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
     memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size);
@@ -228,7 +228,7 @@ void t_C_projection(complex128_t* proj_vertex,
 
 
 void t_D_projection(complex128_t* proj_vertex,
-                    const Vertex* const vertex,
+                    const tu_vertex_t* const vertex,
                     const diverge_model_t* const model) {
     tu_data_t* tu_data = (tu_data_t*)model -> internals -> tu_data;
     memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size);

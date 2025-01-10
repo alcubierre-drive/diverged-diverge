@@ -59,16 +59,16 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
     mod1->data = (char*)hbuf;
 
     complex128_t* buf = (complex128_t*) calloc( size, sizeof(complex128_t) );
-    Vertex_project_fullV( step1->tu_vertex, mod1, hbuf );
+    tu_vertex_project_fullV( step1->tu_vertex, mod1, hbuf );
 
     mod1->ffill = &full_vertex;
     projection_t* proj = projection_init(mod1);
     tu_prop_t* loop = tu_prop_init(mod1);
-    Vertex* v2 = Vertex_init(mod1, proj, loop, 1,1,1, 0);
-    Vertex_project_fullV( v2, mod1, buf );
+    tu_vertex_t* v2 = tu_vertex_init(mod1, proj, loop, 1,1,1, 0);
+    tu_vertex_project_fullV( v2, mod1, buf );
     CHECK(check_equal(buf,hbuf,size));
 
-    Vertex_free( v2 );
+    tu_vertex_free( v2 );
     tu_prop_free( loop );
     free(buf);
     free(hbuf);

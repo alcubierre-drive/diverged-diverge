@@ -75,7 +75,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
 
     tu_prop_t* tu_loop = tu_prop_init(mod_tu);
     projection_t* ProjMom = projection_init(mod_tu);
-    Vertex* VertMom = Vertex_init(mod_tu, ProjMom, tu_loop, 1,1,1,0);
+    tu_vertex_t* VertMom = tu_vertex_init(mod_tu, ProjMom, tu_loop, 1,1,1,0);
 
     grid::Loops grid_loop (mod_grid);
     tu_prop_GF_zero_T( tu_loop, I128*0.1, NULL );
@@ -116,7 +116,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     free(Ltu);
     free(Lrecog);
     free(Lreco);
-    Vertex_free(VertMom);
+    tu_vertex_free(VertMom);
     tu_prop_free(tu_loop);
     projection_free(ProjMom);
     diverge_model_free(mod_tu);

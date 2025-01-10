@@ -108,8 +108,8 @@ TEST_CASE("two orbital model in 1d","[hk]") {
     diverge_model_internals_tu( mod2, 4.01 );
     diverge_flow_step_t* s1 = diverge_flow_step_init( mod1, "tu", "PCD" );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "PCD" );
-    Vertex* v1 = s1->tu_vertex;
-    Vertex* v2 = s2->tu_vertex;
+    tu_vertex_t* v1 = s1->tu_vertex;
+    tu_vertex_t* v2 = s2->tu_vertex;
     CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
     CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
     CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
@@ -117,7 +117,7 @@ TEST_CASE("two orbital model in 1d","[hk]") {
 
     index_t fsize = POW4(mod2->n_orb*mod2->n_spin);
     complex128_t* vertex = (complex128_t*)calloc(fsize,sizeof(complex128_t));
-    Vertex_project_fullV( s2->tu_vertex, mod2, vertex );
+    tu_vertex_project_fullV( s2->tu_vertex, mod2, vertex );
     index_t norb = mod2->n_orb*mod2->n_spin;
     for(index_t s4 = 0; s4<mod2->n_spin;++s4)
     for(index_t s3 = 0; s3<mod2->n_spin;++s3)
@@ -269,8 +269,8 @@ TEST_CASE("two orbital model in 1d mom","[mhk]") {
     diverge_model_internals_tu( mod2, 1.01 );
     diverge_flow_step_t* s1 = diverge_flow_step_init( mod1, "tu", "SPCD" );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "SPCD" );
-    Vertex* v1 = s1->tu_vertex;
-    Vertex* v2 = s2->tu_vertex;
+    tu_vertex_t* v1 = s1->tu_vertex;
+    tu_vertex_t* v2 = s2->tu_vertex;
     CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
     CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
     CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);

@@ -28,8 +28,8 @@ TEST_CASE("momentum vs realspace projections ", "[proj][proj_orbVSreal]")
     tu_prop_t* LoopMom = tu_prop_init(mom);
     tu_prop_t* LoopOrb = tu_prop_init(orb);
 
-    Vertex* VertMom = Vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
-    Vertex* VertOrb = Vertex_init(orb, ProjOrb, LoopOrb, 1,1,1,0);
+    tu_vertex_t* VertMom = tu_vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
+    tu_vertex_t* VertOrb = tu_vertex_init(orb, ProjOrb, LoopOrb, 1,1,1,0);
 
     CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
@@ -79,8 +79,8 @@ TEST_CASE("momentum vs realspace projections ", "[proj][proj_orbVSreal]")
     CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
 
-    Vertex_free(VertMom);
-    Vertex_free(VertOrb);
+    tu_vertex_free(VertMom);
+    tu_vertex_free(VertOrb);
     tu_prop_free(LoopMom);
     tu_prop_free(LoopOrb);
     projection_free( ProjMom );
@@ -104,8 +104,8 @@ TEST_CASE("momentum vs mixed projections ", "[proj][proj_mixVSreal]")
     tu_prop_t* LoopMom = tu_prop_init(mom);
     tu_prop_t* LoopOrb = tu_prop_init(orb);
 
-    Vertex* VertMom = Vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
-    Vertex* VertOrb = Vertex_init(orb, ProjOrb, LoopOrb, 1,1,1,0);
+    tu_vertex_t* VertMom = tu_vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
+    tu_vertex_t* VertOrb = tu_vertex_init(orb, ProjOrb, LoopOrb, 1,1,1,0);
     double* Rveco = (double*)calloc(orb->n_tu_ff*3,sizeof(double));
     double* Rvecm = (double*)calloc(mom->n_tu_ff*3,sizeof(double));
     fill_Rvec(orb, Rveco);
@@ -157,8 +157,8 @@ TEST_CASE("momentum vs mixed projections ", "[proj][proj_mixVSreal]")
     CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
 
-    Vertex_free(VertMom);
-    Vertex_free(VertOrb);
+    tu_vertex_free(VertMom);
+    tu_vertex_free(VertOrb);
     tu_prop_free(LoopMom);
     tu_prop_free(LoopOrb);
     projection_free(ProjMom);
@@ -182,8 +182,8 @@ TEST_CASE("momentum vs mixed projections graphene", "[proj][proj_mixVSrealgr]")
     tu_prop_t* LoopMom = tu_prop_init(mom);
     tu_prop_t* LoopOrb = tu_prop_init(orb);
 
-    Vertex* VertMom = Vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
-    Vertex* VertOrb = Vertex_init(orb, ProjOrb, LoopOrb, 1,1,1,0);
+    tu_vertex_t* VertMom = tu_vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
+    tu_vertex_t* VertOrb = tu_vertex_init(orb, ProjOrb, LoopOrb, 1,1,1,0);
     double* Rveco = (double*)calloc(orb->n_tu_ff*3,sizeof(double));
     double* Rvecm = (double*)calloc(mom->n_tu_ff*3,sizeof(double));
     fill_Rvec(orb, Rveco);
@@ -235,8 +235,8 @@ TEST_CASE("momentum vs mixed projections graphene", "[proj][proj_mixVSrealgr]")
     CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
 
-    Vertex_free(VertMom);
-    Vertex_free(VertOrb);
+    tu_vertex_free(VertMom);
+    tu_vertex_free(VertOrb);
     tu_prop_free(LoopMom);
     tu_prop_free(LoopOrb);
     projection_free( ProjMom );

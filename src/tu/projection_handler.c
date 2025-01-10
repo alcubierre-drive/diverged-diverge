@@ -31,7 +31,7 @@ static void timings( double time_cpyfill, double time_reco, double time_handler_
 }
 #endif
 
-void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
+void P_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
     if(!vertex->P_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -41,7 +41,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
     #ifdef USE_CUDA
     if (vertex->my_nk > (index_t)tu_gpu_info().tu_num_of_devices) {
         if(vertex->C_flow && vertex->C_to_P) {
-            TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'C',
+            TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'C',
                             buf,proj->my_prefac_reco,proj->nr,bufMPI));
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -55,7 +55,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
                 vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         if(vertex->D_flow && vertex->D_to_P) {
-            TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'D',
+            TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'D',
                         buf,proj->my_prefac_reco,proj->nr,bufMPI));
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -73,7 +73,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
     }
     #endif // USE_CUDA
     if(vertex->C_flow && vertex->C_to_P) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'C',
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'C',
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -87,7 +87,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
                vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->D_flow && vertex->D_to_P) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'D',
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'D',
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -102,7 +102,7 @@ void P_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
+void D_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
     if(!vertex->D_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -111,7 +111,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
     #ifdef USE_CUDA
     if (vertex->my_nk > (index_t)tu_gpu_info().tu_num_of_devices) {
         if(vertex->C_flow && vertex->C_to_D) {
-            TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'C',buf,
+            TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'C',buf,
                         proj->my_prefac_reco,proj->nr,bufMPI));
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -123,7 +123,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         if(vertex->P_flow && vertex->P_to_D) {
-            TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'P',
+            TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'P',
                         buf,proj->my_prefac_reco,proj->nr,bufMPI));
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -139,7 +139,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
     }
     #endif // USE_CUDA
     if(vertex->C_flow && vertex->C_to_D) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'C',buf,
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'C',buf,
                     proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -152,7 +152,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->P_flow && vertex->P_to_D) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'P',buf,
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'P',buf,
                     proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -167,7 +167,7 @@ void D_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
+void C_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
     if(!vertex->C_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -177,7 +177,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
     #ifdef USE_CUDA
     if (vertex->my_nk > (index_t)tu_gpu_info().tu_num_of_devices) {
         if(vertex->P_flow && vertex->P_to_C) {
-            TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'P',buf,
+            TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'P',buf,
                         proj->my_prefac_reco,proj->nr,bufMPI));
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -189,7 +189,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
                        vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
         }
         if(vertex->D_flow && vertex->D_to_C) {
-            TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'D',buf,
+            TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'D',buf,
                         proj->my_prefac_reco,proj->nr,bufMPI));
             TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                         vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -206,7 +206,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
     #endif // USE_CUDA
 
     if(vertex->D_flow && vertex->D_to_C) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'D',
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'D',
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -219,7 +219,7 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->P_flow && vertex->P_to_C) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'P',
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'P',
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -234,14 +234,14 @@ void C_projection(complex128_t* proj_vertex, const Vertex* vertex, const project
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void P_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
+void P_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
     if(!vertex->P_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size));
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
     if(vertex->C_flow && vertex->C_to_P) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'C',buf,
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'C',buf,
                     proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -255,7 +255,7 @@ void P_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
                vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->D_flow && vertex->D_to_P) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'D',buf,
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'D',buf,
                     proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -270,14 +270,14 @@ void P_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void D_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
+void D_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
     if(!vertex->D_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size));
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
     if(vertex->C_flow && vertex->C_to_D) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'C',
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'C',
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -290,7 +290,7 @@ void D_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->P_flow && vertex->P_to_D) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'P',
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'P',
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -305,14 +305,14 @@ void D_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void C_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const projection_t* proj) {
+void C_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
     if(!vertex->C_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size));
     complex128_t* buf = vertex->product_helper;
     complex128_t* bufMPI = vertex->bubble_helper;
     if(vertex->D_flow && vertex->D_to_C) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'D',
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'D',
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
@@ -325,7 +325,7 @@ void C_projection_no_GPU(complex128_t* proj_vertex, const Vertex* vertex, const 
                  vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));
     }
     if(vertex->P_flow && vertex->P_to_C) {
-        TICK_TOCK(time_reco, Vertex_reco_ft( vertex, 'P',
+        TICK_TOCK(time_reco, tu_vertex_reco_ft( vertex, 'P',
                     buf,proj->my_prefac_reco,proj->nr,bufMPI));
         TICK_TOCK(time_cpyfill, ZERO_OUT(bufMPI,
                     vertex->my_nk*POW2(vertex->n_orbff*POW2(vertex->n_spin))));

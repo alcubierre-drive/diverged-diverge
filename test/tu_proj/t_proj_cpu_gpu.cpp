@@ -24,7 +24,7 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
 
     projection_t* ProjMom = projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
-    Vertex* VertMom = Vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
+    tu_vertex_t* VertMom = tu_vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
 
     std::random_device rd{};
     std::mt19937 re{rd()};
@@ -52,7 +52,7 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
     D_projection_no_GPU(r1,VertMom,ProjMom);
     CHECK(check_equal(r1,r2,POW2(VertMom->n_orbff)*VertMom->my_nk));
 
-    Vertex_free(VertMom);
+    tu_vertex_free(VertMom);
     tu_prop_free(LoopMom);
     projection_free(ProjMom);
     diverge_model_free(mom);

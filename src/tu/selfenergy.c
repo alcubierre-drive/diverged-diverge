@@ -86,7 +86,7 @@ static inline index_t rpb1pb3(const index_t* nk, index_t x, index_t y, index_t z
                               const index_t* vb1, const index_t* vb3);
 static inline index_t rpb1(const index_t* nk, index_t x, index_t y, index_t z, const index_t* vb1);
 
-selfenergy_t* selfenergy_init( Vertex* V ) {
+selfenergy_t* selfenergy_init( tu_vertex_t* V ) {
     selfenergy_t* s = calloc(1, sizeof*s);
 
     s->model = V->model;

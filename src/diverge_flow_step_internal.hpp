@@ -41,7 +41,7 @@ struct diverge_flow_step_t {
     // tu structs
     projection_t* tu_proj;
     tu_prop_t* tu_loop;
-    Vertex* tu_vertex;
+    tu_vertex_t* tu_vertex;
     tu_stepper* tu_step;
 
     double vertmax;

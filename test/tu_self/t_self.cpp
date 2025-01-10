@@ -18,7 +18,7 @@
 #include "../helper_functions.hpp"
 
 #ifndef USE_GF_FLOATS
-void init_random_PCD(diverge_model_t* model, Vertex* vertex, projection_t * proj, double* value) {
+void init_random_PCD(diverge_model_t* model, tu_vertex_t* vertex, projection_t * proj, double* value) {
     tu_data_t* tu_data = (tu_data_t*)(model -> internals-> tu_data);
     symmstruct_t* symm = tu_data->symm;
     double* Rveco = (double*)calloc(model->n_tu_ff*3,sizeof(double));
@@ -68,9 +68,9 @@ TEST_CASE("self energy Realspace vs k space SU2 static","[self][self_kVSr_SU2]")
     projection_t* ProjMom = projection_init(mom);
     projection_t* ProjMix = projection_init(mix);
 
-    Vertex* VertOrb = Vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
-    Vertex* VertMom = Vertex_init( mom, ProjMom, PropMom, true,true,true,true );
-    Vertex* VertMix = Vertex_init( mix, ProjMix, PropMix, true,true,true,true );
+    tu_vertex_t* VertOrb = tu_vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
+    tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, PropMom, true,true,true,true );
+    tu_vertex_t* VertMix = tu_vertex_init( mix, ProjMix, PropMix, true,true,true,true );
     double value[3] = {0.1,-0.4,1.8};
     init_random_PCD(orb,VertOrb,ProjOrb,value);
     init_random_PCD(mom,VertMom,ProjMom,value);
@@ -107,9 +107,9 @@ TEST_CASE("self energy Realspace vs k space SU2 static","[self][self_kVSr_SU2]")
     CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb,PropMix->nk)
                   -trace(VertOrb->self_en,PropOrb->n_orb,PropOrb->nk)) < 1e-8);
 
-    Vertex_free( VertOrb );
-    Vertex_free( VertMom );
-    Vertex_free( VertMix );
+    tu_vertex_free( VertOrb );
+    tu_vertex_free( VertMom );
+    tu_vertex_free( VertMix );
     selfenergy_free( selfOrb );
     selfenergy_free( selfMom );
     selfenergy_free( selfMix );
@@ -136,8 +136,8 @@ TEST_CASE("self energy honey","[self][self_honey]") {
     projection_t* ProjOrb = projection_init(orb);
     projection_t* ProjMix = projection_init(mix);
 
-    Vertex* VertOrb = Vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
-    Vertex* VertMix = Vertex_init( mix, ProjMix, PropMix,  true,true,true,true );
+    tu_vertex_t* VertOrb = tu_vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
+    tu_vertex_t* VertMix = tu_vertex_init( mix, ProjMix, PropMix,  true,true,true,true );
     double value[3] = {0.1,-0.4,1.8};
     init_random_PCD(orb,VertOrb,ProjOrb,value);
     init_random_PCD(mix,VertMix,ProjMix,value);
@@ -176,8 +176,8 @@ TEST_CASE("self energy honey","[self][self_honey]") {
     CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb,PropMix->nk)
                   -trace(VertOrb->self_en,PropOrb->n_orb,PropOrb->nk)) < 1e-8);
 
-    Vertex_free( VertOrb );
-    Vertex_free( VertMix );
+    tu_vertex_free( VertOrb );
+    tu_vertex_free( VertMix );
     tu_prop_free( PropOrb );
     tu_prop_free( PropMix );
     projection_free( ProjOrb );
@@ -200,8 +200,8 @@ TEST_CASE("self energy honey sym","[self][self_honey]") {
     projection_t* ProjOrb = projection_init(orb);
     projection_t* ProjMix = projection_init(mix);
 
-    Vertex* VertOrb = Vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
-    Vertex* VertMix = Vertex_init( mix, ProjMix, PropMix,  true,true,true,true );
+    tu_vertex_t* VertOrb = tu_vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
+    tu_vertex_t* VertMix = tu_vertex_init( mix, ProjMix, PropMix,  true,true,true,true );
     double value[3] = {0.1,-0.4,1.8};
     init_random_PCD(orb,VertOrb,ProjOrb,value);
     init_random_PCD(mix,VertMix,ProjMix,value);
@@ -233,8 +233,8 @@ TEST_CASE("self energy honey sym","[self][self_honey]") {
     CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb,PropMix->nk)
                   -trace(VertOrb->self_en,PropOrb->n_orb,PropOrb->nk)) < 1e-8);
 
-    Vertex_free( VertMix );
-    Vertex_free( VertOrb );
+    tu_vertex_free( VertMix );
+    tu_vertex_free( VertOrb );
     tu_prop_free( PropOrb );
     tu_prop_free( PropMix );
     projection_free( ProjOrb );
@@ -259,8 +259,8 @@ TEST_CASE("self energy honey rash","[self][self_rash]") {
     projection_t* ProjOrb = projection_init(orb);
     projection_t* ProjMix = projection_init(mix);
 
-    Vertex* VertOrb = Vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
-    Vertex* VertMix = Vertex_init( mix, ProjMix, PropMix,  true,true,true,true );
+    tu_vertex_t* VertOrb = tu_vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
+    tu_vertex_t* VertMix = tu_vertex_init( mix, ProjMix, PropMix,  true,true,true,true );
     double value[3] = {0.1,-0.4,1.8};
     index_t n_sp2 = POW2(VertOrb->n_spin);
     init_random_PCD(orb,VertOrb,ProjOrb,value);
@@ -300,8 +300,8 @@ TEST_CASE("self energy honey rash","[self][self_rash]") {
     CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb*VertOrb->n_spin,PropMix->nk)
                   -trace(VertOrb->self_en,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nk)) < 1e-8);
 
-    Vertex_free( VertMix );
-    Vertex_free( VertOrb );
+    tu_vertex_free( VertMix );
+    tu_vertex_free( VertOrb );
     tu_prop_free( PropOrb );
     tu_prop_free( PropMix );
     projection_free( ProjOrb );
@@ -333,8 +333,8 @@ TEST_CASE("self energy honey rash ref","[self][self_ref]") {
     projection_t* ProjOrb = projection_init(orb);
     projection_t* ProjMix = projection_init(mix);
 
-    Vertex* VertOrb = Vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
-    Vertex* VertMix = Vertex_init( mix, ProjMix, PropMix,  true,true,true,true );
+    tu_vertex_t* VertOrb = tu_vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
+    tu_vertex_t* VertMix = tu_vertex_init( mix, ProjMix, PropMix,  true,true,true,true );
     double value[3] = {0.1,-0.4,1.8};
     init_random_PCD(orb,VertOrb,ProjOrb,value);
     init_random_PCD(mix,VertMix,ProjMix,value);
@@ -362,8 +362,8 @@ TEST_CASE("self energy honey rash ref","[self][self_ref]") {
     CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb*VertOrb->n_spin,PropMix->nktot)
                   -trace(VertOrb->self_en,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nktot)) < 1e-3);
 
-    Vertex_free( VertMix );
-    Vertex_free( VertOrb );
+    tu_vertex_free( VertMix );
+    tu_vertex_free( VertOrb );
     tu_prop_free( PropOrb );
     tu_prop_free( PropMix );
     projection_free( ProjOrb );
@@ -388,8 +388,8 @@ TEST_CASE("self energy hub ref","[self][self_href]") {
     projection_t* ProjOrb = projection_init(orb);
     projection_t* ProjMix = projection_init(mix);
 
-    Vertex* VertOrb = Vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
-    Vertex* VertMix = Vertex_init( mix, ProjMix, PropMix, true,true,true,true );
+    tu_vertex_t* VertOrb = tu_vertex_init( orb, ProjOrb, PropOrb, true,true,true,true );
+    tu_vertex_t* VertMix = tu_vertex_init( mix, ProjMix, PropMix, true,true,true,true );
     double value[3] = {0.1,-0.4,1.8};
     init_random_PCD(orb,VertOrb,ProjOrb,value);
     init_random_PCD(mix,VertMix,ProjMix,value);
@@ -424,8 +424,8 @@ TEST_CASE("self energy hub ref","[self][self_href]") {
     free(gf3);
     CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb*VertOrb->n_spin,PropMix->nktot)
                   -trace(VertOrb->self_en,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nktot)) < 1e-3);
-    Vertex_free( VertMix );
-    Vertex_free( VertOrb );
+    tu_vertex_free( VertMix );
+    tu_vertex_free( VertOrb );
     tu_prop_free( PropOrb );
     tu_prop_free( PropMix );
     projection_free( ProjOrb );

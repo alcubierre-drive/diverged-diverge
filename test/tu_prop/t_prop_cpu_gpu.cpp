@@ -24,7 +24,7 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
 
     tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex* VertMom = Vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
+    tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
 
     index_t n_orbffm = PropMom->n_orbff;
     complex128_t* lm = (complex128_t*)calloc(POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk,sizeof(complex128_t));
@@ -64,7 +64,7 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
     CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
     CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
 
-    Vertex_free( VertMom );
+    tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
@@ -82,7 +82,7 @@ TEST_CASE("momentum loop cpu gpu offloading", "[prop][prop_offload]")
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
     tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex* VertMom = Vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
+    tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
 
     index_t n_orbffm = PropMom->n_orbff;
     complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
@@ -98,7 +98,7 @@ TEST_CASE("momentum loop cpu gpu offloading", "[prop][prop_offload]")
     tu_prop_pp_loop(PropMom, lmrg, NULL);
     CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
-    Vertex_free( VertMom );
+    tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
@@ -114,7 +114,7 @@ TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu_nofull]
 
     tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex* VertMom = Vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
+    tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
     PropMom->cuda_descr.prop_preload_full_gf = false;
 
     index_t n_orbffm = PropMom->n_orbff;
@@ -153,7 +153,7 @@ TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu_nofull]
     CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
     CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
 
-    Vertex_free( VertMom );
+    tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
@@ -171,7 +171,7 @@ TEST_CASE("momentum loop cpu gpu offloading no full GF", "[prop][prop_offload]")
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
     tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex* VertMom = Vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
+    tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
     PropMom->cuda_descr.prop_preload_full_gf = false;
 
     index_t n_orbffm = PropMom->n_orbff;
@@ -188,7 +188,7 @@ TEST_CASE("momentum loop cpu gpu offloading no full GF", "[prop][prop_offload]")
     tu_prop_pp_loop(PropMom, lmrg, NULL);
     CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
-    Vertex_free( VertMom );
+    tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
@@ -204,7 +204,7 @@ TEST_CASE("momentum loop cpu gpu offloading simple", "[prop][prop_offload]")
     ((tu_data_t*)mom->internals->tu_data)->use_reduced_loop = false;
     tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex* VertMom = Vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
+    tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
 
     index_t n_orbffm = PropMom->n_orbff;
     complex128_t* lmr = (complex128_t*)calloc(POW2(n_orbffm*mom->n_spin)*PropMom->nk,sizeof(complex128_t));
@@ -220,7 +220,7 @@ TEST_CASE("momentum loop cpu gpu offloading simple", "[prop][prop_offload]")
     tu_prop_pp_loop(PropMom, lmrg, NULL);
     CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
-    Vertex_free( VertMom );
+    tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);
@@ -235,7 +235,7 @@ TEST_CASE("momentum loop cpu gpu offloading no full GF simple", "[prop][prop_off
     ((tu_data_t*)mom->internals->tu_data)->use_reduced_loop = false;
     tu_prop_t* PropMom = tu_prop_init(mom);
     projection_t* ProjMom = projection_init(mom);
-    Vertex* VertMom = Vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
+    tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, PropMom, 1,1,1,0 );
     PropMom->cuda_descr.prop_preload_full_gf = false;
 
     index_t n_orbffm = PropMom->n_orbff;
@@ -252,7 +252,7 @@ TEST_CASE("momentum loop cpu gpu offloading no full GF simple", "[prop][prop_off
     tu_prop_pp_loop(PropMom, lmrg, NULL);
     CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
-    Vertex_free( VertMom );
+    tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
     projection_free( ProjMom );
     diverge_model_free(mom);

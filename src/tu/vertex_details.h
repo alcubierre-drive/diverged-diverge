@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-struct Vertex {
+struct tu_vertex_t {
     complex128_t *Pch, *Cch, *Dch;
     complex128_t *pp_bubble_int, *ph_bubble_int;
     complex128_t *self_en;
@@ -55,10 +55,10 @@ struct Vertex {
 };
 
 // private functions
-void Vertex_init_U_from_fullV( Vertex* V, diverge_model_t* model, projection_t* proj );
-void Vertex_initialize_GPU_memory( Vertex* V, projection_t* proj, tu_prop_t* loop );
-void Vertex_init_U( Vertex* V, bool enforce_exchange );
-void Vertex_project_fullV( const Vertex* V, const diverge_model_t* mod_ptr, complex128_t* fullV );
+void tu_vertex_init_U_from_fullV( tu_vertex_t* V, diverge_model_t* model, projection_t* proj );
+void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, projection_t* proj, tu_prop_t* loop );
+void tu_vertex_init_U( tu_vertex_t* V, bool enforce_exchange );
+void tu_vertex_project_fullV( const tu_vertex_t* V, const diverge_model_t* mod_ptr, complex128_t* fullV );
 
 #ifdef __cplusplus
 }
