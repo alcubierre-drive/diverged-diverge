@@ -91,8 +91,9 @@ int main( int argc, char** argv ) {
     for (int t=0; t<diverge_flow_step_ntimings(st); ++t)
         mpi_tim_printf( "used %.2fs for '%s'\n", diverge_flow_step_timing(st, t),
                 diverge_flow_step_timing_descr(st, t) );
-    diverge_flow_step_free( st );
+    diverge_postprocess_and_write( st, __FILE__ "_out.dvg" );
 
+    diverge_flow_step_free( st );
     diverge_model_free(m);
     diverge_finalize();
     return 0;

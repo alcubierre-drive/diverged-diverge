@@ -10,6 +10,7 @@
 #include "../misc/eigen.h"
 #include "../diverge_flow_step_internal.hpp"
 #include "../diverge_common.h"
+#include "../diverge_post.h"
 
 static bool check_hermicity(complex128_t* data, index_t linsize){
     double err_max = 0.;
@@ -703,6 +704,42 @@ void tu_postproduction::to_file(string filename, bool save_self, bool save_full,
     header[125] = ~(header[125]);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
     header[127] = header[i-1]*sizeof(complex128_t)+header[i-2];
+
+    i = 128;
+    header[i++] = sizeof(diverge_postprocess_conf_t);
+    header[i++] = offsetof(diverge_postprocess_conf_t, patch_q_matrices);
+    header[i++] = offsetof(diverge_postprocess_conf_t, patch_q_matrices_use_dV);
+    header[i++] = offsetof(diverge_postprocess_conf_t, patch_q_matrices_nv);
+    header[i++] = offsetof(diverge_postprocess_conf_t, patch_q_matrices_max_rel);
+    header[i++] = offsetof(diverge_postprocess_conf_t, patch_q_matrices_eigen_which);
+    header[i++] = offsetof(diverge_postprocess_conf_t, patch_V);
+    header[i++] = offsetof(diverge_postprocess_conf_t, patch_dV);
+    header[i++] = offsetof(diverge_postprocess_conf_t, patch_Lp);
+    header[i++] = offsetof(diverge_postprocess_conf_t, patch_Lm);
+    header[i++] = offsetof(diverge_postprocess_conf_t, grid_lingap_vertex_file_P);
+    header[i++] = offsetof(diverge_postprocess_conf_t, grid_lingap_vertex_file_C);
+    header[i++] = offsetof(diverge_postprocess_conf_t, grid_lingap_vertex_file_D);
+    header[i++] = offsetof(diverge_postprocess_conf_t, grid_n_singular_values);
+    header[i++] = offsetof(diverge_postprocess_conf_t, grid_use_loop);
+    header[i++] = offsetof(diverge_postprocess_conf_t, grid_vertex_file);
+    header[i++] = offsetof(diverge_postprocess_conf_t, grid_vertex_chan);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_which_solver_mode);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_skip_channel_calc);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_storing_threshold);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_storing_relative);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_n_singular_values);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_lingap);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_susceptibilities_full);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_susceptibilities_ff);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_selfenergy);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_channels);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_symmetry_maps);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_n_decomp_values);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_lingap_atscale);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_lingap_solver_mode);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_susceptibilities_bare);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_channel_calc_project);
+    assert(i <= 256);
 
     index_t my_nk_off = vertex->my_nk_off;
     index_t sindex = sizeof(index_t);
