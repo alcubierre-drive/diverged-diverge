@@ -7,7 +7,6 @@
 #include "../model_examples/old.h"
 #include "../../src/diverge_model_internals.h"
 #include "../model_examples/model_constructor.hpp"
-#include "../../src/tu/flow_stepper.hpp"
 #include "../helper_functions.hpp"
 
 TEST_CASE("check completness_relations ", "[complete]") {

@@ -79,7 +79,7 @@ TEST_CASE("P flow","[RPA]") {
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "P" );
     tu_vertex_t* v1 = s1->tu_vertex;
     tu_vertex_t* v2 = s2->tu_vertex;
-    tu_vertex_t* v3 = s1->tu_step->internal_vertex;
+    tu_vertex_t* v3 = tu_stepper_internal_vertex(s1->tu_step);
     P_projection(v1->projection_helper,v1,s1->tu_proj);
     CHECK(check_equal(v1->projection_helper,v2->Pch,v1->full_vert_size));
 
@@ -114,7 +114,7 @@ TEST_CASE("C flow","[RPA]") {
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "C" );
     tu_vertex_t* v1 = s1->tu_vertex;
     tu_vertex_t* v2 = s2->tu_vertex;
-    tu_vertex_t* v3 = s1->tu_step->internal_vertex;
+    tu_vertex_t* v3 = tu_stepper_internal_vertex(s1->tu_step);
     C_projection(v1->projection_helper,v1,s1->tu_proj);
     CHECK(check_equal(v1->projection_helper,v2->Cch,v1->full_vert_size));
 

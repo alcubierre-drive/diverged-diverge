@@ -96,7 +96,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
             st->tu_loop = tu_prop_init(mod);
             st->tu_vertex = tu_vertex_init(mod, st->tu_proj, st->tu_loop, st->channel_selection[0],
                     st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
-            st->tu_step = new tu_stepper(st->tu_proj, st->tu_loop, st->tu_vertex);
+            st->tu_step = tu_stepper_init(st->tu_proj, st->tu_loop, st->tu_vertex);
             break;
         default:
         case diverge_flow_type_invalid:
@@ -151,9 +151,9 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
             delete st->grid_loop;
             break;
         case diverge_tu:
-            delete st->tu_vertex;
+            tu_vertex_free( st->tu_vertex );
             projection_free( st->tu_proj );
-            delete st->tu_step;
+            tu_stepper_free( st->tu_step );
             tu_prop_free( st->tu_loop );
             break;
         default:
@@ -174,6 +174,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
     vector<double> chanmax_vec;
     double patch_cm[6];
     int idx = 0;
+    tu_prop_timing_t* ttt = NULL;
     char tmpchar[64];
     st->Lambda = Lambda;
     st->dLambda = dLambda;
@@ -257,7 +258,8 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             st->niter = st->grid_step->get_num_calls();
             return;
         case diverge_tu:
-            chanmax_vec = st->tu_step->tu_step_euler(st->tu_vertex, Lambda, dLambda);
+            chanmax_vec.resize(6);
+            tu_stepper_euler( st->tu_step, st->tu_vertex, Lambda, dLambda, chanmax_vec.data() );
 
             st->chanmax[0] = chanmax_vec[0];
             st->chanmax[1] = chanmax_vec[1];
@@ -266,9 +268,14 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             st->loopmax[0] = chanmax_vec[3];
             st->loopmax[1] = chanmax_vec[4];
 
-            *st->timings = st->tu_step->get_timings();
-            *st->timings_descr = st->tu_step->get_timings_descr();
-            st->niter = st->tu_step->get_num_calls();
+            ttt = tu_stepper_timings(st->tu_step, &idx);
+            st->timings->resize( idx );
+            st->timings_descr->resize( idx );
+            for (int i=0; i<idx; ++i) {
+                st->timings->at(i) = ttt[i].t;
+                st->timings_descr->at(i) = ttt[i].name;
+            }
+            st->niter = tu_stepper_num_calls( st->tu_step );
             return;
         default:
         case diverge_flow_type_invalid:

@@ -26,7 +26,7 @@ tu_postproduction::tu_postproduction(diverge_flow_step_t* st, bool tu_skip_chann
 :
     skip_channel_calc{tu_skip_channel_calc},
     vertex{st->tu_vertex},
-    internal_vertex{st->tu_step->internal_vertex},
+    internal_vertex{tu_stepper_internal_vertex(st->tu_step)},
     proj{st->tu_proj},
     model{st->tu_vertex->model}
 {
@@ -43,9 +43,9 @@ tu_postproduction::tu_postproduction(diverge_flow_step_t* st, bool tu_skip_chann
         Ptype = (char*)calloc(vertex->my_nk,sizeof(char));
         Ctype = (char*)calloc(vertex->my_nk,sizeof(char));
         Dtype = (char*)calloc(vertex->my_nk,sizeof(char));
-        Pvec = st->tu_step->internal_vertex->Pch;
-        Cvec = st->tu_step->internal_vertex->Cch;
-        Dvec = st->tu_step->internal_vertex->Dch;
+        Pvec = tu_stepper_internal_vertex(st->tu_step)->Pch;
+        Cvec = tu_stepper_internal_vertex(st->tu_step)->Cch;
+        Dvec = tu_stepper_internal_vertex(st->tu_step)->Dch;
 
         lenP = (index_t*)calloc(vertex->my_nk,sizeof(index_t));
         lenC = (index_t*)calloc(vertex->my_nk,sizeof(index_t));

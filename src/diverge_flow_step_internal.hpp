@@ -12,10 +12,15 @@
 #include "tu/vertex.h"
 #include "tu/projection.h"
 #include "tu/propagator.h"
-#include "tu/flow_stepper.hpp"
+#include "tu/flow_stepper.h"
 
 #include "npatch/loop.h"
 #include "npatch/flow_step.h"
+
+#include <vector>
+#include <string>
+using std::vector;
+using std::string;
 
 // DEVELOPERS
 //
@@ -42,7 +47,7 @@ struct diverge_flow_step_t {
     projection_t* tu_proj;
     tu_prop_t* tu_loop;
     tu_vertex_t* tu_vertex;
-    tu_stepper* tu_step;
+    tu_stepper_t* tu_step;
 
     double vertmax;
     double loopmax[2];
