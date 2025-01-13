@@ -7,7 +7,7 @@
 #include "grid/vertex_memory.hpp"
 #include "grid/post_processing.hpp"
 #include "tu/vertex.h"
-#include "tu/postproduction.hpp"
+#include "tu/postproduction.h"
 
 static void grid_pp( diverge_flow_step_t* st,
         const diverge_postprocess_conf_t* pc, const char* file );
@@ -102,16 +102,22 @@ static void patch_pp( diverge_flow_step_t* st,
 
 static void tu_pp( diverge_flow_step_t* st,
         const diverge_postprocess_conf_t* pc, const char* file ) {
-    tu_postproduction tu_pc(st, pc->tu_skip_channel_calc);
-    tu_pc.tu_n_singular_values = pc->tu_n_singular_values;
-    tu_pc.algo = pc->tu_which_solver_mode;
-    tu_pc.cutoff = pc->tu_storing_threshold;
-    tu_pc.cutoff_rel = pc->tu_storing_relative;
-    tu_pc.tu_n_decomp_values = pc->tu_n_decomp_values;
-    tu_pc.bare_susceptibilities = pc->tu_susceptibilities_bare;
-    tu_pc.channel_calc_project = pc->tu_channel_calc_project;
-    memcpy( tu_pc.tu_lingap_solver_mode, pc->tu_lingap_solver_mode, sizeof(tu_pc.tu_lingap_solver_mode) );
-    tu_pc.run_and_save( file, pc->tu_lingap, pc->tu_susceptibilities_ff,
-            pc->tu_susceptibilities_full, pc->tu_lingap_atscale, pc->tu_selfenergy,
-            pc->tu_channels, pc->tu_symmetry_maps );
+    tu_postproduction_conf_t tc = tu_postproduction_conf_defaults_CPP();
+    tc.skip_channel_calc = pc->tu_skip_channel_calc;
+    tc.tu_n_singular_values = pc->tu_n_singular_values;
+    tc.algo = pc->tu_which_solver_mode;
+    tc.cutoff = pc->tu_storing_threshold;
+    tc.cutoff_rel = pc->tu_storing_relative;
+    tc.tu_n_decomp_values = pc->tu_n_decomp_values;
+    tc.bare_susceptibilities = pc->tu_susceptibilities_bare;
+    tc.channel_calc_project = pc->tu_channel_calc_project;
+    memcpy( tc.tu_lingap_solver_mode, pc->tu_lingap_solver_mode, sizeof(tc.tu_lingap_solver_mode) );
+    tc.lingaps = pc->tu_lingap;
+    tc.susc_ff = pc->tu_susceptibilities_ff;
+    tc.susc_full = pc->tu_susceptibilities_full;
+    tc.lingap_atscale = pc->tu_lingap_atscale;
+    tc.save_self = pc->tu_selfenergy;
+    tc.save_full = pc->tu_channels;
+    tc.save_symmetries = pc->tu_symmetry_maps;
+    tu_postproduction( st->tu_vertex, tu_stepper_internal_vertex(st->tu_step), st->tu_proj, st->mod, &tc, file );
 }
