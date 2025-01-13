@@ -169,10 +169,10 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         double err = diverge_symmetrize_2pt_fine( model, (complex128_t*)intls->greens, NULL );
         if (err > DIVERGE_EPS_MESH) mpi_wrn_printf("resymmetrize hamiltonian->large error: %.5e\n", err);
         // copyout
-        memset( intls->greens, 0, sizeof(complex128_t)*nktot*nb*nb );
         if (shared_exclusive_enter( intls->ham ))
             memcpy( intls->ham, intls->greens, sizeof(complex128_t) * nktot*nb*nb );
         shared_exclusive_wait( intls->ham );
+        memset( intls->greens, 0, sizeof(complex128_t)*nktot*nb*nb );
     }
 
     if (intls->ignore_eigensolver_in_common) {

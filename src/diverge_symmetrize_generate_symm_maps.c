@@ -13,20 +13,17 @@ LINALG_IMPLEMENT
 
 #include <assert.h>
 
-static double SYMNORM_SQUARED_POSITION = 1.e-6;
 static double SYMNORM_ASSERT_POSITION_BEYOND = 1.e-4;
 static double SYMNORM_ORBITAL_OVERLAP = 1.e-5;
 static double SYMNORM_POS_EQUAL = 1.e-8;
 static double SYMNORM_MIN_ORBITAL_WEIGHT = 0.99999;
 
-void diverge_generate_symm_maps_set_precision( double SQUARED_POSITION,
-        double ASSERT_POSITION_BEYOND, double ORBITAL_OVERLAP, double POS_EQUAL,
-        double MIN_ORBITAL_WEIGHT ) {
+void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
+        double ORBITAL_OVERLAP, double POS_EQUAL, double MIN_ORBITAL_WEIGHT ) {
     #define SET_TO( THING ) { if (THING > 0) { \
         SYMNORM_##THING = THING; \
         mpi_log_printf( "SYMNORM_" #THING " = %.5e\n", THING ); \
     } }
-    SET_TO( SQUARED_POSITION );
     SET_TO( ASSERT_POSITION_BEYOND );
     SET_TO( ORBITAL_OVERLAP );
     SET_TO( POS_EQUAL );
@@ -162,7 +159,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
                                 claV3d_scale(UC2,im) ),
                                 claV3d_scale(UC3,iq) );
             claV3d_t trial = claV3d_add(to_trial, UC123);
-            if (claV3d_norm2(claV3d_sub(trial,to)) < SYMNORM_SQUARED_POSITION) {
+            if (claV3d_norm(claV3d_sub(trial,to)) < SYMNORM_POS_EQUAL) {
                 maps_to = o2;
                 mapped_pos[o1+n_orb*s] = to_trial;
                 bey_UC = claV3d_sub( to, to_trial );

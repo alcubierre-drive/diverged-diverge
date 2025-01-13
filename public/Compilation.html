@@ -439,113 +439,91 @@ This flag is there to enable the former.</p>
 <dt class="field-even"><code class="docutils literal notranslate"><span class="pre">SKIP_FLOW_TIMING</span></code><span class="colon">:</span></dt>
 <dd class="field-even"><p>do not time the flow step in the grid FRG code</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">SYMNORM_SQUARED_POSITION=VAL</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>maximum squared norm to consider two
-positions equivalent under symmetries (default: <code class="docutils literal notranslate"><span class="pre">1e-6</span></code>)</p>
-</dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">SYMNORM_ASSERT_POSITION_BEYOND=VAL</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>in beyond unit-cell symmetry
-contribution, value to check for in the assertion (default: <code class="docutils literal notranslate"><span class="pre">1e-4</span></code>)</p>
-</dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">SYMNORM_ORBITAL_OVERLAP=VAL</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>minimum value to consider for orbitals to
-<em>overlap</em> (default: <code class="docutils literal notranslate"><span class="pre">1e-5</span></code>)</p>
-</dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">SYMNORM_POS_EQUAL=VAL</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>maximum norm to consider for positions to be
-equal in the <em>overlap</em> check (default: <code class="docutils literal notranslate"><span class="pre">1e-8</span></code>)</p>
-</dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">SYMNOORM_MIN_ORBITAL_WEIGHT=VAL</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>minimal orbital weight to consider “1”
-for checking if weight is conserved (default: <code class="docutils literal notranslate"><span class="pre">0.99999</span></code>). <em>Very
-important to set this to a lower value (e.g. 0.99) for many-orbital
-systems on some machines.</em></p>
-</dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">SYMNORM_MATRIX_ZERO=VAL</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>maximum value that may pop up in a difference
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">SYMNORM_MATRIX_ZERO=VAL</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>maximum value that may pop up in a difference
 matrix when checking whether symmetries have an inverse (default:
 <code class="docutils literal notranslate"><span class="pre">1.e-7</span></code>). <em>Very important to set this to a higher value (e.g. 1.e-3)
 for many-orbital systems on some machines.</em></p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">TAG_VERSION=VAL</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>set the git tag version string to VAL</p>
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">TAG_VERSION=VAL</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>set the git tag version string to VAL</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">TU_MAGIC_NUMBER_POST_PROCESSING=VAL</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>set the TU backend post processing
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">TU_MAGIC_NUMBER_POST_PROCESSING=VAL</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>set the TU backend post processing
 magic number (relevant for output) to VAL</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_ALTERNATIVE_TIME</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>use an alternative method of measuring time when
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_ALTERNATIVE_TIME</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>use an alternative method of measuring time when
 compiling without MPI</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_EIGEN_BATCHED_GEMM</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>use Eigen’s matrix multiplication in batched
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_EIGEN_BATCHED_GEMM</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>use Eigen’s matrix multiplication in batched
 gemms (CPU)</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_EIGEN3_CPU_EIGENSOLVER</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>default to a CPU version of the batched
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_EIGEN3_CPU_EIGENSOLVER</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>default to a CPU version of the batched
 eigensolver, built with Eigen3. Can be turned off at run time via
 <a class="reference internal" href="Linear%20Algebra.html#c.batched_eigen_r_set_eigen3_mode" title="batched_eigen_r_set_eigen3_mode"><code class="xref c c-func docutils literal notranslate"><span class="pre">batched_eigen_r_set_eigen3_mode()</span></code></a>.</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE=VAL</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>compile extensive fixed-size
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE=VAL</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>compile extensive fixed-size
 versions (up to dimension <code class="docutils literal notranslate"><span class="pre">VAL</span></code> up to <code class="docutils literal notranslate"><span class="pre">VAL</span> <span class="pre">=</span> <span class="pre">16</span></code> for the CPU
 eigensolver built with Eigen3. May be faster for small-size matrices,
 but compilation times are terrible.</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_GF_FLOATS</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>save Green’s function in single point precision. should
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_GF_FLOATS</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>save Green’s function in single point precision. should
 work for the npatch backend.</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_MKL</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>use <code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&lt;mkl.h&gt;</span></code> instead of <code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&lt;lapacke.h&gt;</span></code>
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_MKL</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>use <code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&lt;mkl.h&gt;</span></code> instead of <code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&lt;lapacke.h&gt;</span></code>
 and <code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&lt;cblas.h&gt;</span></code></p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_MPI</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>enable MPI parallelization (<a class="reference internal" href="#mpi-compilation"><span class="std std-ref">MPI Compilation</span></a>). Not
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_MPI</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>enable MPI parallelization (<a class="reference internal" href="#mpi-compilation"><span class="std std-ref">MPI Compilation</span></a>). Not
 recommended in conjunction with GPUs (<a class="reference internal" href="#cuda-compilation"><span class="std std-ref">CUDA Compilation</span></a>) as
 GPU/MPI algorithms are scarcely available and therefore not implemented.</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_NO_BLAS_VERTEX_LOOP</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>in the vertex/loop batched GEMMs of the grid
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_NO_BLAS_VERTEX_LOOP</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>in the vertex/loop batched GEMMs of the grid
 FRG code, skip BLAS calls and do the multiplication by hand.</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_NO_LAPACKE</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>do not use LAPACK functions (or, their C wrappers) but
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_NO_LAPACKE</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>do not use LAPACK functions (or, their C wrappers) but
 Eigen.</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_SERIAL_FFTW</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>do not enable multithreaded FFTW.</p>
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_SERIAL_FFTW</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>do not enable multithreaded FFTW.</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_SHARED_MEM</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>experimental support for putting some objects
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_SHARED_MEM</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>experimental support for putting some objects
 (Hamiltonian, Orbital/Band matrices) into node-global shared memory,
 i.e., creating a shared memory pool that is used by all MPI ranks on a
 single node. This flag requires some more recent linux kernel features
 (<code class="docutils literal notranslate"><span class="pre">memfd_create</span></code>, <code class="docutils literal notranslate"><span class="pre">mmap</span></code>).</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">SHARED_MEM_MPI_IMPL</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>use <code class="docutils literal notranslate"><span class="pre">MPI_Win_XXX</span></code> (and friends) for the
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">SHARED_MEM_MPI_IMPL</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>use <code class="docutils literal notranslate"><span class="pre">MPI_Win_XXX</span></code> (and friends) for the
 implementation of the shared memory. Might behave strangely on clusters
 where pinning to certain sockets is enforced.</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">SHARED_MEM_POSIX_IMPL</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>use the POSIX functions <code class="docutils literal notranslate"><span class="pre">shm_open</span></code> and
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">SHARED_MEM_POSIX_IMPL</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>use the POSIX functions <code class="docutils literal notranslate"><span class="pre">shm_open</span></code> and
 <code class="docutils literal notranslate"><span class="pre">shm_unlink</span></code> to create shared memory regions. In Linux, these are then
 typically located in <code class="docutils literal notranslate"><span class="pre">/dev/shm/</span></code>.</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">USE_MPI_FFTW</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>use the MPI backend for FFTW in the TU propagator
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">USE_MPI_FFTW</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>use the MPI backend for FFTW in the TU propagator
 calculation. this usually comes with an enormeous speedup. Users are
 responsible for adding the corresponding linker flags to the
 Makefile.local.</p>
 </dd>
-<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">MPI_VERBOSE_ALLOCATION_PRINT</span></code><span class="colon">:</span></dt>
-<dd class="field-odd"><p>be extra verbose on TU propagator
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">MPI_VERBOSE_ALLOCATION_PRINT</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>be extra verbose on TU propagator
 allocations in the new CPU/MPI algorithms</p>
 </dd>
-<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">TRANSPOSE_MPI_FFT_BUFFERS</span></code><span class="colon">:</span></dt>
-<dd class="field-even"><p>try to optimize memory access and usage by
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">TRANSPOSE_MPI_FFT_BUFFERS</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>try to optimize memory access and usage by
 defining some tensors in different ordering. Only enabled when switching
 the TU propagator algorithms via <a class="reference internal" href="Hacking.html#c.diverge_model_hack" title="diverge_model_hack"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_hack()</span></code></a>
 (<em>unsupported</em>)</p>

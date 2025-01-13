@@ -22,8 +22,6 @@ void diverge_generate_symm_maps( diverge_model_t* model );
 /**
  * set the precision for symmetry map generation.
  *
- * :param double SQUARED_POSITION: for mapping how positions map under
- *      symmetries (i.e. sites), ~0
  * :param double ASSERT_POSITION_BEYOND: for assertion whether the beyond unit
  *      cell portion of the position mapping is violated, ~0
  * :param double ORBITAL_OVERLAP: minimal overlap of orbitals that is considered
@@ -32,9 +30,8 @@ void diverge_generate_symm_maps( diverge_model_t* model );
  * :param double MIN_ORBITAL_WEIGHT: minimal orbital weight that is considered
  *      'one', ~1
  */
-void diverge_generate_symm_maps_set_precision( double SQUARED_POSITION,
-        double ASSERT_POSITION_BEYOND, double ORBITAL_OVERLAP, double POS_EQUAL,
-        double MIN_ORBITAL_WEIGHT );
+void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
+        double ORBITAL_OVERLAP, double POS_EQUAL, double MIN_ORBITAL_WEIGHT );
 
 /**
  * symmetrizes coarse mesh 2pt function stored in buf. returns maximum
