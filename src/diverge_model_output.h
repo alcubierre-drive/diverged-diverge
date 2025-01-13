@@ -188,8 +188,10 @@ typedef struct diverge_model_output_conf_t {
      * *integer*. use this as the number of points on the IBZ path (cf.
      * :c:func:`diverge_model_output_set_npath`). Only used when nonzero; but
      * then *with precedence* over what is/has been set in
-     * :c:func:`diverge_model_output_set_npath`. possible nonzero values: -1,
-     * >=1.
+     * :c:func:`diverge_model_output_set_npath`. possible nonzero values: -1
+     * (use eigenvalues on mesh), >=1 (explicitly calculate H from hoppings),
+     * <-1 (explcitly calculate H from hoppings in batched manner with this many
+     * pts).
      */
     int npath;
     /**
