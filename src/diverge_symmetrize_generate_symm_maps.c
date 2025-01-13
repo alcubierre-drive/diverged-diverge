@@ -13,21 +13,25 @@ LINALG_IMPLEMENT
 
 #include <assert.h>
 
-#ifndef SYMNORM_SQUARED_POSITION
-#define SYMNORM_SQUARED_POSITION 1e-6
-#endif
-#ifndef SYMNORM_ASSERT_POSITION_BEYOND
-#define SYMNORM_ASSERT_POSITION_BEYOND 1e-4
-#endif
-#ifndef SYMNORM_ORBITAL_OVERLAP
-#define SYMNORM_ORBITAL_OVERLAP 1e-5
-#endif
-#ifndef SYMNORM_POS_EQUAL
-#define SYMNORM_POS_EQUAL 1e-8
-#endif
-#ifndef SYMNOORM_MIN_ORBITAL_WEIGHT
-#define SYMNOORM_MIN_ORBITAL_WEIGHT 0.99999
-#endif
+static double SYMNORM_SQUARED_POSITION = 1.e-6;
+static double SYMNORM_ASSERT_POSITION_BEYOND = 1.e-4;
+static double SYMNORM_ORBITAL_OVERLAP = 1.e-5;
+static double SYMNORM_POS_EQUAL = 1.e-8;
+static double SYMNORM_MIN_ORBITAL_WEIGHT = 0.99999;
+
+void diverge_generate_symm_maps_set_precision( double SQUARED_POSITION,
+        double ASSERT_POSITION_BEYOND, double ORBITAL_OVERLAP, double POS_EQUAL,
+        double MIN_ORBITAL_WEIGHT ) {
+    #define SET_TO( THING ) { if (THING > 0) { \
+        SYMNORM_##THING = THING; \
+        mpi_log_printf( "SYMNORM_" #THING " = %.5e\n", THING ); \
+    } }
+    SET_TO( SQUARED_POSITION );
+    SET_TO( ASSERT_POSITION_BEYOND );
+    SET_TO( ORBITAL_OVERLAP );
+    SET_TO( POS_EQUAL );
+    SET_TO( MIN_ORBITAL_WEIGHT );
+}
 
 static inline bool map_back_to_BZ(claV3d_t* k_point, index_t* idx, const diverge_model_t* model, bool fine) {
     index_t nk[3]; memcpy( nk, model->nk, sizeof(nk) );
@@ -167,7 +171,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
                 goto symmetrizer_orb_found;
             }
         }
-        if(maps_to == -1) {
+        if (maps_to == -1) {
             #pragma omp critical
             {
                 mpi_wrn_printf("position %li doesn't map under symmetry %li!\n", o1, s);
@@ -223,7 +227,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         for (index_t e=0; e<orbmaps_to_len[o1]; ++e)
             sum += cabs(POW2(orbmaps_to_prefac[orbmaps_to_off[o1]+e]));
         /* printf( "o1=%li, len=%li, off=%li, sum=%.5e\n", o1, orbmaps_to_len[o1], orbmaps_to_off[o1], sum ); */
-        if (sum < SYMNOORM_MIN_ORBITAL_WEIGHT) {
+        if (sum < SYMNORM_MIN_ORBITAL_WEIGHT) {
             mpi_err_printf("Orbitals do not sum up to one %1.3f\n", sum);
             model->n_sym = 0;
         }

@@ -38,6 +38,7 @@ DIVERGE_0.8 {
         diverge_fukui;
         diverge_fukui_matrix;
         diverge_generate_symm_maps;
+        diverge_generate_symm_maps_set_precision;
         diverge_generate_symm_trafo;
         diverge_greensfunc_generator_default;
         diverge_hamilton_generator_add;

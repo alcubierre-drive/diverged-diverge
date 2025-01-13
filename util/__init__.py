@@ -1131,6 +1131,10 @@ if not _libs["divERGe"] is None:
     generate_symm_maps.argtypes = [POINTER(model_t)]
     generate_symm_maps.restype = None
 
+    generate_symm_maps_set_precision = _libs["divERGe"].get("diverge_generate_symm_maps_set_precision", "cdecl")
+    generate_symm_maps_set_precision.argtypes = [c_double, c_double, c_double, c_double, c_double]
+    generate_symm_maps_set_precision.restype = None
+
     symmetrize_2pt_coarse = _libs["divERGe"].get("diverge_symmetrize_2pt_coarse", "cdecl")
     symmetrize_2pt_coarse.argtypes = [POINTER(model_t), POINTER(complex128_t), POINTER(complex128_t)]
     symmetrize_2pt_coarse.restype = c_double

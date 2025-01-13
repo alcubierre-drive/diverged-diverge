@@ -78,8 +78,7 @@ void diverge_generate_symm_trafo( index_t n_spin, const site_descr_t* orbs, inde
             spherical_harmonic_t op2 = harmonics[o2];
             claV2cd_t sp2 = ((s2 == 0) ? up : dn);
             complex128_t val = claV25cd_dot( op2, op1 ) * claV2cd_dot( sp2, sp1 );
-            orb_trafo[o1+n_orb*(s1+n_spin*(o2+n_orb*s2))] = val;
-            // printf( "%+.2f%+.2fj%c", creal(val), cimag(val), ((o2==n_orb-1) && (s2==n_spin-1)) ? '\n' : ' ' );
+            if (orb_trafo) orb_trafo[o1+n_orb*(s1+n_spin*(o2+n_orb*s2))] = val;
         }
     }
     free( harmonics );
