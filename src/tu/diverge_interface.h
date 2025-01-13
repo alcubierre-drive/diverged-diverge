@@ -27,7 +27,7 @@ typedef enum {
 typedef struct tu_data_t tu_data_t;
 
 struct tu_data_t {
-    symmstruct_t* symm;
+    tu_symmstruct_t* symm;
     bool use_reduced_loop;
     bool use_cuda_mpi_loop;
     index_t nk;

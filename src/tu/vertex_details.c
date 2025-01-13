@@ -27,7 +27,7 @@ static inline index_t ensure_align(index_t numToRound) {
 
 #define MAX3( A, B, C ) MAX(MAX(A,B),C)
 
-void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, projection_t* proj, tu_prop_t* loop ) {
+void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_prop_t* loop ) {
     (void)V; (void)proj; (void)loop;
 #ifdef USE_CUDA
     if (!tu_gpu_info().tu_has_gpu_setup || !loop->cuda_descr.prop_has_gpu_setup ||
@@ -216,7 +216,7 @@ void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, projection_t* proj, tu_pro
 }
 
 
-void tu_vertex_init_U_from_fullV( tu_vertex_t* V, diverge_model_t* model, projection_t* proj ) {
+void tu_vertex_init_U_from_fullV( tu_vertex_t* V, diverge_model_t* model, tu_projection_t* proj ) {
     mpi_wrn_printf("initialization from full\n")
     double* Rvec = calloc(model->n_tu_ff, sizeof(double)*3);
     double* kmesh = model->internals->kmesh;

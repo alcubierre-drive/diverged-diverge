@@ -15,10 +15,10 @@ struct tu_stepper_t {
     double w_time_GF, w_time_full, w_time_loop, w_time_product,
            w_time_projection, w_time_add_find_max, w_time_self;
 
-    selfenergy_t* self;
+    tu_selfenergy_t* self;
     tu_vertex_t* internal_vertex;
     tu_prop_t* loop;
-    projection_t* proj;
+    tu_projection_t* proj;
     bool channel_selection[4];
     double norm[3];
     index_t prodsize;
@@ -31,7 +31,7 @@ struct tu_stepper_t {
     tu_prop_timing_t timings[64];
 };
 
-tu_stepper_t* tu_stepper_init( projection_t* proj, tu_prop_t* loop, tu_vertex_t* vert ) {
+tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex_t* vert ) {
     tu_stepper_t* s = calloc(1, sizeof*s);
     s->loop = loop;
     s->proj = proj;
@@ -55,7 +55,7 @@ tu_stepper_t* tu_stepper_init( projection_t* proj, tu_prop_t* loop, tu_vertex_t*
 
     if (s->channel_selection[3]) {
         s->coarseGF = calloc(s->nk*POW2(vert->n_orb*vert->n_spin),sizeof(complex128_t));
-        s->self = selfenergy_init(vert);
+        s->self = tu_selfenergy_init(vert);
     }
     return s;
 }
@@ -63,7 +63,7 @@ tu_stepper_t* tu_stepper_init( projection_t* proj, tu_prop_t* loop, tu_vertex_t*
 void tu_stepper_free( tu_stepper_t* s ) {
     tu_vertex_free( s->internal_vertex );
     if (s->channel_selection[3]) {
-        selfenergy_free(s->self);
+        tu_selfenergy_free(s->self);
         free(s->coarseGF);
     }
     free( s );
@@ -175,7 +175,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
         if (s->channel_selection[2]) ZERO_OUT( s->internal_vertex->Cch, s->internal_vertex->full_vert_size );
     }
     if (s->channel_selection[3]) {
-        TICK_TOCK( s->w_time_self, selfenergy_flow( s->self, s->internal_vertex->self_en,
+        TICK_TOCK( s->w_time_self, tu_selfenergy_flow( s->self, s->internal_vertex->self_en,
                     inout->Pch, inout->Cch, inout->Dch, s->coarseGF, 1. ) );
     }
     TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(inout, s->internal_vertex, dlambda),

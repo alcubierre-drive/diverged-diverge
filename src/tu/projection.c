@@ -12,13 +12,13 @@ LINALG_IMPLEMENT
 // this must follow the LINALG include to pre-define the types
 #include "projection.h"
 
-static void init_CP_PC_proj( projection_t* p, const diverge_model_t* model );
-static void init_CD_DC_proj( projection_t* p, const diverge_model_t* model );
-static void init_D_to_P_proj( projection_t* p, const diverge_model_t* model );
-static void init_P_to_D_proj( projection_t* p, const diverge_model_t* model );
-static void mpi_communicate( projection_t* p );
-static void init_to_mom_map_existing_r( projection_t* p );
-static void init_prefac_vector( projection_t* p, const diverge_model_t* model );
+static void init_CP_PC_proj( tu_projection_t* p, const diverge_model_t* model );
+static void init_CD_DC_proj( tu_projection_t* p, const diverge_model_t* model );
+static void init_D_to_P_proj( tu_projection_t* p, const diverge_model_t* model );
+static void init_P_to_D_proj( tu_projection_t* p, const diverge_model_t* model );
+static void mpi_communicate( tu_projection_t* p );
+static void init_to_mom_map_existing_r( tu_projection_t* p );
+static void init_prefac_vector( tu_projection_t* p, const diverge_model_t* model );
 
 static index_t* sort_permutation( const claV2ll_t* to, index_t to_sz );
 static inline void apply_permutation_in_place( claV2ll_t* vec, const index_t* p, index_t p_sz );
@@ -48,8 +48,8 @@ static inline claV3i_t set_to( const tu_formfactor_t* tu_ff, index_t b1, int pre
 
 #define TO_IDX( a, nk ) IDX3( (a).v[0], (a).v[1], (a).v[2], (nk)[1], (nk)[2] )
 
-projection_t* projection_init( const diverge_model_t* model ) {
-    projection_t* p = (projection_t*)calloc(1, sizeof*p);
+tu_projection_t* tu_projection_init( const diverge_model_t* model ) {
+    tu_projection_t* p = calloc(1, sizeof*p);
     p->proj_descr = cuda_proj_defaults_CPP();
 
     tu_data_t* tu_data = model->internals->tu_data;
@@ -97,7 +97,7 @@ projection_t* projection_init( const diverge_model_t* model ) {
     return p;
 }
 
-void projection_free( projection_t* p ) {
+void tu_projection_free( tu_projection_t* p ) {
     free(p->my_prefac_reco);
     free(p->my_prefac_proj);
 
@@ -149,7 +149,7 @@ static inline void mesh_normalize_4( claV3i_t* v, const index_t* nk ) {
     for (short d=0; d<3; ++d) { v->v[d] += nk[d]*4; v->v[d] %= nk[d]; }
 }
 
-static void init_CP_PC_proj( projection_t* p, const diverge_model_t* model ) {
+static void init_CP_PC_proj( tu_projection_t* p, const diverge_model_t* model ) {
     if (diverge_mpi_comm_rank() != 0) return;
     VECTOR_INIT( claV2ll_t, f_helper );
     VECTOR_INIT( claV2ll_t, r_helper );
@@ -230,7 +230,7 @@ static void init_CP_PC_proj( projection_t* p, const diverge_model_t* model ) {
 }
 
 
-static void init_CD_DC_proj( projection_t* p, const diverge_model_t* model ) {
+static void init_CD_DC_proj( tu_projection_t* p, const diverge_model_t* model ) {
     if (diverge_mpi_comm_rank() != 0) return;
     VECTOR_INIT( claV2ll_t, f_helper );
     VECTOR_INIT( claV2ll_t, r_helper );
@@ -313,7 +313,7 @@ static void init_CD_DC_proj( projection_t* p, const diverge_model_t* model ) {
     VECTOR_FREE( r_helper );
 }
 
-static void init_D_to_P_proj( projection_t* p, const diverge_model_t* model ) {
+static void init_D_to_P_proj( tu_projection_t* p, const diverge_model_t* model ) {
     if (diverge_mpi_comm_rank() != 0) return;
     VECTOR_INIT( claV2ll_t, f_helper );
     VECTOR_INIT( claV2ll_t, r_helper );
@@ -398,7 +398,7 @@ static void init_D_to_P_proj( projection_t* p, const diverge_model_t* model ) {
     VECTOR_FREE( r_helper );
 }
 
-static void init_P_to_D_proj( projection_t* p, const diverge_model_t* model ) {
+static void init_P_to_D_proj( tu_projection_t* p, const diverge_model_t* model ) {
     if (diverge_mpi_comm_rank() != 0) return;
     VECTOR_INIT( claV2ll_t, f_helper );
     VECTOR_INIT( claV2ll_t, r_helper );
@@ -488,12 +488,12 @@ static inline void tree_count( btree_t* node, void* ctx ) { (void)node; index_t*
 
 #define UNRAVEL_IDX3( a, nk ) (claV3i_t){{a/(nk[1]*nk[2]), (a%(nk[1]*nk[2]))/nk[2], a%nk[2]}}
 static inline void index_to_reduced_iterate( btree_t* node, void* ctx ) {
-    projection_t* p = ctx;
+    tu_projection_t* p = ctx;
     node->val = p->nr;
     p->existing_r[p->nr++] = UNRAVEL_IDX3( node->key, p->nk );
 }
 
-static void init_to_mom_map_existing_r( projection_t* p ) {
+static void init_to_mom_map_existing_r( tu_projection_t* p ) {
     index_t t_sz = (p->PC_r_sz + p->DC_r_sz + p->DP_r_sz + p->PD_r_sz)/4;
     xbtree_t* t = xbtree_init( MAX(t_sz,1024) );
 
@@ -518,7 +518,7 @@ static void init_to_mom_map_existing_r( projection_t* p ) {
     xbtree_free(t);
 }
 
-void mpi_communicate( projection_t* p ) {
+void mpi_communicate( tu_projection_t* p ) {
     index_t to_sz, to_padded_sz;
 
 #define MPICOPY( XX ) \
@@ -553,7 +553,7 @@ void mpi_communicate( projection_t* p ) {
     diverge_mpi_bcast_bytes( p->existing_r, p->nr*sizeof(claV3i_t), 0 );
 }
 
-static void init_prefac_vector( projection_t* p, const diverge_model_t* model ) {
+static void init_prefac_vector( tu_projection_t* p, const diverge_model_t* model ) {
 
     tu_data_t* tu_data = model->internals->tu_data;
     index_t nk = kdim(model->nk);

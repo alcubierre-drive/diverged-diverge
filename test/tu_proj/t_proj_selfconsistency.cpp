@@ -22,8 +22,8 @@ TEST_CASE("momentum vs realspace projections ", "[proj][proj_orbVSreal]")
     diverge_model_internals_tu(orb, 1.2);
     diverge_model_internals_tu(mom, 1.2);
 
-    projection_t* ProjMom = projection_init(mom);
-    projection_t* ProjOrb = projection_init(orb);
+    tu_projection_t* ProjMom = tu_projection_init(mom);
+    tu_projection_t* ProjOrb = tu_projection_init(orb);
 
     tu_prop_t* LoopMom = tu_prop_init(mom);
     tu_prop_t* LoopOrb = tu_prop_init(orb);
@@ -83,8 +83,8 @@ TEST_CASE("momentum vs realspace projections ", "[proj][proj_orbVSreal]")
     tu_vertex_free(VertOrb);
     tu_prop_free(LoopMom);
     tu_prop_free(LoopOrb);
-    projection_free( ProjMom );
-    projection_free( ProjOrb );
+    tu_projection_free( ProjMom );
+    tu_projection_free( ProjOrb );
     diverge_model_free(orb);
     diverge_model_free(mom);
     free(Rveco);
@@ -98,8 +98,8 @@ TEST_CASE("momentum vs mixed projections ", "[proj][proj_mixVSreal]")
     diverge_model_internals_tu(orb, 1.2);
     diverge_model_internals_tu(mom, 1.2);
 
-    projection_t* ProjMom = projection_init(mom);
-    projection_t* ProjOrb = projection_init(orb);
+    tu_projection_t* ProjMom = tu_projection_init(mom);
+    tu_projection_t* ProjOrb = tu_projection_init(orb);
 
     tu_prop_t* LoopMom = tu_prop_init(mom);
     tu_prop_t* LoopOrb = tu_prop_init(orb);
@@ -161,8 +161,8 @@ TEST_CASE("momentum vs mixed projections ", "[proj][proj_mixVSreal]")
     tu_vertex_free(VertOrb);
     tu_prop_free(LoopMom);
     tu_prop_free(LoopOrb);
-    projection_free(ProjMom);
-    projection_free(ProjOrb);
+    tu_projection_free(ProjMom);
+    tu_projection_free(ProjOrb);
     diverge_model_free(orb);
     diverge_model_free(mom);
     free(Rveco);
@@ -176,8 +176,8 @@ TEST_CASE("momentum vs mixed projections graphene", "[proj][proj_mixVSrealgr]")
     diverge_model_internals_tu(orb, 1.2);
     diverge_model_internals_tu(mom, 1.2);
 
-    projection_t* ProjMom = projection_init(mom);
-    projection_t* ProjOrb = projection_init(orb);
+    tu_projection_t* ProjMom = tu_projection_init(mom);
+    tu_projection_t* ProjOrb = tu_projection_init(orb);
 
     tu_prop_t* LoopMom = tu_prop_init(mom);
     tu_prop_t* LoopOrb = tu_prop_init(orb);
@@ -239,8 +239,8 @@ TEST_CASE("momentum vs mixed projections graphene", "[proj][proj_mixVSrealgr]")
     tu_vertex_free(VertOrb);
     tu_prop_free(LoopMom);
     tu_prop_free(LoopOrb);
-    projection_free( ProjMom );
-    projection_free( ProjOrb );
+    tu_projection_free( ProjMom );
+    tu_projection_free( ProjOrb );
     diverge_model_free(orb);
     diverge_model_free(mom);
     free(Rveco);

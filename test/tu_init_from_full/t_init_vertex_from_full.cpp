@@ -61,7 +61,7 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
     tu_vertex_project_fullV( step1->tu_vertex, mod1, hbuf );
 
     mod1->ffill = &full_vertex;
-    projection_t* proj = projection_init(mod1);
+    tu_projection_t* proj = tu_projection_init(mod1);
     tu_prop_t* loop = tu_prop_init(mod1);
     tu_vertex_t* v2 = tu_vertex_init(mod1, proj, loop, 1,1,1, 0);
     tu_vertex_project_fullV( v2, mod1, buf );
@@ -73,7 +73,7 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
     free(hbuf);
     mod1->data = NULL;
     diverge_flow_step_free(step1);
-    projection_free( proj );
+    tu_projection_free( proj );
     diverge_model_free( mod1 );
 }
 

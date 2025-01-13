@@ -15,18 +15,18 @@
 extern "C" {
 #endif
 
-typedef struct selfenergy_t selfenergy_t;
+typedef struct tu_selfenergy_t tu_selfenergy_t;
 
-selfenergy_t* selfenergy_init( tu_vertex_t* vertex_ptr );
-void selfenergy_free( selfenergy_t* s );
+tu_selfenergy_t* tu_selfenergy_init( tu_vertex_t* vertex_ptr );
+void tu_selfenergy_free( tu_selfenergy_t* s );
 
-void selfenergy_flow( selfenergy_t* s, complex128_t* self_en,
+void tu_selfenergy_flow( tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in,
         const complex128_t* D_in, const complex128_t* GF,
         const double prefac_sub );
-void selfenergy_fft_interpolate( selfenergy_t* s, complex128_t* self_en );
+void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en );
 // needed for tests
-fftw_plan selfenergy_get_ifft_self_ip( selfenergy_t* s );
+fftw_plan tu_selfenergy_get_ifft_self_ip( tu_selfenergy_t* s );
 
 #ifdef __cplusplus
 }

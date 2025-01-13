@@ -5,9 +5,9 @@
 #include "../diverge_common.h"
 #include "propagator.h"
 
-typedef struct projection_t projection_t;
+typedef struct tu_projection_t tu_projection_t;
 typedef struct tu_vertex_t tu_vertex_t;
-typedef struct selfenergy_t selfenergy_t;
+typedef struct tu_selfenergy_t tu_selfenergy_t;
 
 typedef struct tu_stepper_t tu_stepper_t;
 
@@ -15,7 +15,7 @@ typedef struct tu_stepper_t tu_stepper_t;
 extern "C" {
 #endif
 
-tu_stepper_t* tu_stepper_init( projection_t* proj, tu_prop_t* loop, tu_vertex_t* vert );
+tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex_t* vert );
 void tu_stepper_free( tu_stepper_t* s );
 void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, double dlambda, double maxs[6] );
 

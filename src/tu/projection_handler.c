@@ -31,7 +31,7 @@ static void timings( double time_cpyfill, double time_reco, double time_handler_
 }
 #endif
 
-void P_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
+void P_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const tu_projection_t* proj) {
     if(!vertex->P_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -102,7 +102,7 @@ void P_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const pr
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void D_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
+void D_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const tu_projection_t* proj) {
     if(!vertex->D_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -167,7 +167,7 @@ void D_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const pr
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void C_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
+void C_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const tu_projection_t* proj) {
     if(!vertex->C_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -234,7 +234,7 @@ void C_projection(complex128_t* proj_vertex, const tu_vertex_t* vertex, const pr
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void P_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
+void P_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, const tu_projection_t* proj) {
     if(!vertex->P_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Pch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -270,7 +270,7 @@ void P_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, c
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void D_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
+void D_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, const tu_projection_t* proj) {
     if(!vertex->D_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Dch, sizeof*proj_vertex * vertex->full_vert_size));
@@ -305,7 +305,7 @@ void D_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, c
     timings(time_cpyfill,time_reco,time_handler_ft,time_add);
 }
 
-void C_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, const projection_t* proj) {
+void C_projection_no_GPU(complex128_t* proj_vertex, const tu_vertex_t* vertex, const tu_projection_t* proj) {
     if(!vertex->C_flow) return;
     double time_cpyfill = 0.0, time_reco = 0.0, time_handler_ft = 0.0, time_add = 0.0;
     TICK_TOCK(time_cpyfill, memcpy(proj_vertex, vertex->Cch, sizeof*proj_vertex * vertex->full_vert_size));

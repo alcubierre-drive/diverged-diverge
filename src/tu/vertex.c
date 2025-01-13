@@ -6,7 +6,7 @@
 #include "../misc/batched_gemms.h"
 #include "../misc/gemm.h"
 
-tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, projection_t* proj, tu_prop_t* loop,
+tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu_prop_t* loop,
         bool P/*=true*/, bool C/*=true*/, bool D/*=true*/, bool self/*=false*/ ) {
     tu_vertex_t* V = calloc(1, sizeof*V);
     V->model = modelin;

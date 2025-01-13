@@ -92,7 +92,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
                 mpi_err_printf("internals for TU FRG not set\n");
                 goto end_error;
             }
-            st->tu_proj = projection_init(mod);
+            st->tu_proj = tu_projection_init(mod);
             st->tu_loop = tu_prop_init(mod);
             st->tu_vertex = tu_vertex_init(mod, st->tu_proj, st->tu_loop, st->channel_selection[0],
                     st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
@@ -152,7 +152,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
             break;
         case diverge_tu:
             tu_vertex_free( st->tu_vertex );
-            projection_free( st->tu_proj );
+            tu_projection_free( st->tu_proj );
             tu_stepper_free( st->tu_step );
             tu_prop_free( st->tu_loop );
             break;
@@ -346,7 +346,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
     grid::VertexMemory* grid_V = (grid::VertexMemory*)intls->grid_vertex;
     npatch_vertex_t* patch_V = (npatch_vertex_t*)intls->patch_vertex;
     tu_vertex_t* tu_V = st->tu_vertex;
-    projection_t* tu_Proj = st->tu_proj;
+    tu_projection_t* tu_Proj = st->tu_proj;
 
     // DEVELOPERS
     //

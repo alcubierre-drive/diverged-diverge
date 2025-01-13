@@ -4,7 +4,7 @@
 #include "vertex.h"
 #include "vertex_details.h"
 
-struct selfenergy_t {
+struct tu_selfenergy_t {
     fftw_plan ifft_self_oop;
     fftw_plan fft_self_oop;
     fftw_plan ifft_self_ip;
@@ -45,7 +45,7 @@ struct selfenergy_t {
     const tu_formfactor_t* tu_ff;
     const index_t* bond_sizes;
     const index_t* bond_offsets;
-    const symmstruct_t* symm;
+    const tu_symmstruct_t* symm;
     bool P_flow;
     bool C_flow;
     bool D_flow;
@@ -57,24 +57,24 @@ struct selfenergy_t {
     complex128_t* greensfkt_helper;
 };
 
-static void generate_fftw_plans( selfenergy_t* s );
+static void generate_fftw_plans( tu_selfenergy_t* s );
 
 // different flows to dispatch to
-static void selfenergy_flow_rs( selfenergy_t* s, complex128_t* self_en,
+static void selfenergy_flow_rs( tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
         const complex128_t* GF, double prefac_sub );
-static void selfenergy_flow_rs_SU2( selfenergy_t* s, complex128_t* self_en,
+static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
         const complex128_t* GF, double prefac_sub );
-static void selfenergy_flow_mom(selfenergy_t* s, complex128_t* self_en,
+static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
         const complex128_t* GF, double prefac_sub );
-static void selfenergy_flow_mom_SU2(selfenergy_t* s, complex128_t* self_en,
+static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
         const complex128_t* GF, double prefac_sub );
 
 // calculates buf[i] = a*Reco(inp)[i] + b*buf[i]
-static inline void reco( const char channel, selfenergy_t* s, complex128_t* buf,
+static inline void reco( const char channel, tu_selfenergy_t* s, complex128_t* buf,
         const complex128_t* inp, double a, double b/*=1*/ );
 
 // some helpers
@@ -86,8 +86,8 @@ static inline index_t rpb1pb3(const index_t* nk, index_t x, index_t y, index_t z
                               const index_t* vb1, const index_t* vb3);
 static inline index_t rpb1(const index_t* nk, index_t x, index_t y, index_t z, const index_t* vb1);
 
-selfenergy_t* selfenergy_init( tu_vertex_t* V ) {
-    selfenergy_t* s = calloc(1, sizeof*s);
+tu_selfenergy_t* tu_selfenergy_init( tu_vertex_t* V ) {
+    tu_selfenergy_t* s = calloc(1, sizeof*s);
 
     s->model = V->model;
     s->tu_data = V->tu_data;
@@ -137,7 +137,7 @@ selfenergy_t* selfenergy_init( tu_vertex_t* V ) {
     return s;
 }
 
-void selfenergy_free( selfenergy_t* s ) {
+void tu_selfenergy_free( tu_selfenergy_t* s ) {
     free(s->ff_helper);
     if (s->nk!=1) {
         free(s->ffkmesh);
@@ -158,7 +158,7 @@ void selfenergy_free( selfenergy_t* s ) {
 }
 
 // only a dispatcher
-void selfenergy_flow( selfenergy_t* s, complex128_t* self_en,
+void tu_selfenergy_flow( tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in,
         const complex128_t* D_in, const complex128_t* GF,
         const double prefac_sub ) {
@@ -174,7 +174,7 @@ void selfenergy_flow( selfenergy_t* s, complex128_t* self_en,
 }
 
 // calculates buf[i] = a*Reco(inp)[i] + b*buf[i]
-static inline void reco( const char channel, selfenergy_t* s, complex128_t* buf,
+static inline void reco( const char channel, tu_selfenergy_t* s, complex128_t* buf,
         const complex128_t* inp, double a, double b/*=1*/ ) {
     if (fabs(b) < 1e-10) ZERO_OUT( buf, POW2(s->n_orbff*s->n_spin*s->n_spin)*s->nk );
     index_t rest = POW2(s->n_orbff*POW2(s->n_spin));
@@ -306,7 +306,7 @@ static inline index_t rpb1(const index_t* nk, index_t x, index_t y, index_t z, c
     return mz + nk[2] *(my + nk[1] * mx);
 }
 
-void selfenergy_fft_interpolate( selfenergy_t* s, complex128_t* self_en ) {
+void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) {
     index_t nkff[3]; for (int i=0; i<3; ++i) nkff[i] = s->model->nk[i] * s->model->nkf[i];
     // pad with zeros
     ZERO_OUT( s->ff_helper, s->nktot*POW2(s->n_orb*s->n_spin) );
@@ -377,7 +377,7 @@ void selfenergy_fft_interpolate( selfenergy_t* s, complex128_t* self_en ) {
     FFTW_EXECUTE_DFT( s->fft_self_oop_gfmesh, s->ff_helper, self_en);
 }
 
-static void selfenergy_flow_rs( selfenergy_t* s, complex128_t* self_en,
+static void selfenergy_flow_rs( tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
         const complex128_t* GF, double pref_subst ) {
     // selfenergy flow equation
@@ -473,7 +473,7 @@ static void selfenergy_flow_rs( selfenergy_t* s, complex128_t* self_en,
     }
 }
 
-static void selfenergy_flow_rs_SU2( selfenergy_t* s, complex128_t* self_en,
+static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
         const complex128_t* GF, double pref_subst ) {
     // selfenergy flow equation
@@ -573,7 +573,7 @@ static void selfenergy_flow_rs_SU2( selfenergy_t* s, complex128_t* self_en,
     }
 }
 
-static void selfenergy_flow_mom(selfenergy_t* s, complex128_t* self_en,
+static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
         const complex128_t* GF, double pref_subst ) {
     // selfenergy flow equation
@@ -749,7 +749,7 @@ static void selfenergy_flow_mom(selfenergy_t* s, complex128_t* self_en,
         diverge_symmetrize_2pt_coarse( s->model, self_en, s->ff_helper );
         transpose(self_en,s->ff_helper, POW2(s->n_orb*s->n_spin), s->nk);
         FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
-        selfenergy_fft_interpolate(s,self_en);
+        tu_selfenergy_fft_interpolate(s,self_en);
     }else{
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
@@ -761,7 +761,7 @@ static void selfenergy_flow_mom(selfenergy_t* s, complex128_t* self_en,
     diverge_symmetrize_2pt_fine( s->model, self_en, s->ff_helper );
 }
 
-static void selfenergy_flow_mom_SU2(selfenergy_t* s, complex128_t* self_en,
+static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
         const complex128_t* GF, double pref_subst ) {
     // selfenergy flow equation
@@ -966,7 +966,7 @@ static void selfenergy_flow_mom_SU2(selfenergy_t* s, complex128_t* self_en,
         diverge_symmetrize_2pt_coarse( s->model, self_en, s->ff_helper );
         transpose(self_en,s->ff_helper, POW2(s->n_orb*s->n_spin), s->nk);
         FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
-        selfenergy_fft_interpolate(s,self_en);
+        tu_selfenergy_fft_interpolate(s,self_en);
     }else{
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
@@ -977,7 +977,7 @@ static void selfenergy_flow_mom_SU2(selfenergy_t* s, complex128_t* self_en,
     diverge_symmetrize_2pt_fine( s->model, self_en, s->ff_helper );
 }
 
-static void generate_fftw_plans( selfenergy_t* s ) {
+static void generate_fftw_plans( tu_selfenergy_t* s ) {
     int dims[] = {(int)s->model->nk[0],(int)s->model->nk[1],(int)s->model->nk[2]};
     s->ifft_self_oop = fftw_plan_many_dft(3, dims, POW2(s->n_spin*s->n_orb),
         (fftw_complex*)(s->ff_helper), dims, 1, s->nk, (fftw_complex*)(s->greensfkt_helper),
@@ -1017,6 +1017,6 @@ static void generate_fftw_plans( selfenergy_t* s ) {
         dims, 1, s->nk, FFTW_FORWARD, FFTW_ESTIMATE);
 }
 
-fftw_plan selfenergy_get_ifft_self_ip( selfenergy_t* s ) {
+fftw_plan tu_selfenergy_get_ifft_self_ip( tu_selfenergy_t* s ) {
     return s->ifft_self_ip;
 }

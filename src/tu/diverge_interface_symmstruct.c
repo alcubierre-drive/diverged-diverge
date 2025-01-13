@@ -16,15 +16,15 @@ LINALG_IMPLEMENT
 // this must follow the LINALG include to pre-define the types
 #include "diverge_interface.h"
 
-static void symmstruct_serialize( const symmstruct_t* symm, char** ptr, uindex_t* nbytes );
-static symmstruct_t* symmstruct_deserialize( const char* ptr );
-static int symmstruct_equal( const symmstruct_t* A, const symmstruct_t* B );
+static void symmstruct_serialize( const tu_symmstruct_t* symm, char** ptr, uindex_t* nbytes );
+static tu_symmstruct_t* symmstruct_deserialize( const char* ptr );
+static int symmstruct_equal( const tu_symmstruct_t* A, const tu_symmstruct_t* B );
 
 #ifndef SYMNORM_MATRIX_ZERO
 #define SYMNORM_MATRIX_ZERO 1.e-7
 #endif
 
-void symmstruct_delete( symmstruct_t* symm ) {
+void tu_symmstruct_delete( tu_symmstruct_t* symm ) {
     free( symm->inv_symmetry );
     free( symm->mi_prefac_in_out );
     free( symm->mi_prefac_in_in );
@@ -51,7 +51,7 @@ static inline int capprox_id( const complex128_t* A, index_t sz );
 
 static bool init_inv_symmerty_map( diverge_model_t* model ) {
     tu_data_t* tu_data = model->internals->tu_data;
-    symmstruct_t* symm = tu_data->symm;
+    tu_symmstruct_t* symm = tu_data->symm;
     complex128_t* orb_symmetries = model->orb_symmetries;
     double* rs_symmetries = (double*)model->rs_symmetries;
     index_t n_orb = model->n_orb;
@@ -127,7 +127,7 @@ static bool init_inv_symmerty_map( diverge_model_t* model ) {
 
 static void init_ibz( diverge_model_t* model ) {
     tu_data_t* tu_data = model->internals->tu_data;
-    symmstruct_t* symm = tu_data->symm;
+    tu_symmstruct_t* symm = tu_data->symm;
     index_t n_sym = model->n_sym;
     index_t nk = kdim(model->nk);
 
@@ -151,7 +151,7 @@ static void init_ibz( diverge_model_t* model ) {
 
     index_t current_ibz_idx = 0;
     symm->kmaps_to = calloc(nk, sizeof(index_t));
-    symm->which_symmetry_used = calloc(nk, sizeof(whichsym_t));
+    symm->which_symmetry_used = calloc(nk, sizeof(tu_whichsym_t));
     symm->nk = nk;
 
     VECTOR_INIT( index_t, idx_ibz_in_fullmesh );
@@ -159,13 +159,13 @@ static void init_ibz( diverge_model_t* model ) {
         if (!bitary_get( is_mapped_to_ibz, ii )) {
             VECTOR_PUSH_BACK( idx_ibz_in_fullmesh, ii );
             bitary_set( is_mapped_to_ibz, ii );
-            symm->which_symmetry_used[ii] = (whichsym_t){which_is_identity, which_is_identity};
+            symm->which_symmetry_used[ii] = (tu_whichsym_t){which_is_identity, which_is_identity};
             symm->kmaps_to[ii] = current_ibz_idx;
             for (index_t s=0; s<n_sym; ++s) {
                 index_t idx = mom_maps_to[s+n_sym*ii];
                 if (!bitary_get( is_mapped_to_ibz, idx )) {
                     bitary_set( is_mapped_to_ibz, idx );
-                    symm->which_symmetry_used[idx] = (whichsym_t){s, symm->inv_symmetry[s]};
+                    symm->which_symmetry_used[idx] = (tu_whichsym_t){s, symm->inv_symmetry[s]};
                     symm->kmaps_to[idx] = current_ibz_idx;
                 }
             }
@@ -221,7 +221,7 @@ static void init_ibz( diverge_model_t* model ) {
 
 static void init_map_for_one_leg( diverge_model_t* model ) {
     tu_data_t* tu_data = model->internals->tu_data;
-    symmstruct_t* symm = tu_data->symm;
+    tu_symmstruct_t* symm = tu_data->symm;
     index_t* bond_sizes = tu_data->bond_sizes;
     index_t* bond_offsets = tu_data->bond_offsets;
     tu_formfactor_t* tu_ff = model->tu_ff;
@@ -335,7 +335,7 @@ static void init_map_for_one_leg( diverge_model_t* model ) {
 static void init_symmetry_maps_o2m(diverge_model_t* model, const double* beyond_UC) {
     mpi_vrb_printf("Generate one-to-many maps\n");
     tu_data_t* tu_data = model->internals->tu_data;
-    symmstruct_t* symm = tu_data->symm;
+    tu_symmstruct_t* symm = tu_data->symm;
     index_t n_spin = model->n_spin;
     index_t my_nk_in_bz = symm->my_nk_in_bz;
     index_t my_nk_in_bz_off = symm->my_nk_in_bz_off;
@@ -382,9 +382,9 @@ static void init_symmetry_maps_o2m(diverge_model_t* model, const double* beyond_
     VECTOR_SHRINK_TO_FIT( symm->idx_map_symm );
 }
 
-void init_symmetries( diverge_model_t* model ) {
+void tu_init_symmetries( diverge_model_t* model ) {
     tu_data_t* tu_data = model->internals->tu_data;
-    symmstruct_t* symm = tu_data->symm;
+    tu_symmstruct_t* symm = tu_data->symm;
     if (model->n_sym == 0) {
         symm->use_symmetries = false;
         tu_data->nkibz = tu_data->nk;
@@ -444,11 +444,11 @@ void init_symmetries( diverge_model_t* model ) {
         free( ptr );
 
         // get the symmstruct and check for error
-        symmstruct_t* symm_from = symmstruct_deserialize( other );
+        tu_symmstruct_t* symm_from = symmstruct_deserialize( other );
         free( other );
         int error = symmstruct_equal( symm, symm_from );
 
-        symmstruct_delete( symm_from );
+        tu_symmstruct_delete( symm_from );
 
         // print if we found an error
         int* errors = calloc( diverge_mpi_comm_size(), sizeof*errors );
@@ -491,7 +491,7 @@ char* _push_vector( char* ptr, uindex_t* p_sz, const void* pvec, uindex_t nel, s
 #define PUSH_VALUE( val ) { ptr = push_value( ptr, &size, val ); }
 #define PUSH_VECTOR( vec, sz ) { ptr = push_vector( ptr, &size, vec, sz ); }
 
-void symmstruct_serialize( const symmstruct_t* symm, char** ptr_, uindex_t* nbytes_ ) {
+void symmstruct_serialize( const tu_symmstruct_t* symm, char** ptr_, uindex_t* nbytes_ ) {
     char* ptr = NULL;
     uindex_t size = 0;
     PUSH_VALUE( symm->use_symmetries );
@@ -549,8 +549,8 @@ void _pop_vector( const char* ptr, uindex_t* p_off, void** pvec, uindex_t* nel, 
 #define POP_VECTOR( type, t, t_sz ) pop_vector( type, t, t_sz, ptr, &off )
 #define POP_VALUE( type, t ) pop_value( type, t, ptr, &off )
 
-symmstruct_t* symmstruct_deserialize( const char* ptr ) {
-    symmstruct_t* symm = calloc(1, sizeof*symm);
+tu_symmstruct_t* symmstruct_deserialize( const char* ptr ) {
+    tu_symmstruct_t* symm = calloc(1, sizeof*symm);
     uindex_t off = 0;
     POP_VALUE( bool, symm->use_symmetries );
     POP_VECTOR( index_t, symm->inv_symmetry, symm->n_sym );
@@ -562,7 +562,7 @@ symmstruct_t* symmstruct_deserialize( const char* ptr ) {
     POP_VECTOR( double, symm->beyond_UC, symm->beyond_UC_sz );
     POP_VECTOR( index_t, symm->kmaps_to, symm->nk );
     POP_VECTOR( index_t, symm->idx_ibz_in_fullmesh, symm->nkibz );
-    POP_VECTOR( whichsym_t, symm->which_symmetry_used, symm->nk );
+    POP_VECTOR( tu_whichsym_t, symm->which_symmetry_used, symm->nk );
     POP_VECTOR( complex128_t, symm->prefactor_symmP, symm->prefactor_symmP_sz );
     POP_VECTOR( complex128_t, symm->prefactor_symmCD, symm->prefactor_symmCD_sz );
     POP_VECTOR( index_t, symm->idx_map_symm, symm->idx_map_symm_sz );
@@ -596,7 +596,7 @@ static inline int vector_cmp_doubles( const double* A, const double* B, index_t 
 #define vector_cmp_f( A, B, len ) vector_cmp_doubles( (const double*)A, (const double*)B, \
         len*sizeof(*A)/sizeof(double) )
 
-int symmstruct_equal( const symmstruct_t* A, const symmstruct_t* B ) {
+int symmstruct_equal( const tu_symmstruct_t* A, const tu_symmstruct_t* B ) {
     int errors = 0;
     errors += A->use_symmetries != B->use_symmetries;
     errors += vector_cmp_i( A->inv_symmetry, B->inv_symmetry, A->n_sym );

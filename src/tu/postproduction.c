@@ -90,12 +90,12 @@ struct tu_postproduction_t {
 
     tu_vertex_t* vertex;
     tu_vertex_t* internal_vertex;
-    projection_t* proj;
+    tu_projection_t* proj;
     const diverge_model_t* model;
 };
 
 void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
-        projection_t* proj, const diverge_model_t* model,
+        tu_projection_t* proj, const diverge_model_t* model,
         const tu_postproduction_conf_t* c, const char* filename ) {
     tu_postproduction_t p = {
         .c = c ? *c : tu_postproduction_conf_defaults,
@@ -535,7 +535,7 @@ static void construct_multiindex_maps( tu_postproduction_t* p ) {
     mpi_vrb_printf("Generate one-to-many for all q for storing\n");
     const diverge_model_t* model = p->model;
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
-    symmstruct_t* symm = tu_data->symm;
+    tu_symmstruct_t* symm = tu_data->symm;
     if (!symm->use_symmetries)
         return;
 
@@ -569,7 +569,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     index_t header[256] = {0};
     const char* version = tag_version();
     tu_data_t* tu_data = (tu_data_t*)p->model->internals->tu_data;
-    symmstruct_t* symm = tu_data->symm;
+    tu_symmstruct_t* symm = tu_data->symm;
     int i = 0;
     index_t my_rank = diverge_mpi_comm_rank();
     const index_t my_nk = p->vertex->my_nk;

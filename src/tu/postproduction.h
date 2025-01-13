@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 typedef struct tu_vertex_t tu_vertex_t;
-typedef struct projection_t projection_t;
+typedef struct tu_projection_t tu_projection_t;
 typedef struct diverge_model_t diverge_model_t;
 
 typedef struct {
@@ -58,7 +58,7 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
 tu_postproduction_conf_t tu_postproduction_conf_defaults_CPP( void );
 
 void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
-        projection_t* proj, const diverge_model_t* model,
+        tu_projection_t* proj, const diverge_model_t* model,
         const tu_postproduction_conf_t* c, const char* filename );
 
 #ifdef __cplusplus

@@ -40,14 +40,14 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
 
     init_ff_struct(max_dist, model);
     generate_reduced_loop_maps(model);
-    init_symmetries(model);
+    tu_init_symmetries(model);
     info->offload_cpu = 0.0;
     info->percent_mem_GPU_blocked = 0.9;
 }
 
 void tu_data_destructor(void* v) {
     tu_data_t* tu_data = v;
-    symmstruct_delete( tu_data->symm );
+    tu_symmstruct_delete( tu_data->symm );
     free(tu_data->bond_sizes);
     free(tu_data->bond_offsets);
     free(tu_data->ff_idx_to_unique_ff_elem);

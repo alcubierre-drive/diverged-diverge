@@ -10,10 +10,10 @@ extern "C" {
 
 typedef struct tu_vertex_t tu_vertex_t;
 typedef struct tu_prop_t tu_prop_t;
-typedef struct projection_t projection_t;
+typedef struct tu_projection_t tu_projection_t;
 typedef struct diverge_model_t diverge_model_t;
 
-tu_vertex_t* tu_vertex_init( diverge_model_t* model, projection_t* proj, tu_prop_t* loop,
+tu_vertex_t* tu_vertex_init( diverge_model_t* model, tu_projection_t* proj, tu_prop_t* loop,
         bool P/*=true*/, bool C/*=true*/, bool D/*=true*/, bool self/*=false*/ );
 void tu_vertex_free( tu_vertex_t* V );
 tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O );

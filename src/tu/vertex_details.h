@@ -33,7 +33,7 @@ struct tu_vertex_t {
     index_t full_vert_size;
     index_t full_bubble_size;
     index_t selfenergy_size;
-    const symmstruct_t* symm;
+    const tu_symmstruct_t* symm;
 
     char* GPU_memory_pool[32];
     char* GPU_memory_pool_managed[32];
@@ -55,8 +55,8 @@ struct tu_vertex_t {
 };
 
 // private functions
-void tu_vertex_init_U_from_fullV( tu_vertex_t* V, diverge_model_t* model, projection_t* proj );
-void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, projection_t* proj, tu_prop_t* loop );
+void tu_vertex_init_U_from_fullV( tu_vertex_t* V, diverge_model_t* model, tu_projection_t* proj );
+void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_prop_t* loop );
 void tu_vertex_init_U( tu_vertex_t* V, bool enforce_exchange );
 void tu_vertex_project_fullV( const tu_vertex_t* V, const diverge_model_t* mod_ptr, complex128_t* fullV );
 

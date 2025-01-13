@@ -8,15 +8,15 @@
 extern "C" {
 #endif
 
-typedef struct symmstruct_t symmstruct_t;
+typedef struct tu_symmstruct_t tu_symmstruct_t;
 typedef struct diverge_model_t diverge_model_t;
 
 typedef struct {
     index_t sym;
     index_t isym;
-} whichsym_t;
+} tu_whichsym_t;
 
-struct symmstruct_t {
+struct tu_symmstruct_t {
     // if true, the vectors are filled
     bool use_symmetries;
     // things needed for the generation of the maps
@@ -35,7 +35,7 @@ struct symmstruct_t {
     // general properties of the IBZ
     index_t* kmaps_to; // nk
     index_t* idx_ibz_in_fullmesh; // nkibz
-    whichsym_t* which_symmetry_used; // nk
+    tu_whichsym_t* which_symmetry_used; // nk
     index_t nk, nkibz;
 
     VECTOR_DECL( complex128_t, prefactor_symmP )
@@ -51,8 +51,8 @@ struct symmstruct_t {
     index_t my_nk_in_bz_off;
 };
 
-void symmstruct_delete( symmstruct_t* symm );
-void init_symmetries( diverge_model_t* model );
+void tu_symmstruct_delete( tu_symmstruct_t* symm );
+void tu_init_symmetries( diverge_model_t* model );
 
 #ifdef __cplusplus
 }

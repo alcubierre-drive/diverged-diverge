@@ -22,7 +22,7 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     diverge_model_t* mom = gen_square_lat_hub(6,6,1,1);
     diverge_model_internals_tu(mom, 1.1);
 
-    projection_t* ProjMom = projection_init(mom);
+    tu_projection_t* ProjMom = tu_projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
     tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, LoopMom, 1,1,1,0 );
 
@@ -64,7 +64,7 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     tu_vertex_free( VertOrb );
     tu_vertex_free( VertMom );
     tu_prop_free( LoopMom );
-    projection_free( ProjMom );
+    tu_projection_free( ProjMom );
     diverge_model_free(mom);
     free(r1);
     free(r2);
@@ -75,7 +75,7 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
     diverge_model_t* mom = gen_honeycomb_lat_hub(6,6,1,1);
     diverge_model_internals_tu(mom, 0.7);
 
-    projection_t* ProjMom = projection_init(mom);
+    tu_projection_t* ProjMom = tu_projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
     tu_vertex_t* VertMom = tu_vertex_init( mom, ProjMom, LoopMom, 1,1,1,0 );
 
@@ -117,7 +117,7 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
     tu_vertex_free( VertOrb );
     tu_vertex_free( VertMom );
     tu_prop_free( LoopMom );
-    projection_free( ProjMom );
+    tu_projection_free( ProjMom );
     diverge_model_free(mom);
     free(r1);
     free(r2);

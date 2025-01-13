@@ -44,7 +44,7 @@ struct diverge_flow_step_t {
     npatch_flow_step_conf_t* patch_step_conf;
 
     // tu structs
-    projection_t* tu_proj;
+    tu_projection_t* tu_proj;
     tu_prop_t* tu_loop;
     tu_vertex_t* tu_vertex;
     tu_stepper_t* tu_step;

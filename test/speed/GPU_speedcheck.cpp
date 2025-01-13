@@ -45,7 +45,7 @@ TEST_CASE("loop proj", "[.][projspeed]") {
     MPILoglevelWrapper LL(5);
     diverge_model_t* mom = gen_honeycomb_lat_hub(30,30,1,1);
     diverge_model_internals_tu(mom, 2.5);
-    projection_t* ProjMom = projection_init(mom);
+    tu_projection_t* ProjMom = tu_projection_init(mom);
     tu_prop_t* LoopMom = tu_prop_init(mom);
     tu_vertex_t* VertMom = tu_vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
     complex128_t* r2 = (complex128_t*)calloc(VertMom->full_vert_size,sizeof(complex128_t));
@@ -60,7 +60,7 @@ TEST_CASE("loop proj", "[.][projspeed]") {
 
     tu_vertex_free( VertMom );
     tu_prop_free( LoopMom );
-    projection_free( ProjMom );
+    tu_projection_free( ProjMom );
     diverge_model_free(mom);
     free(r2);
 }

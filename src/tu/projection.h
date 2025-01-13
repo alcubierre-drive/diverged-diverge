@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-struct projection_t {
+struct tu_projection_t {
     cuda_proj_descr_t proj_descr;
     complex128_t* my_prefac_reco;
     complex128_t* my_prefac_proj;
@@ -62,10 +62,10 @@ struct projection_t {
     VECTOR_DECL( index_t, DP_r )
     VECTOR_DECL( index_t, PD_r )
 };
-typedef struct projection_t projection_t;
+typedef struct tu_projection_t tu_projection_t;
 
-projection_t* projection_init( const diverge_model_t* model );
-void projection_free( projection_t* p );
+tu_projection_t* tu_projection_init( const diverge_model_t* model );
+void tu_projection_free( tu_projection_t* p );
 
 #ifdef __cplusplus
 }
