@@ -113,7 +113,7 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         if (model->nk[d] == 0) model->nk[d] = 1;
         if (model->nkf[d] == 0) model->nkf[d] = 1;
     }
-    mpi_log_printf("model is %i dimensional \n", intls->dim);
+    mpi_log_printf("model is %iD\n", intls->dim);
 
     index_t nk = kdim(model->nk),
             nktot = kdimtot(model->nk, model->nkf),
