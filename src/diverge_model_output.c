@@ -389,7 +389,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
                         out[cnt++] = kf[band_indices[i]*3+d];
                 }
             } else {
-                mpi_vrb_printf("generating bandstructure with %li points per segment\n", npath );
+                mpi_vrb_printf("generating bandstructure with %i points per segment\n", npath );
                 generate_bandstructure( mod, (double*)(buf+ibuf[100]), npath );
             }
         }
