@@ -295,9 +295,8 @@ int rank_from_index( const vector<index_t>& qstarts, const vector<index_t>& qsto
 #define MERGESORT_COMP( x, y ) ( (x).target_rank - (y).target_rank )
 MERGESORT_IMPL( mergesort, SymmetryOperation )
 
-SymmetryCommunicatorFactory::SymmetryCommunicatorFactory( SymmetryTransform* st, dist_info* mpi_info,
-        const index_t* k1m2, const index_t* k1p2, index_t qstart, index_t qstop, index_t nk, index_t nb ) {
-    _mpi = mpi_info;
+SymmetryCommunicatorFactory::SymmetryCommunicatorFactory( SymmetryTransform* st, const index_t* k1m2,
+        const index_t* k1p2, index_t qstart, index_t qstop, index_t nk, index_t nb ) {
     _st = st;
     _qstart = qstart;
     _qstop = qstop;
@@ -433,13 +432,12 @@ SymmetryCommunication SymmetryCommunicatorFactory::gen_communication( index_t sy
     return result;
 }
 
-LoopSymmetrizer::LoopSymmetrizer( SymmetryCommunicatorFactory* factory, dist_info* mpi_info ) {
+LoopSymmetrizer::LoopSymmetrizer( SymmetryCommunicatorFactory* factory ) {
     if (factory == nullptr) {
         _can_transform = false;
         _nsym = 0;
     } else {
         _can_transform = true;
-        _mpi = mpi_info;
         _nsym = factory->get_nsym();
         _loop_size = factory->get_loop_size();
         for (int i=0; i<_nsym; ++i) {
@@ -451,39 +449,6 @@ LoopSymmetrizer::LoopSymmetrizer( SymmetryCommunicatorFactory* factory, dist_inf
         _loop_buf.resize( _loop_size );
     }
 }
-
-/*
-static array<index_t,4> unravel_index( index_t idx, const array<index_t,4>& shape ) {
-    array<index_t,4> indices;
-    index_t rem = idx;
-
-    idx /= (shape[1]*shape[2]*shape[3]);
-    rem %= (shape[1]*shape[2]*shape[3]);
-    indices[0] = idx;
-    idx = rem;
-
-    idx /= (shape[2]*shape[3]);
-    rem %= (shape[2]*shape[3]);
-    indices[1] = idx;
-    idx = rem;
-
-    idx /= (shape[3]);
-    rem %= (shape[3]);
-    indices[2] = idx;
-    idx = rem;
-
-    indices[3] = idx;
-    return indices;
-}
-
-static index_t ravel_index( const array<index_t,4>& indices, const array<index_t,4>& shape ) {
-    index_t x = indices[0] * shape[1]*shape[2]*shape[3] +
-              indices[1] * shape[2]*shape[3] +
-              indices[2] * shape[3] +
-              indices[3];
-    return x;
-}
-*/
 
 int LoopSymmetrizer::operator()( complex128_t* loop_in, complex128_t* loop_out, index_t sym, char chan ) {
     if (!_can_transform) return 1;

@@ -16,10 +16,9 @@ class Loops {
         ~Loops();
         complex128_t* X_P(double Lambda);
         complex128_t* X_C(double Lambda);
-        /* FRG_Data* get_frg_info() const { return _frg; } */
         index_t get_qstart() const { return _qstart; }
-        index_t get_qstop() const { return _qstop; }
-        index_t get_qsize() const { return _qstop-_qstart; }
+        index_t get_qstop() const { return _qstart+_qsize; }
+        index_t get_qsize() const { return _qsize; }
 
         LoopSymmetrizer* get_symmetrizer(void) { return _SYM; }
         void set_symmetrizer( LoopSymmetrizer* S ) { _SYM = S; }
@@ -45,12 +44,11 @@ class Loops {
         complex128_t* _X_C;
         double _max_P = 0.0;
         double _max_C = 0.0;
-        index_t _qstart, _qstop;
-        index_t _nk, _nb, _qsize, _Xsize;
+        index_t _qstart, _qsize;
+        index_t _nk, _nb, _Xsize;
 
         index_t _nkf, *_kfrev, *_k1m2;
         double* _kfweights;
-        bool _formfac_free = false;
         complex128_t* _formfac;
         index_t _nff;
 

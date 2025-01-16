@@ -10,14 +10,6 @@ class VertexMemory;
 class Loops;
 class LoopSymmetrizer;
 
-struct fluctutaions_t {
-    char channel;
-    vector<index_t> qvec;
-    vector<vector<complex128_t>> data;
-};
-
-vector<fluctutaions_t> gen_fluctuations_structs( string config_file, string data_file, index_t nk, index_t nb );
-
 class FlowStep {
     public:
         FlowStep( VertexMemory* V, Loops* L, LoopSymmetrizer* LS, bool P = true,
@@ -27,8 +19,6 @@ class FlowStep {
         void print_timings( void );
         bool is_SU2( void ) { return _SU2; }
         void set_D_channel_degeneracy( double nrm );
-        int get_mpi_rank( void ) const;
-        void set_fluctuations_to_remove( vector<fluctutaions_t> which ) { _remove_fluctuations = which; }
 
         vector<double> get_timings( void ) const {
             return { _reorder_time, _loop_time, _loop_symm_time,
@@ -54,8 +44,6 @@ class FlowStep {
         void _set_dv_zero();
         double _get_dv( char channel, double Lambda, double dLambda );
         double _add_dv_to_v();
-
-        vector<fluctutaions_t> _remove_fluctuations;
 
         array<double,5> _norms;
         double _reorder_time = 0;

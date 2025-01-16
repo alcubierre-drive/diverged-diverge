@@ -48,20 +48,18 @@ Loops::Loops( diverge_model_t* dmod ) {
 
     _qstart = V->get_qdispl();
     _qsize = V->get_qcount();
-    _qstop = _qstart + _qsize;
     _Xsize = _qsize*_nk*_nb*_nb*_nb*_nb;
     _X_P = (complex128_t*)malloc( _Xsize*sizeof(complex128_t) );
     _X_C = (complex128_t*)malloc( _Xsize*sizeof(complex128_t) );
 
     if (S != NULL) {
-        SymmetryCommunicatorFactory lsym_fac( S, V->get_mpi_info(),
-            _k1m2, _dmod->internals->grid_k1p2, _qstart, _qstop, _nk, _nb );
-        set_symmetrizer( new LoopSymmetrizer( &lsym_fac, V->get_mpi_info() ) );
+        SymmetryCommunicatorFactory lsym_fac( S, _k1m2, _dmod->internals->grid_k1p2,
+                _qstart, _qstart+_qsize, _nk, _nb );
+        set_symmetrizer( new LoopSymmetrizer( &lsym_fac ) );
         _SYM_free = true;
     }
 
     _formfac = generate_trivial_formfactors( dmod, _nff );
-    _formfac_free = true;
 }
 
 Loops::~Loops() {
@@ -74,8 +72,7 @@ Loops::~Loops() {
     if (_SYM_free)
         delete _SYM;
 
-    if (_formfac_free)
-        free(_formfac);
+    free(_formfac);
 }
 
 index_t Loops::get_kzero(void) {
@@ -112,10 +109,10 @@ void Loops::_greens_cache_fill(double Lambda) {
 complex128_t* Loops::X_P(double Lambda) {
     _greens_cache_fill(Lambda);
     frg_loop_calc_P_greens( _X_P, _greens_cache_p, _greens_cache_m,
-            _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
+            _qstart, _qstart+_qsize, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     if (_dmod->gproj != NULL)
         frg_loop_calc_P_greens<true>( _X_P, _greens_proj_cache_p, _greens_proj_cache_m,
-            _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
+            _qstart, _qstart+_qsize, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     _max_P = absmax( _X_P, _Xsize );
     return _X_P;
 }
@@ -123,10 +120,10 @@ complex128_t* Loops::X_P(double Lambda) {
 complex128_t* Loops::X_C(double Lambda) {
     _greens_cache_fill(Lambda);
     frg_loop_calc_C_greens( _X_C, _greens_cache_p, _greens_cache_m,
-            _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
+            _qstart, _qstart+_qsize, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     if (_dmod->gproj != NULL)
         frg_loop_calc_C_greens<true>( _X_C, _greens_proj_cache_p, _greens_proj_cache_m,
-            _qstart, _qstop, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
+            _qstart, _qstart+_qsize, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     _max_C = absmax( _X_C, _Xsize );
     return _X_C;
 }

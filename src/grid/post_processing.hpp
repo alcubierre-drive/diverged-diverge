@@ -78,7 +78,6 @@ class PostProcessing {
 
         vector<index_t> _qstartstops();
         int _find_q_zero_rank();
-        MPI_Comm _comm;
 
         void _communicate_linearized_gaps_to_master();
         void _communicate_susceptibility_to_master( char chan );

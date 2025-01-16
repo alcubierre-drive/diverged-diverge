@@ -103,9 +103,8 @@ typedef struct {
 
 class SymmetryCommunicatorFactory {
     public:
-        SymmetryCommunicatorFactory( SymmetryTransform* st, dist_info* mpi_info,
-                const index_t* k1m2, const index_t* k1p2, index_t qstart, index_t qstop,
-                index_t nk, index_t nb );
+        SymmetryCommunicatorFactory( SymmetryTransform* st, const index_t* k1m2,
+                const index_t* k1p2, index_t qstart, index_t qstop, index_t nk, index_t nb );
         ~SymmetryCommunicatorFactory();
 
         index_t get_nsym() { return _st->get_nsym(); }
@@ -117,7 +116,6 @@ class SymmetryCommunicatorFactory {
         }
     private:
         SymmetryTransform* _st;
-        dist_info* _mpi;
         vector<index_t> _qstartstops();
         vector<index_t> _qstarts;
         vector<index_t> _qstops;
@@ -142,7 +140,7 @@ class SymmetryCommunicatorFactory {
 
 class LoopSymmetrizer {
     public:
-        LoopSymmetrizer( SymmetryCommunicatorFactory* factory, dist_info* mpi_info );
+        LoopSymmetrizer( SymmetryCommunicatorFactory* factory );
         complex128_t* operator()( complex128_t* loop_in, char chan );
         void setDebugMode() { _debug = true; }
         bool check( complex128_t* loop_in, char chan );
@@ -154,7 +152,6 @@ class LoopSymmetrizer {
         bool _debug = false;
         vector<SymmetryCommunication> _comms_P;
         vector<SymmetryCommunication> _comms_C;
-        dist_info* _mpi;
         vector<complex128_t> _send_buf;
         vector<complex128_t> _recv_buf;
         vector<complex128_t> _loop_buf;

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "typedefs.hpp"
-typedef struct dist_info dist_info;
+#include "reorder.h"
 
 namespace grid {
 
@@ -11,8 +11,7 @@ class IndexGenerator;
 
 class VertexMemory {
     public:
-        VertexMemory( MPI_Comm comm, index_t nk, index_t nb, index_t* k1m2,
-                index_t* k1p2, bool SU2, index_t* k3map = nullptr );
+        VertexMemory( index_t nk, index_t nb, index_t* k1m2, index_t* k1p2, bool SU2 );
 
         ~VertexMemory();
 
@@ -36,7 +35,6 @@ class VertexMemory {
         complex128_t* get_send_pack(void) const { return send_pack; }
         complex128_t* get_recv_pack(void) const { return recv_pack; }
 
-        dist_info* get_mpi_info(void) const { return _mpi_info; }
         bool get_SU2(void) const { return _SU2; }
         index_t get_size(void) const { return _size; }
 
@@ -46,9 +44,6 @@ class VertexMemory {
         array<bool,3> get_sub_D(void) const { return _sub_D; }
 
         void overwrite_transform( int send, int recv, string new_name );
-
-        // additional buffer may be NULL. In this case, buf_in is overwritten
-        void change_basis( complex128_t* buf_in, complex128_t* buf_out, complex128_t* buf_additional, complex128_t* trafo );
 
         // anti-symmetrizes vertex. factor 0.25 means we average. 0.5 means we
         // 'extend' the C/D channel vertex to all channels
@@ -60,14 +55,10 @@ class VertexMemory {
 
         void print_memory_requirement(void);
 
-        void remove_projected_components( complex128_t* buf, complex128_t* aux_buf,
-                char channel, const vector<index_t>& qvec, const vector<complex128_t*>& U_matrices );
-
-        index_t get_qdispl( void ) const { return _qdispls[_myrank]; }
-        index_t get_qcount( void ) const { return _qcounts[_myrank]; }
+        index_t get_qdispl( void ) const { return _dist->qdispls[_dist->myrank]; }
+        index_t get_qcount( void ) const { return _dist->qcounts[_dist->myrank]; }
 
     private:
-        dist_info* _mpi_info;
         void _alloc_map_buffers();
         void _gen_index_maps();
         void _alloc_vertex_buffers();
@@ -85,8 +76,7 @@ class VertexMemory {
         // index distribution info
         index_t _myrank, _nranks;
         index_t *_qcounts, *_qdispls, *_counts, *_displs;
-
-        void _change_basis_k123( complex128_t* vertex_inout, complex128_t* U );
+        dist_info_t* _dist;
 
         static constexpr int num_maps = 8;
         array<index_t*,num_maps> send_recv_maps;
@@ -98,7 +88,7 @@ class VertexMemory {
         bool _was_sub_D_modified = false;
         array<bool,3> _sub_D;
 
-        const index_t *k1m2, *k1p2, *k3map;
+        const index_t *k1m2, *k1p2;
 };
 
 }

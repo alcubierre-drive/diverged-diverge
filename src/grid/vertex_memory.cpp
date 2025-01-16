@@ -15,9 +15,8 @@
 
 namespace grid {
 
-VertexMemory::VertexMemory( MPI_Comm comm, index_t nk, index_t nb,
-        index_t* k1m2_, index_t* k1p2_, bool SU2, index_t* k3map_ ) :
-    _nk(nk), _nb(nb), _SU2(SU2), k1m2(k1m2_), k1p2(k1p2_), k3map(k3map_) {
+VertexMemory::VertexMemory( index_t nk, index_t nb, index_t* k1m2_, index_t* k1p2_, bool SU2 ) :
+    _nk(nk), _nb(nb), _SU2(SU2), k1m2(k1m2_), k1p2(k1p2_) {
 
     _nranks = diverge_mpi_comm_size();
     _myrank = diverge_mpi_comm_rank();
@@ -29,8 +28,7 @@ VertexMemory::VertexMemory( MPI_Comm comm, index_t nk, index_t nb,
     _displs = _counts + _nranks;
     for (int i=0; i<_nranks*2; ++i) _counts[i] = _qcounts[i] * POW2(nk)*POW4(nb);
 
-    _mpi_info = new dist_info;
-    gen_dist_info( _mpi_info, _displs, _counts, comm );
+    _dist = dist_info_init( nk, nb );
 
     print_memory_requirement();
 
@@ -41,8 +39,7 @@ VertexMemory::VertexMemory( MPI_Comm comm, index_t nk, index_t nb,
 
 VertexMemory::~VertexMemory() {
     _dealloc_buffers();
-    free_dist_info( _mpi_info );
-    delete _mpi_info;
+    dist_info_free( _dist );
     free( _qcounts );
     free( _counts );
 }
@@ -123,7 +120,7 @@ void VertexMemory::init_from_qbuf( const complex128_t* qbuf_in, char chan_in, in
 
 void VertexMemory::print_memory_requirement() {
     index_t memory = _memory_requirement();
-    vector<index_t> memory_per_rank(_mpi_info->nranks);
+    vector<index_t> memory_per_rank(_dist->nranks);
     diverge_mpi_allgather_index( &memory, memory_per_rank.data(), 1 );
 
     double mean_mem = 0.;
@@ -135,42 +132,6 @@ void VertexMemory::print_memory_requirement() {
     double GB = 1024.*1024.*1024.;
 
     mpi_vrb_printf( "grid vertex, mem per rank: %.1fGB-(%.1fGB)-%.1fGB\n", min_mem/GB, mean_mem/GB, max_mem/GB );
-}
-
-void VertexMemory::remove_projected_components( complex128_t* buf, complex128_t* aux_buf,
-        char channel, const vector<index_t>& qvec,
-        const vector<complex128_t*>& U_matrices ) {
-    VertexMemory& V = *this;
-    string back_trafo = "";
-    if (channel == 'P') {
-        V( buf, aux_buf, "D_to_P", false, 1.0 );
-        back_trafo = "P_to_D";
-    }
-    if (channel == 'C') {
-        if (_SU2) {
-            V( buf, aux_buf, "D_to_C", false, 1.0 );
-            back_trafo = "C_to_D";
-        } else {
-            V( buf, aux_buf, "D_swap_3_and_4", false, 1.0 );
-            back_trafo = "D_swap_3_and_4";
-        }
-    }
-    if (channel == 'D') {
-        aux_buf = buf;
-    }
-    for (size_t i=0; i<qvec.size(); ++i) {
-        index_t global_start_idx = qvec[i] * _nk * _nk * _nb * _nb * _nb * _nb;
-        if (global_start_idx >= _mpi_info->starts[_mpi_info->myrank] &&
-            global_start_idx < _mpi_info->stops[_mpi_info->myrank]) {
-            index_t local_start_idx = global_start_idx - _mpi_info->starts[_mpi_info->myrank];
-            Map<MatXcd> V_chan_mat(aux_buf + local_start_idx, _nk*_nb*_nb, _nk*_nb*_nb);
-            Map<MatXcd> U_proj(U_matrices[i], _nk*_nb*_nb, 1);
-            MatXcd V_projected = U_proj.adjoint() * V_chan_mat * U_proj;
-            V_chan_mat -= U_proj * V_projected * U_proj.adjoint();
-        }
-    }
-    if (back_trafo != "" && aux_buf != buf)
-        V(aux_buf, buf, back_trafo, false, 1.0 );
 }
 
 void VertexMemory::operator()( const complex128_t* buf_in, complex128_t* buf_out, char chan1, char chan2, bool add, double scale ) {
@@ -210,7 +171,7 @@ void VertexMemory::operator()( const complex128_t* buf_in, complex128_t* buf_out
     full_pack_exchange( buf_in, buf_out,
             send_recv_maps[send_id], send_pack, send_recv_displs[send_id], send_recv_counts[send_id],
             send_recv_maps[recv_id], recv_pack, send_recv_displs[recv_id], send_recv_counts[recv_id],
-            _mpi_info, add, scale );
+            _dist, add, scale );
 }
 
 void VertexMemory::operator()( const complex128_t* buf_in, complex128_t* buf_out, bool add,
@@ -241,8 +202,8 @@ int VertexMemory::_find_recv_transform(string name) {
 }
 
 void VertexMemory::_alloc_map_buffers() {
-    _size = _mpi_info->sizes[_mpi_info->myrank];
-    int nranks = _mpi_info->nranks;
+    _size = _dist->counts[_dist->myrank];
+    int nranks = _dist->nranks;
     for (size_t i=0; i<send_recv_maps.size()-(_SU2==0); ++i) {
         send_recv_maps[i] = (index_t*) calloc(_size, sizeof(index_t));
         send_recv_displs[i] = (int*) calloc(nranks, sizeof(int));
@@ -282,7 +243,7 @@ void VertexMemory::_gen_index_maps() {
     auto gen_D_to_P_index_map = [&](){
     gen_maps( send_recv_maps[0], send_recv_displs[0], send_recv_counts[0],
               send_recv_maps[1], send_recv_displs[1], send_recv_counts[1],
-              _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_D_to_P,
+              _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_to_P,
               index_gymnastics_P_to_D );
     send_recv_descr[0] = "D_to_P_send";
     send_recv_descr[1] = "D_to_P_recv";
@@ -292,7 +253,7 @@ void VertexMemory::_gen_index_maps() {
     auto gen_P_to_D_index_map = [&](){
     gen_maps( send_recv_maps[2], send_recv_displs[2], send_recv_counts[2],
               send_recv_maps[3], send_recv_displs[3], send_recv_counts[3],
-              _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_P_to_D,
+              _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_P_to_D,
               index_gymnastics_D_to_P );
     send_recv_descr[2] = "P_to_D_send";
     send_recv_descr[3] = "P_to_D_recv";
@@ -303,7 +264,7 @@ void VertexMemory::_gen_index_maps() {
         auto gen_D_to_C_index_map = [&](){
         gen_maps( send_recv_maps[4], send_recv_displs[4], send_recv_counts[4],
                   send_recv_maps[5], send_recv_displs[5], send_recv_counts[5],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_D_to_C,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_to_C,
                   index_gymnastics_C_to_D );
         send_recv_descr[4] = "D_to_C_send";
         send_recv_descr[5] = "D_to_C_recv";
@@ -313,7 +274,7 @@ void VertexMemory::_gen_index_maps() {
         auto gen_C_to_D_index_map = [&](){
         gen_maps( send_recv_maps[6], send_recv_displs[6], send_recv_counts[6],
                   send_recv_maps[7], send_recv_displs[7], send_recv_counts[7],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_C_to_D,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_C_to_D,
                   index_gymnastics_D_to_C );
         send_recv_descr[6] = "C_to_D_send";
         send_recv_descr[7] = "C_to_D_recv";
@@ -323,7 +284,7 @@ void VertexMemory::_gen_index_maps() {
         auto gen_D_swap_3_and_4_index_map = [&](){
         gen_maps( send_recv_maps[4], send_recv_displs[4], send_recv_counts[4],
                   send_recv_maps[5], send_recv_displs[5], send_recv_counts[5],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_D_swap_3_and_4,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_swap_3_and_4,
                   index_gymnastics_D_swap_3_and_4 );
         send_recv_descr[4] = "D_swap_3_and_4_send";
         send_recv_descr[5] = "D_swap_3_and_4_recv";
@@ -335,7 +296,7 @@ void VertexMemory::_gen_index_maps() {
 }
 
 size_t VertexMemory::_memory_requirement() {
-    index_t size = _mpi_info->sizes[_mpi_info->myrank];
+    index_t size = _dist->counts[_dist->myrank];
     size_t total_memsize = sizeof(complex128_t) * (vertex_buffers.size()+2) * size +
                            sizeof(index_t) * (send_recv_maps.size()-(_SU2==0)) * size;
     return total_memsize;
@@ -345,62 +306,62 @@ void VertexMemory::overwrite_transform( int send, int recv, string new_name ) {
     if (new_name == "D_to_P")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_D_to_P,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_to_P,
                   index_gymnastics_P_to_D );
     else if (new_name == "P_to_D")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_P_to_D,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_P_to_D,
                   index_gymnastics_D_to_P );
     else if (new_name == "D_to_C")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_D_to_C,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_to_C,
                   index_gymnastics_C_to_D );
     else if (new_name == "C_to_D")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_C_to_D,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_C_to_D,
                   index_gymnastics_D_to_C );
     else if (new_name == "D_to_V")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_D_to_V,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_to_V,
                   index_gymnastics_V_to_D );
     else if (new_name == "V_to_D")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_V_to_D,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_V_to_D,
                   index_gymnastics_D_to_V );
     else if (new_name == "C_to_V")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_C_to_V,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_C_to_V,
                   index_gymnastics_V_to_C );
     else if (new_name == "V_to_C")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_V_to_C,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_V_to_C,
                   index_gymnastics_C_to_V );
     else if (new_name == "P_to_V")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_P_to_V,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_P_to_V,
                   index_gymnastics_V_to_P );
     else if (new_name == "V_to_P")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_V_to_P,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_V_to_P,
                   index_gymnastics_P_to_V );
     else if (new_name == "D_swap_3_and_4")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_D_swap_3_and_4,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_swap_3_and_4,
                   index_gymnastics_D_swap_3_and_4 );
     else if (new_name == "D_swap_1_and_2")
         gen_maps( send_recv_maps[send], send_recv_displs[send], send_recv_counts[send],
                   send_recv_maps[recv], send_recv_displs[recv], send_recv_counts[recv],
-                  _mpi_info, _nk, _nb, k1m2, k1p2, k3map, index_gymnastics_D_swap_1_and_2,
+                  _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_swap_1_and_2,
                   index_gymnastics_D_swap_1_and_2 );
     else {
         mpi_wrn_printf( "cannot find index gymnastics '%s'. skipping.\n", new_name.c_str() );
@@ -409,14 +370,6 @@ void VertexMemory::overwrite_transform( int send, int recv, string new_name ) {
 
     send_recv_descr[send] = new_name + "_send";
     send_recv_descr[recv] = new_name + "_recv";
-}
-
-void VertexMemory::change_basis( complex128_t* buf_in, complex128_t* buf_out, complex128_t* buf_additional, complex128_t* trafo ) {
-    complex128_t* buf = buf_additional == nullptr ? buf_in : buf_additional;
-    (*this)( buf_in, buf_out, "D_to_V", false, 1.0 );
-    _change_basis_k123( buf_out, trafo );
-    memcpy( buf, buf_out, _size*sizeof(complex128_t) );
-    (*this)( buf, buf_out, "V_to_D", false, 1.0 );
 }
 
 void VertexMemory::exchange_symmetry(double factor) {
@@ -466,7 +419,7 @@ void VertexMemory::write_to_file( string fname, char channel ) {
     }
 
     diverge_mpi_write_cdoub_to_file( fname.c_str(), vertex_buffers[1],
-            _mpi_info->starts[_mpi_info->myrank], get_size() );
+            _dist->displs[_dist->myrank], get_size() );
 }
 
 
@@ -509,51 +462,6 @@ void VertexMemory::get_vertex( complex128_t* buf, char channel ) {
 
 static inline index_t o2b_idx_order( const index_t& x, const index_t& y, const index_t& nb ) {
     return x*nb+y;
-}
-
-void VertexMemory::_change_basis_k123( complex128_t* V, complex128_t* U ) {
-    index_t nb = _nb;
-    index_t nk = _nk;
-    index_t bandstuff = nb*nb*nb*nb;
-    index_t start = _mpi_info->starts[_mpi_info->myrank];
-    index_t stop = _mpi_info->stops[_mpi_info->myrank];
-    index_t k1start = start / (nk*nk*bandstuff);
-    index_t k1stop = stop / (nk*nk*bandstuff);
-
-    const bool use_k3map = k3map != nullptr;
-
-    complex128_t* buffers = (complex128_t*) malloc(sizeof(complex128_t)*bandstuff*diverge_omp_num_threads());
-    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
-    for (int k1=k1start; k1<k1stop; ++k1)
-    for (int k2=0; k2<nk; ++k2)
-    for (int k3=0; k3<nk; ++k3) {
-        complex128_t* vertex_inout = V+((k1-k1start)*nk*nk + k2*nk + k3)*bandstuff;
-        int k4 = use_k3map ? k3map[nk*nk*k1 + nk*k2 + k3] :
-                             k1m2[k3+nk*k1p2[k1*nk+k2]];
-
-        complex128_t* vertex_buf = buffers + bandstuff * omp_get_thread_num();
-        memset( (void*)vertex_buf, 0, sizeof(complex128_t)*bandstuff );
-        for (int b1=0; b1<nb; ++b1)
-        for (int b2=0; b2<nb; ++b2)
-        for (int b3=0; b3<nb; ++b3)
-        for (int b4=0; b4<nb; ++b4) {
-            for (int c1=0; c1<nb; ++c1)
-            for (int c2=0; c2<nb; ++c2)
-            for (int c3=0; c3<nb; ++c3)
-            for (int c4=0; c4<nb; ++c4) {
-                int index_out = b1*nb*nb*nb+b2*nb*nb+b3*nb+b4;
-                int index_in  = c1*nb*nb*nb+c2*nb*nb+c3*nb+c4;
-                complex128_t Umatrix_index_out_index_in =
-                    std::conj(U[k1*nb*nb+ o2b_idx_order(c1,b1,nb) ]) *
-                    std::conj(U[k2*nb*nb+ o2b_idx_order(c2,b2,nb) ]) *
-                    U[k3*nb*nb+ o2b_idx_order(c3,b3,nb) ] *
-                    U[k4*nb*nb+ o2b_idx_order(c4,b4,nb) ];
-                vertex_buf[index_out] += Umatrix_index_out_index_in * vertex_inout[index_in];
-            }
-        }
-        memcpy( vertex_inout, vertex_buf, sizeof(complex128_t)*bandstuff );
-    }
-    free( buffers );
 }
 
 }

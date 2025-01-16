@@ -189,8 +189,8 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     intls->grid_greens_p_buf = (complex128_t*)calloc(intls->grid_nk*intls->grid_nkf*nb*nb, sizeof(complex128_t));
     intls->grid_greens_m_buf = (complex128_t*)calloc(intls->grid_nk*intls->grid_nkf*nb*nb, sizeof(complex128_t));
 
-    grid::VertexMemory* V = new grid::VertexMemory(diverge_mpi_get_comm(), intls->grid_nk,
-            intls->grid_nb, intls->grid_k1m2, intls->grid_k1p2, model->SU2 > 0);
+    grid::VertexMemory* V = new grid::VertexMemory(intls->grid_nk, intls->grid_nb,
+            intls->grid_k1m2, intls->grid_k1p2, model->SU2 > 0);
 
     // DEVELOPERS
     //

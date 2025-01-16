@@ -214,7 +214,6 @@ PostProcessing::PostProcessing( VertexMemory& V, Loops &L ) {
     _nb = _L->get_nb();
     _nff = _L->get_nff();
     _Xsize = _qsize * _nb * _nb * _nb * _nb * _nff;
-    _comm = _V->get_mpi_info()->comm;
 }
 
 PostProcessing::~PostProcessing() {
@@ -344,7 +343,7 @@ void PostProcessing::_communicate_linearized_gaps_to_master() {
     if (! (has_P || has_C || has_D) ) return;
 
     bool is_sender = (pack_P != nullptr) || (pack_C != nullptr) || (pack_D != nullptr);
-    bool is_master = _V->get_mpi_info()->myrank == 0;
+    bool is_master = diverge_mpi_comm_rank() == 0;
     int q_zero_rank = _find_q_zero_rank();
 
     if (is_sender && is_master) {
@@ -412,7 +411,7 @@ void PostProcessing::_communicate_susceptibility_to_master( char chan ) {
     for (unsigned i=1; i<susc_displs.size(); ++i) {
         susc_displs[i] = susc_displs[i-1] + susc_counts[i-1];
     }
-    int myrank = _V->get_mpi_info()->myrank;
+    int myrank = diverge_mpi_comm_rank();
 
     complex128_t* recv_buf = (chan == 'P') ? _V->vertex_buffers[1] :
                       (chan == 'C') ? _V->vertex_buffers[2] :
@@ -516,7 +515,7 @@ index_t* PostProcessing::to_file( const string& fname ) {
     header[62] = MAGIC_NUMBER_POST_PROCESSING;
     header[63] = total_size;
 
-    if (_V->get_mpi_info()->myrank != 0) return header;
+    if (diverge_mpi_comm_rank() != 0) return header;
 
     FILE* outfile = fopen( fname.c_str(), "w" );
     if (!outfile) {

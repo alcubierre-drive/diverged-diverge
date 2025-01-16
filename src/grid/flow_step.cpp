@@ -15,53 +15,6 @@
 
 namespace grid {
 
-vector<fluctutaions_t> gen_fluctuations_structs( string config_file,
-        string data_file, index_t nk, index_t nb ) {
-    std::ifstream cstr( config_file );
-    if (!cstr)
-        mpi_err_printf( "could not open '%s'\n", config_file.c_str() );
-    FILE* dstr = fopen( data_file.c_str(), "rb" );
-    if (!dstr)
-        mpi_err_printf( "could not open '%s'\n", data_file.c_str() );
-
-    vector<fluctutaions_t> result;
-    index_t q;
-    char chan;
-    char chan_prev = 'x';
-    vector<index_t> qvec_cache;
-    vector<vector<complex128_t>> data_cache;
-    while (cstr) {
-        cstr >> q;
-        cstr >> chan;
-        if (!cstr)
-            break;
-        if (chan != chan_prev && chan_prev != 'x') {
-            fluctutaions_t f;
-            f.channel = chan_prev;
-            f.qvec = qvec_cache;
-            f.data = data_cache;
-            result.push_back( f );
-            qvec_cache.clear();
-            data_cache.clear();
-        }
-        vector<complex128_t> data_cache_loc( nk*nb*nb );
-        index_t n_read = fread( data_cache_loc.data(), sizeof(complex128_t), nk*nb*nb, dstr );
-        if (n_read == nk*nb*nb) {
-            qvec_cache.push_back(q);
-            data_cache.push_back( data_cache_loc );
-            chan_prev = chan;
-        }
-    }
-    fluctutaions_t f;
-    f.channel = chan;
-    f.qvec = qvec_cache;
-    f.data = data_cache;
-    result.push_back( f );
-    fclose( dstr );
-
-    return result;
-}
-
 template<typename T>
 double dont_take_time( T x ) {
     x();
@@ -131,14 +84,6 @@ vector<double> FlowStep::operator()( double Lambda, double dLambda ) {
         result.push_back(Pmax);
         result.push_back(Dmax);
         result.push_back(Dmax);
-    }
-
-    for (fluctutaions_t& fluc: _remove_fluctuations) {
-        vector<complex128_t*> fluc_data;
-        for (vector<complex128_t>& v: fluc.data)
-            fluc_data.push_back(v.data());
-        _V->remove_projected_components( _V->vertex_buffers[1],
-                _V->vertex_buffers[2], toupper(fluc.channel), fluc.qvec, fluc_data );
     }
 
     result.push_back( _add_dv_to_v() );
@@ -269,11 +214,11 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
 void FlowStep::print_timings() {
     if (_num_calls < 1) return;
 
-    diverge_mpi_allreduce_double_sum( MPI_IN_PLACE, &_reorder_time,   1 );
-    diverge_mpi_allreduce_double_sum( MPI_IN_PLACE, &_loop_time,      1 );
-    diverge_mpi_allreduce_double_sum( MPI_IN_PLACE, &_loop_gemm_time, 1 );
-    diverge_mpi_allreduce_double_sum( MPI_IN_PLACE, &_contract_time,  1 );
-    diverge_mpi_allreduce_double_sum( MPI_IN_PLACE, &_max_time,       1 );
+    diverge_mpi_allreduce_double_max( MPI_IN_PLACE, &_reorder_time,   1 );
+    diverge_mpi_allreduce_double_max( MPI_IN_PLACE, &_loop_time,      1 );
+    diverge_mpi_allreduce_double_max( MPI_IN_PLACE, &_loop_gemm_time, 1 );
+    diverge_mpi_allreduce_double_max( MPI_IN_PLACE, &_contract_time,  1 );
+    diverge_mpi_allreduce_double_max( MPI_IN_PLACE, &_max_time,       1 );
     diverge_mpi_allreduce_double_max( MPI_IN_PLACE, &_loop_symm_time, 1 );
     int nranks = diverge_mpi_comm_size();
     _num_calls *= (double)nranks;
@@ -285,8 +230,6 @@ void FlowStep::print_timings() {
     mpi_tim_printf( "time per step max:       %5.2fs\n", _max_time/_num_calls       );
     _num_calls /= (double)nranks;
 }
-
-int FlowStep::get_mpi_rank() const { return _V->get_mpi_info()->myrank; }
 
 void FlowStep::set_D_channel_degeneracy( double nrm ) {
     if (_SU2)
