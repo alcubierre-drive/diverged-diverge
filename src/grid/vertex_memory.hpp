@@ -3,12 +3,10 @@
 #pragma once
 
 #include "typedefs.hpp"
+typedef struct dist_info dist_info;
 
 namespace grid {
 
-typedef struct dist_info dist_info;
-
-class IndexGymnastics;
 class IndexGenerator;
 
 class VertexMemory {
@@ -69,7 +67,6 @@ class VertexMemory {
 
     private:
         dist_info* _mpi_info;
-        MPI_Comm _comm;
         void _alloc_map_buffers();
         void _gen_index_maps();
         void _alloc_vertex_buffers();
@@ -83,7 +80,6 @@ class VertexMemory {
         const index_t _nb;
         const bool _SU2;
         index_t _size;
-        const IndexGymnastics* _IG;
         IndexGenerator* _InGen;
 
         void _change_basis_k123( complex128_t* vertex_inout, complex128_t* U );
@@ -97,6 +93,8 @@ class VertexMemory {
 
         bool _was_sub_D_modified = false;
         array<bool,3> _sub_D;
+
+        const index_t *k1m2, *k1p2, *k3map;
 };
 
 }

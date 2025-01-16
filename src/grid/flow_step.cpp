@@ -3,7 +3,6 @@
 #include "flow_step.hpp"
 #include "loops.hpp"
 #include "vertex_memory.hpp"
-#include "reorder.hpp"
 #include "symmetry.hpp"
 
 #include "../misc/batched_gemms.h"
@@ -64,22 +63,14 @@ vector<fluctutaions_t> gen_fluctuations_structs( string config_file,
 }
 
 template<typename T>
-double __elapsed_time__( T x ) {
-    auto start = std::chrono::high_resolution_clock::now();
-    x();
-    auto stop = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = stop - start;
-    return elapsed.count();
-}
-template<typename T>
-double __no_elapsed_time__( T x ) {
+double dont_take_time( T x ) {
     x();
     return 0;
 }
 #ifndef SKIP_FLOW_TIMING
-#define elapsed_time( fun ) __elapsed_time__( [&](){ fun; } )
+#define elapsed_time( fun ) take_time( [&](){ fun; } )
 #else // SKIP_FLOW_TIMING
-#define elapsed_time( fun ) __no_elapsed_time__( [&](){ fun; } )
+#define elapsed_time( fun ) dont_take_time( [&](){ fun; } )
 #endif // SKIP_FLOW_TIMING
 
 static double kfnormgen( const double* kfweights, index_t nkf ) {

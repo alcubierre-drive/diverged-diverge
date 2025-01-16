@@ -2,12 +2,14 @@
 
 #pragma once
 
-#include "reorder.hpp"
+#include "reorder.h"
 #include "../diverge_Eigen3.hpp"
 
 #include <vector>
 #include <array>
-#include <complex>
+
+using std::vector;
+using std::array;
 
 namespace grid {
 

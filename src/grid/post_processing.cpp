@@ -7,7 +7,7 @@
 #include "../misc/batched_gemms.h"
 #include "vertex_memory.hpp"
 #include "loops.hpp"
-#include "reorder.hpp"
+#include "reorder.h"
 
 #include <thread>
 #include <numeric>
