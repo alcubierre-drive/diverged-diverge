@@ -19,12 +19,11 @@ using std::array;
 using std::string;
 using std::stringstream;
 
-template<typename T>
-double take_time( T x ) {
-    double tick = diverge_mpi_wtime();
-    x();
-    double tock = diverge_mpi_wtime();
-    return tock - tick;
+#define TICK_TOCK( output, ... ) { \
+    double tick = diverge_mpi_wtime(); \
+    __VA_ARGS__; \
+    double tock = diverge_mpi_wtime(); \
+    output += tock - tick; \
 }
 
 static inline double absmax( const complex128_t* ary, index_t cnt ) {

@@ -240,48 +240,44 @@ void VertexMemory::_dealloc_buffers() {
 }
 
 void VertexMemory::_gen_index_maps() {
-    auto gen_D_to_P_index_map = [&](){
+    double tick = diverge_mpi_wtime();
     gen_maps( send_recv_maps[0], send_recv_displs[0], send_recv_counts[0],
               send_recv_maps[1], send_recv_displs[1], send_recv_counts[1],
               _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_to_P,
               index_gymnastics_P_to_D );
     send_recv_descr[0] = "D_to_P_send";
     send_recv_descr[1] = "D_to_P_recv";
-    };
-    mpi_tim_printf( "gen_D_to_P_index_map() took %5.2fs\n", take_time( gen_D_to_P_index_map ) );
+    mpi_tim_printf( "gen_D_to_P_index_map() took %5.2fs\n", diverge_mpi_wtime()-tick );
 
-    auto gen_P_to_D_index_map = [&](){
+    tick = diverge_mpi_wtime();
     gen_maps( send_recv_maps[2], send_recv_displs[2], send_recv_counts[2],
               send_recv_maps[3], send_recv_displs[3], send_recv_counts[3],
               _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_P_to_D,
               index_gymnastics_D_to_P );
     send_recv_descr[2] = "P_to_D_send";
     send_recv_descr[3] = "P_to_D_recv";
-    };
-    mpi_tim_printf( "gen_P_to_D_index_map() took %5.2fs\n", take_time( gen_P_to_D_index_map ) );
+    mpi_tim_printf( "gen_P_to_D_index_map() took %5.2fs\n", diverge_mpi_wtime()-tick );
 
     if (_SU2) {
-        auto gen_D_to_C_index_map = [&](){
+        tick = diverge_mpi_wtime();
         gen_maps( send_recv_maps[4], send_recv_displs[4], send_recv_counts[4],
                   send_recv_maps[5], send_recv_displs[5], send_recv_counts[5],
                   _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_to_C,
                   index_gymnastics_C_to_D );
         send_recv_descr[4] = "D_to_C_send";
         send_recv_descr[5] = "D_to_C_recv";
-        };
-        mpi_tim_printf( "gen_D_to_C_index_map() took %5.2fs\n", take_time( gen_D_to_C_index_map ) );
+        mpi_tim_printf( "gen_D_to_C_index_map() took %5.2fs\n", diverge_mpi_wtime()-tick );
 
-        auto gen_C_to_D_index_map = [&](){
+        tick = diverge_mpi_wtime();
         gen_maps( send_recv_maps[6], send_recv_displs[6], send_recv_counts[6],
                   send_recv_maps[7], send_recv_displs[7], send_recv_counts[7],
                   _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_C_to_D,
                   index_gymnastics_D_to_C );
         send_recv_descr[6] = "C_to_D_send";
         send_recv_descr[7] = "C_to_D_recv";
-        };
-        mpi_tim_printf( "gen_C_to_D_index_map() took %5.2fs\n", take_time( gen_C_to_D_index_map ) );
+        mpi_tim_printf( "gen_C_to_D_index_map() took %5.2fs\n", diverge_mpi_wtime()-tick );
     } else {
-        auto gen_D_swap_3_and_4_index_map = [&](){
+        tick = diverge_mpi_wtime();
         gen_maps( send_recv_maps[4], send_recv_displs[4], send_recv_counts[4],
                   send_recv_maps[5], send_recv_displs[5], send_recv_counts[5],
                   _dist, _nk, _nb, k1m2, k1p2, index_gymnastics_D_swap_3_and_4,
@@ -290,8 +286,7 @@ void VertexMemory::_gen_index_maps() {
         send_recv_descr[5] = "D_swap_3_and_4_recv";
         send_recv_descr[6] = "None";
         send_recv_descr[7] = "None";
-        };
-        mpi_tim_printf( "gen_D_swap_3_and_4_index_map() took %5.2fs\n", take_time( gen_D_swap_3_and_4_index_map ) );
+        mpi_tim_printf( "gen_D_swap_3_and_4_index_map() took %5.2fs\n", diverge_mpi_wtime()-tick );
     }
 }
 

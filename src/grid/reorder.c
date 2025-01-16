@@ -147,7 +147,7 @@ void gen_maps( index_t* send_map, int* send_displs, int* send_counts,
     for (index_t i=0; i<size_full; ++i) {
         index_t ii = (newindex_tFun)( (oldindex_tFun)( i, nk, nb, k1m2, k1p2 ),
                 nk, nb, k1m2, k1p2  );
-        if (ii != i) dbg = i+1; break;
+        if (ii != i) { dbg = i+1; break; }
     }
     if (dbg != 0) mpi_err_printf( "not a unique map @ idx %li\n", dbg-1 );
     #endif
