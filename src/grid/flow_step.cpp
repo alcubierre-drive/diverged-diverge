@@ -8,12 +8,6 @@
 
 #include "../misc/batched_gemms.h"
 
-#include <algorithm>
-#include <cstring>
-#include <thread>
-#include <chrono>
-#include <fstream>
-
 namespace grid {
 
 #ifdef SKIP_FLOW_TIMING
@@ -99,11 +93,8 @@ vector<double> FlowStep::operator()( double Lambda, double dLambda ) {
 }
 
 void FlowStep::_set_dv_zero() {
-    complex128_t* d_vertex = _V->vertex_buffers[1];
-    index_t Vsize = _V->get_size();
-    memset( (void*)d_vertex, 0, Vsize*sizeof(complex128_t) );
-    _LP = nullptr;
-    _LC = nullptr;
+    ZERO_OUT( _V->vertex_buffers[1], _V->get_size() );
+    _LP = _LC = nullptr;
 }
 
 double FlowStep::_add_dv_to_v() {
@@ -189,7 +180,7 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
             TICK_TOCK( _reorder_time,   V( right, dv, "D_swap_3_and_4", true, _norms[1]*dLambda ) );
         }
     }
-    return std::abs(vmax);
+    return vmax;
 }
 
 void FlowStep::print_timings() {

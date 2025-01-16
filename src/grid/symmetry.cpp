@@ -2,6 +2,7 @@
 
 #include "symmetry.hpp"
 #include "../misc/mergesort.h"
+#include "../diverge_internals_struct.h"
 
 namespace grid {
 
@@ -13,47 +14,6 @@ struct symm_props {
     int idx_post_symm;
     int R1, R2, R3;
 };
-
-template<typename Ostream>
-Ostream& operator<<( Ostream& str, const symm_props& sp ) {
-    str << "S:" << sp.idx_pre_symm << "->" << sp.idx_post_symm << "(" <<
-        sp.R1 << "," << sp.R2 << "," << sp.R3 << ")";
-    return str;
-}
-
-template<typename Ostream>
-Ostream& operator<<( Ostream& str, const vector<symm_props>& vsp ) {
-    int n = vsp.size();
-    if (n == 0)
-        return str;
-    else if (n == 1) {
-        str << vsp[0];
-        return str;
-    } else {
-        str << vsp[0];
-        for (int i=1; i<n; ++i) {
-            str << "\n" << vsp[i];
-        }
-        return str;
-    }
-}
-
-template<typename Ostream>
-Ostream& operator<<( Ostream& str, const vector<index_t>& ksym ) {
-    int n = ksym.size();
-    if (n == 0)
-        return str;
-    else if (n == 1) {
-        str << 0 << "->" << ksym[0];
-        return str;
-    } else {
-        str << 0 << "->" << ksym[0];
-        for (int i=1; i<n; ++i) {
-            str << "\n" << i << "->" << ksym[i];
-        }
-        return str;
-    }
-}
 
 static vector<symm_props> gen_symm_props( const vector<Vec3d>& basis,
         const array<Vec3d,3>& lattice, const Mat3d& symm );
@@ -374,47 +334,35 @@ SymmetryCommunication SymmetryCommunicatorFactory::gen_communication( index_t sy
                                                    get_symop<'C'>(symm);
     int nranks = diverge_mpi_comm_size();
     int rank = diverge_mpi_comm_rank();
-    vector<index_t> send_counts(nranks);
-    for (index_t i=0; i<_loop_size; ++i)
-        send_counts[symop[i].target_rank]++;
-    vector<index_t> send_displs(nranks);
-    send_displs[0] = 0;
-    for (int i=1; i<nranks; ++i)
-        send_displs[i] = send_displs[i-1] + send_counts[i-1];
+    index_t* send_counts = (index_t*)calloc(nranks, sizeof*send_counts);
+    for (index_t i=0; i<_loop_size; ++i) send_counts[symop[i].target_rank]++;
+    index_t* send_displs = (index_t*)calloc(nranks, sizeof*send_displs);
+    for (int i=1; i<nranks; ++i) send_displs[i] = send_displs[i-1] + send_counts[i-1];
 
-    MatXi all_send_counts( nranks, nranks );
-    diverge_mpi_allgather_index( send_counts.data(), all_send_counts.data(), nranks );
+    index_t* all_send_counts = (index_t*)calloc(POW2(nranks), sizeof*all_send_counts);
+    diverge_mpi_allgather_index( send_counts, all_send_counts, nranks );
 
-    VecXi recv_counts_ = all_send_counts.row( rank );
-    vector<index_t> recv_counts( nranks );
-    vector<index_t> recv_displs( nranks );
-    for (int i=0; i<nranks; ++i)
-        recv_counts[i] = recv_counts_[i];
-    recv_displs[0] = 0;
-    for (int i=1; i<nranks; ++i)
-        recv_displs[i] = recv_displs[i-1] + recv_counts[i-1];
+    index_t* recv_counts = (index_t*)calloc(nranks, sizeof*recv_counts);
+    index_t* recv_displs = (index_t*)calloc(nranks, sizeof*recv_displs);
+    for (int i=0; i<nranks; ++i) recv_counts[i] = all_send_counts[IDX2(i,rank,nranks)];
+    for (int i=1; i<nranks; ++i) recv_displs[i] = recv_displs[i-1] + recv_counts[i-1];
 
     vector<SymmetryOperation> recv_op(_loop_size);
 
-    diverge_mpi_alltoallv_bytes( symop, send_counts.data(), send_displs.data(),
-                                 recv_op.data(), recv_counts.data(), recv_displs.data(),
-                                 sizeof(SymmetryOperation) );
+    diverge_mpi_alltoallv_bytes( symop, send_counts, send_displs, recv_op.data(),
+            recv_counts, recv_displs, sizeof(SymmetryOperation) );
 
     SymmetryCommunication result;
-    result.reorder_before_send.resize(_loop_size);
-    result.phase_before_send.resize(_loop_size);
-    result.send_counts.resize(nranks);
-    result.send_displs.resize(nranks);
-    result.recv_counts.resize(nranks);
-    result.recv_displs.resize(nranks);
-    result.reorder_after_recv.resize(_loop_size);
 
-    for (int i=0; i<nranks; ++i) {
-        result.send_counts[i] = send_counts[i];
-        result.send_displs[i] = send_displs[i];
-        result.recv_counts[i] = recv_counts[i];
-        result.recv_displs[i] = recv_displs[i];
-    }
+    result.reorder_before_send = (index_t*)calloc(_loop_size, sizeof*result.reorder_before_send);
+    result.phase_before_send = (complex128_t*)calloc(_loop_size, sizeof*result.phase_before_send);
+    result.reorder_after_recv = (index_t*)calloc(_loop_size, sizeof*result.reorder_after_recv);
+    result.send_counts = send_counts;
+    result.send_displs = send_displs;
+    result.recv_counts = recv_counts;
+    result.recv_displs = recv_displs;
+
+    free( all_send_counts );
 
     index_t qfac = _nk * _nb * _nb * _nb * _nb;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -425,11 +373,28 @@ SymmetryCommunication SymmetryCommunicatorFactory::gen_communication( index_t sy
     }
 
     result.chan = chan;
-    result.use_orbital_matrix = _st->getMatrixUse();
-    if (result.use_orbital_matrix)
-        result.orbital_matrix = _st->getOrbitalMatrices()[symm];
+    if (_st->getMatrixUse()) {
+        MatXcd M = _st->getOrbitalMatrices()[symm];
+        result.nb = M.rows();
+        result.orbital_matrix = (complex128_t*)calloc(POW2(result.nb), sizeof*result.orbital_matrix);
+        Map<MatXcd>( result.orbital_matrix, result.nb, result.nb ) = M.transpose();
+    } else {
+        result.orbital_matrix = NULL;
+        result.nb = 0;
+    }
 
     return result;
+}
+
+void SymmetryCommunication_free( SymmetryCommunication S ) {
+    free( S.reorder_before_send );
+    free( S.phase_before_send );
+    free( S.send_counts );
+    free( S.send_displs );
+    free( S.recv_counts );
+    free( S.recv_displs );
+    free( S.reorder_after_recv );
+    free( S.orbital_matrix );
 }
 
 LoopSymmetrizer::LoopSymmetrizer( SymmetryCommunicatorFactory* factory ) {
@@ -440,9 +405,11 @@ LoopSymmetrizer::LoopSymmetrizer( SymmetryCommunicatorFactory* factory ) {
         _can_transform = true;
         _nsym = factory->get_nsym();
         _loop_size = factory->get_loop_size();
+        _comms_P = (SymmetryCommunication*)calloc(_nsym, sizeof*_comms_P);
+        _comms_C = (SymmetryCommunication*)calloc(_nsym, sizeof*_comms_P);
         for (int i=0; i<_nsym; ++i) {
-            _comms_P.push_back( (*factory)( i, 'P' ) );
-            _comms_C.push_back( (*factory)( i, 'C' ) );
+            _comms_P[i] = (*factory)( i, 'P' );
+            _comms_C[i] = (*factory)( i, 'C' );
         }
         _send_buf.resize( _loop_size );
         _recv_buf.resize( _loop_size );
@@ -450,61 +417,62 @@ LoopSymmetrizer::LoopSymmetrizer( SymmetryCommunicatorFactory* factory ) {
     }
 }
 
+LoopSymmetrizer::~LoopSymmetrizer() {
+    for (int i=0; i<_nsym; ++i)
+        SymmetryCommunication_free( _comms_P[i] ),
+        SymmetryCommunication_free( _comms_C[i] );
+    free( _comms_P );
+    free( _comms_C );
+}
+
 int LoopSymmetrizer::operator()( complex128_t* loop_in, complex128_t* loop_out, index_t sym, char chan ) {
     if (!_can_transform) return 1;
 
     const SymmetryCommunication& comm = chan == 'P' ? _comms_P[sym] : _comms_C[sym];
 
-    const index_t* send_map = comm.reorder_before_send.data();
-    const complex128_t* send_phase = comm.phase_before_send.data();
+    const index_t* send_map = comm.reorder_before_send;
+    const complex128_t* send_phase = comm.phase_before_send;
 
-    const index_t* send_counts = comm.send_counts.data();
-    const index_t* send_displs = comm.send_displs.data();
-    const index_t* recv_counts = comm.recv_counts.data();
-    const index_t* recv_displs = comm.recv_displs.data();
+    const index_t* send_counts = comm.send_counts;
+    const index_t* send_displs = comm.send_displs;
+    const index_t* recv_counts = comm.recv_counts;
+    const index_t* recv_displs = comm.recv_displs;
 
-    const index_t* recv_map = comm.reorder_after_recv.data();
+    const index_t* recv_map = comm.reorder_after_recv;
 
-    if (!comm.use_orbital_matrix) {
+    if (!comm.orbital_matrix) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (index_t x=0; x<_loop_size; ++x) {
+        for (index_t x=0; x<_loop_size; ++x)
             _send_buf[x] = loop_in[send_map[x]] * send_phase[x];
-        }
     } else {
-        const MatXcd orbital_matrix = comm.orbital_matrix;
-        const index_t nb = orbital_matrix.rows();
-        memset((void*)_send_buf.data(), 0, sizeof(complex128_t)*_loop_size);
+        const index_t nb = comm.nb;
+        const complex128_t* orbital_matrix = comm.orbital_matrix;
+        ZERO_OUT( _send_buf.data(), _loop_size );
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t qk=0; qk<_loop_size/(nb*nb*nb*nb); ++qk) {
             index_t x = qk*nb*nb*nb*nb;
             for (index_t o=0; o<nb*nb*nb*nb; ++o)
             for (index_t op=0; op<nb*nb*nb*nb; ++op) {
 
-                index_t O1 = (o%(nb*nb*nb*nb))/(nb*nb*nb),
-                        O2 = (o%(nb*nb*nb))/(nb*nb),
-                        O3 = (o%(nb*nb))/nb,
-                        O4 = o%nb;
-                index_t O1p = (op%(nb*nb*nb*nb))/(nb*nb*nb),
-                        O2p = (op%(nb*nb*nb))/(nb*nb),
-                        O3p = (op%(nb*nb))/nb,
-                        O4p =  op%nb;
+                const index_t dim[4] = {nb,nb,nb,nb};
+                index_t O[4]; unravel( o, dim, 4, O );
+                index_t Op[4]; unravel( op, dim, 4, Op );
                 index_t o1,o2,o3,o4,
-                      o1p,o2p,o3p,o4p;
+                        o1p,o2p,o3p,o4p;
                 if (chan == 'P') {
-                    o1 = O1, o2 = O2, o3 = O3, o4 = O4,
-                    o1p = O1p, o2p = O2p, o3p = O3p, o4p = O4p;
+                    o1 = O[0], o2 = O[1], o3 = O[2], o4 = O[3],
+                    o1p = Op[0], o2p = Op[1], o3p = Op[2], o4p = Op[3];
                 } else {
-                    o1 = O2, o2 = O3, o3 = O4, o4 = O1,
-                    o1p = O2p, o2p = O3p, o3p = O4p, o4p = O1p;
+                    o1 = O[1], o2 = O[2], o3 = O[3], o4 = O[0],
+                    o1p = Op[1], o2p = Op[2], o3p = Op[3], o4p = Op[0];
                 }
 
 
                 _send_buf[x+op] += loop_in[send_map[x+o]] *
-                    std::conj(orbital_matrix(o1p,o1)) *
-                    std::conj(orbital_matrix(o2p,o2)) *
-                             (orbital_matrix(o3p,o3)) *
-                             (orbital_matrix(o4p,o4)) *
-                              send_phase[x+o];
+                    std::conj(orbital_matrix[IDX2(o1p,o1,nb)]) *
+                    std::conj(orbital_matrix[IDX2(o2p,o2,nb)]) *
+                             (orbital_matrix[IDX2(o3p,o3,nb)]) *
+                             (orbital_matrix[IDX2(o4p,o4,nb)]) * send_phase[x+o];
             }
         }
     }
@@ -526,7 +494,7 @@ bool LoopSymmetrizer::check( complex128_t* loop, char chan ) {
     bool errors = false;
     mpi_err_printf( "checking '%c'\n", chan );
     for (int i=0; i<_nsym; ++i) {
-        memset( (void*)buf, 0, sizeof(complex128_t)*_loop_size );
+        ZERO_OUT( buf, _loop_size );
         this->operator()( loop, buf, i, chan );
         for (index_t x=0; x<_loop_size; ++x) {
             double err = std::abs( buf[x] - loop[x] );
@@ -543,7 +511,7 @@ bool LoopSymmetrizer::check( complex128_t* loop, char chan ) {
 complex128_t* LoopSymmetrizer::operator()( complex128_t* loop, char chan ) {
     if (!_can_transform) return loop;
     complex128_t* out = _loop_buf.data();
-    memset( (void*)out, 0, _loop_size*sizeof(complex128_t) );
+    ZERO_OUT( out, _loop_size );
     for (int i=0; i<_nsym; ++i)
         if (this->operator()( loop, out, i, chan )) {
             return loop;

@@ -138,6 +138,13 @@ static inline index_t kdimtot( const index_t nk[3], const index_t nkf[3] ) {
     return kdim(nk) * kdim(nkf);
 }
 
+static inline void unravel( index_t idx, const index_t* dim, index_t ndim, index_t* out ) {
+    for (index_t i=ndim-1; i>=0; i--) {
+        out[i] = idx % dim[i];
+        idx /= dim[i];
+    }
+}
+
 static inline char* strdup_div( const char* str ) {
     char* r = (char*)malloc(strlen(str)+1);
     strcpy(r, str);

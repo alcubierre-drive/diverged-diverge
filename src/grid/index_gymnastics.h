@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../diverge_common.h"
+#include "../diverge_internals_struct.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,7 +28,6 @@ static inline index_t index_gymnastics_V_swap_1_and_2( index_t idx, index_t nk, 
 
 // implementation
 static inline void unravel_I( index_t idx, index_t nk, index_t nb, index_t* out );
-static inline void unravel( index_t idx, const index_t* dim, index_t ndim, index_t* out );
 static inline void unravel_V( index_t idx, index_t nk, index_t nb, index_t* out );
 
 static inline index_t index_gymnastics_V_to_P( index_t idx, index_t nk, index_t nb,
@@ -137,13 +137,6 @@ static inline index_t index_gymnastics_V_swap_1_and_2( index_t idx, index_t nk, 
     index_t k1 = IDX[0]; index_t k2 = IDX[1]; index_t k3 = IDX[2];
     index_t b1 = IDX[3]; index_t b2 = IDX[4]; index_t b3 = IDX[5]; index_t b4 = IDX[6];
     return IDX7( k2, k1, k3, b2, b1, b3, b4, nk,nk, nb,nb,nb,nb );
-}
-
-static inline void unravel( index_t idx, const index_t* dim, index_t ndim, index_t* out ) {
-    for (index_t i=ndim-1; i>=0; i--) {
-        out[i] = idx % dim[i];
-        idx /= dim[i];
-    }
 }
 
 static inline void unravel_V( index_t idx, index_t nk, index_t nb, index_t* out ) {

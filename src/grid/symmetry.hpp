@@ -91,15 +91,17 @@ typedef struct {
 } SymmetryOperation;
 
 typedef struct {
-    vector<index_t> reorder_before_send;
-    vector<complex128_t> phase_before_send;
-    vector<index_t> send_counts, send_displs,
-                       recv_counts, recv_displs;
-    vector<index_t> reorder_after_recv;
-    MatXcd orbital_matrix;
-    bool use_orbital_matrix;
+    index_t* reorder_before_send; // _loop_size
+    complex128_t* phase_before_send; // _loop_size
+    index_t *send_counts, *send_displs, *recv_counts, *recv_displs;
+    index_t* reorder_after_recv; // _loop_size
+
+    complex128_t* orbital_matrix = NULL; // (nb, nb) or NULL
+    index_t nb;
     char chan;
 } SymmetryCommunication;
+
+void SymmetryCommunication_free( SymmetryCommunication S );
 
 class SymmetryCommunicatorFactory {
     public:
@@ -141,6 +143,7 @@ class SymmetryCommunicatorFactory {
 class LoopSymmetrizer {
     public:
         LoopSymmetrizer( SymmetryCommunicatorFactory* factory );
+        ~LoopSymmetrizer();
         complex128_t* operator()( complex128_t* loop_in, char chan );
         void setDebugMode() { _debug = true; }
         bool check( complex128_t* loop_in, char chan );
@@ -150,8 +153,7 @@ class LoopSymmetrizer {
         index_t _nsym;
         index_t _loop_size;
         bool _debug = false;
-        vector<SymmetryCommunication> _comms_P;
-        vector<SymmetryCommunication> _comms_C;
+        SymmetryCommunication *_comms_P, *_comms_C;
         vector<complex128_t> _send_buf;
         vector<complex128_t> _recv_buf;
         vector<complex128_t> _loop_buf;

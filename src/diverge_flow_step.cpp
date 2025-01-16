@@ -264,7 +264,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             st->chanmax[0] = chanmax_vec[0];
             st->chanmax[1] = chanmax_vec[1];
             st->chanmax[2] = chanmax_vec[2];
-            st->vertmax = std::max({chanmax_vec[0], chanmax_vec[1], chanmax_vec[2]});
+            st->vertmax = MAX(MAX(chanmax_vec[0], chanmax_vec[1]), chanmax_vec[2]);
             st->loopmax[0] = chanmax_vec[3];
             st->loopmax[1] = chanmax_vec[4];
 

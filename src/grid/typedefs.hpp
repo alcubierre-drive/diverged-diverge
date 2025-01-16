@@ -2,22 +2,18 @@
 
 #pragma once
 
+#include "../diverge_common.h"
+#include "../misc/mpi_functions.h"
+
 #include <vector>
 #include <array>
 #include <string>
-#include <complex>
-#include <iostream>
-#include <sstream>
-
-#include "../diverge_Eigen3.hpp"
-#include "../misc/mpi_functions.h"
 
 namespace grid {
 
 using std::vector;
 using std::array;
 using std::string;
-using std::stringstream;
 
 #define TICK_TOCK( output, ... ) { \
     double tick = diverge_mpi_wtime(); \

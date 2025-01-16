@@ -288,40 +288,39 @@ void tu_vertex_multiply(tu_vertex_t* f, const tu_vertex_t* inp, const double fac
     }
 }
 
-static inline double max_abs( const complex128_t* start, index_t length ) {
-    if (length <= 0) return 0.0;
-    double max = cabs(start[0]);
+static inline double absmax( const complex128_t* start, index_t length ) {
+    double result = 0.0;
+    #pragma omp parallel for reduction(max:result) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<length; ++i) {
-        double mabs = cabs(start[i]);
-        max = MAX(max, mabs);
+        double mabs = cabs(start[i]); result = MAX(result, mabs);
     }
-    return max;
+    return result;
 }
 
 void tu_vertex_max(const tu_vertex_t* V, double out[6]) {
     if (V->P_flow) {
-        double max_trial = max_abs(V->Pch,V->full_vert_size);
+        double max_trial = absmax(V->Pch,V->full_vert_size);
         out[0] = diverge_mpi_max(&max_trial);
     }
     if (V->C_flow) {
-        double max_trial = max_abs(V->Cch,V->full_vert_size);
+        double max_trial = absmax(V->Cch,V->full_vert_size);
         out[1] = diverge_mpi_max(&max_trial);
     }
     if (V->D_flow) {
-        double max_trial = max_abs(V->Dch,V->full_vert_size);
+        double max_trial = absmax(V->Dch,V->full_vert_size);
         out[2] = diverge_mpi_max(&max_trial);
     }
 
     if (V->P_flow) {
-        double max_trial = max_abs(V->pp_bubble_int,V->full_bubble_size);
+        double max_trial = absmax(V->pp_bubble_int,V->full_bubble_size);
         out[3] = diverge_mpi_max(&max_trial);
     }
     if (V->C_flow || V->D_flow) {
-        double max_trial = max_abs(V->ph_bubble_int,V->full_bubble_size);
+        double max_trial = absmax(V->ph_bubble_int,V->full_bubble_size);
         out[4] = diverge_mpi_max(&max_trial);
     }
     if (V->selfenergy_size>0) {
-        double max_trial = max_abs(V->self_en,V->selfenergy_size);
+        double max_trial = absmax(V->self_en,V->selfenergy_size);
         out[5] = diverge_mpi_max(&max_trial);
     }
 }

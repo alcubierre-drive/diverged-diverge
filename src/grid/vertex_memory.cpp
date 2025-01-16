@@ -4,12 +4,6 @@
 #include "index_gymnastics.h"
 #include "reorder.h"
 #include "loops.hpp"
-#include "../diverge_Eigen3.hpp"
-#include <algorithm>
-#include <cstring>
-#include <vector>
-#include <string>
-#include <omp.h>
 // for atomic_add
 #include "../diverge_patching_helpers.h"
 
@@ -68,7 +62,7 @@ void VertexMemory::init_from_qbuf( const complex128_t* qbuf_in, char chan_in, in
 
     if (_SU2) ns = 1;
     index_t no = _nb / ns;
-    memset((void*)vbuf_in, 0, sizeof(complex128_t)*nk1*POW2(_nk)*POW4(_nb));
+    ZERO_OUT( vbuf_in, nk1*POW2(_nk)*POW4(_nb) );
 
     #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
     for (index_t k1i=0; k1i<nk1; ++k1i)
@@ -124,14 +118,17 @@ void VertexMemory::print_memory_requirement() {
     diverge_mpi_allgather_index( &memory, memory_per_rank.data(), 1 );
 
     double mean_mem = 0.;
-    for (unsigned i=0; i<memory_per_rank.size(); ++i)
+    index_t min_max[2] = {memory_per_rank[0], memory_per_rank[0]};
+    for (unsigned i=0; i<memory_per_rank.size(); ++i) {
         mean_mem += memory_per_rank[i];
+        min_max[0] = MIN(min_max[0], memory_per_rank[i]);
+        min_max[1] = MAX(min_max[1], memory_per_rank[i]);
+    }
     mean_mem /= (double) memory_per_rank.size();
-    double min_mem = *std::min_element( memory_per_rank.begin(), memory_per_rank.end() );
-    double max_mem = *std::max_element( memory_per_rank.begin(), memory_per_rank.end() );
     double GB = 1024.*1024.*1024.;
 
-    mpi_vrb_printf( "grid vertex, mem per rank: %.1fGB-(%.1fGB)-%.1fGB\n", min_mem/GB, mean_mem/GB, max_mem/GB );
+    mpi_vrb_printf( "grid vertex, mem per rank: %.1fGB-(%.1fGB)-%.1fGB\n",
+            (double)min_max[0]/GB, mean_mem/GB, (double)min_max[1]/GB );
 }
 
 void VertexMemory::operator()( const complex128_t* buf_in, complex128_t* buf_out, char chan1, char chan2, bool add, double scale ) {
