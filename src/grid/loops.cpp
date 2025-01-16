@@ -3,7 +3,6 @@
 #include "loops.hpp"
 #include "symmetry.hpp"
 #include "vertex_memory.hpp"
-#include "index_generator.hpp"
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
 
@@ -47,9 +46,9 @@ Loops::Loops( diverge_model_t* dmod ) {
         _greens_proj_cache_m = (complex128_t*)calloc(_nk*_nkf*_nb*_nb, sizeof(complex128_t));
     }
 
-    _qstart = V->get_index_gen()->qstart;
-    _qstop = V->get_index_gen()->qstop;
-    _qsize = _qstop-_qstart;
+    _qstart = V->get_qdispl();
+    _qsize = V->get_qcount();
+    _qstop = _qstart + _qsize;
     _Xsize = _qsize*_nk*_nb*_nb*_nb*_nb;
     _X_P = (complex128_t*)malloc( _Xsize*sizeof(complex128_t) );
     _X_C = (complex128_t*)malloc( _Xsize*sizeof(complex128_t) );

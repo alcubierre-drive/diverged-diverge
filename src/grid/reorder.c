@@ -54,24 +54,20 @@ static void write_recv_pack( complex128_t* vertex_T, const index_t* recv_map,
     }
 }
 
-void gen_dist_info( dist_info* dist, index_t* starts, index_t* stops, MPI_Comm comm ) {
+void gen_dist_info( dist_info* dist, index_t* displs, index_t* counts, MPI_Comm comm ) {
     dist->nranks = diverge_mpi_comm_size();
     dist->myrank = diverge_mpi_comm_rank();
-    dist->starts = calloc(dist->nranks, sizeof*dist->starts);
-    dist->stops = calloc(dist->nranks, sizeof*dist->stops);
-    dist->sizes = calloc(dist->nranks, sizeof*dist->sizes);
-    for (int i=0; i<dist->nranks; ++i) {
-        dist->starts[i] = starts[i];
-        dist->stops[i] = stops[i];
-        dist->sizes[i] = stops[i] - starts[i];
-    }
+    dist->starts = calloc(3*dist->nranks, sizeof*dist->starts);
+    dist->stops = dist->starts + dist->nranks;
+    dist->sizes = dist->stops + dist->nranks;
+    memcpy( dist->starts, displs, sizeof*dist->starts * dist->nranks );
+    memcpy( dist->sizes, counts, sizeof*dist->sizes * dist->nranks );
+    for (int i=0; i<dist->nranks; ++i) dist->stops[i] = dist->starts[i] + dist->sizes[i];
     dist->comm = comm;
 }
 
 void free_dist_info( const dist_info* dist ) {
     free(dist->starts);
-    free(dist->stops);
-    free(dist->sizes);
 }
 
 void full_pack_exchange( const complex128_t* vertex, complex128_t* vertex_T,

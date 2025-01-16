@@ -20,8 +20,7 @@ struct dist_info {
 };
 typedef struct dist_info dist_info;
 
-void gen_dist_info( dist_info* dist, index_t* vertex_starts, index_t* vertex_stops,
-        MPI_Comm comm );
+void gen_dist_info( dist_info* dist, index_t* vertex_displs, index_t* vertex_counts, MPI_Comm comm );
 void free_dist_info( const dist_info* dist );
 
 void full_pack_exchange( const complex128_t* vertex, complex128_t* vertex_T,

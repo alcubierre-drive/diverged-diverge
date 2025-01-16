@@ -63,7 +63,8 @@ class VertexMemory {
         void remove_projected_components( complex128_t* buf, complex128_t* aux_buf,
                 char channel, const vector<index_t>& qvec, const vector<complex128_t*>& U_matrices );
 
-        IndexGenerator* get_index_gen(void) { return _InGen; }
+        index_t get_qdispl( void ) const { return _qdispls[_myrank]; }
+        index_t get_qcount( void ) const { return _qcounts[_myrank]; }
 
     private:
         dist_info* _mpi_info;
@@ -80,7 +81,10 @@ class VertexMemory {
         const index_t _nb;
         const bool _SU2;
         index_t _size;
-        IndexGenerator* _InGen;
+
+        // index distribution info
+        index_t _myrank, _nranks;
+        index_t *_qcounts, *_qdispls, *_counts, *_displs;
 
         void _change_basis_k123( complex128_t* vertex_inout, complex128_t* U );
 

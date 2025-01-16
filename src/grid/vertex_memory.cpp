@@ -3,7 +3,6 @@
 #include "vertex_memory.hpp"
 #include "index_gymnastics.h"
 #include "reorder.h"
-#include "index_generator.hpp"
 #include "loops.hpp"
 #include "../diverge_Eigen3.hpp"
 #include <algorithm>
@@ -20,9 +19,18 @@ VertexMemory::VertexMemory( MPI_Comm comm, index_t nk, index_t nb,
         index_t* k1m2_, index_t* k1p2_, bool SU2, index_t* k3map_ ) :
     _nk(nk), _nb(nb), _SU2(SU2), k1m2(k1m2_), k1p2(k1p2_), k3map(k3map_) {
 
-    _InGen = new IndexGenerator( nk, nb, comm );
+    _nranks = diverge_mpi_comm_size();
+    _myrank = diverge_mpi_comm_rank();
+
+    _qcounts = diverge_mpi_distribute( nk );
+    _qdispls = _qcounts + _nranks;
+
+    _counts = (index_t*)calloc(_nranks*2, sizeof*_counts);
+    _displs = _counts + _nranks;
+    for (int i=0; i<_nranks*2; ++i) _counts[i] = _qcounts[i] * POW2(nk)*POW4(nb);
+
     _mpi_info = new dist_info;
-    gen_dist_info( _mpi_info, _InGen->starts, _InGen->stops, comm );
+    gen_dist_info( _mpi_info, _displs, _counts, comm );
 
     print_memory_requirement();
 
@@ -35,16 +43,14 @@ VertexMemory::~VertexMemory() {
     _dealloc_buffers();
     free_dist_info( _mpi_info );
     delete _mpi_info;
-    delete _InGen;
+    free( _qcounts );
+    free( _counts );
 }
 
 vector<index_t> VertexMemory::qshare(void) {
-    index_t qstart = _InGen->qstarts[_mpi_info->myrank],
-            qstop = _InGen->qstops[_mpi_info->myrank];
-    vector<index_t> result;
-    result.reserve(qstop-qstart);
-    for (index_t q=qstart; q<qstop; ++q)
-        result.push_back(q);
+    vector<index_t> result(_qcounts[_myrank]);
+    for (index_t i=0; i<_qcounts[_myrank]; ++i)
+        result[i] = _qdispls[_myrank] + i;
     return result;
 }
 
