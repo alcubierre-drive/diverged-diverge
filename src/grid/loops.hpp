@@ -5,10 +5,9 @@
 #include "typedefs.hpp"
 
 typedef struct diverge_model_t diverge_model_t;
+typedef struct grid_symm_transform_t grid_symm_transform_t;
 
 namespace grid {
-
-class LoopSymmetrizer;
 
 class Loops {
     public:
@@ -38,7 +37,7 @@ class Loops {
 
     private:
         complex128_t* symmetrize( complex128_t* loop, char chan );
-        LoopSymmetrizer* _SYM = nullptr;
+        grid_symm_transform_t* _SYM = nullptr;
         bool _SYM_enabled = true;
 
         complex128_t* _X_P;

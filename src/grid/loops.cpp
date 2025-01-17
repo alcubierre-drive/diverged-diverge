@@ -1,10 +1,11 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "loops.hpp"
-#include "symmetry.hpp"
+#include "symmetry.h"
 #include "vertex_memory.hpp"
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
+#include "../diverge_Eigen3.hpp"
 
 #include "../misc/cmath_helpers.h"
 
@@ -28,8 +29,6 @@ static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_
 Loops::Loops( diverge_model_t* dmod ) {
 
     VertexMemory* V = (VertexMemory*)dmod->internals->grid_vertex;
-    /* SymmetryTransform* S = (SymmetryTransform*)dmod->internals->grid_sym; */
-    grid_symm_transform_t* S = (grid_symm_transform_t*)dmod->internals->grid_sym;
 
     _dmod = dmod;
     _nk = _dmod->internals->grid_nk;
@@ -53,9 +52,8 @@ Loops::Loops( diverge_model_t* dmod ) {
     _X_P = (complex128_t*)malloc( _Xsize*sizeof(complex128_t) );
     _X_C = (complex128_t*)malloc( _Xsize*sizeof(complex128_t) );
 
-    if (S != NULL) {
-        _SYM = new LoopSymmetrizer( S, _qstart, _qsize );
-    }
+    if (dmod->n_sym > 0)
+        _SYM = grid_symm_transform_init( dmod, _qstart, _qsize );
 
     _formfac = generate_trivial_formfactors( dmod, _nff );
 }
@@ -67,7 +65,7 @@ Loops::~Loops() {
     if (_greens_proj_cache_p) free(_greens_proj_cache_p);
     if (_greens_proj_cache_m) free(_greens_proj_cache_m);
 
-    if (_SYM) delete _SYM;
+    if (_SYM) grid_symm_transform_free( _SYM );
 
     free(_formfac);
 }
@@ -127,7 +125,7 @@ complex128_t* Loops::X_C(double Lambda) {
 
 complex128_t* Loops::symmetrize( complex128_t* loop, char chan ) {
     if (_SYM_enabled && _SYM != nullptr) {
-        return (*_SYM)( loop, chan );
+        return grid_symm_transform_loop( _SYM, loop, chan );
     } else {
         return loop;
     }

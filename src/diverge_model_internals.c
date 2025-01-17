@@ -223,9 +223,6 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     if ((model->internals->grid_vertex != NULL) &&
         (model->internals->grid_vertex_destructor != NULL))
         (*(model->internals->grid_vertex_destructor))( model->internals->grid_vertex );
-    if ((model->internals->grid_sym != NULL) &&
-        (model->internals->grid_sym_destructor != NULL))
-        (*(model->internals->grid_sym_destructor))( model->internals->grid_sym );
     if ((model->internals->patch_vertex != NULL) &&
         (model->internals->patch_vertex_destructor != NULL))
         (*(model->internals->patch_vertex_destructor))( model->internals->patch_vertex );

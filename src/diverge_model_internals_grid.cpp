@@ -6,7 +6,6 @@
 #include "diverge_Eigen3.hpp"
 #include "diverge_momentum_gen.h"
 #include "grid/vertex_memory.hpp"
-#include "grid/symmetry.hpp"
 
 #include <vector>
 #include <array>
@@ -19,10 +18,6 @@ typedef Eigen::Matrix<complex128_t,-1,-1,Eigen::RowMajor> CMatXcd;
 static void VertexMemory_destructor( void* _V ) {
     grid::VertexMemory* V = (grid::VertexMemory*)_V;
     delete V;
-}
-
-static void grid_symm_transform_destructor( void* _S ) {
-    grid_symm_transform_free( (grid_symm_transform_t*)_S );
 }
 
 static void generate_refinement( const vector<Vec3d>& fine,
@@ -231,9 +226,4 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     }
     intls->grid_vertex = (void*)V;
     intls->grid_vertex_destructor = &VertexMemory_destructor;
-
-    if (model->n_sym > 0) {
-        intls->grid_sym = (void*)grid_symm_transform_init( model );
-        intls->grid_sym_destructor = &grid_symm_transform_destructor;
-    }
 }

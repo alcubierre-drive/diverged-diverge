@@ -3,7 +3,6 @@
 #include "flow_step.hpp"
 #include "loops.hpp"
 #include "vertex_memory.hpp"
-#include "symmetry.hpp"
 #include "typedefs.hpp"
 
 #include "../misc/batched_gemms.h"

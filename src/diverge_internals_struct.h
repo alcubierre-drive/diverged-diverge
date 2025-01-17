@@ -58,8 +58,6 @@ struct internals_t {
 
     void* grid_vertex;
     internals_destructor_t grid_vertex_destructor;
-    void* grid_sym;
-    internals_destructor_t grid_sym_destructor;
 
     // patch internals
     void* patch_vertex;

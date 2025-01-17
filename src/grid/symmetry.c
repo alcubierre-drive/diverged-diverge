@@ -8,6 +8,35 @@
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
 
+// some private types and functions //
+typedef struct {
+    int current_rank;
+    int target_rank;
+    index_t current_index;
+    index_t target_index;
+    complex128_t phase;
+} grid_symm_op_t;
+
+typedef struct {
+    index_t* reorder_before_send; // _loop_size
+    complex128_t* phase_before_send; // _loop_size
+    index_t *send_counts, *send_displs, *recv_counts, *recv_displs;
+    index_t* reorder_after_recv; // _loop_size
+
+    const complex128_t* orbital_matrix; // (nb, nb), must not be freed
+    index_t nb;
+    char chan;
+} grid_symm_comm_t;
+
+// free the memory of a communicator
+static void grid_symm_comm_free( grid_symm_comm_t S );
+
+typedef struct {
+    int idx_pre_symm;
+    int idx_post_symm;
+    int R1, R2, R3;
+} grid_symm_prop_t;
+
 struct grid_symm_transform_t {
     index_t nk, nb;
     index_t nsym;
@@ -23,13 +52,40 @@ struct grid_symm_transform_t {
 
     claM3d_t lattice, rlattice;
 
-    int communicator_init;
     // communicator
     index_t *qdispls, *qcounts, qdispl, qcount;
     index_t loop_size;
     int myrank, nranks;
     grid_symm_op_t *symops_P, *symops_C; // (nsym, loop_size)
+
+    // comm structs/loop
+    grid_symm_comm_t *comms_P, *comms_C;
+    complex128_t *send_buf, *recv_buf, *loop_buf;
 };
+
+// first part of initialization, symm maps are generated
+static grid_symm_transform_t* grid_symm_transform_init_transform( diverge_model_t* model );
+
+// symm maps to MPI loopmaps transform
+static void grid_symm_transform_get_trafo( grid_symm_transform_t* s, index_t sym, index_t qdispl,
+        index_t qcount, complex128_t* phasesP /*(qcount, nk, POW4(nb))*/,
+        complex128_t* phasesC, index_t* mapP /*(qcount, nk, POW4(nb))*/, index_t* mapC );
+
+// communication infrastructure for MPI
+static void grid_symm_transform_init_communicator( grid_symm_transform_t* s,
+        index_t qdispl, index_t qcount );
+
+// communicator setup for specific symmetry
+static grid_symm_comm_t grid_symm_transform_comm( grid_symm_transform_t* s, index_t symm, char chan );
+
+// loop symmetrization infrastructure
+static void grid_symm_transform_init_loop( grid_symm_transform_t* s );
+
+// apply a single symmetry to loop
+static void grid_symm_transform_loop_single( grid_symm_transform_t* s, complex128_t* loop_in,
+        complex128_t* loop_out, index_t sym, char chan );
+
+
 
 static void gen_grid_k_symmmap( const double* kmesh, index_t nk,
         claM3d_t reciprocal, claM3d_t symm, index_t* result/*(nk)*/ ) {
@@ -71,7 +127,7 @@ endloop_grid_symm_prop_t: {}
     }
 }
 
-grid_symm_transform_t* grid_symm_transform_init( diverge_model_t* model ) {
+static grid_symm_transform_t* grid_symm_transform_init_transform( diverge_model_t* model ) {
     grid_symm_transform_t* s = calloc(1, sizeof*s);
     s->nk = kdim(model->nk);
     s->nb = model->n_orb * model->n_spin;
@@ -111,15 +167,7 @@ grid_symm_transform_t* grid_symm_transform_init( diverge_model_t* model ) {
     return s;
 }
 
-index_t grid_symm_transform_nsym( const grid_symm_transform_t* s ) {
-    return s->nsym;
-}
-
-index_t grid_symm_transform_loopsize( const grid_symm_transform_t* s ) {
-    return s->loop_size;
-}
-
-void grid_symm_transform_get_trafo( grid_symm_transform_t* s, index_t sym, index_t qdispl,
+static void grid_symm_transform_get_trafo( grid_symm_transform_t* s, index_t sym, index_t qdispl,
         index_t qcount, complex128_t* phasesP /*(qcount, nk, POW4(nb))*/,
         complex128_t* phasesC, index_t* mapP /*(qcount, nk, POW4(nb))*/, index_t* mapC ) {
 
@@ -223,17 +271,16 @@ void grid_symm_transform_free( grid_symm_transform_t* s ) {
     free( s->symops_P );
     free( s->symops_C );
 
+    for (index_t i=0; i<s->nsym; ++i)
+        grid_symm_comm_free( s->comms_P[i] ),
+        grid_symm_comm_free( s->comms_C[i] );
+    free( s->comms_P );
+    free( s->comms_C );
+    free( s->send_buf );
+    free( s->recv_buf );
+    free( s->loop_buf );
+
     free( s );
-}
-
-complex128_t* grid_symm_transform_orbmatrix_copy( const grid_symm_transform_t* s, index_t sym ) {
-    complex128_t* r = calloc(POW2(s->nb), sizeof*r);
-    memcpy( r, s->orb_sym + POW2(s->nb)*sym, sizeof*r * POW2(s->nb) );
-    return r;
-}
-
-complex128_t* grid_symm_transform_orbmatrix_ref( const grid_symm_transform_t* s, index_t sym ) {
-    return (complex128_t*)s->orb_sym + POW2(s->nb)*sym;
 }
 
 static inline int rank_from_index( index_t* qdispls, index_t* qcounts, int nranks, index_t q ) {
@@ -246,9 +293,8 @@ static inline int rank_from_index( index_t* qdispls, index_t* qcounts, int nrank
 #define MERGESORT_COMP( x, y ) ( (x).target_rank - (y).target_rank )
 MERGESORT_IMPL( mergesort_symop, grid_symm_op_t )
 
-void grid_symm_transform_init_communicator( grid_symm_transform_t* s,
+static void grid_symm_transform_init_communicator( grid_symm_transform_t* s,
         index_t qdispl, index_t qcount ) {
-    if (s->communicator_init) return;
     s->qdispl = qdispl;
     s->qcount = qcount;
     s->nranks = diverge_mpi_comm_size();
@@ -295,10 +341,9 @@ void grid_symm_transform_init_communicator( grid_symm_transform_t* s,
     free( pC );
     free( mP );
     free( mC );
-    s->communicator_init = 1;
 }
 
-grid_symm_comm_t grid_symm_transform_comm( grid_symm_transform_t* s, index_t symm, char chan ) {
+static grid_symm_comm_t grid_symm_transform_comm( grid_symm_transform_t* s, index_t symm, char chan ) {
 
     const grid_symm_op_t* symop = (chan == 'P' ? s->symops_P : s->symops_C) + symm * s->loop_size;
 
@@ -330,8 +375,7 @@ grid_symm_comm_t grid_symm_transform_comm( grid_symm_transform_t* s, index_t sym
         .recv_counts = recv_counts,
         .recv_displs = recv_displs,
         .reorder_after_recv = calloc(s->loop_size, sizeof*result.reorder_after_recv),
-        .orbital_matrix = grid_symm_transform_orbmatrix_ref(s, symm),
-        .orbital_matrix_free = 0,
+        .orbital_matrix = s->orb_sym + POW2(s->nb) * symm,
         .nb = s->nb,
         .chan = chan,
     };
@@ -351,7 +395,7 @@ grid_symm_comm_t grid_symm_transform_comm( grid_symm_transform_t* s, index_t sym
     return result;
 }
 
-void grid_symm_comm_free( grid_symm_comm_t S ) {
+static void grid_symm_comm_free( grid_symm_comm_t S ) {
     free( S.reorder_before_send );
     free( S.phase_before_send );
     free( S.send_counts );
@@ -359,6 +403,107 @@ void grid_symm_comm_free( grid_symm_comm_t S ) {
     free( S.recv_counts );
     free( S.recv_displs );
     free( S.reorder_after_recv );
-    if (S.orbital_matrix_free) free( S.orbital_matrix );
 }
 
+static void grid_symm_transform_init_loop( grid_symm_transform_t* s ) {
+    s->comms_P = calloc(s->nsym, sizeof*s->comms_P);
+    s->comms_C = calloc(s->nsym, sizeof*s->comms_P);
+    for (index_t i=0; i<s->nsym; ++i) {
+        s->comms_P[i] = grid_symm_transform_comm(s, i, 'P');
+        s->comms_C[i] = grid_symm_transform_comm(s, i, 'C');
+    }
+    s->send_buf = calloc(s->loop_size, sizeof*s->send_buf);
+    s->recv_buf = calloc(s->loop_size, sizeof*s->recv_buf);
+    s->loop_buf = calloc(s->loop_size, sizeof*s->loop_buf);
+}
+
+static void grid_symm_transform_loop_single( grid_symm_transform_t* s, complex128_t* loop_in,
+        complex128_t* loop_out, index_t sym, char chan ) {
+
+    const grid_symm_comm_t comm = chan == 'P' ? s->comms_P[sym] : s->comms_C[sym];
+
+    const index_t* send_map = comm.reorder_before_send;
+    const complex128_t* send_phase = comm.phase_before_send;
+
+    const index_t* send_counts = comm.send_counts;
+    const index_t* send_displs = comm.send_displs;
+    const index_t* recv_counts = comm.recv_counts;
+    const index_t* recv_displs = comm.recv_displs;
+
+    const index_t* recv_map = comm.reorder_after_recv;
+
+    const index_t nb = comm.nb;
+    const complex128_t* orbital_matrix = comm.orbital_matrix;
+    ZERO_OUT( s->send_buf, s->loop_size );
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t qk=0; qk<s->loop_size/POW4(s->nb); ++qk) {
+        index_t x = qk*POW4(s->nb);
+        for (index_t o=0; o<POW4(s->nb); ++o)
+        for (index_t op=0; op<POW4(s->nb); ++op) {
+
+            const index_t dim[4] = {nb,nb,nb,nb};
+            index_t O[4]; unravel( o, dim, 4, O );
+            index_t Op[4]; unravel( op, dim, 4, Op );
+            index_t o1,o2,o3,o4,
+                    o1p,o2p,o3p,o4p;
+            if (chan == 'P') {
+                o1 = O[0], o2 = O[1], o3 = O[2], o4 = O[3],
+                o1p = Op[0], o2p = Op[1], o3p = Op[2], o4p = Op[3];
+            } else {
+                o1 = O[1], o2 = O[2], o3 = O[3], o4 = O[0],
+                o1p = Op[1], o2p = Op[2], o3p = Op[3], o4p = Op[0];
+            }
+
+            s->send_buf[x+op] += loop_in[send_map[x+o]] *
+                     conj(orbital_matrix[IDX2(o1p,o1,nb)]) *
+                     conj(orbital_matrix[IDX2(o2p,o2,nb)]) *
+                         (orbital_matrix[IDX2(o3p,o3,nb)]) *
+                         (orbital_matrix[IDX2(o4p,o4,nb)]) * send_phase[x+o];
+        }
+    }
+
+    diverge_mpi_alltoallv_bytes( s->send_buf, send_counts, send_displs,
+            s->recv_buf, recv_counts, recv_displs, sizeof(complex128_t) );
+
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t x=0; x<s->loop_size; ++x) {
+        loop_out[recv_map[x]] += s->recv_buf[x];
+    }
+}
+
+complex128_t* grid_symm_transform_loop( grid_symm_transform_t* s, complex128_t* loop, char chan ) {
+    complex128_t* out = s->loop_buf;
+    ZERO_OUT( out, s->loop_size );
+    for (index_t i=0; i<s->nsym; ++i)
+        grid_symm_transform_loop_single( s, loop, out, i, chan );
+    double norm = 1./(double)s->nsym;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<s->loop_size; ++i) out[i] *= norm;
+    return out;
+}
+
+bool grid_symm_transform_loop_checksyms( grid_symm_transform_t* s, complex128_t* loop, char chan ) {
+    complex128_t* buf = s->loop_buf;
+    bool errors = false;
+    mpi_log_printf( "checking '%c'\n", chan );
+    for (index_t i=0; i<s->nsym; ++i) {
+        ZERO_OUT( buf, s->loop_size );
+        grid_symm_transform_loop_single( s, loop, buf, i, chan );
+        for (index_t x=0; x<s->loop_size; ++x) {
+            double err = cabs( buf[x] - loop[x] );
+            if (err > 1.e-13) {
+                mpi_wrn_printf( "chan '%c', sym %i loop not symmetric (%li; %.5e%+.5ej - %.5e%+.5ej)\n",
+                        chan, i, x, creal(buf[x]), cimag(buf[x]), creal(loop[x]), cimag(loop[x]) );
+                errors = true;
+            }
+        }
+    }
+    return errors;
+}
+
+grid_symm_transform_t* grid_symm_transform_init( diverge_model_t* m, index_t qdispl, index_t qcount ) {
+    grid_symm_transform_t* s = grid_symm_transform_init_transform(m);
+    grid_symm_transform_init_communicator(s, qdispl, qcount);
+    grid_symm_transform_init_loop(s);
+    return s;
+}
