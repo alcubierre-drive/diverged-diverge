@@ -28,7 +28,8 @@ static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_
 Loops::Loops( diverge_model_t* dmod ) {
 
     VertexMemory* V = (VertexMemory*)dmod->internals->grid_vertex;
-    SymmetryTransform* S = (SymmetryTransform*)dmod->internals->grid_sym;
+    /* SymmetryTransform* S = (SymmetryTransform*)dmod->internals->grid_sym; */
+    grid_symm_transform_t* S = (grid_symm_transform_t*)dmod->internals->grid_sym;
 
     _dmod = dmod;
     _nk = _dmod->internals->grid_nk;
@@ -53,10 +54,7 @@ Loops::Loops( diverge_model_t* dmod ) {
     _X_C = (complex128_t*)malloc( _Xsize*sizeof(complex128_t) );
 
     if (S != NULL) {
-        SymmetryCommunicatorFactory lsym_fac( S, _k1m2, _dmod->internals->grid_k1p2,
-                _qstart, _qstart+_qsize, _nk, _nb );
-        set_symmetrizer( new LoopSymmetrizer( &lsym_fac ) );
-        _SYM_free = true;
+        _SYM = new LoopSymmetrizer( S, _qstart, _qsize );
     }
 
     _formfac = generate_trivial_formfactors( dmod, _nff );
@@ -69,8 +67,7 @@ Loops::~Loops() {
     if (_greens_proj_cache_p) free(_greens_proj_cache_p);
     if (_greens_proj_cache_m) free(_greens_proj_cache_m);
 
-    if (_SYM_free)
-        delete _SYM;
+    if (_SYM) delete _SYM;
 
     free(_formfac);
 }
@@ -114,7 +111,7 @@ complex128_t* Loops::X_P(double Lambda) {
         frg_loop_calc_P_greens<true>( _X_P, _greens_proj_cache_p, _greens_proj_cache_m,
             _qstart, _qstart+_qsize, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     _max_P = absmax( _X_P, _Xsize );
-    return _X_P;
+    return symmetrize( _X_P, 'P' );
 }
 
 complex128_t* Loops::X_C(double Lambda) {
@@ -125,14 +122,13 @@ complex128_t* Loops::X_C(double Lambda) {
         frg_loop_calc_C_greens<true>( _X_C, _greens_proj_cache_p, _greens_proj_cache_m,
             _qstart, _qstart+_qsize, _nk, _nkf, _nb, _kfrev, _kfweights, _k1m2 );
     _max_C = absmax( _X_C, _Xsize );
-    return _X_C;
+    return symmetrize( _X_C, 'C' );
 }
 
 complex128_t* Loops::symmetrize( complex128_t* loop, char chan ) {
-    if (_SYM != nullptr) {
+    if (_SYM_enabled && _SYM != nullptr) {
         return (*_SYM)( loop, chan );
     } else {
-        mpi_err_printf("no symmetrizer available\n");
         return loop;
     }
 }

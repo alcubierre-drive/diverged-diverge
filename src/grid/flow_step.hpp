@@ -8,12 +8,10 @@ namespace grid {
 
 class VertexMemory;
 class Loops;
-class LoopSymmetrizer;
 
 class FlowStep {
     public:
-        FlowStep( VertexMemory* V, Loops* L, LoopSymmetrizer* LS, bool P = true,
-                bool C = true, bool D = true );
+        FlowStep( VertexMemory* V, Loops* L, bool P = true, bool C = true, bool D = true );
         // returns Pmax, Cmax, Dmax, Vmax, LPmax, LDmax
         vector<double> operator()( double Lambda, double dLambda );
         void print_timings( void );
@@ -33,7 +31,6 @@ class FlowStep {
     private:
         VertexMemory* _V;
         Loops* _L;
-        LoopSymmetrizer* _LS;
         bool _P, _C, _D;
         bool _SU2;
         double _kfnorm;

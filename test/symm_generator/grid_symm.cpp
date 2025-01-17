@@ -16,7 +16,7 @@ TEST_CASE("loopgrid symmcheck", "[grid_symm]") {
     diverge_model_t* mod_grid = gen_triangular_pxpy_sym(6, 6);
     diverge_model_internals_grid(mod_grid);
     index_t nb = mod_grid->n_orb*mod_grid->n_spin;
-    index_t nk = 36;
+    index_t nk = kdim(mod_grid->nk);
 
     complex128_t* Lgrid;
     complex128_t* Lreco;
@@ -24,13 +24,17 @@ TEST_CASE("loopgrid symmcheck", "[grid_symm]") {
     grid::Loops grid_loop(mod_grid);
     index_t fsize = POW4(nb)*grid_loop.get_qsize()*nk;
 
+    grid_loop.toggle_symmetrizer();
     Lgrid = grid_loop.X_C(0.1);
-    Lreco = grid_loop.symmetrize(Lgrid,'C');
+    grid_loop.toggle_symmetrizer();
+    Lreco = grid_loop.X_C(0.1);
     for(index_t i = 0; i < fsize; ++i)
         CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
 
+    grid_loop.toggle_symmetrizer();
     Lgrid = grid_loop.X_P(0.1);
-    Lreco = grid_loop.symmetrize(Lgrid,'P');
+    grid_loop.toggle_symmetrizer();
+    Lreco = grid_loop.X_P(0.1);
     for(index_t i = 0; i < fsize; ++i)
         CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
 

@@ -21,9 +21,8 @@ static void VertexMemory_destructor( void* _V ) {
     delete V;
 }
 
-static void SymmetryTransform_destructor( void* _S ) {
-    grid::SymmetryTransform* S = (grid::SymmetryTransform*)_S;
-    delete S;
+static void grid_symm_transform_destructor( void* _S ) {
+    grid_symm_transform_free( (grid_symm_transform_t*)_S );
 }
 
 static void generate_refinement( const vector<Vec3d>& fine,
@@ -234,39 +233,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     intls->grid_vertex_destructor = &VertexMemory_destructor;
 
     if (model->n_sym > 0) {
-        // fill all the symmetry stuff
-        Mat3d mat_rs_lattice;
-        array<Vec3d,3> rs_lattice;
-        for (int i=0; i<3; ++i) {
-            rs_lattice[i] = Map<Vec3d>((double*)(model->lattice)+3*i);
-            mat_rs_lattice.col(i) = rs_lattice[i];
-        }
-        Mat3d mat_rec_lattice = 2.*M_PI*mat_rs_lattice.inverse().transpose();
-        array<Vec3d,3> rec_lattice = {mat_rec_lattice.col(0),
-                                      mat_rec_lattice.col(1),
-                                      mat_rec_lattice.col(2)};
-
-        vector<Vec3d> rs_basis; rs_basis.reserve( nb );
-        for (index_t s=0; s<ns; ++s)
-        for (index_t o=0; o<no; ++o)
-            rs_basis.push_back( Map<Vec3d>( (double*)model->positions + o*3 ) );
-
-        vector<Mat3d> rs_symmetries; rs_symmetries.reserve( model->n_sym );
-        for (index_t s=0; s<model->n_sym; ++s)
-            rs_symmetries.push_back( Map<CMat3d>( (double*)model->rs_symmetries + 9*s ) );
-
-        vector<Vec3d> rec_kmesh(intls->grid_nk);
-        for (index_t k=0; k<intls->grid_nk; ++k)
-            rec_kmesh[k] = Map<Vec3d>( intls->kmesh + 3*k );
-
-        grid::SymmetryTransform* S = new grid::SymmetryTransform( rs_symmetries, rs_basis, rs_lattice, rec_lattice, rec_kmesh );
-
-        for (index_t s=0; s<model->n_sym; ++s) {
-            MatXcd mat = Map<CMatXcd>( (complex128_t*)(model->orb_symmetries) + s*nb*nb, nb, nb );
-            S->setOrbitalMatrix( s, mat );
-        }
-        S->setMatrixUse( true );
-        intls->grid_sym = (void*)S;
-        intls->grid_sym_destructor = &SymmetryTransform_destructor;
+        intls->grid_sym = (void*)grid_symm_transform_init( model );
+        intls->grid_sym_destructor = &grid_symm_transform_destructor;
     }
 }

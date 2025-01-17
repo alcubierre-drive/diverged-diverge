@@ -23,14 +23,13 @@ static double kfnormgen( const double* kfweights, index_t nkf ) {
     return norm;
 }
 
-FlowStep::FlowStep( VertexMemory* V, Loops* L, LoopSymmetrizer* LS, bool P, bool C, bool D ) {
+FlowStep::FlowStep( VertexMemory* V, Loops* L, bool P, bool C, bool D ) {
     _P = P;
     _C = C;
     _D = D;
     _SU2 = V->get_SU2();
     _V = V;
     _L = L;
-    _LS = LS;
     _kfnorm = kfnormgen( L->get_kfweights(), L->get_nkf() );
 
     for (unsigned i=0; i<_norms.size(); ++i)
@@ -118,25 +117,21 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
     double vmax = 0.0;
     index_t Vsize = _V->get_size();
     VertexMemory& V = *_V;
-    complex128_t* _LP_sym = nullptr;
-    complex128_t* _LC_sym = nullptr;
     if (channel == 'P') {
         TICK_TOCK( _loop_time,      if (!_LP) { _LP = _L->X_P(Lambda); } );
         TICK_TOCK( _reorder_time,   V( v, left,  "D_to_P", false, 1.0 ) );
         TICK_TOCK( _reorder_time,   V( v, right, "D_to_P", false, 1.0 ) );
-        TICK_TOCK( _loop_symm_time, if (!_LP_sym) { _LP_sym = _LS ? (*_LS)(_LP, 'P') : _LP; } );
-        TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LP_sym, qsize, nk, nb ) );
+        TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LP, qsize, nk, nb ) );
         TICK_TOCK( _contract_time,  batched_gemm_overlapping( left, right, right, nk*nb*nb, 1.0, 0.0, qsize ) );
         TICK_TOCK( _max_time,       vmax = absmax( right, Vsize ) * _norms[0] * dLambda );
         TICK_TOCK( _reorder_time,   V( right, dv, "P_to_D", true, _norms[0]*dLambda ) );
     }
     if (channel == 'C') {
         if (!_SU2) return 0;
-        TICK_TOCK( _loop_time,      if(!_LC) _LC = _L->X_C(Lambda); );
+        TICK_TOCK( _loop_time,      if (!_LC) _LC = _L->X_C(Lambda); );
         TICK_TOCK( _reorder_time,   V( v, left,  "D_to_C", false, 1.0 ) );
         TICK_TOCK( _reorder_time,   V( v, right, "D_to_C", false, 1.0 ) );
-        TICK_TOCK( _loop_symm_time, if (!_LC_sym) { _LC_sym = _LS ? (*_LS)(_LC, 'C') : _LC; } );
-        TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC_sym, qsize, nk, nb ) );
+        TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC, qsize, nk, nb ) );
         TICK_TOCK( _contract_time,  batched_gemm_overlapping( left, right, right, nk*nb*nb, 1.0, 0.0, qsize ) );
         TICK_TOCK( _max_time,       vmax = absmax( right, Vsize ) * _norms[1] * dLambda );
         TICK_TOCK( _reorder_time,   V( right, dv, "C_to_D", true, _norms[1]*dLambda ) );
@@ -149,8 +144,7 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
             // vertex corrections
             // left vertex C channel
             TICK_TOCK( _reorder_time,   V( v, left, "D_to_C", false, 1.0 ) );
-            TICK_TOCK( _loop_symm_time, if (!_LC_sym) { _LC_sym = _LS ? (*_LS)(_LC, 'C') : _LC; } );
-            TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC_sym, qsize, nk, nb ) );
+            TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC, qsize, nk, nb ) );
             // make 'v' the right vertex and 'right' the result
             TICK_TOCK( _contract_time,  batched_gemm( left, v, right, nk*nb*nb, _norms[3]*dLambda, 0.0, qsize ) );
             // right vertex C channel
@@ -158,7 +152,7 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
             TICK_TOCK( _reorder_time,   V( v, left, "D_to_C", false, 1.0 ) );
             // make 'send_pack' left (*after* reordering call)
             TICK_TOCK( _reorder_time,   V( v, V.get_send_pack(), false, 1.0 ) );
-            TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( V.get_send_pack(), _LC_sym, qsize, nk, nb ) );
+            TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( V.get_send_pack(), _LC, qsize, nk, nb ) );
             // write result in 'right'
             TICK_TOCK( _contract_time,  batched_gemm( V.get_send_pack(), left, right, nk*nb*nb, _norms[4]*dLambda, 1.0, qsize ) );
 
@@ -172,8 +166,7 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
             TICK_TOCK( _reorder_time,   V( right, dv, true, 1.0 ) );
         } else {
             TICK_TOCK( _reorder_time,   V( v, left, false, 1.0 ) );
-            TICK_TOCK( _loop_symm_time, if (!_LC_sym) { _LC_sym = _LS ? (*_LS)(_LC, 'C') : _LC; } );
-            TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC_sym, qsize, nk, nb ) );
+            TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC, qsize, nk, nb ) );
             TICK_TOCK( _contract_time,  batched_gemm( left, v, right, nk*nb*nb, 1.0, 0.0, qsize ) );
             TICK_TOCK( _max_time,       vmax = absmax( right, Vsize ) * _norms[2] * dLambda );
             TICK_TOCK( _reorder_time,   V( right, dv, true, _norms[2]*dLambda ) );

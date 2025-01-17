@@ -16,13 +16,12 @@ class Loops {
         ~Loops();
         complex128_t* X_P(double Lambda);
         complex128_t* X_C(double Lambda);
+
+        void toggle_symmetrizer( void ) { _SYM_enabled = !_SYM_enabled; }
+
         index_t get_qstart() const { return _qstart; }
         index_t get_qstop() const { return _qstart+_qsize; }
         index_t get_qsize() const { return _qsize; }
-
-        LoopSymmetrizer* get_symmetrizer(void) { return _SYM; }
-        void set_symmetrizer( LoopSymmetrizer* S ) { _SYM = S; }
-        complex128_t* symmetrize( complex128_t* loop, char chan );
 
         array<double,2> get_max() { return {_max_P, _max_C}; }
 
@@ -38,8 +37,10 @@ class Loops {
         index_t get_nff(void) { return _nff; }
 
     private:
+        complex128_t* symmetrize( complex128_t* loop, char chan );
         LoopSymmetrizer* _SYM = nullptr;
-        bool _SYM_free = false;
+        bool _SYM_enabled = true;
+
         complex128_t* _X_P;
         complex128_t* _X_C;
         double _max_P = 0.0;

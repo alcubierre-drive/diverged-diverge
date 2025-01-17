@@ -1,7 +1,6 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "reorder.h"
-#include <assert.h>
 #include "../misc/mergesort.h"
 
 dist_info_t* dist_info_init( index_t nk, index_t nb ) {

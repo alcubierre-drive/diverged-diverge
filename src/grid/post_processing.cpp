@@ -94,17 +94,14 @@ void LinearizedGapSolution::_calc( double T, char chan, bool use_loop, string ve
         std::thread lc( [&](){ if (use_loop) loop = _L->X_P( T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], "D_to_P", false, 1.0 );
         lc.join();
-        if (use_loop) loop = _L->symmetrize( loop, 'P' );
     } else if (chan == 'C') {
         std::thread lc( [&](){ if (use_loop) loop = _L->X_C( T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], "D_to_C", false, 1.0 );
         lc.join();
-        if (use_loop) loop = _L->symmetrize( loop, 'C' );
     } else /*chan == 'D'*/ {
         std::thread lc( [&](){ if (use_loop) loop = _L->X_C( T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], false, 1.0 );
         lc.join();
-        if (use_loop) loop = _L->symmetrize( loop, 'C' );
     }
 
     if (!_is_q_zero) return;
@@ -269,17 +266,14 @@ void PostProcessing::_calc_sus( complex128_t* buf, double T, char chan ) {
         std::thread lc( [&](){ loop = _L->X_P( T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], "D_to_P", false, 1.0 );
         lc.join();
-        loop = _L->symmetrize( loop, 'P' );
     } else if (chan == 'C') {
         std::thread lc( [&](){ loop = _L->X_C( T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], "D_to_C", false, 1.0 );
         lc.join();
-        loop = _L->symmetrize( loop, 'C' );
     } else /*chan == 'D'*/ {
         std::thread lc( [&](){ loop = _L->X_C( T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], false, 1.0 );
         lc.join();
-        loop = _L->symmetrize( loop, 'C' );
     }
     batched_gemm_vertex_loop( V.vertex_buffers[1], loop, _qsize, _nk, _nb );
     batched_gemm_loop_vertex( loop, V.vertex_buffers[1], _qsize, _nk, _nb );

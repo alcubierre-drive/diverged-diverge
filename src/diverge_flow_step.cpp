@@ -69,8 +69,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
             }
             st->grid_loop = new grid::Loops(st->mod);
             st->grid_step = new grid::FlowStep( (grid::VertexMemory*)st->intls->grid_vertex,
-                    st->grid_loop, st->grid_loop->get_symmetrizer(),
-                    st->channel_selection[0], st->channel_selection[1],
+                    st->grid_loop, st->channel_selection[0], st->channel_selection[1],
                     st->channel_selection[2] );
             diverge_mpi_barrier();
             break;
