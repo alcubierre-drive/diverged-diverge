@@ -11,7 +11,7 @@
 
 #include "tu/vertex_details.h"
 
-#include "grid/vertex_memory.hpp"
+#include "grid/vertex_memory.h"
 
 #include "npatch/vertex.h"
 #include "npatch/kernels_gpu.h"
@@ -68,7 +68,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
                 goto end_error;
             }
             st->grid_loop = grid_loop_init(st->mod);
-            st->grid_step = new grid::FlowStep( (grid::VertexMemory*)st->intls->grid_vertex,
+            st->grid_step = new grid::FlowStep( (grid_vertex_t*)st->intls->grid_vertex,
                     st->grid_loop, st->channel_selection[0], st->channel_selection[1],
                     st->channel_selection[2] );
             diverge_mpi_barrier();
@@ -342,7 +342,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
     diverge_model_t* mod = st->mod;
     internals_t* intls = st->intls;
 
-    grid::VertexMemory* grid_V = (grid::VertexMemory*)intls->grid_vertex;
+    grid_vertex_t* grid_V = (grid_vertex_t*)intls->grid_vertex;
     npatch_vertex_t* patch_V = (npatch_vertex_t*)intls->patch_vertex;
     tu_vertex_t* tu_V = st->tu_vertex;
     tu_projection_t* tu_Proj = st->tu_proj;
@@ -363,10 +363,10 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                 result.channel = 'D';
             }
             result.ary = grid_V->vertex_buffers[2];
-            (*grid_V)( islower(chan) ? grid_V->vertex_buffers[1] : grid_V->vertex_buffers[0],
-                    result.ary, 'D', toupper(result.channel), false, 1.0 );
-            result.q_0 = grid_V->qshare()[0];
-            result.q_1 = result.q_0 + grid_V->qshare().size();
+            grid_vertex_project_chans( grid_V, islower(chan) ? grid_V->vertex_buffers[1] :
+                    grid_V->vertex_buffers[0], result.ary, 'D', toupper(result.channel), false, 1.0 );
+            result.q_0 = grid_V->qdispl;
+            result.q_1 = result.q_0 + grid_V->qcount;
             result.nk = intls->grid_nk;
             result.n_orbff = mod->n_orb;
             result.n_spin = mod->n_spin;

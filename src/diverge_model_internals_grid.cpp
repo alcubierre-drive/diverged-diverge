@@ -5,19 +5,16 @@
 #include "diverge_model_internals.h"
 #include "diverge_Eigen3.hpp"
 #include "diverge_momentum_gen.h"
-#include "grid/vertex_memory.hpp"
+#include "grid/vertex_memory.h"
 
 #include <vector>
 #include <array>
 using std::vector;
 using std::array;
 
-typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
-typedef Eigen::Matrix<complex128_t,-1,-1,Eigen::RowMajor> CMatXcd;
-
 static void VertexMemory_destructor( void* _V ) {
-    grid::VertexMemory* V = (grid::VertexMemory*)_V;
-    delete V;
+    grid_vertex_t* V = (grid_vertex_t*)_V;
+    grid_vertex_free(V);
 }
 
 static void generate_refinement( const vector<Vec3d>& fine,
@@ -183,7 +180,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     intls->grid_greens_p_buf = (complex128_t*)calloc(intls->grid_nk*intls->grid_nkf*nb*nb, sizeof(complex128_t));
     intls->grid_greens_m_buf = (complex128_t*)calloc(intls->grid_nk*intls->grid_nkf*nb*nb, sizeof(complex128_t));
 
-    grid::VertexMemory* V = new grid::VertexMemory(intls->grid_nk, intls->grid_nb,
+    grid_vertex_t* V = grid_vertex_init(intls->grid_nk, intls->grid_nb,
             intls->grid_k1m2, intls->grid_k1p2, model->SU2 > 0);
 
     // DEVELOPERS
@@ -192,27 +189,26 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     if (model->ffill != NULL) {
         mpi_vrb_printf("using full vertex generator\n");
         complex128_t* vbuf = V->vertex_buffers[2];
-        vector<index_t> qlist = V->qshare();
 
         const index_t nk = intls->grid_nk;
         const index_t no4 = POW2(nb*nb);
         #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
-        for (uindex_t k1=0; k1<qlist.size(); ++k1)
+        for (index_t k1=0; k1<V->qcount; ++k1)
         for (index_t k2=0; k2<nk; ++k2)
         for (index_t k3=0; k3<nk; ++k3)
-            (*(model->ffill))( model, qlist[k1], k2, k3, vbuf + IDX3(k1, k2, k3, nk, nk)*no4 );
+            (*(model->ffill))( model, V->qdispl+k1, k2, k3, vbuf + IDX3(k1, k2, k3, nk, nk)*no4 );
 
-        V->overwrite_transform( 0, 1, "D_to_V" );
-        (*V)( vbuf, V->vertex_buffers[0], "V_to_D", false, 1.0 );
-        V->overwrite_transform( 0, 1, "D_to_P" );
+        grid_vertex_overwrite_transform( V, 0, 1, "D_to_V" );
+        grid_vertex_project_name( V, vbuf, V->vertex_buffers[0], "V_to_D", false, 1.0 );
+        grid_vertex_overwrite_transform( V, 0, 1, "D_to_P" );
     } else {
         mpi_vrb_printf("using channel vertex generators\n");
-        memset( (void*)V->vertex_buffers[0], 0, sizeof(complex128_t)*V->qshare().size()*POW2(intls->grid_nk)*POW4(ns*no) );
+        ZERO_OUT( V->vertex_buffers[0], V->size );
         complex128_t* qbuf_in = (complex128_t*)calloc(intls->grid_nk * POW2(ns*ns*no), sizeof(complex128_t));
         for (char chan : {'C', 'P', 'D'}) {
-            memset( (void*)qbuf_in, 0, sizeof(complex128_t)*intls->grid_nk * POW2(ns*ns*no) );
+            ZERO_OUT( qbuf_in, intls->grid_nk * POW2(ns*ns*no) );
             if ((*(model->vfill))( model, chan, qbuf_in ))
-                V->init_from_qbuf( qbuf_in, chan, ns );
+                grid_vertex_from_qbuf( V, qbuf_in, chan, ns );
         }
         free(qbuf_in);
     }
@@ -222,7 +218,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     // example for exchange symmetry enforcment
     if (intls->enforce_exchange) {
         mpi_vrb_printf( "enforcing exchange symmetry of initial vertex\n" );
-        V->exchange_symmetry();
+        grid_vertex_exchange_symmetry( V, 0.5 );
     }
     intls->grid_vertex = (void*)V;
     intls->grid_vertex_destructor = &VertexMemory_destructor;

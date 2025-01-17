@@ -7,8 +7,7 @@
 #include "tu/diverge_interface.h"
 #include "npatch/vertex.h"
 #include "npatch/flow_step.h"
-/* #include "grid/vertex_memory.hpp" */
-extern void grid_VertexMemory_set_sub_D( void* vtx, int which[3] );
+#include "grid/vertex_memory.h"
 #include "misc/kmeans_lloyd.h"
 #include "misc/batched_eigen.h"
 #include "misc/shared_mem.h"
@@ -115,7 +114,7 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("grid_set_sub_D") {
         int ivec[3] = {0};
         parse_vector_int( ivec, 3, val );
-        if (INTERNALS->grid_vertex) grid_VertexMemory_set_sub_D( INTERNALS->grid_vertex, ivec );
+        if (INTERNALS->grid_vertex) memcpy( ((grid_vertex_t*)INTERNALS->grid_vertex)->sub_D, ivec, sizeof(ivec) );
     }
     CHECKKEY("npatch_vertex_resym") {
         npatch_flow_step_set_vertex_resym( atoi(val) );

@@ -10,7 +10,7 @@
 #include "../../src/tu/vertex_details.h"
 #include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
-#include "../../src/grid/vertex_memory.hpp"
+#include "../../src/grid/vertex_memory.h"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
@@ -208,7 +208,7 @@ TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
 
     index_t fsize = POW4(mod2->n_orb*mod2->n_spin);
     complex128_t* vertex = (complex128_t*)calloc(fsize,sizeof(complex128_t));
-    ((grid::VertexMemory*)s2->intls->grid_vertex)->get_vertex( vertex, 'V' );
+    grid_vertex_get_chan_allranks( (grid_vertex_t*)(s2->intls->grid_vertex), vertex, 'V' );
     index_t norb = mod2->n_orb*mod2->n_spin;
     for(index_t s4 = 0; s4<mod2->n_spin;++s4)
     for(index_t s3 = 0; s3<mod2->n_spin;++s3)

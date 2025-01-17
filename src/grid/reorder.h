@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-typedef struct {
+typedef struct dist_info_t {
     index_t *qcounts, *qdispls,
             *counts, *displs;
     int myrank, nranks;

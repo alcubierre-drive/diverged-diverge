@@ -3,10 +3,7 @@
 #include "loops.h"
 #include "symmetry.h"
 #include "typedefs.hpp" // TODO
-
-// TODO
-/* #include "vertex_memory.hpp" */
-void grid_VertexMemory_get_qdispl_qcount( void* vtx, index_t* qdispl, index_t* qcount );
+#include "vertex_memory.h"
 
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
@@ -53,7 +50,8 @@ grid_loop_t* grid_loop_init( diverge_model_t* dmod ) {
         l->greens_proj_cache_m = calloc(l->nk*l->nkf*l->nb*l->nb, sizeof(complex128_t));
     }
 
-    grid_VertexMemory_get_qdispl_qcount( dmod->internals->grid_vertex, &l->qstart, &l->qsize );
+    l->qstart = ((grid_vertex_t*)dmod->internals->grid_vertex)->qdispl;
+    l->qsize = ((grid_vertex_t*)dmod->internals->grid_vertex)->qcount;
 
     l->Xsize = l->qsize*l->nk*POW4(l->nb);
     l->X_P = malloc( l->Xsize*sizeof(complex128_t) );

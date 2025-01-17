@@ -4,7 +4,7 @@
 #include "diverge_flow_step_internal.hpp"
 
 #include "npatch/output.h"
-#include "grid/vertex_memory.hpp"
+#include "grid/vertex_memory.h"
 #include "grid/post_processing.hpp"
 #include "tu/vertex.h"
 #include "tu/postproduction.h"
@@ -50,18 +50,18 @@ void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st,
 static void grid_pp( diverge_flow_step_t* st,
         const diverge_postprocess_conf_t* pc, const char* file ) {
 
-    grid::VertexMemory* V = (grid::VertexMemory*)st->intls->grid_vertex;
+    grid_vertex_t* V = (grid_vertex_t*)st->intls->grid_vertex;
 
     if (strcmp(pc->grid_vertex_file, "")) {
         mpi_log_printf( "writing vertex to file '%s'.\n", pc->grid_vertex_file );
-        V->write_to_file( pc->grid_vertex_file, pc->grid_vertex_chan );
+        grid_vertex_to_file( V, pc->grid_vertex_file, pc->grid_vertex_chan );
     }
 
     index_t nsing = st->intls->grid_nk * st->intls->grid_nb * st->intls->grid_nb;
     nsing = MIN(nsing, pc->grid_n_singular_values);
     if (nsing != pc->grid_n_singular_values)
         mpi_wrn_printf("reset # singular values to %li\n", nsing);
-    grid::PostProcessing post_process( *V, st->grid_loop );
+    grid::PostProcessing post_process( V, st->grid_loop );
     post_process.set_num_singular_values( nsing );
     post_process.set_loop_usage( pc->grid_use_loop );
 

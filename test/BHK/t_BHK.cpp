@@ -9,7 +9,7 @@
 #include "../../src/diverge_model_output.h"
 #include "../../src/diverge_symmetrize.h"
 
-#include "../../src/grid/vertex_memory.hpp"
+#include "../../src/grid/vertex_memory.h"
 
 #include "../../src/tu/vertex_details.h"
 #include "../../src/tu/projection.h"
@@ -188,7 +188,7 @@ static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
         case bhk_mode_tu:
             tu_vertex_project_fullV( step->tu_vertex, mod, vertex ); break;
         case bhk_mode_grid:
-            ((grid::VertexMemory*)step->intls->grid_vertex)->get_vertex( vertex, 'V' ); break;
+            grid_vertex_get_chan_allranks( (grid_vertex_t*)step->intls->grid_vertex, vertex, 'V' ); break;
         case bhk_mode_patch:
             memcpy( vertex, diverge_flow_step_vertex( step, 'V' ).ary, sizeof(complex128_t)*fsize ); break;
         default: break;

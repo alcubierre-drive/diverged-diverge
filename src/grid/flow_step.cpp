@@ -2,7 +2,7 @@
 
 #include "flow_step.hpp"
 #include "loops.h"
-#include "vertex_memory.hpp"
+#include "vertex_memory.h"
 #include "typedefs.hpp"
 
 #include "../misc/batched_gemms.h"
@@ -22,11 +22,11 @@ static double kfnormgen( const double* kfweights, index_t nkf ) {
     return norm;
 }
 
-FlowStep::FlowStep( VertexMemory* V, grid_loop_t* L, bool P, bool C, bool D ) {
+FlowStep::FlowStep( grid_vertex_t* V, grid_loop_t* L, bool P, bool C, bool D ) {
     _P = P;
     _C = C;
     _D = D;
-    _SU2 = V->get_SU2();
+    _SU2 = V->SU2;
     _V = V;
     _L = L;
     _kfnorm = kfnormgen( L->kfweights, L->nkf );
@@ -36,13 +36,13 @@ FlowStep::FlowStep( VertexMemory* V, grid_loop_t* L, bool P, bool C, bool D ) {
 
     if (_SU2) {
         _norms[2] *= -2.0;
-        if (V->was_sub_D_modified()) {
-            array<bool,3> subD = V->get_sub_D();
-            if (!subD[0]) _norms[2] = 0;
-            if (!subD[1]) _norms[3] = 0;
-            if (!subD[2]) _norms[4] = 0;
-            mpi_log_printf( "enabled D channel diagrams: RPA(%i) VC1(%i) VC2(%i)\n", subD[0], subD[1], subD[2] );
-        }
+        int nmod = 0;
+        if (!V->sub_D[0]) _norms[2] = 0, nmod++;
+        if (!V->sub_D[1]) _norms[3] = 0, nmod++;
+        if (!V->sub_D[2]) _norms[4] = 0, nmod++;
+        if (nmod)
+            mpi_log_printf( "enabled D channel diagrams: RPA(%i) VC1(%i) VC2(%i)\n",
+                    V->sub_D[0], V->sub_D[1], V->sub_D[2] );
     } else {
         if (C != D)
             mpi_err_printf( "non-SU2 only uses D *and* C\n" );
@@ -91,14 +91,14 @@ vector<double> FlowStep::operator()( double Lambda, double dLambda ) {
 }
 
 void FlowStep::_set_dv_zero() {
-    ZERO_OUT( _V->vertex_buffers[1], _V->get_size() );
+    ZERO_OUT( _V->vertex_buffers[1], _V->size );
     _LP = _LC = nullptr;
 }
 
 double FlowStep::_add_dv_to_v() {
     complex128_t* vertex = _V->vertex_buffers[0];
     complex128_t* d_vertex = _V->vertex_buffers[1];
-    index_t Vsize = _V->get_size();
+    index_t Vsize = _V->size;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<Vsize; ++i) vertex[i] += d_vertex[i];
     double Vmax = absmax( vertex, Vsize );
@@ -114,26 +114,26 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
     complex128_t* right = _V->vertex_buffers[3];
     complex128_t* dv = _V->vertex_buffers[1];
     double vmax = 0.0;
-    index_t Vsize = _V->get_size();
-    VertexMemory& V = *_V;
+    index_t Vsize = _V->size;
+    grid_vertex_t* V = _V;
     if (channel == 'P') {
         TICK_TOCK( _loop_time,      if (!_LP) _LP = grid_loop_calc(_L, 'P', Lambda); );
-        TICK_TOCK( _reorder_time,   V( v, left,  "D_to_P", false, 1.0 ) );
-        TICK_TOCK( _reorder_time,   V( v, right, "D_to_P", false, 1.0 ) );
+        TICK_TOCK( _reorder_time,   grid_vertex_project_name( V, v, left,  "D_to_P", false, 1.0 ) );
+        TICK_TOCK( _reorder_time,   grid_vertex_project_name( V, v, right, "D_to_P", false, 1.0 ) );
         TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LP, qsize, nk, nb ) );
         TICK_TOCK( _contract_time,  batched_gemm_overlapping( left, right, right, nk*nb*nb, 1.0, 0.0, qsize ) );
         TICK_TOCK( _max_time,       vmax = absmax( right, Vsize ) * _norms[0] * dLambda );
-        TICK_TOCK( _reorder_time,   V( right, dv, "P_to_D", true, _norms[0]*dLambda ) );
+        TICK_TOCK( _reorder_time,   grid_vertex_project_name( V, right, dv, "P_to_D", true, _norms[0]*dLambda ) );
     }
     if (channel == 'C') {
         if (!_SU2) return 0;
         TICK_TOCK( _loop_time,      if (!_LC) _LC = grid_loop_calc(_L, 'C', Lambda); );
-        TICK_TOCK( _reorder_time,   V( v, left,  "D_to_C", false, 1.0 ) );
-        TICK_TOCK( _reorder_time,   V( v, right, "D_to_C", false, 1.0 ) );
+        TICK_TOCK( _reorder_time,   grid_vertex_project_name( V, v, left,  "D_to_C", false, 1.0 ) );
+        TICK_TOCK( _reorder_time,   grid_vertex_project_name( V, v, right, "D_to_C", false, 1.0 ) );
         TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC, qsize, nk, nb ) );
         TICK_TOCK( _contract_time,  batched_gemm_overlapping( left, right, right, nk*nb*nb, 1.0, 0.0, qsize ) );
         TICK_TOCK( _max_time,       vmax = absmax( right, Vsize ) * _norms[1] * dLambda );
-        TICK_TOCK( _reorder_time,   V( right, dv, "C_to_D", true, _norms[1]*dLambda ) );
+        TICK_TOCK( _reorder_time,   grid_vertex_project_name( V, right, dv, "C_to_D", true, _norms[1]*dLambda ) );
     }
     if (channel == 'D') {
         TICK_TOCK( _loop_time,      if (!_LC) _LC = grid_loop_calc(_L, 'C', Lambda); );
@@ -142,34 +142,34 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
 
             // vertex corrections
             // left vertex C channel
-            TICK_TOCK( _reorder_time,   V( v, left, "D_to_C", false, 1.0 ) );
+            TICK_TOCK( _reorder_time,   grid_vertex_project_name( V, v, left, "D_to_C", false, 1.0 ) );
             TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC, qsize, nk, nb ) );
             // make 'v' the right vertex and 'right' the result
             TICK_TOCK( _contract_time,  batched_gemm( left, v, right, nk*nb*nb, _norms[3]*dLambda, 0.0, qsize ) );
             // right vertex C channel
             // make 'left' right
-            TICK_TOCK( _reorder_time,   V( v, left, "D_to_C", false, 1.0 ) );
+            TICK_TOCK( _reorder_time,   grid_vertex_project_name( V, v, left, "D_to_C", false, 1.0 ) );
             // make 'send_pack' left (*after* reordering call)
-            TICK_TOCK( _reorder_time,   V( v, V.get_send_pack(), false, 1.0 ) );
-            TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( V.get_send_pack(), _LC, qsize, nk, nb ) );
+            TICK_TOCK( _reorder_time,   grid_vertex_copy( V, v, V->send_pack, false, 1.0 ) );
+            TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( V->send_pack, _LC, qsize, nk, nb ) );
             // write result in 'right'
-            TICK_TOCK( _contract_time,  batched_gemm( V.get_send_pack(), left, right, nk*nb*nb, _norms[4]*dLambda, 1.0, qsize ) );
+            TICK_TOCK( _contract_time,  batched_gemm( V->send_pack, left, right, nk*nb*nb, _norms[4]*dLambda, 1.0, qsize ) );
 
             // rpa
             // use 'send_pack' as left vertex *with* loop and 'v' as right
             // write result to 'right'
-            TICK_TOCK( _contract_time,  batched_gemm( V.get_send_pack(), v, right, nk*nb*nb, _norms[2]*dLambda, 1.0, qsize ) );
+            TICK_TOCK( _contract_time,  batched_gemm( V->send_pack, v, right, nk*nb*nb, _norms[2]*dLambda, 1.0, qsize ) );
             // get max of result ('right')
             TICK_TOCK( _max_time,       vmax = absmax( right, Vsize ) );
             // add result ('right') to dv
-            TICK_TOCK( _reorder_time,   V( right, dv, true, 1.0 ) );
+            TICK_TOCK( _reorder_time,   grid_vertex_copy( V, right, dv, true, 1.0 ) );
         } else {
-            TICK_TOCK( _reorder_time,   V( v, left, false, 1.0 ) );
+            TICK_TOCK( _reorder_time,   grid_vertex_copy( V, v, left, false, 1.0 ) );
             TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC, qsize, nk, nb ) );
             TICK_TOCK( _contract_time,  batched_gemm( left, v, right, nk*nb*nb, 1.0, 0.0, qsize ) );
             TICK_TOCK( _max_time,       vmax = absmax( right, Vsize ) * _norms[2] * dLambda );
-            TICK_TOCK( _reorder_time,   V( right, dv, true, _norms[2]*dLambda ) );
-            TICK_TOCK( _reorder_time,   V( right, dv, "D_swap_3_and_4", true, _norms[1]*dLambda ) );
+            TICK_TOCK( _reorder_time,   grid_vertex_copy( V, right, dv, true, _norms[2]*dLambda ) );
+            TICK_TOCK( _reorder_time,   grid_vertex_project_name( V, right, dv, "D_swap_3_and_4", true, _norms[1]*dLambda ) );
         }
     }
     return vmax;

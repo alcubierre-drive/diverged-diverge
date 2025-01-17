@@ -8,8 +8,6 @@
 #include "../../src/diverge_model_internals.h"
 #include "../../src/diverge_model_output.h"
 
-#include "../../src/grid/vertex_memory.hpp"
-
 #include "../../src/tu/diverge_interface.h"
 #include "../../src/tu/diverge_interface_symmstruct.h"
 #include "../../src/tu/vertex_details.h"
