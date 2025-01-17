@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "typedefs.hpp"
+#include "../diverge_common.h"
 
 typedef struct grid_loop_t grid_loop_t;
 typedef struct grid_vertex_t grid_vertex_t;

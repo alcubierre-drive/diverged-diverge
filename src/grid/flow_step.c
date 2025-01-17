@@ -1,3 +1,4 @@
+#include "helpers.h"
 #include "flow_step.h"
 #include "vertex_memory.h"
 #include "loops.h"

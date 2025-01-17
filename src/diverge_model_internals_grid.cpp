@@ -6,6 +6,7 @@
 #include "diverge_Eigen3.hpp"
 #include "diverge_momentum_gen.h"
 #include "grid/vertex_memory.h"
+#include "misc/mpi_functions.h"
 
 #include <vector>
 #include <array>

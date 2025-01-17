@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "typedefs.hpp"
+#include "../diverge_common.h"
 
 #ifdef __cplusplus
 extern "C" {

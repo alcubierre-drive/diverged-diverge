@@ -1,8 +1,8 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#include "helpers.h"
 #include "loops.h"
 #include "symmetry.h"
-#include "typedefs.hpp" // TODO
 #include "vertex_memory.h"
 
 #include "../diverge_model.h"

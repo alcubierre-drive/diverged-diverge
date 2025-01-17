@@ -1,10 +1,16 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#include "../diverge_common.h"
+#include "../misc/mpi_functions.h"
+
 #pragma once
 
 #include <vector>
 #include <string>
-#include "typedefs.hpp"
+#include <array>
+using std::vector;
+using std::array;
+using std::string;
 
 #ifndef MAGIC_NUMBER_POST_PROCESSING
 #define MAGIC_NUMBER_POST_PROCESSING 'P'

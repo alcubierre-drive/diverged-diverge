@@ -1,7 +1,7 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "kernels_helpers.h"
-#include "kernels_gpu_helpers.hpp"
+#include "kernels_gpu_helpers.h"
 
 #include "kernels_loop_gpu.h"
 #include "flow_step.h"

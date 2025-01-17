@@ -1,3 +1,4 @@
+#include "helpers.h"
 #include "vertex_memory.h"
 #include "reorder.h"
 #include "../diverge_patching_helpers.h" // atomic_add
