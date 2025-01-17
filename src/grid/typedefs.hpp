@@ -5,6 +5,8 @@
 #include "../diverge_common.h"
 #include "../misc/mpi_functions.h"
 
+#ifdef __cplusplus
+
 #include <vector>
 #include <array>
 #include <string>
@@ -15,13 +17,6 @@ using std::vector;
 using std::array;
 using std::string;
 
-#define TICK_TOCK( output, ... ) { \
-    double tick = diverge_mpi_wtime(); \
-    __VA_ARGS__; \
-    double tock = diverge_mpi_wtime(); \
-    output += tock - tick; \
-}
-
 static inline double absmax( const complex128_t* ary, index_t cnt ) {
     double result = 0.0;
     #pragma omp parallel for reduction(max:result) num_threads(diverge_omp_num_threads())
@@ -30,4 +25,25 @@ static inline double absmax( const complex128_t* ary, index_t cnt ) {
     return result;
 }
 
+}
+
+#else
+
+static inline double absmax( const complex128_t* ary, index_t cnt ) {
+    double result = 0.0;
+    #pragma omp parallel for reduction(max:result) num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<cnt; ++i) {
+        double _abs = cabs(ary[i]);
+        result = MAX(result, _abs);
+    }
+    return result;
+}
+
+#endif
+
+#define TICK_TOCK( output, ... ) { \
+    double tick = diverge_mpi_wtime(); \
+    __VA_ARGS__; \
+    double tock = diverge_mpi_wtime(); \
+    output += tock - tick; \
 }

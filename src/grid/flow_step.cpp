@@ -178,6 +178,7 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
 void FlowStep::print_timings() {
     if (_num_calls < 1) return;
 
+    _loop_symm_time = _L->t_sym;
     diverge_mpi_allreduce_double_max( MPI_IN_PLACE, &_reorder_time,   1 );
     diverge_mpi_allreduce_double_max( MPI_IN_PLACE, &_loop_time,      1 );
     diverge_mpi_allreduce_double_max( MPI_IN_PLACE, &_loop_gemm_time, 1 );

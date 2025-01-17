@@ -7,8 +7,6 @@
 
 namespace grid {
 
-class IndexGenerator;
-
 class VertexMemory {
     public:
         VertexMemory( index_t nk, index_t nb, index_t* k1m2, index_t* k1p2, bool SU2 );

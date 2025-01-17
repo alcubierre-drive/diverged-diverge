@@ -23,6 +23,9 @@ struct grid_loop_t {
     complex128_t* formfac;
     index_t nff;
 
+    // timing
+    double t_sym;
+
     // private
     grid_symm_transform_t* SYM;
     bool SYM_enabled;

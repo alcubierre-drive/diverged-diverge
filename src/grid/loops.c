@@ -2,6 +2,7 @@
 
 #include "loops.h"
 #include "symmetry.h"
+#include "typedefs.hpp" // TODO
 
 // TODO
 /* #include "vertex_memory.hpp" */
@@ -16,7 +17,6 @@ void grid_VertexMemory_get_qdispl_qcount( void* vtx, index_t* qdispl, index_t* q
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
 
-static inline double absmax( const complex128_t* ary, index_t cnt );
 static void frg_loop_calc_P_greens( const bool isProjectedLoop, complex128_t* mem,
         const complex128_t* greens_p, const complex128_t* greens_m, index_t qstart,
         index_t qstop, index_t nk, index_t nkf, index_t nb, const index_t* kfrev,
@@ -102,10 +102,11 @@ static void greens_cache_fill( grid_loop_t* l, double Lambda ) {
 
 static complex128_t* symmetrize( grid_loop_t* l, complex128_t* loop, char chan ) {
     if (l->SYM_enabled && l->SYM != NULL) {
-        return grid_symm_transform_loop( l->SYM, loop, chan );
-    } else {
-        return loop;
+        double tick = diverge_mpi_wtime();
+        loop = grid_symm_transform_loop( l->SYM, loop, chan );
+        l->t_sym += diverge_mpi_wtime() - tick;
     }
+    return loop;
 }
 
 complex128_t* grid_loop_calc( grid_loop_t* l, char chan, double Lambda ) {
@@ -339,15 +340,5 @@ static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_
     for (index_t ff=0; ff<*nff; ++ff)
         normalize(formfac+ff*intls->grid_nk, intls->grid_nk);
     return formfac;
-}
-
-static inline double absmax( const complex128_t* ary, index_t cnt ) {
-    double result = 0.0;
-    #pragma omp parallel for reduction(max:result) num_threads(diverge_omp_num_threads())
-    for (index_t i=0; i<cnt; ++i) {
-        double _abs = cabs(ary[i]);
-        result = MAX(result, _abs);
-    }
-    return result;
 }
 
