@@ -61,7 +61,7 @@ static void grid_pp( diverge_flow_step_t* st,
     nsing = MIN(nsing, pc->grid_n_singular_values);
     if (nsing != pc->grid_n_singular_values)
         mpi_wrn_printf("reset # singular values to %li\n", nsing);
-    grid::PostProcessing post_process( *V, *st->grid_loop );
+    grid::PostProcessing post_process( *V, st->grid_loop );
     post_process.set_num_singular_values( nsing );
     post_process.set_loop_usage( pc->grid_use_loop );
 

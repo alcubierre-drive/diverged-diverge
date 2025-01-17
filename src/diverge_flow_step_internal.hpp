@@ -6,7 +6,7 @@
 #include "diverge_flow_type.h"
 #include "diverge_internals_struct.h"
 
-#include "grid/loops.hpp"
+#include "grid/loops.h"
 #include "grid/flow_step.hpp"
 
 #include "tu/vertex.h"
@@ -36,7 +36,7 @@ struct diverge_flow_step_t {
     bool channel_selection[4];
 
     // grid classes
-    grid::Loops* grid_loop;
+    grid_loop_t* grid_loop;
     grid::FlowStep* grid_step;
 
     // patch structs

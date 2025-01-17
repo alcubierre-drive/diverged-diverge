@@ -6,7 +6,7 @@
 
 #include "../misc/batched_gemms.h"
 #include "vertex_memory.hpp"
-#include "loops.hpp"
+#include "loops.h"
 #include "reorder.h"
 
 #include <thread>
@@ -20,7 +20,7 @@ namespace grid {
 
 class LinearizedGapSolution {
     public:
-        LinearizedGapSolution( VertexMemory& V, Loops& L, double T, char chan,
+        LinearizedGapSolution( VertexMemory& V, grid_loop_t* L, double T, char chan,
                 unsigned n, bool use_loop, string vertex_file );
         ~LinearizedGapSolution();
 
@@ -34,7 +34,7 @@ class LinearizedGapSolution {
         void unpack_data( const double* data );
     private:
         VertexMemory* _V;
-        Loops* _L;
+        grid_loop_t* _L;
 
         void _calc( double T, char chan, bool use_loop, string vertex_file );
 
@@ -52,18 +52,18 @@ class LinearizedGapSolution {
         bool _is_q_zero;
 };
 
-LinearizedGapSolution::LinearizedGapSolution( VertexMemory& V, Loops& L,
+LinearizedGapSolution::LinearizedGapSolution( VertexMemory& V, grid_loop_t* L,
         double T, char chan, unsigned n, bool use_loop, string vertex_file ) {
     _V = &V;
-    _L = &L;
+    _L = L;
     _num_singular_values = n;
 
-    _nk = _L->get_nk();
-    _nb = _L->get_nb();
-    _qsize = _L->get_qsize();
+    _nk = _L->nk;
+    _nb = _L->nb;
+    _qsize = _L->qsize;
 
-    _q_zero = _L->get_kzero();
-    _is_q_zero = (_q_zero >= _L->get_qstart()) && (_q_zero < _L->get_qstop());
+    _q_zero = 0;
+    _is_q_zero = (_q_zero >= _L->qstart) && (_q_zero < (_L->qstart+_L->qsize));
 
     if (_is_q_zero) {
         _singular_matrix_U = (complex128_t*)calloc(_nk*_nb*_nb*_num_singular_values,sizeof(complex128_t));
@@ -91,15 +91,15 @@ void LinearizedGapSolution::_calc( double T, char chan, bool use_loop, string ve
     VertexMemory& V = *_V;
     complex128_t* loop = nullptr;
     if (chan == 'P') {
-        std::thread lc( [&](){ if (use_loop) loop = _L->X_P( T ); } );
+        std::thread lc( [&](){ if (use_loop) loop = grid_loop_calc( _L, 'P', T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], "D_to_P", false, 1.0 );
         lc.join();
     } else if (chan == 'C') {
-        std::thread lc( [&](){ if (use_loop) loop = _L->X_C( T ); } );
+        std::thread lc( [&](){ if (use_loop) loop = grid_loop_calc( _L, 'C', T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], "D_to_C", false, 1.0 );
         lc.join();
     } else /*chan == 'D'*/ {
-        std::thread lc( [&](){ if (use_loop) loop = _L->X_C( T ); } );
+        std::thread lc( [&](){ if (use_loop) loop = grid_loop_calc( _L, 'C', T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], false, 1.0 );
         lc.join();
     }
@@ -119,7 +119,7 @@ void LinearizedGapSolution::_calc( double T, char chan, bool use_loop, string ve
     }
 
     index_t N = _nk*_nb*_nb;
-    complex128_t* v = V.vertex_buffers[1] + (_q_zero - _L->get_qstart())*N*N;
+    complex128_t* v = V.vertex_buffers[1] + (_q_zero - _L->qstart)*N*N;
     complex128_t* U_ = V.vertex_buffers[2];
     complex128_t* V_ = V.vertex_buffers[3];
 
@@ -202,14 +202,14 @@ void LinearizedGapSolution::unpack_data( const double* data ) {
     }
 }
 
-PostProcessing::PostProcessing( VertexMemory& V, Loops &L ) {
+PostProcessing::PostProcessing( VertexMemory& V, grid_loop_t* L ) {
     _V = &V;
-    _L = &L;
+    _L = L;
     _SU2 = _V->get_SU2();
-    _qsize = _L->get_qsize();
-    _nk = _L->get_nk();
-    _nb = _L->get_nb();
-    _nff = _L->get_nff();
+    _qsize = _L->qsize;
+    _nk = _L->nk;
+    _nb = _L->nb;
+    _nff = _L->nff;
     _Xsize = _qsize * _nb * _nb * _nb * _nb * _nff;
 }
 
@@ -232,11 +232,11 @@ void PostProcessing::set_loop_usage( bool loop ) {
 
 void PostProcessing::linearized_gap( double T, char chan, string vertex_file ) {
     if (chan == 'P')
-        _lgap_P = new LinearizedGapSolution( *_V, *_L, T, chan, _num_singular_values, _use_loop, vertex_file );
+        _lgap_P = new LinearizedGapSolution( *_V, _L, T, chan, _num_singular_values, _use_loop, vertex_file );
     else if (chan == 'D')
-        _lgap_D = new LinearizedGapSolution( *_V, *_L, T, chan, _num_singular_values, _use_loop, vertex_file );
+        _lgap_D = new LinearizedGapSolution( *_V, _L, T, chan, _num_singular_values, _use_loop, vertex_file );
     else if (chan == 'C' && _SU2)
-        _lgap_C = new LinearizedGapSolution( *_V, *_L, T, chan, _num_singular_values, _use_loop, vertex_file );
+        _lgap_C = new LinearizedGapSolution( *_V, _L, T, chan, _num_singular_values, _use_loop, vertex_file );
     else
         mpi_wrn_printf( "invalid channel '%c'\n", chan );
 }
@@ -261,17 +261,17 @@ void PostProcessing::susceptibility( double T, char chan ) {
 void PostProcessing::_calc_sus( complex128_t* buf, double T, char chan ) {
     VertexMemory& V = *_V;
     complex128_t* loop = nullptr;
-    complex128_t* ff = _L->get_ff();
+    complex128_t* ff = _L->formfac;
     if (chan == 'P') {
-        std::thread lc( [&](){ loop = _L->X_P( T ); } );
+        std::thread lc( [&](){ loop = grid_loop_calc( _L, 'P', T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], "D_to_P", false, 1.0 );
         lc.join();
     } else if (chan == 'C') {
-        std::thread lc( [&](){ loop = _L->X_C( T ); } );
+        std::thread lc( [&](){ loop = grid_loop_calc( _L, 'C', T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], "D_to_C", false, 1.0 );
         lc.join();
     } else /*chan == 'D'*/ {
-        std::thread lc( [&](){ loop = _L->X_C( T ); } );
+        std::thread lc( [&](){ loop = grid_loop_calc( _L, 'C', T ); } );
         V( V.vertex_buffers[0], V.vertex_buffers[1], false, 1.0 );
         lc.join();
     }
@@ -302,7 +302,7 @@ void PostProcessing::_calc_sus( complex128_t* buf, double T, char chan ) {
 
 vector<index_t> PostProcessing::_qstartstops() {
     int nranks = diverge_mpi_comm_size();
-    array<index_t,2> q = { _L->get_qstart(), _L->get_qstop() };
+    array<index_t,2> q = { _L->qstart, _L->qstart + _L->qsize };
     vector<index_t> qstartstops( nranks*2 );
     diverge_mpi_allgather_index( q.data(), qstartstops.data(), 2 );
     return qstartstops;
@@ -310,7 +310,7 @@ vector<index_t> PostProcessing::_qstartstops() {
 
 int PostProcessing::_find_q_zero_rank() {
     vector<index_t> qstartstops = _qstartstops();
-    index_t q_zero = _L->get_kzero();
+    index_t q_zero = 0;
     for (unsigned i=0; i<qstartstops.size()/2; ++i) {
         index_t q0 = qstartstops[2*i];
         index_t q1 = qstartstops[2*i+1];
@@ -517,7 +517,7 @@ index_t* PostProcessing::to_file( const string& fname ) {
         return header;
     }
     fwrite( header, sizeof(index_t), 64, outfile );
-    fwrite( _L->get_ff(), sizeof(double), header[6], outfile );
+    fwrite( _L->formfac, sizeof(double), header[6], outfile );
 
     fwrite( _V->vertex_buffers[1], sizeof(double), header[8], outfile );
     if (lP) {

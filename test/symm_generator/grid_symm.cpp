@@ -7,7 +7,7 @@
 #include "../model_examples/old.h"
 #include "../../src/diverge_model_internals.h"
 #include "../model_examples/model_constructor.hpp"
-#include "../../src/grid/loops.hpp"
+#include "../../src/grid/loops.h"
 #include "../helper_functions.hpp"
 
 
@@ -21,23 +21,24 @@ TEST_CASE("loopgrid symmcheck", "[grid_symm]") {
     complex128_t* Lgrid;
     complex128_t* Lreco;
 
-    grid::Loops grid_loop(mod_grid);
-    index_t fsize = POW4(nb)*grid_loop.get_qsize()*nk;
+    grid_loop_t* grid_loop = grid_loop_init(mod_grid);
+    index_t fsize = POW4(nb)*grid_loop->qsize*nk;
 
-    grid_loop.toggle_symmetrizer();
-    Lgrid = grid_loop.X_C(0.1);
-    grid_loop.toggle_symmetrizer();
-    Lreco = grid_loop.X_C(0.1);
+    grid_loop_toggle_symmetrizer(grid_loop);
+    Lgrid = grid_loop_calc( grid_loop, 'C', 0.1 );
+    grid_loop_toggle_symmetrizer(grid_loop);
+    Lreco = grid_loop_calc( grid_loop, 'C', 0.1 );
     for(index_t i = 0; i < fsize; ++i)
         CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
 
-    grid_loop.toggle_symmetrizer();
-    Lgrid = grid_loop.X_P(0.1);
-    grid_loop.toggle_symmetrizer();
-    Lreco = grid_loop.X_P(0.1);
+    grid_loop_toggle_symmetrizer(grid_loop);
+    Lgrid = grid_loop_calc( grid_loop, 'P', 0.1 );
+    grid_loop_toggle_symmetrizer(grid_loop);
+    Lreco = grid_loop_calc( grid_loop, 'P', 0.1 );
     for(index_t i = 0; i < fsize; ++i)
         CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
 
+    grid_loop_free(grid_loop);
     diverge_model_free(mod_grid);
 }
 

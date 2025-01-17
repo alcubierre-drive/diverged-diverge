@@ -1,7 +1,7 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "flow_step.hpp"
-#include "loops.hpp"
+#include "loops.h"
 #include "vertex_memory.hpp"
 #include "typedefs.hpp"
 
@@ -22,17 +22,17 @@ static double kfnormgen( const double* kfweights, index_t nkf ) {
     return norm;
 }
 
-FlowStep::FlowStep( VertexMemory* V, Loops* L, bool P, bool C, bool D ) {
+FlowStep::FlowStep( VertexMemory* V, grid_loop_t* L, bool P, bool C, bool D ) {
     _P = P;
     _C = C;
     _D = D;
     _SU2 = V->get_SU2();
     _V = V;
     _L = L;
-    _kfnorm = kfnormgen( L->get_kfweights(), L->get_nkf() );
+    _kfnorm = kfnormgen( L->kfweights, L->nkf );
 
     for (unsigned i=0; i<_norms.size(); ++i)
-        _norms[i] = 1.0/(double)_L->get_nk()/_kfnorm;
+        _norms[i] = 1.0/(double)_L->nk/_kfnorm;
 
     if (_SU2) {
         _norms[2] *= -2.0;
@@ -78,7 +78,7 @@ vector<double> FlowStep::operator()( double Lambda, double dLambda ) {
     result.push_back( _add_dv_to_v() );
     _num_calls++;
 
-    array<double,2> loopmax = _L->get_max();
+    array<double,2> loopmax = {_L->max_P, _L->max_C};
     for (unsigned i=0; i<loopmax.size(); ++i) {
         result.push_back( loopmax[i] );
     }
@@ -106,9 +106,9 @@ double FlowStep::_add_dv_to_v() {
 }
 
 double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
-    index_t qsize = _L->get_qsize();
-    index_t nk = _L->get_nk();
-    index_t nb = _L->get_nb();
+    index_t qsize = _L->qsize;
+    index_t nk = _L->nk;
+    index_t nb = _L->nb;
     complex128_t* v = _V->vertex_buffers[0];
     complex128_t* left = _V->vertex_buffers[2];
     complex128_t* right = _V->vertex_buffers[3];
@@ -117,7 +117,7 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
     index_t Vsize = _V->get_size();
     VertexMemory& V = *_V;
     if (channel == 'P') {
-        TICK_TOCK( _loop_time,      if (!_LP) { _LP = _L->X_P(Lambda); } );
+        TICK_TOCK( _loop_time,      if (!_LP) _LP = grid_loop_calc(_L, 'P', Lambda); );
         TICK_TOCK( _reorder_time,   V( v, left,  "D_to_P", false, 1.0 ) );
         TICK_TOCK( _reorder_time,   V( v, right, "D_to_P", false, 1.0 ) );
         TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LP, qsize, nk, nb ) );
@@ -127,7 +127,7 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
     }
     if (channel == 'C') {
         if (!_SU2) return 0;
-        TICK_TOCK( _loop_time,      if (!_LC) _LC = _L->X_C(Lambda); );
+        TICK_TOCK( _loop_time,      if (!_LC) _LC = grid_loop_calc(_L, 'C', Lambda); );
         TICK_TOCK( _reorder_time,   V( v, left,  "D_to_C", false, 1.0 ) );
         TICK_TOCK( _reorder_time,   V( v, right, "D_to_C", false, 1.0 ) );
         TICK_TOCK( _loop_gemm_time, batched_gemm_vertex_loop( left, _LC, qsize, nk, nb ) );
@@ -136,7 +136,7 @@ double FlowStep::_get_dv( char channel, double Lambda, double dLambda ) {
         TICK_TOCK( _reorder_time,   V( right, dv, "C_to_D", true, _norms[1]*dLambda ) );
     }
     if (channel == 'D') {
-        TICK_TOCK( _loop_time,      if(!_LC) _LC = _L->X_C(Lambda); );
+        TICK_TOCK( _loop_time,      if (!_LC) _LC = grid_loop_calc(_L, 'C', Lambda); );
         if (_SU2) {
             // 'right' is the result
 

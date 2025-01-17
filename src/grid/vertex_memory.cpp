@@ -3,7 +3,7 @@
 #include "vertex_memory.hpp"
 #include "index_gymnastics.h"
 #include "reorder.h"
-#include "loops.hpp"
+#include "loops.h"
 // for atomic_add
 #include "../diverge_patching_helpers.h"
 
@@ -461,4 +461,10 @@ static inline index_t o2b_idx_order( const index_t& x, const index_t& y, const i
 void grid_VertexMemory_set_sub_D( void* vtx, int which[3] ) {
     grid::VertexMemory* V = (grid::VertexMemory*)vtx;
     V->set_sub_D( which );
+}
+
+void grid_VertexMemory_get_qdispl_qcount( void* vtx, index_t* qdispl, index_t* qcount ) {
+    grid::VertexMemory* V = (grid::VertexMemory*)vtx;
+    *qdispl = V->get_qdispl();
+    *qcount = V->get_qcount();
 }

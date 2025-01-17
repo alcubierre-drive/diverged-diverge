@@ -67,7 +67,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
                 mpi_err_printf("internals for grid FRG not set\n");
                 goto end_error;
             }
-            st->grid_loop = new grid::Loops(st->mod);
+            st->grid_loop = grid_loop_init(st->mod);
             st->grid_step = new grid::FlowStep( (grid::VertexMemory*)st->intls->grid_vertex,
                     st->grid_loop, st->channel_selection[0], st->channel_selection[1],
                     st->channel_selection[2] );
@@ -147,7 +147,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
             break;
         case diverge_grid:
             delete st->grid_step;
-            delete st->grid_loop;
+            grid_loop_free( st->grid_loop );
             break;
         case diverge_tu:
             tu_vertex_free( st->tu_vertex );

@@ -4,14 +4,15 @@
 
 #include "typedefs.hpp"
 
+typedef struct grid_loop_t grid_loop_t;
+
 namespace grid {
 
 class VertexMemory;
-class Loops;
 
 class FlowStep {
     public:
-        FlowStep( VertexMemory* V, Loops* L, bool P = true, bool C = true, bool D = true );
+        FlowStep( VertexMemory* V, grid_loop_t* L, bool P = true, bool C = true, bool D = true );
         // returns Pmax, Cmax, Dmax, Vmax, LPmax, LDmax
         vector<double> operator()( double Lambda, double dLambda );
         void print_timings( void );
@@ -30,7 +31,7 @@ class FlowStep {
         }
     private:
         VertexMemory* _V;
-        Loops* _L;
+        grid_loop_t* _L;
         bool _P, _C, _D;
         bool _SU2;
         double _kfnorm;

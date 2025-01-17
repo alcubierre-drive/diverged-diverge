@@ -10,15 +10,16 @@
 #define MAGIC_NUMBER_POST_PROCESSING 'P'
 #endif
 
+typedef struct grid_loop_t grid_loop_t;
+
 namespace grid {
 
 class VertexMemory;
-class Loops;
 class LinearizedGapSolution;
 
 class PostProcessing {
     public:
-        PostProcessing( VertexMemory& V, Loops& L );
+        PostProcessing( VertexMemory& V, grid_loop_t* L );
         ~PostProcessing();
 
         void susceptibility( double T, char chan );
@@ -58,7 +59,7 @@ class PostProcessing {
         index_t* to_file( const string& fname );
     private:
         VertexMemory* _V;
-        Loops* _L;
+        grid_loop_t* _L;
 
         index_t _qsize, _nb, _nk, _nff, _Xsize;
 

@@ -485,7 +485,6 @@ complex128_t* grid_symm_transform_loop( grid_symm_transform_t* s, complex128_t* 
 bool grid_symm_transform_loop_checksyms( grid_symm_transform_t* s, complex128_t* loop, char chan ) {
     complex128_t* buf = s->loop_buf;
     bool errors = false;
-    mpi_log_printf( "checking '%c'\n", chan );
     for (index_t i=0; i<s->nsym; ++i) {
         ZERO_OUT( buf, s->loop_size );
         grid_symm_transform_loop_single( s, loop, buf, i, chan );
