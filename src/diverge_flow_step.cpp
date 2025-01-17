@@ -68,7 +68,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
                 goto end_error;
             }
             st->grid_loop = grid_loop_init(st->mod);
-            st->grid_step = new grid::FlowStep( (grid_vertex_t*)st->intls->grid_vertex,
+            st->grid_step = grid_flow_step_init( (grid_vertex_t*)st->intls->grid_vertex,
                     st->grid_loop, st->channel_selection[0], st->channel_selection[1],
                     st->channel_selection[2] );
             diverge_mpi_barrier();
@@ -146,7 +146,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
             npatch_setup_teardown();
             break;
         case diverge_grid:
-            delete st->grid_step;
+            grid_flow_step_free( st->grid_step );
             grid_loop_free( st->grid_loop );
             break;
         case diverge_tu:
@@ -173,6 +173,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
     vector<double> chanmax_vec;
     double patch_cm[6];
     int idx = 0;
+    grid_timing_t* gtt = NULL;
     tu_prop_timing_t* ttt = NULL;
     char tmpchar[64];
     st->Lambda = Lambda;
@@ -203,7 +204,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
     // std::conj(cmplx_Lambda) into the buffer st->intls->greens. You are free
     // to fill the Greens functions into your own buffers. Moreover, you must
     // check for the return value of the Green's function filler (i.e. where)
-    // and act accordingly. See src/npatch/loop.c or src/grid/loops.cpp for
+    // and act accordingly. See src/npatch/loop.c or src/grid/loops.c for
     // examples.
     switch (st->type) {
         case diverge_patch:
@@ -243,7 +244,10 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             st->niter = st->patch_step_conf->niter;
             return;
         case diverge_grid:
-            chanmax_vec = (*st->grid_step)( Lambda, dLambda );
+            chanmax_vec.resize(6);
+            memcpy( chanmax_vec.data(),
+                    grid_flow_step_euler( st->grid_step, Lambda, dLambda ),
+                    sizeof(double)*6 );
             st->chanmax[0] = chanmax_vec[0];
             st->chanmax[1] = chanmax_vec[1];
             st->chanmax[2] = chanmax_vec[2];
@@ -251,10 +255,14 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             st->loopmax[0] = chanmax_vec[4];
             st->loopmax[1] = chanmax_vec[5];
 
-            // save timings
-            *st->timings = st->grid_step->get_timings();
-            *st->timings_descr = st->grid_step->get_timings_descr();
-            st->niter = st->grid_step->get_num_calls();
+            st->timings->resize(6);
+            st->timings_descr->resize(6);
+            gtt = grid_flow_step_timings( st->grid_step );
+            for (int i=0; i<6; ++i) {
+                st->timings->at(i) = gtt[i].t;
+                st->timings_descr->at(i) = gtt[i].nam;
+            }
+            st->niter = grid_flow_step_num_calls( st->grid_step );
             return;
         case diverge_tu:
             chanmax_vec.resize(6);

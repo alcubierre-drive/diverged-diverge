@@ -7,7 +7,7 @@
 #include "diverge_internals_struct.h"
 
 #include "grid/loops.h"
-#include "grid/flow_step.hpp"
+#include "grid/flow_step.h"
 
 #include "tu/vertex.h"
 #include "tu/projection.h"
@@ -37,7 +37,7 @@ struct diverge_flow_step_t {
 
     // grid classes
     grid_loop_t* grid_loop;
-    grid::FlowStep* grid_step;
+    grid_flow_step_t* grid_step;
 
     // patch structs
     npatch_loop_t* patch_loop;
