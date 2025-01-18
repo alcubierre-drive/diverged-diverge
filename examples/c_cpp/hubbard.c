@@ -85,13 +85,8 @@ int main( int argc, char** argv ) {
     diverge_model_set_chempot(m, NULL, -1, -4.*tp);
 
     // backend selection
-    typedef union {
-        index_t np_ibz;
-        double max_dist;
-    } internals_arg_t;
-    internals_arg_t A = {.np_ibz = 4};
-    if (!patch_mode) A.max_dist = 2.01;
-    diverge_model_internals_any(m, mode, A);
+    if (patch_mode) diverge_model_internals_any(m, mode, 4);
+    else            diverge_model_internals_any(m, mode, 2.01);
 
     // output
     diverge_model_output_conf_t oc = diverge_model_output_conf_defaults;
@@ -110,7 +105,8 @@ int main( int argc, char** argv ) {
 
     // post-process
     diverge_postprocess_conf_t pc = diverge_postprocess_conf_defaults;
-    pc.tu_susceptibilities_full = 1;
+    pc.tu_susceptibilities_full = true;
+    pc.tu_susceptibilities_bare = true;
     diverge_postprocess_and_write_finegrained( f, __FILE__ "_out.dvg", &pc );
 
     // cleanup

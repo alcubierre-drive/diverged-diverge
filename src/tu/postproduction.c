@@ -497,9 +497,9 @@ static void calc_susc( tu_postproduction_t* p ) {
         }
     }
     if (!p->c.susc_ff) {
-        free(p->suscCh_ff);
-        free(p->suscMa_ff);
-        free(p->suscPp_ff);
+        free(p->suscCh_ff); p->suscCh_ff = NULL;
+        free(p->suscMa_ff); p->suscMa_ff = NULL;
+        free(p->suscPp_ff); p->suscPp_ff = NULL;
     }
     free(suscff);
 }
@@ -775,11 +775,11 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
 
     header[i] = header[i-2] + header[i-1]*sizeof(index_t); ++i;
     if (p->vertex->P_flow && p->c.bare_susceptibilities)
-        header[i] = POW2(linsize) * p->vertex->nk;
+        header[i] = POW2(linsize) * tu_data->nkibz;
     ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
     if ((p->vertex->C_flow || p->vertex->D_flow) && p->c.bare_susceptibilities)
-        header[i] = POW2(linsize) * p->vertex->nk;
+        header[i] = POW2(linsize) * tu_data->nkibz;
     ++i;
 
     assert(i < 125);
@@ -942,9 +942,11 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
 
     index_t scdlin = POW2(linsize) * sizeof(complex128_t);
     if (p->c.bare_susceptibilities && p->vertex->P_flow)
-        new_off = diverge_mpi_write_byte_to_file(file,p->vertex->pp_bubble_int,new_off+my_nk_off*scdlin,my_nk*scdlin);
+        new_off = diverge_mpi_write_byte_to_file(file, p->vertex->pp_bubble_int,
+                new_off+my_nk_off*scdlin, my_nk*scdlin);
     if (p->c.bare_susceptibilities && (p->vertex->C_flow || p->vertex->D_flow))
-        new_off = diverge_mpi_write_byte_to_file(file,p->vertex->ph_bubble_int,new_off+my_nk_off*scdlin,my_nk*scdlin);
+        new_off = diverge_mpi_write_byte_to_file(file, p->vertex->ph_bubble_int,
+                new_off+my_nk_off*scdlin, my_nk*scdlin);
 
     if (new_off != header[127])
         mpi_wrn_printf( "offset of file (%li) dosn't match size (%li)\n", new_off, header[127] );

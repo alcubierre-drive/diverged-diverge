@@ -767,7 +767,7 @@ class diverge_post_tu:
         #: multiindex to tu_ff index mapping; useful for analysis with model.tu_ff (n_orbff)
         self.mi_to_tuffidx = get_array_header( iL, np.longlong )
 
-        susc_shape = (self.nk, n_spin*n_spin, n_orbff, n_spin*n_spin,n_orbff)
+        susc_shape = (self.nkibz, n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)
         #: particle particle susceptibility (bare)
         self.chi0_pp = get_array_header( iL, np.complex128 )
         if self.chi0_pp.size > 0:
