@@ -49,7 +49,7 @@ struct internals_t {
     // src/diverge_model_internals_patch.c
 
     // grid internals
-    index_t grid_nk, grid_nkf, grid_nb, grid_kfzero;
+    index_t grid_nk, grid_nkf, grid_nb;
     index_t *grid_kfmesh, // grid_nk * grid_nkf
             *grid_kfrev, // grid_nkf
             *grid_k1m2, *grid_k1p2; // grid_nk * grid_nk

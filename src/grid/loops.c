@@ -231,25 +231,23 @@ static void transform_to_gbuf( const gf_complex_t* greens, complex128_t* greens_
 
 }
 
-static inline index_t claV3ll_to_key( claV3ll_t vec, index_t minmax_value ) {
-    index_t idx = IDX3( vec.v[0]+minmax_value, vec.v[1]+minmax_value,
-            vec.v[2]+minmax_value, 2*minmax_value+1, 2*minmax_value+1 );
-    index_t nidx = IDX3( -vec.v[0]+minmax_value, -vec.v[1]+minmax_value,
-            -vec.v[2]+minmax_value, 2*minmax_value+1, 2*minmax_value+1 );
+static inline index_t claV3ll_to_key( claV3ll_t vec, index_t mabs ) {
+    index_t  idx = IDX3( mabs+vec.v[0], mabs+vec.v[1], mabs+vec.v[2], 2*mabs+1, 2*mabs+1 );
+    index_t nidx = IDX3( mabs-vec.v[0], mabs-vec.v[1], mabs-vec.v[2], 2*mabs+1, 2*mabs+1 );
     return MIN(idx, nidx);
 }
 
-static inline claV3ll_t key_to_claV3ll_t( index_t key, index_t minmax_value ) {
+static inline claV3ll_t key_to_claV3ll_t( index_t key, index_t mabs ) {
     claV3ll_t result = {0};
-    index_t dim[3] = {2*minmax_value+1, 2*minmax_value+1, 2*minmax_value+1};
+    index_t dim[3] = {2*mabs+1, 2*mabs+1, 2*mabs+1};
     unravel( key, dim, 3, result.v );
-    return claV3ll_sub( result, (claV3ll_t){{minmax_value, minmax_value, minmax_value}} );
+    return claV3ll_sub( result, (claV3ll_t){{mabs, mabs, mabs}} );
 }
 
-typedef struct { VECTOR_DECL( claV3ll_t, v ) index_t minmax_value; } vec_claV3ll_t;
+typedef struct { VECTOR_DECL( claV3ll_t, v ) index_t mabs; } vec_claV3ll_t;
 static inline void candidates_write_out( btree_t* node, void* ctx ) {
     vec_claV3ll_t* ff = ctx;
-    VECTOR_PUSH_BACK( ff->v, key_to_claV3ll_t(node->key, ff->minmax_value) );
+    VECTOR_PUSH_BACK( ff->v, key_to_claV3ll_t(node->key, ff->mabs) );
 }
 
 static inline int mergesort_formfactors_comp( claV3ll_t i, claV3ll_t j, const claM3d_t* lat ) {
@@ -271,39 +269,40 @@ static inline void normalize( complex128_t* v, index_t sz ) {
 static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_t* nff ) {
     internals_t* intls = dmod->internals;
     claV3d_t lattice[3];
-    for (int d=0; d<3; ++d) {
-        lattice[d] = claV3d_map(dmod->lattice[d]);
-        if (d >= dmod->internals->dim-1)
-            lattice[d] = claV3d_scale( lattice[d], (double)GRID_FF_SHELL_DISTANCE * 2. / claV3d_norm(lattice[d]) );
-    }
+    for (int d=0; d<3; ++d) lattice[d] = claV3d_map(dmod->lattice[d]);
 
     VECTOR_INIT_CAP( claV3ll_t, rs_ff_candidates, POW2(GRID_FF_SHELL_DISTANCE*2+1) );
     double norm_fac = claV3d_norm(lattice[0]);
     for (int d=1; d<dmod->internals->dim; ++d) norm_fac += claV3d_norm(lattice[d]);
     norm_fac /= (double)dmod->internals->dim;
+    if (norm_fac < DIVERGE_EPS_MESH) {
+        mpi_wrn_printf( "tiny values for lattice vector norms (%.5e)\n", norm_fac );
+        norm_fac = 1.0;
+    }
 
-    index_t minmax_value = 0;
-    for (int r1=-3*GRID_FF_SHELL_DISTANCE; r1<=3*GRID_FF_SHELL_DISTANCE; ++r1)
-    for (int r2=-3*GRID_FF_SHELL_DISTANCE; r2<=3*GRID_FF_SHELL_DISTANCE; ++r2)
-    for (int r3=-3*GRID_FF_SHELL_DISTANCE; r3<=3*GRID_FF_SHELL_DISTANCE; ++r3) {
+    int run_dim[3] = {3*GRID_FF_SHELL_DISTANCE, 3*GRID_FF_SHELL_DISTANCE, 3*GRID_FF_SHELL_DISTANCE};
+    for (int d=dmod->internals->dim; d<3; ++d) run_dim[d] = 0;
+    index_t mabs = 0;
+    for (int r1=-run_dim[0]; r1<=run_dim[0]; ++r1)
+    for (int r2=-run_dim[1]; r2<=run_dim[1]; ++r2)
+    for (int r3=-run_dim[2]; r3<=run_dim[2]; ++r3) {
         claV3d_t R = claV3d_add(claV3d_add(claV3d_scale(lattice[0], r1),
-                                claV3d_scale(lattice[1], r2)), claV3d_scale(lattice[2], r3));
-        if (claV3d_norm(R) / norm_fac < GRID_FF_SHELL_DISTANCE && (r1 != 0 && r2 != 0 && r3 != 0)) {
+                                           claV3d_scale(lattice[1], r2)),
+                                           claV3d_scale(lattice[2], r3));
+        if ((claV3d_norm(R)/norm_fac) < GRID_FF_SHELL_DISTANCE && (r1 != 0 || r2 != 0 || r3 != 0)) {
             VECTOR_PUSH_BACK( rs_ff_candidates, (claV3ll_t){{r1,r2,r3}} );
-            minmax_value = MAX(abs(r1), minmax_value);
-            minmax_value = MAX(abs(r2), minmax_value);
-            minmax_value = MAX(abs(r3), minmax_value);
+            mabs = MAX(abs(r1), mabs); mabs = MAX(abs(r2), mabs); mabs = MAX(abs(r3), mabs);
         }
     }
-    minmax_value++;
+    mabs++;
 
     // only the 'positive' ones, _to_key is maps two vectors onto the same value
-    xbtree_t* rs_ff = xbtree_init( rs_ff_candidates_sz/2 );
+    xbtree_t* rs_ff = xbtree_init( MAX(rs_ff_candidates_sz/2+1, 512) );
     for (index_t x=0; x<rs_ff_candidates_sz; ++x)
-        xbtree_find_or_insert( rs_ff, claV3ll_to_key(rs_ff_candidates[x], minmax_value) );
+        xbtree_find_or_insert( rs_ff, claV3ll_to_key(rs_ff_candidates[x], mabs) );
 
     vec_claV3ll_t rs_ff_vec = { .v=rs_ff_candidates, .v_sz=0,
-        .v_cap=rs_ff_candidates_cap, .minmax_value=minmax_value };
+        .v_cap=rs_ff_candidates_cap, .mabs=mabs };
 
     xbtree_iter( rs_ff, &candidates_write_out, &rs_ff_vec );
     xbtree_free( rs_ff );

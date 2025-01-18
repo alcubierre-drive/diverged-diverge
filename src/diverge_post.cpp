@@ -5,7 +5,7 @@
 
 #include "npatch/output.h"
 #include "grid/vertex_memory.h"
-#include "grid/post_processing.hpp"
+#include "grid/post_processing.h"
 #include "tu/vertex.h"
 #include "tu/postproduction.h"
 
@@ -49,7 +49,6 @@ void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st,
 
 static void grid_pp( diverge_flow_step_t* st,
         const diverge_postprocess_conf_t* pc, const char* file ) {
-
     grid_vertex_t* V = (grid_vertex_t*)st->intls->grid_vertex;
 
     if (strcmp(pc->grid_vertex_file, "")) {
@@ -61,28 +60,25 @@ static void grid_pp( diverge_flow_step_t* st,
     nsing = MIN(nsing, pc->grid_n_singular_values);
     if (nsing != pc->grid_n_singular_values)
         mpi_wrn_printf("reset # singular values to %li\n", nsing);
-    grid::PostProcessing post_process( V, st->grid_loop );
-    post_process.set_num_singular_values( nsing );
-    post_process.set_loop_usage( pc->grid_use_loop );
+    grid_postproc_t* pp = grid_postproc_init( V, st->grid_loop );
+    grid_postproc_set_num_singular_values( pp, nsing );
+    grid_postproc_set_loop_usage( pp, pc->grid_use_loop );
 
     mpi_vrb_printf( "susceptibilities\n" );
-    post_process.susceptibility( st->Lambda, 'P' );
-    if (st->mod->SU2 > 0)
-        post_process.susceptibility( st->Lambda, 'C' );
-    post_process.susceptibility( st->Lambda, 'D' );
+    grid_postproc_susc( pp, st->Lambda, 'P' );
+    if (st->mod->SU2 > 0) grid_postproc_susc( pp, st->Lambda, 'C' );
+    grid_postproc_susc( pp, st->Lambda, 'D' );
 
     mpi_vrb_printf( "linearized gaps\n" );
-    post_process.linearized_gap( st->Lambda, 'P', pc->grid_lingap_vertex_file_P );
-    if (st->mod->SU2 > 0)
-        post_process.linearized_gap( st->Lambda, 'C', pc->grid_lingap_vertex_file_C );
-    post_process.linearized_gap( st->Lambda, 'D', pc->grid_lingap_vertex_file_D );
+    grid_postproc_lingap( pp, st->Lambda, 'P', pc->grid_lingap_vertex_file_P );
+    if (st->mod->SU2 > 0) grid_postproc_lingap( pp, st->Lambda, 'C', pc->grid_lingap_vertex_file_C );
+    grid_postproc_lingap( pp, st->Lambda, 'D', pc->grid_lingap_vertex_file_D );
 
     mpi_vrb_printf( "communicating results\n" );
-    post_process.communicate();
+    grid_postproc_communicate( pp );
 
-    index_t* file_header = post_process.to_file( file );
-    grid::print_post_processing_file_header( file_header );
-    free( file_header );
+    grid_postproc_print_header( grid_postproc_to_file( pp, file ) );
+    grid_postproc_free( pp );
 }
 
 static void patch_pp( diverge_flow_step_t* st,

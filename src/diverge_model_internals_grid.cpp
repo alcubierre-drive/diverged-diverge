@@ -13,10 +13,7 @@
 using std::vector;
 using std::array;
 
-static void VertexMemory_destructor( void* _V ) {
-    grid_vertex_t* V = (grid_vertex_t*)_V;
-    grid_vertex_free(V);
-}
+static void grid_vertex_destructor( void* _V ) { grid_vertex_free((grid_vertex_t*)_V); }
 
 static void generate_refinement( const vector<Vec3d>& fine,
         const vector<Vec3d>& central_w_nghbrs, index_t coarse_center,
@@ -157,10 +154,6 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
     // and copy the stuff over
     memcpy( intls->grid_kfrev, fine_rev.data(), sizeof(index_t)*fine_rev.size() );
     memcpy( intls->grid_weights, fine_weights.data(), sizeof(index_t)*fine_weights.size() );
-    // and set the kfzero point
-    for (index_t i=0; i<(index_t)fine_rev.size(); ++i)
-        if (fine_rev[i] == i)
-            intls->grid_kfzero = i;
 
     // only the reordering map needs extra care
     index_t counter = 0;
@@ -222,5 +215,5 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
         grid_vertex_exchange_symmetry( V, 0.5 );
     }
     intls->grid_vertex = (void*)V;
-    intls->grid_vertex_destructor = &VertexMemory_destructor;
+    intls->grid_vertex_destructor = &grid_vertex_destructor;
 }

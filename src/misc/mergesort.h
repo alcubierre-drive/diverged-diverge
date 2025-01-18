@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 #ifndef MERGESORT_DEFAULT_TASK_SIZE
-#define MERGESORT_DEFAULT_TASK_SIZE 2048
+#define MERGESORT_DEFAULT_TASK_SIZE 8192
 #endif
 #ifndef MERGESORT_COMP
 #define MERGESORT_COMP( x, y ) ((x)-(y))

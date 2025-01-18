@@ -53,11 +53,11 @@ struct diverge_flow_step_t {
     double loopmax[2];
     double chanmax[3];
 
-    vector<double>* timings;
-    vector<string>* timings_descr;
-    index_t niter;
-
     double Lambda;
     double dLambda;
+
+    index_t niter;
+    vector<double>* timings;
+    vector<string>* timings_descr;
 };
 
