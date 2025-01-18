@@ -1,6 +1,6 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-#include "diverge_flow_step_internal.hpp"
+#include "diverge_flow_step_internal.h"
 #include "diverge_flow_type.h"
 #include "misc/batched_gemms.h"
 #include "misc/batched_eigen.h"
@@ -17,7 +17,7 @@
 #include "npatch/kernels_gpu.h"
 #include "npatch/loop.h"
 
-#include <cfloat>
+#include <float.h>
 
 static void diverge_flow_step_select_channels( diverge_flow_step_t* st, const char* chans_ );
 
@@ -51,8 +51,6 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
     // massive amounts of memory or take significant time they can be called
     // analogous to the above routine
 
-    st->timings = new vector<double>();
-    st->timings_descr = new vector<string>();
     st->niter = 0;
 
     // DEVELOPERS
@@ -83,8 +81,7 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
             st->patch_step_conf->P = st->channel_selection[0];
             st->patch_step_conf->C = st->channel_selection[1];
             st->patch_step_conf->D = st->channel_selection[2];
-            st->timings->resize( 8 + 3*128 );
-            st->timings_descr->resize( 8 + 3*128 );
+            VECTOR_RESIZE( st->timings, 8 + 3*128 );
             break;
         case diverge_tu:
             if (st->intls->tu_data == NULL) {
@@ -159,8 +156,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
         case diverge_flow_type_invalid:
             break;
     }
-    delete st->timings;
-    delete st->timings_descr;
+    VECTOR_FREE( st->timings );
 
     dependency_tree_remove_flow(st);
 
@@ -170,12 +166,10 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
 }
 
 void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLambda ) {
-    vector<double> chanmax_vec;
-    double patch_cm[6];
+    double chanmax[6];
     int idx = 0;
     grid_timing_t* gtt = NULL;
     tu_prop_timing_t* ttt = NULL;
-    char tmpchar[64];
     st->Lambda = Lambda;
     st->dLambda = dLambda;
     // DEVELOPERS
@@ -209,19 +203,19 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
     switch (st->type) {
         case diverge_patch:
             npatch_flow_step( st->patch_step_conf, (npatch_vertex_t*)st->intls->patch_vertex,
-                    st->patch_loop, &Lambda, dLambda, patch_cm );
-            st->loopmax[0] = patch_cm[0];
-            st->loopmax[1] = patch_cm[1];
-            st->chanmax[0] = patch_cm[2];
-            st->chanmax[1] = patch_cm[3];
-            st->chanmax[2] = patch_cm[4];
-            st->vertmax = patch_cm[5];
+                    st->patch_loop, &Lambda, dLambda, chanmax );
+            st->loopmax[0] = chanmax[0];
+            st->loopmax[1] = chanmax[1];
+            st->chanmax[0] = chanmax[2];
+            st->chanmax[1] = chanmax[3];
+            st->chanmax[2] = chanmax[4];
+            st->vertmax = chanmax[5];
 
             // save timings
             idx = 0;
             #define PATCH_TIMINGS_PUSH_BACK( name ) \
-            st->timings->at(idx) = st->patch_step_conf->name; \
-            st->timings_descr->at(idx++) = #name;
+                st->timings[idx].t = st->patch_step_conf->name; \
+                strcpy( st->timings[idx++].nam, #name );
             PATCH_TIMINGS_PUSH_BACK( wtime_gpu )
             PATCH_TIMINGS_PUSH_BACK( wtime_cpu )
             PATCH_TIMINGS_PUSH_BACK( wtime_comm )
@@ -230,57 +224,48 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             PATCH_TIMINGS_PUSH_BACK( wtime_loop_cpu )
             PATCH_TIMINGS_PUSH_BACK( wtime_loop_comm )
             PATCH_TIMINGS_PUSH_BACK( wtime_full )
-            memcpy( st->timings->data() + 8 + 128*0, st->patch_step_conf->wtime_gpu_list, sizeof(double)*128 );
-            memcpy( st->timings->data() + 8 + 128*1, st->patch_step_conf->wtime_loop_gpu_list, sizeof(double)*128 );
-            memcpy( st->timings->data() + 8 + 128*2, st->patch_step_conf->wtime_loop_gpu_gf_list, sizeof(double)*128 );
             for (int i=0; i<128; ++i) {
-                sprintf(tmpchar, "wtime_gpu_%03i", i);
-                st->timings_descr->at(8+128*0+i) = tmpchar;
-                sprintf(tmpchar, "wtime_loop_gpu_%03i", i);
-                st->timings_descr->at(8+128*1+i) = tmpchar;
-                sprintf(tmpchar, "wtime_gf_gpu_%03i", i);
-                st->timings_descr->at(8+128*2+i) = tmpchar;
+                st->timings[8+128*0+i].t = st->patch_step_conf->wtime_gpu_list[i];
+                snprintf(st->timings[8+128*0+i].nam, 55, "wtime_gpu_%03i", i);
+                st->timings[8+128*1+i].t = st->patch_step_conf->wtime_loop_gpu_list[i];
+                snprintf(st->timings[8+128*1+i].nam, 55, "wtime_loop_gpu_%03i", i);
+                st->timings[8+128*2+i].t = st->patch_step_conf->wtime_loop_gpu_gf_list[i];
+                snprintf(st->timings[8+128*2+i].nam, 55, "wtime_gf_gpu_%03i", i);
             }
             st->niter = st->patch_step_conf->niter;
             return;
         case diverge_grid:
-            chanmax_vec.resize(6);
-            memcpy( chanmax_vec.data(),
-                    grid_flow_step_euler( st->grid_step, Lambda, dLambda ),
-                    sizeof(double)*6 );
-            st->chanmax[0] = chanmax_vec[0];
-            st->chanmax[1] = chanmax_vec[1];
-            st->chanmax[2] = chanmax_vec[2];
-            st->vertmax = chanmax_vec[3];
-            st->loopmax[0] = chanmax_vec[4];
-            st->loopmax[1] = chanmax_vec[5];
+            memcpy( chanmax, grid_flow_step_euler( st->grid_step, Lambda, dLambda ), sizeof(double)*6 );
+            st->chanmax[0] = chanmax[0];
+            st->chanmax[1] = chanmax[1];
+            st->chanmax[2] = chanmax[2];
+            st->vertmax = chanmax[3];
+            st->loopmax[0] = chanmax[4];
+            st->loopmax[1] = chanmax[5];
 
-            st->timings->resize(6);
-            st->timings_descr->resize(6);
+            VECTOR_RESIZE(st->timings, 6);
             gtt = grid_flow_step_timings( st->grid_step );
             for (int i=0; i<6; ++i) {
-                st->timings->at(i) = gtt[i].t;
-                st->timings_descr->at(i) = gtt[i].nam;
+                st->timings[i].t = gtt[i].t;
+                strncpy( st->timings[i].nam, gtt[i].nam, 55 );
             }
             st->niter = grid_flow_step_num_calls( st->grid_step );
             return;
         case diverge_tu:
-            chanmax_vec.resize(6);
-            tu_stepper_euler( st->tu_step, st->tu_vertex, Lambda, dLambda, chanmax_vec.data() );
+            tu_stepper_euler( st->tu_step, st->tu_vertex, Lambda, dLambda, chanmax );
 
-            st->chanmax[0] = chanmax_vec[0];
-            st->chanmax[1] = chanmax_vec[1];
-            st->chanmax[2] = chanmax_vec[2];
-            st->vertmax = MAX(MAX(chanmax_vec[0], chanmax_vec[1]), chanmax_vec[2]);
-            st->loopmax[0] = chanmax_vec[3];
-            st->loopmax[1] = chanmax_vec[4];
+            st->chanmax[0] = chanmax[0];
+            st->chanmax[1] = chanmax[1];
+            st->chanmax[2] = chanmax[2];
+            st->vertmax = MAX(MAX(chanmax[0], chanmax[1]), chanmax[2]);
+            st->loopmax[0] = chanmax[3];
+            st->loopmax[1] = chanmax[4];
 
             ttt = tu_stepper_timings(st->tu_step, &idx);
-            st->timings->resize( idx );
-            st->timings_descr->resize( idx );
+            VECTOR_RESIZE( st->timings, idx );
             for (int i=0; i<idx; ++i) {
-                st->timings->at(i) = ttt[i].t;
-                st->timings_descr->at(i) = ttt[i].name;
+                st->timings[i].t = ttt[i].t;
+                strncpy( st->timings[i].nam, ttt[i].name, 55 );
             }
             st->niter = tu_stepper_num_calls( st->tu_step );
             return;
@@ -294,32 +279,26 @@ index_t diverge_flow_step_niter( diverge_flow_step_t* st ) {
     return st->niter;
 }
 index_t diverge_flow_step_ntimings( diverge_flow_step_t* st ) {
-    return st->timings->size();
+    return st->timings_sz;
 }
 double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx ) {
-    return st->timings->at(idx);
+    return st->timings[idx].t;
 }
 const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx ) {
-    return st->timings_descr->at(idx).c_str();
+    return st->timings[idx].nam;
 }
 
-static double dvg_timings[129];
+static double dvg_timings[512] = {0};
 double* diverge_flow_step_timing_vec( diverge_flow_step_t* st ) {
-    for (uindex_t i=0; i<st->timings->size(); ++i)
-        if (i < 128)
-            dvg_timings[i] = st->timings->at(i);
-    memset( dvg_timings+128, 0, sizeof(double) );
+    for (index_t i=0; i<st->timings_sz; ++i)
+        if (i < 511) dvg_timings[i] = st->timings[i].t;
     return dvg_timings;
 }
 
-static char dvg_timings_descr[129][1024];
+static char dvg_timings_descr[512][64] = {0};
 char** diverge_flow_step_timing_descr_vec( diverge_flow_step_t* st ) {
-    for (uindex_t i=0; i<st->timings_descr->size(); ++i)
-        if (i < 128) {
-            strncpy( dvg_timings_descr[i], st->timings_descr->at(i).c_str(), 1023 );
-            dvg_timings_descr[i][1023] = '\0';
-        }
-    memset( dvg_timings_descr[128], 0, 1024 );
+    for (index_t i=0; i<st->timings_sz; ++i)
+        if (i < 511) strncpy( dvg_timings_descr[i], st->timings[i].nam, 63 );
     return (char**)dvg_timings_descr;
 }
 

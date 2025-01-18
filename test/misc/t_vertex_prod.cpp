@@ -3,10 +3,13 @@
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
-#include "../model_examples/old.h"
 #include "../../src/diverge_model_internals.h"
+#include "../../src/misc/mpi_functions.h"
+#include "../../src/tu/vertex.h"
+#include "../../src/tu/cuda_init.h"
+#include "../model_examples/old.h"
 #include "../model_examples/model_constructor.hpp"
+
 #include <random>
 
 TEST_CASE("vert_prod", "[vprod]") {

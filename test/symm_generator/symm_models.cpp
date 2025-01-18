@@ -3,7 +3,7 @@
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
+#include "../../src/diverge_flow_step_internal.h"
 #include "../../src/diverge_patching.h"
 #include "../../src/diverge_model_internals.h"
 #include "../../src/diverge_model_output.h"

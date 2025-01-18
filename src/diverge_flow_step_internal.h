@@ -17,15 +17,19 @@
 #include "npatch/loop.h"
 #include "npatch/flow_step.h"
 
-#include <vector>
-#include <string>
-using std::vector;
-using std::string;
-
 // DEVELOPERS
 //
-// For a new backend, you can add arbitrary C/C++ structs to the
+// For a new backend, you can add arbitrary structures to the
 // diverge_flow_step_t structure defined below.
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct {
+    double t;
+    char nam[56];
+} diverge_flow_step_timing_t;
 
 struct diverge_flow_step_t {
     diverge_model_t* mod;
@@ -57,7 +61,9 @@ struct diverge_flow_step_t {
     double dLambda;
 
     index_t niter;
-    vector<double>* timings;
-    vector<string>* timings_descr;
+    VECTOR_DECL( diverge_flow_step_timing_t, timings )
 };
 
+#ifdef __cplusplus
+}
+#endif

@@ -2,7 +2,7 @@
 
 #include "dependency_tree.h"
 #include "dependency_tree.hpp"
-#include "../diverge_flow_step_internal.hpp"
+#include "../diverge_flow_step_internal.h"
 
 #include <mutex>
 

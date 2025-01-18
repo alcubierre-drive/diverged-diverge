@@ -7,13 +7,16 @@
 #include "../model_examples/old.h"
 #include "../../src/tu/propagator.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
+#include "../../src/diverge_flow_step_internal.h"
 #include "../../src/tu/vertex_details.h"
 #include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
+
+#include <vector>
+using std::vector;
 
 diverge_model_t* RPA_model(int n_spin, int kx = 1, int kxf = 1) {
     diverge_model_t* mod1 = diverge_model_init();
