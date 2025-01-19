@@ -403,6 +403,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                     if (chan == 'c') C_projection(tu_V->projection_helper, tu_V, tu_Proj);
                     if (chan == 'd') D_projection(tu_V->projection_helper, tu_V, tu_Proj);
                 } else {
+                    result.ary = tu_V->projection_helper;
                     C_projection(tu_V->projection_helper, tu_V, tu_Proj);
                     for (index_t i=0; i<tu_V->full_vert_size; ++i)
                         tu_V->projection_helper[i] *= -1.0;
