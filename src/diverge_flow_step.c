@@ -386,8 +386,9 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
             if (toupper(chan) != 'P' &&
                 toupper(chan) != 'C' &&
                 toupper(chan) != 'D' &&
-                toupper(chan) != 'S') {
-                mpi_wrn_printf("for TUFRG vertex chan must be one of 'PCDSpcds'. default: 'D'.\n");
+                toupper(chan) != 'S' &&
+                chan != 'm' && chan != 'h') {
+                mpi_wrn_printf("for TUFRG vertex chan must be one of 'PCDSpcdsmh'. default: 'D'.\n");
                 result.channel = chan = 'D';
             }
 
@@ -396,11 +397,20 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                     result.ary = (chan == 'P') ? tu_V->Pch :
                                  (chan == 'C') ? tu_V->Cch :
                                 /*chan == 'D'*/  tu_V->Dch;
-                } else {
+                } else if (chan != 'm' && chan != 'h') {
                     result.ary = tu_V->projection_helper;
                     if (chan == 'p') P_projection(tu_V->projection_helper, tu_V, tu_Proj);
                     if (chan == 'c') C_projection(tu_V->projection_helper, tu_V, tu_Proj);
                     if (chan == 'd') D_projection(tu_V->projection_helper, tu_V, tu_Proj);
+                } else {
+                    C_projection(tu_V->projection_helper, tu_V, tu_Proj);
+                    for (index_t i=0; i<tu_V->full_vert_size; ++i)
+                        tu_V->projection_helper[i] *= -1.0;
+                    if (chan == 'h') {
+                        D_projection(tu_V->bubble_helper, tu_V, tu_Proj);
+                        for (index_t i=0; i<tu_V->full_vert_size; ++i)
+                            tu_V->projection_helper[i] += tu_V->bubble_helper[i];
+                    }
                 }
                 result.q_0 = tu_V->my_nk_off;
                 result.q_1 = tu_V->my_nk_off + tu_V->my_nk;
