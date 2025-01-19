@@ -137,6 +137,13 @@ void tu_vertex_free( tu_vertex_t* V ) {
         }
     }
 #endif
+
+    if (V->elph) {
+        free( V->Pi_P );
+        free( V->Pi_C );
+        free( V->Pi_D );
+    }
+
     free( V );
 }
 
@@ -168,6 +175,12 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
     V->D_to_C = O->D_to_C;
     V->P_to_D = O->P_to_D;
     V->C_to_D = O->C_to_D;
+
+    V->elph = O->elph;
+    V->tu_ph = O->tu_ph;
+    if (V->P_flow) V->Pi_P = calloc(V->full_vert_size, sizeof(complex128_t));
+    if (V->C_flow) V->Pi_C = calloc(V->full_vert_size, sizeof(complex128_t));
+    if (V->D_flow) V->Pi_D = calloc(V->full_vert_size, sizeof(complex128_t));
 
     V->bubble_helper = O->bubble_helper;
     V->product_helper = O->product_helper;
@@ -569,4 +582,13 @@ void tu_vertex_product( complex128_t* result, const complex128_t* B,
         batched_gemm(B, C, helper, productsize, 1., 0., nbatch);
         batched_gemm(helper, B, result, productsize, prefac, 0., nbatch);
     }
+}
+
+void tu_vertex_init_phonons( tu_vertex_t* V, tu_data_phonons_t* p ) {
+    V->elph = true;
+    V->tu_ph = p;
+    index_t linsz = V->n_orbff * POW2(V->n_spin);
+    V->Pi_P = calloc(V->my_nk * POW2(linsz), sizeof*V->Pi_P);
+    V->Pi_C = calloc(V->my_nk * POW2(linsz), sizeof*V->Pi_C);
+    V->Pi_D = calloc(V->my_nk * POW2(linsz), sizeof*V->Pi_D);
 }

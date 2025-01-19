@@ -94,6 +94,18 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
                     st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
             st->tu_step = tu_stepper_init(st->tu_proj, st->tu_loop, st->tu_vertex);
             break;
+        case diverge_tu_phonons:
+            if (!st->intls->tu_data || !st->intls->tu_data_phonons) {
+                mpi_err_printf("internals for TU FRG × Phonons not set\n");
+                goto end_error;
+            }
+            st->tu_proj = tu_projection_init(mod);
+            st->tu_loop = tu_prop_init(mod);
+            st->tu_vertex = tu_vertex_init(mod, st->tu_proj, st->tu_loop, st->channel_selection[0],
+                    st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
+            tu_vertex_init_phonons(st->tu_vertex, st->intls->tu_data_phonons);
+            st->tu_step = tu_stepper_init(st->tu_proj, st->tu_loop, st->tu_vertex);
+            break;
         default:
         case diverge_flow_type_invalid:
             mpi_err_printf("invalid flow type '%s'. valid choices are 'grid', 'patch', 'tu'.\n", method);

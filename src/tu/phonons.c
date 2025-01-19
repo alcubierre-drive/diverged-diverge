@@ -1,0 +1,183 @@
+#include "phonons.h"
+#include "../diverge_internals_struct.h"
+#include "../misc/mergesort.h"
+#include <assert.h>
+#include <fftw3.h>
+
+tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* pmod ) {
+    tu_data_phonons_t* t = calloc(1, sizeof*t);
+    t->pmod = pmod;
+    memcpy( t->nk, t->pmod->nk, sizeof t->nk );
+    t->nO = t->pmod->n_orb;
+    if (!t->pmod->internals->has_common_internals)
+        mpi_err_printf( "phonon model must have common internals!\n" );
+    assert( t->pmod->n_spin == 1 );
+    assert( t->pmod->internals->greens_shared == 0 );
+    assert( t->pmod->gproj == NULL );
+    t->vtx = (ph_vertex_t*)t->pmod->vert;
+    t->n_vtx = t->pmod->n_vert;
+    return t;
+}
+
+void tu_data_phonons_free( tu_data_phonons_t* t ) {
+    free(t->gbuf);
+    free(t->g_ob_qO);
+    free(t->tmp_g);
+    free(t);
+}
+
+void tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
+    index_t nO2 = POW2(t->nO);
+    index_t ngreens = kdim(t->nk)*nO2;
+    gf_complex_t *gbuf_p = t->pmod->internals->greens,
+                 *gbuf_m = t->pmod->internals->greens + ngreens;
+
+    (*t->pmod->gfill)( t->pmod, I*Lambda, gbuf_p );
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t kk=0; kk<t->my_nk; ++kk) {
+        index_t q = t->idx_ibz_in_fullmesh[t->my_nk_off + kk];
+        for (index_t O12=0; O12<nO2; ++O12)
+            t->gbuf[IDX3(0,kk,O12,t->my_nk,nO2)] = gbuf_p[IDX2(q,O12,nO2)] + gbuf_m[IDX2(q,O12,nO2)];
+    }
+
+    (*t->pmod->gfill)( t->pmod, I*DIVERGE_EPS_MESH, gbuf_p );
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t kk=0; kk<t->my_nk; ++kk) {
+        index_t q = t->idx_ibz_in_fullmesh[t->my_nk_off + kk];
+        for (index_t O12=0; O12<nO2; ++O12)
+            t->gbuf[IDX3(1,kk,O12,t->my_nk,nO2)] = gbuf_p[IDX2(q,O12,nO2)] + gbuf_m[IDX2(q,O12,nO2)];
+    }
+}
+
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( i, j ) memcmp( &i, &j, offsetof(ph_vertex_t, R1) )
+MERGESORT_IMPL( ph_vertex_sort, ph_vertex_t )
+
+static inline int formfac_equal( const ph_vertex_t* a, const ph_vertex_t* b ) {
+    return !memcmp(a, b, offsetof(ph_vertex_t, R1));
+}
+
+static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff, ph_vertex_t ff ) {
+    index_t idx = -1;
+    for (index_t i=0; i<n_tu_ff; ++i) {
+        if (tu_ff[i].oto == ff.o2 && tu_ff[i].ofrom == ff.o1 && tu_ff[i].R[0] == ff.R12[0] &&
+                tu_ff[i].R[1] == ff.R12[1] && tu_ff[i].R[2] == ff.R12[2]) {
+            idx = i;
+            break;
+        }
+    }
+    return idx;
+}
+
+void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
+        const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin ) {
+    // unique formfactors
+    for (index_t i=0; i<t->n_vtx; ++i) t->vtx[i]._chan = 'p';
+    ph_vertex_sort( t->vtx, t->n_vtx, diverge_omp_num_threads(), 0 );
+    VECTOR_INIT( ph_vertex_t, formfacs );
+    VECTOR_INIT( index_t, formfacs_displ );
+    ph_vertex_t formfac = { .o1=-1, .s1=-1, .o2=-1, .s2=-1, .O1=-1 };
+    for (index_t i=0; i<t->n_vtx; ++i)
+    if (!formfac_equal(&formfac, t->vtx+i)) {
+        VECTOR_PUSH_BACK( formfacs, (formfac=t->vtx[i]) );
+        VECTOR_PUSH_BACK( formfacs_displ, i );
+    }
+    VECTOR_SHRINK_TO_FIT( formfacs );
+    VECTOR_SHRINK_TO_FIT( formfacs_displ );
+    index_t* formfacs_count = calloc(formfacs_sz, sizeof*formfacs_count);
+    if (formfacs_sz > 0) {
+        for (index_t i=0; i<formfacs_sz-1; ++i)
+            formfacs_count[i] = formfacs_displ[i+1] - formfacs_displ[i];
+        formfacs_count[formfacs_sz-1] = t->n_vtx - formfacs_displ[formfacs_sz-1];
+    }
+
+    // perform the FFT
+    fftw_iodim64 dims[3];
+    dims[0].n = t->nk[0], dims[1].n = t->nk[1], dims[2].n = t->nk[2];
+    dims[0].is = t->nk[2]*t->nk[1], dims[1].is = t->nk[2], dims[2].is = 1;
+    dims[0].os = t->nk[2]*t->nk[1]*formfacs_sz, dims[1].os = t->nk[2]*formfacs_sz, dims[2].os = formfacs_sz;
+    fftw_iodim64 howmany = { .n=formfacs_sz, .is=1, .os=1 };
+
+    const index_t nk = kdim(t->nk);
+    fftw_complex* fftw_buf = fftw_malloc(sizeof*fftw_buf * nk*formfacs_sz);
+    complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
+    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, FFTW_ESTIMATE);
+    ZERO_OUT(fftw_buf, nk*formfacs_sz);
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t ff=0; ff<formfacs_sz; ++ff) {
+        for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
+            index_t f = formfacs_displ[ff] + cc;
+            const index_t* R = t->vtx[f].R1;
+            index_t z_id = (R[2]<0)? t->nk[2] + R[2] : R[2],
+                    y_id = (R[1]<0)? t->nk[1] + R[1] : R[1],
+                    x_id = (R[0]<0)? t->nk[0] + R[0] : R[0];
+            index_t Ridx = IDX3(x_id,y_id,z_id,t->nk[1],t->nk[2]);
+            fftw_cbuf[IDX2(ff,Ridx,nk)] += t->vtx[f].g;
+        }
+    }
+    fftw_execute(p);
+    fftw_destroy_plan(p);
+    free( formfacs_count );
+    VECTOR_FREE( formfacs_displ );
+
+    t->my_nk = d->my_nk;
+    t->my_nk_off = d->my_nk_off;
+    t->idx_ibz_in_fullmesh = d->symm->idx_ibz_in_fullmesh;
+    t->n_spin = n_spin;
+    t->n_orbff = d->n_orbff;
+
+    // write out the objects to g_ob_qO;
+    t->g_ob_qO = calloc(t->my_nk * POW2(t->n_spin) * t->n_orbff * t->nO, sizeof*t->g_ob_qO);
+    t->tmp_g = calloc(t->my_nk * POW2(t->n_spin) * t->n_orbff * t->nO, sizeof*t->tmp_g);
+    t->gbuf = calloc(t->my_nk * POW2(t->nO), sizeof*t->gbuf);
+    int n_not_found = 0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_not_found)
+    for (index_t f=0; f<formfacs_sz; ++f) {
+        // find tu_ff index
+        index_t mapped_tu = find_tu_ff( tu_ff, n_tu_ff, formfacs[f] );
+        if (mapped_tu == -1) { n_not_found++; continue; }
+        // find mi index
+        index_t mapped_mi = -1;
+        for (index_t i=0; i<t->n_orbff; ++i) {
+            if (d->mi_to_tuffidx[i] == mapped_tu) {
+                mapped_mi = i;
+                break;
+            }
+        }
+        if (mapped_mi == -1) { n_not_found++; continue; }
+        // map to g
+        for (index_t kk=0; kk<t->my_nk; ++kk) {
+            index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
+            t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].O1,
+                               t->n_spin,t->n_spin,t->n_orbff,t->nO)] +=
+                fftw_cbuf[IDX2(f,q,nk)];
+        }
+    }
+    diverge_mpi_allreduce_int_max_inplace( &n_not_found, 1 );
+    if (n_not_found > 0)
+        mpi_err_printf( "couldnt find <= %i formactors, try larger distance\n", n_not_found );
+
+    fftw_free(fftw_buf);
+    VECTOR_FREE( formfacs );
+}
+
+void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
+        complex128_t* V_Lambda, complex128_t* V_zero ) {
+    tu_data_phonons_gfill( t, Lambda );
+
+    complex128_t *g_Lambda = t->gbuf,
+                 *g_Zero = t->gbuf + t->my_nk * POW2(t->nO);
+    index_t linsz = POW2(t->n_spin)*t->n_orbff;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t kk=0; kk<t->my_nk; ++kk) {
+        complex128_t *g = t->g_ob_qO + kk*linsz*t->nO,
+                     *D = g_Lambda + kk*POW2(t->nO),
+                     *V = V_Lambda + kk*POW2(linsz),
+                     *tmp = t->tmp_g + kk*linsz*t->nO;
+        phonon_gemm( g, D, V, tmp, linsz, t->nO );
+        D = g_Zero + kk*POW2(t->nO);
+        V = V_zero + kk*POW2(linsz);
+        phonon_gemm( g, D, V, tmp, linsz, t->nO );
+    }
+
+}

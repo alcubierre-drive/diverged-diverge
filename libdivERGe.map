@@ -77,6 +77,7 @@ DIVERGE_0.8 {
         diverge_model_internals_patch;
         diverge_model_internals_reset;
         diverge_model_internals_tu;
+        diverge_model_internals_tu_phonons;
         diverge_model_output_conf_defaults_CPP;
         diverge_model_output_set_npath;
         diverge_model_print_hacks;

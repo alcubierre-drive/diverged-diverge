@@ -10,6 +10,7 @@
 
 #include "diverge_interface.h"
 #include "selfenergy.h"
+#include "phonons.h"
 
 struct tu_stepper_t {
     double w_time_GF, w_time_full, w_time_loop, w_time_product,
@@ -87,6 +88,39 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
     } else {
         tu_prop_GF_zero_T(s->loop, lambda*I, NULL);
     }
+
+    if (inout->elph) {
+        complex128_t *D_L = calloc(inout->full_vert_size, sizeof*D_L),
+                     *D_Z = calloc(inout->full_vert_size, sizeof*D_Z),
+                     *VP_P = calloc(inout->full_vert_size, sizeof*VP_P),
+                     *VP_C = calloc(inout->full_vert_size, sizeof*VP_C),
+                     *VP_D = calloc(inout->full_vert_size, sizeof*VP_D);
+        ZERO_OUT( inout->Pi_P, inout->full_vert_size );
+        ZERO_OUT( inout->Pi_C, inout->full_vert_size );
+        ZERO_OUT( inout->Pi_D, inout->full_vert_size );
+        tu_data_phonons_vertices( inout->tu_ph, lambda, D_L, D_Z );
+        {   // Lambda
+            #define _SWAP(X) XORSWAP_PTR( inout->X##ch, inout->Pi_##X );
+            #define SWAP { _SWAP(P) _SWAP(C) _SWAP(D) }
+            SWAP;
+            memcpy( inout->Dch, D_L, inout->full_vert_size*sizeof(complex128_t) );
+            C_projection( VP_C, inout, s->proj );
+            P_projection( VP_P, inout, s->proj );
+            // Zero
+            memcpy( inout->Dch, D_Z, inout->full_vert_size*sizeof(complex128_t) );
+            D_projection( VP_D, inout, s->proj );
+            SWAP;
+        }
+        memcpy( inout->Pi_P, VP_P, inout->full_vert_size*sizeof*VP_P );
+        memcpy( inout->Pi_C, VP_C, inout->full_vert_size*sizeof*VP_C );
+        memcpy( inout->Pi_D, VP_D, inout->full_vert_size*sizeof*VP_D );
+        free( D_L );
+        free( D_Z );
+        free( VP_P );
+        free( VP_C );
+        free( VP_D );
+    }
+
     s->w_time_GF += diverge_mpi_wtime()-flow_step_tick;
     if (!s->tu_selfenergy_flow) {
         if (inout->SU2) {

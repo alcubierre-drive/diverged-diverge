@@ -52,6 +52,12 @@ struct tu_vertex_t {
 
     // private
     bool owns;
+
+
+    // phonon stuff
+    bool elph;
+    tu_data_phonons_t* tu_ph;
+    complex128_t *Pi_P, *Pi_C, *Pi_D;
 };
 
 // private functions

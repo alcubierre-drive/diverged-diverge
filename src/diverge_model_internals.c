@@ -34,9 +34,14 @@ void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... 
         case diverge_tu:
             diverge_model_internals_tu( model, va_arg(ap, double) );
             break;
+        case diverge_tu_phonons:
+            diverge_model_internals_tu_phonons( model, va_arg(ap, double),
+                    va_arg(ap, rs_hopping_t*), va_arg(ap, index_t),
+                    va_arg(ap, rs_vertex_t*), va_arg(ap, index_t) );
+            break;
         case diverge_flow_type_invalid:
         default:
-            mpi_err_printf("invalid flow type '%s' (use tu, grid, patch)\n", mode);
+            mpi_err_printf("invalid flow type '%s' (use tu, tu_phonons, grid, patch)\n", mode);
             goto EndFunc;
             break;
     }
@@ -229,6 +234,9 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     if ((model->internals->tu_data != NULL) &&
         (model->internals->tu_data_destructor != NULL))
         (*(model->internals->tu_data_destructor))( model->internals->tu_data );
+    if ((model->internals->tu_data_phonons != NULL) &&
+        (model->internals->tu_data_phonons_destructor != NULL))
+        (*(model->internals->tu_data_phonons_destructor))( model->internals->tu_data_phonons );
 
     free(model->internals->patch_kmesh);
     free(model->internals->patch_pmesh);

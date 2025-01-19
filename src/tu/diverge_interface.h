@@ -25,6 +25,7 @@ typedef enum {
 } tu_fft_algorithm_t;
 
 typedef struct tu_data_t tu_data_t;
+typedef struct tu_data_phonons_t tu_data_phonons_t;
 
 struct tu_data_t {
     tu_symmstruct_t* symm;

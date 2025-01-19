@@ -6,6 +6,7 @@ LINALG_IMPLEMENT
 
 // this must follow the LINALG include to pre-define the types
 #include "diverge_interface.h"
+#include "phonons.h"
 
 #include "../misc/qnan.h"
 #include "../diverge_model_internals.h"
@@ -43,6 +44,46 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     tu_init_symmetries(model);
     info->offload_cpu = 0.0;
     info->percent_mem_GPU_blocked = 0.9;
+}
+
+static void tu_data_phonons_destructor( void* v ) {
+    tu_data_phonons_t* p = v;
+    diverge_model_free(p->pmod);
+    tu_data_phonons_free(p);
+}
+
+void diverge_model_internals_tu_phonons( diverge_model_t* model, double max_dist,
+        rs_hopping_t* hop, index_t n_hop, rs_vertex_t* vert, index_t n_vert ) {
+    diverge_model_internals_tu( model, max_dist );
+    mpi_vrb_printf( "setting up phonon internals\n" );
+
+    diverge_model_t* m = diverge_model_init();
+    memcpy( m->nk, model->nk, sizeof(m->nk) );
+    memcpy( m->nkf, model->nkf, sizeof(m->nkf) );
+    memcpy( m->lattice, model->lattice, sizeof(m->lattice) );
+    m->hop = calloc(n_hop, sizeof*m->hop); memcpy( m->hop, hop, n_hop*sizeof*m->hop );
+    m->n_hop = n_hop;
+    m->vert = calloc(n_vert, sizeof*m->vert); memcpy( m->vert, vert, n_vert*sizeof*m->vert );
+    m->n_vert = n_vert;
+    index_t max_orb = 0;
+    for (index_t i=0; i<n_hop; ++i) {
+        max_orb = MAX(max_orb, m->hop[i].o1);
+        max_orb = MAX(max_orb, m->hop[i].o2);
+    }
+    ph_vertex_t* pvert = (ph_vertex_t*)m->vert;
+    for (index_t i=0; i<n_vert; ++i) {
+        max_orb = MAX(max_orb, pvert[i].O1);
+    }
+    m->n_orb = max_orb + 1;
+    m->n_spin = m->SU2 = 1;
+    diverge_model_internals_common(m);
+
+    tu_data_phonons_t* p = tu_data_phonons_init( m );
+    tu_data_phonons_init_vertex( p, model->internals->tu_data, model->tu_ff,
+            model->n_tu_ff, model->n_spin );
+
+    model->internals->tu_data_phonons = p;
+    model->internals->tu_data_phonons_destructor = &tu_data_phonons_destructor;
 }
 
 void tu_data_destructor(void* v) {

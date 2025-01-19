@@ -75,6 +75,21 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz );
  */
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
 
+/**
+ * Prepare the tu/phonons part of the :c:type:`internals_t` struct.
+ *
+ * :param diverge_model_t* model: model instance
+ * :param double max_dist: formfactor distance (see :c:func:`diverge_model_internals_tu`)
+ * :param rs_hopping_t* ph_hop: phonon hoppings for the lattice spring model,
+ *      length ``n_ph_hop``.
+ * :param index_t n_ph_hop: length of the phonon hoppings.
+ * :param rs_vertex_t* ph_vert: electron-phonon vertices. Even though the type
+ *      has the same size as :c:type:`rs_vertex_t`, it contains other
+ *      information. See `src/tu/phonons.h` (:c:type`ph_vertex_t`)
+ */
+void diverge_model_internals_tu_phonons( diverge_model_t* model, double max_dist,
+        rs_hopping_t* ph_hop, index_t n_ph_hop, rs_vertex_t* ph_vert, index_t n_ph_vert );
+
 #define IOBI_FORMFACTOR_MAGIC_NUMBER 0
 /**
  * return magic value for formfactor setup (max_dist value in

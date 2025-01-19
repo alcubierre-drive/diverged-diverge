@@ -74,6 +74,8 @@ struct internals_t {
     // tu internals
     void* tu_data;
     internals_destructor_t tu_data_destructor;
+    void* tu_data_phonons;
+    internals_destructor_t tu_data_phonons_destructor;
     int tu_symcheck_mpi;
 
     // symmetry internals for two point functions
