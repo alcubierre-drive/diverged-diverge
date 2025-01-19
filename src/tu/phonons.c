@@ -166,7 +166,6 @@ void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
         complex128_t* V_Lambda, complex128_t* V_zero ) {
     tu_data_phonons_gfill( t, Lambda );
-
     complex128_t *g_Lambda = t->gbuf,
                  *g_Zero = t->gbuf + t->my_nk * POW2(t->nO);
     index_t linsz = POW2(t->n_spin)*t->n_orbff;
