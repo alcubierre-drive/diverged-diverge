@@ -89,36 +89,45 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
         tu_prop_GF_zero_T(s->loop, lambda*I, NULL);
     }
 
+    // we calculate the elph vertices, project to channels, add the channels
+    // onto those, and swap out the vertex pointers for the elph+channel
+    // vertices
+    complex128_t *Pch = NULL, *Cch = NULL, *Dch = NULL;
     if (inout->elph) {
         complex128_t *D_L = calloc(inout->full_vert_size, sizeof*D_L),
-                     *D_Z = calloc(inout->full_vert_size, sizeof*D_Z),
-                     *VP_P = calloc(inout->full_vert_size, sizeof*VP_P),
-                     *VP_C = calloc(inout->full_vert_size, sizeof*VP_C),
-                     *VP_D = calloc(inout->full_vert_size, sizeof*VP_D);
-        ZERO_OUT( inout->Pi_P, inout->full_vert_size );
-        ZERO_OUT( inout->Pi_C, inout->full_vert_size );
-        ZERO_OUT( inout->Pi_D, inout->full_vert_size );
+                     *D_Z = calloc(inout->full_vert_size, sizeof*D_Z);
+        // backup old channels
+        Pch = calloc(inout->full_vert_size, sizeof*Pch),
+        Cch = calloc(inout->full_vert_size, sizeof*Cch),
+        Dch = calloc(inout->full_vert_size, sizeof*Dch);
+        memcpy( Pch, inout->Pch, inout->full_vert_size*sizeof*Pch );
+        memcpy( Cch, inout->Cch, inout->full_vert_size*sizeof*Cch );
+        memcpy( Dch, inout->Dch, inout->full_vert_size*sizeof*Dch );
+        // and zero the actual vertices
+        ZERO_OUT( inout->Pch, inout->full_vert_size );
+        ZERO_OUT( inout->Cch, inout->full_vert_size );
+        ZERO_OUT( inout->Dch, inout->full_vert_size );
+
+        // generate phonon vertices
         tu_data_phonons_vertices( inout->tu_ph, lambda, D_L, D_Z );
-        {   // Lambda
-            #define _SWAP(X) XORSWAP_PTR( inout->X##ch, inout->Pi_##X );
-            #define SWAP { _SWAP(P) _SWAP(C) _SWAP(D) }
-            SWAP;
-            memcpy( inout->Dch, D_L, inout->full_vert_size*sizeof(complex128_t) );
-            C_projection( VP_C, inout, s->proj );
-            P_projection( VP_P, inout, s->proj );
-            // Zero
-            memcpy( inout->Dch, D_Z, inout->full_vert_size*sizeof(complex128_t) );
-            D_projection( VP_D, inout, s->proj );
-            SWAP;
-        }
-        memcpy( inout->Pi_P, VP_P, inout->full_vert_size*sizeof*VP_P );
-        memcpy( inout->Pi_C, VP_C, inout->full_vert_size*sizeof*VP_C );
-        memcpy( inout->Pi_D, VP_D, inout->full_vert_size*sizeof*VP_D );
+
+        // project them to the channels and add the old vertices
+        memcpy( inout->Dch, D_L, inout->full_vert_size*sizeof(complex128_t) );
+        C_projection( inout->Pi_C, inout, s->proj );
+        P_projection( inout->Pi_P, inout, s->proj );
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<inout->full_vert_size; ++i)
+            inout->Pi_C[i] += Cch[i],
+            inout->Pi_P[i] += Pch[i],
+            inout->Pi_D[i] = Dch[i] + D_Z[i];
+
+        // copy them to the channels
+        memcpy( inout->Pch, inout->Pi_P, inout->full_vert_size*sizeof*Pch );
+        memcpy( inout->Cch, inout->Pi_C, inout->full_vert_size*sizeof*Cch );
+        memcpy( inout->Dch, inout->Pi_D, inout->full_vert_size*sizeof*Dch );
+
         free( D_L );
         free( D_Z );
-        free( VP_P );
-        free( VP_C );
-        free( VP_D );
     }
 
     s->w_time_GF += diverge_mpi_wtime()-flow_step_tick;
@@ -211,6 +220,15 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
     if (s->channel_selection[3]) {
         TICK_TOCK( s->w_time_self, tu_selfenergy_flow( s->self, s->internal_vertex->self_en,
                     inout->Pch, inout->Cch, inout->Dch, s->coarseGF, 1. ) );
+    }
+    // after everything is done, we reset the channels to the original ones
+    if (inout->elph) {
+        memcpy( inout->Pch, Pch, inout->full_vert_size * sizeof*Pch );
+        memcpy( inout->Cch, Cch, inout->full_vert_size * sizeof*Cch );
+        memcpy( inout->Dch, Dch, inout->full_vert_size * sizeof*Dch );
+        free( Pch );
+        free( Cch );
+        free( Dch );
     }
     TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(inout, s->internal_vertex, dlambda),
                                        tu_vertex_max(inout, maxs) );

@@ -55,11 +55,13 @@ static void tu_data_phonons_destructor( void* v ) {
 void diverge_model_internals_tu_phonons( diverge_model_t* model, double max_dist,
         rs_hopping_t* hop, index_t n_hop, rs_vertex_t* vert, index_t n_vert ) {
     diverge_model_internals_tu( model, max_dist );
+    strcpy( model->internals->backend, "tu_phonons" );
     mpi_vrb_printf( "setting up phonon internals\n" );
 
     diverge_model_t* m = diverge_model_init();
     memcpy( m->nk, model->nk, sizeof(m->nk) );
     memcpy( m->nkf, model->nkf, sizeof(m->nkf) );
+    for (int d=model->internals->dim; d<3; ++d) m->nk[d] = m->nkf[d] = 0;
     memcpy( m->lattice, model->lattice, sizeof(m->lattice) );
     m->hop = calloc(n_hop, sizeof*m->hop); memcpy( m->hop, hop, n_hop*sizeof*m->hop );
     m->n_hop = n_hop;

@@ -57,8 +57,10 @@ static inline int formfac_equal( const ph_vertex_t* a, const ph_vertex_t* b ) {
     return !memcmp(a, b, offsetof(ph_vertex_t, R1));
 }
 
-static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff, ph_vertex_t ff ) {
+static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff,
+        ph_vertex_t ff, const index_t* nk ) {
     index_t idx = -1;
+    for (int d=0; d<3; ++d) while (ff.R12[d] < 0) ff.R12[d] += nk[d]; // make positive
     for (index_t i=0; i<n_tu_ff; ++i) {
         if (tu_ff[i].oto == ff.o2 && tu_ff[i].ofrom == ff.o1 && tu_ff[i].R[0] == ff.R12[0] &&
                 tu_ff[i].R[1] == ff.R12[1] && tu_ff[i].R[2] == ff.R12[2]) {
@@ -92,13 +94,13 @@ void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     }
 
     // perform the FFT
+    const index_t nk = kdim(t->nk);
     fftw_iodim64 dims[3];
     dims[0].n = t->nk[0], dims[1].n = t->nk[1], dims[2].n = t->nk[2];
     dims[0].is = t->nk[2]*t->nk[1], dims[1].is = t->nk[2], dims[2].is = 1;
-    dims[0].os = t->nk[2]*t->nk[1]*formfacs_sz, dims[1].os = t->nk[2]*formfacs_sz, dims[2].os = formfacs_sz;
-    fftw_iodim64 howmany = { .n=formfacs_sz, .is=1, .os=1 };
+    dims[0].os = t->nk[2]*t->nk[1], dims[1].os = t->nk[2], dims[2].os = 1;
+    fftw_iodim64 howmany = { .n=formfacs_sz, .is=nk, .os=nk };
 
-    const index_t nk = kdim(t->nk);
     fftw_complex* fftw_buf = fftw_malloc(sizeof*fftw_buf * nk*formfacs_sz);
     complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
     fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, FFTW_ESTIMATE);
@@ -129,12 +131,12 @@ void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     // write out the objects to g_ob_qO;
     t->g_ob_qO = calloc(t->my_nk * POW2(t->n_spin) * t->n_orbff * t->nO, sizeof*t->g_ob_qO);
     t->tmp_g = calloc(t->my_nk * POW2(t->n_spin) * t->n_orbff * t->nO, sizeof*t->tmp_g);
-    t->gbuf = calloc(t->my_nk * POW2(t->nO), sizeof*t->gbuf);
+    t->gbuf = calloc(2 * t->my_nk * POW2(t->nO), sizeof*t->gbuf);
     int n_not_found = 0;
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_not_found)
     for (index_t f=0; f<formfacs_sz; ++f) {
         // find tu_ff index
-        index_t mapped_tu = find_tu_ff( tu_ff, n_tu_ff, formfacs[f] );
+        index_t mapped_tu = find_tu_ff( tu_ff, n_tu_ff, formfacs[f], t->nk );
         if (mapped_tu == -1) { n_not_found++; continue; }
         // find mi index
         index_t mapped_mi = -1;
@@ -155,7 +157,7 @@ void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     }
     diverge_mpi_allreduce_int_max_inplace( &n_not_found, 1 );
     if (n_not_found > 0)
-        mpi_err_printf( "couldnt find <= %i formactors, try larger distance\n", n_not_found );
+        mpi_err_printf( "couldnt find <=%i tu_ff for elph, try larger max_dist\n", n_not_found );
 
     fftw_free(fftw_buf);
     VECTOR_FREE( formfacs );
@@ -179,5 +181,4 @@ void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
         V = V_zero + kk*POW2(linsz);
         phonon_gemm( g, D, V, tmp, linsz, t->nO );
     }
-
 }
