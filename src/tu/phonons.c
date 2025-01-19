@@ -4,7 +4,30 @@
 #include <assert.h>
 #include <fftw3.h>
 
-tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* pmod ) {
+struct tu_data_phonons_t {
+    diverge_model_t* pmod;
+
+    index_t nk[3];
+    complex128_t* gbuf; // (ll, my_nk, nO, nO), with ll=(0,Lambda)
+    index_t nO;
+
+    ph_vertex_t* vtx;
+    index_t n_vtx;
+
+    complex128_t* g_ob_qO; // (my_nk, n_spin,n_spin,n_orbff, nO)
+    complex128_t* tmp_g; // (my_nk, n_spin,n_spin,n_orbff, nO)
+
+    index_t n_spin, n_orbff;
+    index_t my_nk;
+    index_t my_nk_off;
+    const index_t* idx_ibz_in_fullmesh;
+};
+
+static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
+        const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
+static void tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda );
+
+tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* pmod, diverge_model_t* elmod ) {
     tu_data_phonons_t* t = calloc(1, sizeof*t);
     t->pmod = pmod;
     memcpy( t->nk, t->pmod->nk, sizeof t->nk );
@@ -16,6 +39,7 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* pmod ) {
     assert( t->pmod->gproj == NULL );
     t->vtx = (ph_vertex_t*)t->pmod->vert;
     t->n_vtx = t->pmod->n_vert;
+    tu_data_phonons_init_vertex( t, elmod->internals->tu_data, elmod->tu_ff, elmod->n_tu_ff, elmod->n_spin );
     return t;
 }
 
@@ -26,7 +50,7 @@ void tu_data_phonons_free( tu_data_phonons_t* t ) {
     free(t);
 }
 
-void tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
+static void tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
     index_t nO2 = POW2(t->nO);
     index_t ngreens = kdim(t->nk)*nO2;
     gf_complex_t *gbuf_p = t->pmod->internals->greens,
@@ -71,7 +95,7 @@ static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff,
     return idx;
 }
 
-void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
+static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin ) {
     // unique formfactors
     for (index_t i=0; i<t->n_vtx; ++i) t->vtx[i]._chan = 'p';
@@ -168,6 +192,8 @@ void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
     tu_data_phonons_gfill( t, Lambda );
     complex128_t *g_Lambda = t->gbuf,
                  *g_Zero = t->gbuf + t->my_nk * POW2(t->nO);
+    // XXX do we need a negative sign?
+    /* for (index_t koo=0; koo<POW2(t->nO)*t->my_nk*2; ++koo) g_Lambda[koo] *= -1.0; */
     index_t linsz = POW2(t->n_spin)*t->n_orbff;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t kk=0; kk<t->my_nk; ++kk) {

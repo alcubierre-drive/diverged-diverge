@@ -47,9 +47,10 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
 }
 
 static void tu_data_phonons_destructor( void* v ) {
-    tu_data_phonons_t* p = v;
-    diverge_model_free(p->pmod);
-    tu_data_phonons_free(p);
+    tu_data_phonons_free((tu_data_phonons_t*)v);
+}
+static void model_phonons_destructor( void* v ) {
+    diverge_model_free((diverge_model_t*)v);
 }
 
 void diverge_model_internals_tu_phonons( diverge_model_t* model, double max_dist,
@@ -80,12 +81,12 @@ void diverge_model_internals_tu_phonons( diverge_model_t* model, double max_dist
     m->n_spin = m->SU2 = 1;
     diverge_model_internals_common(m);
 
-    tu_data_phonons_t* p = tu_data_phonons_init( m );
-    tu_data_phonons_init_vertex( p, model->internals->tu_data, model->tu_ff,
-            model->n_tu_ff, model->n_spin );
+    tu_data_phonons_t* p = tu_data_phonons_init( m, model );
 
     model->internals->tu_data_phonons = p;
     model->internals->tu_data_phonons_destructor = &tu_data_phonons_destructor;
+    model->internals->model_phonons = m;
+    model->internals->model_phonons_destructor = &model_phonons_destructor;
 }
 
 void tu_data_destructor(void* v) {

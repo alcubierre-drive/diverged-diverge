@@ -237,6 +237,9 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     if ((model->internals->tu_data_phonons != NULL) &&
         (model->internals->tu_data_phonons_destructor != NULL))
         (*(model->internals->tu_data_phonons_destructor))( model->internals->tu_data_phonons );
+    if ((model->internals->model_phonons != NULL) &&
+        (model->internals->model_phonons_destructor != NULL))
+        (*(model->internals->model_phonons_destructor))( model->internals->model_phonons );
 
     free(model->internals->patch_kmesh);
     free(model->internals->patch_pmesh);

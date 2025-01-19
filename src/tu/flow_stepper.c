@@ -90,8 +90,8 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
     }
 
     // we calculate the elph vertices, project to channels, add the channels
-    // onto those, and swap out the vertex pointers for the elph+channel
-    // vertices
+    // onto those
+    // TODO not finished, this is far from ideal in terms of performance...
     complex128_t *Pch = NULL, *Cch = NULL, *Dch = NULL;
     if (inout->elph) {
         complex128_t *D_L = calloc(inout->full_vert_size, sizeof*D_L),
