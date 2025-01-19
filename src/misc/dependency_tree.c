@@ -12,10 +12,22 @@ typedef struct {
     pthread_mutex_t mtx;
 } deptree_t;
 
+static inline void printsteps( index_t key, void* val, void* ctx ) {
+    (void)val; (void)ctx; void* step = (void*)key;
+    mpi_wrn_printf( "flow step %p dangling, please free resources\n", step );
+}
+
+static inline void printmods( index_t key, void* val, void* ctx ) {
+    (void)val; (void)ctx; void* mod = (void*)key;
+    mpi_wrn_printf( "model %p dangling, please free resources\n", mod );
+}
+
 static void deptree_free( deptree_t* d ) {
     pthread_mutex_lock( &d->mtx );
-    hashtable_free( d->mod );
+    hashtable_iterate( d->step, &printsteps, NULL );
     hashtable_free( d->step );
+    hashtable_iterate( d->mod, &printmods, NULL );
+    hashtable_free( d->mod );
     pthread_mutex_unlock( &d->mtx );
 }
 
