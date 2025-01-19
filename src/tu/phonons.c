@@ -51,25 +51,27 @@ void tu_data_phonons_free( tu_data_phonons_t* t ) {
 }
 
 static void tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
-    index_t nO2 = POW2(t->nO);
-    index_t ngreens = kdim(t->nk)*nO2;
+    const index_t nO = t->nO, my_nk = t->my_nk, my_nk_off = t->my_nk_off;
+    index_t ngreens = kdim(t->nk)*POW2(nO);
     gf_complex_t *gbuf_p = t->pmod->internals->greens,
                  *gbuf_m = t->pmod->internals->greens + ngreens;
 
     (*t->pmod->gfill)( t->pmod, I*Lambda, gbuf_p );
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t kk=0; kk<t->my_nk; ++kk) {
-        index_t q = t->idx_ibz_in_fullmesh[t->my_nk_off + kk];
-        for (index_t O12=0; O12<nO2; ++O12)
-            t->gbuf[IDX3(0,kk,O12,t->my_nk,nO2)] = gbuf_p[IDX2(q,O12,nO2)] + gbuf_m[IDX2(q,O12,nO2)];
+    for (index_t kk=0; kk<my_nk; ++kk) {
+        index_t q = t->idx_ibz_in_fullmesh[my_nk_off + kk];
+        for (index_t O1=0; O1<nO; ++O1)
+        for (index_t O2=0; O2<nO; ++O2)
+            t->gbuf[IDX4(0,kk,O1,O2,my_nk,nO,nO)] = gbuf_p[IDX3(q,O1,O2,nO,nO)] + gbuf_m[IDX3(q,O1,O2,nO,nO)];
     }
 
     (*t->pmod->gfill)( t->pmod, I*DIVERGE_EPS_MESH, gbuf_p );
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t kk=0; kk<t->my_nk; ++kk) {
-        index_t q = t->idx_ibz_in_fullmesh[t->my_nk_off + kk];
-        for (index_t O12=0; O12<nO2; ++O12)
-            t->gbuf[IDX3(1,kk,O12,t->my_nk,nO2)] = gbuf_p[IDX2(q,O12,nO2)] + gbuf_m[IDX2(q,O12,nO2)];
+    for (index_t kk=0; kk<my_nk; ++kk) {
+        index_t q = t->idx_ibz_in_fullmesh[my_nk_off + kk];
+        for (index_t O1=0; O1<nO; ++O1)
+        for (index_t O2=0; O2<nO; ++O2)
+            t->gbuf[IDX4(1,kk,O1,O2,my_nk,nO,nO)] = gbuf_p[IDX3(q,O1,O2,nO,nO)] + gbuf_m[IDX3(q,O1,O2,nO,nO)];
     }
 }
 
@@ -199,11 +201,11 @@ void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
     for (index_t kk=0; kk<t->my_nk; ++kk) {
         complex128_t *g = t->g_ob_qO + kk*linsz*t->nO,
                      *D = g_Lambda + kk*POW2(t->nO),
-                     *V = V_Lambda + kk*POW2(linsz),
                      *tmp = t->tmp_g + kk*linsz*t->nO;
-        phonon_gemm( g, D, V, tmp, linsz, t->nO );
+        if (V_Lambda)
+            phonon_gemm( g, D, V_Lambda + kk*POW2(linsz), tmp, linsz, t->nO );
         D = g_Zero + kk*POW2(t->nO);
-        V = V_zero + kk*POW2(linsz);
-        phonon_gemm( g, D, V, tmp, linsz, t->nO );
+        if (V_zero)
+            phonon_gemm( g, D, V_zero + kk*POW2(linsz), tmp, linsz, t->nO );
     }
 }

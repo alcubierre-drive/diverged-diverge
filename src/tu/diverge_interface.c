@@ -61,7 +61,7 @@ void diverge_model_internals_tu_phonons( diverge_model_t* model, double max_dist
 
     diverge_model_t* m = diverge_model_init();
     memcpy( m->nk, model->nk, sizeof(m->nk) );
-    memcpy( m->nkf, model->nkf, sizeof(m->nkf) );
+    m->nkf[0] = m->nkf[1] = m->nkf[2] = 1;
     for (int d=model->internals->dim; d<3; ++d) m->nk[d] = m->nkf[d] = 0;
     memcpy( m->lattice, model->lattice, sizeof(m->lattice) );
     m->hop = calloc(n_hop, sizeof*m->hop); memcpy( m->hop, hop, n_hop*sizeof*m->hop );
