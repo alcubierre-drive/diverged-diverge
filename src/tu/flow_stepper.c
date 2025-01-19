@@ -28,7 +28,7 @@ struct tu_stepper_t {
     complex128_t* coarseGF;
     bool tu_selfenergy_flow;
 
-    tu_prop_timing_t timings[64];
+    diverge_timing_t timings[64];
 };
 
 tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex_t* vert ) {
@@ -184,10 +184,10 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
     s->w_time_full += diverge_mpi_wtime()-flow_step_tick;
 }
 
-tu_prop_timing_t* tu_stepper_timings( tu_stepper_t* s, int* num ) {
+diverge_timing_t* tu_stepper_timings( tu_stepper_t* s, int* num ) {
     int cnt; if (!num) num = &cnt; *num = 0;
-    #define push_timing( nam ) { \
-        s->timings[(*num)++] = (tu_prop_timing_t){ .t=s->w_time_##nam, .name=#nam }; \
+    #define push_timing( name ) { \
+        s->timings[(*num)++] = (diverge_timing_t){ .t=s->w_time_##name, .nam=#name }; \
     }
     push_timing( GF );
     push_timing( loop );
@@ -197,7 +197,7 @@ tu_prop_timing_t* tu_stepper_timings( tu_stepper_t* s, int* num ) {
     push_timing( self );
     push_timing( full );
     int nprop = 0;
-    tu_prop_timing_t* tprop = tu_prop_get_extra_timings( s->loop, &nprop );
+    diverge_timing_t* tprop = tu_prop_get_extra_timings( s->loop, &nprop );
     for (int i=0; i<nprop; ++i)
         s->timings[(*num)++] = tprop[i];
     return s->timings;

@@ -26,11 +26,6 @@
 extern "C" {
 #endif
 
-typedef struct {
-    double t;
-    char nam[56];
-} diverge_flow_step_timing_t;
-
 struct diverge_flow_step_t {
     diverge_model_t* mod;
     internals_t* intls;
@@ -61,7 +56,7 @@ struct diverge_flow_step_t {
     double dLambda;
 
     index_t niter;
-    VECTOR_DECL( diverge_flow_step_timing_t, timings )
+    VECTOR_DECL( diverge_timing_t, timings )
 };
 
 #ifdef __cplusplus

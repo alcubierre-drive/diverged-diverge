@@ -19,6 +19,14 @@ extern "C" {
  */
 typedef struct diverge_flow_step_t diverge_flow_step_t;
 
+/** flow step timings given by :c:func:`diverge_flow_step_timings` */
+typedef struct {
+    /** time in seconds */
+    double t;
+    /** name given for this timing */
+    char nam[56];
+} diverge_timing_t;
+
 /**
  * internals of the ``model`` must be set up at the time of calling this
  * function. Therefore, the model already holds all vertex data etc. returns
@@ -68,14 +76,35 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
 
 /** return the number of iterations carried out by the :c:type:`diverge_flow_step_t` */
 index_t diverge_flow_step_niter( diverge_flow_step_t* st );
+
 /** return the length of the timing list attached to :c:type:`diverge_flow_step_t` */
 index_t diverge_flow_step_ntimings( diverge_flow_step_t* st );
-/** return the timing list element at ``idx`` attached to :c:type:`diverge_flow_step_t` */
-double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx );
-/** return the timing list element name at ``idx`` attached to :c:type:`diverge_flow_step_t` */
-const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx );
+/**
+ * return timing vector (type :c:struct:`diverge_timing_t`, length given by
+ * :c:func:`diverge_flow_step_ntimings`) taken during the flow
+ */
+diverge_timing_t* diverge_flow_step_timings( diverge_flow_step_t* st );
 
 /**
+ * .. deprecated:: 0.9
+ * use :c:func:`diverge_flow_step_timings` instead.
+ *
+ * return the timing list element at ``idx`` attached to
+ * :c:type:`diverge_flow_step_t`
+ */
+double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx );
+/**
+ * .. deprecated:: 0.9
+ * use :c:func:`diverge_flow_step_timings` instead.
+ *
+ * the timing list element name at ``idx`` attached to
+ * :c:type:`diverge_flow_step_t`
+ */
+const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx );
+/**
+ * .. deprecated:: 0.9
+ * use :c:func:`diverge_flow_step_timings` instead.
+ *
  * returns all timings as static vector (that must not be freed), maximal size
  * 128. last element [128] is zerod.
  *
@@ -83,6 +112,9 @@ const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx
  */
 double* diverge_flow_step_timing_vec( diverge_flow_step_t* st );
 /**
+ * .. deprecated:: 0.9
+ * use :c:func:`diverge_flow_step_timings` instead.
+ *
  * returns all timing descriptions as static vector (that must not be freed),
  * maximal size 128. last element [128] is zerod.
  *

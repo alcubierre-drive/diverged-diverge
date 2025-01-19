@@ -168,8 +168,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
 void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLambda ) {
     double chanmax[6];
     int idx = 0;
-    grid_timing_t* gtt = NULL;
-    tu_prop_timing_t* ttt = NULL;
+    diverge_timing_t* ttt = NULL;
     st->Lambda = Lambda;
     st->dLambda = dLambda;
     // DEVELOPERS
@@ -244,11 +243,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             st->loopmax[1] = chanmax[5];
 
             VECTOR_RESIZE(st->timings, 6);
-            gtt = grid_flow_step_timings( st->grid_step );
-            for (int i=0; i<6; ++i) {
-                st->timings[i].t = gtt[i].t;
-                strncpy( st->timings[i].nam, gtt[i].nam, 55 );
-            }
+            memcpy(st->timings, grid_flow_step_timings(st->grid_step), sizeof(diverge_timing_t)*6);
             st->niter = grid_flow_step_num_calls( st->grid_step );
             return;
         case diverge_tu:
@@ -263,10 +258,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
 
             ttt = tu_stepper_timings(st->tu_step, &idx);
             VECTOR_RESIZE( st->timings, idx );
-            for (int i=0; i<idx; ++i) {
-                st->timings[i].t = ttt[i].t;
-                strncpy( st->timings[i].nam, ttt[i].name, 55 );
-            }
+            memcpy( st->timings, ttt, sizeof(diverge_timing_t)*idx );
             st->niter = tu_stepper_num_calls( st->tu_step );
             return;
         default:
@@ -280,6 +272,9 @@ index_t diverge_flow_step_niter( diverge_flow_step_t* st ) {
 }
 index_t diverge_flow_step_ntimings( diverge_flow_step_t* st ) {
     return st->timings_sz;
+}
+diverge_timing_t* diverge_flow_step_timings( diverge_flow_step_t* st ) {
+    return st->timings;
 }
 double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx ) {
     return st->timings[idx].t;

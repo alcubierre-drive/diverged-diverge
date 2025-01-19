@@ -20,7 +20,7 @@ struct grid_flow_step_t {
     complex128_t* LP;
 
     double norms[5];
-    grid_timing_t t[6];
+    diverge_timing_t t[6];
     double maxs[6];
     index_t num_calls;
 };
@@ -65,7 +65,7 @@ grid_flow_step_t* grid_flow_step_init( grid_vertex_t* V, grid_loop_t* L,
 }
 
 void grid_flow_step_free( grid_flow_step_t* s ) { free(s); }
-grid_timing_t* grid_flow_step_timings( grid_flow_step_t* s ) { return s->t; }
+diverge_timing_t* grid_flow_step_timings( grid_flow_step_t* s ) { return s->t; }
 index_t grid_flow_step_num_calls( const grid_flow_step_t* s ) { return s->num_calls; }
 
 const double* grid_flow_step_euler( grid_flow_step_t* s, double Lambda, double dLambda ) {

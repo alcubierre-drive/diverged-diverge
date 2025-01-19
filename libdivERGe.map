@@ -31,6 +31,7 @@ DIVERGE_0.8 {
         diverge_flow_step_timing_descr;
         diverge_flow_step_timing_descr_vec;
         diverge_flow_step_timing_vec;
+        diverge_flow_step_timings;
         diverge_flow_step_type;
         diverge_flow_step_vertex;
         diverge_flow_step_vertmax;

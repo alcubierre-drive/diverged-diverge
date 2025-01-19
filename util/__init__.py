@@ -763,10 +763,16 @@ if not _libs["divERGe"] is None:
         pass
     flow_step_t = struct_flow_step_t
 
+    # and timing
+    class struct_timing_t(Structure):
+        pass
+    timing_t = struct_timing_t
+    struct_timing_t.__slots__ = [ 't', 'nam', ]
+    struct_timing_t._fields_ = [ ('t', c_double), ('nam', c_char*int(56)) ]
+
     flow_step_init = _libs["divERGe"].get("diverge_flow_step_init", "cdecl")
     flow_step_init.argtypes = [POINTER(model_t), String, String]
     flow_step_init.restype = POINTER(flow_step_t)
-
 
     flow_step_set_interchannel = _libs["divERGe"].get("diverge_flow_step_set_interchannel", "cdecl")
     flow_step_set_interchannel.argtypes = [POINTER(flow_step_t), String]
@@ -799,6 +805,10 @@ if not _libs["divERGe"] is None:
     flow_step_ntimings = _libs["divERGe"].get("diverge_flow_step_ntimings", "cdecl")
     flow_step_ntimings.argtypes = [POINTER(flow_step_t)]
     flow_step_ntimings.restype = index_t
+
+    flow_step_timings = _libs["divERGe"].get("diverge_flow_step_timings", "cdecl")
+    flow_step_timings.argtypes = [POINTER(flow_step_t)]
+    flow_step_timings.restype = POINTER(timing_t)
 
     flow_step_timing = _libs["divERGe"].get("diverge_flow_step_timing", "cdecl")
     flow_step_timing.argtypes = [POINTER(flow_step_t), index_t]

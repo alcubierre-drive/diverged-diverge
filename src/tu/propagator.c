@@ -226,7 +226,7 @@ void tu_prop_GF_for_self( tu_prop_t* t, complex128_t* coarseGF ) {
 
 void tu_prop_set_extra_timings( tu_prop_t* t, bool enabled ) { t->extra_timings_enabled = enabled; }
 
-tu_prop_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ) {
+diverge_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ) {
     if (!t->extra_timings_enabled) { *ntimings = 0; return NULL; }
     t->n_extra_timings = 11; // reset
     double tvec[3] = {0};
@@ -265,45 +265,45 @@ tu_prop_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ) {
     // and the names
     int name_idx = 0;
     if (!t->mpi_gf) {
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft GF serial", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft GF mpi reorder", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft GF mpi fft", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft GF mpi comm", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft GF serial", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft GF mpi reorder", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft GF mpi fft", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft GF mpi comm", 55 );
     } else {
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_gf_timing_trans", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_gf_timing_ffttrans", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_gf_timing_fft", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_gf_timing_comm", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_gf_timing_trans", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_gf_timing_ffttrans", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_gf_timing_fft", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_gf_timing_comm", 55 );
     }
     if (!t->mpi_loop) {
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft many serial", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi+ reorder", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi+ fft", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi+ comm", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi- reorder", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi- fft", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "loop-fft many mpi- comm", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft many serial", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft many mpi+ reorder", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft many mpi+ fft", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft many mpi+ comm", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft many mpi- reorder", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft many mpi- fft", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "loop-fft many mpi- comm", 55 );
     } else {
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_prepare", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_reorder", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_transpose", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_fft", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_insert", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_mpibufprep", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_comm", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_insert_missing", 55 );
-        strncpy( t->extra_timings[name_idx++].name, "tu_mpi_loop_timing_postproc", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_loop_timing_prepare", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_loop_timing_reorder", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_loop_timing_transpose", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_loop_timing_fft", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_loop_timing_insert", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_loop_timing_mpibufprep", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_loop_timing_comm", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_loop_timing_insert_missing", 55 );
+        strncpy( t->extra_timings[name_idx++].nam, "tu_mpi_loop_timing_postproc", 55 );
     }
     if (t->gpu_mpi_dist_pp)
         for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( t->gpu_mpi_dist_pp ); ++i) {
-            strcpy( t->extra_timings[name_idx].name, "pp:" );
-            strncat( t->extra_timings[name_idx].name, tu_prop_gpu_mpi_dist_timing_name(t->gpu_mpi_dist_pp,i), 55 );
+            strcpy( t->extra_timings[name_idx].nam, "pp:" );
+            strncat( t->extra_timings[name_idx].nam, tu_prop_gpu_mpi_dist_timing_name(t->gpu_mpi_dist_pp,i), 55 );
             name_idx++;
         }
     if (t->gpu_mpi_dist_ph)
         for (index_t i=0; i<tu_prop_gpu_mpi_dist_timing_num( t->gpu_mpi_dist_ph ); ++i) {
-            strcpy( t->extra_timings[name_idx].name, "ph:" );
-            strncat( t->extra_timings[name_idx].name, tu_prop_gpu_mpi_dist_timing_name(t->gpu_mpi_dist_ph,i), 55 );
+            strcpy( t->extra_timings[name_idx].nam, "ph:" );
+            strncat( t->extra_timings[name_idx].nam, tu_prop_gpu_mpi_dist_timing_name(t->gpu_mpi_dist_ph,i), 55 );
             name_idx++;
         }
 

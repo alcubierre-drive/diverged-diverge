@@ -97,7 +97,7 @@ struct tu_prop_t {
     index_t gpu_mpi_dist_recv_pack_sz;
 
     // only CPU timings
-    tu_prop_timing_t extra_timings[64];
+    diverge_timing_t extra_timings[64];
     int n_extra_timings;
     bool extra_timings_enabled;
 };

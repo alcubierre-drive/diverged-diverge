@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../diverge_common.h"
+#include "../diverge_flow_step.h" // timing
 #include "propagator.h"
 
 typedef struct tu_projection_t tu_projection_t;
@@ -20,7 +21,7 @@ void tu_stepper_free( tu_stepper_t* s );
 void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, double dlambda, double maxs[6] );
 
 // returns static memory, don't free!
-tu_prop_timing_t* tu_stepper_timings( tu_stepper_t* s, int* num );
+diverge_timing_t* tu_stepper_timings( tu_stepper_t* s, int* num );
 index_t tu_stepper_num_calls( const tu_stepper_t* s );
 
 // only neede for postproc
