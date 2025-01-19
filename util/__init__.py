@@ -810,6 +810,14 @@ if not _libs["divERGe"] is None:
     flow_step_timings.argtypes = [POINTER(flow_step_t)]
     flow_step_timings.restype = POINTER(timing_t)
 
+    def flow_step_timings_PY( step ):
+        ts = flow_step_timings( step )
+        nt = flow_step_ntimings( step )
+        if ts:
+            return view_array( ctypes.cast(ts, c_voidp), shape=(nt,), dtype=[('t','f8'), ('nam','S56')] )
+        else:
+            return None
+
     flow_step_timing = _libs["divERGe"].get("diverge_flow_step_timing", "cdecl")
     flow_step_timing.argtypes = [POINTER(flow_step_t), index_t]
     flow_step_timing.restype = c_double
