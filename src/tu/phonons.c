@@ -194,6 +194,11 @@ static void phonon_gemm( const complex128_t* g, const complex128_t* D,
         complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO ) {
     single_gemm( g, D, tmp, nO, linsz, nO, 1.0, 0.0 );
     single_gemm_adjoint( tmp, g, V, linsz, linsz, nO, 1.0, 0.0 );
+    // XXX debugging
+    /* for (index_t i=0; i<linsz; ++i) */
+    /* for (index_t j=0; j<linsz; ++j) */
+    /*     printf( "%+.1f%+.1fj%c", creal(V[IDX2(i,j,linsz)]), cimag(V[IDX2(i,j,linsz)]), j==linsz-1?'\n':' ' ); */
+    /* printf( "\n" ); */
 }
 
 void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
