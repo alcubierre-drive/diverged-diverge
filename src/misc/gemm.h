@@ -9,11 +9,19 @@ extern "C" {
 #endif
 
 /**
- * calculates the GEMM :math:`C_{nm} = \alpha A_{nk} B_{km} + \beta C_{nm]` with
- * A, B, C matrices in C order.
+ * calculates the matrix product :math:`C = \beta C + \alpha A \cdot B`. A(N,K),
+ * B(K,M) and C(N,M) are matrices in C order (Row Major).
  */
 void single_gemm( const complex128_t* A, const complex128_t* B, complex128_t* C,
         index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta);
+
+/**
+ * calculates the matrix product :math:`C = \beta C + \alpha A \cdot B^\dagger`.
+ * A(N,K), B(M,K) and C(N,M) are matrices in C order (Row Major).
+ */
+void single_gemm_adjoint( const complex128_t* A, const complex128_t* B,
+        complex128_t* C, index_t M, index_t N, index_t K, complex128_t alpha,
+        complex128_t beta);
 
 /**
  * calculates the GEMM :math:`C_{12} = A_{13} B_{32}` for square matrices stored

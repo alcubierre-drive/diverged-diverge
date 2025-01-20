@@ -10,11 +10,15 @@
 
 void single_gemm( const complex128_t* A, const complex128_t* B, complex128_t* C,
         index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta) {
-    index_t LDA = M;
-    index_t LDB = K;
-    index_t LDC = M;
-    cblas_zgemm( CblasColMajor, CblasNoTrans, CblasNoTrans, M, N, K, &alpha,
-                B, LDA, A, LDB, &beta, C, LDC );
+    cblas_zgemm( CblasRowMajor, CblasNoTrans, CblasNoTrans, N, M, K, &alpha, A, K,
+            B, M, &beta, C, M );
+}
+
+void single_gemm_adjoint( const complex128_t* A, const complex128_t* B,
+        complex128_t* C, index_t M, index_t N, index_t K, complex128_t alpha,
+        complex128_t beta) {
+    cblas_zgemm( CblasRowMajor, CblasNoTrans, CblasConjTrans, N, M, K, &alpha, A, K,
+            B, K, &beta, C, M );
 }
 
 void single_square_gemm( const complex128_t* A, int AconjTrans,

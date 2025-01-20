@@ -217,6 +217,7 @@ DIVERGE_UNSTABLE {
         single_eigen_sort_N;
         single_eigen_sort_part;
         single_gemm;
+        single_gemm_adjoint;
         single_square_gemm;
         single_svd;
         subspace_gfill_multi_exec;

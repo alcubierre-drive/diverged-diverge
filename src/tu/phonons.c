@@ -1,6 +1,7 @@
 #include "phonons.h"
 #include "../diverge_internals_struct.h"
 #include "../misc/mergesort.h"
+#include "../misc/gemm.h"
 #include <assert.h>
 #include <fftw3.h>
 
@@ -187,6 +188,12 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 
     fftw_free(fftw_buf);
     VECTOR_FREE( formfacs );
+}
+
+static void phonon_gemm( const complex128_t* g, const complex128_t* D,
+        complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO ) {
+    single_gemm( g, D, tmp, nO, linsz, nO, 1.0, 0.0 );
+    single_gemm_adjoint( tmp, g, V, linsz, linsz, nO, 1.0, 0.0 );
 }
 
 void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,

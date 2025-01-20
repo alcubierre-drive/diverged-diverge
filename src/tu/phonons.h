@@ -26,10 +26,6 @@ void tu_data_phonons_free( tu_data_phonons_t* t );
 void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
         complex128_t* V_Lambda, complex128_t* V_zero );
 
-// only used for C-linkage, actually performing the GEMM
-void phonon_gemm( const complex128_t* g, const complex128_t* D,
-        complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO );
-
 
 #ifdef __cplusplus
 }
