@@ -91,43 +91,61 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
 
     // we calculate the elph vertices, project to channels, add the channels
     // onto those
-    // TODO not finished, this is far from ideal in terms of performance...
-    complex128_t *Pch = NULL, *Cch = NULL, *Dch = NULL;
     if (inout->elph) {
-        complex128_t *D_L = calloc(inout->full_vert_size, sizeof*D_L),
-                     *D_Z = calloc(inout->full_vert_size, sizeof*D_Z);
-        // backup old channels
-        Pch = calloc(inout->full_vert_size, sizeof*Pch),
-        Cch = calloc(inout->full_vert_size, sizeof*Cch),
-        Dch = calloc(inout->full_vert_size, sizeof*Dch);
-        memcpy( Pch, inout->Pch, inout->full_vert_size*sizeof*Pch );
-        memcpy( Cch, inout->Cch, inout->full_vert_size*sizeof*Cch );
-        memcpy( Dch, inout->Dch, inout->full_vert_size*sizeof*Dch );
+        const bool P = inout->P_flow, C = inout->C_flow; // D = true because we have elph
+        // backup
+        if (P) memcpy( inout->Pch_phonon_backup, inout->Pch, inout->full_vert_size*sizeof*inout->Pch );
+        if (C) memcpy( inout->Cch_phonon_backup, inout->Cch, inout->full_vert_size*sizeof*inout->Cch );
+        /*(D)*/memcpy( inout->Dch_phonon_backup, inout->Dch, inout->full_vert_size*sizeof*inout->Dch );
         // and zero the actual vertices
-        ZERO_OUT( inout->Pch, inout->full_vert_size );
-        ZERO_OUT( inout->Cch, inout->full_vert_size );
-        ZERO_OUT( inout->Dch, inout->full_vert_size );
+        if (P) ZERO_OUT( inout->Pch, inout->full_vert_size );
+        if (C) ZERO_OUT( inout->Cch, inout->full_vert_size );
 
-        // generate phonon vertices
-        tu_data_phonons_vertices( inout->tu_ph, lambda, D_L, D_Z );
+        // generate instantaneous phonon vertex
+        tu_data_phonons_vertices( inout->tu_ph, lambda, NULL, inout->Dch );
 
-        // project them to the channels and add the old vertices
-        memcpy( inout->Dch, D_L, inout->full_vert_size*sizeof(complex128_t) );
-        C_projection( inout->Pi_C, inout, s->proj );
-        P_projection( inout->Pi_P, inout, s->proj );
+        // project the Lambda part to C and P channel
+        complex128_t *DP_proj = inout->D_Zero,
+                     *DC_proj = inout->D_Lambda;
+        if (inout->D_to_P && P) P_projection( DP_proj, inout, s->proj );
+        else                    ZERO_OUT( DP_proj, inout->full_vert_size );
+        if (inout->D_to_C && C) C_projection( DC_proj, inout, s->proj );
+        else                    ZERO_OUT( DC_proj, inout->full_vert_size );
+
+
+        // now take the backup and stuff it into the vertices
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<inout->full_vert_size; ++i) {
+            if (P) inout->Pch[i] = DP_proj[i] + inout->Pch_phonon_backup[i];
+            if (C) inout->Cch[i] = -DC_proj[i] + inout->Cch_phonon_backup[i];
+        }
+
+        // generate retarded phonon vertex in the D channel
+        tu_data_phonons_vertices( inout->tu_ph, lambda, inout->Dch, NULL );
+
+        // now take the backup and stuff it into the vertex
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t i=0; i<inout->full_vert_size; ++i)
-            inout->Pi_C[i] += Cch[i],
-            inout->Pi_P[i] += Pch[i],
-            inout->Pi_D[i] = Dch[i] + D_Z[i];
+            inout->Dch[i] += inout->Dch_phonon_backup[i];
 
-        // copy them to the channels
-        memcpy( inout->Pch, inout->Pi_P, inout->full_vert_size*sizeof*Pch );
-        memcpy( inout->Cch, inout->Pi_C, inout->full_vert_size*sizeof*Cch );
-        memcpy( inout->Dch, inout->Pi_D, inout->full_vert_size*sizeof*Dch );
-
-        free( D_L );
-        free( D_Z );
+        // XXX debugging
+#define DEBUG_VERTEX(V) { \
+        index_t linsz = POW2(inout->n_spin) * inout->n_orbff; \
+        for (index_t k=0; k<inout->my_nk; ++k) { \
+            for (index_t i=0; i<linsz; ++i) \
+            for (index_t j=0; j<linsz; ++j) \
+                printf( "%5.2f%c", cabs(V[IDX3(k,i,j,linsz,linsz)]), j==linsz-1?'\n':' ' ); \
+            printf( "\n" ); \
+        }}
+        /* DEBUG_VERTEX(inout->Dch) */
+        /*
+        FILE* f = fopen( "eigs.bin", "wb" );
+        fwrite( inout->Pch, sizeof*inout->Pch, inout->full_vert_size, f );
+        fwrite( inout->Cch, sizeof*inout->Cch, inout->full_vert_size, f );
+        fwrite( inout->Dch, sizeof*inout->Dch, inout->full_vert_size, f );
+        fclose(f);
+        exit(0);
+        */
     }
 
     s->w_time_GF += diverge_mpi_wtime()-flow_step_tick;
@@ -223,15 +241,16 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
     }
     // after everything is done, we reset the channels to the original ones
     if (inout->elph) {
-        memcpy( inout->Pch, Pch, inout->full_vert_size * sizeof*Pch );
-        memcpy( inout->Cch, Cch, inout->full_vert_size * sizeof*Cch );
-        memcpy( inout->Dch, Dch, inout->full_vert_size * sizeof*Dch );
-        free( Pch );
-        free( Cch );
-        free( Dch );
+        // first add the differential part to the phonon vertex
+        TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(inout, s->internal_vertex, dlambda) );
+        // and then swap pointers to reset to the previous vertex
+        XORSWAP_PTR( inout->Pch, inout->Pch_phonon_backup );
+        XORSWAP_PTR( inout->Cch, inout->Cch_phonon_backup );
+        XORSWAP_PTR( inout->Dch, inout->Dch_phonon_backup );
     }
-    TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(inout, s->internal_vertex, dlambda),
-                                       tu_vertex_max(inout, maxs) );
+
+    TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(inout, s->internal_vertex, dlambda) );
+    TICK_TOCK( s->w_time_add_find_max, tu_vertex_max(inout, maxs) );
 
     s->w_time_full += diverge_mpi_wtime()-flow_step_tick;
 }

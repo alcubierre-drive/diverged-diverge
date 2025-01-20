@@ -104,6 +104,9 @@ void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
         .proj = proj,
         .model = model,
     };
+
+    if (vertex->elph && p.c.phonon_vertex) XORSWAP_PTR(vertex->Dch, vertex->Dch_phonon_backup);
+
     if (!p.c.skip_channel_calc) {
         index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
         p.Pval = calloc(linsize*p.vertex->my_nk,sizeof(double));
@@ -160,6 +163,8 @@ void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
     VECTOR_FREE( p.mi_map_idx );
     VECTOR_FREE( p.mi_map_pref_in_in );
     VECTOR_FREE( p.mi_map_pref_in_out );
+
+    if (vertex->elph && p.c.phonon_vertex) XORSWAP_PTR(vertex->Dch, vertex->Dch_phonon_backup);
 }
 
 static void save_channel_leading_ev( tu_postproduction_t* p ) {

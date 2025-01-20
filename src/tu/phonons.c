@@ -1,3 +1,6 @@
+#define LINALG_NO_LAPACKE
+#include "../misc/linalg.h"
+LINALG_IMPLEMENT
 #include "phonons.h"
 #include "../diverge_internals_struct.h"
 #include "../misc/mergesort.h"
@@ -10,6 +13,7 @@ struct tu_data_phonons_t {
 
     index_t nk[3];
     complex128_t* gbuf; // (ll, my_nk, nO, nO), with ll=(0,Lambda)
+    double Lambda;
     index_t nO;
 
     ph_vertex_t* vtx;
@@ -52,6 +56,8 @@ void tu_data_phonons_free( tu_data_phonons_t* t ) {
 }
 
 static void tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
+    if (Lambda == t->Lambda) return;
+    t->Lambda = Lambda;
     const index_t nO = t->nO, my_nk = t->my_nk, my_nk_off = t->my_nk_off;
     index_t ngreens = kdim(t->nk)*POW2(nO);
     gf_complex_t *gbuf_p = t->pmod->internals->greens,
@@ -175,11 +181,30 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         }
         if (mapped_mi == -1) { n_not_found++; continue; }
         // map to g
+        // XXX
+        /* const double* qmesh = t->pmod->internals->kmesh; */
+        /* const claM3d_t lat = claM3d_map(t->pmod->lattice[0]); */
         for (index_t kk=0; kk<t->my_nk; ++kk) {
             index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
+            // XXX
+            /* claV3d_t qvec = claV3d_map(qmesh+3*q); */
+            /* claV3d_t R1 = claM3d_vecmat( (claV3d_t){{formfacs[f].R1[0],formfacs[f].R1[1],formfacs[f].R1[2]}}, lat ); */
+            /* claV3d_t R12 = claM3d_vecmat( (claV3d_t){{formfacs[f].R12[0],formfacs[f].R12[1],formfacs[f].R12[2]}}, lat ); */
             t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].O1,
                                t->n_spin,t->n_spin,t->n_orbff,t->nO)] +=
                 fftw_cbuf[IDX2(f,q,nk)];
+            // XXX
+            /*
+            int sel = 8;
+            sel==0 ? cexp( I*claV3d_dot(qvec, R12) ) :
+            sel==1 ? cexp( I*-claV3d_dot(qvec, R12) ) :
+            sel==2 ? cexp( I*claV3d_dot(qvec, R1) ) :
+            sel==3 ? cexp( I*-claV3d_dot(qvec, R1) ) :
+            sel==4 ? cexp( I*claV3d_dot(qvec, claV3d_add(R12, R1)) ) :
+            sel==5 ? cexp( I*-claV3d_dot(qvec, claV3d_add(R12, R1)) ) :
+            sel==6 ? cexp( I*claV3d_dot(qvec, claV3d_sub(R12, R1)) ) :
+            sel==7 ? cexp( I*-claV3d_dot(qvec, claV3d_sub(R12, R1)) ) : 1.0;
+            */
         }
     }
     diverge_mpi_allreduce_int_max_inplace( &n_not_found, 1 );
@@ -194,11 +219,6 @@ static void phonon_gemm( const complex128_t* g, const complex128_t* D,
         complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO ) {
     single_gemm( g, D, tmp, nO, linsz, nO, 1.0, 0.0 );
     single_gemm_adjoint( tmp, g, V, linsz, linsz, nO, 1.0, 0.0 );
-    // XXX debugging
-    /* for (index_t i=0; i<linsz; ++i) */
-    /* for (index_t j=0; j<linsz; ++j) */
-    /*     printf( "%+.1f%+.1fj%c", creal(V[IDX2(i,j,linsz)]), cimag(V[IDX2(i,j,linsz)]), j==linsz-1?'\n':' ' ); */
-    /* printf( "\n" ); */
 }
 
 void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
@@ -206,18 +226,37 @@ void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
     tu_data_phonons_gfill( t, Lambda );
     complex128_t *g_Lambda = t->gbuf,
                  *g_Zero = t->gbuf + t->my_nk * POW2(t->nO);
-    // XXX do we need a negative sign?
-    /* for (index_t koo=0; koo<POW2(t->nO)*t->my_nk*2; ++koo) g_Lambda[koo] *= -1.0; */
     index_t linsz = POW2(t->n_spin)*t->n_orbff;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t kk=0; kk<t->my_nk; ++kk) {
         complex128_t *g = t->g_ob_qO + kk*linsz*t->nO,
-                     *D = g_Lambda + kk*POW2(t->nO),
-                     *tmp = t->tmp_g + kk*linsz*t->nO;
-        if (V_Lambda)
-            phonon_gemm( g, D, V_Lambda + kk*POW2(linsz), tmp, linsz, t->nO );
-        D = g_Zero + kk*POW2(t->nO);
-        if (V_zero)
-            phonon_gemm( g, D, V_zero + kk*POW2(linsz), tmp, linsz, t->nO );
+                     *D_Lambda = g_Lambda + kk*POW2(t->nO),
+                     *tmp = t->tmp_g + kk*linsz*t->nO,
+                     *D_Zero = g_Zero + kk*POW2(t->nO);
+        if (V_Lambda) phonon_gemm( g, D_Lambda, V_Lambda + kk*POW2(linsz), tmp, linsz, t->nO );
+        if (V_zero)   phonon_gemm( g, D_Zero, V_zero + kk*POW2(linsz), tmp, linsz, t->nO );
     }
+    /*
+    // XXX debugging
+    if (V_zero) {
+    complex128_t* V = V_zero;
+    for (index_t k=0; k<t->my_nk; ++k) {
+        for (index_t i=0; i<linsz; ++i)
+        for (index_t j=0; j<linsz; ++j)
+            printf( "%+.1f%+.1fj%c", creal(V[IDX3(k,i,j,linsz,linsz)]),
+                    cimag(V[IDX3(k,i,j,linsz,linsz)]), j==linsz-1?'\n':' ' );
+        printf( "\n" );
+    }
+    }
+    if (V_Lambda) {
+    complex128_t* V = V_Lambda;
+    for (index_t k=0; k<t->my_nk; ++k) {
+        for (index_t i=0; i<linsz; ++i)
+        for (index_t j=0; j<linsz; ++j)
+            printf( "%+.1f%+.1fj%c", creal(V[IDX3(k,i,j,linsz,linsz)]),
+                    cimag(V[IDX3(k,i,j,linsz,linsz)]), j==linsz-1?'\n':' ' );
+        printf( "\n" );
+    }
+    }
+    */
 }

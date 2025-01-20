@@ -138,10 +138,12 @@ void tu_vertex_free( tu_vertex_t* V ) {
     }
 #endif
 
-    if (V->elph) {
-        free( V->Pi_P );
-        free( V->Pi_C );
-        free( V->Pi_D );
+    if (V->elph && V->owns) {
+        free( V->Pch_phonon_backup );
+        free( V->Cch_phonon_backup );
+        free( V->Dch_phonon_backup );
+        free( V->D_Lambda );
+        free( V->D_Zero );
     }
 
     free( V );
@@ -178,9 +180,11 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
 
     V->elph = O->elph;
     V->tu_ph = O->tu_ph;
-    if (V->P_flow) V->Pi_P = calloc(V->full_vert_size, sizeof(complex128_t));
-    if (V->C_flow) V->Pi_C = calloc(V->full_vert_size, sizeof(complex128_t));
-    if (V->D_flow) V->Pi_D = calloc(V->full_vert_size, sizeof(complex128_t));
+    V->Pch_phonon_backup = O->Pch_phonon_backup;
+    V->Cch_phonon_backup = O->Cch_phonon_backup;
+    V->Dch_phonon_backup = O->Dch_phonon_backup;
+    V->D_Lambda = O->D_Lambda;
+    V->D_Zero = O->D_Zero;
 
     V->bubble_helper = O->bubble_helper;
     V->product_helper = O->product_helper;
@@ -585,10 +589,15 @@ void tu_vertex_product( complex128_t* result, const complex128_t* B,
 }
 
 void tu_vertex_init_phonons( tu_vertex_t* V, tu_data_phonons_t* p ) {
+    if (!V->D_flow) {
+        mpi_err_printf( "cannot use phonon flow without D channel\n" );
+        return;
+    }
     V->elph = true;
     V->tu_ph = p;
-    index_t linsz = V->n_orbff * POW2(V->n_spin);
-    V->Pi_P = calloc(V->my_nk * POW2(linsz), sizeof*V->Pi_P);
-    V->Pi_C = calloc(V->my_nk * POW2(linsz), sizeof*V->Pi_C);
-    V->Pi_D = calloc(V->my_nk * POW2(linsz), sizeof*V->Pi_D);
+    if (V->P_flow) V->Pch_phonon_backup = calloc(V->full_vert_size, sizeof*V->Pch_phonon_backup);
+    if (V->C_flow) V->Cch_phonon_backup = calloc(V->full_vert_size, sizeof*V->Cch_phonon_backup);
+    V->Dch_phonon_backup = calloc(V->full_vert_size, sizeof*V->Dch_phonon_backup);
+    V->D_Lambda = calloc(V->full_vert_size, sizeof*V->D_Lambda);
+    V->D_Zero = calloc(V->full_vert_size, sizeof*V->D_Zero);
 }

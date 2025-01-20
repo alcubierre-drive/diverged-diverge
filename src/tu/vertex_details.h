@@ -57,7 +57,8 @@ struct tu_vertex_t {
     // phonon stuff
     bool elph;
     tu_data_phonons_t* tu_ph;
-    complex128_t *Pi_P, *Pi_C, *Pi_D;
+    complex128_t *Pch_phonon_backup, *Cch_phonon_backup, *Dch_phonon_backup;
+    complex128_t *D_Lambda, *D_Zero;
 };
 
 // private functions

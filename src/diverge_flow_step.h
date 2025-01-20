@@ -170,12 +170,13 @@ typedef struct {
  *         the case determines whether the vertex is just the channel (upper
  *         case), the full vertex projected to the respective channel (lower
  *         case), or a physical channel (su'p'erconducting, 'm'agnetic,
- *         c'h'arge). The actual channel specific vertex object is returned,
- *         ordered as (q, s4,s3,ob2, s2,s1,ob1). Note that q is symmetry reduced
- *         as well as MPI distributed. Additionally, chan can be 'S' to yield
- *         the self-energy on the fine mesh (if used). Then, n_orbff contains
- *         the number of orbitals and nk the number of total (refined * coarse)
- *         kpts.
+ *         c'h'arge). In case phonons are included, the phonon contribution to
+ *         the channels can be activated by using ``-chan``. The actual channel
+ *         specific vertex object is returned, ordered as (q, s4,s3,ob2,
+ *         s2,s1,ob1). Note that q is symmetry reduced as well as MPI
+ *         distributed. Additionally, chan can be 'S' to yield the self-energy
+ *         on the fine mesh (if used). Then, n_orbff contains the number of
+ *         orbitals and nk the number of total (refined * coarse) kpts.
  * :grid FRG: chan can be 'P', 'C', 'D', or 'V', both upper and lower case. In
  *            general, lower case references the differential vertex and upper
  *            case the full vertex. The three channels are returned in
