@@ -96,7 +96,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
         // backup
         if (P) memcpy( inout->Pch_phonon_backup, inout->Pch, inout->full_vert_size*sizeof*inout->Pch );
         if (C) memcpy( inout->Cch_phonon_backup, inout->Cch, inout->full_vert_size*sizeof*inout->Cch );
-        /*(D)*/memcpy( inout->Dch_phonon_backup, inout->Dch, inout->full_vert_size*sizeof*inout->Dch );
+        /*  D*/memcpy( inout->Dch_phonon_backup, inout->Dch, inout->full_vert_size*sizeof*inout->Dch );
         // and zero the actual vertices; Dch skipped as it's overwritten promptly
         if (P) ZERO_OUT( inout->Pch, inout->full_vert_size );
         if (C) ZERO_OUT( inout->Cch, inout->full_vert_size );
@@ -105,19 +105,17 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
         tu_data_phonons_vertices( inout->tu_ph, lambda, inout->Dch, NULL );
 
         // project the Lambda part to C and P channel
-        complex128_t *DP_proj = inout->D_Zero,
-                     *DC_proj = inout->D_Lambda;
-        if (inout->D_to_P && P) P_projection( DP_proj, inout, s->proj );
-        else                    ZERO_OUT( DP_proj, inout->full_vert_size );
-        if (inout->D_to_C && C) C_projection( DC_proj, inout, s->proj );
-        else                    ZERO_OUT( DC_proj, inout->full_vert_size );
+        if (inout->D_to_P && P) P_projection( inout->DP_phonon_proj, inout, s->proj );
+        else if (P)             ZERO_OUT( inout->DP_phonon_proj, inout->full_vert_size );
+        if (inout->D_to_C && C) C_projection( inout->DC_phonon_proj, inout, s->proj );
+        else if (C)             ZERO_OUT( inout->DC_phonon_proj, inout->full_vert_size );
 
 
         // now take the backup and stuff it into the vertices
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t i=0; i<inout->full_vert_size; ++i) {
-            if (P) inout->Pch[i] = DP_proj[i] + inout->Pch_phonon_backup[i];
-            if (C) inout->Cch[i] = -DC_proj[i] + inout->Cch_phonon_backup[i];
+            if (P) inout->Pch[i] = inout->DP_phonon_proj[i] + inout->Pch_phonon_backup[i];
+            if (C) inout->Cch[i] = inout->DC_phonon_proj[i] + inout->Cch_phonon_backup[i];
         }
 
         // generate instantaneous phonon vertex in the D channel

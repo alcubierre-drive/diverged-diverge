@@ -6,7 +6,10 @@ FILE* vertex_file = NULL;
 const char vertex_file_name[] = __FILE__ "_eig.bin";
 
 static inline void append_vertex_to_file( diverge_flow_step_vertex_t v ) {
-    if (!vertex_file) vertex_file = fopen(vertex_file_name, "wb");
+    if (!vertex_file) {
+        vertex_file = fopen(vertex_file_name, "wb");
+        mpi_usr_printf("opening %s for vertices\n", vertex_file_name);
+    }
     index_t sz = v.n_orbff, num = v.q_1;
     fwrite(v.ary, sizeof(*v.ary), POW2(sz)*num, vertex_file);
 }
