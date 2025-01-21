@@ -3,7 +3,7 @@
 #include <diverge_misc.h>
 
 FILE* vertex_file = NULL;
-const char vertex_file_name[] = "eigs.bin";
+const char vertex_file_name[] = __FILE__ "_eig.bin";
 
 static inline void append_vertex_to_file( diverge_flow_step_vertex_t v ) {
     if (!vertex_file) vertex_file = fopen(vertex_file_name, "wb");
@@ -23,7 +23,6 @@ int main( int argc, char** argv ) {
     if (argc > 2) omega = atof(argv[2]);
 
     double g = sqrt(lambda * (8.*t) * omega);
-    char prefix[128]; sprintf( prefix, "out_l%.3f_w%.3f", lambda, omega );
 
     diverge_model_t* m = diverge_model_init();
     m->nk[0] = m->nk[1] = nk;
@@ -49,7 +48,7 @@ int main( int argc, char** argv ) {
     m->n_spin = m->n_orb = m->SU2 = 1;
 
     diverge_model_internals_common(m);
-    char o[128]; strcpy(o, prefix); strcat(o, "_mod.dvg"); diverge_model_to_file(m, o);
+    diverge_model_to_file(m, __FILE__ "_mod.dvg" );
     diverge_model_set_filling(m, NULL, -1, 0.5);
 
     rs_hopping_t phop[] = {
@@ -83,7 +82,7 @@ int main( int argc, char** argv ) {
     pc.tu_storing_relative = 1;
     pc.tu_storing_threshold = 0.8;
     pc.tu_susceptibilities_ff = true;
-    strcpy(o, prefix); strcat(o, "_out.dvg"); diverge_postprocess_and_write_finegrained( st, o, &pc );
+    diverge_postprocess_and_write_finegrained( st, __FILE__ "_out.dvg", &pc );
     diverge_flow_step_free( st );
     diverge_model_free( m );
     diverge_finalize();
