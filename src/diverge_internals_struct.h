@@ -74,6 +74,7 @@ struct internals_t {
     // tu internals
     void* tu_data;
     internals_destructor_t tu_data_destructor;
+    int tu_phonons_buffered;
     void* tu_data_phonons;
     internals_destructor_t tu_data_phonons_destructor;
     void* model_phonons;

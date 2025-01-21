@@ -5,19 +5,29 @@
 FILE* vertex_file = NULL;
 const char vertex_file_name[] = __FILE__ "_eig.bin";
 
-static inline void append_vertex_to_file( diverge_flow_step_vertex_t v ) {
+static inline void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v ) {
     if (!vertex_file) {
         vertex_file = fopen(vertex_file_name, "wb");
         mpi_usr_printf("opening %s for vertices\n", vertex_file_name);
     }
-    index_t sz = v.n_orbff, num = v.q_1;
-    fwrite(v.ary, sizeof(*v.ary), POW2(sz)*num, vertex_file);
+    index_t sz = v.n_orbff, num = v.q_1 - v.q_0;
+    double* vals = calloc(num*sz, sizeof*vals);
+    complex128_t* vecs = calloc(num*POW2(sz), sizeof*vecs);
+    complex128_t* tmp = calloc(num*POW2(sz), sizeof*tmp);
+    for (index_t q=0; q<num; ++q) {
+        single_svd( v.ary + POW2(sz)*q, tmp + POW2(sz)*q, vecs + POW2(sz)*q, vals + sz*q, sz );
+        single_eigen_sort( tmp, vals, sz, 'M' );
+    }
+    free( vecs );
+    free( tmp );
+    fwrite( vals, sizeof*vals, sz*num, vertex_file );
+    free( vals );
 }
 
 int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );
 
-    double t = 1.0, U = 0.0, V = 0.0, max_dist = 1.51;
+    double t = 1.0, U = 0.0, V = 0.0, max_dist = 1.01;
 
     int nk = 24, nkf = 15;
     double omega = 10.0, lambda = 0.1;
@@ -74,11 +84,11 @@ int main( int argc, char** argv ) {
         diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
         diverge_flow_step_chanmax( st, cmax );
         diverge_flow_step_vertmax( st, &vmax );
+        append_vertex_eigs_to_file( diverge_flow_step_vertex( st, 'p' ) );
+        append_vertex_eigs_to_file( diverge_flow_step_vertex( st, 'm' ) );
+        append_vertex_eigs_to_file( diverge_flow_step_vertex( st, 'h' ) );
         mpi_printf( "%.5e %.5e %.5e %.5e\n", eu.Lambda, cmax[0], cmax[1], cmax[2] );
     } while (diverge_euler_next(&eu, vmax));
-    append_vertex_to_file( diverge_flow_step_vertex( st, 'p' ) );
-    append_vertex_to_file( diverge_flow_step_vertex( st, 'm' ) );
-    append_vertex_to_file( diverge_flow_step_vertex( st, 'h' ) );
     if (vertex_file) fclose( vertex_file );
 
     diverge_postprocess_conf_t pc = diverge_postprocess_conf_defaults;

@@ -78,6 +78,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("tu_extra_propagator_timings") {
         TU_INTERNALS->propagator_extra_cpu_timings = atoi(val);
     }
+    CHECKKEY("tu_phonons_buffered") {
+        INTERNALS->tu_phonons_buffered = atoi(val);
+    }
     CHECKKEY("npatch_gpu_workshare") {
         INTERNALS->patch_gpu_workshare = atof(val);
     }

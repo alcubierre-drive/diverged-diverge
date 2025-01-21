@@ -19,7 +19,8 @@ typedef struct ph_vertex_t {
 
 typedef struct tu_data_phonons_t tu_data_phonons_t;
 
-tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* pmod, diverge_model_t* elmod );
+tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
+        bool buffered );
 void tu_data_phonons_free( tu_data_phonons_t* t );
 
 // generates D channel vertex scaled by fac, optionally adds to existing buffer

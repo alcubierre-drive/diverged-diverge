@@ -81,7 +81,7 @@ void diverge_model_internals_tu_phonons( diverge_model_t* model, double max_dist
     m->n_spin = m->SU2 = 1;
     diverge_model_internals_common(m);
 
-    tu_data_phonons_t* p = tu_data_phonons_init( m, model );
+    tu_data_phonons_t* p = tu_data_phonons_init( m, model, model->internals->tu_phonons_buffered );
 
     model->internals->tu_data_phonons = p;
     model->internals->tu_data_phonons_destructor = &tu_data_phonons_destructor;
