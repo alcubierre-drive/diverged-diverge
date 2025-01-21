@@ -139,13 +139,6 @@ void tu_vertex_free( tu_vertex_t* V ) {
     }
 #endif
 
-    if (V->elph && V->owns) {
-        free( V->Pch_phonon_backup );
-        free( V->Cch_phonon_backup );
-        free( V->Dch_phonon_backup );
-        free( V->phonon_helper );
-    }
-
     free( V );
 }
 
@@ -180,10 +173,6 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
 
     V->elph = O->elph;
     V->tu_ph = O->tu_ph;
-    V->Pch_phonon_backup = O->Pch_phonon_backup;
-    V->Cch_phonon_backup = O->Cch_phonon_backup;
-    V->Dch_phonon_backup = O->Dch_phonon_backup;
-    V->phonon_helper = O->phonon_helper;
 
     V->bubble_helper = O->bubble_helper;
     V->product_helper = O->product_helper;
@@ -594,9 +583,4 @@ void tu_vertex_init_phonons( tu_vertex_t* V, tu_data_phonons_t* p ) {
     }
     V->elph = true;
     V->tu_ph = p;
-    if (V->P_flow) V->Pch_phonon_backup = calloc(V->full_vert_size, sizeof*V->Pch_phonon_backup);
-    if (V->C_flow) V->Cch_phonon_backup = calloc(V->full_vert_size, sizeof*V->Cch_phonon_backup);
-    V->Dch_phonon_backup = calloc(V->full_vert_size, sizeof*V->Dch_phonon_backup);
-    V->phonon_helper = calloc(V->full_vert_size, sizeof*V->phonon_helper);
-    tu_data_phonons_gen_vert(p, 0.0, V->Dch, true, 1.0);
 }
