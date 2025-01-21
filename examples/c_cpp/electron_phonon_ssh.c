@@ -1,0 +1,90 @@
+#include <diverge.h>
+#include <tu/phonons.h>
+#include <diverge_misc.h>
+
+FILE* vertex_file = NULL;
+const char vertex_file_name[] = "eigs.bin";
+
+static inline void append_vertex_to_file( diverge_flow_step_vertex_t v ) {
+    if (!vertex_file) vertex_file = fopen(vertex_file_name, "wb");
+    index_t sz = v.n_orbff, num = v.q_1;
+    fwrite(v.ary, sizeof(*v.ary), POW2(sz)*num, vertex_file);
+}
+
+int main( int argc, char** argv ) {
+    diverge_init( &argc, &argv );
+
+    double t = 1.0, U = 0.0, V = 0.0, max_dist = 1.51;
+
+    int nk = 24, nkf = 15;
+    double omega = 10.0, lambda = 0.1;
+
+    if (argc > 1) lambda = atof(argv[1]);
+    if (argc > 2) omega = atof(argv[2]);
+
+    double g = sqrt(lambda * (8.*t) * omega);
+    char prefix[128]; sprintf( prefix, "out_l%.3f_w%.3f", lambda, omega );
+
+    diverge_model_t* m = diverge_model_init();
+    m->nk[0] = m->nk[1] = nk;
+    m->nkf[0] = m->nkf[1] = nkf;
+    m->lattice[0][0] = m->lattice[1][1] = m->lattice[2][2] = 1.0;
+    m->hop = calloc(1024, sizeof*m->hop);
+    m->hop[m->n_hop++] = (rs_hopping_t){ .R={ 1, 0,0}, .t=t };
+    m->hop[m->n_hop++] = (rs_hopping_t){ .R={-1, 0,0}, .t=t };
+    m->hop[m->n_hop++] = (rs_hopping_t){ .R={ 0, 1,0}, .t=t };
+    m->hop[m->n_hop++] = (rs_hopping_t){ .R={ 0,-1,0}, .t=t };
+    m->vert = calloc(1024, sizeof*m->vert);
+    m->vert[m->n_vert++] = (rs_vertex_t){ .chan='C', .s1=-1, .V=U };
+    // we add some P and D channel interactions, just to simulate how the elph
+    // interaction would have to look
+    m->vert[m->n_vert++] = (rs_vertex_t){ .chan='P', .R={ 1, 0,0}, .s1=-1, .V=V };
+    m->vert[m->n_vert++] = (rs_vertex_t){ .chan='P', .R={-1, 0,0}, .s1=-1, .V=V };
+    m->vert[m->n_vert++] = (rs_vertex_t){ .chan='P', .R={ 0, 1,0}, .s1=-1, .V=V };
+    m->vert[m->n_vert++] = (rs_vertex_t){ .chan='P', .R={ 0,-1,0}, .s1=-1, .V=V };
+    m->vert[m->n_vert++] = (rs_vertex_t){ .chan='D', .R={ 1, 0,0}, .s1=-1, .V=V };
+    m->vert[m->n_vert++] = (rs_vertex_t){ .chan='D', .R={-1, 0,0}, .s1=-1, .V=V };
+    m->vert[m->n_vert++] = (rs_vertex_t){ .chan='D', .R={ 0, 1,0}, .s1=-1, .V=V };
+    m->vert[m->n_vert++] = (rs_vertex_t){ .chan='D', .R={ 0,-1,0}, .s1=-1, .V=V };
+    m->n_spin = m->n_orb = m->SU2 = 1;
+
+    diverge_model_internals_common(m);
+    char o[128]; strcpy(o, prefix); strcat(o, "_mod.dvg"); diverge_model_to_file(m, o);
+    diverge_model_set_filling(m, NULL, -1, 0.5);
+
+    rs_hopping_t phop[] = {
+        { .o1=0, .o2=0, .t=omega },
+        { .o1=1, .o2=1, .t=omega },
+    };
+    ph_vertex_t pvert[] = {
+        { .R12={ 1, 0,0}, .O1=0, .g=g },
+        { .R12={-1, 0,0}, .O1=0, .g=g },
+        { .R12={ 0, 1,0}, .O1=1, .g=g },
+        { .R12={ 0,-1,0}, .O1=1, .g=g },
+    };
+    diverge_model_internals_tu_phonons(m, max_dist, phop, sizeof(phop)/sizeof(phop[0]), (rs_vertex_t*)pvert, 4);
+
+    diverge_flow_step_t* st = diverge_flow_step_init_any(m, "PCD");
+    diverge_euler_t eu = diverge_euler_defaults;
+    double cmax[3] = {0};
+    double vmax;
+    do {
+        diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
+        diverge_flow_step_chanmax( st, cmax );
+        diverge_flow_step_vertmax( st, &vmax );
+        mpi_printf( "%.5e %.5e %.5e %.5e\n", eu.Lambda, cmax[0], cmax[1], cmax[2] );
+    } while (diverge_euler_next(&eu, vmax));
+    append_vertex_to_file( diverge_flow_step_vertex( st, 'p' ) );
+    append_vertex_to_file( diverge_flow_step_vertex( st, 'm' ) );
+    append_vertex_to_file( diverge_flow_step_vertex( st, 'h' ) );
+    if (vertex_file) fclose( vertex_file );
+
+    diverge_postprocess_conf_t pc = diverge_postprocess_conf_defaults;
+    pc.tu_storing_relative = 1;
+    pc.tu_storing_threshold = 0.8;
+    pc.tu_susceptibilities_ff = true;
+    strcpy(o, prefix); strcat(o, "_out.dvg"); diverge_postprocess_and_write_finegrained( st, o, &pc );
+    diverge_flow_step_free( st );
+    diverge_model_free( m );
+    diverge_finalize();
+}
