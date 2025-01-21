@@ -9,10 +9,17 @@ LINALG_IMPLEMENT
 #include <assert.h>
 #include <fftw3.h>
 
+// references:
+//
+// Hubbard-SSH model: https://doi.org/10.1103/PhysRevB.106.245136
+// CBO in Kagome/Phonon: https://doi.org/10.1103/PhysRevB.109.075130
+// Hubbard-Holstein: https://doi.org/10.1103/PhysRevB.92.195102
+
 struct tu_data_phonons_t {
     diverge_model_t* pmod;
 
     index_t nk[3];
+    index_t nkf[3];
     index_t nO;
 
     ph_vertex_t* vtx;
@@ -43,9 +50,12 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     tu_data_phonons_t* t = calloc(1, sizeof*t);
     t->pmod = ph;
     memcpy( t->nk, t->pmod->nk, sizeof t->nk );
+    memcpy( t->nkf, t->pmod->nkf, sizeof t->nkf );
     t->nO = t->pmod->n_orb;
     if (!t->pmod->internals->has_common_internals)
         mpi_err_printf( "phonon model must have common internals!\n" );
+    if (memcmp( t->nk, el->nk, sizeof(t->nk) ) != 0)
+        mpi_err_printf( "kpoints from ph (%li)/el (%li) don't match\n", kdim(t->nk), kdim(el->nk) );
     assert( t->pmod->n_spin == 1 );
     assert( t->pmod->internals->greens_shared == 0 );
     assert( t->pmod->gproj == NULL );
@@ -77,12 +87,12 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda 
 
     (*t->pmod->gfill)( t->pmod, I*(iszero?DIVERGE_EPS_MESH:Lambda), t->pmod->internals->greens );
     const index_t nO = t->nO, my_nk = t->my_nk, my_nk_off = t->my_nk_off;
-    const index_t ngreens = kdim(t->nk)*POW2(nO);
+    const index_t ngreens = kdimtot(t->nk, t->nkf)*POW2(nO);
     const gf_complex_t *gbuf_p = t->pmod->internals->greens,
                        *gbuf_m = t->pmod->internals->greens + ngreens;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t kk=0; kk<my_nk; ++kk) {
-        index_t q = t->idx_ibz_in_fullmesh[my_nk_off + kk];
+        index_t q = kidxc2f( t->idx_ibz_in_fullmesh[my_nk_off + kk], t->nk, t->nkf );
         for (index_t O1=0; O1<nO; ++O1)
         for (index_t O2=0; O2<nO; ++O2)
             buf[IDX3(kk,O1,O2,nO,nO)] = gbuf_p[IDX3(q,O1,O2,nO,nO)] + gbuf_m[IDX3(q,O1,O2,nO,nO)];
@@ -264,4 +274,6 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
             out[i] = beta * out[i] + alpha * buf[i];
     }
 }
+
+diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t ) { return t->pmod; }
 

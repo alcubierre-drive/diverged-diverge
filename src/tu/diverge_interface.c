@@ -50,18 +50,21 @@ static void tu_data_phonons_destructor( void* v ) {
     tu_data_phonons_free((tu_data_phonons_t*)v);
 }
 static void model_phonons_destructor( void* v ) {
-    diverge_model_free((diverge_model_t*)v);
+    diverge_model_t* m = v;
+    m->internals->tu_phonon_model_dont_free = 0;
+    diverge_model_free(m);
 }
 
-void diverge_model_internals_tu_phonons( diverge_model_t* model, double max_dist,
-        rs_hopping_t* hop, index_t n_hop, rs_vertex_t* vert, index_t n_vert ) {
+diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
+        double max_dist, rs_hopping_t* hop, index_t n_hop, rs_vertex_t* vert,
+        index_t n_vert ) {
     diverge_model_internals_tu( model, max_dist );
     strcpy( model->internals->backend, "tu_phonons" );
     mpi_vrb_printf( "setting up phonon internals\n" );
 
     diverge_model_t* m = diverge_model_init();
     memcpy( m->nk, model->nk, sizeof(m->nk) );
-    m->nkf[0] = m->nkf[1] = m->nkf[2] = 1;
+    memcpy( m->nkf, model->nkf, sizeof(m->nkf) );
     for (int d=model->internals->dim; d<3; ++d) m->nk[d] = m->nkf[d] = 0;
     memcpy( m->lattice, model->lattice, sizeof(m->lattice) );
     m->hop = calloc(n_hop, sizeof*m->hop); memcpy( m->hop, hop, n_hop*sizeof*m->hop );
@@ -79,14 +82,22 @@ void diverge_model_internals_tu_phonons( diverge_model_t* model, double max_dist
     }
     m->n_orb = max_orb + 1;
     m->n_spin = m->SU2 = 1;
+    strncpy(m->name, model->name, sizeof(m->name));
+    strncat(m->name, "_phonons", sizeof(m->name));
+    m->name[sizeof m->name - 1] = 0;
+    memcpy(&m->n_ibz_path, &model->n_ibz_path, sizeof m->n_ibz_path);
+    memcpy(m->ibz_path, model->ibz_path, sizeof m->ibz_path);
+    if (model->n_sym > 0) mpi_log_printf( "symmetries not added to phonon model\n" );
+    if (model->n_orb > 0) mpi_log_printf( "nontrivial basis positions not implemented in phonon model\n" );
     diverge_model_internals_common(m);
 
+    m->internals->tu_phonon_model_dont_free = 1;
     tu_data_phonons_t* p = tu_data_phonons_init( m, model, model->internals->tu_phonons_buffered );
-
     model->internals->tu_data_phonons = p;
     model->internals->tu_data_phonons_destructor = &tu_data_phonons_destructor;
     model->internals->model_phonons = m;
     model->internals->model_phonons_destructor = &model_phonons_destructor;
+    return m;
 }
 
 void tu_data_destructor(void* v) {

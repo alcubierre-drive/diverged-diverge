@@ -60,9 +60,15 @@ int main( int argc, char** argv ) {
     m->vert[m->n_vert++] = (rs_vertex_t){ .chan='D', .R={ 0,-1,0}, .s1=-1, .V=V };
     m->n_spin = m->n_orb = m->SU2 = 1;
 
+    m->n_ibz_path = 4;
+    m->ibz_path[1][0] = m->ibz_path[2][0] = m->ibz_path[2][1] = 0.5;
+
     diverge_model_internals_common(m);
-    diverge_model_to_file(m, __FILE__ "_mod.dvg" );
-    diverge_model_set_filling(m, NULL, -1, 0.5);
+
+    diverge_model_output_conf_t oc = diverge_model_output_conf_defaults;
+    oc.npath = -1;
+    oc.kf_ibz_path = 1;
+    diverge_model_to_file_finegrained(m, __FILE__ "_mod.dvg", &oc);
 
     rs_hopping_t phop[] = {
         { .o1=0, .o2=0, .t=omega },
@@ -74,7 +80,8 @@ int main( int argc, char** argv ) {
         { .R12={ 0, 1,0}, .O1=1, .g=g },
         { .R12={ 0,-1,0}, .O1=1, .g=g },
     };
-    diverge_model_internals_tu_phonons(m, max_dist, phop, sizeof(phop)/sizeof(phop[0]), (rs_vertex_t*)pvert, 4);
+    diverge_model_internals_tu_phonons(m, max_dist, phop, sizeof(phop)/sizeof(phop[0]),
+            (rs_vertex_t*)pvert, sizeof(pvert)/sizeof(pvert[0]));
 
     diverge_flow_step_t* st = diverge_flow_step_init_any(m, "PCD");
     diverge_euler_t eu = diverge_euler_defaults;
