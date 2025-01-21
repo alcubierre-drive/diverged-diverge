@@ -13,6 +13,7 @@ struct tu_data_phonons_t {
     diverge_model_t* pmod;
 
     index_t nk[3];
+    complex128_t* gbuf_zero; // (ll, my_nk, nO, nO), with ll=(0,Lambda)
     complex128_t* gbuf; // (ll, my_nk, nO, nO), with ll=(0,Lambda)
     double Lambda;
     index_t nO;
@@ -31,7 +32,7 @@ struct tu_data_phonons_t {
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
-static void tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda );
+static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* pmod, diverge_model_t* elmod ) {
     tu_data_phonons_t* t = calloc(1, sizeof*t);
@@ -51,36 +52,48 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* pmod, diverge_model_t*
 
 void tu_data_phonons_free( tu_data_phonons_t* t ) {
     free(t->gbuf);
+    free(t->gbuf_zero);
     free(t->g_ob_qO);
     free(t->tmp_g);
     free(t);
 }
 
-static void tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
-    if (Lambda == t->Lambda) return;
-    t->Lambda = Lambda;
+static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
+    complex128_t* buf = NULL;
+    if (Lambda == 0.0) {
+        if (!t->gbuf_zero) {
+            buf = t->gbuf_zero = calloc(t->my_nk * POW2(t->nO), sizeof*t->gbuf_zero);
+        } else {
+            buf = t->gbuf_zero; // quick return because zero is always the same
+            goto return_buf;
+        }
+    } else {
+        if (!t->gbuf)
+            buf = t->gbuf = calloc(t->my_nk * POW2(t->nO), sizeof*t->gbuf);
+        else
+            buf = t->gbuf;
+    }
+    if (Lambda != 0.0) {
+        if (Lambda == t->Lambda)
+            goto return_buf;
+        else
+            t->Lambda = Lambda;
+    }
+
+    (*t->pmod->gfill)( t->pmod, I*(Lambda==0.0?DIVERGE_EPS_MESH:Lambda), t->pmod->internals->greens );
     const index_t nO = t->nO, my_nk = t->my_nk, my_nk_off = t->my_nk_off;
-    index_t ngreens = kdim(t->nk)*POW2(nO);
-    gf_complex_t *gbuf_p = t->pmod->internals->greens,
-                 *gbuf_m = t->pmod->internals->greens + ngreens;
-
-    (*t->pmod->gfill)( t->pmod, I*Lambda, gbuf_p );
+    const index_t ngreens = kdim(t->nk)*POW2(nO);
+    const gf_complex_t *gbuf_p = t->pmod->internals->greens,
+                       *gbuf_m = t->pmod->internals->greens + ngreens;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t kk=0; kk<my_nk; ++kk) {
         index_t q = t->idx_ibz_in_fullmesh[my_nk_off + kk];
         for (index_t O1=0; O1<nO; ++O1)
         for (index_t O2=0; O2<nO; ++O2)
-            t->gbuf[IDX4(0,kk,O1,O2,my_nk,nO,nO)] = gbuf_p[IDX3(q,O1,O2,nO,nO)] + gbuf_m[IDX3(q,O1,O2,nO,nO)];
+            buf[IDX3(kk,O1,O2,nO,nO)] = gbuf_p[IDX3(q,O1,O2,nO,nO)] + gbuf_m[IDX3(q,O1,O2,nO,nO)];
     }
-
-    (*t->pmod->gfill)( t->pmod, I*DIVERGE_EPS_MESH, gbuf_p );
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t kk=0; kk<my_nk; ++kk) {
-        index_t q = t->idx_ibz_in_fullmesh[my_nk_off + kk];
-        for (index_t O1=0; O1<nO; ++O1)
-        for (index_t O2=0; O2<nO; ++O2)
-            t->gbuf[IDX4(1,kk,O1,O2,my_nk,nO,nO)] = gbuf_p[IDX3(q,O1,O2,nO,nO)] + gbuf_m[IDX3(q,O1,O2,nO,nO)];
-    }
+return_buf:
+    return buf;
 }
 
 #undef MERGESORT_COMP
@@ -165,7 +178,6 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     // write out the objects to g_ob_qO;
     t->g_ob_qO = calloc(t->my_nk * POW2(t->n_spin) * t->n_orbff * t->nO, sizeof*t->g_ob_qO);
     t->tmp_g = calloc(t->my_nk * POW2(t->n_spin) * t->n_orbff * t->nO, sizeof*t->tmp_g);
-    t->gbuf = calloc(2 * t->my_nk * POW2(t->nO), sizeof*t->gbuf);
     int n_not_found = 0;
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_not_found)
     for (index_t f=0; f<formfacs_sz; ++f) {
@@ -206,24 +218,25 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 }
 
 static void phonon_gemm( const complex128_t* g, const complex128_t* D,
-        complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO ) {
-    single_gemm( g, D, tmp, nO, linsz, nO, 1.0, 0.0 );
-    single_gemm_adjoint( tmp, g, V, linsz, linsz, nO, 1.0, 0.0 );
+        complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO, bool add,
+        double fac ) {
+    single_gemm( g, D, tmp, nO, linsz, nO, fac, 0.0 );
+    single_gemm_adjoint( tmp, g, V, linsz, linsz, nO, 1.0, add?1.0:0.0 );
 }
 
-void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
-        complex128_t* V_Lambda, complex128_t* V_zero ) {
-    tu_data_phonons_gfill( t, Lambda );
-    complex128_t *g_Lambda = t->gbuf,
-                 *g_Zero = t->gbuf + t->my_nk * POW2(t->nO);
-    index_t linsz = POW2(t->n_spin)*t->n_orbff;
+void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
+        complex128_t* out, bool add, double fac ) {
+    const index_t linsz = POW2(t->n_spin)*t->n_orbff,
+                  nO = t->nO, my_nk = t->my_nk;
+    const complex128_t *gbuf = t->g_ob_qO,
+                       *dbuf = tu_data_phonons_gfill( t, Lambda );
+    complex128_t* gtmp = t->tmp_g;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t kk=0; kk<t->my_nk; ++kk) {
-        complex128_t *g = t->g_ob_qO + kk*linsz*t->nO,
-                     *D_Lambda = g_Lambda + kk*POW2(t->nO),
-                     *tmp = t->tmp_g + kk*linsz*t->nO,
-                     *D_Zero = g_Zero + kk*POW2(t->nO);
-        if (V_Lambda) phonon_gemm( g, D_Lambda, V_Lambda + kk*POW2(linsz), tmp, linsz, t->nO );
-        if (V_zero)   phonon_gemm( g, D_Zero, V_zero + kk*POW2(linsz), tmp, linsz, t->nO );
+    for (index_t kk=0; kk<my_nk; ++kk) {
+        const complex128_t *g = gbuf + kk*linsz*nO,
+                           *D = dbuf + kk*POW2(nO);
+        complex128_t* tmp = gtmp + kk*linsz*nO;
+        phonon_gemm( g, D, out + kk*POW2(linsz), tmp, linsz, nO, add, fac );
     }
 }
+

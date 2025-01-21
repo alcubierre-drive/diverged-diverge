@@ -10,6 +10,7 @@
 #include "misc/dependency_tree.h"
 
 #include "tu/vertex_details.h"
+#include "tu/phonons.h"
 
 #include "grid/vertex_memory.h"
 
@@ -334,7 +335,6 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
     result.q_0 = result.q_1 = result.nk = result.n_orbff = result.n_spin = 0;
     result.backend = 'I';
     result.channel = chan;
-    bool use_phonons = false;
 
     diverge_model_t* mod = st->mod;
     internals_t* intls = st->intls;
@@ -383,12 +383,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
             result.backend = 'P';
             break;
         case diverge_tu_phonons:
-            use_phonons = chan < 0; chan = abs(chan);
-            goto diverge_tu;
-            break;
         case diverge_tu:
-        diverge_tu:
-            if (use_phonons) XORSWAP_PTR(tu_V->Dch, tu_V->Dch_phonon_backup);
             if (toupper(chan) != 'P' &&
                 toupper(chan) != 'C' &&
                 toupper(chan) != 'D' &&
@@ -432,7 +427,6 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
             }
             result.n_spin = mod->n_spin;
             result.backend = 'T';
-            if (use_phonons) XORSWAP_PTR(tu_V->Dch, tu_V->Dch_phonon_backup);
             break;
         default:
         case diverge_flow_type_invalid:

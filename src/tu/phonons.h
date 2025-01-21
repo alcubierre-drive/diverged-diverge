@@ -22,9 +22,9 @@ typedef struct tu_data_phonons_t tu_data_phonons_t;
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* pmod, diverge_model_t* elmod );
 void tu_data_phonons_free( tu_data_phonons_t* t );
 
-// calculates V = g D g*
-void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
-        complex128_t* V_Lambda, complex128_t* V_zero );
+// generates D channel vertex scaled by fac, optionally adds to existing buffer
+void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
+        complex128_t* out, bool add, double fac );
 
 
 #ifdef __cplusplus
