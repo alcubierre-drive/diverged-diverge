@@ -97,12 +97,12 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
         if (P) memcpy( inout->Pch_phonon_backup, inout->Pch, inout->full_vert_size*sizeof*inout->Pch );
         if (C) memcpy( inout->Cch_phonon_backup, inout->Cch, inout->full_vert_size*sizeof*inout->Cch );
         /*(D)*/memcpy( inout->Dch_phonon_backup, inout->Dch, inout->full_vert_size*sizeof*inout->Dch );
-        // and zero the actual vertices
+        // and zero the actual vertices; Dch skipped as it's overwritten promptly
         if (P) ZERO_OUT( inout->Pch, inout->full_vert_size );
         if (C) ZERO_OUT( inout->Cch, inout->full_vert_size );
 
-        // generate instantaneous phonon vertex
-        tu_data_phonons_vertices( inout->tu_ph, lambda, NULL, inout->Dch );
+        // generate retarded phonon vertex
+        tu_data_phonons_vertices( inout->tu_ph, lambda, inout->Dch, NULL );
 
         // project the Lambda part to C and P channel
         complex128_t *DP_proj = inout->D_Zero,
@@ -120,32 +120,13 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
             if (C) inout->Cch[i] = -DC_proj[i] + inout->Cch_phonon_backup[i];
         }
 
-        // generate retarded phonon vertex in the D channel
-        tu_data_phonons_vertices( inout->tu_ph, lambda, inout->Dch, NULL );
+        // generate instantaneous phonon vertex in the D channel
+        tu_data_phonons_vertices( inout->tu_ph, lambda, NULL, inout->Dch );
 
         // now take the backup and stuff it into the vertex
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t i=0; i<inout->full_vert_size; ++i)
             inout->Dch[i] += inout->Dch_phonon_backup[i];
-
-        // XXX debugging
-#define DEBUG_VERTEX(V) { \
-        index_t linsz = POW2(inout->n_spin) * inout->n_orbff; \
-        for (index_t k=0; k<inout->my_nk; ++k) { \
-            for (index_t i=0; i<linsz; ++i) \
-            for (index_t j=0; j<linsz; ++j) \
-                printf( "%5.2f%c", cabs(V[IDX3(k,i,j,linsz,linsz)]), j==linsz-1?'\n':' ' ); \
-            printf( "\n" ); \
-        }}
-        /* DEBUG_VERTEX(inout->Dch) */
-        /*
-        FILE* f = fopen( "eigs.bin", "wb" );
-        fwrite( inout->Pch, sizeof*inout->Pch, inout->full_vert_size, f );
-        fwrite( inout->Cch, sizeof*inout->Cch, inout->full_vert_size, f );
-        fwrite( inout->Dch, sizeof*inout->Dch, inout->full_vert_size, f );
-        fclose(f);
-        exit(0);
-        */
     }
 
     s->w_time_GF += diverge_mpi_wtime()-flow_step_tick;

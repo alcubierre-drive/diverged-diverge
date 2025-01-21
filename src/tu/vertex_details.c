@@ -162,7 +162,7 @@ void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_
         }
         index_t memory_GPU = MAX3( gemm_mem, prop_mem, proj_mem );
         index_t memory_managed = MAX3( gemm_mem_managed, prop_mem_managed, proj_mem_managed );
-        // XXX needed to set the values to sth always >= 0
+        // it is required to set the size of memory >= 0
         memory_GPU = MAX( memory_GPU, 128*16 );
         memory_managed = MAX( memory_managed, 128*16 );
         mpi_vrb_printf("TU GPU pool with %.1f GB on-device and %.1f GB managed\n",

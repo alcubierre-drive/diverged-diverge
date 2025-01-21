@@ -3,6 +3,7 @@
 LINALG_IMPLEMENT
 #include "phonons.h"
 #include "../diverge_internals_struct.h"
+#include "../diverge_patching_helpers.h" // atomic_add
 #include "../misc/mergesort.h"
 #include "../misc/gemm.h"
 #include <assert.h>
@@ -136,6 +137,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 
     fftw_complex* fftw_buf = fftw_malloc(sizeof*fftw_buf * nk*formfacs_sz);
     complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
+    // XXX do we need to do an IFFT?
     fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, FFTW_ESTIMATE);
     ZERO_OUT(fftw_buf, nk*formfacs_sz);
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -146,8 +148,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             index_t z_id = (R[2]<0)? t->nk[2] + R[2] : R[2],
                     y_id = (R[1]<0)? t->nk[1] + R[1] : R[1],
                     x_id = (R[0]<0)? t->nk[0] + R[0] : R[0];
-            index_t Ridx = IDX3(x_id,y_id,z_id,t->nk[1],t->nk[2]);
-            fftw_cbuf[IDX2(ff,Ridx,nk)] += t->vtx[f].g;
+            fftw_cbuf[IDX4(ff,x_id,y_id,z_id,t->nk[0],t->nk[1],t->nk[2])] += t->vtx[f].g;
         }
     }
     fftw_execute(p);
@@ -171,40 +172,29 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         // find tu_ff index
         index_t mapped_tu = find_tu_ff( tu_ff, n_tu_ff, formfacs[f], t->nk );
         if (mapped_tu == -1) { n_not_found++; continue; }
+
         // find mi index
         index_t mapped_mi = -1;
-        for (index_t i=0; i<t->n_orbff; ++i) {
-            if (d->mi_to_tuffidx[i] == mapped_tu) {
-                mapped_mi = i;
-                break;
-            }
+        for (index_t i=0; i<t->n_orbff; ++i) if (d->mi_to_tuffidx[i] == mapped_tu) {
+            mapped_mi = i; break;
         }
         if (mapped_mi == -1) { n_not_found++; continue; }
         // map to g
-        // XXX
-        /* const double* qmesh = t->pmod->internals->kmesh; */
-        /* const claM3d_t lat = claM3d_map(t->pmod->lattice[0]); */
+
+        const double* qmesh = t->pmod->internals->kmesh;
+        const claM3d_t lat = claM3d_map(t->pmod->lattice[0]);
         for (index_t kk=0; kk<t->my_nk; ++kk) {
             index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
-            // XXX
-            /* claV3d_t qvec = claV3d_map(qmesh+3*q); */
-            /* claV3d_t R1 = claM3d_vecmat( (claV3d_t){{formfacs[f].R1[0],formfacs[f].R1[1],formfacs[f].R1[2]}}, lat ); */
-            /* claV3d_t R12 = claM3d_vecmat( (claV3d_t){{formfacs[f].R12[0],formfacs[f].R12[1],formfacs[f].R12[2]}}, lat ); */
-            t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].O1,
-                               t->n_spin,t->n_spin,t->n_orbff,t->nO)] +=
-                fftw_cbuf[IDX2(f,q,nk)];
-            // XXX
-            /*
-            int sel = 8;
-            sel==0 ? cexp( I*claV3d_dot(qvec, R12) ) :
-            sel==1 ? cexp( I*-claV3d_dot(qvec, R12) ) :
-            sel==2 ? cexp( I*claV3d_dot(qvec, R1) ) :
-            sel==3 ? cexp( I*-claV3d_dot(qvec, R1) ) :
-            sel==4 ? cexp( I*claV3d_dot(qvec, claV3d_add(R12, R1)) ) :
-            sel==5 ? cexp( I*-claV3d_dot(qvec, claV3d_add(R12, R1)) ) :
-            sel==6 ? cexp( I*claV3d_dot(qvec, claV3d_sub(R12, R1)) ) :
-            sel==7 ? cexp( I*-claV3d_dot(qvec, claV3d_sub(R12, R1)) ) : 1.0;
-            */
+            ph_vertex_t ff = formfacs[f];
+            claV3d_t qvec = claV3d_map(qmesh+3*q),
+                     R12 = claM3d_vecmat((claV3d_t){{ff.R12[0],ff.R12[1],ff.R12[2]}}, lat),
+                     R1 = claM3d_vecmat((claV3d_t){{ff.R1[0],ff.R1[1],ff.R1[2]}}, lat);
+            // XXX is R12 sufficient? Or do we need a different phase factor
+            // once we have some kind of dispersive phonon?
+            (void)R1;
+            const complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)] * cexp(0.5*I*claV3d_dot(qvec,R12));
+            atomic_add( &t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].O1,
+                               t->n_spin,t->n_spin,t->n_orbff,t->nO)], &to_add );
         }
     }
     diverge_mpi_allreduce_int_max_inplace( &n_not_found, 1 );
@@ -236,27 +226,4 @@ void tu_data_phonons_vertices( tu_data_phonons_t* t, double Lambda,
         if (V_Lambda) phonon_gemm( g, D_Lambda, V_Lambda + kk*POW2(linsz), tmp, linsz, t->nO );
         if (V_zero)   phonon_gemm( g, D_Zero, V_zero + kk*POW2(linsz), tmp, linsz, t->nO );
     }
-    /*
-    // XXX debugging
-    if (V_zero) {
-    complex128_t* V = V_zero;
-    for (index_t k=0; k<t->my_nk; ++k) {
-        for (index_t i=0; i<linsz; ++i)
-        for (index_t j=0; j<linsz; ++j)
-            printf( "%+.1f%+.1fj%c", creal(V[IDX3(k,i,j,linsz,linsz)]),
-                    cimag(V[IDX3(k,i,j,linsz,linsz)]), j==linsz-1?'\n':' ' );
-        printf( "\n" );
-    }
-    }
-    if (V_Lambda) {
-    complex128_t* V = V_Lambda;
-    for (index_t k=0; k<t->my_nk; ++k) {
-        for (index_t i=0; i<linsz; ++i)
-        for (index_t j=0; j<linsz; ++j)
-            printf( "%+.1f%+.1fj%c", creal(V[IDX3(k,i,j,linsz,linsz)]),
-                    cimag(V[IDX3(k,i,j,linsz,linsz)]), j==linsz-1?'\n':' ' );
-        printf( "\n" );
-    }
-    }
-    */
 }
