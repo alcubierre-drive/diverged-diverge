@@ -113,7 +113,7 @@ static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff,
     index_t idx = -1;
     for (int d=0; d<3; ++d) while (ff.R12[d] < 0) ff.R12[d] += nk[d]; // make positive
     for (index_t i=0; i<n_tu_ff; ++i) {
-        if (tu_ff[i].oto == ff.o2 && tu_ff[i].ofrom == ff.o1 && tu_ff[i].R[0] == ff.R12[0] &&
+        if (tu_ff[i].ofrom == ff.o2 && tu_ff[i].oto == ff.o1 && tu_ff[i].R[0] == ff.R12[0] &&
                 tu_ff[i].R[1] == ff.R12[1] && tu_ff[i].R[2] == ff.R12[2]) {
             idx = i;
             break;
@@ -205,10 +205,9 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             claV3d_t qvec = claV3d_map(qmesh+3*q),
                      R12 = claM3d_vecmat((claV3d_t){{ff.R12[0],ff.R12[1],ff.R12[2]}}, lat),
                      R1 = claM3d_vecmat((claV3d_t){{ff.R1[0],ff.R1[1],ff.R1[2]}}, lat);
-            // XXX is R12 sufficient? Or do we need a different phase factor
+            // XXX is R12 + R1 correct? Or do we need a different phase factor
             // once we have some kind of dispersive phonon?
-            (void)R1;
-            const complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)] * cexp(0.5*I*claV3d_dot(qvec,R12));
+            const complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)] * cexp(0.5*I*claV3d_dot(qvec,claV3d_add(R12,R1)));
             atomic_add( &t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].O1,
                                t->n_spin,t->n_spin,t->n_orbff,t->nO)], &to_add );
         }
