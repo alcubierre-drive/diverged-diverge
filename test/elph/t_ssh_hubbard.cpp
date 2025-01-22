@@ -11,9 +11,12 @@ using std::vector;
 static inline double max_eigval( diverge_flow_step_vertex_t v ) {
     index_t sz = v.n_orbff, num = v.q_1 - v.q_0;
     vector<double> E(num*sz);
-    double maxval = 0.0;
+    double maxval_ = 0.0;
     batched_svd( NULL, -1, v.ary, NULL, NULL, E.data(), sz, num );
-    for (index_t i=0; i<num*sz; ++i) maxval = MAX(E[i], maxval);
+    for (index_t i=0; i<num*sz; ++i) maxval_ = MAX(E[i], maxval_);
+
+    double maxval = maxval_;
+    diverge_mpi_allreduce_double_max( &maxval_, &maxval, 1 );
     return maxval;
 }
 
