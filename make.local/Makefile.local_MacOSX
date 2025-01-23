@@ -4,12 +4,12 @@ LD := clang++
 
 INCLUDES += -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/ \
     -I/opt/homebrew/Cellar/fftw/3.3.10_1/include/ \
-    -I/opt/homebrew/Cellar/libomp/16.0.6/include/ \
-    -I/opt/homebrew/Cellar/openblas/0.3.23/include/
+    -I/opt/homebrew/Cellar/libomp/19.1.6/include/ \
+    -I/opt/homebrew/Cellar/openblas/0.3.28/include/
 
 LIBS = -L/opt/homebrew/Cellar/fftw/3.3.10_1/lib/ \
-    -L/opt/homebrew/Cellar/libomp/16.0.6/lib/ \
-    -L/opt/homebrew/Cellar/openblas/0.3.23/lib/ \
+    -L/opt/homebrew/Cellar/libomp/19.1.6/lib/ \
+    -L/opt/homebrew/Cellar/openblas/0.3.28/lib/ \
     -lopenblas -lfftw3 -lfftw3_omp -lomp
 
 PREFLAGS := -Ofast -march=native
