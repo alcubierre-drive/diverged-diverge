@@ -8,8 +8,8 @@ extern "C" {
 #include <stdbool.h>
 #endif
 
-bool check_iec_double( void );
-bool check_iec_float( void );
+bool check_64bit_double( void );
+bool check_32bit_float( void );
 bool check_little_endian( void );
 bool check_8bit_char( void );
 

@@ -1,16 +1,15 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "number_repr_checks.h"
-#include <cstdint>
-#include <limits>
-#include <climits>
+#include <stdint.h>
+#include <limits.h>
 
-bool check_iec_double( void ) {
-    return std::numeric_limits<double>::is_iec559;
+bool check_64bit_double( void ) {
+    return sizeof(double) == 8 && CHAR_BIT == 8;
 }
 
-bool check_iec_float( void ) {
-    return std::numeric_limits<float>::is_iec559;
+bool check_32bit_float( void ) {
+    return sizeof(float) == 4 && CHAR_BIT == 8;
 }
 
 bool check_little_endian( void ) {
