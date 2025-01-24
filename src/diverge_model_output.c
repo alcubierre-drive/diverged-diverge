@@ -287,9 +287,9 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         uindex_t checkmask = 0;
         uint8_t one = 1;
         uindex_t firstbit = checkmask | (one << 7);
-        if (!check_iec_float())
+        if (!check_32bit_float())
             checkmask |= firstbit >> 0;
-        if (!check_iec_double())
+        if (!check_64bit_double())
             checkmask |= firstbit >> 1;
         if (!check_little_endian())
             checkmask |= firstbit >> 2;

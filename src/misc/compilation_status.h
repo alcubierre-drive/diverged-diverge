@@ -24,7 +24,7 @@ int diverge_compilation_status_cuda( char* str );
  */
 int diverge_compilation_status_version( char* str );
 
-/** return 1 if number representations follow IEC and endianness is little, else 0 */
+/** return 1 if number representations have the right bit width and endianness is little, else 0 */
 int diverge_compilation_status_numbers( void );
 
 #ifdef __cplusplus

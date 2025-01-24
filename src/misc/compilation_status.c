@@ -61,8 +61,8 @@ int diverge_compilation_status_version( char* str ) {
 }
 
 int diverge_compilation_status_numbers( void ) {
-    bool number_representation = check_iec_double() &&
-                                 check_iec_float() &&
+    bool number_representation = check_64bit_double() &&
+                                 check_32bit_float() &&
                                  check_little_endian() &&
                                  check_8bit_char();
     return number_representation;
@@ -85,10 +85,10 @@ void diverge_compilation_status( void ) {
     mpi_eprintf("\n");
 
     if (!diverge_compilation_status_numbers()) {
-        if (!check_iec_double())
-            mpi_wrn_printf("double is not conformant to iec559. binary files may be corrupted.\n");
-        if (!check_iec_float())
-            mpi_wrn_printf("float is not conformant to iec559. binary files may be corrupted.\n");
+        if (!check_64bit_double())
+            mpi_wrn_printf("double is not 64bit. implementation may fail.\n");
+        if (!check_32bit_float())
+            mpi_wrn_printf("float is not 32bit. implementation may fail.\n");
         if (!check_little_endian())
             mpi_wrn_printf("int or int64_t is not little endian. binary files may be corrupted.\n");
         if (!check_8bit_char())

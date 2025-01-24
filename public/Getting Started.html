@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Getting Started &#8212; divERGe 0.8 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
     <script src="_static/documentation_options.js?v=a0e24af7"></script>
@@ -41,10 +41,10 @@
 </pre></div>
 </div>
 <p>You find a tutorial for the C interface <a class="reference internal" href="Tutorial.html#tutorial"><span class="std std-ref">here</span></a>. You can further
-download <a class="extlink-release_version reference external" href="https://git.rwth-aachen.de/frg/diverge/-/raw/dev-C/public/releases/v0.8/divERGe.tar.gz">divERGe.tar.gz</a> to obtain a
+download <a class="extlink-release_version reference external" href="https://git.rwth-aachen.de/frg/diverge/-/raw/dev/public/releases/v0.8/divERGe.tar.gz">divERGe.tar.gz</a> to obtain a
 pre-compiled copy of divERGe that additionally contains the <a class="reference internal" href="C%20Interface.html#c-interface"><span class="std std-ref">C Interface</span></a>
 and some <a class="reference internal" href="Examples.html#examples"><span class="std std-ref">Examples</span></a>. For more pre-built versions, see
-<a class="extlink-release_tree reference external" href="https://git.rwth-aachen.de/frg/diverge/-/tree/dev-C/public/releases">releases</a>. If you wish to <a class="reference internal" href="Compilation.html#compilation"><span class="std std-ref">compile
+<a class="extlink-release_tree reference external" href="https://git.rwth-aachen.de/frg/diverge/-/tree/dev/public/releases">releases</a>. If you wish to <a class="reference internal" href="Compilation.html#compilation"><span class="std std-ref">compile
 yourself</span></a> to include various optimizations (MPI, CUDA, …), you
 can do so by cloning the <a class="reference external" href="https://git.rwth-aachen.de/frg/diverge.git">git repository</a> and following the <a class="reference internal" href="Compilation.html#compilation"><span class="std std-ref">build
 instructions</span></a>. Moreover, environment variables can be used to
@@ -56,7 +56,7 @@ library features (e.g. the <a class="reference internal" href="Autoflow.html#aut
 <a class="reference internal" href="Python%20Interface.html#python-interface"><span class="std std-ref">here</span></a>. For reading the output files, see the
 documentation for <a class="reference internal" href="Simulation%20Output.html#simulation-output"><span class="std std-ref">diverge.output</span></a> <em>and also the Python
 doc obtained from within Python using help(object), i.e.,</em></p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">diverge.output</span> <span class="k">as</span> <span class="nn">do</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">diverge.output</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">do</span>
 <span class="n">help</span><span class="p">(</span><span class="n">do</span><span class="o">.</span><span class="n">diverge_model</span><span class="p">)</span>
 <span class="n">help</span><span class="p">(</span><span class="n">do</span><span class="o">.</span><span class="n">diverge_post_tu</span><span class="p">)</span>
 </pre></div>
@@ -65,7 +65,7 @@ doc obtained from within Python using help(object), i.e.,</em></p>
 except for that the <code class="docutils literal notranslate"><span class="pre">diverge_</span></code> prefix is omitted.</p>
 <p>We now continue with the example: On a not-too-old Linux machine (GLIBC &gt;=
 2.17), extract the tar.gz file and use a python3 interpreter to execute
-<a class="extlink-release_tree reference external" href="https://git.rwth-aachen.de/frg/diverge/-/tree/dev-C/examples/python/simple.py">the simple example</a>.</p>
+<a class="extlink-release_tree reference external" href="https://git.rwth-aachen.de/frg/diverge/-/tree/dev/examples/python/simple.py">the simple example</a>.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>divERGe
 tar<span class="w"> </span>-C<span class="w"> </span>divERGe<span class="w"> </span>-xvf<span class="w"> </span>divERGe.tar.gz
 <span class="nb">cd</span><span class="w"> </span>divERGe
@@ -78,7 +78,7 @@ tar<span class="w"> </span>-C<span class="w"> </span>divERGe<span class="w"> </s
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">¶</a></h2>
 <p>If the pip installation fails, you can navigate to the folder where you
-extracted <a class="extlink-release_version reference external" href="https://git.rwth-aachen.de/frg/diverge/-/raw/dev-C/public/releases/v0.8/divERGe.tar.gz">diverge.tar.gz</a> and execute</p>
+extracted <a class="extlink-release_version reference external" href="https://git.rwth-aachen.de/frg/diverge/-/raw/dev/public/releases/v0.8/divERGe.tar.gz">diverge.tar.gz</a> and execute</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>setup.py<span class="w"> </span>install
 </pre></div>
 </div>
@@ -143,7 +143,7 @@ the channel maxima (tu)</p>
 <section id="license">
 <h2>License<a class="headerlink" href="#license" title="Link to this heading">¶</a></h2>
 <p>divERGe is published under the <a class="reference external" href="https://www.gnu.org/licenses/gpl-3.0.html">GPLv3</a>. The license is found in the
-<a class="extlink-release_tree reference external" href="https://git.rwth-aachen.de/frg/diverge/-/tree/dev-C/LICENSE.md">git repo</a>. License information from within divERGe
+<a class="extlink-release_tree reference external" href="https://git.rwth-aachen.de/frg/diverge/-/tree/dev/LICENSE.md">git repo</a>. License information from within divERGe
 can be obtained by calling <a class="reference internal" href="License.html#c.diverge_license" title="diverge_license"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_license()</span></code></a> or
 <a class="reference internal" href="License.html#c.diverge_license_print" title="diverge_license_print"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_license_print()</span></code></a>.</p>
 </section>

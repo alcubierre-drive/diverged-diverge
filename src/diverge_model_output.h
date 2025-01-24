@@ -142,10 +142,10 @@ typedef struct diverge_model_t diverge_model_t;
  *                         indicated in the following manner:
  *
  *                           * the leftmost (first) bit is one when floats are not
- *                             represented in iec559
+ *                             32bit wide
  *
  *                           * the second bit is one when doubles are not
- *                             represented in iec559
+ *                             64bit wide
  *
  *                           * the third bit is one when integers (int and
  *                             :c:type:`index_t`) are not little endian
