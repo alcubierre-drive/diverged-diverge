@@ -12,16 +12,6 @@
 #include <mkl.h>
 #endif
 
-static void batched_gemm_cblas( const complex128_t* A, const complex128_t* B,
-        complex128_t* C, index_t N, complex128_t alpha, complex128_t beta,
-        index_t num, bool Aconj, bool Bconj ) {
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t i=0; i<num; ++i)
-        cblas_zgemm( CblasColMajor, Aconj?CblasConjTrans:CblasNoTrans,
-                Bconj?CblasConjTrans:CblasNoTrans, N, N, N, &alpha, A+N*N*i, N,
-                B+N*N*i, N, &beta, C+N*N*i, N);
-}
-
 static void batched_zgemd_r_smart( complex128_t* S, complex128_t* U, double* E,
         complex128_t alpha, complex128_t beta, index_t N, index_t num,
         complex128_t* buf = NULL ) {
