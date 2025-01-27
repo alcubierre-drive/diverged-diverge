@@ -18,8 +18,6 @@ LINALG_IMPLEMENT
 #define SKIP_CLAV2D_T
 #include "misc/kmeans_lloyd.h"
 
-#define Kmesh( k ) Map<const Vec3d>(mod->internals->kmesh + 3*(k))
-
 // convenience functions to re-normalize and mpi-distribute the patching struct
 static void diverge_patching_weights_equalize( mom_patching_t* patch );
 static void diverge_patching_mpi_equalize( mom_patching_t* patch );

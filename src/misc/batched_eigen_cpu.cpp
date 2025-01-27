@@ -7,13 +7,9 @@
 #include "../diverge_Eigen3.hpp"
 #include "mpi_functions.h"
 
-template<index_t N>
-using MatNcd = Eigen::Matrix<complex128_t,N,N>;
-template<index_t N>
-using cMatNcd = Eigen::Matrix<complex128_t,N,N,Eigen::RowMajor>;
-template<index_t N>
-using VecNd = Eigen::Matrix<double,N,1>;
-typedef Eigen::Matrix<complex128_t,-1,-1,Eigen::RowMajor> cMatXcd;
+template<index_t N> using MatNcd = Eigen::Matrix<complex128_t,N,N>;
+template<index_t N> using cMatNcd = Eigen::Matrix<complex128_t,N,N,Eigen::RowMajor>;
+template<index_t N> using VecNd = Eigen::Matrix<double,N,1>;
 
 template<index_t dim>
 void batched_zheevd_templ( const complex128_t* H, complex128_t* U, double* E, index_t num ) {
@@ -151,7 +147,6 @@ void* batched_eigen_cpu( void* data ) {
 #include "../diverge_Eigen3.hpp"
 
 static void batched_eigen_cpu_helper( complex128_t* pH, double* pE, index_t n ) {
-    typedef Matrix<complex128_t,-1,-1,Eigen::RowMajor> cMatXcd;
     Map<cMatXcd> cH( pH, n, n );
     Eigen::SelfAdjointEigenSolver<MatXcd> sol( cH );
 

@@ -9,7 +9,6 @@
 #include "../../src/misc/batched_eigen.h"
 #include "../../src/misc/batched_svd.h"
 
-typedef Eigen::Matrix<complex128_t,-1,-1,Eigen::RowMajor> cMatXcd;
 typedef Eigen::SelfAdjointEigenSolver<MatXcd> SolXcd;
 typedef Eigen::JacobiSVD<MatXcd> SvdXcd;
 
@@ -57,15 +56,21 @@ TEST_CASE("batched eigen", "[batched][eigen]") {
     for (index_t i=0; i<num; ++i)
         Map<cMatXcd>(H+i*N*N, N, N) = Map<cMatXcd>(A+i*N*N, N, N) + Map<cMatXcd>(A+i*N*N, N, N).adjoint();
 
+    int mode = batched_eigen_r_get_eigen3_mode();
+
     double* E1 = (double*)calloc(N*num, sizeof(double));
     complex128_t* U1 = U;
     memcpy( U1, H, sizeof(complex128_t)*N*N*num );
+    batched_eigen_r_set_eigen3_mode(0);
     batched_eigen_r( NULL, -1, U1, E1, N, num );
 
-    complex128_t* E2 = (complex128_t*)calloc(N*num, sizeof(complex128_t));
+    double* E2 = (double*)calloc(N*num, sizeof(double));
     complex128_t* U2 = A;
     memcpy( U2, H, sizeof(complex128_t)*N*N*num );
-    batched_eigen( NULL, -1, U2, E2, N, num );
+    batched_eigen_r_set_eigen3_mode(1);
+    batched_eigen_r( NULL, -1, U2, E2, N, num );
+
+    batched_eigen_r_set_eigen3_mode(mode);
 
     for (index_t i=0; i<num; ++i) {
         Map<cMatXcd> H3(H+i*N*N, N, N);
@@ -74,7 +79,7 @@ TEST_CASE("batched eigen", "[batched][eigen]") {
         MatXd E3 = Solv.eigenvalues().asDiagonal();
         double N3 = (U3.adjoint() * H3 * U3 - E3).norm();
 
-        MatXcd xE2 = Map<VecXcd>(E2+i*N, N).asDiagonal();
+        MatXd xE2 = Map<VecXd>(E2+i*N, N).asDiagonal();
         MatXcd xU2 = Map<MatXcd>(U2+i*N*N, N,N);
         double N2 = (xU2.adjoint() * H3 * xU2 - xE2).norm();
 
