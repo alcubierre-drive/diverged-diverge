@@ -179,7 +179,6 @@ local:
 };
 DIVERGE_UNSTABLE {
     global:
-        batched_eigen;
         batched_eigen_get_nchunks;
         batched_eigen_r;
         batched_eigen_r_set_eigen3_mode;

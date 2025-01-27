@@ -134,13 +134,7 @@ void* batched_eigen_cpu( void* data ) {
         LAPACKE_zheevd_work( LAPACK_COL_MAJOR, 'V', 'U', n, H_test, n, E, work,
                 lwork_query_i, rwork, lrwork_query, iwork, liwork_query );
         memcpy( cfg->H + n*n*i, H_test, sizeof(complex128_t)*n*n );
-        if (cfg->Er == NULL) {
-            for (index_t j=0; j<n; ++j)
-                cfg->E[i*n+j] = E[j];
-        } else {
-            for (index_t j=0; j<n; ++j)
-                cfg->Er[i*n+j] = E[j];
-        }
+        memcpy( cfg->E + n*i, E, sizeof(double)*n );
     }
     free(H_test);
 
@@ -176,13 +170,7 @@ void* batched_eigen_cpu( void* data ) {
     for (index_t i=0; i<cfg->N; ++i) {
         complex128_t* H = cfg->H + n*n*i;
         batched_eigen_cpu_helper( H, E, n );
-        if (cfg->Er == NULL) {
-            for (index_t j=0; j<n; ++j)
-                cfg->E[i*n+j] = E[j];
-        } else {
-            for (index_t j=0; j<n; ++j)
-                cfg->Er[i*n+j] = E[j];
-        }
+        memcpy( cfg->E + n*i, E, sizeof(double)*n );
     }
 
     free(E);
