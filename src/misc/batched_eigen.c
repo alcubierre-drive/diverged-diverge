@@ -25,6 +25,10 @@ void batched_eigen_r_set_eigen3_mode( int use_eigen3 ) {
     helper_batched_eigen_eigen3cpu = use_eigen3;
 }
 
+int batched_eigen_r_get_eigen3_mode( void ) {
+    return helper_batched_eigen_eigen3cpu;
+}
+
 static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
         double* E, index_t n, index_t N );
 

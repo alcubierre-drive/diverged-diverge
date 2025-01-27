@@ -51,6 +51,7 @@ typedef Eigen::Matrix2cd Mat2cd;
 typedef Eigen::Matrix3cd Mat3cd;
 typedef Eigen::Matrix4cd Mat4cd;
 typedef Eigen::MatrixXcd MatXcd;
+typedef Eigen::Matrix<std::complex<double>,-1,-1,Eigen::RowMajor> cMatXcd;
 
 typedef Eigen::Rotation2Dd Rot2d;
 
