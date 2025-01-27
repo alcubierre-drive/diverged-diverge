@@ -11,8 +11,7 @@ extern "C" {
 typedef struct {
     int device;
     complex128_t* H;
-    complex128_t* E;
-    double* Er;
+    double* E;
     index_t n;
     index_t N;
     index_t nbatches;

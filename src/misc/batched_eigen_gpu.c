@@ -58,7 +58,7 @@ void* batched_eigen_gpu( void* data ) {
 
     for (int run=0; run<N_runs; ++run) {
         int N_this_run = (run+1)*N_per_run < cfg->N ? N_per_run : (cfg->N - run*N_per_run);
-        if(N_this_run > 0) {
+        if (N_this_run > 0) {
             transpose_memcpy_batched( H, cfg->H+N_per_run*run*cfg->n*cfg->n, N_this_run, cfg->n );
             CUDA_CHECK( cudaMemPrefetchAsync( H, sizeof(cuDoubleComplex)*cfg->n*cfg->n*N_this_run, cfg->device, stream ) );
             CUSOLVER_CHECK( cusolverDnZheevjBatched( handle,
@@ -66,14 +66,7 @@ void* batched_eigen_gpu( void* data ) {
                     H, cfg->n, E, work, lwork, pinfo, info, N_this_run ) );
             CUDA_CHECK( cudaStreamSynchronize( stream ) );
             memcpy( cfg->H + N_per_run*run*cfg->n*cfg->n, H, sizeof(cuDoubleComplex)*cfg->n*cfg->n*N_this_run );
-
-            if (cfg->Er == NULL) {
-                for (index_t i=0; i<N_this_run*cfg->n; ++i)
-                    cfg->E[N_per_run*run*cfg->n+i] = E[i];
-            } else {
-                for (index_t i=0; i<N_this_run*cfg->n; ++i)
-                    cfg->Er[N_per_run*run*cfg->n+i] = E[i];
-            }
+            memcpy( cfg->E + N_per_run*run*cfg->n, E, sizeof(double)*cfg->n*N_this_run );
             CUDA_CHECK( cudaStreamSynchronize( stream ) );
         }
     }

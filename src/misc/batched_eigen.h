@@ -26,18 +26,10 @@ extern "C" {
  *      FORTRAN order). On output, the eigenvectors are stored as ``(i,b,o)``
  *      with ``i`` the index of the eigenproblem, ``b`` the index of the
  *      eigenvalue, and ``o`` the vector component.
- * :param complex128_t* E: output array for the eigenvalues broadcasted to
- *      complex numbers (even though all eigenvalues are strictly real!). Given
- *      as (i,b) in memory, with each individual eigenproblem sorted in standard
- *      fashion.
+ * :param double* E: output array for the eigenvalues. Given as (i,b) in memory,
+ *      with each individual eigenproblem sorted in standard fashion.
  * :param dim: linear size of each individual problem (``b``, ``o``, ``p``)
  * :param Num: number of eigenproblems (``i``)
- */
-void batched_eigen( int* devices, int ndevices, complex128_t* H, complex128_t* E, index_t dim, index_t Num );
-
-/**
- * same as :c:func:`batched_eigen` except for that the eigenvalues are output as
- * real numbers (i.e. a ``double`` array).
  */
 void batched_eigen_r( int* devices, int ndevices, complex128_t* H, double* E, index_t dim, index_t Num );
 

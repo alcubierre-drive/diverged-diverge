@@ -26,7 +26,7 @@ void batched_eigen_r_set_eigen3_mode( int use_eigen3 ) {
 }
 
 static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
-        void* E_, bool real, index_t n, index_t N );
+        double* E, index_t n, index_t N );
 
 void batched_eigen_shut_up( int silence ) {
     helper_batched_eigen_shut_up = silence;
@@ -34,10 +34,6 @@ void batched_eigen_shut_up( int silence ) {
 
 void batched_eigen_set_nthreads( int nthr ) {
     helper_batched_eigen_nthreads = nthr;
-}
-
-void batched_eigen( int* devices, int ndevices, complex128_t* H, complex128_t* E, index_t n, index_t N ) {
-    batched_eigen_wrap_r( devices, ndevices, H, E, false, n, N );
 }
 
 void batched_eigen_r( int* devices, int ndevices, complex128_t* H, double* E, index_t n, index_t N ) {
@@ -49,7 +45,7 @@ void batched_eigen_r( int* devices, int ndevices, complex128_t* H, double* E, in
         mpi_vrb_printf( "dispatching to batched_zheevd eigensolver (Eigen3@CPU)\n" );
         batched_zheevd( H, H, E, N, n );
     } else {
-        batched_eigen_wrap_r( devices, ndevices, H, E, true, n, N );
+        batched_eigen_wrap_r( devices, ndevices, H, E, n, N );
     }
 }
 
@@ -62,7 +58,7 @@ int batched_eigen_get_nchunks( void ) {
 }
 
 static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
-        void* E_, bool real, index_t n, index_t N ) {
+        double* E, index_t n, index_t N ) {
 
     bool should_free_device_array = false;
     bool should_reset_nchunks = false;
@@ -140,10 +136,7 @@ static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
         configs[i].n = n;
         configs[i].N = counts[i];
         configs[i].H = H + n*n * displs[i];
-        if (real)
-            configs[i].Er = (double*)E_ + n * displs[i];
-        else
-            configs[i].E = (complex128_t*)E_ + n * displs[i];
+        configs[i].E = E + n * displs[i];
     }
 
     pthread_t* threads = (pthread_t*)calloc(ndevices,sizeof(pthread_t));
