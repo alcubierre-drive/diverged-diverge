@@ -323,7 +323,7 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
 
 #undef MERGESORT_COMP
 #define MERGESORT_COMP( x, y ) ((x).dest_rank - (y).dest_rank)
-MERGESORT_IMPL( custom_mergesort, pack_t )
+MERGESORT_IMPL( packsort, pack_t )
 
 static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
 
@@ -379,7 +379,7 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
     }
 
     // sort the send pack
-    custom_mergesort( t->send_pack, t->n_touched, diverge_omp_num_threads(), 0 );
+    packsort( t->send_pack, t->n_touched, diverge_omp_num_threads(), 0 );
 
     // set the send indices and communicate
     for (index_t s=0; s<t->n_touched; ++s)

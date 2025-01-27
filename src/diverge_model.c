@@ -159,20 +159,20 @@ greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* mode
 
 #undef MERGESORT_COMP
 #define MERGESORT_COMP( x, y ) ( (x).chan - (y).chan )
-MERGESORT_IMPL( custom_mergesort, rs_vertex_t )
+MERGESORT_IMPL( vertsort, rs_vertex_t )
 
 #undef MERGESORT_COMP_R
 #define MERGESORT_COMP_R( x, y, ctx ) ( \
     IDX3((x).R[0],(x).R[1],(x).R[2],((index_t*)(ctx))[1], ((index_t*)(ctx))[2]) - \
     IDX3((y).R[0],(y).R[1],(y).R[2],((index_t*)(ctx))[1], ((index_t*)(ctx))[2]) \
 )
-MERGESORT_IMPL_R( custom_mergesort, rs_vertex_t )
+MERGESORT_IMPL_R( vertsort, rs_vertex_t )
 
 
 static inline void sort_rs_vertex_elements(diverge_model_t* model) {
     if (model->n_vert_chan[0] != -1) return;
-    custom_mergesort_r( model->vert, model->n_vert, model->nk, diverge_omp_num_threads(), 0 );
-    custom_mergesort( model->vert, model->n_vert, diverge_omp_num_threads(), 0 );
+    vertsort_r( model->vert, model->n_vert, model->nk, diverge_omp_num_threads(), 0 );
+    vertsort( model->vert, model->n_vert, diverge_omp_num_threads(), 0 );
     char chans[] = "CDP";
     rs_vertex_t* vptr = model->vert;
     const rs_vertex_t* vptr_end = model->vert + model->n_vert;

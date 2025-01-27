@@ -292,19 +292,19 @@ static inline index_t regularize( index_t idx, index_t sz ) {
 #undef MERGESORT_COMP
 #define MERGESORT_COMP( x, y ) ( ((x)-(y)) < 0 ? -1 : \
                                  ((x)-(y)) > 0 ? 1 : 0 )
-MERGESORT_IMPL( custom_mergesort, double )
+MERGESORT_IMPL( doublesort, double )
 
 #undef MERGESORT_COMP_R
 #define MERGESORT_COMP_R( x, y, A ) ( \
         (((const double*)(A))[(x)] - ((const double*)(A))[(y)]) < 0 ? -1 : \
         (((const double*)(A))[(x)] - ((const double*)(A))[(y)]) > 0 ? 1 : 0 \
 )
-MERGESORT_IMPL_R( custom_mergesort, index_t )
+MERGESORT_IMPL_R( doublesort, index_t )
 
 void _dos_sort_doubles_( double* start, index_t size ) {
-    custom_mergesort( start, size, diverge_omp_num_threads(), 0 );
+    doublesort( start, size, diverge_omp_num_threads(), 0 );
 }
 void _dos_sort_doubles_indirect_( index_t* start, index_t size, const double* vals ) {
-    custom_mergesort_r( start, size, (void*)vals, diverge_omp_num_threads(), 0 );
+    doublesort_r( start, size, (void*)vals, diverge_omp_num_threads(), 0 );
 }
 
