@@ -437,7 +437,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
 }
 
 void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspace ) {
-    if (s->type != diverge_tu || s->type != diverge_tu_phonons) {
+    if (s->type != diverge_tu && s->type != diverge_tu_phonons) {
         mpi_err_printf("refill only possible with TUFRG\n");
         return;
     }
@@ -475,7 +475,7 @@ void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspac
 }
 
 double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* workspace ) {
-    if (s->type != diverge_tu || s->type != diverge_tu_phonons) {
+    if (s->type != diverge_tu && s->type != diverge_tu_phonons) {
         mpi_err_printf("refill_Hself only possible with TUFRG\n");
         return 0;
     }
@@ -517,7 +517,7 @@ double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* 
 
 
 double diverge_flow_step_get_filling_Hself( diverge_flow_step_t* s, void* workspace ) {
-    if (s->type != diverge_tu || s->type != diverge_tu_phonons) {
+    if (s->type != diverge_tu && s->type != diverge_tu_phonons) {
         mpi_err_printf("refill_Hself only possible with TUFRG\n");
         return 0;
     }
@@ -560,7 +560,7 @@ void diverge_flow_step_get_channels( const diverge_flow_step_t* st, int chans[4]
 }
 
 void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* feedback ) {
-    if (st->type != diverge_tu || st->type != diverge_tu_phonons) {
+    if (st->type != diverge_tu && st->type != diverge_tu_phonons) {
         mpi_err_printf( "interchannel feedback control only implemented for TUFRG\n" );
         return;
     }
