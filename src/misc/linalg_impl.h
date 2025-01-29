@@ -6,6 +6,7 @@
 
 #ifndef LINALG_NO_LAPACKE
 #ifdef USE_MKL
+#define MKL_Complex16 complex128_t
 #include <mkl.h>
 #else
 #include <lapacke.h>
