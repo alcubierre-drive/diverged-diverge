@@ -1,0 +1,21 @@
+#!/bin/bash
+
+CC=${CC:=gcc}
+filtered_files=( src/tu/vertex.c src/grid/flow_step.c )
+found_filtered_file=false
+
+for arg in $@; do
+    for f in ${filtered_files[@]}; do
+        if [[ "$arg" -ef "$f" ]]; then
+            found_filtered_file=true
+            break 2
+        fi
+    done
+done
+
+if $found_filtered_file; then
+    echo -e "\033[1;33m$CC ${@/-flto/}\033[0m"
+    $CC ${@/-flto/}
+else
+    $CC $@
+fi
