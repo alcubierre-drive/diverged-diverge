@@ -10,6 +10,7 @@
 
 #include "diverge_interface.h"
 #include "selfenergy.h"
+#include "../grid/helpers.h" // TICK_TOCK macro
 
 struct tu_stepper_t {
     double w_time_GF, w_time_full, w_time_loop, w_time_product,
@@ -67,13 +68,6 @@ void tu_stepper_free( tu_stepper_t* s ) {
         free(s->coarseGF);
     }
     free( s );
-}
-
-#define TICK_TOCK( output, ... ) { \
-    double tick = diverge_mpi_wtime(); \
-    __VA_ARGS__; \
-    double tock = diverge_mpi_wtime(); \
-    output += tock - tick; \
 }
 
 void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, double dlambda, double maxs[6] ) {

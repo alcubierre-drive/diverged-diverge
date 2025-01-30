@@ -4,6 +4,8 @@
 
 #ifdef __cplusplus
 extern "C" {
+#else
+#include <stddef.h>
 #endif
 
 /**
@@ -30,13 +32,13 @@ void shared_malloc_finalize( void );
  * allocate rank shared memory on a single node. signature equivalent to
  * stdlib's malloc
  */
-void* shared_malloc( long long sz );
+void* shared_malloc( size_t sz );
 
 /**
  * same as :c:func:`shared_malloc` but zero out the memory. signature equivalent
  * to stdlib's calloc
  */
-void* shared_calloc( long long cnt, long long sz );
+void* shared_calloc( size_t cnt, size_t sz );
 
 /**
  * free memory allocated with :c:func:`shared_malloc` or

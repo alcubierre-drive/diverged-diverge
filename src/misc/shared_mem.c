@@ -167,14 +167,14 @@ void shared_malloc_finalize( void ) {
     shmem_pool_destroy( shared_mem_pool );
 }
 
-void* shared_calloc( long long cnt, long long sz ) {
+void* shared_calloc( size_t cnt, size_t sz ) {
     void* ptr = shared_malloc( cnt*sz );
     if (shared_exclusive_enter(ptr) == 1) memset( ptr, 0, cnt*sz );
     shared_exclusive_wait(ptr);
     return ptr;
 }
 
-void* shared_malloc( long long sz ) {
+void* shared_malloc( size_t sz ) {
     if (!shared_mem_pool) return NULL;
     shmem_t* memptr = shmem_alloc( shared_mem_pool, sz );
     hashtable_insert( shared_mem_pool->pool, (index_t)memptr->ptr, memptr );
@@ -523,14 +523,14 @@ void shared_malloc_finalize( void ) {
     shmem_pool_destroy( shared_mem_pool );
 }
 
-void* shared_calloc( long long cnt, long long sz ) {
+void* shared_calloc( size_t cnt, size_t sz ) {
     void* ptr = shared_malloc( cnt*sz );
     if (shared_exclusive_enter(ptr) == 1) memset( ptr, 0, cnt*sz );
     shared_exclusive_wait(ptr);
     return ptr;
 }
 
-void* shared_malloc( long long sz ) {
+void* shared_malloc( size_t sz ) {
     if (!shared_mem_pool) return NULL;
     shmem_t* memptr = shmem_alloc( shared_mem_pool, sz );
     hashtable_insert( shared_mem_pool->pool, (index_t)memptr->ptr, memptr );
@@ -605,8 +605,8 @@ void shared_malloc_barrier( void ) {
 
 void shared_malloc_init( int more_colors ) { (void)more_colors; }
 void shared_malloc_finalize( void ) {}
-void* shared_malloc( long long sz ) { return malloc(sz); }
-void* shared_calloc( long long cnt, long long sz ) { return calloc(cnt, sz); }
+void* shared_malloc( size_t sz ) { return malloc(sz); }
+void* shared_calloc( size_t cnt, size_t sz ) { return calloc(cnt, sz); }
 void shared_free( void* ptr ) { free(ptr); }
 
 int shared_exclusive_enter( void* ptr ) { (void)ptr; return 1; }
