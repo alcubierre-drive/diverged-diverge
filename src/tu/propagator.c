@@ -105,12 +105,8 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
         t->GF_fft_conj_plus = (complex128_t*)(t->gf_buf + t->nktot*POW2(t->n_spin*t->n_orb));
     }
     if (t->cFRG_loop) {
-        if (model->internals->greens_shared) {
-            t->gf_buf_cfrg = shared_calloc(2*t->nktot*POW2(t->n_spin*t->n_orb),sizeof(gf_complex_t));
-            mpi_wrn_printf("enabled shared GF for cFRG TU loop\n");
-        } else {
-            t->gf_buf_cfrg = calloc(2*t->nktot*POW2(t->n_spin*t->n_orb),sizeof(gf_complex_t));
-        }
+        t->gf_buf_cfrg = (model->internals->greens_shared ? shared_calloc : calloc)(
+                2*t->nktot*POW2(t->n_spin*t->n_orb), sizeof*t->gf_buf_cfrg );
         if (t->do_GF_fft_allocs) {
             t->cFRG_GF_fft_plus = (complex128_t*)fftw_alloc_complex(t->nktot* POW2(t->n_spin*t->n_orb));
             t->cFRG_GF_fft_conj_plus = (complex128_t*)fftw_alloc_complex(t->nktot* POW2(t->n_spin*t->n_orb));
@@ -175,10 +171,7 @@ void tu_prop_free( tu_prop_t* t ) {
         fftw_free(t->GF_fft_conj_plus);
     }
     if (t->cFRG_loop) {
-        if (t->model->internals->greens_shared)
-            shared_free(t->gf_buf_cfrg);
-        else
-            free(t->gf_buf_cfrg);
+        (t->model->internals->greens_shared ? shared_free : free)(t->gf_buf_cfrg);
 
         if (t->do_GF_fft_allocs) {
             fftw_free(t->cFRG_GF_fft_plus);

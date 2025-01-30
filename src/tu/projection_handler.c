@@ -5,6 +5,7 @@
 #include "projection.h"
 #include "vertex.h"
 #include "vertex_details.h"
+#include "../grid/helpers.h" // TICK_TOCK macro
 
 static inline void complex128_array_add( complex128_t* out, const complex128_t* in, index_t sz ) {
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -17,14 +18,8 @@ static void timings( double time_cpyfill, double time_reco, double time_handler_
                 time_cpyfill, time_reco, time_handler_ft, time_add );
 }
 
-#ifdef TU_PROJ_TIMING
-#define TICK_TOCK( output, ... ) { \
-    double tick = diverge_mpi_wtime(); \
-    __VA_ARGS__; \
-    double tock = diverge_mpi_wtime(); \
-    output += tock - tick; \
-}
-#else
+#ifndef TU_PROJ_TIMING
+#undef TICK_TOCK
 #define TICK_TOCK( output, ... ) { \
     __VA_ARGS__; \
     output -= 1.0; \
