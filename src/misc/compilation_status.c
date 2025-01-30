@@ -8,12 +8,18 @@
 #include <string.h>
 
 #ifndef DIVERGE_MARK_OK
-#define DIVERGE_MARK_OK "✓"
+#define DIVERGE_MARK_OK "\xE2\x9C\x93"
 #endif
 
 #ifndef DIVERGE_MARK_NOT_OK
-#define DIVERGE_MARK_NOT_OK "✗"
+#define DIVERGE_MARK_NOT_OK "\xE2\x9C\x97"
 #endif
+
+static const char dvg_mark_avail[8] = DIVERGE_MARK_OK;
+static const char dvg_mark_not_avail[8] = DIVERGE_MARK_NOT_OK;
+static const char dvg_color_bright_red[8] = "\x1b[31;1m";
+static const char dvg_color_bright_green[8] = "\x1b[32;1m";
+static const char dvg_color_reset[8] = "\x1b[0m";
 
 #define MSG_STR_SZ 1024
 static inline char* strxcat( char* dest, const char* src ) {
@@ -21,17 +27,11 @@ static inline char* strxcat( char* dest, const char* src ) {
 }
 
 static void message( const char* msg, bool success, char* result ) {
-    int use_color = mpi_log_get_colors();
-    const char _mark_avail[16] = DIVERGE_MARK_OK;
-    const char _mark_not_avail[16] = DIVERGE_MARK_NOT_OK;
-    const char _color_bright_red[16] = "\x1b[31;1m";
-    const char _color_bright_green[16] = "\x1b[32;1m";
-    const char _color_reset[16] = "\x1b[0m";
-    if (use_color) strxcat( result, success ? _color_bright_green : _color_bright_red );
+    if (mpi_log_get_colors()) strxcat( result, success ? dvg_color_bright_green : dvg_color_bright_red );
     strxcat( result, msg );
     strxcat( result, " " );
-    strxcat( result, success ? _mark_avail : _mark_not_avail );
-    if (use_color) strxcat( result, _color_reset );
+    strxcat( result, success ? dvg_mark_avail : dvg_mark_not_avail );
+    if (mpi_log_get_colors()) strxcat( result, dvg_color_reset );
     strxcat( result, " " );
 }
 
@@ -96,4 +96,3 @@ void diverge_compilation_status( void ) {
     }
     fflush(stderr);
 }
-
