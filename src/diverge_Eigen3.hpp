@@ -42,6 +42,7 @@ typedef Eigen::Matrix2d Mat2d;
 typedef Eigen::Matrix3d Mat3d;
 typedef Eigen::Matrix4d Mat4d;
 typedef Eigen::MatrixXd MatXd;
+typedef Eigen::Matrix<double,-1,-1,Eigen::RowMajor> cMatXd;
 
 typedef Eigen::Vector2cd Vec2cd;
 typedef Eigen::Vector3cd Vec3cd;
