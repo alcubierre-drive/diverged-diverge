@@ -4,6 +4,8 @@
 #include "mpi_functions.h"
 #include "../diverge_Eigen3.hpp"
 
+typedef Eigen::Matrix<complex128_t,-1,-1,Eigen::RowMajor> cMatXcd;
+
 void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
         complex128_t alpha, complex128_t beta, index_t N, index_t num ) {
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
