@@ -2,52 +2,33 @@
 
 #include "diverge_internals_struct.h"
 #include "diverge_momentum_gen.h"
+#define LINALG_NO_LAPACKE
+#include "misc/linalg.h"
+LINALG_IMPLEMENT
 
-static void cross(double A[3], const double B[3], const double C[3], double factor) {
-    for (int i=0; i<3; ++i)
-        A[i] = factor * (B[(i+1)%3] * C[(i+2)%3] - B[(i+2)%3] * C[(i+1)%3]);
-}
-
-static double dot(const double A[3], const double B[3]) {
-    return A[0]*B[0] + A[1]*B[1] + A[2]*B[2];
-}
-
-void diverge_model_generate_mom_basis(double* lattice_, double* kbasis_) {
-    double lattice[3][3];
-    double kbasis[3][3];
-    memcpy( lattice[0], lattice_, sizeof(lattice) );
-
-    double helper[3];
-    cross(helper,lattice[0],lattice[1],1.0);
-    double VBZsign = dot(helper,lattice[2]);
+void diverge_model_generate_mom_basis( double* lattice, double* kbasis ) {
+    claV3d_t lat[3] = {claV3d_map(lattice), claV3d_map(lattice+3), claV3d_map(lattice+6)};
+    double VBZsign = claV3d_dot( claV3d_cross(lat[0],lat[1]), lat[2] );
     if (VBZsign < 0) {
         mpi_wrn_printf("left handed coordinate system detected and fixed\n");
-        lattice[2][0] *= -1.,lattice[2][1] *= -1.,lattice[2][2] *= -1.;
+        lat[2] = claV3d_scale(lat[2], -1.0);
         VBZsign *= -1;
     }
     double prefactor = 2.0 * M_PI / VBZsign;
-    for (int i=0; i<3; ++i)
-        cross( kbasis[i], lattice[(i+1)%3], lattice[(i+2)%3], prefactor );
-
-    memcpy( lattice_, lattice[0], sizeof(lattice) );
-    memcpy( kbasis_, kbasis[0], sizeof(kbasis) );
+    for (int i=0; i<3; ++i) {
+        claV3d_rmap(claV3d_scale(claV3d_cross(lat[(i+1)%3],lat[(i+2)%3]), prefactor), kbasis+3*i);
+        claV3d_rmap(lat[i], lattice + 3*i);
+    }
 }
 
 static void fill_mesh(double* mesh, const index_t nk[3], double kbasis[3][3]) {
     const double dnk[3] = { nk[0], nk[1], nk[2] };
-    for(index_t kx = 0; kx < nk[0]; ++kx)
-    for(index_t ky = 0; ky < nk[1]; ++ky)
-    for(index_t kz = 0; kz < nk[2]; ++kz) {
-        index_t idx = 3 * IDX3(kx,ky,kz,nk[1],nk[2]);
-        mesh[idx + 0] = kbasis[0][0] * (double)kx / dnk[0]
-                      + kbasis[1][0] * (double)ky / dnk[1]
-                      + kbasis[2][0] * (double)kz / dnk[2];
-        mesh[idx + 1] = kbasis[0][1] * (double)kx / dnk[0]
-                      + kbasis[1][1] * (double)ky / dnk[1]
-                      + kbasis[2][1] * (double)kz / dnk[2];
-        mesh[idx + 2] = kbasis[0][2] * (double)kx / dnk[0]
-                      + kbasis[1][2] * (double)ky / dnk[1]
-                      + kbasis[2][2] * (double)kz / dnk[2];
+    const claM3d_t G = claM3d_map(kbasis[0]);
+    for (index_t kx=0; kx<nk[0]; ++kx)
+    for (index_t ky=0; ky<nk[1]; ++ky)
+    for (index_t kz=0; kz<nk[2]; ++kz) {
+        const claV3d_t kiv = {{(double)kx/dnk[0], (double)ky/dnk[1], (double)kz/dnk[2]}};
+        claV3d_rmap(claM3d_vecmat(kiv, G), mesh+3*IDX3(kx,ky,kz,nk[1],nk[2]));
     }
 }
 
