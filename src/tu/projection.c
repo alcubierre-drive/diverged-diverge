@@ -635,9 +635,15 @@ SERISORT_IMPL_R( serisort_fhelp, index_t )
 static vec_claV2ll_t sort_and_filter( vec_claV2ll_t* to, vec_claV2ll_t* from_help, vec_index_t* from,
         vec_claV2ll_t* rvec_help, vec_index_t* rvec, vec_index_t* count, vec_index_t* displ ) {
     index_t* p = sort_permutation( to->v, to->v_sz );
-    apply_permutation_in_place( to->v, p, to->v_sz );
-    apply_permutation_in_place( from_help->v, p, to->v_sz );
-    apply_permutation_in_place( rvec_help->v, p, to->v_sz );
+    #pragma omp parallel num_threads(MIN(diverge_omp_num_threads(),3))
+    {
+        #pragma omp single nowait
+        apply_permutation_in_place( to->v, p, to->v_sz );
+        #pragma omp single nowait
+        apply_permutation_in_place( from_help->v, p, to->v_sz );
+        #pragma omp single nowait
+        apply_permutation_in_place( rvec_help->v, p, to->v_sz );
+    }
     free( p );
 
     index_t msize = to->v_sz;

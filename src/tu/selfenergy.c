@@ -306,73 +306,71 @@ static inline index_t rpb1(const index_t* nk, index_t x, index_t y, index_t z, c
     return mz + nk[2] *(my + nk[1] * mx);
 }
 
+#define IS_ZERO(x) (fabs(x) < 1e-7)
+
 void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) {
-    index_t nkff[3]; for (int i=0; i<3; ++i) nkff[i] = s->model->nk[i] * s->model->nkf[i];
+    const index_t nk[] = { s->model->nk[0], s->model->nk[1], s->model->nk[2] };
+    const index_t nkff[] = { nk[0]*s->model->nkf[0], nk[1]*s->model->nkf[1], nk[2]*s->model->nkf[2] };
     // pad with zeros
     ZERO_OUT( s->ff_helper, s->nktot*POW2(s->n_orb*s->n_spin) );
     const double pref = 1./(double)s->nk;
 
-    float hx = (s->model->nk[0]>1) ? (float)s->model->nk[0]/2. : 2;
-    float hy = (s->model->nk[1]>1) ? (float)s->model->nk[1]/2. : 2;
-    float hz = (s->model->nk[2]>1) ? (float)s->model->nk[2]/2. : 2;
-    for (index_t r=0; r<POW2(s->n_orb*s->n_spin); ++r)
-    for (index_t x=0; x<s->model->nk[0]; ++x)
-    for (index_t y=0; y<s->model->nk[1]; ++y)
-    for (index_t z=0; z<s->model->nk[2]; ++z) {
-        index_t from = z + s->model->nk[2]*(y+s->model->nk[1]*(x+s->model->nk[0]*r));
-        const index_t xto = (x <= hx) ? x : nkff[0]-(s->model->nk[0]-x);
-        const index_t yto = (y <= hy) ? y : nkff[1]-(s->model->nk[1]-y);
-        const index_t zto = (z <= hz) ? z : nkff[2]-(s->model->nk[2]-z);
-        const index_t to = zto + nkff[2]*(yto+nkff[1]*(xto+nkff[0]*r));
-        complex128_t helper = self_en[from]*pref;
-        // copy edges and corners
-        if (fabs(x - hx) < 1e-10 && fabs(y - hy) < 1e-10 && fabs(z - hz) < 1e-10) {
-            helper *= 0.125;
-            index_t xto2 = nkff[0]-hx;
-            index_t yto2 = nkff[1]-hy;
-            index_t zto2 = nkff[2]-hz;
-            s->ff_helper[zto2 + nkff[2]*(yto+nkff[1]*(xto+nkff[0]*r))] += helper;
-            s->ff_helper[zto2 + nkff[2]*(yto2+nkff[1]*(xto+nkff[0]*r))] += helper;
-            s->ff_helper[zto + nkff[2]*(yto2+nkff[1]*(xto+nkff[0]*r))] += helper;
-            s->ff_helper[zto2 + nkff[2]*(yto2+nkff[1]*(xto2+nkff[0]*r))] += helper;
-            s->ff_helper[zto + nkff[2]*(yto2+nkff[1]*(xto2+nkff[0]*r))] += helper;
-            s->ff_helper[zto2 + nkff[2]*(yto+nkff[1]*(xto2+nkff[0]*r))] += helper;
-            s->ff_helper[zto + nkff[2]*(yto+nkff[1]*(xto2+nkff[0]*r))] += helper;
-        } else if (fabs(x - hx) < 1e-10 && fabs(y - hy) < 1e-10) {
-            helper *= 0.25;
-            index_t xto2 = nkff[0]-hx;
-            index_t yto2 = nkff[1]-hy;
-            s->ff_helper[zto + nkff[2]*(yto+nkff[1]*(xto2+nkff[0]*r))] += helper;
-            s->ff_helper[zto + nkff[2]*(yto2+nkff[1]*(xto2+nkff[0]*r))] += helper;
-            s->ff_helper[zto + nkff[2]*(yto2+nkff[1]*(xto+nkff[0]*r))] += helper;
-        } else if (fabs(x - hx) < 1e-10 && fabs(z - hz) < 1e-10) {
-            helper *= 0.25;
-            index_t xto2 = nkff[0]-hx;
-            index_t zto2 = nkff[2]-hz;
-            s->ff_helper[zto2 + nkff[2]*(yto+nkff[1]*(xto +nkff[0]*r))] += helper;
-            s->ff_helper[zto2 + nkff[2]*(yto+nkff[1]*(xto2+nkff[0]*r))] += helper;
-            s->ff_helper[zto  + nkff[2]*(yto+nkff[1]*(xto2+nkff[0]*r))] += helper;
-        } else if (fabs(y - hy) < 1e-10 && fabs(z - hz) < 1e-10) {
-            helper *= 0.25;
-            index_t yto2 = nkff[1]-hy;
-            index_t zto2 = nkff[2]-hz;
-            s->ff_helper[zto  + nkff[2]*(yto2+nkff[1]*(xto+nkff[0]*r))] += helper;
-            s->ff_helper[zto2 + nkff[2]*(yto2+nkff[1]*(xto+nkff[0]*r))] += helper;
-            s->ff_helper[zto2 + nkff[2]*(yto +nkff[1]*(xto+nkff[0]*r))] += helper;
-        } else if (fabs(x - hx) < 1e-10) {
-            helper *= 0.5;
-            index_t xto2 = nkff[0]-hx;
-            s->ff_helper[zto + nkff[2]*(yto+nkff[1]*(xto2+nkff[0]*r))] += (helper);
-        } else if (fabs(z - hz) < 1e-10) {
-            helper *= 0.5;
-            index_t zto2 = nkff[2]-hz;
-            s->ff_helper[zto2 + nkff[2]*(yto+nkff[1]*(xto+nkff[0]*r))] += (helper);
-        } else if(fabs(y - hy) < 1e-10) {
-            helper *= 0.5;
-            index_t yto2 = nkff[1]-hy;
-            s->ff_helper[zto + nkff[2]*(yto2+nkff[1]*(xto+nkff[0]*r))] += (helper);
+    float hx = (nk[0]>1) ? (float)nk[0]/2. : 2;
+    float hy = (nk[1]>1) ? (float)nk[1]/2. : 2;
+    float hz = (nk[2]>1) ? (float)nk[2]/2. : 2;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t r=0; r<POW2(s->n_orb*s->n_spin); ++r) {
+        for (index_t x=0; x<nk[0]; ++x)
+        for (index_t y=0; y<nk[1]; ++y)
+        for (index_t z=0; z<nk[2]; ++z) {
+            const index_t xto = (x<=hx) ? x : nkff[0]-(nk[0]-x);
+            const index_t yto = (y<=hy) ? y : nkff[1]-(nk[1]-y);
+            const index_t zto = (z<=hz) ? z : nkff[2]-(nk[2]-z);
+            complex128_t helper = self_en[IDX4(r, x,y,z, nk[0],nk[1],nk[2])]*pref;
+            // copy edges and corners
+            if (IS_ZERO(x-hx) && IS_ZERO(y-hy) && IS_ZERO(z-hz)) {
+                helper *= 0.125;
+                const index_t xto2 = nkff[0]-hx, yto2 = nkff[1]-hy, zto2 = nkff[2]-hz;
+                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto ,yto2,zto2, nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto2,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto2,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto2,yto2,zto2, nkff[0],nkff[1],nkff[2])] += helper;
+            } else if (IS_ZERO(x-hx) && IS_ZERO(y-hy)) {
+                helper *= 0.25;
+                const index_t xto2 = nkff[0]-hx, yto2 = nkff[1]-hy;
+                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto2,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
+            } else if (IS_ZERO(x-hx) && IS_ZERO(z-hz)) {
+                helper *= 0.25;
+                const index_t xto2 = nkff[0]-hx, zto2 = nkff[2]-hz;
+                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto2,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
+            } else if (IS_ZERO(y-hy) && IS_ZERO(z-hz)) {
+                helper *= 0.25;
+                const index_t yto2 = nkff[1]-hy, zto2 = nkff[2]-hz;
+                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
+                s->ff_helper[IDX4(r,xto ,yto2,zto2, nkff[0],nkff[1],nkff[2])] += helper;
+            } else if (IS_ZERO(x-hx)) {
+                helper *= 0.5;
+                const index_t xto2 = nkff[0]-hx;
+                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
+            } else if (IS_ZERO(z-hz)) {
+                helper *= 0.5;
+                const index_t zto2 = nkff[2]-hz;
+                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
+            } else if (IS_ZERO(y-hy)) {
+                helper *= 0.5;
+                const index_t yto2 = nkff[1]-hy;
+                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
+            }
+            s->ff_helper[IDX4(r,xto ,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
         }
-        s->ff_helper[to] += helper;
     }
     FFTW_EXECUTE_DFT( s->fft_self_oop_gfmesh, s->ff_helper, self_en);
 }
@@ -739,8 +737,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
 
     const index_t selfsize = POW2(s->n_orb*s->n_spin)*s->nk;
     diverge_mpi_allreduce_complex_sum_inplace(self_en, selfsize);
-    if(s->nk != s->nktot)
-    {
+    if (s->nk != s->nktot) {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
@@ -750,7 +747,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         transpose(self_en,s->ff_helper, POW2(s->n_orb*s->n_spin), s->nk);
         FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
         tu_selfenergy_fft_interpolate(s,self_en);
-    }else{
+    } else {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
@@ -957,7 +954,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
     const index_t selfsize = POW2(s->n_orb*s->n_spin)*s->nk;
     diverge_mpi_allreduce_complex_sum_inplace(self_en, selfsize);
 
-    if(s->nk != s->nktot) {
+    if (s->nk != s->nktot) {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
@@ -967,7 +964,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         transpose(self_en,s->ff_helper, POW2(s->n_orb*s->n_spin), s->nk);
         FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
         tu_selfenergy_fft_interpolate(s,self_en);
-    }else{
+    } else {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
