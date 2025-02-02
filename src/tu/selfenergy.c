@@ -78,7 +78,8 @@ static inline void reco( const char channel, tu_selfenergy_t* s, complex128_t* b
         const complex128_t* inp, double a, double b/*=1*/ );
 
 // some helpers
-static inline void transpose(complex128_t* inp, complex128_t* buf, index_t nx, index_t ny);
+// transposes (b,o,k) -> (k,o,b) if nk > 0 && nb > 0, otherwise (k,o,b) -> (b,o,k)
+static inline void transpose( complex128_t* buf, complex128_t* aux, index_t nk, index_t nb );
 #define FFTW_EXECUTE_DFT( plan, in, out ) fftw_execute_dft( (plan), (fftw_complex*)(in), (fftw_complex*)(out) )
 static inline index_t rpb1mb3(const index_t* nk, index_t x, index_t y, index_t z,
                               const index_t* vb1, const index_t* vb3);
@@ -276,11 +277,18 @@ static inline void reco( const char channel, tu_selfenergy_t* s, complex128_t* b
     }
 }
 
-static inline void transpose(complex128_t* inp, complex128_t* buf, index_t nx, index_t ny) {
-    for (index_t x=0; x<nx; ++x)
-    for (index_t y=0; y<ny; ++y)
-        buf[y+ny*x] = inp[x+nx*y];
-    memcpy( inp, buf, nx*ny*sizeof(complex128_t) );
+static inline void transpose( complex128_t* buf, complex128_t* aux, index_t nk, index_t nb ) {
+    if (nk > 0 && nb > 0) {
+        for (index_t k=0; k<nk; ++k)
+        for (index_t o=0; o<nb; ++o)
+        for (index_t b=0; b<nb; ++b) aux[IDX3(k,o,b, nb,nb)] = buf[IDX3(b,o,k, nb,nk)];
+    } else {
+        nk = labs(nk), nb = labs(nb);
+        for (index_t k=0; k<nk; ++k)
+        for (index_t o=0; o<nb; ++o)
+        for (index_t b=0; b<nb; ++b) aux[IDX3(b,o,k, nb,nk)] = buf[IDX3(k,o,b, nb,nb)];
+    }
+    memcpy( buf, aux, POW2(nb)*nk * sizeof*buf );
 }
 
 static inline index_t rpb1mb3(const index_t* nk, index_t x, index_t y, index_t z,
@@ -742,9 +750,10 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
-        transpose(self_en,s->ff_helper, s->nk, POW2(s->n_orb*s->n_spin));
+        // o2,o1,k -> k,o1,o2
+        transpose(self_en,s->ff_helper, s->nk, s->n_orb*s->n_spin);
         diverge_symmetrize_2pt_coarse( s->model, self_en, s->ff_helper );
-        transpose(self_en,s->ff_helper, POW2(s->n_orb*s->n_spin), s->nk);
+        transpose(self_en,s->ff_helper, -s->nk, -s->n_orb*s->n_spin);
         FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
         tu_selfenergy_fft_interpolate(s,self_en);
     } else {
@@ -754,7 +763,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
 
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
     }
-    transpose(self_en,s->ff_helper, s->nktot, POW2(s->n_orb*s->n_spin));
+    transpose(self_en,s->ff_helper, s->nktot, s->n_orb*s->n_spin);
     diverge_symmetrize_2pt_fine( s->model, self_en, s->ff_helper );
 }
 
@@ -959,9 +968,9 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
-        transpose(self_en,s->ff_helper, s->nk, POW2(s->n_orb*s->n_spin));
+        transpose(self_en,s->ff_helper, s->nk, s->n_orb*s->n_spin);
         diverge_symmetrize_2pt_coarse( s->model, self_en, s->ff_helper );
-        transpose(self_en,s->ff_helper, POW2(s->n_orb*s->n_spin), s->nk);
+        transpose(self_en,s->ff_helper, -s->nk, -s->n_orb*s->n_spin);
         FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
         tu_selfenergy_fft_interpolate(s,self_en);
     } else {
@@ -970,7 +979,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
             self_en[i] *= prefac;
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
     }
-    transpose(self_en,s->ff_helper, s->nktot, POW2(s->n_orb*s->n_spin));
+    transpose(self_en,s->ff_helper, s->nktot, s->n_orb*s->n_spin);
     diverge_symmetrize_2pt_fine( s->model, self_en, s->ff_helper );
 }
 
