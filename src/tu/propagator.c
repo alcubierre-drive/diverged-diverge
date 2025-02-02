@@ -201,19 +201,22 @@ void tu_prop_GF_zero_T( tu_prop_t* t, complex128_t lambda, complex128_t* self_en
 }
 
 void tu_prop_GF_for_self( tu_prop_t* t, complex128_t* coarseGF ) {
+    // we here write the buffer into a *transposed* form, because the TUFRG
+    // backend for self-energies expects the o1/o2 index order the other way
+    // round.
     const index_t nb = (t->n_spin*t->n_orb), nk = t->nk;
     const index_t nb2 = POW2(nb);
     #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t b=0; b<nb; ++b)
     for (index_t o=0; o<nb; ++o)
     for (index_t k=0; k<nk; ++k)
-        coarseGF[k+nk*(o+nb*b)] = t->gf_buf[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
+        coarseGF[k+nk*(b+nb*o)] = t->gf_buf[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
     if (t->cFRG_loop) {
         #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
         for (index_t b=0; b<nb; ++b)
         for (index_t o=0; o<nb; ++o)
         for (index_t k=0; k<nk; ++k)
-            coarseGF[k+nk*(o+nb*b)] -= t->gf_buf_cfrg[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
+            coarseGF[k+nk*(b+nb*o)] -= t->gf_buf_cfrg[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
     }
 }
 
