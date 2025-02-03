@@ -495,14 +495,14 @@ void tu_loop_t::get_GF_for_self(complex128_t* coarseGF) {
     for(index_t b = 0; b < nb; ++b)
     for(index_t o = 0; o < nb; ++o)
     for(index_t k = 0; k < nk; ++k) {
-        coarseGF[k+nk*(o+nb*b)] = gf_buf[o+nb*b+nb2*kidxc2f(k,model->nk,model->nkf)];
+        coarseGF[k+nk*(b+nb*o)] = gf_buf[o+nb*b+nb2*kidxc2f(k,model->nk,model->nkf)];
     }
     if(cFRG_loop) {
         #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
         for(index_t b = 0; b < nb; ++b)
         for(index_t o = 0; o < nb; ++o)
         for(index_t k = 0; k < nk; ++k) {
-            coarseGF[k+nk*(o+nb*b)] -= gf_buf_cfrg[o+nb*b+nb2*kidxc2f(k,model->nk,model->nkf)];
+            coarseGF[k+nk*(b+nb*o)] -= gf_buf_cfrg[o+nb*b+nb2*kidxc2f(k,model->nk,model->nkf)];
         }
     }
 }

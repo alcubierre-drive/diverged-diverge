@@ -2,12 +2,18 @@
 
 #include "selfenergy.hpp"
 
-inline static void transpose(complex128_t* inp, complex128_t* buf, index_t nx, index_t ny) {
-    for(index_t x = 0; x < nx; ++x)
-    for(index_t y = 0; y < ny; ++y) {
-        buf[y+ny*x] = inp[x+nx*y];
+static inline void transpose( complex128_t* buf, complex128_t* aux, index_t nk, index_t nb ) {
+    if (nk > 0 && nb > 0) {
+        for (index_t k=0; k<nk; ++k)
+        for (index_t o=0; o<nb; ++o)
+        for (index_t b=0; b<nb; ++b) aux[IDX3(k,o,b, nb,nb)] = buf[IDX3(b,o,k, nb,nk)];
+    } else {
+        nk = labs(nk), nb = labs(nb);
+        for (index_t k=0; k<nk; ++k)
+        for (index_t o=0; o<nb; ++o)
+        for (index_t b=0; b<nb; ++b) aux[IDX3(b,o,k, nb,nk)] = buf[IDX3(k,o,b, nb,nb)];
     }
-    memcpy(inp,buf,nx*ny*sizeof(complex128_t));
+    memcpy( buf, aux, POW2(nb)*nk * sizeof*buf );
 }
 
 inline static void fftw_execute_dft_helper(const fftw_plan p, complex128_t* in,
@@ -528,9 +534,9 @@ void selfEnergy::selfenergy_flow_mom(complex128_t* const self_en,
         for(index_t i = 0; i < POW2(n_spin*n_orb)*nk; ++i)
             self_en[i] *= prefac;
         fftw_execute_dft_helper(fft_fullself_ip,self_en,self_en);
-        transpose(self_en,ff_helper, nk, POW2(n_orb*n_spin));
+        transpose(self_en,ff_helper, nk, n_orb*n_spin);
         diverge_symmetrize_2pt_coarse( model, self_en, ff_helper );
-        transpose(self_en,ff_helper, POW2(n_orb*n_spin), nk);
+        transpose(self_en,ff_helper, -nk, -n_orb*n_spin);
         fftw_execute_dft_helper(ifft_fullself_ip,self_en,self_en);
         fft_interpolate(self_en);
     }else{
@@ -540,7 +546,7 @@ void selfEnergy::selfenergy_flow_mom(complex128_t* const self_en,
 
         fftw_execute_dft_helper(fft_fullself_ip,self_en,self_en);
     }
-    transpose(self_en,ff_helper, nktot, POW2(n_orb*n_spin));
+    transpose(self_en,ff_helper, nktot, n_orb*n_spin);
     diverge_symmetrize_2pt_fine( model, self_en, ff_helper );
 }
 
@@ -747,9 +753,9 @@ void selfEnergy::selfenergy_flow_mom_SU2(complex128_t* self_en,
         for(index_t i = 0; i < POW2(n_spin*n_orb)*nk; ++i)
             self_en[i] *= prefac;
         fftw_execute_dft_helper(fft_fullself_ip,self_en,self_en);
-        transpose(self_en,ff_helper, nk, POW2(n_orb*n_spin));
+        transpose(self_en,ff_helper, nk, n_orb*n_spin);
         diverge_symmetrize_2pt_coarse( model, self_en, ff_helper );
-        transpose(self_en,ff_helper, POW2(n_orb*n_spin), nk);
+        transpose(self_en,ff_helper, -nk, -n_orb*n_spin);
         fftw_execute_dft_helper(ifft_fullself_ip,self_en,self_en);
         fft_interpolate(self_en);
     }else{
@@ -758,6 +764,6 @@ void selfEnergy::selfenergy_flow_mom_SU2(complex128_t* self_en,
             self_en[i] *= prefac;
         fftw_execute_dft_helper(fft_fullself_ip,self_en,self_en);
     }
-    transpose(self_en,ff_helper, nktot, POW2(n_orb*n_spin));
+    transpose(self_en,ff_helper, nktot, n_orb*n_spin);
     diverge_symmetrize_2pt_fine( model, self_en, ff_helper );
 }
