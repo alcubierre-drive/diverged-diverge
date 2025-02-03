@@ -13,31 +13,35 @@ def version_compare( A, B ):
     # special cases
     if (A == B):
         return 0
-    if (A == "dev"):
+    if ("dev" in A):
         return 1
-    if (B == "dev"):
+    if ("dev" in B):
         return -1
 
-    # equalize lengths
-    A_list = [int(x) for x in A.lstrip('v').split('.')]
-    B_list = [int(x) for x in B.lstrip('v').split('.')]
-    vlen = max( len(A_list), len(B_list) )
-    if (len(A_list) < vlen):
-        A_list += [0] * (vlen - len(A_list))
-    if (len(B_list) < vlen):
-        B_list += [0] * (vlen - len(B_list))
+    try:
+        # equalize lengths
+        A_list = [int(x) for x in A.lstrip('v').split('.')]
+        B_list = [int(x) for x in B.lstrip('v').split('.')]
+        vlen = max( len(A_list), len(B_list) )
+        if (len(A_list) < vlen):
+            A_list += [0] * (vlen - len(A_list))
+        if (len(B_list) < vlen):
+            B_list += [0] * (vlen - len(B_list))
 
-    # and check for larger version
-    for i in range(vlen):
-        if A_list[i] > B_list[i]:
-            return 1
-        elif A_list[i] < B_list[i]:
-            return -1
-        else:
-            pass
+        # and check for larger version
+        for i in range(vlen):
+            if A_list[i] > B_list[i]:
+                return 1
+            elif A_list[i] < B_list[i]:
+                return -1
+            else:
+                pass
 
-    # default: versions are equal
-    return 0
+        # default: versions are equal
+        return 0
+    except:
+        print("version cannot be determined (A:'%s',B:'%s'), treat as dev" % (A,B))
+        return 1
 
 # this is due to some weird numpy version checking for the contents of a buffer
 def numpy_fromfile( fname, **kwargs ):
