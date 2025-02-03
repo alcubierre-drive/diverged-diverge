@@ -872,6 +872,9 @@ if not _libs["divERGe"] is None:
     flow_step_refill_Hself.argtypes = [POINTER(flow_step_t), c_double, c_void_p]
     flow_step_refill_Hself.restype = c_double
 
+    flow_step_get_filling_Hself = _libs["divERGe"].get("diverge_flow_step_get_filling_Hself")
+    flow_step_get_filling_Hself.argtypes = [POINTER(flow_step_t), c_void_p]
+    flow_step_get_filling_Hself.restype = c_double
 
     # Euler integrator
     class struct_euler_t(Structure):
