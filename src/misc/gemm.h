@@ -23,6 +23,15 @@ void single_gemm( const complex128_t* A, const complex128_t* B, complex128_t* C,
 void single_square_gemm( const complex128_t* A, int AconjTrans,
         const complex128_t* B, int BconjTrans, complex128_t* C, index_t n );
 
+/** in-place transposition of square matrix ``A`` (dimension NxN) */
+void transpose_inplace( complex128_t* A, index_t N );
+
+/** out-of-place transposition of square matrix ``A`` into ``B`` (dimension NxN) */
+void transpose_outofplace( complex128_t* B, const complex128_t* A, index_t N );
+
+/** out-of-place adjoint of square matrix ``A`` into ``B`` (dimension NxN) */
+void transpose_conj_outofplace( complex128_t* B, const complex128_t* A, index_t N );
+
 #ifdef __cplusplus
 }
 #endif

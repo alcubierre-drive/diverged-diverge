@@ -180,6 +180,7 @@ DIVERGE_UNSTABLE {
     global:
         batched_eigen_get_nchunks;
         batched_eigen_r;
+        batched_eigen_r_get_eigen3_mode;
         batched_eigen_r_set_eigen3_mode;
         batched_eigen_set_nchunks;
         batched_eigen_set_nthreads;
@@ -221,6 +222,9 @@ DIVERGE_UNSTABLE {
         subspace_gfill_multi_exec_mu;
         subspace_gfill_multi_free;
         subspace_gfill_multi_init;
+        transpose_conj_outofplace;
+        transpose_inplace;
+        transpose_outofplace;
         tu_highsym_vertex_free;
         tu_highsym_vertex_store;
         tu_highsym_vertex_to_file;

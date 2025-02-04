@@ -2,6 +2,7 @@
 
 #include "batched_svd.h"
 #include "batched_svd_private.h"
+#include "gemm.h"
 
 #ifdef USE_CUDA
 
@@ -11,22 +12,6 @@
 #include "../misc/cuda_error.h"
 
 #include "mpi_log.h"
-
-static inline void transpose_memcpy_128( void* out_, const void* in_, index_t N ) {
-    complex128_t* out = (complex128_t*)out_;
-    const complex128_t* in = (const complex128_t*)in_;
-    for (index_t i=0; i<N; ++i)
-    for (index_t j=0; j<N; ++j)
-        out[IDX2(i,j,N)] = in[IDX2(j,i,N)];
-}
-
-static inline void adjoint_memcpy_128( void* out_, const void* in_, index_t N ) {
-    complex128_t* out = (complex128_t*)out_;
-    const complex128_t* in = (const complex128_t*)in_;
-    for (index_t i=0; i<N; ++i)
-    for (index_t j=0; j<N; ++j)
-        out[IDX2(i,j,N)] = conj(in[IDX2(j,i,N)]);
-}
 
 typedef struct single_cusolver_solution_t single_cusolver_solution_t;
 
@@ -61,7 +46,7 @@ void* single_cusolver_thread( void* data ) {
     CUDA_CHECK( cudaSetDevice( cfg->dev ) );
     for (index_t ii=0; ii<cfg->n_indices; ++ii) {
         index_t i = cfg->indices[ii];
-        transpose_memcpy_128( cfg->dA, cfg->A + i*POW2(cfg->dim), cfg->dim );
+        transpose_outofplace( (complex128_t*)cfg->dA, cfg->A + i*POW2(cfg->dim), cfg->dim );
         CUDA_CHECK( cudaMemPrefetchAsync( cfg->dA, sizeof(complex128_t)*POW2(cfg->dim), cfg->dev, cfg->stream ) );
         CUDA_CHECK( cudaStreamSynchronize( cfg->stream ) );
 
@@ -84,12 +69,12 @@ void* single_cusolver_thread( void* data ) {
         sem_post( cfg->sem );
 
         if (cfg->U && !cfg->do_eigen)
-            transpose_memcpy_128( cfg->U + i*POW2(cfg->dim), cfg->dU, cfg->dim );
+            transpose_outofplace( cfg->U + i*POW2(cfg->dim), (const complex128_t*)cfg->dU, cfg->dim );
         else if (cfg->U) // the Eigen case is different
             memcpy( cfg->U + i*POW2(cfg->dim), cfg->dA, sizeof(complex128_t)*POW2(cfg->dim) );
 
         if (cfg->V)
-            adjoint_memcpy_128( cfg->V + i*POW2(cfg->dim), cfg->dV, cfg->dim );
+            transpose_conj_outofplace( cfg->V + i*POW2(cfg->dim), (const complex128_t*)cfg->dV, cfg->dim );
 
         memcpy( cfg->S + i*cfg->dim, cfg->dS, sizeof(double)*cfg->dim );
     }
