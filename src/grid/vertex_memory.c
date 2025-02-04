@@ -248,23 +248,22 @@ static int grid_vertex_find_recv_trafo( const grid_vertex_t* v, const char* name
 }
 
 void grid_vertex_overwrite_transform( grid_vertex_t* v, int send, int recv, const char* new_name ) {
-    if (0) {}
-#define MAPGEN( name, name_inv ) else if (!strcmp(#name, new_name)) \
+#define MAPGEN( name, name_inv ) (!strcmp(#name, new_name)) \
     gen_maps( v->send_recv_maps[send], v->send_recv_displs[send], v->send_recv_counts[send], \
               v->send_recv_maps[recv], v->send_recv_displs[recv], v->send_recv_counts[recv], \
               v->dist, v->nk, v->nb, v->k1m2, v->k1p2, index_gymnastics_##name, index_gymnastics_##name_inv )
-    MAPGEN( D_to_P, P_to_D );
-    MAPGEN( P_to_D, D_to_P );
-    MAPGEN( D_to_C, C_to_D );
-    MAPGEN( C_to_D, D_to_C );
-    MAPGEN( D_to_V, V_to_D );
-    MAPGEN( V_to_D, D_to_V );
-    MAPGEN( C_to_V, V_to_C );
-    MAPGEN( V_to_C, C_to_V );
-    MAPGEN( P_to_V, V_to_P );
-    MAPGEN( V_to_P, P_to_V );
-    MAPGEN( D_swap_3_and_4, D_swap_3_and_4 );
-    MAPGEN( D_swap_1_and_2, D_swap_1_and_2 );
+    if      MAPGEN( D_to_P, P_to_D );
+    else if MAPGEN( P_to_D, D_to_P );
+    else if MAPGEN( D_to_C, C_to_D );
+    else if MAPGEN( C_to_D, D_to_C );
+    else if MAPGEN( D_to_V, V_to_D );
+    else if MAPGEN( V_to_D, D_to_V );
+    else if MAPGEN( C_to_V, V_to_C );
+    else if MAPGEN( V_to_C, C_to_V );
+    else if MAPGEN( P_to_V, V_to_P );
+    else if MAPGEN( V_to_P, P_to_V );
+    else if MAPGEN( D_swap_3_and_4, D_swap_3_and_4 );
+    else if MAPGEN( D_swap_1_and_2, D_swap_1_and_2 );
     else {
         mpi_wrn_printf( "cannot find index gymnastics '%s'. skipping.\n", new_name );
         return;

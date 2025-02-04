@@ -159,8 +159,7 @@ static grid_symm_transform_t* grid_symm_transform_init_transform( diverge_model_
                 claM3d_map(model->rs_symmetries[sym][0]), s->k_symmaps + sym*s->nk );
     }
 
-    // _reset_bond_symmprops due to diverge style of having the indices encoded
-    // in the matrices
+    // we don't have non-matrix symmetries in diverge
     for (index_t symb=0; symb<s->nsym * s->nb; ++symb)
         s->symmprops[symb].idx_post_symm = s->symmprops[symb].idx_pre_symm;
 
