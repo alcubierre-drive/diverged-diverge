@@ -5,6 +5,7 @@
 #include "../misc/version.h"
 #include "../misc/batched_gemms.h"
 #include "../misc/eigen.h"
+#include "../misc/gemm.h"
 
 typedef struct {
     grid_vertex_t* V;
@@ -284,15 +285,6 @@ static void grid_lingap_free( grid_lingap_t* l ) {
     free( l );
 }
 
-static inline void transposeInPlace( complex128_t* matrix, index_t n ) {
-    for (index_t i=0; i<n; ++i)
-    for (index_t j=i+1; j<n; ++j) {
-        complex128_t tmp = matrix[IDX2(i,j,n)];
-        matrix[IDX2(i,j,n)] = matrix[IDX2(j,i,n)];
-        matrix[IDX2(j,i,n)] = tmp;
-    }
-}
-
 static void grid_lingap_calc( grid_lingap_t* l, double T, char chan, bool use_loop,
         const char* vertex_file ) {
 
@@ -329,7 +321,7 @@ static void grid_lingap_calc( grid_lingap_t* l, double T, char chan, bool use_lo
 
     // eigensolution of vertex (hermitian!)
     single_eigen( v, U_, l->eigen_values, N );
-    transposeInPlace( U_, N );
+    transpose_inplace( U_, N );
     single_eigen_sort( U_, l->eigen_values, N, 0 );
     for (index_t i=0; i<N; ++i)
     for (uindex_t v=0; v<l->num_singular_values; ++v)

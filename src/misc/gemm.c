@@ -27,3 +27,20 @@ void single_square_gemm( const complex128_t* A, int AconjTrans,
     cblas_zgemm( CblasRowMajor, AconjTrans?CblasConjTrans:CblasNoTrans,
             BconjTrans?CblasConjTrans:CblasNoTrans, n, n, n, &one, A, n, B, n, &zero, C, n );
 }
+
+void transpose_inplace( complex128_t* A, index_t N ) {
+    for (index_t i=0; i<N; ++i)
+    for (index_t j=i+1; j<N; ++j) {
+        const complex128_t tmp = A[IDX2(i,j,N)];
+        A[IDX2(i,j,N)] = A[IDX2(j,i,N)];
+        A[IDX2(j,i,N)] = tmp;
+    }
+}
+
+void transpose_outofplace( complex128_t* B, const complex128_t* A, index_t N ) {
+    for (index_t i=0; i<N; ++i) for (index_t j=0; j<N; ++j) B[IDX2(i,j,N)] = A[IDX2(j,i,N)];
+}
+
+void transpose_conj_outofplace( complex128_t* B, const complex128_t* A, index_t N ) {
+    for (index_t i=0; i<N; ++i) for (index_t j=0; j<N; ++j) B[IDX2(i,j,N)] = conj(A[IDX2(j,i,N)]);
+}

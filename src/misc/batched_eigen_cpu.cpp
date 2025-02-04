@@ -2,6 +2,7 @@
 
 #include "batched_eigen.h"
 #include "batched_eigen_internals.h"
+#include "gemm.h"
 
 // compile the batched zheevd for EIGEN usage, selectable through USE_EIGEN3_CPU_EIGENSOLVER
 #include "../diverge_Eigen3.hpp"
@@ -98,12 +99,6 @@ void batched_zheevd( const complex128_t* H, complex128_t* U, double* E, index_t 
 #include <lapacke.h>
 #endif
 
-static inline void transpose_memcpy( complex128_t* out, const complex128_t* in, index_t N ) {
-    for (index_t i=0; i<N; ++i)
-    for (index_t j=0; j<N; ++j)
-        out[IDX2(i,j,N)] = in[IDX2(j,i,N)];
-}
-
 void* batched_eigen_cpu( void* data ) {
     batched_eigen_t* cfg = (batched_eigen_t*)data;
 
@@ -126,7 +121,7 @@ void* batched_eigen_cpu( void* data ) {
     double* E = (double*)malloc(sizeof(double)*n);
 
     for (index_t i=0; i<cfg->N; ++i) {
-        transpose_memcpy( H_test, cfg->H + n*n*i, n );
+        transpose_outofplace( H_test, cfg->H + n*n*i, n );
         LAPACKE_zheevd_work( LAPACK_COL_MAJOR, 'V', 'U', n, H_test, n, E, work,
                 lwork_query_i, rwork, lrwork_query, iwork, liwork_query );
         memcpy( cfg->H + n*n*i, H_test, sizeof(complex128_t)*n*n );

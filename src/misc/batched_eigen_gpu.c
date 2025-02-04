@@ -2,6 +2,7 @@
 
 #include "batched_eigen.h"
 #include "batched_eigen_internals.h"
+#include "gemm.h"
 
 #ifdef USE_CUDA
 
@@ -11,12 +12,10 @@
 
 #include "mpi_log.h"
 
-static inline void transpose_memcpy_batched( cuDoubleComplex* out, const complex128_t* in, index_t num, index_t N ) {
-    cuDoubleComplex* ptr = (cuDoubleComplex*)in;
-    for (index_t n=0; n<num; ++n)
-    for (index_t i=0; i<N; ++i)
-    for (index_t j=0; j<N; ++j)
-        out[IDX3(n,i,j,N,N)] = ptr[IDX3(n,j,i,N,N)];
+static inline void transpose_outofplace_batched( cuDoubleComplex* out,
+        const complex128_t* in, index_t num, index_t N ) {
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t n=0; n<num; ++n) transpose_outofplace( (complex128_t*)out + n*N*N, in + n*N*N, N );
 }
 
 void* batched_eigen_gpu( void* data ) {
@@ -59,7 +58,7 @@ void* batched_eigen_gpu( void* data ) {
     for (int run=0; run<N_runs; ++run) {
         int N_this_run = (run+1)*N_per_run < cfg->N ? N_per_run : (cfg->N - run*N_per_run);
         if (N_this_run > 0) {
-            transpose_memcpy_batched( H, cfg->H+N_per_run*run*cfg->n*cfg->n, N_this_run, cfg->n );
+            transpose_outofplace_batched( H, cfg->H+N_per_run*run*cfg->n*cfg->n, N_this_run, cfg->n );
             CUDA_CHECK( cudaMemPrefetchAsync( H, sizeof(cuDoubleComplex)*cfg->n*cfg->n*N_this_run, cfg->device, stream ) );
             CUSOLVER_CHECK( cusolverDnZheevjBatched( handle,
                     CUSOLVER_EIG_MODE_VECTOR, CUBLAS_FILL_MODE_UPPER, cfg->n,

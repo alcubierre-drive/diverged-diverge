@@ -11,6 +11,7 @@ LINALG_IMPLEMENT
 #include "../misc/batched_svd.h"
 #include "../misc/batched_gemms.h"
 #include "../misc/eigen.h"
+#include "../misc/gemm.h"
 #include "../diverge_post.h"
 
 #include <assert.h>
@@ -30,7 +31,6 @@ static void to_file( tu_postproduction_t* p, const char* filename );
 
 // helper functions
 static bool check_hermicity( complex128_t* data, index_t linsize );
-static void transposeInPlace( complex128_t* matrix, index_t n );
 static void _save_channel_leading_ev( tu_postproduction_t* p, complex128_t* channel,
         complex128_t* vec, double* val, char* type, index_t* len, index_t* off );
 static void _susc_o14k(const diverge_model_t* model, const complex128_t* inp, complex128_t* susc);
@@ -222,7 +222,7 @@ static void _save_channel_leading_ev( tu_postproduction_t* p, complex128_t* chan
                 type[q] = 's';
             }
             // above the matrices are C order, we must transpose that…
-            transposeInPlace( _vec, linsize );
+            transpose_inplace( _vec, linsize );
         }
 
         len[q] = (p->c.tu_n_decomp_values != 0) ?
@@ -275,11 +275,11 @@ void lingap_ff( tu_postproduction_t* p ) {
                                                       'm';  // inverse if none of the above
                 memcpy(_xval, _val, sizeof(double)*linsize);
 
-                transposeInPlace( p->vertex->product_helper, linsize );
+                transpose_inplace( p->vertex->product_helper, linsize );
                 single_eigen_sort( p->vertex->product_helper, _val, linsize, sort_mode );
-                transposeInPlace( p->vertex->product_helper, linsize );
+                transpose_inplace( p->vertex->product_helper, linsize );
 
-                transposeInPlace( p->vertex->bubble_helper, linsize );
+                transpose_inplace( p->vertex->bubble_helper, linsize );
                 single_eigen_sort( p->vertex->bubble_helper, _xval, linsize, sort_mode );
             }
             for (index_t i=0; i<p->tu_n_singular_valuesP; ++i) {
@@ -309,11 +309,11 @@ void lingap_ff( tu_postproduction_t* p ) {
                                                       'm';  // inverse if none of the above
                 memcpy(_xval, _val, sizeof(double)*linsize);
 
-                transposeInPlace( p->vertex->product_helper, linsize );
+                transpose_inplace( p->vertex->product_helper, linsize );
                 single_eigen_sort( p->vertex->product_helper, _val, linsize, sort_mode );
-                transposeInPlace( p->vertex->product_helper, linsize );
+                transpose_inplace( p->vertex->product_helper, linsize );
 
-                transposeInPlace( p->vertex->bubble_helper, linsize );
+                transpose_inplace( p->vertex->bubble_helper, linsize );
                 single_eigen_sort( p->vertex->bubble_helper, _xval, linsize, sort_mode );
             }
             for (index_t i=0; i<p->tu_n_singular_valuesC; ++i) {
@@ -355,11 +355,11 @@ void lingap_ff( tu_postproduction_t* p ) {
                                                       'm';  // inverse if none of the above
                 memcpy(_xval, _val, sizeof(double)*linsize);
 
-                transposeInPlace( p->vertex->product_helper, linsize );
+                transpose_inplace( p->vertex->product_helper, linsize );
                 single_eigen_sort( p->vertex->product_helper, _val, linsize, sort_mode );
-                transposeInPlace( p->vertex->product_helper, linsize );
+                transpose_inplace( p->vertex->product_helper, linsize );
 
-                transposeInPlace( p->vertex->bubble_helper, linsize );
+                transpose_inplace( p->vertex->bubble_helper, linsize );
                 single_eigen_sort( p->vertex->bubble_helper, _xval, linsize, sort_mode );
             }
             for (index_t i=0; i<p->tu_n_singular_valuesD; ++i) {
@@ -513,15 +513,6 @@ static bool check_hermicity( complex128_t* data, index_t linsize ) {
         err_max = MAX(err_max, err);
     }
     return err_max < 1e-11;
-}
-
-static void transposeInPlace( complex128_t* matrix, index_t n ) {
-    for (index_t i=0; i<n; ++i)
-    for (index_t j=i+1; j<n; ++j) {
-        complex128_t tmp = matrix[IDX2(i,j,n)];
-        matrix[IDX2(i,j,n)] = matrix[IDX2(j,i,n)];
-        matrix[IDX2(j,i,n)] = tmp;
-    }
 }
 
 static inline claV3d_t claV3i_d( const claV3i_t in ) { return (claV3d_t){.v={in.v[0],in.v[1],in.v[2]}}; }
