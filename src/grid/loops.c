@@ -273,15 +273,15 @@ static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_
 
     VECTOR_INIT_CAP( claV3ll_t, rs_ff_candidates, POW2(GRID_FF_SHELL_DISTANCE*2+1) );
     double norm_fac = claV3d_norm(lattice[0]);
-    for (int d=1; d<dmod->internals->dim; ++d) norm_fac += claV3d_norm(lattice[d]);
-    norm_fac /= (double)dmod->internals->dim;
+    for (int d=1; d<intls->dim; ++d) norm_fac += claV3d_norm(lattice[d]);
+    norm_fac /= (double)intls->dim;
     if (norm_fac < DIVERGE_EPS_MESH) {
         mpi_wrn_printf( "tiny values for lattice vector norms (%.5e)\n", norm_fac );
         norm_fac = 1.0;
     }
 
     int run_dim[3] = {3*GRID_FF_SHELL_DISTANCE, 3*GRID_FF_SHELL_DISTANCE, 3*GRID_FF_SHELL_DISTANCE};
-    for (int d=dmod->internals->dim; d<3; ++d) run_dim[d] = 0;
+    for (int d=intls->dim; d<3; ++d) run_dim[d] = 0;
     index_t mabs = 0;
     for (int r1=-run_dim[0]; r1<=run_dim[0]; ++r1)
     for (int r2=-run_dim[1]; r2<=run_dim[1]; ++r2)
@@ -296,7 +296,7 @@ static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_
     }
     mabs++;
 
-    // only the 'positive' ones, _to_key is maps two vectors onto the same value
+    // only the 'positive' ones, claV3ll_to_key maps positive/negative vecs to the same integer
     xbtree_t* rs_ff = xbtree_init( MAX(rs_ff_candidates_sz/2+1, 512) );
     for (index_t x=0; x<rs_ff_candidates_sz; ++x)
         xbtree_find_or_insert( rs_ff, claV3ll_to_key(rs_ff_candidates[x], mabs) );
@@ -334,8 +334,7 @@ static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_
 
     VECTOR_FREE( rs_ff_candidates );
 
-    for (index_t ff=0; ff<*nff; ++ff)
-        normalize(formfac+ff*intls->grid_nk, intls->grid_nk);
+    for (index_t ff=0; ff<*nff; ++ff) normalize(formfac+ff*intls->grid_nk, intls->grid_nk);
     return formfac;
 }
 
