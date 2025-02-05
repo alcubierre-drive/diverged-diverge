@@ -986,7 +986,7 @@ if not _libs["divERGe"] is None:
         ('tu_lingap_atscale', c_bool),
         ('tu_lingap_solver_mode', c_char * int(4)),
         ('tu_susceptibilities_bare', c_bool),
-        ('tu_channel_calc_project', c_bool),
+        ('tu_channel_calc_project', c_int),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 

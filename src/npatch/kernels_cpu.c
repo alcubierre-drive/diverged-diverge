@@ -54,7 +54,7 @@
     const index_t stop = params->stop_at; \
     const index_t* restrict k3map = params->L->k3map; \
     const double* restrict W = params->L->wgh; \
-    complex128_t* dPhi = params->dPhi;
+    complex128_t* restrict dPhi = params->dPhi;
 
 #define MAGIC_SPIN_VALUE (-1234567890)
 
@@ -69,7 +69,7 @@ void* npatch_cpu_flow_step_##su##_##chan ( void* _params ) { \
             factor; \
     \
     const index_t Nb4 = nb*nb*nb*nb; \
-    complex128_t* mem_per_thread = (complex128_t*)malloc(sizeof(complex128_t)*diverge_omp_num_threads()*Nb4); \
+    complex128_t* restrict mem_per_thread = malloc(sizeof(complex128_t)*diverge_omp_num_threads()*Nb4); \
     \
     const index_t k123start = start/Nb4, \
                   k123stop = stop/Nb4; \
@@ -80,7 +80,7 @@ void* npatch_cpu_flow_step_##su##_##chan ( void* _params ) { \
         \
         const double nrm = W[k] * fac; \
         \
-        complex128_t* cache = mem_per_thread + Nb4*omp_get_thread_num(); \
+        complex128_t* restrict cache = mem_per_thread + Nb4*omp_get_thread_num(); \
         memset(cache,0,sizeof(complex128_t)*Nb4); \
         \
         UNRAVEL_K3(phi_k_idx, k1, k2, k3) \
