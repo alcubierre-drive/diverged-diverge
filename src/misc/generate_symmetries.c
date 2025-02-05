@@ -1,11 +1,9 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "generate_symmetries.h"
-/* #include "cmath_helpers.h" */
 #include "assert.h"
 
 #define LINALG_NO_LAPACKE
-#define LINALG_EXPORT static inline
 #include "linalg.h"
 LINALG_IMPLEMENT
 LINALG_IMPL( LINALG_PREFIX, 25 )
