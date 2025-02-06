@@ -448,7 +448,7 @@ static void selfenergy_flow_rs( tu_selfenergy_t* s, complex128_t* self_en,
             self_en[o1+s->n_orb*(s1+s->n_spin*(o3+s->n_orb*(s3)))] -= prefac*tmp;
         }
     }
-    if (s->C_flow) {
+    if (s->C_flow && C_in) {
         #pragma omp parallel for collapse(4) num_threads(diverge_omp_num_threads())
         for (index_t s3=0; s3<s->n_spin; ++s3)
         for (index_t o3=0; o3<s->n_orb; ++o3)
@@ -516,7 +516,7 @@ static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
             self_en[o1+s->n_orb*o3] -= prefac*2.0*tmp;
         }
     }
-    if (s->C_flow) {
+    if (s->C_flow && C_in) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for(index_t o1 = 0; o1<s->n_orb;++o1)
         for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1) {
@@ -686,7 +686,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         }
     }
 
-    if (s->C_flow) {
+    if (s->C_flow && C_in) {
         reco('C',s,s->reco_helper,C_in,1.0,0.0);
 
         memcpy(s->greensfkt_helper,GF, sizeof(*s->greensfkt_helper)*POW2(s->n_spin*s->n_orb)*s->nk);
@@ -811,7 +811,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
                                 (tmp)*conj(s->ffkmesh[q+s->nk*s->tu_ff[s->bond_offsets[o1]+b1].ffidx]);
             }
         }
-        if (s->C_flow) {
+        if (s->C_flow && C_in) {
             #pragma omp parallel for collapse(2) schedule(dynamic) num_threads(diverge_omp_num_threads())
             for(index_t q = 0; q<s->nk;++q)
             for(index_t o1 = 0; o1<s->n_orb;++o1)
@@ -831,11 +831,11 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
             FFTW_EXECUTE_DFT(s->ifft_self_oop,s->ff_helper,self_en);
     }
 
-    if (s->C_flow)
+    if (s->C_flow && C_in)
         reco('C',s,s->reco_helper,C_in,1.0,0.0);
 
     if (s->D_flow) {
-        if (!s->C_flow) {
+        if (!s->C_flow || !C_in) {
             reco('D',s,s->reco_helper,D_in,-0.5,0.0);
         } else {
             reco('D',s,s->reco_helper,D_in,-0.5,1.0);
