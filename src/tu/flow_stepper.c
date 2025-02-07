@@ -11,7 +11,6 @@
 
 #include "diverge_interface.h"
 #include "selfenergy.h"
-#include "selfenergy_multiloop.h"
 #include "../grid/helpers.h" // TICK_TOCK macro
 
 struct tu_stepper_t {
@@ -19,7 +18,6 @@ struct tu_stepper_t {
            w_time_projection, w_time_add_find_max, w_time_self;
 
     tu_selfenergy_t* self;
-    tu_multiloop_correction_t* mFRG_self;
     tu_vertex_t* internal_vertex;
     tu_prop_t* loop;
     tu_projection_t* proj;
@@ -60,8 +58,6 @@ tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex
     if (s->channel_selection[3]) {
         s->coarseGF = calloc(s->nk*POW2(vert->n_orb*vert->n_spin),sizeof(complex128_t));
         s->self = tu_selfenergy_init(vert);
-        if (s->loop->tu_data->multiloop_selfenergy)
-            s->mFRG_self = tu_multiloop_correction_init( s->loop->model, vert->self_en );
     }
     return s;
 }
@@ -70,7 +66,6 @@ void tu_stepper_free( tu_stepper_t* s ) {
     tu_vertex_free( s->internal_vertex );
     if (s->channel_selection[3]) {
         tu_selfenergy_free(s->self);
-        if (s->mFRG_self) tu_multiloop_correction_free(s->mFRG_self);
         free(s->coarseGF);
     }
     free( s );
@@ -177,11 +172,6 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
     if (s->channel_selection[3]) {
         TICK_TOCK( s->w_time_self, tu_selfenergy_flow( s->self, s->internal_vertex->self_en,
                     inout->Pch, inout->Cch, inout->Dch, s->coarseGF, 1. ) );
-        // multi-loop corrections to the self-energy
-        if (s->mFRG_self)
-            TICK_TOCK( s->w_time_self, tu_multiloop_correction_calc( s->mFRG_self, lambda,
-                        inout->Pch, inout->Cch, inout->Dch, s->internal_vertex->Pch,
-                        s->internal_vertex->Dch, s->self, s->internal_vertex->self_en ) );
     }
     TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(inout, s->internal_vertex, dlambda),
                                        tu_vertex_max(inout, maxs) );

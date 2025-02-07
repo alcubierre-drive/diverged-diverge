@@ -5,8 +5,7 @@
 #include "propagator_gpu_mpi.h"
 #include "cuda_init.h"
 #include "../misc/shared_mem.h"
-
-#include "selfenergy_multiloop.h"
+#include "coarsify.h"
 
 #include <assert.h>
 #include <pthread.h>

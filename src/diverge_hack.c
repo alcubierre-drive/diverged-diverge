@@ -81,9 +81,6 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("tu_GF_fft_coarsify") {
         TU_INTERNALS->GF_fft_coarsify = atoi(val);
     }
-    CHECKKEY("tu_multiloop_selfenergy") {
-        TU_INTERNALS->multiloop_selfenergy = atoi(val);
-    }
     CHECKKEY("npatch_gpu_workshare") {
         INTERNALS->patch_gpu_workshare = atof(val);
     }

@@ -54,7 +54,6 @@ struct tu_data_t {
     double percent_mem_GPU_blocked;
     bool tu_selfenergy_flow;
     bool GF_fft_coarsify;
-    bool multiloop_selfenergy;
 
     index_t mpi_fft_chunksize;
     tu_fft_algorithm_t which_fft_simple,
