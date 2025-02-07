@@ -71,6 +71,9 @@ BITARY_HOST_DEV static inline cbyte_t* bitary_alloc( size_t nbit ) {
 BITARY_HOST_DEV static inline void bitary_set( cbyte_t* ary, size_t bitidx ) {
     bit_set( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
 }
+// required for omp atomic operation
+#define BITARY_SET( ary, bitidx ) \
+    (ary)[CHAR_DIV(bitidx)] |= CHAR_MOD(bitidx)
 
 /** set the :math:`n`-th bit (``bitidx``) of the bit array ``ary`` to zero */
 BITARY_HOST_DEV static inline void bitary_unset( cbyte_t* ary, size_t bitidx ) {

@@ -35,7 +35,12 @@
 #define RAVEL_L3( Pi, P1, P2, o1, o2, o3, o4 ) ((((((Pi*np+P1)*np+P2)*nb+o1)*nb+o2)*nb+o3)*nb+o4)
 #define RAVEL_O4( o1, o2, o3, o4 ) ((o1*nb+o2)*nb+o3)*nb+o4
 
-static inline void complex128_t_atomic_add( complex128_t* restrict addr, const complex128_t* restrict val ) {
+#ifndef __cplusplus
+#define RESTRICT restrict
+#else
+#define RESTRICT 
+#endif
+static inline void complex128_t_atomic_add( complex128_t* RESTRICT addr, const complex128_t* RESTRICT val ) {
     double* addr_double = (double*)addr;
     const double* val_double = (const double*)val;
     #pragma omp atomic
