@@ -801,6 +801,10 @@ if not _libs["divERGe"] is None:
     flow_step_chanmax.argtypes = [POINTER(flow_step_t), c_voidp]
     flow_step_chanmax.restype = None
 
+    flow_step_eigchan = _libs["divERGe"].get("diverge_flow_step_eigchan", "cdecl")
+    flow_step_eigchan.argtypes = [POINTER(flow_step_t), c_char]
+    flow_step_eigchan.restype = c_double
+
     flow_step_euler = _libs["divERGe"].get("diverge_flow_step_euler", "cdecl")
     flow_step_euler.argtypes = [POINTER(flow_step_t), c_double, c_double]
     flow_step_euler.restype = None
