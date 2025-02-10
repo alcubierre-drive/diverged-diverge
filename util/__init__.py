@@ -670,6 +670,10 @@ if not _libs["divERGe"] is None:
     mem_alloc_complex128_t.argtypes = [index_t]
     mem_alloc_complex128_t.restype = POINTER(c_double)
 
+    mem_alloc = _libs["divERGe"].get("malloc", "cdecl")
+    mem_alloc.argtypes = [c_size_t]
+    mem_alloc.restype = c_voidp
+
     mem_free = _libs["divERGe"].get("diverge_mem_free", "cdecl")
     mem_free.argtypes = [POINTER(None)]
     mem_free.restype = None
@@ -1284,8 +1288,11 @@ if not _libs["divERGe"] is None:
         elif dtype == "tu_formfactor_t":
             return view_array( mem_alloc_tu_formfactor_t(np.prod(shape)), dtype=struct_tu_formfactor_t, shape=shape )
         else:
-            mpi_py_eprint("cannot allocate array of type '%s'" % dtype)
-            return None
+            try:
+                return view_array( mem_alloc(np.prod(shape) * dtype().itemsize), dtype=dtype, shape=shape )
+            except:
+                mpi_py_eprint("cannot allocate array of type '%s'" % dtype)
+                return None
 
     print_ = print
 
