@@ -265,6 +265,32 @@ double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
     return omega;
 }
 
+double* diverge_energy_fill_gaps( double* omega, index_t* p_n_omega, double d_omega_min ) {
+    index_t n_omega = *p_n_omega;
+    index_t n_add = 0;
+    for (index_t w=0; w<n_omega-1; ++w) {
+        double d_omega = omega[w+1] - omega[w];
+        if (d_omega > d_omega_min)
+            n_add += lroundl(d_omega / d_omega_min);
+    }
+    omega = realloc(omega, sizeof*omega * (n_omega + n_add));
+    for (index_t w=0; w<n_omega-1; ++w) {
+        double omega_0 = omega[w], omega_1 = omega[w+1];
+        double d_omega = omega_1 - omega_0;
+        if (d_omega > d_omega_min) {
+            index_t n_add_this = lroundl(d_omega / d_omega_min);
+            double d_omega_this = d_omega / ((double)n_add_this + 1.0);
+            memmove( omega+w+1+n_add_this, omega+w+1, (n_omega-(w+1)) * sizeof*omega );
+            for (index_t n=0; n<n_add_this; ++n)
+                omega[w+1+n] = omega_0 + d_omega_this * (double)(n + 1);
+            n_omega += n_add_this;
+            w += n_add_this;
+        }
+    }
+    *p_n_omega = n_omega;
+    return omega;
+}
+
 static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double test ) {
     if (test >= vals[n_vals-1]) return n_vals-1;
     if (test <= vals[0]) return -1;

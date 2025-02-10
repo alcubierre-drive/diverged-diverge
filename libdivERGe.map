@@ -202,6 +202,7 @@ DIVERGE_UNSTABLE {
         batched_zgemd_r;
         diverge_dos_set_eta_factor;
         diverge_dos_use_gpu;
+        diverge_energy_fill_gaps;
         diverge_filling_to_energy;
         diverge_largemat_gf;
         diverge_linspace;

@@ -560,6 +560,9 @@ if not _libs["divERGe"] is None:
     filling_to_energy = _libs["divERGe"].get("diverge_filling_to_energy", "cdecl")
     filling_to_energy.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, index_t]
     filling_to_energy.restype = c_voidp
+    energy_fill_gaps = _libs["divERGe"].get("diverge_energy_fill_gaps", "cdecl")
+    energy_fill_gaps.argtypes = [c_voidp, c_voidp, c_double]
+    energy_fill_gaps.restype = c_voidp
     model_dos = _libs["divERGe"].get("diverge_model_dos", "cdecl")
     model_dos.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, index_t, c_double]
     model_dos.restype = c_voidp
