@@ -598,7 +598,7 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan ) {
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:smax)
     for (index_t i=0; i<linsz*nq; ++i) smax = MAX(smax, singular_values[i]);
     free( singular_values );
-    double smax_red = 0.0;
+    double smax_red = smax;
     diverge_mpi_allreduce_double_max( &smax, &smax_red, 1 );
-    return smax_red;
+    return MAX(smax,smax_red);
 }
