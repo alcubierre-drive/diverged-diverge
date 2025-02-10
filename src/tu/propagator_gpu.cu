@@ -345,7 +345,8 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                                 cudaMemcpyDeviceToHost,down);
             if (L_touched_map) {
                 for (index_t k=0; k<my_nk; ++k) {
-                    bitary_set( L_touched_map, loop_idx*my_nk + k );
+                    #pragma omp atomic
+                    BITARY_SET( L_touched_map, loop_idx*my_nk + k );
                 }
             }
 
@@ -454,7 +455,8 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
                                 cudaMemcpyDeviceToHost,down);
             if (L_touched_map) {
                 for (index_t k=0; k<my_nk; ++k) {
-                    bitary_set( L_touched_map, loop_idx*my_nk + k );
+                    #pragma omp atomic
+                    BITARY_SET( L_touched_map, loop_idx*my_nk + k );
                 }
             }
         }

@@ -331,7 +331,7 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
 
     tick = diverge_mpi_wtime();
     // find the touched indices
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(static,8)
     for (index_t i=0; i<t->L_tot; ++i) {
         uint64_t* L_uint = (uint64_t*)(L + i);
         if (L_uint[0] | L_uint[1]) {

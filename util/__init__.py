@@ -560,6 +560,9 @@ if not _libs["divERGe"] is None:
     filling_to_energy = _libs["divERGe"].get("diverge_filling_to_energy", "cdecl")
     filling_to_energy.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, index_t]
     filling_to_energy.restype = c_voidp
+    energy_fill_gaps = _libs["divERGe"].get("diverge_energy_fill_gaps", "cdecl")
+    energy_fill_gaps.argtypes = [c_voidp, c_voidp, c_double]
+    energy_fill_gaps.restype = c_voidp
     model_dos = _libs["divERGe"].get("diverge_model_dos", "cdecl")
     model_dos.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, index_t, c_double]
     model_dos.restype = c_voidp
@@ -669,6 +672,10 @@ if not _libs["divERGe"] is None:
     mem_alloc_complex128_t = _libs["divERGe"].get("diverge_mem_alloc_complex128_t", "cdecl")
     mem_alloc_complex128_t.argtypes = [index_t]
     mem_alloc_complex128_t.restype = POINTER(c_double)
+
+    mem_alloc = _libs["divERGe"].get("malloc", "cdecl")
+    mem_alloc.argtypes = [c_size_t]
+    mem_alloc.restype = c_voidp
 
     mem_free = _libs["divERGe"].get("diverge_mem_free", "cdecl")
     mem_free.argtypes = [POINTER(None)]
@@ -793,6 +800,10 @@ if not _libs["divERGe"] is None:
     flow_step_chanmax = _libs["divERGe"].get("diverge_flow_step_chanmax", "cdecl")
     flow_step_chanmax.argtypes = [POINTER(flow_step_t), c_voidp]
     flow_step_chanmax.restype = None
+
+    flow_step_eigchan = _libs["divERGe"].get("diverge_flow_step_eigchan", "cdecl")
+    flow_step_eigchan.argtypes = [POINTER(flow_step_t), c_char]
+    flow_step_eigchan.restype = c_double
 
     flow_step_euler = _libs["divERGe"].get("diverge_flow_step_euler", "cdecl")
     flow_step_euler.argtypes = [POINTER(flow_step_t), c_double, c_double]
@@ -1284,8 +1295,11 @@ if not _libs["divERGe"] is None:
         elif dtype == "tu_formfactor_t":
             return view_array( mem_alloc_tu_formfactor_t(np.prod(shape)), dtype=struct_tu_formfactor_t, shape=shape )
         else:
-            mpi_py_eprint("cannot allocate array of type '%s'" % dtype)
-            return None
+            try:
+                return view_array( mem_alloc(np.prod(shape) * dtype().itemsize), dtype=dtype, shape=shape )
+            except:
+                mpi_py_eprint("cannot allocate array of type '%s'" % dtype)
+                return None
 
     print_ = print
 

@@ -5,6 +5,7 @@
 #include "propagator_gpu_mpi.h"
 #include "cuda_init.h"
 #include "../misc/shared_mem.h"
+#include "coarsify.h"
 
 #include <assert.h>
 #include <pthread.h>
@@ -140,6 +141,9 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
     }
     cpu_fft_algorithm_init( t, t->which_fft_greens, t->which_fft_simple, t->which_fft_red );
 
+    t->coarsify = t->tu_data->GF_fft_coarsify ? greensfunc_coarse_init( model->nk,
+            model->nkf, model->n_orb*model->n_spin, model->internals->dim ) : NULL;
+
     return t;
 }
 
@@ -188,6 +192,8 @@ void tu_prop_free( tu_prop_t* t ) {
     free( t->c2fmap );
     free( t->c2fmap_full );
 
+    if (t->coarsify) greensfunc_coarse_free(t->coarsify);
+
     free( t );
 }
 
@@ -206,6 +212,17 @@ void tu_prop_GF_for_self( tu_prop_t* t, complex128_t* coarseGF ) {
     // round.
     const index_t nb = (t->n_spin*t->n_orb), nk = t->nk;
     const index_t nb2 = POW2(nb);
+
+    if (t->coarsify) {
+        memcpy( coarseGF, greensfunc_coarse_calc( t->coarsify, t->gf_buf ), sizeof*coarseGF * nk*POW2(nb) );
+        if (t->cFRG_loop) {
+            complex128_t* coarseGF_cFRG = greensfunc_coarse_calc( t->coarsify, t->gf_buf_cfrg );
+            #pragma omp parallel for num_threads(diverge_omp_num_threads())
+            for (index_t i=0; i<nk*POW2(nb); ++i) coarseGF[i] -= coarseGF_cFRG[i];
+        }
+        return;
+    }
+
     #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
     for (index_t b=0; b<nb; ++b)
     for (index_t o=0; o<nb; ++o)

@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+typedef struct greensfunc_coarse_t greensfunc_coarse_t;
+
 struct tu_prop_t {
     gf_complex_t* gf_buf;
     diverge_model_t* model;
@@ -48,6 +50,9 @@ struct tu_prop_t {
     // simple & red
     fftw_plan fft_single_backward,
               fft_single_forward;
+
+    // to put the GF on a coarse mesh using FFTs
+    greensfunc_coarse_t* coarsify;
 
     complex128_t **buffer_ggm, **buffer_ggp;
     index_t buffer_ggmp_sz;

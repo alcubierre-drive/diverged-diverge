@@ -70,6 +70,11 @@ void diverge_flow_step_vertmax( diverge_flow_step_t* st, double vertmax[1] );
 void diverge_flow_step_loopmax( diverge_flow_step_t* st, double loopmax[2] );
 /** outputs the maximum channel vertex elements in ``chanmax`` */
 void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
+/**
+ * outputs the maximum channel singular value given a channel in ``chan``. For
+ * how the channels are defined, see :c:func:`diverge_flow_step_vertex`.
+ */
+double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan );
 
 /** Do an euler step starting at :math:`\Lambda` ending at :math:`\Lambda+d_\Lambda` */
 void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLambda );

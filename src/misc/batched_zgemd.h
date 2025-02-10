@@ -17,7 +17,7 @@ extern "C" {
  *
  * .. note:: currently, no GPU version is implemented.
  */
-void batched_zgemd_r( complex128_t* out, complex128_t* U, double* E,
+void batched_zgemd_r( complex128_t* out, const complex128_t* U, const double* E,
         complex128_t alpha, complex128_t beta, index_t N, index_t num );
 
 #ifdef __cplusplus
