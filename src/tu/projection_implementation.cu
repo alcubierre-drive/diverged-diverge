@@ -48,10 +48,11 @@ __global__ void Proj_to_D_ft(__restrict__ cuDoubleComplex* const TO,
                     const index_t* const mom,
                     const cuDoubleComplex* const proj_prefac);
 
-void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
-        complex128_t* proj_vertex, const complex128_t* I_channel,
-        const index_t* rsmap_to, const index_t* rsmap_from, const index_t* mom_in,
-        const index_t mapsize, const complex128_t* proj_prefac, const index_t n_orbff,
+void GPUproj_handler_ft( const cuda_proj_descr_t* __restrict__ cp, const char channel,
+        complex128_t* __restrict__ proj_vertex, const complex128_t* __restrict__ I_channel,
+        const index_t* __restrict__ rsmap_to, const index_t* __restrict__ rsmap_from,
+        const index_t* __restrict__ mom_in, const index_t mapsize,
+        const complex128_t* __restrict__ proj_prefac, const index_t n_orbff,
         const index_t n_spin, const index_t my_nk, const size_t n_projpref ) {
     if (channel != 'P' && channel != 'D' && channel != 'C') return;
     cuda_setup();

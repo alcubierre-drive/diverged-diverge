@@ -36,14 +36,13 @@ __global__ void to_loop_simple(__restrict__ cuDoubleComplex* const loop,
                     const index_t* const coarse_in_fine_map);
 
 
-void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L,
-    const complex128_t* const GF, const complex128_t* const GFconj,
-    const index_t n_orb, const index_t n_bonds, const index_t* const bond_sizes,
-    const index_t n_orbff, const index_t n_spin, const index_t nktot,
-    const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
-    const index_t* mi_to_from,
-    const index_t* mi_to_oto,
-    const index_t* const mi_to_Rin) {
+void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* __restrict__ cp,
+        complex128_t* const __restrict__ L, const complex128_t* const __restrict__ GF,
+        const complex128_t* const __restrict__ GFconj, const index_t n_orb, const index_t n_bonds,
+        const index_t* const __restrict__ bond_sizes, const index_t n_orbff, const index_t n_spin,
+        const index_t nktot, const index_t my_nk, const index_t* const __restrict__ c2f_map,
+        const index_t* __restrict__ nkref, const index_t* __restrict__ mi_to_from,
+        const index_t* __restrict__ mi_to_oto, const index_t* const __restrict__ mi_to_Rin) {
     cuda_setup();
     memset(L,0,POW4(n_spin)*POW2(n_orbff)*my_nk*sizeof(complex128_t));
     tu_gpu_info_t ii = tu_gpu_info();
@@ -142,15 +141,13 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
     cudaDeviceSynchronize();
 }
 
-
-void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L,
-    const complex128_t* const GF, const complex128_t* const GFconj,
-    const index_t n_orb, const index_t n_bonds, const index_t* const bond_sizes,
-    const index_t n_orbff, const index_t n_spin, const index_t nktot,
-    const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
-    const index_t* mi_to_from,
-    const index_t* mi_to_oto,
-    const index_t* const mi_to_Rin) {
+void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* __restrict__ cp,
+        complex128_t* const __restrict__ L, const complex128_t* const __restrict__ GF,
+        const complex128_t* const __restrict__ GFconj, const index_t n_orb, const index_t n_bonds,
+        const index_t* const __restrict__ bond_sizes, const index_t n_orbff, const index_t n_spin,
+        const index_t nktot, const index_t my_nk, const index_t* const __restrict__ c2f_map,
+        const index_t* __restrict__ nkref, const index_t* __restrict__ mi_to_from,
+        const index_t* __restrict__ mi_to_oto, const index_t* const __restrict__ mi_to_Rin) {
     cuda_setup();
     memset(L,0,POW4(n_spin)*POW2(n_orbff)*my_nk*sizeof(complex128_t));
     tu_gpu_info_t ii = tu_gpu_info();
@@ -248,14 +245,15 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
     cudaDeviceSynchronize();
 }
 
-void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* const L,
-    const complex128_t* const GF, const complex128_t* const GFconj,
-    const index_t n_orb,
-    const index_t n_orbff, const index_t n_spin, const index_t nktot,
-    const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
-    const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
-    const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
-    const index_t n_unique_pairs, cbyte_t* L_touched_map ) {
+void ph_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
+        complex128_t* const __restrict__ L, const complex128_t* const __restrict__ GF,
+        const complex128_t* const __restrict__ GFconj, const index_t n_orb, const index_t n_orbff,
+        const index_t n_spin, const index_t nktot, const index_t my_nk,
+        const index_t* const __restrict__ c2f_map, const index_t* __restrict__ nkref,
+        const index_t* const __restrict__ mi_to_ofrom, const index_t* const __restrict__ mi_to_oto,
+        const index_t* const __restrict__ mi_to_Rin, const index_t* const __restrict__ umi_l,
+        const index_t* const __restrict__ umi_r, const index_t n_unique_pairs,
+        cbyte_t* __restrict__ L_touched_map ) {
     cuda_setup();
     memset(L,0,POW4(n_spin)*POW2(n_orbff)*my_nk*sizeof(complex128_t));
     tu_gpu_info_t ii = tu_gpu_info();
@@ -356,15 +354,15 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* con
     cudaDeviceSynchronize();
 }
 
-
-void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp,  complex128_t* const L,
-    const complex128_t* const GF, const complex128_t* const GFconj,
-    const index_t n_orb,
-    const index_t n_orbff, const index_t n_spin, const index_t nktot,
-    const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
-    const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
-    const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
-    const index_t n_unique_pairs, cbyte_t* L_touched_map ) {
+void pp_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
+        complex128_t* const __restrict__ L, const complex128_t* const __restrict__ GF,
+        const complex128_t* const __restrict__ GFconj, const index_t n_orb, const index_t n_orbff,
+        const index_t n_spin, const index_t nktot, const index_t my_nk,
+        const index_t* const __restrict__ c2f_map, const index_t* __restrict__ nkref,
+        const index_t* const __restrict__ mi_to_ofrom, const index_t* const __restrict__ mi_to_oto,
+        const index_t* const __restrict__ mi_to_Rin, const index_t* const __restrict__ umi_l,
+        const index_t* const __restrict__ umi_r, const index_t n_unique_pairs,
+        cbyte_t* __restrict__ L_touched_map ) {
     cuda_setup();
     memset(L,0,POW4(n_spin)*POW2(n_orbff)*my_nk*sizeof(complex128_t));
     tu_gpu_info_t ii = tu_gpu_info();

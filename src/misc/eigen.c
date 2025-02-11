@@ -27,8 +27,9 @@ static inline void normalize( complex128_t* v, index_t N ) {
     cblas_zdscal( N, 1./cblas_dznrm2(N,v,1), v, 1 );
 }
 
-complex128_t power_iteration( const complex128_t* A, complex128_t* v, index_t N,
-        complex128_t* aux, index_t* niter, double* tol, const int* iseed ) {
+complex128_t power_iteration( const complex128_t* restrict A, complex128_t* restrict v,
+        index_t N, complex128_t* restrict aux, index_t* restrict niter, double* restrict tol,
+        const int* restrict iseed ) {
 
     lapack_int seed[4]; memcpy( seed, iseed?iseed:power_iteration_seed, sizeof(seed) );
     const index_t maxiter = niter ? *niter : power_iteration_maxiter;
