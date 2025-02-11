@@ -213,6 +213,7 @@ DIVERGE_UNSTABLE {
         diverge_model_unique_distances;
         diverge_model_unique_distances_length;
         diverge_model_unique_distances_set_precision;
+        power_iteration;
         single_eigen;
         single_eigen_sort;
         single_eigen_sort_N;
