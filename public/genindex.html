@@ -87,11 +87,11 @@
 </li>
       <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.bandstructure_xvals">bandstructure_xvals() (in module diverge.output)</a>
 </li>
-      <li><a href="Linear%20Algebra.html#c.batched_eigen">batched_eigen (C function)</a>
-</li>
       <li><a href="Linear%20Algebra.html#c.batched_eigen_get_nchunks">batched_eigen_get_nchunks (C function)</a>
 </li>
       <li><a href="Linear%20Algebra.html#c.batched_eigen_r">batched_eigen_r (C function)</a>
+</li>
+      <li><a href="Linear%20Algebra.html#c.batched_eigen_r_get_eigen3_mode">batched_eigen_r_get_eigen3_mode (C function)</a>
 </li>
       <li><a href="Linear%20Algebra.html#c.batched_eigen_r_set_eigen3_mode">batched_eigen_r_set_eigen3_mode (C function)</a>
 </li>
@@ -295,6 +295,8 @@
 </li>
       <li><a href="Initialization.html#c.diverge_embed">diverge_embed (C function)</a>
 </li>
+      <li><a href="Advanced%20Features.html#c.diverge_energy_fill_gaps">diverge_energy_fill_gaps (C function)</a>
+</li>
       <li><a href="Flow%20Integration.html#c.diverge_euler_defaults">diverge_euler_defaults (C var)</a>
 </li>
       <li><a href="Flow%20Integration.html#c.diverge_euler_defaults_CPP">diverge_euler_defaults_CPP (C function)</a>
@@ -336,6 +338,8 @@
       <li><a href="Flow%20Step%20Object.html#c.diverge_flow_step_chanmax">diverge_flow_step_chanmax (C function)</a>
 </li>
       <li><a href="Flow%20Step%20Object.html#c.diverge_flow_step_dlambda">diverge_flow_step_dlambda (C function)</a>
+</li>
+      <li><a href="Flow%20Step%20Object.html#c.diverge_flow_step_eigchan">diverge_flow_step_eigchan (C function)</a>
 </li>
       <li><a href="Flow%20Step%20Object.html#c.diverge_flow_step_euler">diverge_flow_step_euler (C function)</a>
 </li>
@@ -495,10 +499,10 @@
 </li>
       <li><a href="Output.html#c.diverge_model_output_conf_defaults_CPP">diverge_model_output_conf_defaults_CPP (C function)</a>
 </li>
-      <li><a href="Output.html#c.diverge_model_output_conf_t">diverge_model_output_conf_t (C struct)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="Output.html#c.diverge_model_output_conf_t">diverge_model_output_conf_t (C struct)</a>
+</li>
       <li><a href="Output.html#c.diverge_model_output_conf_t.E">diverge_model_output_conf_t.E (C member)</a>
 </li>
       <li><a href="Output.html#c.diverge_model_output_conf_t.fatbands">diverge_model_output_conf_t.fatbands (C member)</a>
@@ -1130,10 +1134,10 @@
 </li>
       <li><a href="Full%20Python%20Module%20Specification.html#diverge.patching_find_fs_pts_PY">patching_find_fs_pts_PY() (in module diverge)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.Pchannel">Pchannel (diverge.output.diverge_post_tu attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.phloop">phloop (diverge.output.diverge_post_tu attribute)</a>
 </li>
       <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.Plen">Plen (diverge.output.diverge_post_tu attribute)</a>
@@ -1151,6 +1155,8 @@
       <li><a href="Datatypes.html#c.POW3">POW3 (C macro)</a>
 </li>
       <li><a href="Datatypes.html#c.POW4">POW4 (C macro)</a>
+</li>
+      <li><a href="Linear%20Algebra.html#c.power_iteration">power_iteration (C function)</a>
 </li>
       <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.pploop">pploop (diverge.output.diverge_post_tu attribute)</a>
 </li>
@@ -1394,6 +1400,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Full%20Python%20Module%20Specification.html#diverge.timing_t">timing_t (in module diverge)</a>
 </li>
+      <li><a href="Linear%20Algebra.html#c.transpose_conj_outofplace">transpose_conj_outofplace (C function)</a>
+</li>
+      <li><a href="Linear%20Algebra.html#c.transpose_inplace">transpose_inplace (C function)</a>
+</li>
+      <li><a href="Linear%20Algebra.html#c.transpose_outofplace">transpose_outofplace (C function)</a>
+</li>
       <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_model.tu_ff">tu_ff (diverge.output.diverge_model attribute)</a>
 </li>
       <li><a href="Model.html#c.tu_formfactor_t">tu_formfactor_t (C struct)</a>
@@ -1412,10 +1424,10 @@
 </li>
       <li><a href="Model.html#c.tu_formfactor_t.R">tu_formfactor_t.R (C member)</a>
 </li>
-      <li><a href="Flowing%20Vertices.html#c.tu_highsym_vertex_free">tu_highsym_vertex_free (C function)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="Flowing%20Vertices.html#c.tu_highsym_vertex_free">tu_highsym_vertex_free (C function)</a>
+</li>
       <li><a href="Flowing%20Vertices.html#c.tu_highsym_vertex_store">tu_highsym_vertex_store (C function)</a>
 </li>
       <li><a href="Flowing%20Vertices.html#c.tu_highsym_vertex_t">tu_highsym_vertex_t (C struct)</a>
