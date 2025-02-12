@@ -49,8 +49,14 @@ struct single_gemm_Xt_t {
 single_gemm_Xt_t* single_gemm_Xt_init( void ) {
     single_gemm_Xt_t* x = calloc(1, sizeof*x);
     CUBLAS_CHECK( cublasXtCreate( &x->t ) );
+    int ndev = -1;
+    CUDA_CHECK( cudaGetDeviceCount( &ndev ) );
+    int* dev = calloc(ndev, sizeof*dev);
+    for (int i=0; i<ndev; ++i) dev[i] = i;
+    CUBLAS_CHECK( cublasXtDeviceSelect( x->t, ndev, dev ) );
     CUBLAS_CHECK( cublasXtSetBlockDim( x->t, 8192 ) );
     CUBLAS_CHECK( cublasXtSetCpuRatio( x->t, CUBLASXT_GEMM, CUBLASXT_DOUBLECOMPLEX, 0.0 ) );
+    free( dev );
     return x;
 }
 void single_gemm_Xt_free( single_gemm_Xt_t* x ) {
