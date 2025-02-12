@@ -142,7 +142,7 @@ void tu_vertex_free( tu_vertex_t* V ) {
     }
 #endif
 #ifdef TU_VERTEX_RECO_GPU_ZGEMM
-    single_gemm_Xt_free( V->GPU_reco_gemm );
+    if (V->owns) single_gemm_Xt_free( V->GPU_reco_gemm );
 #endif
     free( V );
 }
@@ -200,6 +200,7 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
     for (int j = 0; j < 3; ++j) {
         V->GPU_gemm_buffer[i][j] = O->GPU_gemm_buffer[i][j];
     }
+    V->GPU_reco_gemm = O->GPU_reco_gemm;
 
     return V;
 }
@@ -375,7 +376,7 @@ void tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* 
         ZERO_OUT(buf_q,rest*my_nk_in_bz);
         const index_t nsq = POW2(n_spin);
         const index_t legdim = nsq*n_orbff;
-        #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
+        #pragma omp parallel for collapse(6) num_threads(diverge_omp_num_threads())
         for (index_t s4=0; s4<n_spin; ++s4)
         for (index_t s3=0; s3<n_spin; ++s3)
         for (index_t mo3=0; mo3<n_orbff; ++mo3)
@@ -440,7 +441,7 @@ void tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* 
         single_gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
 #endif
     } else {
-        #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
+        #pragma omp parallel for collapse(6) num_threads(diverge_omp_num_threads())
         for (index_t s4=0; s4<n_spin; ++s4)
         for (index_t s3=0; s3<n_spin; ++s3)
         for (index_t mo3=0; mo3<n_orbff; ++mo3)
