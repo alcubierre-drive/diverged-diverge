@@ -339,8 +339,8 @@ double tu_vertex_infinity_norm( const tu_vertex_t* V ) {
     return max;
 }
 
-void tu_vertex_reco_ft( const tu_vertex_t* V, char chan, complex128_t* buf,
-        const complex128_t* existing_r_exp, index_t nr, complex128_t* buf_q/*=NULL*/ ) {
+void tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* restrict buf,
+        const complex128_t* restrict existing_r_exp, index_t nr, complex128_t* restrict buf_q/*=NULL*/ ) {
     const char channel = chan;
     bool was_null = false;
     if (!buf_q) {

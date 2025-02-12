@@ -6,6 +6,7 @@
 #include "misc/batched_eigen.h"
 #include "misc/batched_svd.h"
 #include "misc/batched_zgemd.h"
+#include "misc/eigen.h"
 #include "diverge_filling.h"
 #include "diverge_model_internals.h"
 #include "misc/dependency_tree.h"
@@ -604,17 +605,33 @@ void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* fe
     if(st->tu_vertex->C_to_D) mpi_vrb_printf("C to D feedback active\n");
 }
 
-double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan ) {
+double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter ) {
     diverge_flow_step_vertex_t v = diverge_flow_step_vertex( st, chan );
     index_t nq = (v.q_1 - v.q_0);
     index_t linsz = v.backend == 'T' ? v.n_orbff * POW2(v.n_spin) : POW2(v.n_orbff*v.n_spin) * v.nk;
-    double* singular_values = calloc( nq * linsz, sizeof* singular_values );
-    batched_svd( NULL, -1, v.ary, NULL, NULL, singular_values, linsz, nq );
-    double smax = 0.0;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:smax)
-    for (index_t i=0; i<linsz*nq; ++i) smax = MAX(smax, singular_values[i]);
-    free( singular_values );
-    double smax_red = smax;
-    diverge_mpi_allreduce_double_max( &smax, &smax_red, 1 );
-    return MAX(smax,smax_red);
+    if (piter) {
+        complex128_t* aux = calloc( 3*linsz, sizeof*aux );
+        double tol = 1.e-6;
+        index_t niter = 1000;
+        double maxval = 0.0;
+        for (index_t q=0; q<nq; ++q) {
+            complex128_t eval = power_iteration( v.ary + q*POW2(linsz), aux, linsz,
+                    aux+linsz, &niter, &tol, NULL );
+            maxval = MAX(maxval, cabs(eval));
+        }
+        free( aux );
+        double maxval_red = maxval;
+        diverge_mpi_allreduce_double_max( &maxval, &maxval_red, 1 );
+        return MAX(maxval, maxval_red);
+    } else {
+        double* singular_values = calloc( nq * linsz, sizeof* singular_values );
+        batched_svd( NULL, -1, v.ary, NULL, NULL, singular_values, linsz, nq );
+        double smax = 0.0;
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:smax)
+        for (index_t i=0; i<linsz*nq; ++i) smax = MAX(smax, singular_values[i]);
+        free( singular_values );
+        double smax_red = smax;
+        diverge_mpi_allreduce_double_max( &smax, &smax_red, 1 );
+        return MAX(smax, smax_red);
+    }
 }

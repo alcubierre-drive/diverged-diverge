@@ -255,9 +255,9 @@ derivative. May result in large files.</p>
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_postprocess_conf_t.tu_channel_calc_project">
 <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_channel_calc_project</span></span></span><a class="headerlink" href="#c.diverge_postprocess_conf_t.tu_channel_calc_project" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_post.h#L112"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>project the full vertex into the respective diagrammatic channel for
-diagonalization (only useful when <a class="reference internal" href="#c.diverge_postprocess_conf_t.tu_skip_channel_calc" title="tu_skip_channel_calc"><code class="xref c c-member docutils literal notranslate"><span class="pre">tu_skip_channel_calc</span></code></a> is
-false)</p>
+<dd><p>project the full vertex into the respective diagrammatic channel (if &gt; 0)
+for diagonalization, or to physical channels (if &lt; 0). Note that this
+flag has an effect only when <a class="reference internal" href="#c.diverge_postprocess_conf_t.tu_skip_channel_calc" title="tu_skip_channel_calc"><code class="xref c c-member docutils literal notranslate"><span class="pre">tu_skip_channel_calc</span></code></a> is false.</p>
 </dd></dl>
 
 </dd></dl>

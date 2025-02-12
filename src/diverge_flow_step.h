@@ -71,10 +71,12 @@ void diverge_flow_step_loopmax( diverge_flow_step_t* st, double loopmax[2] );
 /** outputs the maximum channel vertex elements in ``chanmax`` */
 void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
 /**
- * outputs the maximum channel singular value given a channel in ``chan``. For
- * how the channels are defined, see :c:func:`diverge_flow_step_vertex`.
+ * outputs the maximum channel singular value given a channel in ``chan``. If
+ * ``piter != 0``, calculate the leading eigenvalue using power iteration,
+ * otherwise use :c:func:`batched_svd`. For how the channels are defined, see
+ * :c:func:`diverge_flow_step_vertex`.
  */
-double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan );
+double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter );
 
 /** Do an euler step starting at :math:`\Lambda` ending at :math:`\Lambda+d_\Lambda` */
 void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLambda );
@@ -92,7 +94,7 @@ diverge_timing_t* diverge_flow_step_timings( diverge_flow_step_t* st );
 
 /**
  * .. deprecated:: 0.9
- *  use :c:func:`diverge_flow_step_timings` instead.
+ *   use :c:func:`diverge_flow_step_timings` instead.
  *
  * return the timing list element at ``idx`` attached to
  * :c:type:`diverge_flow_step_t`
@@ -100,7 +102,7 @@ diverge_timing_t* diverge_flow_step_timings( diverge_flow_step_t* st );
 double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx );
 /**
  * .. deprecated:: 0.9
- *  use :c:func:`diverge_flow_step_timings` instead.
+ *   use :c:func:`diverge_flow_step_timings` instead.
  *
  * the timing list element name at ``idx`` attached to
  * :c:type:`diverge_flow_step_t`
@@ -108,7 +110,7 @@ double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx );
 const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx );
 /**
  * .. deprecated:: 0.9
- *  use :c:func:`diverge_flow_step_timings` instead.
+ *   use :c:func:`diverge_flow_step_timings` instead.
  *
  * returns all timings as static vector (that must not be freed), maximal size
  * 128. last element [128] is zerod.
@@ -118,7 +120,7 @@ const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx
 double* diverge_flow_step_timing_vec( diverge_flow_step_t* st );
 /**
  * .. deprecated:: 0.9
- *  use :c:func:`diverge_flow_step_timings` instead.
+ *   use :c:func:`diverge_flow_step_timings` instead.
  *
  * returns all timing descriptions as static vector (that must not be freed),
  * maximal size 128. last element [128] is zerod.

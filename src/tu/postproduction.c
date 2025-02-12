@@ -181,7 +181,7 @@ static void save_channel_leading_ev( tu_postproduction_t* p ) {
         _save_channel_leading_ev(p, Vbuf ? Vbuf : p->vertex->Cch, p->Cvec, p->Cval, p->Ctype, p->lenC, p->offC);
     }
     if (p->vertex->D_flow) {
-        if (p->c.channel_calc_project > 0 || !p->vertex->SU2) {
+        if (p->c.channel_calc_project > 0 || (p->c.channel_calc_project < 0 && !p->vertex->SU2)) {
             D_projection(Vbuf, p->vertex, p->proj);
         } else if (p->c.channel_calc_project < 0 && p->vertex->SU2) {
             complex128_t* helper = p->vertex->bubble_helper;
