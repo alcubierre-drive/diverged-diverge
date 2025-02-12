@@ -114,6 +114,10 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
     mpi_vrb_printf("TU euler requires %.1fGB\n", memsize/POW3(1024.) * sizeof(complex128_t))
     mpi_vrb_printf("TU vertex size: %.1fGB\n",  (double)V->full_vert_size/POW3(1024.) * sizeof(complex128_t));
 
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+    V->GPU_reco_gemm = single_gemm_Xt_init();
+#endif
+
     return V;
 }
 
@@ -136,6 +140,9 @@ void tu_vertex_free( tu_vertex_t* V ) {
             CUDA_CHECK( cudaFree(V->GPU_memory_pool_managed[i]) );
         }
     }
+#endif
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+    single_gemm_Xt_free( V->GPU_reco_gemm );
 #endif
     free( V );
 }
@@ -427,7 +434,11 @@ void tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* 
                 }
             }
         }
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+        single_gemm_Xt(V->GPU_reco_gemm,buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
+#else
         single_gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
+#endif
     } else {
         #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
         for (index_t s4=0; s4<n_spin; ++s4)
@@ -455,7 +466,11 @@ void tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* 
                                                         (s2+n_spin*q)))))];
             }
         }
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+        single_gemm_Xt(V->GPU_reco_gemm,buf_q,existing_r_exp,buf,nr,rest,V->my_nk,1./(double)V->nk,0.0);
+#else
         single_gemm(buf_q,existing_r_exp,buf,nr,rest,V->my_nk,1./(double)V->nk,0.0);
+#endif
     }
     diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
 
