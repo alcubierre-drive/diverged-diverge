@@ -13,7 +13,7 @@ extern "C" {
  * B(K,M) and C(N,M) are matrices in C order (Row Major).
  */
 void single_gemm( const complex128_t* A, const complex128_t* B, complex128_t* C,
-        index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta);
+        index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta );
 
 /**
  * calculates the matrix product :math:`C = \beta C + \alpha A \cdot B^\dagger`.
@@ -39,6 +39,13 @@ void transpose_outofplace( complex128_t* B, const complex128_t* A, index_t N );
 
 /** out-of-place adjoint of square matrix ``A`` into ``B`` (dimension NxN) */
 void transpose_conj_outofplace( complex128_t* B, const complex128_t* A, index_t N );
+
+typedef struct single_gemm_Xt_t single_gemm_Xt_t;
+single_gemm_Xt_t* single_gemm_Xt_init( void );
+void single_gemm_Xt_free( single_gemm_Xt_t* x );
+void single_gemm_Xt( single_gemm_Xt_t* x, const complex128_t* A,
+        const complex128_t* B, complex128_t* C, index_t M, index_t N, index_t K,
+        complex128_t alpha, complex128_t beta );
 
 #ifdef __cplusplus
 }

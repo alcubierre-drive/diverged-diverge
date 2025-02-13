@@ -169,6 +169,7 @@ static void save_channel_leading_ev( tu_postproduction_t* p ) {
     // the _save_channel_leading_ev call
     complex128_t* Vbuf = p->c.channel_calc_project ? p->vertex->projection_helper : NULL;
     index_t V_sz = p->vertex->full_vert_size;
+    if (Vbuf) ZERO_OUT( Vbuf, V_sz );
     if (p->vertex->P_flow) {
         if (p->c.channel_calc_project) P_projection(Vbuf, p->vertex, p->proj);
         _save_channel_leading_ev(p, Vbuf ? Vbuf : p->vertex->Pch, p->Pvec, p->Pval, p->Ptype, p->lenP, p->offP);
@@ -184,15 +185,16 @@ static void save_channel_leading_ev( tu_postproduction_t* p ) {
         if (p->c.channel_calc_project > 0 || (p->c.channel_calc_project < 0 && !p->vertex->SU2)) {
             D_projection(Vbuf, p->vertex, p->proj);
         } else if (p->c.channel_calc_project < 0 && p->vertex->SU2) {
-            complex128_t* helper = p->vertex->bubble_helper;
             if (p->vertex->C_flow) {
                 C_projection(Vbuf, p->vertex, p->proj);
                 for (index_t i=0; i<V_sz; ++i) Vbuf[i] *= -1.0;
             } else {
                 for (index_t i=0; i<V_sz; ++i) Vbuf[i] = 0.0;
             }
+            complex128_t* helper = calloc(p->vertex->full_vert_size,sizeof(complex128_t));
             D_projection(helper, p->vertex, p->proj);
             for (index_t i=0; i<V_sz; ++i) Vbuf[i] += 2.*helper[i];
+            free( helper );
         }
         _save_channel_leading_ev(p, Vbuf ? Vbuf : p->vertex->Dch, p->Dvec, p->Dval, p->Dtype, p->lenD, p->offD);
     }

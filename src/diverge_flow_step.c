@@ -412,8 +412,8 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                     if (chan == 'h') {
                         complex128_t* helper = calloc(tu_V->full_vert_size, sizeof*helper);
                         D_projection(helper, tu_V, tu_Proj);
-                        for (index_t i=0; i<tu_V->full_vert_size; ++i) tu_V->projection_helper[i] += 2.*helper[i];
-                        free(helper);
+                        for (index_t i=0; i<tu_V->full_vert_size; ++i) tu_V->projection_helper[i] += 2.0*helper[i];
+                        free( helper );
                     }
                 }
                 result.q_0 = tu_V->my_nk_off;

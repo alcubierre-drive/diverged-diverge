@@ -115,6 +115,10 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
     mpi_vrb_printf("TU euler requires %.1fGB\n", memsize/POW3(1024.) * sizeof(complex128_t))
     mpi_vrb_printf("TU vertex size: %.1fGB\n",  (double)V->full_vert_size/POW3(1024.) * sizeof(complex128_t));
 
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+    V->GPU_reco_gemm = single_gemm_Xt_init();
+#endif
+
     return V;
 }
 
@@ -138,7 +142,9 @@ void tu_vertex_free( tu_vertex_t* V ) {
         }
     }
 #endif
-
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+    if (V->owns) single_gemm_Xt_free( V->GPU_reco_gemm );
+#endif
     free( V );
 }
 
@@ -198,6 +204,7 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
     for (int j = 0; j < 3; ++j) {
         V->GPU_gemm_buffer[i][j] = O->GPU_gemm_buffer[i][j];
     }
+    V->GPU_reco_gemm = O->GPU_reco_gemm;
 
     return V;
 }
@@ -350,105 +357,125 @@ void tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* 
         buf_q = calloc(my_vertsize,sizeof(complex128_t));
     }
 
-    const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));
+    const index_t n_spin = V->n_spin,
+                  n_orbff = V->n_orbff;
+
+    const index_t* restrict symm_from_ibz_2_bz = V->symm->from_ibz_2_bz;
+    const index_t* restrict symm_kmaps_to = V->symm->kmaps_to;
+    const index_t my_nk_off = V->tu_data->my_nk_off;
+    const index_t* restrict symm_o2m_map_len = V->symm->o2m_map_len;
+    const index_t* restrict symm_o2m_map_off = V->symm->o2m_map_off;
+    const index_t* restrict symm_idx_map_symm = V->symm->idx_map_symm;
+    const complex128_t* restrict symm_prefactor_symmP = V->symm->prefactor_symmP;
+    const complex128_t* restrict symm_prefactor_symmCD = V->symm->prefactor_symmCD;
+    const complex128_t* restrict Pch = V->Pch;
+    const complex128_t* restrict Cch = V->Cch;
+    const complex128_t* restrict Dch = V->Dch;
+
+    const index_t rest = POW2(n_orbff*POW2(n_spin));
     if (V->symm->use_symmetries) {
         const index_t my_nk_in_bz = V->symm->my_nk_in_bz;
         const index_t my_nk_in_bz_off = V->symm->my_nk_in_bz_off;
 
         ZERO_OUT(buf_q,rest*my_nk_in_bz);
-        const index_t nsq = POW2(V->n_spin);
-        const index_t legdim = nsq*V->n_orbff;
-        #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
-        for (index_t s4=0; s4<V->n_spin; ++s4)
-        for (index_t s3=0; s3<V->n_spin; ++s3)
-        for (index_t mo3=0; mo3<V->n_orbff; ++mo3)
-        for (index_t s2=0; s2<V->n_spin; ++s2)
-        for (index_t s1=0; s1<V->n_spin; ++s1)
-        for (index_t mo1=0; mo1<V->n_orbff; ++mo1)
+        const index_t nsq = POW2(n_spin);
+        const index_t legdim = nsq*n_orbff;
+        #pragma omp parallel for collapse(6) num_threads(diverge_omp_num_threads())
+        for (index_t s4=0; s4<n_spin; ++s4)
+        for (index_t s3=0; s3<n_spin; ++s3)
+        for (index_t mo3=0; mo3<n_orbff; ++mo3)
+        for (index_t s2=0; s2<n_spin; ++s2)
+        for (index_t s1=0; s1<n_spin; ++s1)
+        for (index_t mo1=0; mo1<n_orbff; ++mo1)
         for (index_t q=0; q<my_nk_in_bz; ++q) {
-            const index_t q_in_full = V->symm->from_ibz_2_bz[q + my_nk_in_bz_off];
-            const index_t qFROM_IBZ = V->symm->kmaps_to[q_in_full] - V->tu_data->my_nk_off;
-            const index_t idx_TO = q + my_nk_in_bz*(mo1 + V->n_orbff*((s1+V->n_spin*s2)+nsq*
-                    (mo3 + V->n_orbff*(s3+V->n_spin*s4))));
+            const index_t q_in_full = symm_from_ibz_2_bz[q + my_nk_in_bz_off];
+            const index_t qFROM_IBZ = symm_kmaps_to[q_in_full] - my_nk_off;
+            const index_t idx_TO = q + my_nk_in_bz*(mo1 + n_orbff*((s1+n_spin*s2)+nsq*
+                    (mo3 + n_orbff*(s3+n_spin*s4))));
 
             if (channel == 'P') {
-                index_t lidx = IDX4(s2,s1,mo1,q,V->n_spin,V->n_orbff,my_nk_in_bz);
-                index_t ridx = IDX4(s4,s3,mo3,q,V->n_spin,V->n_orbff,my_nk_in_bz);
+                index_t lidx = IDX4(s2,s1,mo1,q,n_spin,n_orbff,my_nk_in_bz);
+                index_t ridx = IDX4(s4,s3,mo3,q,n_spin,n_orbff,my_nk_in_bz);
 
-                for(index_t l=0; l < V->symm->o2m_map_len[lidx]; ++l)
-                for(index_t r=0; r < V->symm->o2m_map_len[ridx]; ++r) {
+                for(index_t l=0; l < symm_o2m_map_len[lidx]; ++l)
+                for(index_t r=0; r < symm_o2m_map_len[ridx]; ++r) {
                     const index_t idx_FROM =
-                        V->symm->idx_map_symm[l+V->symm->o2m_map_off[lidx]] + legdim * (
-                            V->symm->idx_map_symm[r+V->symm->o2m_map_off[ridx]]
+                        symm_idx_map_symm[l+symm_o2m_map_off[lidx]] + legdim * (
+                            symm_idx_map_symm[r+symm_o2m_map_off[ridx]]
                             +legdim * (qFROM_IBZ));
 
-                    buf_q[idx_TO] += V->symm->prefactor_symmP[l+V->symm->o2m_map_off[lidx]]*
-                                conj(V->symm->prefactor_symmP[r+V->symm->o2m_map_off[ridx]])* V->Pch[idx_FROM];
+                    buf_q[idx_TO] += symm_prefactor_symmP[l+symm_o2m_map_off[lidx]]*
+                                conj(symm_prefactor_symmP[r+symm_o2m_map_off[ridx]])* Pch[idx_FROM];
                 }
             }
             if (channel == 'C') {
-                index_t lidx = IDX4(s4,s1,mo1,q,V->n_spin,V->n_orbff,my_nk_in_bz);
-                index_t ridx = IDX4(s2,s3,mo3,q,V->n_spin,V->n_orbff,my_nk_in_bz);
+                index_t lidx = IDX4(s4,s1,mo1,q,n_spin,n_orbff,my_nk_in_bz);
+                index_t ridx = IDX4(s2,s3,mo3,q,n_spin,n_orbff,my_nk_in_bz);
 
-                for(index_t l=0; l < V->symm->o2m_map_len[lidx]; ++l)
-                for(index_t r=0; r < V->symm->o2m_map_len[ridx]; ++r) {
+                for(index_t l=0; l < symm_o2m_map_len[lidx]; ++l)
+                for(index_t r=0; r < symm_o2m_map_len[ridx]; ++r) {
                     const index_t idx_FROM =
-                        V->symm->idx_map_symm[l+V->symm->o2m_map_off[lidx]] + legdim * (
-                            V->symm->idx_map_symm[r+V->symm->o2m_map_off[ridx]]
+                        symm_idx_map_symm[l+symm_o2m_map_off[lidx]] + legdim * (
+                            symm_idx_map_symm[r+symm_o2m_map_off[ridx]]
                             +legdim * (qFROM_IBZ));
 
-                    buf_q[idx_TO] += V->symm->prefactor_symmCD[l+V->symm->o2m_map_off[lidx]]*
-                                conj(V->symm->prefactor_symmCD[r+V->symm->o2m_map_off[ridx]])* V->Cch[idx_FROM];
+                    buf_q[idx_TO] += symm_prefactor_symmCD[l+symm_o2m_map_off[lidx]]*
+                                conj(symm_prefactor_symmCD[r+symm_o2m_map_off[ridx]])* Cch[idx_FROM];
                 }
             }
             if (channel == 'D') {
-                index_t lidx = IDX4(s3,s1,mo1,q,V->n_spin,V->n_orbff,my_nk_in_bz);
-                index_t ridx = IDX4(s2,s4,mo3,q,V->n_spin,V->n_orbff,my_nk_in_bz);
+                index_t lidx = IDX4(s3,s1,mo1,q,n_spin,n_orbff,my_nk_in_bz);
+                index_t ridx = IDX4(s2,s4,mo3,q,n_spin,n_orbff,my_nk_in_bz);
 
-                for(index_t l=0; l < V->symm->o2m_map_len[lidx]; ++l)
-                for(index_t r=0; r < V->symm->o2m_map_len[ridx]; ++r) {
+                for(index_t l=0; l < symm_o2m_map_len[lidx]; ++l)
+                for(index_t r=0; r < symm_o2m_map_len[ridx]; ++r) {
                     const index_t idx_FROM =
-                        V->symm->idx_map_symm[l+V->symm->o2m_map_off[lidx]] + legdim * (
-                            V->symm->idx_map_symm[r+V->symm->o2m_map_off[ridx]]
+                        symm_idx_map_symm[l+symm_o2m_map_off[lidx]] + legdim * (
+                            symm_idx_map_symm[r+symm_o2m_map_off[ridx]]
                             +legdim * (qFROM_IBZ));
 
-                    buf_q[idx_TO] += V->symm->prefactor_symmCD[l+V->symm->o2m_map_off[lidx]]*
-                                conj(V->symm->prefactor_symmCD[r+V->symm->o2m_map_off[ridx]])* V->Dch[idx_FROM];
+                    buf_q[idx_TO] += symm_prefactor_symmCD[l+symm_o2m_map_off[lidx]]*
+                                conj(symm_prefactor_symmCD[r+symm_o2m_map_off[ridx]])* Dch[idx_FROM];
                 }
             }
         }
-
-        const double norm = 1./(double)V->nk;
-        single_gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,norm,0.0);
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+        single_gemm_Xt(V->GPU_reco_gemm,buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
+#else
+        single_gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
+#endif
     } else {
-        #pragma omp parallel for schedule(static) collapse(7) num_threads(diverge_omp_num_threads())
-        for (index_t s4=0; s4<V->n_spin; ++s4)
-        for (index_t s3=0; s3<V->n_spin; ++s3)
-        for (index_t mo3=0; mo3<V->n_orbff; ++mo3)
-        for (index_t s2=0; s2<V->n_spin; ++s2)
-        for (index_t s1=0; s1<V->n_spin; ++s1)
-        for (index_t mo1=0; mo1<V->n_orbff; ++mo1)
+        #pragma omp parallel for collapse(6) num_threads(diverge_omp_num_threads())
+        for (index_t s4=0; s4<n_spin; ++s4)
+        for (index_t s3=0; s3<n_spin; ++s3)
+        for (index_t mo3=0; mo3<n_orbff; ++mo3)
+        for (index_t s2=0; s2<n_spin; ++s2)
+        for (index_t s1=0; s1<n_spin; ++s1)
+        for (index_t mo1=0; mo1<n_orbff; ++mo1)
         for (index_t q=0; q<V->my_nk; ++q) {
-            const index_t idx_TO = q + V->my_nk*(mo1+V->n_orbff*(s1+V->n_spin*
-                                (s2+V->n_spin*(mo3+V->n_orbff*(s3+V->n_spin*s4)))));
+            const index_t idx_TO = q + V->my_nk*(mo1+n_orbff*(s1+n_spin*
+                                (s2+n_spin*(mo3+n_orbff*(s3+n_spin*s4)))));
             if (channel == 'P') {
-                buf_q[idx_TO] = V->Pch[mo1+V->n_orbff*(s1+V->n_spin*
-                                    (s2+V->n_spin*(mo3+V->n_orbff*(s3+V->n_spin*
-                                                        (s4+V->n_spin*q)))))];
+                buf_q[idx_TO] = Pch[mo1+n_orbff*(s1+n_spin*
+                                    (s2+n_spin*(mo3+n_orbff*(s3+n_spin*
+                                                        (s4+n_spin*q)))))];
             }
             if (channel == 'C') {
-                buf_q[idx_TO] = V->Cch[mo1+V->n_orbff*(s1+V->n_spin*
-                                    (s4+V->n_spin*(mo3+V->n_orbff*(s3+V->n_spin*
-                                                        (s2+V->n_spin*q)))))];
+                buf_q[idx_TO] = Cch[mo1+n_orbff*(s1+n_spin*
+                                    (s4+n_spin*(mo3+n_orbff*(s3+n_spin*
+                                                        (s2+n_spin*q)))))];
             }
             if (channel == 'D') {
-                buf_q[idx_TO] = V->Dch[mo1+V->n_orbff*(s1+V->n_spin*
-                                    (s3+V->n_spin*(mo3+V->n_orbff*(s4+V->n_spin*
-                                                        (s2+V->n_spin*q)))))];
+                buf_q[idx_TO] = Dch[mo1+n_orbff*(s1+n_spin*
+                                    (s3+n_spin*(mo3+n_orbff*(s4+n_spin*
+                                                        (s2+n_spin*q)))))];
             }
         }
-        const double norm = 1./(double)V->nk;
-        single_gemm(buf_q,existing_r_exp,buf,nr,rest,V->my_nk,norm,0.0);
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+        single_gemm_Xt(V->GPU_reco_gemm,buf_q,existing_r_exp,buf,nr,rest,V->my_nk,1./(double)V->nk,0.0);
+#else
+        single_gemm(buf_q,existing_r_exp,buf,nr,rest,V->my_nk,1./(double)V->nk,0.0);
+#endif
     }
     diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
 
