@@ -395,9 +395,11 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                     for (index_t i=0; i<tu_V->full_vert_size; ++i)
                         tu_V->projection_helper[i] *= -1.0;
                     if (chan == 'h') {
-                        D_projection(tu_V->bubble_helper, tu_V, tu_Proj);
+                        complex128_t* helper = calloc(tu_V->full_vert_size, sizeof*helper);
+                        D_projection(helper, tu_V, tu_Proj);
                         for (index_t i=0; i<tu_V->full_vert_size; ++i)
-                            tu_V->projection_helper[i] += 2.*tu_V->bubble_helper[i];
+                            tu_V->projection_helper[i] += helper[i];
+                        free( helper );
                     }
                 }
                 result.q_0 = tu_V->my_nk_off;
