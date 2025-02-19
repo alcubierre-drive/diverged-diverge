@@ -751,12 +751,15 @@ class diverge_post_tu:
         self.symm_o2m_off = get_array_header( iL, np.longlong )
         if(d_header[iL[0]-1] > 0):
             self.symm_o2m_off = self.symm_o2m_off.reshape(symm_shape)
-        #: index maps
+        #: index maps (two-dimensional array (-1,nkibz), first dimension described by o2m_len and o2m_off)
         self.symm_o2m_idx_map = get_array_header( iL, np.longlong )
-        #: complex prefactor for P
+        if self.symm_o2m_idx_map.size > 0: self.symm_o2m_idx_map = self.symm_o2m_idx_map.reshape((-1,self.nkibz))
+        #: complex prefactor for P (different for each :math:`\boldsymbol{q}`, therefore a two-dimensional array (-1,nkibz))
         self.symm_o2m_Ppref = get_array_header( iL, np.complex128 )
-        #: complex prefactor for C
+        if self.symm_o2m_Ppref.size > 0: self.symm_o2m_Ppref = self.symm_o2m_Ppref.reshape((-1,self.nkibz))
+        #: complex prefactor for C (different for each :math:`\boldsymbol{q}`, therefore a two-dimensional array (-1,nkibz))
         self.symm_o2m_Cpref = get_array_header( iL, np.complex128 )
+        if self.symm_o2m_Cpref.size > 0: self.symm_o2m_Cpref = self.symm_o2m_Cpref.reshape((-1,self.nkibz))
 
         #: diverge tag version (serves as file format version)
         self.version = get_array_header( iL, np.byte ).tobytes().decode()
