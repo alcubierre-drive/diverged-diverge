@@ -17,8 +17,9 @@ typedef struct diverge_model_t diverge_model_t;
  * = \sum_{b\in\mathcal S} U_{o,b}(\boldsymbol k) U_{o',b}^*(\boldsymbol k)`,
  * and :math:`\mathcal S` denotes a set of bands to sum over. Our
  * implementation only takes finite differences along each of the lattice
- * directions, but does *not* divide by the corresponding lengths. This must be
- * taken into account when interpreting :math:`g(\boldsymbol k)`.
+ * directions, treating the model as three-dimensional. So a model in lower
+ * dimension must be re-normalized by the length of the inverse lattice vector
+ * (usually :math:`2\pi` when you set e.g. ``model->lattice[2][2] = 1.0``).
  *
  * :param diverge_model_t m: the model instance. May be NULL in case all other
  *      parameters are given (non-NULL / not -1).
