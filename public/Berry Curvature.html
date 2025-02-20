@@ -115,11 +115,9 @@ axes. Must be freed manually by a call to <code class="docutils literal notransl
 <span class="math notranslate nohighlight">\(g(\boldsymbol k) = \frac{1}{2} \mathrm{Tr} \partial_i P_{\mathcal S}
 \partial_i P_\mathcal{S}\)</span>, where <span class="math notranslate nohighlight">\(P^{o,o'}_{\mathcal S}(\boldsymbol k)
 = \sum_{b\in\mathcal S} U_{o,b}(\boldsymbol k) U_{o',b}^*(\boldsymbol k)\)</span>,
-and <span class="math notranslate nohighlight">\(\mathcal S\)</span> denotes a set of bands to sum over. Our
-implementation only takes finite differences along each of the lattice
-directions, treating the model as three-dimensional. So a model in lower
-dimension must be re-normalized by the length of the inverse lattice vector
-(usually <span class="math notranslate nohighlight">\(2\pi\)</span> when you set e.g. <code class="docutils literal notranslate"><span class="pre">model-&gt;lattice[2][2]</span> <span class="pre">=</span> <span class="pre">1.0</span></code>).</p>
+and <span class="math notranslate nohighlight">\(\mathcal S\)</span> denotes a set of bands to sum over. Our implementation
+only takes finite differences along each of the lattice directions, which are
+transformed to cartesian coordinates with <code class="docutils literal notranslate"><span class="pre">non_ortho_grad</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
