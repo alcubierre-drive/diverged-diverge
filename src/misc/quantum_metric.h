@@ -15,10 +15,9 @@ typedef struct diverge_model_t diverge_model_t;
  * :math:`g(\boldsymbol k) = \frac{1}{2} \mathrm{Tr} \partial_i P_{\mathcal S}
  * \partial_i P_\mathcal{S}`, where :math:`P^{o,o'}_{\mathcal S}(\boldsymbol k)
  * = \sum_{b\in\mathcal S} U_{o,b}(\boldsymbol k) U_{o',b}^*(\boldsymbol k)`,
- * and :math:`\mathcal S` denotes a set of bands to sum over. Our
- * implementation only takes finite differences along each of the lattice
- * directions, but does *not* divide by the corresponding lengths. This must be
- * taken into account when interpreting :math:`g(\boldsymbol k)`.
+ * and :math:`\mathcal S` denotes a set of bands to sum over. Our implementation
+ * only takes finite differences along each of the lattice directions, which are
+ * transformed to cartesian coordinates with ``non_ortho_grad``.
  *
  * :param diverge_model_t m: the model instance. May be NULL in case all other
  *      parameters are given (non-NULL / not -1).
