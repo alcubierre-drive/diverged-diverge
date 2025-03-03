@@ -9,30 +9,30 @@ static inline __device__ index_t mem_offset() {
     return blockIdx.x*blockDim.x + threadIdx.x;
 }
 
-__global__ void GF_prod_ph(__restrict__ cuDoubleComplex* const buf,
-                    __restrict__ const cuDoubleComplex* const GF1,
-                    __restrict__ const cuDoubleComplex* const GFconj1,
-                    __restrict__ const cuDoubleComplex* const GF2,
-                    __restrict__ const cuDoubleComplex* const GFconj2,
-                    __restrict__ const index_t* R1,
-                    __restrict__ const index_t* R2,
-                    __restrict__ const index_t* nk,
+__global__ void GF_prod_ph(cuDoubleComplex* __restrict__ const buf,
+                    const cuDoubleComplex* __restrict__ const GF1,
+                    const cuDoubleComplex* __restrict__ const GFconj1,
+                    const cuDoubleComplex* __restrict__ const GF2,
+                    const cuDoubleComplex* __restrict__ const GFconj2,
+                    const index_t* __restrict__ R1,
+                    const index_t* __restrict__ R2,
+                    const index_t* __restrict__ nk,
                     const index_t n_blocks,
                     const index_t nk_per_thread);
 
-__global__ void GF_prod_pp(__restrict__ cuDoubleComplex* const buf,
-                    __restrict__ const cuDoubleComplex* const GF1,
-                    __restrict__ const cuDoubleComplex* const GFconj1,
-                    __restrict__ const cuDoubleComplex* const GF2,
-                    __restrict__ const cuDoubleComplex* const GFconj2,
-                    __restrict__ const index_t* R1,
-                    __restrict__ const index_t* R2,
-                    __restrict__ const index_t* nk,
+__global__ void GF_prod_pp(cuDoubleComplex* __restrict__ const buf,
+                    const cuDoubleComplex* __restrict__ const GF1,
+                    const cuDoubleComplex* __restrict__ const GFconj1,
+                    const cuDoubleComplex* __restrict__ const GF2,
+                    const cuDoubleComplex* __restrict__ const GFconj2,
+                    const index_t* __restrict__ R1,
+                    const index_t* __restrict__ R2,
+                    const index_t* __restrict__ nk,
                     const index_t n_blocks,
                     const index_t nk_per_thread);
 
-__global__ void to_loop_simple(__restrict__ cuDoubleComplex* const loop,
-                    __restrict__ const cuDoubleComplex* const res,const index_t my_nk,
+__global__ void to_loop_simple(cuDoubleComplex* __restrict__ const loop,
+                    const cuDoubleComplex* __restrict__ const res,const index_t my_nk,
                     const index_t* const coarse_in_fine_map);
 
 
@@ -464,14 +464,14 @@ void pp_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
 }
 
 
-__global__ void GF_prod_pp(__restrict__ cuDoubleComplex* const buf,
-                    __restrict__ const cuDoubleComplex* const GF_off_1,
-                    __restrict__ const cuDoubleComplex* const GF_off_2,
-                    __restrict__ const cuDoubleComplex* const GFconj_off_1,
-                    __restrict__ const cuDoubleComplex* const GFconj_off_2,
-                    __restrict__ const index_t* const R1,
-                    __restrict__ const index_t* const R2,
-                    __restrict__ const index_t* const nk,
+__global__ void GF_prod_pp(cuDoubleComplex* __restrict__ const buf,
+                    const cuDoubleComplex* __restrict__ const GF_off_1,
+                    const cuDoubleComplex* __restrict__ const GF_off_2,
+                    const cuDoubleComplex* __restrict__ const GFconj_off_1,
+                    const cuDoubleComplex* __restrict__ const GFconj_off_2,
+                    const index_t* __restrict__ const R1,
+                    const index_t* __restrict__ const R2,
+                    const index_t* __restrict__ const nk,
                     const index_t n_blocks,
                     const index_t nk_per_thread)
 {
@@ -499,14 +499,14 @@ __global__ void GF_prod_pp(__restrict__ cuDoubleComplex* const buf,
 }
 
 
-__global__ void GF_prod_ph(__restrict__ cuDoubleComplex* const buf,
-                    __restrict__ const cuDoubleComplex* const GF_off_1,
-                    __restrict__ const cuDoubleComplex* const GF_off_2,
-                    __restrict__ const cuDoubleComplex* const GFconj_off_1,
-                    __restrict__ const cuDoubleComplex* const GFconj_off_2,
-                    __restrict__ const index_t* const R1,
-                    __restrict__ const index_t* const R2,
-                    __restrict__ const index_t* const nk,
+__global__ void GF_prod_ph(cuDoubleComplex* __restrict__ const buf,
+                    const cuDoubleComplex* __restrict__ const GF_off_1,
+                    const cuDoubleComplex* __restrict__ const GF_off_2,
+                    const cuDoubleComplex* __restrict__ const GFconj_off_1,
+                    const cuDoubleComplex* __restrict__ const GFconj_off_2,
+                    const index_t* __restrict__ const R1,
+                    const index_t* __restrict__ const R2,
+                    const index_t* __restrict__ const nk,
                     const index_t n_blocks,
                     const index_t nk_per_thread)
 {
@@ -533,9 +533,9 @@ __global__ void GF_prod_ph(__restrict__ cuDoubleComplex* const buf,
     }
 }
 
-__global__ void to_loop_simple(__restrict__ cuDoubleComplex* const loop,
-                        __restrict__ const cuDoubleComplex* const res, const index_t my_nk,
-                        __restrict__ const index_t* const c2fmap)
+__global__ void to_loop_simple(cuDoubleComplex* __restrict__ const loop,
+                        const cuDoubleComplex* __restrict__ const res, const index_t my_nk,
+                        const index_t* __restrict__ const c2fmap)
 {
     index_t q = mem_offset();
     if(q>=my_nk) return;
