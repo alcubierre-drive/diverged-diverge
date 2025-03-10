@@ -220,6 +220,9 @@ DIVERGE_UNSTABLE {
         single_eigen_sort_N;
         single_eigen_sort_part;
         single_gemm;
+        single_gemm_Xt;
+        single_gemm_Xt_free;
+        single_gemm_Xt_init;
         single_gemm_adjoint;
         single_square_gemm;
         single_svd;
