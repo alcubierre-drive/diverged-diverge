@@ -23,9 +23,9 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
         bool buffered );
 void tu_data_phonons_free( tu_data_phonons_t* t );
 
-// generates D channel vertex scaled by fac, optionally adds to existing buffer
+// generates D channel vertex scaled by fac, adds to existing content of buffer
 void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
-        complex128_t* out, bool add, double fac );
+        complex128_t* out, double fac );
 diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t );
 
 

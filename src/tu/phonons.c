@@ -229,27 +229,26 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 }
 
 static void phonon_gemm( const complex128_t* g, const complex128_t* D,
-        complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO, bool add,
+        complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO,
         double fac ) {
     single_gemm( g, D, tmp, nO, linsz, nO, fac, 0.0 );
-    single_gemm_adjoint( tmp, g, V, linsz, linsz, nO, 1.0, add?1.0:0.0 );
+    single_gemm_adjoint( tmp, g, V, linsz, linsz, nO, 1.0, 1.0 );
 }
 
 void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
-        complex128_t* out, bool add, double fac ) {
+        complex128_t* out, double fac ) {
     const index_t linsz = POW2(t->n_spin)*t->n_orbff,
                   nO = t->nO, my_nk = t->my_nk;
 
     int calc = 1;
-    complex128_t* buf = NULL;
+    complex128_t* buf = out;
     if (t->buffered) {
         const int iszero = Lambda == 0.0;
         buf = iszero ? t->Dch_zero : t->Dch;
         double* last = iszero ? &t->Dch_zero_last_Lambda : &t->Dch_last_Lambda;
-        if (*last == Lambda) {
-            calc = 0;
-        } else {
+        if ((calc = (*last != Lambda))) {
             *last = Lambda;
+            ZERO_OUT(buf, my_nk*POW2(linsz));
         }
     }
 
@@ -262,15 +261,13 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
             const complex128_t *g = gbuf + kk*linsz*nO,
                                *D = dbuf + kk*POW2(nO);
             complex128_t* tmp = gtmp + kk*linsz*nO;
-            phonon_gemm( g, D, buf + kk*POW2(linsz), tmp, linsz, nO, add, fac );
+            phonon_gemm( g, D, buf + kk*POW2(linsz), tmp, linsz, nO, t->buffered ? 1.0 : fac );
         }
     }
 
     if (t->buffered) {
-        const double beta = add ? 1.0 : 0.0, alpha = fac;
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (index_t i=0; i<my_nk*POW2(linsz); ++i)
-            out[i] = beta * out[i] + alpha * buf[i];
+        for (index_t i=0; i<my_nk*POW2(linsz); ++i) out[i] += fac * buf[i];
     }
 }
 
