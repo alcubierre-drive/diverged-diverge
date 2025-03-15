@@ -576,6 +576,22 @@ if not _libs["divERGe"] is None:
     dos_use_gpu.argtypes = [c_int]
     dos_use_gpu.restype = None
 
+    hartree_fock_init = _libs["divERGe"].get("hartree_fock_init", "cdecl")
+    hartree_fock_init.argtypes = [POINTER(model_t), c_double, String]
+    hartree_fock_init.restype = c_voidp
+    hartree_fock_step = _libs["divERGe"].get("hartree_fock_step", "cdecl")
+    hartree_fock_step.argtypes = [c_voidp, c_double]
+    hartree_fock_step.restype = None
+    hartree_fock_get_sigma = _libs["divERGe"].get("hartree_fock_get_sigma", "cdecl")
+    hartree_fock_get_sigma.argtypes = [c_voidp]
+    hartree_fock_get_sigma.restype = c_voidp
+    hartree_fock_get_sigma_prev = _libs["divERGe"].get("hartree_fock_get_sigma_prev", "cdecl")
+    hartree_fock_get_sigma_prev.argtypes = [c_voidp]
+    hartree_fock_get_sigma_prev.restype = c_voidp
+    hartree_fock_free = _libs["divERGe"].get("hartree_fock_free", "cdecl")
+    hartree_fock_free.argtypes = [c_voidp]
+    hartree_fock_free.restype = None
+
     fukui = _libs["divERGe"].get("diverge_fukui", "cdecl")
     fukui.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp]
     fukui.restype = c_voidp
