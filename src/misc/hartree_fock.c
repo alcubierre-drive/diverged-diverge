@@ -28,21 +28,7 @@ struct diverge_hartree_fock_t {
 static inline double fermi( double E, double T ) {
     return 1./(exp(E/T) + 1.);
 }
-MERGESORT_IMPL( esort, double )
-
-typedef struct {
-    void* data;
-    index_t nbytes_data;
-    void (*data_destructor)( void* );
-    diverge_hartree_fock_t* hf;
-} hf_data_t;
-
-static void hf_data_destructor( void* ptr ) {
-    hf_data_t* hfd = ptr;
-    if (hfd->data && hfd->nbytes_data > 0)
-        (hfd->data_destructor == NULL ? free : hfd->data_destructor)( hfd->data );
-    free( hfd );
-}
+MERGESORT_IMPL( dblsort, double )
 
 static greensfunc_op_t hf_data_gfill( const diverge_model_t* m, complex128_t Lambda, gf_complex_t* buf );
 
@@ -71,15 +57,8 @@ diverge_hartree_fock_t* diverge_hartree_fock_init( diverge_model_t* model, doubl
     m->step = diverge_flow_step_init( model, "tu", xchans );
     m->flow_step_sigma = diverge_flow_step_vertex( m->step, 'S' ).ary;
 
-    // add the data to the model
-    hf_data_t* hfd = calloc(1, sizeof*hfd);
-    hfd->data = model->data;
-    hfd->nbytes_data = model->nbytes_data;
-    hfd->data_destructor = model->data_destructor;
-    hfd->hf = m;
-    model->data = hfd;
-    model->data_destructor = &hf_data_destructor;
-    model->nbytes_data = sizeof(*hfd);
+    // add the HF pointer to the model
+    model->internals->hf_data = m;
 
     // and set the GF generator
     model->gfill = &hf_data_gfill;
@@ -111,14 +90,12 @@ void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* dest, c
     // copy eigenvalues in order to sort them and find the chempot corresponding
     // to the requested filling
     memcpy( dbuf, m->E, sizeof*m->E * m->nk*m->nb );
-    esort( dbuf, m->nk*m->nb, diverge_omp_num_threads(), 0 );
+    dblsort( dbuf, m->nk*m->nb, diverge_omp_num_threads(), 0 );
 
     double which_E_dbl = (double)(m->nk*m->nb) * m->nu - 0.5;
     index_t which_E_start = (index_t)(which_E_dbl);
     double rest = which_E_dbl - which_E_start;
     index_t which_E_stop = which_E_start + 1;
-
-    printf( "%li %li %.5e\n", which_E_start, which_E_stop, rest );
 
     double mu;
     if (which_E_start >= (m->nk*m->nb-1)) {
@@ -152,8 +129,7 @@ void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* dest, c
 }
 
 static greensfunc_op_t hf_data_gfill( const diverge_model_t* m, complex128_t Lambda, gf_complex_t* buf ) {
-    hf_data_t* hfd = m->data;
-    diverge_hartree_fock_exec( hfd->hf, buf, Lambda );
+    diverge_hartree_fock_exec( m->internals->hf_data, buf, Lambda );
     return greensfunc_op_cpu;
 }
 
