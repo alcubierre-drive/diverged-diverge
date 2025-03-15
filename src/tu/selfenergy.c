@@ -814,13 +814,11 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
-        if (s->model->n_sym > 0) {
-            FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
-            transpose(self_en,s->ff_helper, s->nk, s->n_orb*s->n_spin);
-            diverge_symmetrize_2pt_coarse( s->model, self_en, s->ff_helper );
-            transpose(self_en,s->ff_helper, -s->nk, -s->n_orb*s->n_spin);
-            FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
-        }
+        FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
+        transpose(self_en,s->ff_helper, s->nk, s->n_orb*s->n_spin);
+        diverge_symmetrize_2pt_coarse( s->model, self_en, s->ff_helper );
+        transpose(self_en,s->ff_helper, -s->nk, -s->n_orb*s->n_spin);
+        FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
         tu_selfenergy_fft_interpolate(s,self_en);
     } else {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
@@ -830,8 +828,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
     }
     transpose(self_en,s->ff_helper, s->nktot, s->n_orb*s->n_spin);
-    if (s->model->n_sym > 0)
-        diverge_symmetrize_2pt_fine( s->model, self_en, s->ff_helper );
+    diverge_symmetrize_2pt_fine( s->model, self_en, s->ff_helper );
 }
 
 static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
@@ -1036,13 +1033,11 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
-        if (s->model->n_sym > 0) {
-            FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
-            transpose(self_en,s->ff_helper, s->nk, s->n_orb*s->n_spin);
-            diverge_symmetrize_2pt_coarse( s->model, self_en, s->ff_helper );
-            transpose(self_en,s->ff_helper, -s->nk, -s->n_orb*s->n_spin);
-            FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
-        }
+        FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
+        transpose(self_en,s->ff_helper, s->nk, s->n_orb*s->n_spin);
+        diverge_symmetrize_2pt_coarse( s->model, self_en, s->ff_helper );
+        transpose(self_en,s->ff_helper, -s->nk, -s->n_orb*s->n_spin);
+        FFTW_EXECUTE_DFT(s->ifft_fullself_ip,self_en,self_en);
         tu_selfenergy_fft_interpolate(s,self_en);
     } else {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
@@ -1051,8 +1046,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
     }
     transpose(self_en,s->ff_helper, s->nktot, s->n_orb*s->n_spin);
-    if (s->model->n_sym > 0)
-        diverge_symmetrize_2pt_fine( s->model, self_en, s->ff_helper );
+    diverge_symmetrize_2pt_fine( s->model, self_en, s->ff_helper );
 }
 
 static void generate_fftw_plans( tu_selfenergy_t* s ) {
