@@ -112,10 +112,22 @@ void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* dest, c
     // to the requested filling
     memcpy( dbuf, m->E, sizeof*m->E * m->nk*m->nb );
     esort( dbuf, m->nk*m->nb, diverge_omp_num_threads(), 0 );
-    index_t which_E = (double)(m->nk*m->nb) * m->nu;
-    which_E = MIN(which_E, m->nk*m->nb-1);
-    which_E = MAX(which_E, 0);
-    const double mu = dbuf[which_E];
+
+    double which_E_dbl = (double)(m->nk*m->nb) * m->nu - 0.5;
+    index_t which_E_start = (index_t)(which_E_dbl);
+    double rest = which_E_dbl - which_E_start;
+    index_t which_E_stop = which_E_start + 1;
+
+    printf( "%li %li %.5e\n", which_E_start, which_E_stop, rest );
+
+    double mu;
+    if (which_E_start >= (m->nk*m->nb-1)) {
+        mu = dbuf[m->nk*m->nb-1];
+    } else if (which_E_stop <= 0) {
+        mu = dbuf[0];
+    } else {
+        mu = dbuf[which_E_start] + (dbuf[which_E_stop] - dbuf[which_E_start]) * rest;
+    }
     // apply the filling
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<m->nk*m->nb; ++i) m->E[i] -= mu;
