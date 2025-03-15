@@ -53,6 +53,7 @@ struct tu_data_t {
     double offload_cpu;
     double percent_mem_GPU_blocked;
     bool tu_selfenergy_flow;
+    bool tu_gf_skip_selfenergy; // do not add \Sigma to G^{-1}
     bool GF_fft_coarsify;
     bool selfenergy_circular_cutoff;
 

@@ -35,6 +35,7 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
     t->my_nk_off = t->tu_data->my_nk_off;
     t->SU2 = (model->SU2 > 0);
     t->cFRG_loop = (model->gproj != NULL);
+    t->skip_selfenergy = t->tu_data->tu_gf_skip_selfenergy;
     t->which_fft_simple = t->tu_data->which_fft_simple;
     t->which_fft_red = t->tu_data->which_fft_red;
     t->which_fft_greens = t->tu_data->which_fft_greens;

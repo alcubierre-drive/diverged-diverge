@@ -41,6 +41,10 @@ struct tu_prop_t {
 
     bool cFRG_loop;
 
+    // only there to allow HF-like simulations, i.e., patching the GF generator
+    // and *not* adding the self-energy to the GF
+    bool skip_selfenergy;
+
     tu_fft_algorithm_t which_fft_simple, which_fft_red, which_fft_greens;
     index_t chunksize_max;
 
