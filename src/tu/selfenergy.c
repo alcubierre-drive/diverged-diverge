@@ -1,8 +1,15 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#define LINALG_NO_LAPACKE
+#include "../misc/linalg.h"
+LINALG_IMPLEMENT
+
 #include "selfenergy.h"
 #include "vertex.h"
 #include "vertex_details.h"
+
+static void apply_circ_cutoff( complex128_t* rs_ary/*(ostride,nk[0],nk[1],nk[2],istride)*/,
+        const index_t* nk, index_t istride, index_t ostride, tu_selfenergy_t* s );
 
 struct tu_selfenergy_t {
     fftw_plan ifft_self_oop;
@@ -55,6 +62,10 @@ struct tu_selfenergy_t {
 
     complex128_t* ff_helper;
     complex128_t* greensfkt_helper;
+
+    claM3d_t circ_cutoff_lat;
+    double circ_cutoff;
+    bool circ_cutoff_use;
 };
 
 static void generate_fftw_plans( tu_selfenergy_t* s );
@@ -133,6 +144,33 @@ tu_selfenergy_t* tu_selfenergy_init( tu_vertex_t* V ) {
                         s->existing_ff[rv].v[0]*kx/(double)s->model->nk[0] +
                         s->existing_ff[rv].v[1]*ky/(double)s->model->nk[1] +
                         s->existing_ff[rv].v[2]*kz/(double)s->model->nk[2]));
+        }
+
+        if (s->tu_data->selfenergy_circular_cutoff) {
+            int dim = s->model->internals->dim;
+            if (dim > 1) {
+                index_t nr[3] = {s->model->nk[0]/2-1, s->model->nk[1]/2-1, s->model->nk[2]/2-1};
+                for (int d=dim; d<3; ++d) nr[d] = 0;
+                for (int d=0; d<3; ++d) nr[d] = MAX(0,nr[d]);
+
+                const claM3d_t lat = claM3d_map( s->model->lattice[0] );
+                double minnorm = claV3d_norm(claV3d_scale(claV3d_map(s->model->lattice[0]), nr[0]));
+                for (index_t rx=-nr[0]; rx<=nr[0]; ++rx)
+                for (index_t ry=-nr[0]; ry<=nr[0]; ++ry)
+                for (index_t rz=-nr[0]; rz<=nr[0]; ++rz) {
+                    bool is_boundary = (labs(rx) == nr[0]);
+                    if (dim > 1) is_boundary = is_boundary || (labs(ry) == nr[1]);
+                    if (dim > 2) is_boundary = is_boundary || (labs(rz) == nr[2]);
+                    if (is_boundary) {
+                        double nrm = claV3d_norm(claM3d_vecmat((claV3d_t){{rx,ry,rz}}, lat));
+                        minnorm = MIN(nrm, minnorm);
+                    }
+                }
+                s->circ_cutoff = minnorm;
+                s->circ_cutoff_use = true;
+                s->circ_cutoff_lat = lat;
+                mpi_log_printf( "circular RS cutoff (%.2f) for self-energy\n", s->circ_cutoff );
+            }
         }
     }
     return s;
@@ -314,6 +352,30 @@ static inline index_t rpb1(const index_t* nk, index_t x, index_t y, index_t z, c
     return mz + nk[2] *(my + nk[1] * mx);
 }
 
+static void apply_circ_cutoff( complex128_t* rs_ary, const index_t* nk,
+        index_t istride, index_t ostride, tu_selfenergy_t* s ) {
+    if (!s->circ_cutoff_use) return;
+
+    const claM3d_t lat = s->circ_cutoff_lat;
+    const double cut = s->circ_cutoff;
+
+    const float hx = (nk[0]>1) ? (float)nk[0]/2. : 2;
+    const float hy = (nk[1]>1) ? (float)nk[1]/2. : 2;
+    const float hz = (nk[2]>1) ? (float)nk[2]/2. : 2;
+
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(5)
+    for (index_t os=0; os<ostride; ++os)
+    for (index_t x=0; x<nk[0]; ++x)
+    for (index_t y=0; y<nk[1]; ++y)
+    for (index_t z=0; z<nk[2]; ++z)
+    for (index_t is=0; is<istride; ++is) {
+        const claV3d_t ivec = {{x<=hx?x:x-nk[0],y<=hy?y:y-nk[1],z<=hz?z:z-nk[2]}};
+        double dist = claV3d_norm(claM3d_vecmat(ivec, lat));
+        if (dist >= (cut + DIVERGE_EPS_MESH))
+            rs_ary[ IDX5( os, x,y,z, is, nk[0],nk[1],nk[2], istride ) ] = 0.0;
+    }
+}
+
 #define IS_ZERO(x) (fabs(x) < 1e-7)
 
 void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) {
@@ -331,9 +393,11 @@ void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) 
         for (index_t x=0; x<nk[0]; ++x)
         for (index_t y=0; y<nk[1]; ++y)
         for (index_t z=0; z<nk[2]; ++z) {
+
             const index_t xto = (x<=hx) ? x : nkff[0]-(nk[0]-x);
             const index_t yto = (y<=hy) ? y : nkff[1]-(nk[1]-y);
             const index_t zto = (z<=hz) ? z : nkff[2]-(nk[2]-z);
+
             complex128_t helper = self_en[IDX4(r, x,y,z, nk[0],nk[1],nk[2])]*pref;
             // copy edges and corners
             if (IS_ZERO(x-hx) && IS_ZERO(y-hy) && IS_ZERO(z-hz)) {
@@ -742,6 +806,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         }
     }
 
+    apply_circ_cutoff( self_en, s->model->nk, 1, POW2(s->n_orb*s->n_spin), s );
 
     const index_t selfsize = POW2(s->n_orb*s->n_spin)*s->nk;
     diverge_mpi_allreduce_complex_sum_inplace(self_en, selfsize);
@@ -750,7 +815,6 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
-        // o2,o1,k -> k,o1,o2
         transpose(self_en,s->ff_helper, s->nk, s->n_orb*s->n_spin);
         diverge_symmetrize_2pt_coarse( s->model, self_en, s->ff_helper );
         transpose(self_en,s->ff_helper, -s->nk, -s->n_orb*s->n_spin);
@@ -959,6 +1023,8 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
             self_en[ridx+s->nk*(o1+s->n_orb*s->tu_ff[s->bond_offsets[o4]+b4].oto)] += tmp;
         }
     }
+
+    apply_circ_cutoff( self_en, s->model->nk, 1, POW2(s->n_orb*s->n_spin), s );
 
     const index_t selfsize = POW2(s->n_orb*s->n_spin)*s->nk;
     diverge_mpi_allreduce_complex_sum_inplace(self_en, selfsize);
