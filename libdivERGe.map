@@ -206,6 +206,11 @@ DIVERGE_UNSTABLE {
         diverge_dos_use_gpu;
         diverge_energy_fill_gaps;
         diverge_filling_to_energy;
+        diverge_hartree_fock_free;
+        diverge_hartree_fock_get_sigma;
+        diverge_hartree_fock_get_sigma_prev;
+        diverge_hartree_fock_init;
+        diverge_hartree_fock_step;
         diverge_largemat_gf;
         diverge_linspace;
         diverge_model_dos;

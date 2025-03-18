@@ -190,7 +190,7 @@ void GF_zero_T_any( tu_prop_t* t, greensfunc_generator_t gf, complex128_t lambda
     greensfunc_op_t res = gf( t->model, lambda, gbuf );
     if (res != greensfunc_op_cpu) mpi_err_printf( "GPU GFs not supported\n" );
 
-    if (self_energy) {
+    if (self_energy && !t->skip_selfenergy) {
         int enter = 1;
         if (t->model->internals->greens_shared) enter = shared_exclusive_enter(gbuf);
         if (enter) {

@@ -429,6 +429,78 @@ Kernel (which only falls off quadratically).</p>
 </dd></dl>
 
 </section>
+<section id="hartree-fock">
+<h2>Hartree Fock<a class="headerlink" href="#hartree-fock" title="Link to this heading">¶</a></h2>
+<p>Since divERGe includes self-energy diagrams in the TU backend, we chose to also
+provide building blocks for self-consistent Hartree Fock simulations using
+models built in divERGe. In order to use these facilities, you must initialize
+the model with <a class="reference internal" href="Internals.html#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> and
+<a class="reference internal" href="Internals.html#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>. Moreover, only standard Hamiltonian-based
+models (i.e., default GF generator, no shared-memory GFs, etc) are supported;
+each HF step <em>requires</em> a full rediagonalization of <span class="math notranslate nohighlight">\(H(\boldsymbol{k}) +
+\Sigma(\boldsymbol{k})\)</span> and setting a filling value <span class="math notranslate nohighlight">\(\nu\)</span>.</p>
+<dl class="c type">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_t">
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></span><a class="headerlink" href="#c.diverge_hartree_fock_t" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/hartree_fock.h#L12"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>opaque typedef for the handle</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_init">
+<a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_init</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">nu</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">chans</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_init" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/hartree_fock.h#L16"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>initialize a <a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_hartree_fock_t</span></code></a> handle given a model that has
+both the TU and common internals set. The user additionally has to provide a
+filling value <span class="math notranslate nohighlight">\(\nu\)</span> and the interaction channels that should be taken
+into account (equivalent to the <em>vertex</em> specific channels in
+<a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_init" title="diverge_flow_step_init"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_init()</span></code></a>). Must be freed with a call to
+<a class="reference internal" href="#c.diverge_hartree_fock_free" title="diverge_hartree_fock_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_free()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a><span class="p">*</span></span></span>) – diverge model</p></li>
+<li><p><strong>nu</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – filling value (0…1)</p></li>
+<li><p><strong>chans</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="p">*</span></span></span>) – interaction channels as string</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_step">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_step</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">T</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_step" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/hartree_fock.h#L30"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>perform a step of the Hartre-Fock self-consistency iteration (at temperature
+T). “Step” here refers to the fact that the current self-energy (see
+<a class="reference internal" href="#c.diverge_hartree_fock_get_sigma" title="diverge_hartree_fock_get_sigma"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_get_sigma()</span></code></a>) is used for calculating the Green’s
+function via <span class="math notranslate nohighlight">\(G(\boldsymbol{k})^{-1} = i\omega - H(\boldsymbol{k}) -
+\Sigma(\boldsymbol{k})\)</span>, which is used to evaluate the diagrams. On exit, the
+resulting “new” self-energy is stored in the buffer pointed to by
+<a class="reference internal" href="#c.diverge_hartree_fock_get_sigma" title="diverge_hartree_fock_get_sigma"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_get_sigma()</span></code></a>, and the (previous) self-energy that
+acted as input to calculating the diagrams gets copied to the buffer pointed
+to by <a class="reference internal" href="#c.diverge_hartree_fock_get_sigma_prev" title="diverge_hartree_fock_get_sigma_prev"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_get_sigma_prev()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_get_sigma">
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_get_sigma</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_get_sigma" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/hartree_fock.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>return the current self-energy buffer. Can be used to e.g. set a seed or
+output of the final self-energy.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_get_sigma_prev">
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_get_sigma_prev</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_get_sigma_prev" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/hartree_fock.h#L49"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>return the self-energy buffer of the <em>previous</em> iteration. Do not put a seed
+in here. Useful to combine with <a class="reference internal" href="#c.diverge_hartree_fock_get_sigma" title="diverge_hartree_fock_get_sigma"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_get_sigma()</span></code></a> for
+mixing schemes or assessing convergence.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_free">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_free" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/hartree_fock.h#L55"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>free the <a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_hartree_fock_t</span></code></a> handle.</p>
+</dd></dl>
+
+</section>
 </section>
 
 

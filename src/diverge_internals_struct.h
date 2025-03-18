@@ -82,6 +82,9 @@ struct internals_t {
     internals_destructor_t model_phonons_destructor;
     int tu_symcheck_mpi;
 
+    // hartree fock internals
+    void* hf_data;
+
     // symmetry internals for two point functions
     index_t* symm_map_mom_fine;
     index_t* symm_map_mom_crs;
