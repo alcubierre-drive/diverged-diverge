@@ -164,6 +164,7 @@ DIVERGE_0.8 {
         mpi_py_print;
         mpi_py_print_all;
         rs_hopping_to_fractcell;
+        rs_hopping_to_fractcell_mat;
         rs_hopping_to_supercell;
         shared_calloc;
         shared_exclusive_enter;
