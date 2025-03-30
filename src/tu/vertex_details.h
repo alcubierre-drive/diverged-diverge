@@ -6,6 +6,7 @@
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
 #include "../misc/mpi_functions.h"
+#include "../misc/gemm.h"
 #include "diverge_interface.h"
 #include "projection.h"
 #include "projection_handler.h"
@@ -39,6 +40,7 @@ struct tu_vertex_t {
     char* GPU_memory_pool_managed[32];
     char* GPU_gemm_buffer[32][3];
     bool has_gpu_memory;
+    single_gemm_Xt_t* GPU_reco_gemm;
 
     bool P_flow, C_flow, D_flow;
     bool C_to_P, D_to_P, P_to_C, D_to_C, P_to_D, C_to_D;

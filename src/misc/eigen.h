@@ -51,6 +51,17 @@ index_t single_eigen_sort_part( complex128_t* U, double* E, index_t N, char whic
  */
 index_t single_eigen_sort_N( complex128_t* U, double* E, index_t N, char which, double abs_limit );
 
+/**
+ * do power iteration for the maximum eigenvector of matrix ``A`` (NxN, Row
+ * major). save eigenvector in ``v``. auxiliary buffer ``aux`` can be NULL or of
+ * size ``2*N``. If ``niter != NULL``, use the value pointed to as maximum
+ * number of iterations. If ``tol != NULL``, use the value pointed to as minimum
+ * tolerance. If ``seed != NULL``, use these *four* integers as seed to
+ * construct the random vector. The last integer *must be odd*.
+ */
+complex128_t power_iteration( const complex128_t* A, complex128_t* v, index_t N,
+        complex128_t* aux, index_t* niter, double* tol, const int* iseed );
+
 #ifdef __cplusplus
 }
 #endif

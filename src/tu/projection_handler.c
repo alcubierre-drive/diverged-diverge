@@ -7,7 +7,7 @@
 #include "vertex_details.h"
 #include "../grid/helpers.h" // TICK_TOCK macro
 
-static inline void complex128_array_add( complex128_t* out, const complex128_t* in, index_t sz ) {
+static inline void complex128_array_add( complex128_t* restrict out, const complex128_t* restrict in, index_t sz ) {
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<sz; ++i) out[i] += in[i];
 }

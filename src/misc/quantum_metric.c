@@ -6,9 +6,9 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_momentum_gen.h"
 #include "mpi_functions.h"
+#include "invert.h"
 
 #define LINALG_NO_LAPACKE
-#define LINALG_EXPORT static inline
 #include "linalg.h"
 LINALG_IMPLEMENT
 
@@ -24,18 +24,15 @@ static double* diverge_qgt_impl_grad( double* lattice_, complex128_t* U,
         index_t nb, index_t* nk, index_t* which_bands, index_t n_which_bands,
         const qgt_improper_gauge_t* ig ) {
 
-    claM3cd_t lattice = {0};
-    for (int i=0; i<3; ++i)
-    for (int j=0; j<3; ++j)
-        lattice.m[i][j] = lattice_[IDX2(i,j,3)];
-
     double rlattice[3][3] = {0};
-    if (ig)
-        diverge_model_generate_mom_basis( ig->lattice, rlattice[0] );
-    else
-        diverge_model_generate_mom_basis( lattice_, rlattice[0] );
+    diverge_model_generate_mom_basis( ig ? ig->lattice : lattice_, rlattice[0] );
 
-    claM3cd_t AAT = claM3cd_matmul( lattice, claM3cd_transpose(lattice) );
+    claM3d_t drlat;
+    for (int i=0; i<3; ++i) for (int j=0; j<3; ++j) drlat.m[i][j] = rlattice[i][j] / (double)nk[i];
+    claM3d_t drlat_inv; matrix_invert( drlat.m[0], 3, drlat_inv.m[0] );
+    claM3cd_t drlat_i; // map to complex, and transpose!
+    for (int i=0; i<3; ++i) for (int j=0; j<3; ++j) drlat_i.m[i][j] = drlat_inv.m[j][i];
+
     const index_t nk_tot = nk[0]*nk[1]*nk[2];
     const int oneX = nk[0] > 1 ? 1 : 0,
               oneY = nk[1] > 1 ? 1 : 0,
@@ -47,51 +44,63 @@ static double* diverge_qgt_impl_grad( double* lattice_, complex128_t* U,
 
     double* result = (double*)calloc(nk_tot, sizeof(double));
 
-    #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(3)
-    for (index_t kx=0; kx<nk[0]; ++kx)
-    for (index_t ky=0; ky<nk[1]; ++ky)
-    for (index_t kz=0; kz<nk[2]; ++kz) {
-        index_t ks[] = {kx, ky, kz};
-        index_t k = IDX3(kx, ky, kz, nk[1], nk[2]);
-        claV3d_t kvec = {0};
-        if (ig)
-            kvec = claV3d_map(ig->kfmesh + 3*k);
-        double dP_trace = 0;
-        for (index_t o1=0; o1<nb; ++o1)
-        for (index_t o2=0; o2<nb; ++o2) {
-            claV3d_t o1vec = {0};
-            claV3d_t o2vec = {0};
-            if (ig) {
-                o1vec = claV3d_map(ig->pos + 3*(o1 % ig->no));
-                o2vec = claV3d_map(ig->pos + 3*(o2 % ig->no));
-            }
-            claV3cd_t f;
-            for (uint8_t dim=0; dim<3; ++dim) {
-                // wrap around
-                claV3d_t dkvec = {0};
-                index_t k_dk = k1p2( k, dk[dim], nk );
-                if (ig)
-                    dkvec = claV3d_map(ig->kfmesh + 3*k_dk);
-                if (ks[dim] == (nk[dim]-1))
-                    dkvec = claV3d_add(dkvec, claV3d_map(rlattice[dim]));
-                complex128_t P_o1_o2_k = 0,
-                             P_o1_o2_k_dk = 0;
-                for (index_t ww=0; ww<n_which_bands; ++ww) {
-                    index_t bb=which_bands[ww];
-                    complex128_t fac = 1.0;
-                    if (ig)
-                        fac = cexp( ig->sgn*I*claV3d_dot(kvec, claV3d_sub(o1vec,o2vec)) );
-                    P_o1_o2_k += U[IDX3( k, bb, o1, nb, nb )] * conj(U[IDX3( k, bb, o2, nb, nb )]) * fac;
-                    if (ig)
-                        fac = cexp( ig->sgn*I*claV3d_dot(dkvec, claV3d_sub(o1vec,o2vec)) );
-                    P_o1_o2_k_dk += U[IDX3( k_dk, bb, o1, nb, nb )] * conj(U[IDX3( k_dk, bb, o2, nb, nb )]) * fac;
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
+    {
+        complex128_t* dP_o1_o2 = calloc(POW2(nb)*3, sizeof*dP_o1_o2);
+        #pragma omp for collapse(3)
+        for (index_t kx=0; kx<nk[0]; ++kx)
+        for (index_t ky=0; ky<nk[1]; ++ky)
+        for (index_t kz=0; kz<nk[2]; ++kz) {
+            index_t ks[] = {kx, ky, kz};
+            index_t k = IDX3(kx, ky, kz, nk[1], nk[2]);
+            claV3d_t kvec = {0};
+            if (ig)
+                kvec = claV3d_map(ig->kfmesh + 3*k);
+            for (index_t o1=0; o1<nb; ++o1)
+            for (index_t o2=0; o2<nb; ++o2) {
+                claV3d_t o1vec = {0};
+                claV3d_t o2vec = {0};
+                if (ig) {
+                    o1vec = claV3d_map(ig->pos + 3*(o1 % ig->no));
+                    o2vec = claV3d_map(ig->pos + 3*(o2 % ig->no));
                 }
-                complex128_t dP_o1_o2 = P_o1_o2_k_dk - P_o1_o2_k;
-                f.v[dim] = dP_o1_o2;
+                for (index_t dim=0; dim<3; ++dim) {
+                    // wrap around
+                    claV3d_t dkvec = {0};
+                    index_t k_dk = k1p2( k, dk[dim], nk );
+                    if (ig)
+                        dkvec = claV3d_map(ig->kfmesh + 3*k_dk);
+                    if (ks[dim] == (nk[dim]-1))
+                        dkvec = claV3d_add(dkvec, claV3d_map(rlattice[dim]));
+                    complex128_t P_o1_o2_k = 0,
+                                 P_o1_o2_k_dk = 0;
+                    for (index_t ww=0; ww<n_which_bands; ++ww) {
+                        index_t bb=which_bands[ww];
+                        complex128_t fac = 1.0;
+                        if (ig)
+                            fac = cexp( ig->sgn*I*claV3d_dot(kvec, claV3d_sub(o1vec,o2vec)) );
+                        P_o1_o2_k += U[IDX3( k, bb, o1, nb, nb )] * conj(U[IDX3( k, bb, o2, nb, nb )]) * fac;
+                        if (ig)
+                            fac = cexp( ig->sgn*I*claV3d_dot(dkvec, claV3d_sub(o1vec,o2vec)) );
+                        P_o1_o2_k_dk += U[IDX3( k_dk, bb, o1, nb, nb )] * conj(U[IDX3( k_dk, bb, o2, nb, nb )]) * fac;
+                    }
+                    dP_o1_o2[IDX3(o1,o2,dim, nb,3)] = P_o1_o2_k_dk - P_o1_o2_k;
+                }
             }
-            dP_trace += creal(claV3cd_dot( f, claM3cd_matvec( AAT, f ) ));
+            complex128_t rr = 0.0;
+            for (index_t o1=0; o1<nb; ++o1)
+            for (index_t o2=0; o2<nb; ++o2) {
+                complex128_t* mem = dP_o1_o2+o1*nb*3+o2*3;
+                claV3cd_t dP_xyz = claM3cd_vecmat(claV3cd_map(mem), drlat_i);
+                claV3cd_rmap(dP_xyz, mem);
+            }
+            for (index_t o1=0; o1<nb; ++o1)
+            for (index_t o2=0; o2<nb; ++o2)
+            for (index_t x=0; x<3; ++x)
+                rr += dP_o1_o2[IDX3(o1,o2,x,nb,3)] * dP_o1_o2[IDX3(o2,o1,x,nb,3)];
+            result[k] = 0.5*rr;
         }
-        result[k] = 0.5 * dP_trace;
+        free( dP_o1_o2 );
     }
 
     return result;

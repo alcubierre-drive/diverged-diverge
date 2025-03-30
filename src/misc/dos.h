@@ -41,6 +41,13 @@ double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
         index_t nb, const double* nu, index_t n_nu );
 
 /**
+ * fill the gaps of a frequency array such that the spacing is always larger
+ * than ``d_omega_min``. return the *reallocated* array, and change
+ * ``*p_n_omega`` according to the new size
+ */
+double* diverge_energy_fill_gaps( double* omega, index_t* p_n_omega, double d_omega_min );
+
+/**
  * calculate the DOS given an array of energies or a model that has its
  * internals set: :math:`\rho(\omega) = \sum_{k,b} \Im[ 1/(\omega - i\eta -
  * E_{kb}) ]`.

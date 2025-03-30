@@ -4,12 +4,12 @@
 #include "mpi_functions.h"
 #include "../diverge_Eigen3.hpp"
 
-void batched_zgemd_r( complex128_t* S, complex128_t* U, double* E,
+void batched_zgemd_r( complex128_t* S, const complex128_t* U, const double* E,
         complex128_t alpha, complex128_t beta, index_t N, index_t num ) {
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<num; ++i) {
-        Map<MatXcd> UU(U + i*N*N, N, N);
-        Map<VecXd> EE(E + i*N, N);
+        Map<const MatXcd> UU(U + i*N*N, N, N);
+        Map<const VecXd> EE(E + i*N, N);
         Map<cMatXcd> SS(S + i*N*N, N, N);
 
         SS = UU * EE.asDiagonal() * UU.adjoint() * alpha + SS * beta;

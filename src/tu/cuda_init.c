@@ -10,30 +10,27 @@ static tu_gpu_info_t tu_gpu_info_global = {0};
 tu_gpu_info_t tu_gpu_info( void ) { return tu_gpu_info_global; }
 
 #ifdef USE_CUDA
-static int enablePeerAccess(const int nbGpus) {
-    int currentDevice = 0;
-    CUDA_CHECK( cudaGetDevice( &currentDevice ) );
-
-    // Remark: access granted by this cudaDeviceEnablePeerAccess is unidirectional
-    // Rows and columns represents a connectivity matrix between GPUs in the system
-    for(int row=0; row < nbGpus; row++) {
+static int enablePeerAccess( int ngpu ) {
+    int retval = 0;
+    int currentDevice = 0; CUDA_CHECK( cudaGetDevice( &currentDevice ) );
+    for (int row=0; row<ngpu; ++row) {
         CUDA_CHECK( cudaSetDevice(row) );
-        for(int col=0; col < nbGpus; col++) {
-            if( row != col ){
+        for (int col=0; col<ngpu; ++col) {
+            if (row != col) {
                 int canAccessPeer = 0;
                 CUDA_CHECK(cudaDeviceCanAccessPeer( &canAccessPeer, row, col ));
-                if ( canAccessPeer ){
+                if (canAccessPeer) {
                     CUDA_CHECK(cudaDeviceEnablePeerAccess( col, 0 ));
-                }else{
+                } else {
+                    retval++;
                     mpi_err_printf("peer access %d->%d impossible\n", row, col );
                 }
             }
         }
     }
     CUDA_CHECK( cudaSetDevice( currentDevice ) );
-    return 0;
+    return retval;
 }
-
 
 void cuda_setup( void ) {
     if(tu_gpu_info_global.tu_has_gpu_setup)
@@ -78,7 +75,6 @@ void cuda_deconstruct( void ) {
     CUDA_CHECK(cudaDeviceReset());
 }
 
-
 void cuda_delete_prop_descr(cuda_prop_descr_t* cp) {
     if(!cp->prop_has_gpu_setup)
         return;
@@ -87,12 +83,11 @@ void cuda_delete_prop_descr(cuda_prop_descr_t* cp) {
     free(cp->gpu_fft);
 }
 
-#else
-
+#else // USE_CUDA
 void cuda_delete_prop_descr(cuda_prop_descr_t* cp) {(void)cp;}
 void cuda_setup( void ) {}
 void cuda_deconstruct( void ) {}
-#endif
+#endif // USE_CUDA
 
 void cuda_reset_prop_descr(cuda_prop_descr_t* cp,index_t tasks_spin, index_t tasks_dist, double offload_cpu) {
     mpi_wrn_printf("cuda_reset_prop_descr(...) used for testing. use with caution!\n");
@@ -104,12 +99,10 @@ void cuda_reset_prop_descr(cuda_prop_descr_t* cp,index_t tasks_spin, index_t tas
     cuda_setup_prop_descr(cp,tasks_spin,tasks_dist,NULL,offload_cpu);
 }
 
-
 void cuda_setup_projections(cuda_proj_descr_t* cp,index_t ntasks, index_t my_nk) {
-    #ifndef USE_CUDA
+#ifndef USE_CUDA
     (void)cp,(void)ntasks,(void)my_nk;
-    #else
-
+#else // USE_CUDA
     if(cp->proj_has_gpu_setup) return;
     if(!tu_gpu_info_global.tu_has_gpu_setup) cuda_setup();
     cp->proj_has_gpu_setup = true;
@@ -132,8 +125,7 @@ void cuda_setup_projections(cuda_proj_descr_t* cp,index_t ntasks, index_t my_nk)
         cp->_qstart_proj[ii] = cp->_threadkpts_proj[ii-1]+cp->_qstart_proj[ii-1];
     for (int ii=0; ii<tu_gpu_info_global.tu_num_of_devices;++ii)
         mpi_vrb_printf("TU:proj GPU %d: nq=%4d (+%4d)\n", ii, cp->_threadkpts_proj[ii] , cp->_qstart_proj[ii]);
-
-    #endif
+#endif // USE_CUDA
 }
 
 void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
@@ -142,7 +134,7 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
     (void)tasks_spin,(void)tasks_dist,(void)nkpts,(void)offload_cpu;
     cp->_tasks_cpu = tasks_dist;
     cp->_off_cpu = 0;
-#else
+#else // USE_CUDA
     if(cp->prop_has_gpu_setup) return;
     if(!tu_gpu_info_global.tu_has_gpu_setup) cuda_setup();
     cp->prop_has_gpu_setup = true;
@@ -190,5 +182,5 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
     }
     cp->n_kblocks = nk/cp->nk_per_thread;
     mpi_vrb_printf("TU prop GPU setup: nblock=%d, nk_per_thread=%d, nk=%d\n", cp->n_kblocks, cp->nk_per_thread, nk);
-#endif
+#endif // USE_CUDA
 }

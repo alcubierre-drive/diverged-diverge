@@ -4,6 +4,7 @@
 #include "diverge_internals_struct.h"
 #include "misc/mpi_functions.h"
 #include "misc/shared_mem.h"
+#include "misc/mergesort.h"
 
 double diverge_model_get_filling( diverge_model_t* model, const double* E, index_t nb ) {
     index_t nk = kdimtot(model->nk, model->nkf);
@@ -42,6 +43,7 @@ static inline int compare_dbl( const void* a_, const void* b_ ) {
     else return 0;
 }
 
+MERGESORT_IMPL(dblsort, double)
 double diverge_model_set_filling( diverge_model_t* model, double* E, index_t nb, double nu ) {
     index_t nk = kdimtot(model->nk, model->nkf);
     if (E == NULL) {
@@ -50,11 +52,21 @@ double diverge_model_set_filling( diverge_model_t* model, double* E, index_t nb,
     }
     double* E_cpy = (double*)malloc(sizeof(double)*nk*nb);
     memcpy( E_cpy, E, sizeof(double)*nk*nb );
-    qsort( E_cpy, nk*nb, sizeof(double), &compare_dbl );
-    index_t idx = lround(nu * (double)(nk*nb));
-    idx = MIN(idx,nk*nb);
-    idx = MAX(idx,0);
-    double mu = E_cpy[idx];
+    dblsort( E_cpy, nk*nb, diverge_omp_num_threads(), 0 );
+
+    double idx_frac = nu * (double)(nk*nb) - 0.5;
+    index_t idx_0 = (index_t)idx_frac;
+    index_t idx_1 = idx_0 + 1;
+
+    double mu;
+    if (idx_1 <= 0) {
+        mu = E_cpy[0];
+    } else if (idx_0 >= (nk*nb-1)) {
+        mu = E_cpy[nk*nb-1];
+    } else {
+        mu = E_cpy[idx_0] + (E_cpy[idx_1] - E_cpy[idx_0]) * (idx_frac - idx_0);
+    }
+
     diverge_model_set_chempot( model, E, nb, mu );
     free( E_cpy );
     return mu;

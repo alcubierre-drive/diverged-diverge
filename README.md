@@ -1,3 +1,5 @@
+<p align=center><img src="public/diverge.png" width="400"/></p>
+
 # DivERGe implements various ERG examples
 DivERGe provides a versatile framework to set up (one,) two and three
 dimensional functional renormalization group (FRG/ERG) calculations under the

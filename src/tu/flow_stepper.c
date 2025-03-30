@@ -5,6 +5,7 @@
 #include "vertex.h"
 #include "vertex_details.h"
 #include "propagator.h"
+#include "propagator_details.h"
 #include "projection.h"
 #include "projection_handler.h"
 

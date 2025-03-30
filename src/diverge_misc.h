@@ -49,3 +49,7 @@
 
 // density of states
 #include "misc/dos.h"
+
+// hartree fock
+#include "misc/hartree_fock.h"
+

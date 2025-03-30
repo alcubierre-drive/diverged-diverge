@@ -24,7 +24,7 @@ typedef struct {
     bool cutoff_rel;
     index_t tu_n_decomp_values;
     bool bare_susceptibilities;
-    bool channel_calc_project;
+    int channel_calc_project;
     char tu_lingap_solver_mode[4];
 
     bool lingaps;

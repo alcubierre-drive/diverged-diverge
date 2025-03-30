@@ -3,7 +3,6 @@
 #include "merge_orb_w_rs_symm.h"
 
 #define LINALG_NO_LAPACKE
-#define LINALG_EXPORT static inline
 #include "linalg.h"
 LINALG_IMPLEMENT
 

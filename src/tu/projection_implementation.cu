@@ -18,8 +18,8 @@ static inline __device__ size_t mem_offset() {
     return threadId;
 }
 
-__global__ void Proj_to_P_ft(__restrict__ cuDoubleComplex* const TO,
-                    __restrict__ const cuDoubleComplex* const FROM,
+__global__ void Proj_to_P_ft(cuDoubleComplex* __restrict__ const TO,
+                    const cuDoubleComplex* __restrict__ const FROM,
                     const size_t n_orbff,const size_t my_nk,
                     const size_t n_spin, const size_t current_qTO,
                     const index_t len_maps, const size_t n_projpref,
@@ -28,8 +28,8 @@ __global__ void Proj_to_P_ft(__restrict__ cuDoubleComplex* const TO,
                     const index_t* const mom,
                     const cuDoubleComplex* const proj_prefac);
 
-__global__ void Proj_to_C_ft(__restrict__ cuDoubleComplex* const TO,
-                    __restrict__ const cuDoubleComplex* const FROM,
+__global__ void Proj_to_C_ft(cuDoubleComplex* __restrict__ const TO,
+                    const cuDoubleComplex* __restrict__ const FROM,
                     const size_t n_orbff,const size_t my_nk,
                     const size_t n_spin, const size_t current_qTO,
                     const index_t len_maps, const size_t n_projpref,
@@ -38,8 +38,8 @@ __global__ void Proj_to_C_ft(__restrict__ cuDoubleComplex* const TO,
                     const index_t* const mom,
                     const cuDoubleComplex* const proj_prefac);
 
-__global__ void Proj_to_D_ft(__restrict__ cuDoubleComplex* const TO,
-                    __restrict__ const cuDoubleComplex* const FROM,
+__global__ void Proj_to_D_ft(cuDoubleComplex* __restrict__ const TO,
+                    const cuDoubleComplex* __restrict__ const FROM,
                     const size_t n_orbff,const size_t my_nk,
                     const size_t n_spin, const size_t current_qTO,
                     const index_t len_maps, const size_t n_projpref,
@@ -48,10 +48,11 @@ __global__ void Proj_to_D_ft(__restrict__ cuDoubleComplex* const TO,
                     const index_t* const mom,
                     const cuDoubleComplex* const proj_prefac);
 
-void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
-        complex128_t* proj_vertex, const complex128_t* I_channel,
-        const index_t* rsmap_to, const index_t* rsmap_from, const index_t* mom_in,
-        const index_t mapsize, const complex128_t* proj_prefac, const index_t n_orbff,
+void GPUproj_handler_ft( const cuda_proj_descr_t* __restrict__ cp, const char channel,
+        complex128_t* __restrict__ proj_vertex, const complex128_t* __restrict__ I_channel,
+        const index_t* __restrict__ rsmap_to, const index_t* __restrict__ rsmap_from,
+        const index_t* __restrict__ mom_in, const index_t mapsize,
+        const complex128_t* __restrict__ proj_prefac, const index_t n_orbff,
         const index_t n_spin, const index_t my_nk, const size_t n_projpref ) {
     if (channel != 'P' && channel != 'D' && channel != 'C') return;
     cuda_setup();
@@ -114,8 +115,8 @@ void GPUproj_handler_ft( const cuda_proj_descr_t* cp, const char channel,
     cudaDeviceSynchronize();
 }
 
-__global__ void Proj_to_P_ft(__restrict__ cuDoubleComplex* const TO,
-                    __restrict__ const cuDoubleComplex* const FROM,
+__global__ void Proj_to_P_ft(cuDoubleComplex* __restrict__ const TO,
+                    const cuDoubleComplex* __restrict__ const FROM,
                     const size_t n_orbff,const size_t my_nk,
                     const size_t n_spin, const size_t current_qTO,
                     const index_t len_maps, const size_t n_projpref,
@@ -153,8 +154,8 @@ __global__ void Proj_to_P_ft(__restrict__ cuDoubleComplex* const TO,
     atomicAdd(((double*)(TO+idx_TO))+1, cuCimag(tmp));
 }
 
-__global__ void Proj_to_C_ft(__restrict__ cuDoubleComplex* const TO,
-                    __restrict__ const cuDoubleComplex* const FROM,
+__global__ void Proj_to_C_ft(cuDoubleComplex* __restrict__ const TO,
+                    const cuDoubleComplex* __restrict__ const FROM,
                     const size_t n_orbff,const size_t my_nk,
                     const size_t n_spin, const size_t current_qTO,
                     const index_t len_maps, const size_t n_projpref,
@@ -192,8 +193,8 @@ __global__ void Proj_to_C_ft(__restrict__ cuDoubleComplex* const TO,
 
 }
 
-__global__ void Proj_to_D_ft(__restrict__ cuDoubleComplex* const TO,
-                    __restrict__ const cuDoubleComplex* const FROM,
+__global__ void Proj_to_D_ft(cuDoubleComplex* __restrict__ const TO,
+                    const cuDoubleComplex* __restrict__ const FROM,
                     const size_t n_orbff,const size_t my_nk,
                     const size_t n_spin, const size_t current_qTO,
                     const index_t len_maps, const size_t n_projpref,

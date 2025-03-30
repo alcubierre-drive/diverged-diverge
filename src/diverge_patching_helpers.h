@@ -41,7 +41,12 @@ static inline index_t find_closest_patch( complex128_t ppt, const complex128_t* 
     return result;
 }
 
-static inline void atomic_add( complex128_t* addr, const complex128_t* val ) {
+#ifndef __cplusplus
+#define RESTRICT restrict
+#else
+#define RESTRICT 
+#endif
+static inline void atomic_add( complex128_t* RESTRICT addr, const complex128_t* RESTRICT val ) {
     double* paddr = (double*)addr;
     const double* pval = (const double*)val;
     #pragma omp atomic

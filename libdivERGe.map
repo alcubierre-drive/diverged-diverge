@@ -14,6 +14,7 @@ DIVERGE_0.8 {
         diverge_finalize;
         diverge_flow_step_chanmax;
         diverge_flow_step_dlambda;
+        diverge_flow_step_eigchan;
         diverge_flow_step_euler;
         diverge_flow_step_free;
         diverge_flow_step_get_channels;
@@ -163,6 +164,7 @@ DIVERGE_0.8 {
         mpi_py_print;
         mpi_py_print_all;
         rs_hopping_to_fractcell;
+        rs_hopping_to_fractcell_mat;
         rs_hopping_to_supercell;
         shared_calloc;
         shared_exclusive_enter;
@@ -180,6 +182,7 @@ DIVERGE_UNSTABLE {
     global:
         batched_eigen_get_nchunks;
         batched_eigen_r;
+        batched_eigen_r_get_eigen3_mode;
         batched_eigen_r_set_eigen3_mode;
         batched_eigen_set_nchunks;
         batched_eigen_set_nthreads;
@@ -201,7 +204,13 @@ DIVERGE_UNSTABLE {
         batched_zgemd_r;
         diverge_dos_set_eta_factor;
         diverge_dos_use_gpu;
+        diverge_energy_fill_gaps;
         diverge_filling_to_energy;
+        diverge_hartree_fock_free;
+        diverge_hartree_fock_get_sigma;
+        diverge_hartree_fock_get_sigma_prev;
+        diverge_hartree_fock_init;
+        diverge_hartree_fock_step;
         diverge_largemat_gf;
         diverge_linspace;
         diverge_model_dos;
@@ -210,17 +219,24 @@ DIVERGE_UNSTABLE {
         diverge_model_unique_distances;
         diverge_model_unique_distances_length;
         diverge_model_unique_distances_set_precision;
+        power_iteration;
         single_eigen;
         single_eigen_sort;
         single_eigen_sort_N;
         single_eigen_sort_part;
         single_gemm;
+        single_gemm_Xt;
+        single_gemm_Xt_free;
+        single_gemm_Xt_init;
         single_square_gemm;
         single_svd;
         subspace_gfill_multi_exec;
         subspace_gfill_multi_exec_mu;
         subspace_gfill_multi_free;
         subspace_gfill_multi_init;
+        transpose_conj_outofplace;
+        transpose_inplace;
+        transpose_outofplace;
         tu_highsym_vertex_free;
         tu_highsym_vertex_store;
         tu_highsym_vertex_to_file;

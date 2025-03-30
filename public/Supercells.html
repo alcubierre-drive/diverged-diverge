@@ -7,7 +7,7 @@
 
     <title>Supercells &#8212; divERGe 0.8 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
     <script src="_static/documentation_options.js?v=a0e24af7"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
@@ -78,6 +78,13 @@ as nr.</p>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.rs_hopping_to_fractcell_mat">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rs_hopping_to_fractcell_mat</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">N123</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.rs_hopping_to_fractcell_mat" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hoppings_to_supercell.h#L45"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>same as <a class="reference internal" href="#c.rs_hopping_to_fractcell" title="rs_hopping_to_fractcell"><code class="xref c c-func docutils literal notranslate"><span class="pre">rs_hopping_to_fractcell()</span></code></a> but with matrix <code class="docutils literal notranslate"><span class="pre">N123[3][3]</span></code> for
+supercell, where each row corresponds to one supercell vector.</p>
 </dd></dl>
 
 </section>
@@ -172,7 +179,7 @@ as nr.</p>
       &#169;2025, Jonas B. Profe, Lennart Klebl.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

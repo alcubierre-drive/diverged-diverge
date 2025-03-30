@@ -28,6 +28,7 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->use_reduced_loop = true;
     info->use_cuda_mpi_loop = false;
     info->tu_selfenergy_flow = false;
+    info->tu_gf_skip_selfenergy = false;
     info->mpi_fft_chunksize = -1; // auto
     #if defined(USE_MPI) && defined(USE_MPI_FFTW)
     info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_mpi_new;
@@ -37,6 +38,14 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->propagator_extra_cpu_timings = false;
     model->internals->tu_data = (void*)info;
     model->internals->tu_data_destructor = tu_data_destructor;
+
+    #ifdef DIVERGE_TU_GF_COARSIFY_FFT
+    info->GF_fft_coarsify = true;
+    #else
+    info->GF_fft_coarsify = false;
+    #endif
+
+    info->selfenergy_circular_cutoff = false;
 
     init_ff_struct(max_dist, model);
     generate_reduced_loop_maps(model);

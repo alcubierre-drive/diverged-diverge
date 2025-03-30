@@ -63,6 +63,12 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("tu_selfenergy_flow") {
         TU_INTERNALS->tu_selfenergy_flow = (bool)atoi(val);
     }
+    CHECKKEY("tu_selfenergy_circular_cutoff") {
+        TU_INTERNALS->selfenergy_circular_cutoff = (bool)atoi(val);
+    }
+    CHECKKEY("tu_gf_skip_selfenergy") {
+        TU_INTERNALS->tu_gf_skip_selfenergy = (bool)atoi(val);
+    }
     CHECKKEY("tu_mpifft_chunksize") {
         TU_INTERNALS->mpi_fft_chunksize = atoi(val);
     }
@@ -77,6 +83,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("tu_extra_propagator_timings") {
         TU_INTERNALS->propagator_extra_cpu_timings = atoi(val);
+    }
+    CHECKKEY("tu_GF_fft_coarsify") {
+        TU_INTERNALS->GF_fft_coarsify = atoi(val);
     }
     CHECKKEY("npatch_gpu_workshare") {
         INTERNALS->patch_gpu_workshare = atof(val);

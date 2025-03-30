@@ -7,7 +7,7 @@
 
     <title>Advanced Features &#8212; divERGe 0.8 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
     <script src="_static/documentation_options.js?v=a0e24af7"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
@@ -333,8 +333,16 @@ zero and one (everything else is truncated to zero-one)</p></li>
 </dd></dl>
 
 <dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_energy_fill_gaps">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_energy_fill_gaps</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">omega</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">p_n_omega</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">d_omega_min</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_energy_fill_gaps" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>fill the gaps of a frequency array such that the spacing is always larger
+than <code class="docutils literal notranslate"><span class="pre">d_omega_min</span></code>. return the <em>reallocated</em> array, and change
+<code class="docutils literal notranslate"><span class="pre">*p_n_omega</span></code> according to the new size</p>
+</dd></dl>
+
+<dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_dos">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_dos</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">omega</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_omega</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_dos" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_dos</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">omega</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_omega</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_dos" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L50"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>calculate the DOS given an array of energies or a model that has its
 internals set: <span class="math notranslate nohighlight">\(\rho(\omega) = \sum_{k,b} \Im[ 1/(\omega - i\eta -
 E_{kb}) ]\)</span>.</p>
@@ -368,7 +376,7 @@ must be free’d with call to <code class="docutils literal notranslate"><span c
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_ldos">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_ldos</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">U</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">omega</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_omega</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_ldos" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L71"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_ldos</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">U</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">omega</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_omega</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_ldos" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L78"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>calculate the LDOS given an array of energies and orbital to band matrices or
 a model that has its internals set: <span class="math notranslate nohighlight">\(\rho(\omega,o) = \sum_{k,b} \Im[
 |U_{kb}^o|^2/(\omega - i\eta - E_{kb}) ]\)</span>.</p>
@@ -405,7 +413,7 @@ each frequency, assumes linearly spaced array for <code class="docutils literal 
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_dos_set_eta_factor">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_dos_set_eta_factor</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta_factor</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_dos_set_eta_factor" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L103"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_dos_set_eta_factor</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta_factor</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_dos_set_eta_factor" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L110"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>set the factor <span class="math notranslate nohighlight">\(e\)</span> that determines the width of energies <span class="math notranslate nohighlight">\(W\)</span> to
 be considered for summation at a given frequency <span class="math notranslate nohighlight">\(\omega\)</span>, i.e.,</p>
 <p><span class="math notranslate nohighlight">\(W = [\omega - e\eta, \omega + e\eta]\)</span></p>
@@ -416,8 +424,80 @@ Kernel (which only falls off quadratically).</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_dos_use_gpu">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_dos_use_gpu</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">use_gpu</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_dos_use_gpu" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L114"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_dos_use_gpu</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">use_gpu</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_dos_use_gpu" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/dos.h#L121"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>set whether GPU is used for DOS calc</p>
+</dd></dl>
+
+</section>
+<section id="hartree-fock">
+<h2>Hartree Fock<a class="headerlink" href="#hartree-fock" title="Link to this heading">¶</a></h2>
+<p>Since divERGe includes self-energy diagrams in the TU backend, we chose to also
+provide building blocks for self-consistent Hartree Fock simulations using
+models built in divERGe. In order to use these facilities, you must initialize
+the model with <a class="reference internal" href="Internals.html#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> and
+<a class="reference internal" href="Internals.html#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>. Moreover, only standard Hamiltonian-based
+models (i.e., default GF generator, no shared-memory GFs, etc) are supported;
+each HF step <em>requires</em> a full rediagonalization of <span class="math notranslate nohighlight">\(H(\boldsymbol{k}) +
+\Sigma(\boldsymbol{k})\)</span> and setting a filling value <span class="math notranslate nohighlight">\(\nu\)</span>.</p>
+<dl class="c type">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_t">
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></span><a class="headerlink" href="#c.diverge_hartree_fock_t" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hartree_fock.h#L12"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>opaque typedef for the handle</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_init">
+<a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_init</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">nu</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">chans</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_init" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hartree_fock.h#L16"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>initialize a <a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_hartree_fock_t</span></code></a> handle given a model that has
+both the TU and common internals set. The user additionally has to provide a
+filling value <span class="math notranslate nohighlight">\(\nu\)</span> and the interaction channels that should be taken
+into account (equivalent to the <em>vertex</em> specific channels in
+<a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_init" title="diverge_flow_step_init"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_init()</span></code></a>). Must be freed with a call to
+<a class="reference internal" href="#c.diverge_hartree_fock_free" title="diverge_hartree_fock_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_free()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a><span class="p">*</span></span></span>) – diverge model</p></li>
+<li><p><strong>nu</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – filling value (0…1)</p></li>
+<li><p><strong>chans</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="p">*</span></span></span>) – interaction channels as string</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_step">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_step</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">T</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_step" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hartree_fock.h#L30"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>perform a step of the Hartre-Fock self-consistency iteration (at temperature
+T). “Step” here refers to the fact that the current self-energy (see
+<a class="reference internal" href="#c.diverge_hartree_fock_get_sigma" title="diverge_hartree_fock_get_sigma"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_get_sigma()</span></code></a>) is used for calculating the Green’s
+function via <span class="math notranslate nohighlight">\(G(\boldsymbol{k})^{-1} = i\omega - H(\boldsymbol{k}) -
+\Sigma(\boldsymbol{k})\)</span>, which is used to evaluate the diagrams. On exit, the
+resulting “new” self-energy is stored in the buffer pointed to by
+<a class="reference internal" href="#c.diverge_hartree_fock_get_sigma" title="diverge_hartree_fock_get_sigma"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_get_sigma()</span></code></a>, and the (previous) self-energy that
+acted as input to calculating the diagrams gets copied to the buffer pointed
+to by <a class="reference internal" href="#c.diverge_hartree_fock_get_sigma_prev" title="diverge_hartree_fock_get_sigma_prev"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_get_sigma_prev()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_get_sigma">
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_get_sigma</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_get_sigma" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hartree_fock.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>return the current self-energy buffer. Can be used to e.g. set a seed or
+output of the final self-energy.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_get_sigma_prev">
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_get_sigma_prev</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_get_sigma_prev" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hartree_fock.h#L49"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>return the self-energy buffer of the <em>previous</em> iteration. Do not put a seed
+in here. Useful to combine with <a class="reference internal" href="#c.diverge_hartree_fock_get_sigma" title="diverge_hartree_fock_get_sigma"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_get_sigma()</span></code></a> for
+mixing schemes or assessing convergence.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_free">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_free" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hartree_fock.h#L55"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>free the <a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_hartree_fock_t</span></code></a> handle.</p>
 </dd></dl>
 
 </section>
@@ -513,7 +593,7 @@ Kernel (which only falls off quadratically).</p>
       &#169;2025, Jonas B. Profe, Lennart Klebl.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

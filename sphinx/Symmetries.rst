@@ -150,10 +150,10 @@ and :math:`p_-` orbitals, we obtain the symmetries as
     curr_symm[0].normal_vector[2] = 1;
     curr_symm[0].angle = -45;
 
-    curr_symm[0].type = 'M';
-    curr_symm[0].normal_vector[0] = 1;
-    curr_symm[0].normal_vector[1] = 0;
-    curr_symm[0].normal_vector[2] = 0;
+    curr_symm[1].type = 'M';
+    curr_symm[1].normal_vector[0] = 1;
+    curr_symm[1].normal_vector[1] = 0;
+    curr_symm[1].normal_vector[2] = 0;
 
     curr_symm[2].type = 'R';
     curr_symm[2].normal_vector[0] = 0;
@@ -161,7 +161,7 @@ and :math:`p_-` orbitals, we obtain the symmetries as
     curr_symm[2].normal_vector[2] = 1;
     curr_symm[2].angle = 45;
     diverge_generate_symm_trafo(1, sites, 3, curr_symm, 1,
-                            &(mod->rs_symmetries[6][0][0]), mod->orb_symmetries+9*6);
+                            &(mod->rs_symmetries[7][0][0]), mod->orb_symmetries+9*7);
 
 where we constructed one of the diagonal mirrors by concatenating three symmetry
 operations.

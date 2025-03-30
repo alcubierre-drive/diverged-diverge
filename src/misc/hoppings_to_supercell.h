@@ -42,6 +42,12 @@ void rs_hopping_to_supercell( diverge_model_t* m, int* nr );
  */
 void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 );
 
+/**
+ * same as :c:func:`rs_hopping_to_fractcell` but with matrix ``N123[3][3]`` for
+ * supercell, where each row corresponds to one supercell vector.
+ */
+void rs_hopping_to_fractcell_mat( diverge_model_t* m, int* N123 );
+
 #ifdef __cplusplus
 }
 #endif
