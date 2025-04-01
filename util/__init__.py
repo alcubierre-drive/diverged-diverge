@@ -658,7 +658,7 @@ if not _libs["divERGe"] is None:
             n_per_segment_ptr = kmesh_to_bands_crs( model, byref(pts_ptr), byref(n_pts_ptr))
         else:
             n_per_segment_ptr = kmesh_to_bands( model, byref(pts_ptr), byref(n_pts_ptr))
-        n_per_segment = view_array( n_per_segment_ptr, dtype=index_t, shape=(model.contents.n_ibz_path,) )
+        n_per_segment = view_array( n_per_segment_ptr, dtype=index_t, shape=(model.contents.n_ibz_path-1,) )
         pts = view_array( pts_ptr, dtype=index_t, shape=(n_pts_ptr.value,) )
 
         n_per_segment = np.copy( n_per_segment )
@@ -729,6 +729,11 @@ if not _libs["divERGe"] is None:
     model_internals_tu = _libs["divERGe"].get("diverge_model_internals_tu", "cdecl")
     model_internals_tu.argtypes = [POINTER(model_t), c_double]
     model_internals_tu.restype = None
+
+    #Batched eigensolver
+    batched_eigen_r = _libs["divERGe"].get("batched_eigen_r", "cdecl")
+    batched_eigen_r.argtypes = [POINTER(index_t), index_t, POINTER(complex128_t), POINTER(c_double), index_t, index_t]
+    batched_eigen_r.restype = None
 
     class ArgUnion(Union):
         _fields_ = [("np_ibz", index_t),
