@@ -88,6 +88,10 @@ void generate_reduced_loop_maps( diverge_model_t* model );
 // void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
 void tu_data_destructor( void* model );
 
+// set what it means to have 'zero' in the symstruct generation (several
+// zeros...)
+void tu_symmetry_bounds( double BOND_MAX, double MATRIX_ZERO );
+
 #ifdef __cplusplus
 }
 #endif

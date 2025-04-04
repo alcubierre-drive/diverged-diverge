@@ -4,6 +4,9 @@
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
 
+static double DIVERGE_TU_BOND_MAX_SYMABS = 1.e-5;
+static double SYMNORM_MATRIX_ZERO = 1.e-7;
+
 #include "diverge_interface_symmstruct.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_momentum_gen.h"
@@ -20,9 +23,16 @@ static void symmstruct_serialize( const tu_symmstruct_t* symm, char** ptr, uinde
 static tu_symmstruct_t* symmstruct_deserialize( const char* ptr );
 static int symmstruct_equal( const tu_symmstruct_t* A, const tu_symmstruct_t* B );
 
-#ifndef SYMNORM_MATRIX_ZERO
-#define SYMNORM_MATRIX_ZERO 1.e-7
-#endif
+void tu_symmetry_bounds( double BOND_MAX, double MATRIX_ZERO ) {
+    if (BOND_MAX >= 0.0) {
+        DIVERGE_TU_BOND_MAX_SYMABS = BOND_MAX;
+        mpi_log_printf( "tu_symmetry_bounds DIVERGE_TU_BOND_MAX_SYMABS = %.5e\n", BOND_MAX );
+    }
+    if (MATRIX_ZERO >= 0.0) {
+        SYMNORM_MATRIX_ZERO = MATRIX_ZERO;
+        mpi_log_printf( "tu_symmetry_bounds SYMNORM_MATRIX_ZERO = %.5e\n", SYMNORM_MATRIX_ZERO );
+    }
+}
 
 void tu_symmstruct_delete( tu_symmstruct_t* symm ) {
     free( symm->inv_symmetry );
@@ -303,7 +313,7 @@ static void init_map_for_one_leg( diverge_model_t* model ) {
                     trial = claV3d_add(trial,claV3d_scale(UC1,model->nk[0]*in));
                     trial = claV3d_add(trial,claV3d_scale(UC2,model->nk[1]*im));
                     trial = claV3d_add(trial,claV3d_scale(UC3,model->nk[2]*iq));
-                    if (claV3d_norm(trial) < 1.e-5)
+                    if (claV3d_norm(trial) < DIVERGE_TU_BOND_MAX_SYMABS)
                         mapped_to = true;
                 }
 
