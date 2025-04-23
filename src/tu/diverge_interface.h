@@ -90,7 +90,8 @@ void tu_data_destructor( void* model );
 
 // set what it means to have 'zero' in the symstruct generation (several
 // zeros...)
-void tu_symmetry_bounds( double BOND_MAX, double MATRIX_ZERO );
+extern double SYMNORM_TU_BOND_MAX;
+extern double SYMNORM_MATRIX_ZERO;
 
 #ifdef __cplusplus
 }
