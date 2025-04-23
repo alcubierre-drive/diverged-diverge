@@ -11,6 +11,9 @@
 #include "misc/linalg.h"
 LINALG_IMPLEMENT
 
+// for tu_symmetry_bounds()
+#include "tu/diverge_interface.h"
+
 #include <assert.h>
 
 static double SYMNORM_ASSERT_POSITION_BEYOND = 1.e-4;
@@ -19,7 +22,8 @@ static double SYMNORM_POS_EQUAL = 1.e-8;
 static double SYMNORM_MIN_ORBITAL_WEIGHT = 0.99999;
 
 void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
-        double ORBITAL_OVERLAP, double POS_EQUAL, double MIN_ORBITAL_WEIGHT ) {
+        double ORBITAL_OVERLAP, double POS_EQUAL, double MIN_ORBITAL_WEIGHT,
+        double TU_BOND_MAX, double MATRIX_ZERO ) {
     #define SET_TO( THING ) { if (THING > 0) { \
         SYMNORM_##THING = THING; \
         mpi_log_printf( "SYMNORM_" #THING " = %.5e\n", THING ); \
@@ -28,6 +32,8 @@ void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
     SET_TO( ORBITAL_OVERLAP );
     SET_TO( POS_EQUAL );
     SET_TO( MIN_ORBITAL_WEIGHT );
+    SET_TO( TU_BOND_MAX );
+    SET_TO( MATRIX_ZERO );
 }
 
 static inline bool map_back_to_BZ(claV3d_t* k_point, index_t* idx, const diverge_model_t* model, bool fine) {

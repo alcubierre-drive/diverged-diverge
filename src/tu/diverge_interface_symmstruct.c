@@ -4,6 +4,9 @@
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
 
+double SYMNORM_TU_BOND_MAX = 1.e-5;
+double SYMNORM_MATRIX_ZERO = 1.e-7;
+
 #include "diverge_interface_symmstruct.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_momentum_gen.h"
@@ -19,10 +22,6 @@ LINALG_IMPLEMENT
 static void symmstruct_serialize( const tu_symmstruct_t* symm, char** ptr, uindex_t* nbytes );
 static tu_symmstruct_t* symmstruct_deserialize( const char* ptr );
 static int symmstruct_equal( const tu_symmstruct_t* A, const tu_symmstruct_t* B );
-
-#ifndef SYMNORM_MATRIX_ZERO
-#define SYMNORM_MATRIX_ZERO 1.e-7
-#endif
 
 void tu_symmstruct_delete( tu_symmstruct_t* symm ) {
     free( symm->inv_symmetry );
@@ -303,7 +302,7 @@ static void init_map_for_one_leg( diverge_model_t* model ) {
                     trial = claV3d_add(trial,claV3d_scale(UC1,model->nk[0]*in));
                     trial = claV3d_add(trial,claV3d_scale(UC2,model->nk[1]*im));
                     trial = claV3d_add(trial,claV3d_scale(UC3,model->nk[2]*iq));
-                    if (claV3d_norm(trial) < 1.e-5)
+                    if (claV3d_norm(trial) < SYMNORM_TU_BOND_MAX)
                         mapped_to = true;
                 }
 

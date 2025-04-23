@@ -17,6 +17,11 @@ extern "C" {
  * Special case of :c:func:`rs_hopping_to_fractcell` with :math:`N^j_i =
  * \delta_{ij} n^r_i`.
  *
+ * .. note :: This function does not touch, "see", or change the vertex elements.
+ *            Users are hence advised to set interaction components *after*
+ *            mapping the non-interacting parts of the model to a supercell.
+ *
+ *
  * :param diverge_model_t* m: input/output model
  * :param int[3] nr: description of the cubic supercell :math:`n^r`. the new
  *                   lattice vectors are given as :math:`L_i = n^r_i l_i`, with
@@ -31,6 +36,10 @@ void rs_hopping_to_supercell( diverge_model_t* m, int* nr );
  * be set and modifies those members, as well as
  * :c:member:`diverge_model_t.positions` and :c:member:`diverge_model_t.n_orb`.
  *
+ * .. note :: This function does not touch, "see", or change the vertex elements.
+ *            Users are hence advised to set interaction components *after*
+ *            mapping the non-interacting parts of the model to a supercell.
+ *
  * The supercell lattice vectors are given as :math:`L_j = \sum_i N^j_i l_i`. In
  * case N2 == N3 == NULL, make call to :c:func:`rs_hopping_to_supercell` with N1
  * as nr.
@@ -41,6 +50,12 @@ void rs_hopping_to_supercell( diverge_model_t* m, int* nr );
  * :param int[3] N3: integer coordinates :math:`N^3` for first supercell vector
  */
 void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 );
+
+/**
+ * same as :c:func:`rs_hopping_to_fractcell` but with matrix ``N123[3][3]`` for
+ * supercell, where each row corresponds to one supercell vector.
+ */
+void rs_hopping_to_fractcell_mat( diverge_model_t* m, int* N123 );
 
 #ifdef __cplusplus
 }

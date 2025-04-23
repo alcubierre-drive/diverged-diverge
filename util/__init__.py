@@ -554,6 +554,10 @@ if not _libs["divERGe"] is None:
     rs_hopping_to_fractcell.argtypes = [c_voidp, c_voidp, c_voidp, c_voidp]
     rs_hopping_to_fractcell.restype = None
 
+    rs_hopping_to_fractcell_mat = _libs["divERGe"].get("rs_hopping_to_fractcell_mat", "cdecl")
+    rs_hopping_to_fractcell_mat.argtypes = [c_voidp, c_voidp]
+    rs_hopping_to_fractcell_mat.restype = None
+
     linspace = _libs["divERGe"].get("diverge_linspace", "cdecl")
     linspace.argtypes = [c_double, c_double, index_t]
     linspace.restype = c_voidp
@@ -654,7 +658,7 @@ if not _libs["divERGe"] is None:
             n_per_segment_ptr = kmesh_to_bands_crs( model, byref(pts_ptr), byref(n_pts_ptr))
         else:
             n_per_segment_ptr = kmesh_to_bands( model, byref(pts_ptr), byref(n_pts_ptr))
-        n_per_segment = view_array( n_per_segment_ptr, dtype=index_t, shape=(model.contents.n_ibz_path,) )
+        n_per_segment = view_array( n_per_segment_ptr, dtype=index_t, shape=(model.contents.n_ibz_path-1,) )
         pts = view_array( pts_ptr, dtype=index_t, shape=(n_pts_ptr.value,) )
 
         n_per_segment = np.copy( n_per_segment )
@@ -725,6 +729,11 @@ if not _libs["divERGe"] is None:
     model_internals_tu = _libs["divERGe"].get("diverge_model_internals_tu", "cdecl")
     model_internals_tu.argtypes = [POINTER(model_t), c_double]
     model_internals_tu.restype = None
+
+    #Batched eigensolver
+    batched_eigen_r = _libs["divERGe"].get("batched_eigen_r", "cdecl")
+    batched_eigen_r.argtypes = [POINTER(index_t), index_t, POINTER(complex128_t), POINTER(c_double), index_t, index_t]
+    batched_eigen_r.restype = None
 
     class ArgUnion(Union):
         _fields_ = [("np_ibz", index_t),
@@ -1180,7 +1189,7 @@ if not _libs["divERGe"] is None:
     generate_symm_maps.restype = None
 
     generate_symm_maps_set_precision = _libs["divERGe"].get("diverge_generate_symm_maps_set_precision", "cdecl")
-    generate_symm_maps_set_precision.argtypes = [c_double, c_double, c_double, c_double]
+    generate_symm_maps_set_precision.argtypes = [c_double, c_double, c_double, c_double, c_double, c_double]
     generate_symm_maps_set_precision.restype = None
 
     symmetrize_2pt_coarse = _libs["divERGe"].get("diverge_symmetrize_2pt_coarse", "cdecl")

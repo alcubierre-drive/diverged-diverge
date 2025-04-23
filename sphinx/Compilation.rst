@@ -335,10 +335,6 @@ written (i.e., the variable can be either *defined* or *not*), or
         equivalent to /usr/include/Eigen instead of /usr/include/eigen3/Eigen.
         This flag is there to enable the former.
     :``SKIP_FLOW_TIMING``: do not time the flow step in the grid FRG code
-    :``SYMNORM_MATRIX_ZERO=VAL``: maximum value that may pop up in a difference
-        matrix when checking whether symmetries have an inverse (default:
-        ``1.e-7``). *Very important to set this to a higher value (e.g. 1.e-3)
-        for many-orbital systems on some machines.*
     :``TAG_VERSION=VAL``: set the git tag version string to VAL
     :``TU_MAGIC_NUMBER_POST_PROCESSING=VAL``: set the TU backend post processing
         magic number (relevant for output) to VAL

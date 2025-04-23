@@ -29,9 +29,12 @@ void diverge_generate_symm_maps( diverge_model_t* model );
  * :param double POS_EQUAL: finding whether obtials have same position, ~0
  * :param double MIN_ORBITAL_WEIGHT: minimal orbital weight that is considered
  *      'one', ~1
+ * :param double BOND_EQUAL: tu_symmstruct: find whether bonds are the same, ~0
+ * :param double MATRIX_ZERO: tu_symmstruct: when is a matrix zero?, ~0
  */
 void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
-        double ORBITAL_OVERLAP, double POS_EQUAL, double MIN_ORBITAL_WEIGHT );
+        double ORBITAL_OVERLAP, double POS_EQUAL, double MIN_ORBITAL_WEIGHT,
+        double BOND_EQUAL, double MATRIX_ZERO );
 
 /**
  * symmetrizes coarse mesh 2pt function stored in buf. returns maximum

@@ -20,6 +20,8 @@ double diverge_max_dist_iobi( void ) {
 }
 
 void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... ) {
+    if (!model->internals->has_common_internals)
+        diverge_model_internals_common( model );
     diverge_flow_type t = diverge_flow_type_fromstr( mode );
     mpi_log_printf("internals mode: %s\n", mode);
     va_list ap;

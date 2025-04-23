@@ -186,3 +186,7 @@ void rs_hopping_to_supercell( diverge_model_t* m, int* nr ) {
     for (int i=0; i<3; ++i) N[i][i] = nr[i];
     rs_hopping_to_fractcell( m, N[0], N[1], N[2] );
 }
+
+void rs_hopping_to_fractcell_mat( diverge_model_t* m, int* N123 ) {
+    rs_hopping_to_fractcell( m, N123+0, N123+3, N123+6 );
+}
