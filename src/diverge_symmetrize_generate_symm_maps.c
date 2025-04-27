@@ -11,7 +11,8 @@
 #include "misc/linalg.h"
 LINALG_IMPLEMENT
 
-// for tu_symmetry_bounds()
+// extern double SYMNORM_TU_BOND_MAX;
+// extern double SYMNORM_MATRIX_ZERO;
 #include "tu/diverge_interface.h"
 
 #include <assert.h>
