@@ -24,6 +24,11 @@ diverge_model_output_conf_t diverge_model_output_conf_defaults_CPP( void ) {
     return diverge_model_output_conf_defaults;
 }
 
+char* diverge_model_to_file_fg( diverge_model_t* mod, const char* fname,
+        const diverge_model_output_conf_t* cfg ) {
+    return diverge_model_to_file_finegrained( mod, fname, cfg );
+}
+
 // use batched eigen/alloc if npath < 0
 static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t npath );
 static index_t h_diverge_model_nbandstructure = DIVERGE_MODEL_NBANDSTRUCTURE;

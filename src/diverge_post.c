@@ -16,6 +16,11 @@ static void patch_pp( diverge_flow_step_t* st,
 static void tu_pp( diverge_flow_step_t* st,
         const diverge_postprocess_conf_t* pc, const char* file );
 
+void diverge_postprocess_and_write_fg( diverge_flow_step_t* st, const char* file,
+        const diverge_postprocess_conf_t* cfg ) {
+    diverge_postprocess_and_write_finegrained( st, file, cfg );
+}
+
 void diverge_postprocess_and_write( diverge_flow_step_t* st, const char* file ) {
     diverge_postprocess_and_write_finegrained( st, file, NULL );
 }

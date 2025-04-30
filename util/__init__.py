@@ -1038,6 +1038,10 @@ if not _libs["divERGe"] is None:
     postprocess_and_write_finegrained.argtypes = [POINTER(flow_step_t), String, POINTER(postprocess_conf_t)]
     postprocess_and_write_finegrained.restype = None
 
+    postprocess_and_write_fg = _libs["divERGe"].get("diverge_postprocess_and_write_fg", "cdecl")
+    postprocess_and_write_fg.argtypes = [POINTER(flow_step_t), String, POINTER(postprocess_conf_t)]
+    postprocess_and_write_fg.restype = None
+
     def postprocess_and_write_PY( step, filename, **kwargs ):
         r"""
         wraps :c:func:`diverge_postprocess_and_write_finegrained` in a
@@ -1103,6 +1107,14 @@ if not _libs["divERGe"] is None:
     else:
         model_to_file_finegrained.restype = String
         model_to_file_finegrained.errcheck = ReturnString
+
+    model_to_file_fg = _libs["divERGe"].get("diverge_model_to_file_fg", "cdecl")
+    model_to_file_fg.argtypes = [POINTER(model_t), String, POINTER(model_output_conf_t)]
+    if sizeof(c_int) == sizeof(c_void_p):
+        model_to_file_fg.restype = ReturnString
+    else:
+        model_to_file_fg.restype = String
+        model_to_file_fg.errcheck = ReturnString
 
     def model_to_file_PY( model, filename, **kwargs ):
         r"""

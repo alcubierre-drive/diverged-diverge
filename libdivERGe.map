@@ -84,6 +84,7 @@ DIVERGE_0.8 {
         diverge_model_set_chempot;
         diverge_model_set_filling;
         diverge_model_to_file;
+        diverge_model_to_file_fg;
         diverge_model_to_file_finegrained;
         diverge_model_validate;
         diverge_mpi_allgather_double;
@@ -134,6 +135,7 @@ DIVERGE_0.8 {
         diverge_patching_from_indices;
         diverge_patching_symmetrize_refinement;
         diverge_postprocess_and_write;
+        diverge_postprocess_and_write_fg;
         diverge_postprocess_and_write_finegrained;
         diverge_postprocess_conf_defaults_CPP;
         diverge_qgt;

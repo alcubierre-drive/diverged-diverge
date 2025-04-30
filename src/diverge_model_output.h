@@ -239,6 +239,10 @@ diverge_model_output_conf_t diverge_model_output_conf_defaults_CPP( void );
 char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname,
         const diverge_model_output_conf_t* cfg );
 
+/** alias for :c:func:`diverge_model_to_file_finegrained` */
+char* diverge_model_to_file_fg( diverge_model_t* mod, const char* fname,
+        const diverge_model_output_conf_t* cfg );
+
 /**
  * set the number of points per IBZ segment for the bandstructure calculation.
  * defaults to ``DIVERGE_MODEL_NBANDSTRUCTURE`` (300). must be called before
