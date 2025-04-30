@@ -179,7 +179,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     t->n_spin = n_spin;
     t->n_orbff = d->n_orbff;
 
-    // write out the objects to g_ob_qO;
+    // write out the objects to g_ob_qO
     t->g_ob_qO = calloc(t->my_nk * POW2(t->n_spin) * t->n_orbff * t->nO, sizeof*t->g_ob_qO);
     t->tmp_g = calloc(t->my_nk * POW2(t->n_spin) * t->n_orbff * t->nO, sizeof*t->tmp_g);
     int n_not_found = 0;
@@ -207,6 +207,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
                      R1 = claM3d_vecmat((claV3d_t){{ff.R1[0],ff.R1[1],ff.R1[2]}}, lat);
             // XXX is R12 + R1 correct? Or do we need a different phase factor
             // once we have some kind of dispersive phonon?
+            R1 = claV3d_scale(R1, 2.0); // XXX Suggestion: e^{1/2 q·R12 ± q·R1}
             const complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)] * cexp(0.5*I*claV3d_dot(qvec,claV3d_add(R12,R1)));
             atomic_add( &t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].O1,
                                t->n_spin,t->n_spin,t->n_orbff,t->nO)], &to_add );

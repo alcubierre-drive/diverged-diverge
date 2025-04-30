@@ -176,6 +176,8 @@ struct rs_vertex_t {
     complex128_t V;
 };
 
+/** .. c:autodoc:: tu/phonons.h */
+
 /**
  * See :ref:`Patching` for how to use this structure. Most probably, you won't
  * need to manually construct it. All allocations of arrays must be taken care
