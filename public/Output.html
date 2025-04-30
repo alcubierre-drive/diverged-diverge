@@ -1,43 +1,115 @@
 <!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<html lang="en" data-content_root="./">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Output &mdash; divERGe 0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
-    <title>Output &#8212; divERGe 0.8 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
-    <script src="_static/documentation_options.js?v=a0e24af7"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=a0e24af7"></script>
+        <script src="_static/doctools.js?v=9bcbadda"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Hacking" href="Hacking.html" />
-    <link rel="prev" title="Supercells" href="Supercells.html" />
-   
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
+    <link rel="prev" title="Supercells" href="Supercells.html" /> 
+</head>
 
-  
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
 
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
           
+          
+          <a href="index.html" class="icon icon-home">
+            divERGe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Getting%20Started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Compilation.html">Compilation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="C%20Interface.html">C Interface</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Initialization.html">Initialization &amp; Miscellaneous Functions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="Model.html">Model</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Internals.html">Internals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Meshing.html">Meshing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Wannier90.html">Wannier90</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FPLO.html">FPLO</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Patching.html">Patching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Symmetries.html">Symmetries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Symmetrization.html">Symmetrization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Filling.html">Filling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Berry%20Curvature.html">Berry Curvature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Supercells.html">Supercells</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Hacking.html">Hacking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Advanced%20Features.html">Advanced Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Flow.html">Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Testing.html">Testing</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Python%20Interface.html">Python Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Simulation%20Output.html">Simulation Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Runtime%20Tuning.html">Runtime Tuning</a></li>
+</ul>
 
-          <div class="body" role="main">
-            
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">divERGe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="C%20Interface.html">C Interface</a></li>
+          <li class="breadcrumb-item"><a href="Model.html">Model</a></li>
+      <li class="breadcrumb-item active">Output</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Output.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <section id="output">
-<span id="id1"></span><h1>Output<a class="headerlink" href="#output" title="Link to this heading">¶</a></h1>
+<span id="id1"></span><h1>Output<a class="headerlink" href="#output" title="Link to this heading"></a></h1>
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_to_file">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_to_file</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fname</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_to_file" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_to_file</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fname</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_to_file" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>output a <a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_model_t</span></code></a> to a <code class="docutils literal notranslate"><span class="pre">.dvg</span></code> file that can be read
 using the <code class="docutils literal notranslate"><span class="pre">diverge.output</span></code> python library (see <a class="reference internal" href="Simulation%20Output.html#simulation-output"><span class="std std-ref">Simulation Output</span></a>).
 more control can be obtained using
@@ -321,7 +393,7 @@ is not the same as 8 bit.</p></li>
 
 <dl class="c struct">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t">
-<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L158"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L158"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>to have fine-grained output control over <a class="reference internal" href="#c.diverge_model_to_file" title="diverge_model_to_file"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_to_file()</span></code></a>.
 Used explicitly in <a class="reference internal" href="#c.diverge_model_to_file_finegrained" title="diverge_model_to_file_finegrained"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_to_file_finegrained()</span></code></a>, and implicit
 in the python wrapper <a class="reference internal" href="Full%20Python%20Module%20Specification.html#diverge.model_to_file_PY" title="diverge.model_to_file_PY"><code class="xref py py-func docutils literal notranslate"><span class="pre">diverge.model_to_file_PY()</span></code></a>. Defaults are <em>not</em> documented
@@ -330,51 +402,51 @@ here, but can be obtained from C/C++/Python via
 variable <a class="reference internal" href="#c.diverge_model_output_conf_defaults" title="diverge_model_output_conf_defaults"><code class="xref c c-var docutils literal notranslate"><span class="pre">diverge_model_output_conf_defaults</span></code></a> in C.</p>
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t.kc">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kc</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.kc" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L166"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kc</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.kc" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L166"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>coarse kmesh</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t.kf">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kf</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.kf" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L168"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kf</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.kf" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L168"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>fine kmesh</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t.kc_ibz_path">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kc_ibz_path</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.kc_ibz_path" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L171"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kc_ibz_path</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.kc_ibz_path" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L171"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>include the indices on the coarse mesh that describe the ibz path. must
 have <a class="reference internal" href="Model.html#c.diverge_model_t.n_ibz_path" title="diverge_model_t.n_ibz_path"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.n_ibz_path</span></code></a> &gt; 0.</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t.kf_ibz_path">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kf_ibz_path</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.kf_ibz_path" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L176"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kf_ibz_path</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.kf_ibz_path" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L176"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>include the indices on the fine mesh that describe the ibz path. must
 have <a class="reference internal" href="Model.html#c.diverge_model_t.n_ibz_path" title="diverge_model_t.n_ibz_path"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.n_ibz_path</span></code></a> &gt; 0.</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t.H">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">H</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.H" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L180"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">H</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.H" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L180"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Hamiltonian on fine mesh</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t.U">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">U</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.U" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L182"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">U</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.U" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L182"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Orbital to band matrices on fine mesh</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t.E">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">E</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.E" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L184"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">E</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.E" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L184"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>energies on fine mesh</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t.npath">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">npath</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.npath" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L187"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">npath</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.npath" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L187"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p><em>integer</em>. use this as the number of points on the IBZ path (cf.
 <a class="reference internal" href="#c.diverge_model_output_set_npath" title="diverge_model_output_set_npath"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_output_set_npath()</span></code></a>). Only used when nonzero; but
 then <em>with precedence</em> over what is/has been set in
@@ -386,7 +458,7 @@ pts).</p>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_t.fatbands">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fatbands</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.fatbands" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L197"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fatbands</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_t.fatbands" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L197"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>if (<a class="reference internal" href="#c.diverge_model_output_conf_t.npath" title="diverge_model_output_conf_t.npath"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_output_conf_t.npath</span></code></a> == -1 &amp;&amp;
 <a class="reference internal" href="Model.html#c.diverge_model_t.n_ibz_path" title="diverge_model_t.n_ibz_path"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.n_ibz_path</span></code></a> &gt; 0 &amp;&amp; common internals are set),
 output the absolute value of the orbital to band matrices</p>
@@ -396,13 +468,13 @@ output the absolute value of the orbital to band matrices</p>
 
 <dl class="c var">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_defaults">
-<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_output_conf_defaults</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_defaults" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L205"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_output_conf_defaults</span></span></span><a class="headerlink" href="#c.diverge_model_output_conf_defaults" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L205"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>output configuration defaults, accessible from C, for values look at source</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_output_conf_defaults_CPP">
-<a class="reference internal" href="#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_output_conf_defaults_CPP</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_output_conf_defaults_CPP" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L220"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_output_conf_defaults_CPP</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_output_conf_defaults_CPP" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L220"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>return the defaults of the <a class="reference internal" href="#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_model_output_conf_t</span></code></a> structure
 from CPP/Python. For C you can use a plain, simple</p>
 <div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="n">diverge_model_output_conf_t</span><span class="w"> </span><span class="n">outconf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">diverge_model_output_conf_defaults</span><span class="p">;</span>
@@ -412,7 +484,7 @@ from CPP/Python. For C you can use a plain, simple</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_to_file_finegrained">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_to_file_finegrained</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fname</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">cfg</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_to_file_finegrained" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L230"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_to_file_finegrained</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fname</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">cfg</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_to_file_finegrained" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L230"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>offers the same functionality as <a class="reference internal" href="#c.diverge_model_to_file" title="diverge_model_to_file"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_to_file()</span></code></a> including
 fine-grained controls over all internal structures. Returns the md5sum of the
 written file as <em>static</em> string.</p>
@@ -429,13 +501,13 @@ written file as <em>static</em> string.</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_to_file_fg">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_to_file_fg</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fname</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">cfg</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_to_file_fg" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L241"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_to_file_fg</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fname</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_model_output_conf_t" title="diverge_model_output_conf_t"><span class="n"><span class="pre">diverge_model_output_conf_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">cfg</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_to_file_fg" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L241"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>alias for <a class="reference internal" href="#c.diverge_model_to_file_finegrained" title="diverge_model_to_file_finegrained"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_to_file_finegrained()</span></code></a></p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_output_set_npath">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_output_set_npath</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">npath</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_output_set_npath" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L246"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_output_set_npath</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">npath</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_output_set_npath" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_output.h#L246"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>set the number of points per IBZ segment for the bandstructure calculation.
 defaults to <code class="docutils literal notranslate"><span class="pre">DIVERGE_MODEL_NBANDSTRUCTURE</span></code> (300). must be called before
 <a class="reference internal" href="#c.diverge_model_to_file" title="diverge_model_to_file"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_to_file()</span></code></a>. If set to -1, use
@@ -447,105 +519,34 @@ energy array).</p>
 </section>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Supercells.html" class="btn btn-neutral float-left" title="Supercells" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Hacking.html" class="btn btn-neutral float-right" title="Hacking" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonas B. Profe, Lennart Klebl.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">divERGe</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-
-<search id="searchbox" style="display: none" role="search">
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="Getting%20Started.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Compilation.html">Compilation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="C%20Interface.html">C Interface</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Initialization.html">Initialization &amp; Miscellaneous Functions</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="Model.html">Model</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="Internals.html">Internals</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Meshing.html">Meshing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Wannier90.html">Wannier90</a></li>
-<li class="toctree-l3"><a class="reference internal" href="FPLO.html">FPLO</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Patching.html">Patching</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Symmetries.html">Symmetries</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Symmetrization.html">Symmetrization</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Filling.html">Filling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Berry%20Curvature.html">Berry Curvature</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Supercells.html">Supercells</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Output</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Hacking.html">Hacking</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Advanced%20Features.html">Advanced Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="Flow.html">Flow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Testing.html">Testing</a></li>
-</ul>
-</li>
-</ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Python%20Interface.html">Python Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Simulation%20Output.html">Simulation Output</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Runtime%20Tuning.html">Runtime Tuning</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-  <li><a href="C%20Interface.html">C Interface</a><ul>
-  <li><a href="Model.html">Model</a><ul>
-      <li>Previous: <a href="Supercells.html" title="previous chapter">Supercells</a></li>
-      <li>Next: <a href="Hacking.html" title="next chapter">Hacking</a></li>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &#169;2025, Jonas B. Profe, Lennart Klebl.
-      
-      |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
-      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
-      
-      |
-      <a href="_sources/Output.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

@@ -1,234 +1,50 @@
 <!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<html lang="en" data-content_root="./">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Internals &mdash; divERGe 0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
-    <title>Internals &#8212; divERGe 0.8 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
-    <script src="_static/documentation_options.js?v=a0e24af7"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=a0e24af7"></script>
+        <script src="_static/doctools.js?v=9bcbadda"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Meshing" href="Meshing.html" />
-    <link rel="prev" title="Model" href="Model.html" />
-   
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
+    <link rel="prev" title="Model" href="Model.html" /> 
+</head>
 
-  
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
 
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
           
-
-          <div class="body" role="main">
-            
-  <section id="internals">
-<span id="id1"></span><h1>Internals<a class="headerlink" href="#internals" title="Link to this heading">¶</a></h1>
-<p>Functions to generate and access internal structures. Kinetics are initalized
-with <a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a>. Backend-specific interaction
-internals with <a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>,
-<a class="reference internal" href="#c.diverge_model_internals_patch" title="diverge_model_internals_patch"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_patch()</span></code></a>, <a class="reference internal" href="#c.diverge_model_internals_grid" title="diverge_model_internals_grid"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_grid()</span></code></a>,
-or <a class="reference internal" href="#c.diverge_model_internals_any" title="diverge_model_internals_any"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_any()</span></code></a>.</p>
-<p>Internals can be accessed through several getter functions that <em>may break when
-using non-standard models</em> (custom Hamiltonians etc.):</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#c.diverge_model_internals_get_E" title="diverge_model_internals_get_E"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_E()</span></code></a></p></li>
-<li><p><a class="reference internal" href="#c.diverge_model_internals_get_U" title="diverge_model_internals_get_U"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_U()</span></code></a></p></li>
-<li><p><a class="reference internal" href="#c.diverge_model_internals_get_H" title="diverge_model_internals_get_H"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_H()</span></code></a></p></li>
-<li><p><a class="reference internal" href="#c.diverge_model_internals_get_kmesh" title="diverge_model_internals_get_kmesh"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_kmesh()</span></code></a></p></li>
-<li><p><a class="reference internal" href="#c.diverge_model_internals_get_kfmesh" title="diverge_model_internals_get_kfmesh"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_kfmesh()</span></code></a></p></li>
-<li><p><a class="reference internal" href="#c.diverge_model_internals_get_greens" title="diverge_model_internals_get_greens"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_greens()</span></code></a></p></li>
-</ul>
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_validate">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_validate</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_validate" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Check for errors in the user defined model</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_common">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_common</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_common" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L16"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Prepare the common part of the <a class="reference internal" href="Model.html#c.internals_t" title="internals_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">internals_t</span></code></a> struct,
-including Hamiltonian, Eigenvectors/Eigenvalues, momentum meshes, etc.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_any">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_any</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mode</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_any" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Prepare internal structure for the computation mode specified as string in
-mode; can be <code class="docutils literal notranslate"><span class="pre">&quot;grid&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;patch&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;tu&quot;</span></code>. Dispatches to the
-corrseponding function, i.e.,</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference internal" href="#c.diverge_model_internals_grid" title="diverge_model_internals_grid"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_grid()</span></code></a>,</p></li>
-<li><p><a class="reference internal" href="#c.diverge_model_internals_patch" title="diverge_model_internals_patch"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_patch()</span></code></a>,</p></li>
-<li><p><a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>.</p></li>
-</ul>
-</div></blockquote>
-<p>For <a class="reference internal" href="#c.diverge_model_internals_grid" title="diverge_model_internals_grid"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_grid()</span></code></a>, no additional parameters are
-needed.</p>
-<p>For <a class="reference internal" href="#c.diverge_model_internals_patch" title="diverge_model_internals_patch"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_patch()</span></code></a>, one additional parameter
-(<code class="docutils literal notranslate"><span class="pre">index_t</span> <span class="pre">np_ibz</span></code>) must be passed. Documentation found in
-<a class="reference internal" href="#c.diverge_model_internals_patch" title="diverge_model_internals_patch"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_patch()</span></code></a>.</p>
-<p>For <a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>, one additional parameter (<code class="docutils literal notranslate"><span class="pre">double</span>
-<span class="pre">max_dist</span></code>) must be passed. Documentation found in
-<a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_grid">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_grid</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_grid" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Prepare the grid FRG part of the <a class="reference internal" href="Model.html#c.internals_t" title="internals_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">internals_t</span></code></a> structure.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_patch">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_patch</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_ibz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_patch" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L48"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Prepare the patch part of the <a class="reference internal" href="Model.html#c.internals_t" title="internals_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">internals_t</span></code></a> struct as well as the
-<a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">mom_patching_t</span></code></a> struct (<a class="reference internal" href="Model.html#c.diverge_model_t.patching" title="diverge_model_t.patching"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.patching</span></code></a>) if it
-is not allocated.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>divERGe can only generate and operate on the npatch backend if there
-is no refinement set through <a class="reference internal" href="Model.html#c.diverge_model_t.nkf" title="diverge_model_t.nkf"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.nkf</span></code></a>, i.e., ones in
-those spots where <a class="reference internal" href="Model.html#c.diverge_model_t.nk" title="diverge_model_t.nk"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.nk</span></code></a> is nonzero. Some of the
-patching routines further assume a two-dimensional model – not the actual
-FRG kernels, merely some helper functions.</p>
+          
+          <a href="index.html" class="icon icon-home">
+            divERGe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
 </div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a></span></span>) – model instance</p></li>
-<li><p><strong>np_ibz</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of patches to search for in the IBZ if
-<a class="reference internal" href="Model.html#c.diverge_model_t.patching" title="diverge_model_t.patching"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.patching</span></code></a> is NULL</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_tu">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_tu</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">max_dist</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_tu" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L66"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Prepare the TU part of the <a class="reference internal" href="Model.html#c.internals_t" title="internals_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">internals_t</span></code></a> struct.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a></span></span>) – model instance</p></li>
-<li><p><strong>max_dist</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – distance up to which formfactors should be included.
-If the return value of
-<a class="reference internal" href="#c.diverge_max_dist_iobi" title="diverge_max_dist_iobi"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_max_dist_iobi()</span></code></a> is passed (a special
-‘nan’), formfactors that adhere to the IOBI
-approximation are generated.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_max_dist_iobi">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_max_dist_iobi</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_max_dist_iobi" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L79"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>return magic value for formfactor setup (max_dist value in
-<a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>) of TUFRG such that only on-site
-intraorbital formfactors are generated (IOBI approximation). Uses quiet nan
-payload, i.e., returns ‘nan’. Might break if non-IEEE floating point numbers
-are in use.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_reset">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_reset</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_reset" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L88"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Reset all internal structures of the model and free their resources. Does not
-reset the patching. Usage is discouraged.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_get_E">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_E</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_E" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L118"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>returns the internally generated energies (nk*nkf, nb).</p>
-<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
-NULL is returned.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_get_U">
-<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_U</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_U" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L125"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>returns the internally generated orbital to band transform (nk*nkf, nb, nb)</p>
-<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
-NULL is returned.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_get_H">
-<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_H</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_H" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L132"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>returns the internally generated hamiltonian (nk*nkf, nb, nb)</p>
-<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
-NULL is returned.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_get_kmesh">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_kmesh</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_kmesh" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L139"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>returns the internally generated coarse momentum mesh (nk, 3)</p>
-<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
-NULL is returned.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_get_kfmesh">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_kfmesh</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_kfmesh" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L146"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>returns the internally generated coarse momentum mesh (nk*nkf, 3)</p>
-<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
-NULL is returned.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_model_internals_get_greens">
-<a class="reference internal" href="Datatypes.html#c.gf_complex_t" title="gf_complex_t"><span class="n"><span class="pre">gf_complex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_greens</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_greens" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L153"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>returns the internal Green’s function buffer (2, nk*nkf, nb, nb)</p>
-<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
-NULL is returned.</p>
-</dd></dl>
-
-</section>
-
-
-          </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">divERGe</a></h1>
-
-
-
-
-
-
-
-
-
-<search id="searchbox" style="display: none" role="search">
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Getting%20Started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Compilation.html">Compilation</a></li>
@@ -263,45 +79,230 @@ NULL is returned.</p>
 <li class="toctree-l1"><a class="reference internal" href="Runtime%20Tuning.html">Runtime Tuning</a></li>
 </ul>
 
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-  <li><a href="C%20Interface.html">C Interface</a><ul>
-  <li><a href="Model.html">Model</a><ul>
-      <li>Previous: <a href="Model.html" title="previous chapter">Model</a></li>
-      <li>Next: <a href="Meshing.html" title="next chapter">Meshing</a></li>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-
-
-
-
-
-
-
-
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &#169;2025, Jonas B. Profe, Lennart Klebl.
-      
-      |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
-      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
-      
-      |
-      <a href="_sources/Internals.rst.txt"
-          rel="nofollow">Page source</a>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">divERGe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="C%20Interface.html">C Interface</a></li>
+          <li class="breadcrumb-item"><a href="Model.html">Model</a></li>
+      <li class="breadcrumb-item active">Internals</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Internals.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="internals">
+<span id="id1"></span><h1>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h1>
+<p>Functions to generate and access internal structures. Kinetics are initalized
+with <a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a>. Backend-specific interaction
+internals with <a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>,
+<a class="reference internal" href="#c.diverge_model_internals_patch" title="diverge_model_internals_patch"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_patch()</span></code></a>, <a class="reference internal" href="#c.diverge_model_internals_grid" title="diverge_model_internals_grid"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_grid()</span></code></a>,
+or <a class="reference internal" href="#c.diverge_model_internals_any" title="diverge_model_internals_any"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_any()</span></code></a>.</p>
+<p>Internals can be accessed through several getter functions that <em>may break when
+using non-standard models</em> (custom Hamiltonians etc.):</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#c.diverge_model_internals_get_E" title="diverge_model_internals_get_E"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_E()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#c.diverge_model_internals_get_U" title="diverge_model_internals_get_U"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_U()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#c.diverge_model_internals_get_H" title="diverge_model_internals_get_H"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_H()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#c.diverge_model_internals_get_kmesh" title="diverge_model_internals_get_kmesh"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_kmesh()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#c.diverge_model_internals_get_kfmesh" title="diverge_model_internals_get_kfmesh"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_kfmesh()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#c.diverge_model_internals_get_greens" title="diverge_model_internals_get_greens"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_get_greens()</span></code></a></p></li>
+</ul>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_validate">
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_validate</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_validate" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Check for errors in the user defined model</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_common">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_common</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_common" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L16"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Prepare the common part of the <a class="reference internal" href="Model.html#c.internals_t" title="internals_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">internals_t</span></code></a> struct,
+including Hamiltonian, Eigenvectors/Eigenvalues, momentum meshes, etc.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_any">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_any</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mode</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_any" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Prepare internal structure for the computation mode specified as string in
+mode; can be <code class="docutils literal notranslate"><span class="pre">&quot;grid&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;patch&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;tu&quot;</span></code>. Dispatches to the
+corrseponding function, i.e.,</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="#c.diverge_model_internals_grid" title="diverge_model_internals_grid"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_grid()</span></code></a>,</p></li>
+<li><p><a class="reference internal" href="#c.diverge_model_internals_patch" title="diverge_model_internals_patch"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_patch()</span></code></a>,</p></li>
+<li><p><a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>.</p></li>
+</ul>
+</div></blockquote>
+<p>For <a class="reference internal" href="#c.diverge_model_internals_grid" title="diverge_model_internals_grid"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_grid()</span></code></a>, no additional parameters are
+needed.</p>
+<p>For <a class="reference internal" href="#c.diverge_model_internals_patch" title="diverge_model_internals_patch"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_patch()</span></code></a>, one additional parameter
+(<code class="docutils literal notranslate"><span class="pre">index_t</span> <span class="pre">np_ibz</span></code>) must be passed. Documentation found in
+<a class="reference internal" href="#c.diverge_model_internals_patch" title="diverge_model_internals_patch"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_patch()</span></code></a>.</p>
+<p>For <a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>, one additional parameter (<code class="docutils literal notranslate"><span class="pre">double</span>
+<span class="pre">max_dist</span></code>) must be passed. Documentation found in
+<a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_grid">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_grid</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_grid" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Prepare the grid FRG part of the <a class="reference internal" href="Model.html#c.internals_t" title="internals_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">internals_t</span></code></a> structure.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_patch">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_patch</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_ibz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_patch" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L48"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Prepare the patch part of the <a class="reference internal" href="Model.html#c.internals_t" title="internals_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">internals_t</span></code></a> struct as well as the
+<a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">mom_patching_t</span></code></a> struct (<a class="reference internal" href="Model.html#c.diverge_model_t.patching" title="diverge_model_t.patching"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.patching</span></code></a>) if it
+is not allocated.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>divERGe can only generate and operate on the npatch backend if there
+is no refinement set through <a class="reference internal" href="Model.html#c.diverge_model_t.nkf" title="diverge_model_t.nkf"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.nkf</span></code></a>, i.e., ones in
+those spots where <a class="reference internal" href="Model.html#c.diverge_model_t.nk" title="diverge_model_t.nk"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.nk</span></code></a> is nonzero. Some of the
+patching routines further assume a two-dimensional model – not the actual
+FRG kernels, merely some helper functions.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a></span></span>) – model instance</p></li>
+<li><p><strong>np_ibz</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of patches to search for in the IBZ if
+<a class="reference internal" href="Model.html#c.diverge_model_t.patching" title="diverge_model_t.patching"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_model_t.patching</span></code></a> is NULL</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_tu">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_tu</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">max_dist</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_tu" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L66"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Prepare the TU part of the <a class="reference internal" href="Model.html#c.internals_t" title="internals_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">internals_t</span></code></a> struct.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a></span></span>) – model instance</p></li>
+<li><p><strong>max_dist</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – distance up to which formfactors should be included.
+If the return value of
+<a class="reference internal" href="#c.diverge_max_dist_iobi" title="diverge_max_dist_iobi"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_max_dist_iobi()</span></code></a> is passed (a special
+‘nan’), formfactors that adhere to the IOBI
+approximation are generated.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_max_dist_iobi">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_max_dist_iobi</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_max_dist_iobi" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L79"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>return magic value for formfactor setup (max_dist value in
+<a class="reference internal" href="#c.diverge_model_internals_tu" title="diverge_model_internals_tu"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu()</span></code></a>) of TUFRG such that only on-site
+intraorbital formfactors are generated (IOBI approximation). Uses quiet nan
+payload, i.e., returns ‘nan’. Might break if non-IEEE floating point numbers
+are in use.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_reset">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_reset</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_reset" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L88"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Reset all internal structures of the model and free their resources. Does not
+reset the patching. Usage is discouraged.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_get_E">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_E</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_E" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L118"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns the internally generated energies (nk*nkf, nb).</p>
+<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
+NULL is returned.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_get_U">
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_U</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_U" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L125"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns the internally generated orbital to band transform (nk*nkf, nb, nb)</p>
+<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
+NULL is returned.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_get_H">
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_H</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_H" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L132"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns the internally generated hamiltonian (nk*nkf, nb, nb)</p>
+<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
+NULL is returned.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_get_kmesh">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_kmesh</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_kmesh" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L139"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns the internally generated coarse momentum mesh (nk, 3)</p>
+<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
+NULL is returned.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_get_kfmesh">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_kfmesh</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_kfmesh" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L146"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns the internally generated coarse momentum mesh (nk*nkf, 3)</p>
+<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
+NULL is returned.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_internals_get_greens">
+<a class="reference internal" href="Datatypes.html#c.gf_complex_t" title="gf_complex_t"><span class="n"><span class="pre">gf_complex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_internals_get_greens</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_internals_get_greens" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_model_internals.h#L153"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns the internal Green’s function buffer (2, nk*nkf, nb, nb)</p>
+<p><a class="reference internal" href="#c.diverge_model_internals_common" title="diverge_model_internals_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_common()</span></code></a> must have been called, otherwise
+NULL is returned.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Model.html" class="btn btn-neutral float-left" title="Model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Meshing.html" class="btn btn-neutral float-right" title="Meshing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
-    
+  <hr/>
 
-    
-  </body>
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonas B. Profe, Lennart Klebl.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
 </html>

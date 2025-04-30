@@ -1,193 +1,51 @@
 <!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<html lang="en" data-content_root="./">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flow Integration &mdash; divERGe 0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
-    <title>Flow Integration &#8212; divERGe 0.8 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
-    <script src="_static/documentation_options.js?v=a0e24af7"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=a0e24af7"></script>
+        <script src="_static/doctools.js?v=9bcbadda"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Postprocessing and Output" href="Postprocessing%20and%20Output.html" />
-    <link rel="prev" title="Flowing Vertices" href="Flowing%20Vertices.html" />
-   
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
+    <link rel="prev" title="Flowing Vertices" href="Flowing%20Vertices.html" /> 
+</head>
 
-  
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
 
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
           
-
-          <div class="body" role="main">
-            
-  <section id="flow-integration">
-<span id="id1"></span><h1>Flow Integration<a class="headerlink" href="#flow-integration" title="Link to this heading">¶</a></h1>
-<p>The FRG flow is integrated by successive calls to
-<a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_euler" title="diverge_flow_step_euler"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_euler()</span></code></a>. Before carrying out this integration, users
-must allocate a <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a> object using
-<a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_init" title="diverge_flow_step_init"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_init()</span></code></a>. We explicitly leave the construction of the
-(Euler) integration loop to the users, in order to adjust step sizes etc. by
-hand.</p>
-<dl class="c struct">
-<dt class="sig sig-object c" id="c.diverge_euler_t">
-<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_t</span></span></span><a class="headerlink" href="#c.diverge_euler_t" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L12"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>simple structure to support user-driven Euler integration with adaptive step
-size. The step size is chosen as <span class="math notranslate nohighlight">\(d\Lambda = \max[ \min(B_\mathrm{fac},
-B_\mathrm{fac-sc}), d\Lambda_\mathrm{min} ]\)</span>.</p>
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.Lambda">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Lambda</span></span></span><a class="headerlink" href="#c.diverge_euler_t.Lambda" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L17"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>current scale <span class="math notranslate nohighlight">\(\Lambda\)</span></p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.dLambda">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dLambda</span></span></span><a class="headerlink" href="#c.diverge_euler_t.dLambda" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L19"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>current differential scale <span class="math notranslate nohighlight">\(d\Lambda\)</span></p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.Lambda_min">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Lambda_min</span></span></span><a class="headerlink" href="#c.diverge_euler_t.Lambda_min" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>minimal scale <span class="math notranslate nohighlight">\(\Lambda_\mathrm{min}\)</span></p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.dLambda_min">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dLambda_min</span></span></span><a class="headerlink" href="#c.diverge_euler_t.dLambda_min" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>absolute minimal differentail scale <span class="math notranslate nohighlight">\(d\Lambda_\mathrm{min}\)</span></p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.dLambda_fac">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dLambda_fac</span></span></span><a class="headerlink" href="#c.diverge_euler_t.dLambda_fac" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L26"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p><span class="math notranslate nohighlight">\(d\Lambda_\mathrm{fac}\)</span> defines an upper bound <span class="math notranslate nohighlight">\(B\)</span> for the
-step width as <span class="math notranslate nohighlight">\(B_\mathrm{fac} = d\Lambda_\mathrm{fac} \cdot
-\Lambda\)</span>.</p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.dLambda_fac_scale">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dLambda_fac_scale</span></span></span><a class="headerlink" href="#c.diverge_euler_t.dLambda_fac_scale" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L32"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p><span class="math notranslate nohighlight">\(d\Lambda_{\mathrm{fac-sc}}\)</span> additional scaling factor for the
-calculation of the width of the next step, used as an upper bound
-<span class="math notranslate nohighlight">\(B\)</span> for the step-width: <span class="math notranslate nohighlight">\(B_\mathrm{fac-sc} =
-d\Lambda_\mathrm{fac-sc} / V_\mathrm{max} \cdot \Lambda\)</span></p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.maxvert">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">maxvert</span></span></span><a class="headerlink" href="#c.diverge_euler_t.maxvert" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L38"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>maximum vertex value</p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.maxvert_hard_limit">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">maxvert_hard_limit</span></span></span><a class="headerlink" href="#c.diverge_euler_t.maxvert_hard_limit" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L40"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>hard limit for maximum vertex value</p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.niter">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">niter</span></span></span><a class="headerlink" href="#c.diverge_euler_t.niter" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>number of iterations</p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.maxiter">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">maxiter</span></span></span><a class="headerlink" href="#c.diverge_euler_t.maxiter" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L45"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>maximum number of iterations</p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.consider_maxvert_iter_start">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">consider_maxvert_iter_start</span></span></span><a class="headerlink" href="#c.diverge_euler_t.consider_maxvert_iter_start" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>consider <a class="reference internal" href="#c.diverge_euler_t.maxvert" title="diverge_euler_t.maxvert"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_euler_t.maxvert</span></code></a> only after this iteration</p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.diverge_euler_t.consider_maxvert_lambda">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">consider_maxvert_lambda</span></span></span><a class="headerlink" href="#c.diverge_euler_t.consider_maxvert_lambda" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L50"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>consider <a class="reference internal" href="#c.diverge_euler_t.maxvert" title="diverge_euler_t.maxvert"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_euler_t.maxvert</span></code></a> only after passing this
-value of <span class="math notranslate nohighlight">\(\Lambda\)</span></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_euler_defaults_CPP">
-<a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_defaults_CPP</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_defaults_CPP" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L57"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>returns default values for the Euler integrator in C/C++/Python, see
-<a class="reference internal" href="#c.diverge_euler_defaults" title="diverge_euler_defaults"><code class="xref c c-var docutils literal notranslate"><span class="pre">diverge_euler_defaults</span></code></a> for values.</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.diverge_euler_next">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_next</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">de</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">Vmax</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_next" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L63"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>performs adaptive step, without calling any <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a>
-related routines. example usage:</p>
-<div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="c1">// diverge_flow_step_t* st = ...;</span>
-<span class="n">diverge_euler_t</span><span class="w"> </span><span class="n">eu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">diverge_euler_defaults_CPP</span><span class="p">();</span>
-<span class="kt">double</span><span class="w"> </span><span class="n">vertmax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
-<span class="k">do</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">diverge_flow_step_euler</span><span class="p">(</span><span class="w"> </span><span class="n">st</span><span class="p">,</span><span class="w"> </span><span class="n">eu</span><span class="p">.</span><span class="n">Lambda</span><span class="p">,</span><span class="w"> </span><span class="n">eu</span><span class="p">.</span><span class="n">dLambda</span><span class="w"> </span><span class="p">);</span>
-<span class="w">    </span><span class="n">diverge_flow_step_vertmax</span><span class="p">(</span><span class="w"> </span><span class="n">st</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">vertmax</span><span class="w"> </span><span class="p">);</span>
-<span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">diverge_euler_next</span><span class="p">(</span><span class="o">&amp;</span><span class="n">eu</span><span class="p">,</span><span class="w"> </span><span class="n">vertmax</span><span class="p">));</span>
-</pre></div>
+          
+          <a href="index.html" class="icon icon-home">
+            divERGe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
 </div>
-</dd></dl>
-
-<dl class="c var">
-<dt class="sig sig-object c" id="c.diverge_euler_defaults">
-<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_defaults</span></span></span><a class="headerlink" href="#c.diverge_euler_defaults" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L80"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>defaults struct accessible only in C, because C++ does not allow named
-member initialization. Look the values up in the source (linked on the
-right).</p>
-</dd></dl>
-
-</section>
-
-
-          </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">divERGe</a></h1>
-
-
-
-
-
-
-
-
-
-<search id="searchbox" style="display: none" role="search">
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Getting%20Started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Compilation.html">Compilation</a></li>
@@ -213,45 +71,188 @@ right).</p>
 <li class="toctree-l1"><a class="reference internal" href="Runtime%20Tuning.html">Runtime Tuning</a></li>
 </ul>
 
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-  <li><a href="C%20Interface.html">C Interface</a><ul>
-  <li><a href="Flow.html">Flow</a><ul>
-      <li>Previous: <a href="Flowing%20Vertices.html" title="previous chapter">Flowing Vertices</a></li>
-      <li>Next: <a href="Postprocessing%20and%20Output.html" title="next chapter">Postprocessing and Output</a></li>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-
-
-
-
-
-
-
-
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &#169;2025, Jonas B. Profe, Lennart Klebl.
-      
-      |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
-      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
-      
-      |
-      <a href="_sources/Flow Integration.rst.txt"
-          rel="nofollow">Page source</a>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">divERGe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="C%20Interface.html">C Interface</a></li>
+          <li class="breadcrumb-item"><a href="Flow.html">Flow</a></li>
+      <li class="breadcrumb-item active">Flow Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Flow Integration.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="flow-integration">
+<span id="id1"></span><h1>Flow Integration<a class="headerlink" href="#flow-integration" title="Link to this heading"></a></h1>
+<p>The FRG flow is integrated by successive calls to
+<a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_euler" title="diverge_flow_step_euler"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_euler()</span></code></a>. Before carrying out this integration, users
+must allocate a <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a> object using
+<a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_init" title="diverge_flow_step_init"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_init()</span></code></a>. We explicitly leave the construction of the
+(Euler) integration loop to the users, in order to adjust step sizes etc. by
+hand.</p>
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.diverge_euler_t">
+<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_t</span></span></span><a class="headerlink" href="#c.diverge_euler_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L12"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>simple structure to support user-driven Euler integration with adaptive step
+size. The step size is chosen as <span class="math notranslate nohighlight">\(d\Lambda = \max[ \min(B_\mathrm{fac},
+B_\mathrm{fac-sc}), d\Lambda_\mathrm{min} ]\)</span>.</p>
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.Lambda">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Lambda</span></span></span><a class="headerlink" href="#c.diverge_euler_t.Lambda" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L17"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>current scale <span class="math notranslate nohighlight">\(\Lambda\)</span></p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.dLambda">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dLambda</span></span></span><a class="headerlink" href="#c.diverge_euler_t.dLambda" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L19"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>current differential scale <span class="math notranslate nohighlight">\(d\Lambda\)</span></p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.Lambda_min">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Lambda_min</span></span></span><a class="headerlink" href="#c.diverge_euler_t.Lambda_min" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>minimal scale <span class="math notranslate nohighlight">\(\Lambda_\mathrm{min}\)</span></p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.dLambda_min">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dLambda_min</span></span></span><a class="headerlink" href="#c.diverge_euler_t.dLambda_min" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>absolute minimal differentail scale <span class="math notranslate nohighlight">\(d\Lambda_\mathrm{min}\)</span></p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.dLambda_fac">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dLambda_fac</span></span></span><a class="headerlink" href="#c.diverge_euler_t.dLambda_fac" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L26"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(d\Lambda_\mathrm{fac}\)</span> defines an upper bound <span class="math notranslate nohighlight">\(B\)</span> for the
+step width as <span class="math notranslate nohighlight">\(B_\mathrm{fac} = d\Lambda_\mathrm{fac} \cdot
+\Lambda\)</span>.</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.dLambda_fac_scale">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dLambda_fac_scale</span></span></span><a class="headerlink" href="#c.diverge_euler_t.dLambda_fac_scale" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L32"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(d\Lambda_{\mathrm{fac-sc}}\)</span> additional scaling factor for the
+calculation of the width of the next step, used as an upper bound
+<span class="math notranslate nohighlight">\(B\)</span> for the step-width: <span class="math notranslate nohighlight">\(B_\mathrm{fac-sc} =
+d\Lambda_\mathrm{fac-sc} / V_\mathrm{max} \cdot \Lambda\)</span></p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.maxvert">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">maxvert</span></span></span><a class="headerlink" href="#c.diverge_euler_t.maxvert" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L38"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>maximum vertex value</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.maxvert_hard_limit">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">maxvert_hard_limit</span></span></span><a class="headerlink" href="#c.diverge_euler_t.maxvert_hard_limit" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L40"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>hard limit for maximum vertex value</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.niter">
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">niter</span></span></span><a class="headerlink" href="#c.diverge_euler_t.niter" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>number of iterations</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.maxiter">
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">maxiter</span></span></span><a class="headerlink" href="#c.diverge_euler_t.maxiter" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L45"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>maximum number of iterations</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.consider_maxvert_iter_start">
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">consider_maxvert_iter_start</span></span></span><a class="headerlink" href="#c.diverge_euler_t.consider_maxvert_iter_start" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>consider <a class="reference internal" href="#c.diverge_euler_t.maxvert" title="diverge_euler_t.maxvert"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_euler_t.maxvert</span></code></a> only after this iteration</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_euler_t.consider_maxvert_lambda">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">consider_maxvert_lambda</span></span></span><a class="headerlink" href="#c.diverge_euler_t.consider_maxvert_lambda" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L50"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>consider <a class="reference internal" href="#c.diverge_euler_t.maxvert" title="diverge_euler_t.maxvert"><code class="xref c c-member docutils literal notranslate"><span class="pre">diverge_euler_t.maxvert</span></code></a> only after passing this
+value of <span class="math notranslate nohighlight">\(\Lambda\)</span></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_euler_defaults_CPP">
+<a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_defaults_CPP</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_defaults_CPP" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L57"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns default values for the Euler integrator in C/C++/Python, see
+<a class="reference internal" href="#c.diverge_euler_defaults" title="diverge_euler_defaults"><code class="xref c c-var docutils literal notranslate"><span class="pre">diverge_euler_defaults</span></code></a> for values.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_euler_next">
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_next</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">de</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">Vmax</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_next" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L63"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>performs adaptive step, without calling any <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a>
+related routines. example usage:</p>
+<div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="c1">// diverge_flow_step_t* st = ...;</span>
+<span class="n">diverge_euler_t</span><span class="w"> </span><span class="n">eu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">diverge_euler_defaults_CPP</span><span class="p">();</span>
+<span class="kt">double</span><span class="w"> </span><span class="n">vertmax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="k">do</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">diverge_flow_step_euler</span><span class="p">(</span><span class="w"> </span><span class="n">st</span><span class="p">,</span><span class="w"> </span><span class="n">eu</span><span class="p">.</span><span class="n">Lambda</span><span class="p">,</span><span class="w"> </span><span class="n">eu</span><span class="p">.</span><span class="n">dLambda</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">diverge_flow_step_vertmax</span><span class="p">(</span><span class="w"> </span><span class="n">st</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">vertmax</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">diverge_euler_next</span><span class="p">(</span><span class="o">&amp;</span><span class="n">eu</span><span class="p">,</span><span class="w"> </span><span class="n">vertmax</span><span class="p">));</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.diverge_euler_defaults">
+<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_defaults</span></span></span><a class="headerlink" href="#c.diverge_euler_defaults" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_euler.h#L80"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>defaults struct accessible only in C, because C++ does not allow named
+member initialization. Look the values up in the source (linked on the
+right).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Flowing%20Vertices.html" class="btn btn-neutral float-left" title="Flowing Vertices" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Postprocessing%20and%20Output.html" class="btn btn-neutral float-right" title="Postprocessing and Output" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
-    
+  <hr/>
 
-    
-  </body>
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonas B. Profe, Lennart Klebl.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
 </html>
