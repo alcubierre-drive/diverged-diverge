@@ -1,41 +1,113 @@
 <!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<html lang="en" data-content_root="./">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patching &mdash; divERGe 0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
-    <title>Patching &#8212; divERGe 0.8 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
-    <script src="_static/documentation_options.js?v=a0e24af7"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=a0e24af7"></script>
+        <script src="_static/doctools.js?v=9bcbadda"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Symmetries" href="Symmetries.html" />
-    <link rel="prev" title="FPLO" href="FPLO.html" />
-   
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
+    <link rel="prev" title="FPLO" href="FPLO.html" /> 
+</head>
 
-  
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
 
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
           
+          
+          <a href="index.html" class="icon icon-home">
+            divERGe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Getting%20Started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Compilation.html">Compilation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="C%20Interface.html">C Interface</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Initialization.html">Initialization &amp; Miscellaneous Functions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="Model.html">Model</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Internals.html">Internals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Meshing.html">Meshing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Wannier90.html">Wannier90</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FPLO.html">FPLO</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Patching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Symmetries.html">Symmetries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Symmetrization.html">Symmetrization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Filling.html">Filling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Berry%20Curvature.html">Berry Curvature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Supercells.html">Supercells</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Output.html">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Hacking.html">Hacking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Advanced%20Features.html">Advanced Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Flow.html">Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Testing.html">Testing</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Python%20Interface.html">Python Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Simulation%20Output.html">Simulation Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Runtime%20Tuning.html">Runtime Tuning</a></li>
+</ul>
 
-          <div class="body" role="main">
-            
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">divERGe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="C%20Interface.html">C Interface</a></li>
+          <li class="breadcrumb-item"><a href="Model.html">Model</a></li>
+      <li class="breadcrumb-item active">Patching</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Patching.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <section id="patching">
-<span id="id1"></span><h1>Patching<a class="headerlink" href="#patching" title="Link to this heading">¶</a></h1>
+<span id="id1"></span><h1>Patching<a class="headerlink" href="#patching" title="Link to this heading"></a></h1>
 <p>Advanced npatch setup in divERGe</p>
 <p>We can call <a class="reference internal" href="#c.diverge_patching_find_fs_pts" title="diverge_patching_find_fs_pts"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_patching_find_fs_pts()</span></code></a> to find the Fermi surface
 and store it in an array. Note that we can provide NULL as the energy to the
@@ -81,7 +153,7 @@ implement all the relevant <a class="reference internal" href="Symmetries.html#s
 call to <a class="reference internal" href="Internals.html#c.diverge_model_internals_patch" title="diverge_model_internals_patch"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_patch()</span></code></a>.</p>
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_patching_find_fs_pts_C">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_find_fs_pts_C</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_ibz</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_search</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">pts</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">npts</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_find_fs_pts_C" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L17"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_find_fs_pts_C</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_ibz</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_search</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">pts</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">npts</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_find_fs_pts_C" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L17"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>old C interface to the patching find function
 <a class="reference internal" href="#c.diverge_patching_find_fs_pts" title="diverge_patching_find_fs_pts"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_patching_find_fs_pts()</span></code></a>. must free the pts memory with
 <code class="docutils literal notranslate"><span class="pre">free(*pts)</span></code>.</p>
@@ -107,7 +179,7 @@ array.</p></li>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_patching_find_fs_pts">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_find_fs_pts</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_ibz</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_search</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_find_fs_pts" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L38"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_find_fs_pts</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_ibz</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">np_search</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_find_fs_pts" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L38"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>uses internal energy array if NULL is provided for E. Works like
 <a class="reference internal" href="#c.diverge_patching_find_fs_pts_C" title="diverge_patching_find_fs_pts_C"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_patching_find_fs_pts_C()</span></code></a>, but with the number of patches
 encoded in the array itself: The (zero-based) index of the first element of
@@ -123,7 +195,7 @@ accordingly.</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_patching_from_indices">
-<a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><span class="n"><span class="pre">mom_patching_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_from_indices</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">patches</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">npatches</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_from_indices" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L53"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><span class="n"><span class="pre">mom_patching_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_from_indices</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">patches</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">npatches</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_from_indices" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L53"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>allocates everything inside the <code class="docutils literal notranslate"><span class="pre">mom_patching_t*</span></code> struct given Fermi
 surface indices in the array <code class="docutils literal notranslate"><span class="pre">patches</span></code>. The <code class="docutils literal notranslate"><span class="pre">mom_patching_t*</span></code> internals
 as well as the struct itself are freed by the code when they are attached to
@@ -132,7 +204,7 @@ a <code class="docutils literal notranslate"><span class="pre">diverge_model_t*<
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_patching_autofine">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_autofine</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><span class="n"><span class="pre">mom_patching_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">patch</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">ngroups</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">alpha</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">beta</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">gamma</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_autofine" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L61"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_autofine</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><span class="n"><span class="pre">mom_patching_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">patch</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">ngroups</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">alpha</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">beta</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">gamma</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_autofine" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L61"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>generate refinement with a heuristic function</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -158,7 +230,7 @@ points in cluster</p></li>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_patching_symmetrize_refinement">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_symmetrize_refinement</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><span class="n"><span class="pre">mom_patching_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">patch</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_symmetrize_refinement" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L83"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_symmetrize_refinement</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">mod</span></span>, <a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><span class="n"><span class="pre">mom_patching_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">patch</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_symmetrize_refinement" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L83"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>according to the realspace symmetries defined in the model the refinement is
 symmetrized. useful if the refinement has been generated with the autofine
 method.</p>
@@ -166,7 +238,7 @@ method.</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_patching_free">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><span class="n"><span class="pre">mom_patching_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">patching</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_free" title="Link to this definition">¶</a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L90"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><span class="n"><span class="pre">mom_patching_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">patching</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_free" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_patching.h#L90"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>frees all resources of a <a class="reference internal" href="Model.html#c.mom_patching_t" title="mom_patching_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">mom_patching_t</span></code></a> structure. Usage is
 typically not needed, but for advanced patching calculations it may be
 advantageous.</p>
@@ -187,105 +259,34 @@ advantageous.</p>
 </section>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="FPLO.html" class="btn btn-neutral float-left" title="FPLO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Symmetries.html" class="btn btn-neutral float-right" title="Symmetries" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonas B. Profe, Lennart Klebl.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">divERGe</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-
-<search id="searchbox" style="display: none" role="search">
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="Getting%20Started.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Compilation.html">Compilation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="C%20Interface.html">C Interface</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Initialization.html">Initialization &amp; Miscellaneous Functions</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="Model.html">Model</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="Internals.html">Internals</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Meshing.html">Meshing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Wannier90.html">Wannier90</a></li>
-<li class="toctree-l3"><a class="reference internal" href="FPLO.html">FPLO</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Patching</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Symmetries.html">Symmetries</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Symmetrization.html">Symmetrization</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Filling.html">Filling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Berry%20Curvature.html">Berry Curvature</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Supercells.html">Supercells</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Output.html">Output</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Hacking.html">Hacking</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Advanced%20Features.html">Advanced Features</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="Flow.html">Flow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Testing.html">Testing</a></li>
-</ul>
-</li>
-</ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Python%20Interface.html">Python Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Simulation%20Output.html">Simulation Output</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Runtime%20Tuning.html">Runtime Tuning</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-  <li><a href="C%20Interface.html">C Interface</a><ul>
-  <li><a href="Model.html">Model</a><ul>
-      <li>Previous: <a href="FPLO.html" title="previous chapter">FPLO</a></li>
-      <li>Next: <a href="Symmetries.html" title="next chapter">Symmetries</a></li>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &#169;2025, Jonas B. Profe, Lennart Klebl.
-      
-      |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
-      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
-      
-      |
-      <a href="_sources/Patching.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>
