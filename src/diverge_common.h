@@ -12,7 +12,6 @@
 #include <cstdio>
 #include <cmath>
 #include <cstring>
-#include <cstdbool>
 #include <cstdint>
 
 #ifndef CTYPESGEN
