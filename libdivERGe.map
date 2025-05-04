@@ -222,6 +222,7 @@ DIVERGE_UNSTABLE {
         diverge_model_unique_distances;
         diverge_model_unique_distances_length;
         diverge_model_unique_distances_set_precision;
+        diverge_phonons_asr;
         power_iteration;
         single_eigen;
         single_eigen_sort;

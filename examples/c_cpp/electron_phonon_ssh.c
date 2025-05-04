@@ -1,5 +1,5 @@
 #include <diverge.h>
-#include <tu/phonons.h>
+#include <diverge_phonons.h>
 #include <diverge_misc.h>
 
 FILE* vertex_file = NULL;
@@ -75,13 +75,13 @@ int main( int argc, char** argv ) {
         { .o1=1, .o2=1, .t=omega },
     };
     ph_vertex_t pvert[] = {
-        { .R12={ 1, 0,0}, .O1=0, .g=g },
-        { .R12={-1, 0,0}, .O1=0, .g=g },
-        { .R12={ 0, 1,0}, .O1=1, .g=g },
-        { .R12={ 0,-1,0}, .O1=1, .g=g },
+        { .R12={ 1, 0,0}, .OA=0, .g=g },
+        { .R12={-1, 0,0}, .OA=0, .g=g },
+        { .R12={ 0, 1,0}, .OA=1, .g=g },
+        { .R12={ 0,-1,0}, .OA=1, .g=g },
     };
     diverge_model_internals_tu_phonons(m, max_dist, phop, sizeof(phop)/sizeof(phop[0]),
-            (rs_vertex_t*)pvert, sizeof(pvert)/sizeof(pvert[0]));
+            pvert, sizeof(pvert)/sizeof(pvert[0]));
 
     diverge_flow_step_t* st = diverge_flow_step_init_any(m, "PCD");
     diverge_euler_t eu = diverge_euler_defaults;

@@ -101,11 +101,11 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda 
 }
 
 #undef MERGESORT_COMP
-#define MERGESORT_COMP( i, j ) memcmp( &i, &j, offsetof(ph_vertex_t, R1) )
+#define MERGESORT_COMP( i, j ) memcmp( &i, &j, offsetof(ph_vertex_t, RA) )
 MERGESORT_IMPL( ph_vertex_sort, ph_vertex_t )
 
 static inline int formfac_equal( const ph_vertex_t* a, const ph_vertex_t* b ) {
-    return !memcmp(a, b, offsetof(ph_vertex_t, R1));
+    return !memcmp(a, b, offsetof(ph_vertex_t, RA));
 }
 
 static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff,
@@ -129,7 +129,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     ph_vertex_sort( t->vtx, t->n_vtx, diverge_omp_num_threads(), 0 );
     VECTOR_INIT( ph_vertex_t, formfacs );
     VECTOR_INIT( index_t, formfacs_displ );
-    ph_vertex_t formfac = { .o1=-1, .s1=-1, .o2=-1, .s2=-1, .O1=-1 };
+    ph_vertex_t formfac = { .o1=-1, .s1=-1, .o2=-1, .s2=-1, .OA=-1 };
     for (index_t i=0; i<t->n_vtx; ++i)
     if (!formfac_equal(&formfac, t->vtx+i)) {
         VECTOR_PUSH_BACK( formfacs, (formfac=t->vtx[i]) );
@@ -161,7 +161,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     for (index_t ff=0; ff<formfacs_sz; ++ff) {
         for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
             index_t f = formfacs_displ[ff] + cc;
-            const index_t* R = t->vtx[f].R1;
+            const index_t* R = t->vtx[f].RA;
             index_t z_id = (R[2]<0)? t->nk[2] + R[2] : R[2],
                     y_id = (R[1]<0)? t->nk[1] + R[1] : R[1],
                     x_id = (R[0]<0)? t->nk[0] + R[0] : R[0];
@@ -204,12 +204,10 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             ph_vertex_t ff = formfacs[f];
             claV3d_t qvec = claV3d_map(qmesh+3*q),
                      R12 = claM3d_vecmat((claV3d_t){{ff.R12[0],ff.R12[1],ff.R12[2]}}, lat),
-                     R1 = claM3d_vecmat((claV3d_t){{ff.R1[0],ff.R1[1],ff.R1[2]}}, lat);
-            // XXX is R12 + R1 correct? Or do we need a different phase factor
-            // once we have some kind of dispersive phonon?
-            R1 = claV3d_scale(R1, 2.0); // XXX Suggestion: e^{1/2 q·R12 ± q·R1}
-            const complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)] * cexp(0.5*I*claV3d_dot(qvec,claV3d_add(R12,R1)));
-            atomic_add( &t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].O1,
+                     RA = claM3d_vecmat((claV3d_t){{ff.RA[0],ff.RA[1],ff.RA[2]}}, lat);
+            // XXX current version seems to work!
+            const complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)] * cexp(0.5*I*claV3d_dot(qvec,claV3d_add(R12,RA)));
+            atomic_add( &t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].OA,
                                t->n_spin,t->n_spin,t->n_orbff,t->nO)], &to_add );
         }
     }

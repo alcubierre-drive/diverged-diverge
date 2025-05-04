@@ -39,7 +39,7 @@ void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... 
         case diverge_tu_phonons:
             diverge_model_internals_tu_phonons( model, va_arg(ap, double),
                     va_arg(ap, rs_hopping_t*), va_arg(ap, index_t),
-                    va_arg(ap, rs_vertex_t*), va_arg(ap, index_t) );
+                    va_arg(ap, ph_vertex_t*), va_arg(ap, index_t) );
             break;
         case diverge_flow_type_invalid:
         default:

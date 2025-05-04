@@ -52,11 +52,11 @@ static diverge_model_t* hubbard_ssh_model( double omega=1.0, double lambda=0.1,
     phop[0].o1 = phop[0].o2 = 0; phop[0].t = omega;
     phop[1].o1 = phop[1].o2 = 1; phop[1].t = omega;
     ph_vertex_t pvert[4]; memset((void*)pvert, 0, sizeof pvert);
-    pvert[0].R12[0] = 1; pvert[0].O1 = 0; pvert[0].g = g;
-    pvert[1].R12[0] =-1; pvert[1].O1 = 0; pvert[1].g = g;
-    pvert[2].R12[1] = 1; pvert[2].O1 = 1; pvert[2].g = g;
-    pvert[3].R12[1] =-1; pvert[3].O1 = 1; pvert[3].g = g;
-    diverge_model_internals_tu_phonons(m, max_dist, phop, 2, (rs_vertex_t*)pvert, 4);
+    pvert[0].R12[0] = 1; pvert[0].OA = 0; pvert[0].g = g;
+    pvert[1].R12[0] =-1; pvert[1].OA = 0; pvert[1].g = g;
+    pvert[2].R12[1] = 1; pvert[2].OA = 1; pvert[2].g = g;
+    pvert[3].R12[1] =-1; pvert[3].OA = 1; pvert[3].g = g;
+    diverge_model_internals_tu_phonons(m, max_dist, phop, 2, pvert, 4);
     return m;
 }
 

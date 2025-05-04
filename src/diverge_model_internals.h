@@ -75,17 +75,19 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz );
  */
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
 
+typedef struct ph_vertex_t ph_vertex_t;
 /**
- * Prepare the tu/phonons part of the :c:type:`internals_t` struct.
+ * Prepare the TU as well as the phonons part of the :c:type:`internals_t`
+ * struct. For documentation on the phonon implementation see :ref:`Phonons`.
  *
  * :param diverge_model_t* model: model instance
  * :param double max_dist: formfactor distance (see :c:func:`diverge_model_internals_tu`)
  * :param rs_hopping_t* ph_hop: phonon hoppings for the lattice spring model,
  *      length ``n_ph_hop``.
  * :param index_t n_ph_hop: length of the phonon hoppings.
- * :param rs_vertex_t* ph_vert: electron-phonon vertices. Even though the type
- *      has the same size as :c:type:`rs_vertex_t`, it contains other
- *      information. See `src/tu/phonons.h` (:c:type`ph_vertex_t`)
+ * :param ph_vertex_t* ph_vert: electron-phonon vertices. The type
+ *      has the same size as :c:type:`rs_vertex_t`, but it contains other
+ *      information. See :c:type:`ph_vertex_t`.
  *
  * :returns diverge_model_t*: phonon model without symmetries or atom positions.
  *      Also, the number of "orbitals" is set to the maximum index (+1) found in
@@ -95,7 +97,7 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
  */
 diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
         double max_dist, rs_hopping_t* ph_hop, index_t n_ph_hop,
-        rs_vertex_t* ph_vert, index_t n_ph_vert );
+        ph_vertex_t* ph_vert, index_t n_ph_vert );
 
 #define IOBI_FORMFACTOR_MAGIC_NUMBER 0
 /**

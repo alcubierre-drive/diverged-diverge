@@ -65,7 +65,7 @@ static void model_phonons_destructor( void* v ) {
 }
 
 diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
-        double max_dist, rs_hopping_t* hop, index_t n_hop, rs_vertex_t* vert,
+        double max_dist, rs_hopping_t* hop, index_t n_hop, ph_vertex_t* vert,
         index_t n_vert ) {
     diverge_model_internals_tu( model, max_dist );
     strcpy( model->internals->backend, "tu_phonons" );
@@ -76,6 +76,7 @@ diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
     memcpy( m->nkf, model->nkf, sizeof(m->nkf) );
     for (int d=model->internals->dim; d<3; ++d) m->nk[d] = m->nkf[d] = 0;
     memcpy( m->lattice, model->lattice, sizeof(m->lattice) );
+
     m->hop = calloc(n_hop, sizeof*m->hop); memcpy( m->hop, hop, n_hop*sizeof*m->hop );
     m->n_hop = n_hop;
     m->vert = calloc(n_vert, sizeof*m->vert); memcpy( m->vert, vert, n_vert*sizeof*m->vert );
@@ -87,10 +88,11 @@ diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
     }
     ph_vertex_t* pvert = (ph_vertex_t*)m->vert;
     for (index_t i=0; i<n_vert; ++i) {
-        max_orb = MAX(max_orb, pvert[i].O1);
+        max_orb = MAX(max_orb, pvert[i].OA);
     }
     m->n_orb = max_orb + 1;
     m->n_spin = m->SU2 = 1;
+
     strncpy(m->name, model->name, sizeof(m->name));
     strncat(m->name, "_phonons", sizeof(m->name));
     m->name[sizeof m->name - 1] = 0;
