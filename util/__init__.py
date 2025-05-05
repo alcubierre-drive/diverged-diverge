@@ -318,6 +318,10 @@ if not _libs["divERGe"] is None:
         pass
     rs_vertex_t = struct_rs_vertex_t
 
+    class struct_ph_vertex_t(Structure):
+        pass
+    ph_vertex_t = struct_ph_vertex_t
+
     class struct_mom_patching_t(Structure):
         pass
     mom_patching_t = struct_mom_patching_t
@@ -388,6 +392,30 @@ if not _libs["divERGe"] is None:
         ('s4', index_t),
         ('V', complex128_t),
     ]
+
+    struct_ph_vertex_t.__slots__ = [
+        '_chan',
+        'R12',
+        'o1',
+        's1',
+        'o2',
+        's2',
+        'OA',
+        'RA',
+        'g',
+    ]
+    struct_ph_vertex_t._fields_ = [
+        ('_chan', c_char),
+        ('R12', index_t * int(3)),
+        ('o1', c_int),
+        ('s1', c_int),
+        ('o2', c_int),
+        ('s2', c_int),
+        ('OA', index_t),
+        ('RA', index_t * int(3)),
+        ('g', complex128_t),
+    ]
+
 
     struct_mom_patching_t.__slots__ = [
         'n_patches',
@@ -729,6 +757,15 @@ if not _libs["divERGe"] is None:
     model_internals_tu = _libs["divERGe"].get("diverge_model_internals_tu", "cdecl")
     model_internals_tu.argtypes = [POINTER(model_t), c_double]
     model_internals_tu.restype = None
+
+    model_internals_tu_phonons = _libs["divERGe"].get("diverge_model_internals_tu_phonons", "cdecl")
+    model_internals_tu_phonons.argtypes = [POINTER(model_t), c_double,
+                                           c_voidp, index_t, c_voidp, index_t]
+    model_internals_tu_phonons.restype = POINTER(model_t)
+
+    phonons_asr = _libs["divERGe"].get("diverge_phonons_asr", "cdecl")
+    phonons_asr.argtypes = [c_voidp, c_voidp]
+    phonons_asr.restype = c_voidp
 
     #Batched eigensolver
     batched_eigen_r = _libs["divERGe"].get("batched_eigen_r", "cdecl")
