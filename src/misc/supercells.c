@@ -1,6 +1,6 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-#include "hoppings_to_supercell.h"
+#include "supercells.h"
 #include "../diverge_model.h"
 #include "mpi_functions.h"
 #include <assert.h>
@@ -19,6 +19,8 @@ typedef struct {
 } supercell_t;
 
 #define SGN( i ) ((i)>0 ? 1 : -1)
+
+static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3, int map_vertices );
 
 static void supercell_del( supercell_t* s ) {
     free( s->cells );
@@ -104,6 +106,30 @@ static void supercell_map( supercell_t* s, claV3i_t R, claV3i_t* S, index_t* idx
 }
 
 void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
+    model_to_fractcell( m, N1, N2, N3, 0 );
+}
+void rs_hopping_to_supercell( diverge_model_t* m, int* nr ) {
+    int N[3][3] = {0};
+    for (int i=0; i<3; ++i) N[i][i] = nr[i];
+    rs_hopping_to_fractcell( m, N[0], N[1], N[2] );
+}
+void rs_hopping_to_fractcell_mat( diverge_model_t* m, int* N123 ) {
+    rs_hopping_to_fractcell( m, N123+0, N123+3, N123+6 );
+}
+
+void diverge_model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
+    model_to_fractcell( m, N1, N2, N3, 1 );
+}
+void diverge_model_to_supercell( diverge_model_t* m, int* nr ) {
+    int N[3][3] = {0};
+    for (int i=0; i<3; ++i) N[i][i] = nr[i];
+    diverge_model_to_fractcell( m, N[0], N[1], N[2] );
+}
+void diverge_model_to_fractcell_mat( diverge_model_t* m, int* N123 ) {
+    diverge_model_to_fractcell( m, N123+0, N123+3, N123+6 );
+}
+
+static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3, int map_vertices ) {
     assert(m->hop != NULL || m->n_hop == 0);
 
     if (N2 == NULL && N3 == NULL) {
@@ -146,14 +172,15 @@ void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
     m->n_orb *= s->N;
 
     // update lattice
-    claV3d_t S1 = claV3d_add( claV3d_add( claV3d_scale(L1,N1[0]), claV3d_scale(L2,N1[1]) ), claV3d_scale(L3,N1[2]) );
-    claV3d_t S2 = claV3d_add( claV3d_add( claV3d_scale(L1,N2[0]), claV3d_scale(L2,N2[1]) ), claV3d_scale(L3,N2[2]) );
-    claV3d_t S3 = claV3d_add( claV3d_add( claV3d_scale(L1,N3[0]), claV3d_scale(L2,N3[1]) ), claV3d_scale(L3,N3[2]) );
+    claV3d_t S1 = claV3d_add(claV3d_add( claV3d_scale(L1,N1[0]), claV3d_scale(L2,N1[1]) ), claV3d_scale(L3,N1[2]));
+    claV3d_t S2 = claV3d_add(claV3d_add( claV3d_scale(L1,N2[0]), claV3d_scale(L2,N2[1]) ), claV3d_scale(L3,N2[2]));
+    claV3d_t S3 = claV3d_add(claV3d_add( claV3d_scale(L1,N3[0]), claV3d_scale(L2,N3[1]) ), claV3d_scale(L3,N3[2]));
     claV3d_rmap( S1, m->lattice[0] );
     claV3d_rmap( S2, m->lattice[1] );
     claV3d_rmap( S3, m->lattice[2] );
 
     rs_hopping_t* new_hop = calloc(m->n_hop * s->n_cells, sizeof(rs_hopping_t));
+    rs_vertex_t* new_vert = map_vertices ? calloc(m->n_vert * s->n_cells, sizeof(rs_vertex_t)) : NULL;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t c=0; c<s->n_cells; ++c) {
         claV3i_t cell = s->cells[c];
@@ -173,20 +200,33 @@ void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
             Hnew->o1 += n_orb_mini * r;
             Hnew->o2 += n_orb_mini * c;
         }
+        if (map_vertices) {
+            for (index_t v=0; v<m->n_vert; ++v) {
+                rs_vertex_t* V = m->vert + v;
+
+                claV3i_t R = {0};
+                index_t r = -1;
+                claV3i_t R_old = {{V->R[0], V->R[1], V->R[2]}};
+                supercell_map( s, claV3i_add(R_old, cell), &R, &r );
+
+                index_t new_vert_idx = c*m->n_vert + v;
+                rs_vertex_t* Vnew = new_vert + new_vert_idx;
+
+                memcpy( Vnew, V, sizeof(rs_vertex_t) );
+                for (int i=0; i<3; ++i) Vnew->R[i] = R.v[i];
+                Vnew->o1 += n_orb_mini * r;
+                Vnew->o2 += n_orb_mini * c;
+            }
+        }
     }
     free(m->hop);
     m->hop = new_hop;
     m->n_hop *= s->n_cells;
+    if (map_vertices) {
+        free(m->vert);
+        m->vert = new_vert;
+        m->n_vert *= s->n_cells;
+    }
 
     supercell_del( s );
-}
-
-void rs_hopping_to_supercell( diverge_model_t* m, int* nr ) {
-    int N[3][3] = {0};
-    for (int i=0; i<3; ++i) N[i][i] = nr[i];
-    rs_hopping_to_fractcell( m, N[0], N[1], N[2] );
-}
-
-void rs_hopping_to_fractcell_mat( diverge_model_t* m, int* N123 ) {
-    rs_hopping_to_fractcell( m, N123+0, N123+3, N123+6 );
 }

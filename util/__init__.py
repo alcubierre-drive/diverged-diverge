@@ -586,6 +586,18 @@ if not _libs["divERGe"] is None:
     rs_hopping_to_fractcell_mat.argtypes = [c_voidp, c_voidp]
     rs_hopping_to_fractcell_mat.restype = None
 
+    model_to_supercell = _libs["divERGe"].get("diverge_model_to_supercell", "cdecl")
+    model_to_supercell.argtypes = [c_voidp, c_voidp]
+    model_to_supercell.restype = None
+
+    model_to_fractcell = _libs["divERGe"].get("diverge_model_to_fractcell", "cdecl")
+    model_to_fractcell.argtypes = [c_voidp, c_voidp, c_voidp, c_voidp]
+    model_to_fractcell.restype = None
+
+    model_to_fractcell_mat = _libs["divERGe"].get("diverge_model_to_fractcell_mat", "cdecl")
+    model_to_fractcell_mat.argtypes = [c_voidp, c_voidp]
+    model_to_fractcell_mat.restype = None
+
     linspace = _libs["divERGe"].get("diverge_linspace", "cdecl")
     linspace.argtypes = [c_double, c_double, index_t]
     linspace.restype = c_voidp

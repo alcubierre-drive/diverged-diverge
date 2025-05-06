@@ -57,6 +57,13 @@ void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 );
  */
 void rs_hopping_to_fractcell_mat( diverge_model_t* m, int* N123 );
 
+/** same as :c:func:`rs_hopping_to_supercell`, but also maps (real space) vertex elements */
+void diverge_model_to_supercell( diverge_model_t* m, int* nr );
+/** same as :c:func:`rs_hopping_to_fractcell`, but also maps (real space) vertex elements */
+void diverge_model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 );
+/** same as :c:func:`rs_hopping_to_fractcell_mat`, but also maps (real space) vertex elements */
+void diverge_model_to_fractcell_mat( diverge_model_t* m, int* N123 );
+
 #ifdef __cplusplus
 }
 #endif

@@ -87,6 +87,9 @@ DIVERGE_0.8 {
         diverge_model_to_file;
         diverge_model_to_file_fg;
         diverge_model_to_file_finegrained;
+        diverge_model_to_fractcell;
+        diverge_model_to_fractcell_mat;
+        diverge_model_to_supercell;
         diverge_model_validate;
         diverge_mpi_allgather_double;
         diverge_mpi_allgather_index;
