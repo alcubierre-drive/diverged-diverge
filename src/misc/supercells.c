@@ -1,6 +1,6 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
-#include "hoppings_to_supercell.h"
+#include "supercells.h"
 #include "../diverge_model.h"
 #include "mpi_functions.h"
 #include <assert.h>
