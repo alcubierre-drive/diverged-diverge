@@ -38,7 +38,7 @@ DIVERGE_0.8 {
         diverge_flow_step_vertmax;
         diverge_force_thread_limit;
         diverge_fukui;
-        diverge_fukui_matrix;
+        diverge_fukui_non_abelian;
         diverge_generate_symm_maps;
         diverge_generate_symm_maps_set_precision;
         diverge_generate_symm_trafo;

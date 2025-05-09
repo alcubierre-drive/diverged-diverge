@@ -612,9 +612,9 @@ if not _libs["divERGe"] is None:
     fukui.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp]
     fukui.restype = c_voidp
 
-    fukui_matrix = _libs["divERGe"].get("diverge_fukui_matrix", "cdecl")
-    fukui_matrix.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp]
-    fukui_matrix.restype = c_voidp
+    fukui_non_abelian = _libs["divERGe"].get("diverge_fukui_non_abelian", "cdecl")
+    fukui_non_abelian.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, c_voidp, index_t]
+    fukui_non_abelian.restype = c_voidp
 
     qgt = _libs["divERGe"].get("diverge_qgt", "cdecl")
     qgt.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, c_voidp, index_t, c_int]
