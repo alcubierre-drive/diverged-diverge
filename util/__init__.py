@@ -570,6 +570,10 @@ if not _libs["divERGe"] is None:
     model_to_fractcell_mat.argtypes = [c_voidp, c_voidp]
     model_to_fractcell_mat.restype = None
 
+    supercell_set_sign = _libs["divERGe"].get("diverge_supercell_set_sign", "cdecl")
+    supercell_set_sign.argtypes = [c_double]
+    supercell_set_sign.restype = None
+
     linspace = _libs["divERGe"].get("diverge_linspace", "cdecl")
     linspace.argtypes = [c_double, c_double, index_t]
     linspace.restype = c_voidp
@@ -619,6 +623,10 @@ if not _libs["divERGe"] is None:
     qgt = _libs["divERGe"].get("diverge_qgt", "cdecl")
     qgt.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, c_voidp, index_t, c_int]
     qgt.restype = c_voidp
+
+    qgt_tensor = _libs["divERGe"].get("diverge_qgt_tensor", "cdecl")
+    qgt_tensor.argtypes = [POINTER(model_t), c_voidp, index_t, c_voidp, c_voidp, index_t, c_int]
+    qgt_tensor.restype = c_voidp
 
     model_ham_at_kcidx = _libs["divERGe"].get("diverge_model_ham_at_kcidx", "cdecl")
     model_ham_at_kcidx.argtypes = [POINTER(model_t), index_t, c_voidp]

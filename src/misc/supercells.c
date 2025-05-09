@@ -20,7 +20,13 @@ typedef struct {
 
 #define SGN( i ) ((i)>0 ? 1 : -1)
 
-static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3, int map_vertices );
+static double SUPERCELL_SIGN = 1.0;
+void diverge_supercell_set_sign( double sign ) {
+    SUPERCELL_SIGN = sign;
+}
+
+static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
+        double scsgn, int map_vertices );
 
 static void supercell_del( supercell_t* s ) {
     free( s->cells );
@@ -106,7 +112,7 @@ static void supercell_map( supercell_t* s, claV3i_t R, claV3i_t* S, index_t* idx
 }
 
 void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
-    model_to_fractcell( m, N1, N2, N3, 0 );
+    model_to_fractcell( m, N1, N2, N3, SUPERCELL_SIGN, 0 );
 }
 void rs_hopping_to_supercell( diverge_model_t* m, int* nr ) {
     int N[3][3] = {0};
@@ -118,7 +124,7 @@ void rs_hopping_to_fractcell_mat( diverge_model_t* m, int* N123 ) {
 }
 
 void diverge_model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
-    model_to_fractcell( m, N1, N2, N3, 1 );
+    model_to_fractcell( m, N1, N2, N3, SUPERCELL_SIGN, 1 );
 }
 void diverge_model_to_supercell( diverge_model_t* m, int* nr ) {
     int N[3][3] = {0};
@@ -129,7 +135,8 @@ void diverge_model_to_fractcell_mat( diverge_model_t* m, int* N123 ) {
     diverge_model_to_fractcell( m, N123+0, N123+3, N123+6 );
 }
 
-static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3, int map_vertices ) {
+static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
+        double scsgn, int map_vertices ) {
     assert(m->hop != NULL || m->n_hop == 0);
 
     if (N2 == NULL && N3 == NULL) {
@@ -160,9 +167,9 @@ static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3, i
     for (index_t c=0; c<s->n_cells; ++c) {
         for (index_t i=0; i<n_orb_mini; ++i) {
             claV3d_t pos = claV3d_map(m->positions[i]);
-            pos = claV3d_add( pos, claV3d_scale( L1, s->cells[c].v[0] ) );
-            pos = claV3d_add( pos, claV3d_scale( L2, s->cells[c].v[1] ) );
-            pos = claV3d_add( pos, claV3d_scale( L3, s->cells[c].v[2] ) );
+            pos = claV3d_add( pos, claV3d_scale( L1, s->cells[c].v[0]*scsgn ) );
+            pos = claV3d_add( pos, claV3d_scale( L2, s->cells[c].v[1]*scsgn ) );
+            pos = claV3d_add( pos, claV3d_scale( L3, s->cells[c].v[2]*scsgn ) );
             claV3d_rmap(pos, pos_cpy[IDX2(c, i, n_orb_mini)]);
         }
     }

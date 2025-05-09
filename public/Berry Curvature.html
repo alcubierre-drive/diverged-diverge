@@ -226,6 +226,73 @@ or <a class="reference internal" href="Allocators.html#c.diverge_mem_free" title
 </dl>
 </dd></dl>
 
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_qgt_tensor">
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_qgt_tensor</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">U</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">nk</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">which_bands</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_which_bands</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">non_ortho_grad</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_qgt_tensor" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/quantum_metric.h#L50"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Calculate the full quantum geometric tensor <span class="math notranslate nohighlight">\(\eta_{\mu\nu}(\boldsymbol
+k)\)</span>, which split into real- and imaginary parts yields the Berry curvature
+<span class="math notranslate nohighlight">\(-2\mathrm{Im}\, \eta_{\mu\nu}(\boldsymbol k) =
+\Omega_{\mu\nu}(\boldsymbol k)\)</span> (see <a class="reference internal" href="#c.diverge_fukui_non_abelian" title="diverge_fukui_non_abelian"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_fukui_non_abelian()</span></code></a>) and
+the quantum metric <span class="math notranslate nohighlight">\(\mathrm{Re}\, \eta_{\mu\nu}(\boldsymbol k) =
+g_{\mu\nu}(\boldsymbol k)\)</span> (see <a class="reference internal" href="#c.diverge_qgt" title="diverge_qgt"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_qgt()</span></code></a>). Following <a class="reference external" href="http://dx.doi.org/10.1140/epjb/e2010-10874-4">[Resta,
+EPJB 79, 121-137 (2011)]</a>, we
+can obtain the metric tensor in a fully gauge-invariant way by calculating
+<span class="math notranslate nohighlight">\(\eta_{\mu\nu}(\boldsymbol k) = \mathrm{Tr}\big[ \partial_\mu \hat
+P(\boldsymbol k) \hat Q(\boldsymbol k) \partial_\nu \hat P(\boldsymbol k)
+\big]\)</span>. The projectors are defined as <span class="math notranslate nohighlight">\(P_{o,o'}(\boldsymbol k) =
+\sum_{b\in\mathcal S} U_{o,b}(\boldsymbol k) U_{o',b}^*(\boldsymbol k)\)</span> and
+<span class="math notranslate nohighlight">\(\hat Q(\boldsymbol k) = 1 - \hat P(\boldsymbol k)\)</span>, where
+<span class="math notranslate nohighlight">\(\mathcal S\)</span> denotes the set of isolated bands to calculate the quantum
+metric over.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Berry curvature obtained from this function is not normalized
+intuitively. To obtain the Chern number (in a certain direction), you have
+to calculate</p>
+<div class="math notranslate nohighlight">
+\[\mathcal C_{\mu\nu} = \frac{-2\pi}{A N_{\boldsymbol k}} \sum_{\boldsymbol
+k} \mathrm{Im}\big( \Omega_{\mu\nu}(\boldsymbol k) -
+\Omega_{\nu\mu}(\boldsymbol k)\big) \,,\]</div>
+<p>with <span class="math notranslate nohighlight">\(A = (\boldsymbol a_1 \times \boldsymbol a_2) \cdot \boldsymbol
+a_3\)</span> the unit cell area.</p>
+<p>The quantum metric (<a class="reference internal" href="#c.diverge_qgt" title="diverge_qgt"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_qgt()</span></code></a>) is given in the same units:</p>
+<div class="math notranslate nohighlight">
+\[g(\boldsymbol k) = \sum_i \mathrm{Re}\big( \eta_{ii}(\boldsymbol k)
+\big) \,.\]</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a></span></span>) – the model instance. May be NULL in case all other
+parameters are given (non-NULL / not -1).</p></li>
+<li><p><strong>U</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n">complex128_t</span></a><span class="p">*</span></span></span>) – orbital to band matrices as (k,b,o) array;
+<span class="math notranslate nohighlight">\(U_{o,b}(\boldsymbol k)\)</span>. May be NULL in case <code class="docutils literal notranslate"><span class="pre">m</span></code> contains
+common internals.</p></li>
+<li><p><strong>nb</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – total number of bands in the system. May be -1 in case
+<code class="docutils literal notranslate"><span class="pre">m</span></code> is given.</p></li>
+<li><p><strong>nk</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – number of k points as array of shape (3,). May be NULL in
+case <code class="docutils literal notranslate"><span class="pre">m</span></code> is given. As for <a class="reference internal" href="#c.diverge_fukui" title="diverge_fukui"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_fukui()</span></code></a>, if any of the
+provided mesh lengths is negative, this function transforms to the
+improper gauge; the model <code class="docutils literal notranslate"><span class="pre">m</span></code> must not be NULL for this to work.
+In case the improper gauge is used, one can swap the sign convention by
+changing the number of negative dimensions.</p></li>
+<li><p><strong>which_bands</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – the bands to sum over. Describes the set
+<span class="math notranslate nohighlight">\(\mathcal S\)</span>. Must not be NULL. Array of shape (<code class="docutils literal notranslate"><span class="pre">n_which_bands</span></code>,).</p></li>
+<li><p><strong>n_which_bands</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of bands to sum over. Describes the set
+<span class="math notranslate nohighlight">\(\mathcal S\)</span>, i.e., the array <code class="docutils literal notranslate"><span class="pre">which_bands</span></code>.</p></li>
+<li><p><strong>non_ortho_grad</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">int</span></span></span>) – boolean flag that determines whether the lattice
+vectors are taken into account in the calculation of <span class="math notranslate nohighlight">\(\nabla f
+\cdot \nabla g\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">complex128_t</span></code></a> array of size (nk,3,3) with the values of
+<span class="math notranslate nohighlight">\(\eta_{\mu\nu}(\boldsymbol k)\)</span>. Must be free’d by the user by a
+call to free or <a class="reference internal" href="Allocators.html#c.diverge_mem_free" title="diverge_mem_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_mem_free()</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
