@@ -184,7 +184,7 @@ int main( int argc, char** argv ) {
                  double g = alpha * eR.v[d];
                  if (!EQUAL(g, 0.0)) {
                      for (int x=0; x<3; ++x) p.RA[x] = -p.R12[x];
-                     p.g = g;
+                     p.g =-g;
                      p.OA = IDX2(t.o1,d,3);
                      VECTOR_PUSH_BACK( pv, p );
                      for (int x=0; x<3; ++x) p.RA[x] = p.R12[x];
