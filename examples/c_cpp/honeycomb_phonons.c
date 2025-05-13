@@ -181,23 +181,28 @@ int main( int argc, char** argv ) {
         ph_vertex_t p = { .o1=t.o1, .o2=t.o2, .R12={t.R[0],t.R[1],t.R[2]} };
         if (EQUAL(claV3d_norm(R),dist[1])) {
             for (int d=0; d<3; ++d) {
-                 double g = alpha * eR.v[d];
+                 double g = alpha * eR.v[d] * t.t;
                  if (!EQUAL(g, 0.0)) {
                      for (int x=0; x<3; ++x) p.RA[x] = -p.R12[x];
                      p.g =-g;
-                     p.OA = IDX2(t.o1,d,3);
+                     p.OA = IDX2(t.o2,d,3);
                      VECTOR_PUSH_BACK( pv, p );
                      for (int x=0; x<3; ++x) p.RA[x] = p.R12[x];
                      p.g = g;
-                     p.OA = IDX2(t.o2,d,3);
+                     p.OA = IDX2(t.o1,d,3);
                      VECTOR_PUSH_BACK( pv, p );
                  }
             }
         }
         if (EQUAL(claV3d_norm(R),dist[2])) {
             for (int d=0; d<3; ++d) {
-                 double g = beta * eR.v[d];
+                 double g = beta * eR.v[d] * t.t;
                  if (!EQUAL(g, 0.0)) {
+                     for (int x=0; x<3; ++x) p.RA[x] = -p.R12[x];
+                     p.g =-g;
+                     p.OA = IDX2(t.o2,d,3);
+                     VECTOR_PUSH_BACK( pv, p );
+                     for (int x=0; x<3; ++x) p.RA[x] = p.R12[x];
                      p.g = g;
                      p.OA = IDX2(t.o1,d,3);
                      VECTOR_PUSH_BACK( pv, p );
