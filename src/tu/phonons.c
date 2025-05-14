@@ -15,32 +15,6 @@ LINALG_IMPLEMENT
 // CBO in Kagome/Phonon: https://doi.org/10.1103/PhysRevB.109.075130
 // Hubbard-Holstein: https://doi.org/10.1103/PhysRevB.92.195102
 
-struct tu_data_phonons_t {
-    diverge_model_t* pmod;
-
-    index_t nk[3];
-    index_t nkf[3];
-    index_t nO;
-
-    ph_vertex_t* vtx;
-    index_t n_vtx;
-
-    complex128_t* g_ob_qO; // (my_nk, n_spin,n_spin,n_orbff, nO)
-    complex128_t* tmp_g; // (my_nk, n_spin,n_spin,n_orbff, nO)
-
-    complex128_t *gbuf, *gbuf_zero; // (ll, my_nk, nO, nO), with ll=(0,Lambda)
-    double gbuf_last_Lambda, gbuf_zero_last_Lambda;
-
-    int buffered; // optional buffered operation for gen_vert()
-    complex128_t *Dch, *Dch_zero; // (my_nk, POW2(POW2(n_spin)*n_orbff))
-    double Dch_last_Lambda, Dch_zero_last_Lambda;
-
-    index_t n_spin, n_orbff;
-    index_t my_nk;
-    index_t my_nk_off;
-    const index_t* idx_ibz_in_fullmesh;
-};
-
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda );
@@ -122,6 +96,10 @@ static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff,
     return idx;
 }
 
+// TODO those are for testing
+int tu_data_phonons_init___fftw_sign = 1;
+double tu_data_phonons_init___R12_factor = 0.0;
+
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin ) {
     // unique formfactors
@@ -154,8 +132,9 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 
     fftw_complex* fftw_buf = fftw_malloc(sizeof*fftw_buf * nk*formfacs_sz);
     complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
-    // XXX do we need to do an IFFT?
-    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, FFTW_ESTIMATE);
+    // TODO fix sign once tested
+    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf,
+            tu_data_phonons_init___fftw_sign, FFTW_ESTIMATE);
     ZERO_OUT(fftw_buf, nk*formfacs_sz);
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t ff=0; ff<formfacs_sz; ++ff) {
@@ -203,10 +182,10 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
             ph_vertex_t ff = formfacs[f];
             claV3d_t qvec = claV3d_map(qmesh+3*q),
-                     R12 = claM3d_vecmat((claV3d_t){{ff.R12[0],ff.R12[1],ff.R12[2]}}, lat),
-                     RA = claM3d_vecmat((claV3d_t){{ff.RA[0],ff.RA[1],ff.RA[2]}}, lat);
-            // XXX current version seems to work!
-            const complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)] * cexp(0.5*I*claV3d_dot(qvec,claV3d_add(R12,RA)));
+                     R12 = claM3d_vecmat((claV3d_t){{ff.R12[0],ff.R12[1],ff.R12[2]}}, lat);
+            // TODO fix factor once tested
+            R12 = claV3d_scale(R12,tu_data_phonons_init___R12_factor);
+            const complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)] * cexp(-I*claV3d_dot(qvec,R12));
             atomic_add( &t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].OA,
                                t->n_spin,t->n_spin,t->n_orbff,t->nO)], &to_add );
         }
