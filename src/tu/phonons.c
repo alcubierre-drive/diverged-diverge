@@ -6,6 +6,7 @@ LINALG_IMPLEMENT
 #include "../diverge_patching_helpers.h" // atomic_add
 #include "../misc/mergesort.h"
 #include "../misc/gemm.h"
+#include "../misc/bitary.h"
 #include <assert.h>
 #include <fftw3.h>
 
@@ -18,6 +19,8 @@ LINALG_IMPLEMENT
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda );
+static greensfunc_op_t phonon_gf_generator(const diverge_model_t* model,
+        complex128_t Lambda, gf_complex_t* buf);
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
         bool buffered ) {
@@ -30,6 +33,7 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
         mpi_err_printf( "phonon model must have common internals!\n" );
     if (memcmp( t->nk, el->nk, sizeof(t->nk) ) != 0)
         mpi_err_printf( "kpoints from ph (%li)/el (%li) don't match\n", kdim(t->nk), kdim(el->nk) );
+    t->pmod->gfill = &phonon_gf_generator;
     assert( t->pmod->n_spin == 1 );
     assert( t->pmod->internals->greens_shared == 0 );
     assert( t->pmod->gproj == NULL );
@@ -50,6 +54,31 @@ void tu_data_phonons_free( tu_data_phonons_t* t ) {
     free(t->g_ob_qO);
     free(t->tmp_g);
     free(t);
+}
+
+static greensfunc_op_t phonon_gf_generator(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf) {
+    const complex128_t one = 1.0;
+    const index_t nkf = kdimtot(model->nk, model->nkf);
+    const index_t nb = model->n_spin * model->n_orb;
+    const complex128_t* U = (const complex128_t*) model->internals->U;
+    const double* E = model->internals->E;
+    const cbyte_t* E_imag = model->internals->model_phonons_imag_freq;
+    assert( E_imag != NULL );
+
+    for (int sign=0; sign<2; ++sign) {
+        complex128_t L = sign ? Lambda : conj(Lambda);
+        #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
+        for (index_t k=0; k<nkf; ++k)
+        for (index_t o=0; o<nb; ++o)
+        for (index_t p=0; p<nb; ++p) {
+            complex128_t tmp = 0.0;
+            for (index_t b=0; b<nb; ++b)
+                tmp += U[IDX3(k,b,o,nb,nb)] * conj(U[IDX3(k,b,p,nb,nb)]) /
+                    (L - (bitary_get(E_imag,IDX2(k,b,nb))?I:one) * E[IDX2(k,b,nb)]);
+            buf[IDX4(sign, k, o, p, nkf, nb, nb)] = tmp;
+        }
+    }
+    return greensfunc_op_cpu;
 }
 
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
@@ -96,9 +125,8 @@ static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff,
     return idx;
 }
 
-// TODO those are for testing
+// TODO this is for testing
 int tu_data_phonons_init___fftw_sign = 1;
-double tu_data_phonons_init___R12_factor = 0.0;
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin ) {
@@ -132,7 +160,6 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 
     fftw_complex* fftw_buf = fftw_malloc(sizeof*fftw_buf * nk*formfacs_sz);
     complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
-    // TODO fix sign once tested
     fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf,
             tu_data_phonons_init___fftw_sign, FFTW_ESTIMATE);
     ZERO_OUT(fftw_buf, nk*formfacs_sz);
@@ -174,18 +201,11 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             mapped_mi = i; break;
         }
         if (mapped_mi == -1) { n_not_found++; continue; }
-        // map to g
 
-        const double* qmesh = t->pmod->internals->kmesh;
-        const claM3d_t lat = claM3d_map(t->pmod->lattice[0]);
+        // map to g
         for (index_t kk=0; kk<t->my_nk; ++kk) {
             index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
-            ph_vertex_t ff = formfacs[f];
-            claV3d_t qvec = claV3d_map(qmesh+3*q),
-                     R12 = claM3d_vecmat((claV3d_t){{ff.R12[0],ff.R12[1],ff.R12[2]}}, lat);
-            // TODO fix factor once tested
-            R12 = claV3d_scale(R12,tu_data_phonons_init___R12_factor);
-            const complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)] * cexp(-I*claV3d_dot(qvec,R12));
+            complex128_t to_add = fftw_cbuf[IDX2(f,q,nk)];
             atomic_add( &t->g_ob_qO[IDX5(kk,formfacs[f].s2,formfacs[f].s1,mapped_mi,formfacs[f].OA,
                                t->n_spin,t->n_spin,t->n_orbff,t->nO)], &to_add );
         }
@@ -207,8 +227,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 }
 
 static void phonon_gemm( const complex128_t* g, const complex128_t* D,
-        complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO,
-        double fac ) {
+        complex128_t* V, complex128_t* tmp, index_t linsz, index_t nO, double fac ) {
     single_gemm( g, D, tmp, nO, linsz, nO, fac, 0.0 );
     single_gemm_adjoint( tmp, g, V, linsz, linsz, nO, 1.0, 1.0 );
 }

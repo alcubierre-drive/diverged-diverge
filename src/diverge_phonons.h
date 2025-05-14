@@ -10,6 +10,7 @@ extern "C" {
 
 // forward declaration
 typedef struct rs_hopping_t rs_hopping_t;
+typedef struct diverge_model_t diverge_model_t;
 
 /**
  * electron-phonon vertex structure in real space. Some member types are chosen
@@ -78,6 +79,20 @@ typedef struct ph_vertex_t {
  * :returns rs_hopping_t*: hopping parameter array, reallocated.
  */
 rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop );
+
+/**
+ * convert eigenvalues to frequencies (by taking :math:`\sqrt{D}`) and fill an
+ * internal array that tracks whether at a certain point in momentum space for a
+ * certain mode we have *imaginary* frequencies. This bit-array may be retrieved
+ * with :c:func:`diverge_phonons_get_ifrq`
+ */
+void diverge_phonons_apply_sgnsqrt( diverge_model_t* m );
+
+/**
+ * return a bit-array (cf. :c:func:`bitary_get`) of shape (nk, nb) that tracks
+ * whether at a certain k point and mode the phonon frequency is *imaginary*.
+ */
+void* diverge_phonons_get_ifrq( diverge_model_t* m );
 
 #ifdef __cplusplus
 }

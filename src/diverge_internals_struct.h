@@ -74,11 +74,14 @@ struct internals_t {
     // tu internals
     void* tu_data;
     internals_destructor_t tu_data_destructor;
+
+    // tu additional phonon internals
     int tu_phonon_model_dont_free;
     int tu_phonons_buffered;
     void* tu_data_phonons;
     internals_destructor_t tu_data_phonons_destructor;
     void* model_phonons;
+    void* model_phonons_imag_freq;
     internals_destructor_t model_phonons_destructor;
     int tu_symcheck_mpi;
 
@@ -96,7 +99,6 @@ struct internals_t {
     complex128_t* symm_pref;
 
     int symcheck_mpi;
-
 };
 typedef struct internals_t internals_t;
 

@@ -40,7 +40,6 @@ struct tu_data_phonons_t {
 
 // TODO those are for testing
 extern int tu_data_phonons_init___fftw_sign;
-extern double tu_data_phonons_init___R12_factor;
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
         bool buffered );

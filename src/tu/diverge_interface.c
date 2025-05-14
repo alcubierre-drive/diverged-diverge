@@ -99,8 +99,9 @@ diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
     memcpy(&m->n_ibz_path, &model->n_ibz_path, sizeof m->n_ibz_path);
     memcpy(m->ibz_path, model->ibz_path, sizeof m->ibz_path);
     if (model->n_sym > 0) mpi_log_printf( "symmetries not added to phonon model\n" );
-    if (model->n_orb > 0) mpi_log_printf( "nontrivial basis positions not implemented in phonon model\n" );
+    if (model->n_orb > 0) mpi_log_printf( "nontrivial basis positions not set in phonon model\n" );
     diverge_model_internals_common(m);
+    diverge_phonons_apply_sgnsqrt(m);
 
     m->internals->tu_phonon_model_dont_free = 1;
     tu_data_phonons_t* p = tu_data_phonons_init( m, model, model->internals->tu_phonons_buffered );

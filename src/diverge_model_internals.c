@@ -242,6 +242,7 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     if ((model->internals->model_phonons != NULL) &&
         (model->internals->model_phonons_destructor != NULL))
         (*(model->internals->model_phonons_destructor))( model->internals->model_phonons );
+    free(model->internals->model_phonons_imag_freq);
 
     free(model->internals->patch_kmesh);
     free(model->internals->patch_pmesh);

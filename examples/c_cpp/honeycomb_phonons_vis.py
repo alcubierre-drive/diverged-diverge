@@ -5,13 +5,20 @@ import numpy as np
 import diverge.output as do
 import fancymaps as fm
 import matplotlib.pyplot as plt
+import os
+os.system( 'make; ./honeycomb_phonons.x' )
 
 ccmap = fm.complex_cmap_factory( fm.Cycl_wdiv4 )
 # ccmap = fm.complex_cmap_factory( plt.cm.hsv )
 
 M = do.read( 'el_int.dvg' )
 P = do.read( 'elph_post.dvg' )
-g = np.fromfile('g.bin', dtype=complex).reshape((24,24, 20, -1))
+pp = do.read( 'ph.dvg' )
+plt.figure()
+plt.plot( do.bandstructure_xvals(pp), do.bandstructure_bands(pp) )
+plt.xticks( do.bandstructure_ticks(pp), 'GMKG' )
+
+g = np.fromfile('g.bin', dtype=complex).reshape((24*24, 20, -1))
 
 tumap = P.mi_to_tuffidx
 formfactors = M.tu_ff[tumap]
@@ -19,7 +26,12 @@ formfactors = M.tu_ff[tumap]
 fsel = formfactors['R'] > M.nk[0]//2
 formfactors['R'][fsel] -= M.nk[0]
 
-cg = ccmap(g)[0,0]
+cg = ccmap(g)[0]
+print( np.abs(g).sum() )
+
+modes = pp.U[0]
+xg = np.einsum( 'qfO, bO -> qbf', g, modes )
+print( np.abs(xg[0]).sum(axis=-1) )
 
 fig, axs = plt.subplots( M.n_orb, 2, layout="constrained", sharex=True, sharey=True )
 for p in range(M.n_orb):

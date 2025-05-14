@@ -6,6 +6,7 @@ LINALG_IMPLEMENT
 #include <tu/phonons.h>
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define SELECTOR( type ) \
 type selector_##type( index_t idx, ... ) { va_list ap; va_start( ap, idx ); \
@@ -35,7 +36,7 @@ static inline void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v ) {
     complex128_t* tmp = calloc(num*POW2(sz), sizeof*tmp);
     for (index_t q=0; q<num; ++q) {
         single_svd( v.ary + POW2(sz)*q, tmp + POW2(sz)*q, vecs + POW2(sz)*q, vals + sz*q, sz );
-        single_eigen_sort( tmp, vals + sz*q, sz, 'M' );
+        single_eigen_sort( tmp + POW2(sz)*q, vals + sz*q, sz, 'M' );
     }
     free( vecs );
     free( tmp );
@@ -46,7 +47,7 @@ static inline void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v ) {
 
 int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );
-
+    // mpi_loglevel_set(6);
 
     int nk = 24, nkf = 5;
     double t1 = 1.0, t2 = 0.1;
@@ -104,6 +105,7 @@ int main( int argc, char** argv ) {
     oc.npath = -1;
     oc.kf_ibz_path = 1;
     oc.kc = 1;
+    oc.E = oc.U = 1;
     diverge_model_to_file_finegrained(m, "el.dvg", &oc);
 
     diverge_model_t* ph = diverge_model_init();
@@ -126,12 +128,12 @@ int main( int argc, char** argv ) {
         a1,
     };
     const claM3d_t reference_forces[] = {
-        {{{C1x, 0, 0},
-          {0, C1y, 0},
-          {0, 0, C1z}}},
-        {{{  C2x,    C2xy,       0},
-          {-C2xy, -C1y/6.,       0},
-          {    0,       0, -C1z/6.}}},
+        {{{   C1x,       0,       0},
+          {     0,     C1y,       0},
+          {     0,       0,     C1z}}},
+        {{{   C2x,    C2xy,       0},
+          { -C2xy, -C1y/6.,       0},
+          {     0,       0, -C1z/6.}}},
     };
     const int n_reference = 2;
 
@@ -170,10 +172,11 @@ int main( int argc, char** argv ) {
     ph->n_hop = ph_hop_sz;
 
     diverge_model_internals_common(ph);
+    diverge_phonons_apply_sgnsqrt(ph);
     diverge_model_to_file_finegrained(ph, "ph.dvg", &oc);
 
     double alpha = 1.0,
-           beta = 0.7;
+           beta = 1.0;
     VECTOR_INIT( ph_vertex_t, pv );
     for (index_t i=0; i<m->n_hop; ++i) {
         rs_hopping_t t = m->hop[i];
@@ -188,8 +191,13 @@ int main( int argc, char** argv ) {
                  if (!EQUAL(g, 0.0)) {
                      for (int x=0; x<3; ++x) p.RA[x] = p.R12[x];
                      p.g = g;
-                     p.OA = IDX2(t.o1,d,3);
+                     p.OA = IDX2(t.o2,d,3);
                      VECTOR_PUSH_BACK( pv, p );
+                     // TODO those give the right couplings, but these couplings to not give the right vertices -.-
+                     // for (int x=0; x<3; ++x) p.RA[x] = 0;
+                     // p.g = -g;
+                     // p.OA = IDX2(t.o1,d,3);
+                     // VECTOR_PUSH_BACK( pv, p );
                  }
             }
         }
@@ -206,21 +214,21 @@ int main( int argc, char** argv ) {
 
     diverge_flow_step_t* s = diverge_flow_step_init_any(m, "PCD");
     {
-    tu_data_phonons_t* pp = m->internals->tu_data_phonons;
-    FILE* gfile = fopen("g.bin", "wb");
-    diverge_flow_step_vertex_t v = diverge_flow_step_vertex( s, 'D' );
-    fwrite( pp->g_ob_qO, sizeof*pp->g_ob_qO, kdim(m->nk)*POW2(v.n_spin)*v.n_orbff * ph->n_orb, gfile );
-    fclose( gfile );
+        tu_data_phonons_t* pp = m->internals->tu_data_phonons;
+        FILE* gfile = fopen("g.bin", "wb");
+        diverge_flow_step_vertex_t v = diverge_flow_step_vertex( s, 'D' );
+        fwrite( pp->g_ob_qO, sizeof*pp->g_ob_qO, kdim(m->nk)*POW2(v.n_spin)*v.n_orbff * ph->n_orb, gfile );
+        fclose( gfile );
     }
     diverge_euler_t eu = diverge_euler_defaults;
     int i=0;
     do {
         diverge_flow_step_euler(s, eu.Lambda, eu.dLambda );
-        if (++i == 10) break;
+        if (++i == 1) break;
     } while (diverge_euler_next(&eu, 0));
     append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'p') );
-    append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'h') );
     append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'm') );
+    append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'h') );
     if (vertex_file) fclose(vertex_file);
 
     free(dist);
