@@ -3,6 +3,8 @@
 #include <diverge_misc.h>
 LINALG_IMPLEMENT
 
+#include <tu/phonons.h>
+
 #include <stdarg.h>
 
 #define SELECTOR( type ) \
@@ -171,7 +173,7 @@ int main( int argc, char** argv ) {
     diverge_model_to_file_finegrained(ph, "ph.dvg", &oc);
 
     double alpha = 1.0,
-           beta = 0.0;
+           beta = 0.7;
     VECTOR_INIT( ph_vertex_t, pv );
     for (index_t i=0; i<m->n_hop; ++i) {
         rs_hopping_t t = m->hop[i];
@@ -179,25 +181,12 @@ int main( int argc, char** argv ) {
         claV3d_t R = claV3d_add(P,claV3d_add(claV3d_scale(a1,t.R[0]),claV3d_scale(a2,t.R[1])));
         claV3d_t eR = claV3d_scale(R, 1./claV3d_norm(R));
         ph_vertex_t p = { .o1=t.o1, .o2=t.o2, .R12={t.R[0],t.R[1],t.R[2]} };
-        if (EQUAL(claV3d_norm(R),dist[1])) {
+        if (EQUAL(claV3d_norm(R),dist[1]) || EQUAL(claV3d_norm(R),dist[2])) {
+            double aa = EQUAL(claV3d_norm(R),dist[1]) ? alpha : beta;
             for (int d=0; d<3; ++d) {
-                 double g = alpha * eR.v[d];
+                 double g = aa * eR.v[d];
                  if (!EQUAL(g, 0.0)) {
-                     for (int x=0; x<3; ++x) p.RA[x] = -p.R12[x];
-                     p.g = g;
-                     p.OA = IDX2(t.o1,d,3);
-                     VECTOR_PUSH_BACK( pv, p );
                      for (int x=0; x<3; ++x) p.RA[x] = p.R12[x];
-                     p.g = g;
-                     p.OA = IDX2(t.o2,d,3);
-                     VECTOR_PUSH_BACK( pv, p );
-                 }
-            }
-        }
-        if (EQUAL(claV3d_norm(R),dist[2])) {
-            for (int d=0; d<3; ++d) {
-                 double g = beta * eR.v[d];
-                 if (!EQUAL(g, 0.0)) {
                      p.g = g;
                      p.OA = IDX2(t.o1,d,3);
                      VECTOR_PUSH_BACK( pv, p );
@@ -208,6 +197,7 @@ int main( int argc, char** argv ) {
 
     diverge_model_t* pph = diverge_model_internals_tu_phonons(m, 1.01, ph->hop,
             ph->n_hop, pv, pv_sz);
+    diverge_model_to_file_finegrained(m, "el_int.dvg", &oc);
     free(pv);
     memcpy(pph->positions, ph->positions, sizeof(ph->positions));
     diverge_model_free(ph);
@@ -215,6 +205,13 @@ int main( int argc, char** argv ) {
     diverge_model_to_file_finegrained(ph, "elph.dvg", &oc);
 
     diverge_flow_step_t* s = diverge_flow_step_init_any(m, "PCD");
+    {
+    tu_data_phonons_t* pp = m->internals->tu_data_phonons;
+    FILE* gfile = fopen("g.bin", "wb");
+    diverge_flow_step_vertex_t v = diverge_flow_step_vertex( s, 'D' );
+    fwrite( pp->g_ob_qO, sizeof*pp->g_ob_qO, kdim(m->nk)*POW2(v.n_spin)*v.n_orbff * ph->n_orb, gfile );
+    fclose( gfile );
+    }
     diverge_euler_t eu = diverge_euler_defaults;
     int i=0;
     do {
@@ -227,6 +224,8 @@ int main( int argc, char** argv ) {
     if (vertex_file) fclose(vertex_file);
 
     free(dist);
+
+    diverge_postprocess_and_write( s, "elph_post.dvg" );
 
     diverge_flow_step_free(s);
     diverge_model_free(m);
