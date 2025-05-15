@@ -16,6 +16,15 @@ void single_gemm( const complex128_t* A, const complex128_t* B, complex128_t* C,
         index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta );
 
 /**
+ * calculate the matrix product :math:`C(N,K) = alpha * A(N,M) * B(M,K) + beta *
+ * C(N,K)` with all matrices in C order (Row Major), but with an Eigen3 backend
+ * (so no parallelization issues but less ideal runtime).
+ */
+void single_gemm_serial( const complex128_t* A, const complex128_t* B,
+        complex128_t* C, index_t N, index_t M, index_t K,
+        complex128_t alpha, complex128_t beta );
+
+/**
  * calculates the matrix product :math:`C = \beta C + \alpha A \cdot B^\dagger`.
  * A(N,K), B(M,K) and C(N,M) are matrices in C order (Row Major).
  */

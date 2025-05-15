@@ -27,23 +27,46 @@ fsel = formfactors['R'] > M.nk[0]//2
 formfactors['R'][fsel] -= M.nk[0]
 
 cg = ccmap(g)[0]
-print( np.abs(g).sum() )
+print( np.abs(g[0]).sum(axis=-2) )
 
-modes = pp.U[0]
-xg = np.einsum( 'qfO, bO -> qbf', g, modes )
-print( np.abs(xg[0]).sum(axis=-1) )
+fig, axs = plt.subplots( M.n_orb, M.n_orb*2, layout="constrained", sharex=True, sharey=True )
+for o in range(M.n_orb):
+ for p in range(M.n_orb):
+  for xyz in range(2):
+   ax = axs[o,p*2+xyz]
+   ax.set_aspect(1)
+   for iff, ff in enumerate(formfactors):
+    of = ff['oto']
+    if of == o:
+        bond = ff['R'] @ M.lattice + M.positions[ff['ofrom']] - M.positions[ff['oto']]
+        vecs = np.array([np.zeros_like(bond), bond])
+        ax.plot( vecs[:,0], vecs[:,1], c=cg[iff,p*3+xyz], lw=5 )
+        ax.scatter( *bond[:2], c='r', s=8, zorder=4 )
+        ax.scatter( *(M.positions[p]-M.positions[o])[:2], c='k', s=40, zorder=3 )
 
-fig, axs = plt.subplots( M.n_orb, 2, layout="constrained", sharex=True, sharey=True )
-for p in range(M.n_orb):
-    for xyz in range(2):
-        for iff, ff in enumerate(formfactors):
-            bondvec = ff['R'] @ M.lattice + M.positions[ff['ofrom']]
-            start = M.positions[ff['oto']]
-            vecs = np.array([start, bondvec])
-            axs[p,xyz].plot( vecs[:,0], vecs[:,1], c=cg[iff,p*3+xyz], lw=5 )
-            axs[p,xyz].scatter( *vecs[:,:2].T, c='r', s=8, zorder=4 )
-        axs[p,xyz].scatter( *M.positions[p,:2], c='k', s=40, zorder=3 )
-        axs[p,xyz].set_aspect(1)
+# fig, axs = plt.subplots( M.n_orb, 1, layout="constrained", sharex=True, sharey=True )
+# cg = ccmap( P.Dvec[0,0,0] )
+# for o in range(M.n_orb):
+#     ax = axs[o]
+#     ax.set_aspect(1)
+#     for iff, ff in enumerate(formfactors):
+#         of = ff['oto']
+#         if of == o:
+#             bond = ff['R'] @ M.lattice + M.positions[ff['ofrom']] - M.positions[ff['oto']]
+#             vecs = np.array([np.zeros_like(bond), bond])
+#             ax.plot( vecs[:,0], vecs[:,1], c=cg[iff], lw=5 )
+#             if np.isclose(np.linalg.norm(bond),0):
+#                 ax.scatter( *bond[:2], color=cg[iff], s=80, zorder=4 )
+#             else:
+#                 ax.scatter( *bond[:2], color='gray', s=8, zorder=4 )
+
+fig = plt.figure( layout="constrained" )
+ax = fig.add_subplot( 111 )
+for i in range(2):
+ for j in range(2):
+  ax.scatter(*(M.rlattice[0,:2]*i + M.rlattice[1,:2]*j + M.kmesh[:,:2]).T,
+             c=np.log10(P.Dval[P.Doff]), cmap='nipy_spectral_r' )
+ax.set_aspect(1)
 plt.show()
 
 # vals = g[0,0]

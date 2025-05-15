@@ -49,9 +49,9 @@ int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );
     // mpi_loglevel_set(6);
 
-    int nk = 24, nkf = 5;
+    int nk = 18, nkf = 1;
     double t1 = 1.0, t2 = 0.1;
-    double U = 0.0, V1 = 0.0, V2 = 0.0;
+    double U = 0.00, V1 = 0.00, V2 = 0.00;
 
     diverge_model_t* m = diverge_model_init();
     m->nk[0] = m->nk[1] = nk;
@@ -193,11 +193,10 @@ int main( int argc, char** argv ) {
                      p.g = g;
                      p.OA = IDX2(t.o2,d,3);
                      VECTOR_PUSH_BACK( pv, p );
-                     // TODO those give the right couplings, but these couplings to not give the right vertices -.-
-                     // for (int x=0; x<3; ++x) p.RA[x] = 0;
-                     // p.g = -g;
-                     // p.OA = IDX2(t.o1,d,3);
-                     // VECTOR_PUSH_BACK( pv, p );
+                     for (int x=0; x<3; ++x) p.RA[x] = 0;
+                     p.g = -g;
+                     p.OA = IDX2(t.o1,d,3);
+                     VECTOR_PUSH_BACK( pv, p );
                  }
             }
         }
@@ -226,14 +225,21 @@ int main( int argc, char** argv ) {
         diverge_flow_step_euler(s, eu.Lambda, eu.dLambda );
         if (++i == 1) break;
     } while (diverge_euler_next(&eu, 0));
-    append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'p') );
-    append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'm') );
-    append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'h') );
+    // append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'p') );
+    // append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'm') );
+    // append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'h') );
+    append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'P') );
+    append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'C') );
+    append_vertex_eigs_to_file( diverge_flow_step_vertex(s, 'D') );
     if (vertex_file) fclose(vertex_file);
 
     free(dist);
 
-    diverge_postprocess_and_write( s, "elph_post.dvg" );
+    diverge_postprocess_conf_t pc = diverge_postprocess_conf_defaults;
+    pc.tu_storing_relative = 1;
+    pc.tu_storing_threshold = 0.01;
+    pc.tu_which_solver_mode = 'B';
+    diverge_postprocess_and_write_fg( s, "elph_post.dvg", &pc );
 
     diverge_flow_step_free(s);
     diverge_model_free(m);

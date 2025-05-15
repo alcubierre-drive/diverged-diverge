@@ -238,6 +238,7 @@ DIVERGE_UNSTABLE {
         single_gemm_Xt_free;
         single_gemm_Xt_init;
         single_gemm_adjoint;
+        single_gemm_serial;
         single_square_gemm;
         single_svd;
         subspace_gfill_multi_exec;
