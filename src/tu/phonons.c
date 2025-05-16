@@ -20,7 +20,10 @@ LINALG_IMPLEMENT
 static int fft_sign = -1;
 static int conj_U = 0;
 static int conj_l = 1, conj_r = 0;
-static double phase_pref = 0.0;
+// static double phase_pref = 0.0;
+// TODO we have to use this factor to get the SSH model results?!
+static double phase_pref = -0.5;
+
 static void select_config( void ) {
     char* cvalue = getenv("PHONON_CFG");
     if (cvalue) {
