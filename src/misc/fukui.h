@@ -40,10 +40,9 @@ typedef struct diverge_model_t diverge_model_t;
 double* diverge_fukui( diverge_model_t* m, complex128_t* U, index_t nb, index_t* nk );
 
 /**
- * Calculate the non-abelian Berry curvature matrix
- * :math:`\Omega_{\mu\nu}(\boldsymbol{k})` using Fukui's method. As for
- * :c:func:`diverge_fukui`, we norm it to the Chern number. The input parameters
- * also follow this function (:c:func:`diverge_fukui`):
+ * Calculate the non-abelian Berry curvature over a set of bands using Fukui's
+ * method. As for :c:func:`diverge_fukui`, we norm it to the Chern number. The
+ * input parameters also follow the function :c:func:`diverge_fukui`:
  *
  * :param diverge_model_t m: model instance. obtain all parameters from there by
  *                           default. internals must be set
@@ -60,13 +59,18 @@ double* diverge_fukui( diverge_model_t* m, complex128_t* U, index_t nb, index_t*
  *                     number of :math:`\boldsymbol{k}` points. In case the
  *                     improper gauge is used, one can swap the sign convention
  *                     by changing the number of negative dimensions.
+ * :param index_t* which_bands: selection of bands to take the non-abelian
+ *                              determinant over
+ * :param index_t n_which_bands: number of bands in the selection (same usage as
+ *                               in :c:func:`diverge_qgt`)
  *
- * :returns: :c:type:`complex128_t` array of shape ``(nk, nb, nb, 3)`` that
- *           contains the non-abelian Berry curvature along the three crystal
- *           axes. Must be freed manually by a call to ``free`` or
- *           :c:func:`diverge_mem_free`. May be ``NULL`` on errors.
+ * :returns: ``double`` array of shape ``(nk, 3)`` that contains the non-abelian
+ *           Berry curvature along the three crystal axes. Must be freed
+ *           manually by a call to ``free`` or :c:func:`diverge_mem_free`. May
+ *           be ``NULL`` on errors.
  */
-complex128_t* diverge_fukui_matrix( diverge_model_t* m, complex128_t* U, index_t nb, index_t* nk );
+double* diverge_fukui_non_abelian( diverge_model_t* m, complex128_t* U,
+        index_t nb, index_t* nk, index_t* which_bands, index_t n_which_bands );
 
 #ifdef __cplusplus
 }

@@ -123,7 +123,7 @@ the phonon model comply with the acoustic sum rule;
 in <a class="reference external" href="https://epw-code.org/">EPW</a>).</p>
 <dl class="c struct">
 <dt class="sig sig-object c" id="c.ph_vertex_t">
-<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ph_vertex_t</span></span></span><a class="headerlink" href="#c.ph_vertex_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L14"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ph_vertex_t</span></span></span><a class="headerlink" href="#c.ph_vertex_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L15"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>electron-phonon vertex structure in real space. Some member types are chosen
 in a specific way to yield a type that’s as large as <a class="reference internal" href="Model.html#c.rs_vertex_t" title="rs_vertex_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">rs_vertex_t</span></code></a>.</p>
 <p>The three-leg vertex is characterized by three quantum numbers. Two
@@ -143,56 +143,56 @@ g^{(\boldsymbol0,o_1,s_1),(\boldsymbol{R}_{12},o_2,s_2)}_{(O_A,\boldsymbol{R}_A)
 look at the examples.</p>
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t._chan">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_chan</span></span></span><a class="headerlink" href="#c.ph_vertex_t._chan" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L38"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_chan</span></span></span><a class="headerlink" href="#c.ph_vertex_t._chan" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>padding to be equivalent to <a class="reference internal" href="Model.html#c.rs_vertex_t" title="rs_vertex_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">rs_vertex_t</span></code></a></p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.R12">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R12</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.ph_vertex_t.R12" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L41"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R12</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.ph_vertex_t.R12" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L42"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>electronic bond (R vector, analogous to <a class="reference internal" href="Model.html#c.tu_formfactor_t" title="tu_formfactor_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">tu_formfactor_t</span></code></a> or
 <a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">rs_hopping_t</span></code></a>)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.o1">
-<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">o1</span></span></span><a class="headerlink" href="#c.ph_vertex_t.o1" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L45"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">o1</span></span></span><a class="headerlink" href="#c.ph_vertex_t.o1" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L46"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>electron 1, orbital (see <a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">rs_hopping_t</span></code></a>)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.s1">
-<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">s1</span></span></span><a class="headerlink" href="#c.ph_vertex_t.s1" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">s1</span></span></span><a class="headerlink" href="#c.ph_vertex_t.s1" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L48"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>electron 1, spin (see <a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">rs_hopping_t</span></code></a>)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.o2">
-<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">o2</span></span></span><a class="headerlink" href="#c.ph_vertex_t.o2" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L49"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">o2</span></span></span><a class="headerlink" href="#c.ph_vertex_t.o2" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L50"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>electron 2, orbital (see <a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">rs_hopping_t</span></code></a>)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.s2">
-<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">s2</span></span></span><a class="headerlink" href="#c.ph_vertex_t.s2" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L51"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">s2</span></span></span><a class="headerlink" href="#c.ph_vertex_t.s2" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L52"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>electron 2, spin (see <a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">rs_hopping_t</span></code></a>)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.OA">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">OA</span></span></span><a class="headerlink" href="#c.ph_vertex_t.OA" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L57"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">OA</span></span></span><a class="headerlink" href="#c.ph_vertex_t.OA" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L58"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>phononic ‘orbital’ (site,xyz) multiindex</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.RA">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RA</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.ph_vertex_t.RA" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L59"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RA</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.ph_vertex_t.RA" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L60"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>phononic ‘transfer’ vector (only an FFT of <span class="math notranslate nohighlight">\(\boldsymbol{q}\)</span>)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.g">
-<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">g</span></span></span><a class="headerlink" href="#c.ph_vertex_t.g" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L62"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">g</span></span></span><a class="headerlink" href="#c.ph_vertex_t.g" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L63"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>coupling strength</p>
 </dd></dl>
 
@@ -200,7 +200,7 @@ look at the examples.</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_phonons_asr">
-<a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_asr</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">ph_hop</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">n_ph_hop</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_asr" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L67"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_asr</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">ph_hop</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">n_ph_hop</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_asr" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L68"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>apply the acoustic sum rule (ASR) to a set of phonon hopping parameters. This
 function <em>invalidates</em> the pointer <code class="docutils literal notranslate"><span class="pre">ph_hop</span></code>, use as if <code class="docutils literal notranslate"><span class="pre">realloc</span></code> were
 called (i.e. use the returned pointer!).</p>
@@ -218,6 +218,22 @@ hoppings on return.</p></li>
 <dd class="field-even"><p>hopping parameter array, reallocated.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_phonons_apply_sgnsqrt">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_apply_sgnsqrt</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_apply_sgnsqrt" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L83"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>convert eigenvalues to frequencies (by taking <span class="math notranslate nohighlight">\(\sqrt{D}\)</span>) and fill an
+internal array that tracks whether at a certain point in momentum space for a
+certain mode we have <em>imaginary</em> frequencies. This bit-array may be retrieved
+with <a class="reference internal" href="#c.diverge_phonons_get_ifrq" title="diverge_phonons_get_ifrq"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_phonons_get_ifrq()</span></code></a></p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_phonons_get_ifrq">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_get_ifrq</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_get_ifrq" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>return a bit-array (cf. <a class="reference internal" href="Bit%20Arrays.html#c.bitary_get" title="bitary_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">bitary_get()</span></code></a>) of shape (nk, nb) that tracks
+whether at a certain k point and mode the phonon frequency is <em>imaginary</em>.</p>
 </dd></dl>
 
 </section>

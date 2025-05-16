@@ -14,6 +14,9 @@ extern "C" {
  * be set and modifies those members, as well as
  * :c:member:`diverge_model_t.positions` and :c:member:`diverge_model_t.n_orb`.
  *
+ * .. note:: The orbital sign convention can be changed by a call to
+ *           :c:func:`diverge_supercell_set_sign`.
+ *
  * Special case of :c:func:`rs_hopping_to_fractcell` with :math:`N^j_i =
  * \delta_{ij} n^r_i`.
  *
@@ -35,6 +38,9 @@ void rs_hopping_to_supercell( diverge_model_t* m, int* nr );
  * :c:member:`diverge_model_t.n_hop`, and :c:member:`diverge_model_t.lattice` to
  * be set and modifies those members, as well as
  * :c:member:`diverge_model_t.positions` and :c:member:`diverge_model_t.n_orb`.
+ *
+ * .. note:: The orbital sign convention can be changed by a call to
+ *           :c:func:`diverge_supercell_set_sign`.
  *
  * .. note :: This function does not touch, "see", or change the vertex elements.
  *            Users are hence advised to set interaction components *after*
@@ -63,6 +69,12 @@ void diverge_model_to_supercell( diverge_model_t* m, int* nr );
 void diverge_model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 );
 /** same as :c:func:`rs_hopping_to_fractcell_mat`, but also maps (real space) vertex elements */
 void diverge_model_to_fractcell_mat( diverge_model_t* m, int* N123 );
+
+/**
+ * to swap the orbital convention in supercells, use this function to set -1
+ * instead of the default, i.e., 1. Not thread-safe. Call before generation.
+ */
+void diverge_supercell_set_sign( double sign );
 
 #ifdef __cplusplus
 }

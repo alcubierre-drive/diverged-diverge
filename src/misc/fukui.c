@@ -6,6 +6,7 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_momentum_gen.h"
 #include "mpi_functions.h"
+#include "invert.h"
 
 #define LINALG_NO_LAPACKE
 #include "linalg.h"
@@ -178,7 +179,11 @@ double* diverge_fukui( diverge_model_t* m, complex128_t* U_, index_t nb_, index_
     return out;
 }
 
-complex128_t* diverge_fukui_matrix( diverge_model_t* m, complex128_t* U_, index_t nb_, index_t* nk_ ) {
+// Eq. (16) from [J. Phys. Soc. Jpn. 74, pp. 1674-1677 (2005)]
+// https://doi.org/10.1143/JPSJ.74.1674
+// Fukui/Hatsugai/Suzuki
+double* diverge_fukui_non_abelian( diverge_model_t* m, complex128_t* U_,
+        index_t nb_, index_t* nk_, index_t* which_bands, index_t n_which_bands ) {
 
     index_t nk[3] = {0};
     complex128_t* U = NULL;
@@ -254,11 +259,12 @@ complex128_t* diverge_fukui_matrix( diverge_model_t* m, complex128_t* U_, index_
 
     index_t nb2 = nb*nb;
     index_t nk_tot = nk[0]*nk[1]*nk[2];
-    complex128_t* out = calloc( nk_tot * nb*nb * 3, sizeof(complex128_t) );
+    double* out = calloc( nk_tot * 3, sizeof(double) );
 
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
     complex128_t* U_cube = calloc(8*nb2, sizeof(complex128_t));
+    complex128_t* U_non_abel = calloc(POW2(n_which_bands), sizeof*U_non_abel);
     #pragma omp for collapse(3)
     for (index_t kx=0; kx<nk[0]; ++kx)
     for (index_t ky=0; ky<nk[1]; ++ky)
@@ -312,11 +318,7 @@ complex128_t* diverge_fukui_matrix( diverge_model_t* m, complex128_t* U_, index_
         k_idx = k1p2(k, IDX3(oneX,oneY,0,   nk[1],nk[2]), nk); U_CUBE_PUSH_BACK();
         wraps_add[2] = 1;
         k_idx = k1p2(k, IDX3(oneX,oneY,oneZ,nk[1],nk[2]), nk); U_CUBE_PUSH_BACK();
-        for (index_t b1=0; b1<nb; ++b1)
-        for (index_t b2=0; b2<nb; ++b2)
         for (index_t dim=0; dim<3; ++dim) {
-
-            complex128_t prod = 1.0;
             index_t cube_sel[4] = {0};
             switch (dim) {
                 case 0: cube_sel[1] = 1; cube_sel[2] = 3; cube_sel[3] = 2; break;
@@ -324,19 +326,27 @@ complex128_t* diverge_fukui_matrix( diverge_model_t* m, complex128_t* U_, index_
                 case 2: cube_sel[1] = 4; cube_sel[2] = 6; cube_sel[3] = 2; break;
                 default: break;
             }
+            complex128_t prod = 1.0;
             for (int plaq=0; plaq<4; ++plaq) {
-                complex128_t scalar_product = 0.0;
-                for (index_t o=0; o<nb; ++o) {
-                    index_t c1 = IDX3(cube_sel[(plaq+0)%4],b1,o,nb,nb),
-                            c2 = IDX3(cube_sel[(plaq+1)%4],b2,o,nb,nb);
-                    scalar_product += U_cube[c1] * conj(U_cube[c2]);
+                for (index_t ib1=0; ib1<n_which_bands; ++ib1)
+                for (index_t ib2=0; ib2<n_which_bands; ++ib2) {
+                    U_non_abel[IDX2(ib1,ib2,n_which_bands)] = 0.0;
+                    index_t b1 = which_bands[ib1],
+                            b2 = which_bands[ib2];
+                    for (index_t o=0; o<nb; ++o) {
+                        index_t c1 = IDX3(cube_sel[(plaq+0)%4],b1,o,nb,nb),
+                                c2 = IDX3(cube_sel[(plaq+1)%4],b2,o,nb,nb);
+                        U_non_abel[IDX2(ib1,ib2,n_which_bands)] += U_cube[c1] * conj(U_cube[c2]);
+                    }
                 }
-                prod *= scalar_product;
+                complex128_t det = cmatrix_determinant( U_non_abel, n_which_bands );
+                prod *= det;
             }
-            out[IDX4( k, b1, b2, dim, nb, nb, 3 )] = clog(prod) / 2. / M_PI;
+            out[IDX2( k, dim, 3 )] = carg(prod) / 2. / M_PI;
         }
     }
     free(U_cube);
+    free(U_non_abel);
     } // omp
 
     return out;
