@@ -3,7 +3,6 @@
 LINALG_IMPLEMENT
 #include "phonons.h"
 #include "../diverge_internals_struct.h"
-#include "../diverge_patching_helpers.h" // atomic_add
 #include "../misc/mergesort.h"
 #include "../misc/gemm.h"
 #include "../misc/bitary.h"
@@ -20,8 +19,15 @@ LINALG_IMPLEMENT
 static int fft_sign = -1;
 static int conj_U = 0;
 static int conj_l = 1, conj_r = 0;
+
+// TODO this factor is correct for square lattice systems
+// (selection #4)
 // static double phase_pref = 0.0;
-// TODO we have to use this factor to get the SSH model results?!
+
+// TODO this factor works for the SSH model, and also for all other ones to
+// produce symmetric results as soon as the inverted (RA=0) couplings are
+// removed
+// (selection #20)
 static double phase_pref = -0.5;
 
 static void select_config( void ) {
@@ -69,8 +75,7 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     if (memcmp( t->nk, el->nk, sizeof(t->nk) ) != 0)
         mpi_err_printf( "kpoints from ph (%li)/el (%li) don't match\n", kdim(t->nk), kdim(el->nk) );
     assert( t->pmod->n_spin == 1 );
-    assert( t->pmod->internals->greens_shared == 0 );
-    assert( t->pmod->gproj == NULL );
+    assert( t->pmod->internals->E_imag != NULL );
     t->vtx = (ph_vertex_t*)t->pmod->vert;
     t->n_vtx = t->pmod->n_vert;
     t->buffered = buffered;
@@ -89,6 +94,9 @@ void tu_data_phonons_free( tu_data_phonons_t* t ) {
     free(t);
 }
 
+static inline complex128_t gf_gp_plus_gm( const double E, const bool E_imag, const double rLambda ) {
+    return 1./(+I*rLambda - (E_imag?I:1.0)*E ) + 1./(-I*rLambda - (E_imag?I:1.0)*E );
+}
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
     const int iszero = Lambda == 0.0;
     complex128_t* buf = iszero ? t->gbuf_zero : t->gbuf;
@@ -96,33 +104,21 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda 
     if (*last == Lambda) return buf;
     *last = Lambda;
 
-    gf_complex_t* greens = t->pmod->internals->greens;
-    const complex128_t cLambda = I*(iszero?DIVERGE_EPS_MESH:Lambda), one = 1.0;
-    const index_t nO = t->nO, my_nk = t->my_nk, my_nk_off = t->my_nk_off,
-                  nkf = kdimtot(t->pmod->nk,t->pmod->nkf);
+    const double rLambda = iszero ? DIVERGE_EPS_MESH : Lambda;
     const double* E = t->pmod->internals->E;
     const cbyte_t* E_imag = t->pmod->internals->model_phonons_imag_freq;
-    assert( E_imag != NULL );
 
-    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
-    for (int sign=0; sign<2; ++sign)
-    for (index_t k=0; k<nkf; ++k)
-    for (index_t b=0; b<nO; ++b) {
-        greens[IDX3(sign, k, b, nkf, nO)] = 1./ ( (sign?cLambda:conj(cLambda))
-                - (bitary_get(E_imag,IDX2(k,b,nO))?I:one) * E[IDX2(k,b,nO)] );
-    }
-
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t kk=0; kk<my_nk; ++kk) {
-        const index_t q = kidxc2f( t->idx_ibz_in_fullmesh[my_nk_off + kk], t->nk, t->nkf );
-        for (index_t b=0; b<nO; ++b)
-            buf[IDX2(kk,b,nO)] = greens[IDX3(0,q,b,nkf,nO)] + greens[IDX3(1,q,b,nkf,nO)];
+    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+    for (index_t kk=0; kk<t->my_nk; ++kk)
+    for (index_t b=0; b<t->nO; ++b) {
+        const index_t q = kidxc2f( t->idx_ibz_in_fullmesh[t->my_nk_off+kk], t->nk, t->nkf );
+        buf[IDX2(kk,b,t->nO)] = gf_gp_plus_gm( E[IDX2(q,b,t->nO)], bitary_get(E_imag,IDX2(q,b,t->nO)), rLambda );
     }
     return buf;
 }
 
 #undef MERGESORT_COMP
-#define MERGESORT_COMP( i, j ) memcmp( &i, &j, offsetof(ph_vertex_t, RA) )
+#define MERGESORT_COMP( i, j ) memcmp( &i, &j, sizeof(ph_vertex_t) )
 MERGESORT_IMPL( ph_vertex_sort, ph_vertex_t )
 
 static inline int formfac_equal( const ph_vertex_t* a, const ph_vertex_t* b ) {

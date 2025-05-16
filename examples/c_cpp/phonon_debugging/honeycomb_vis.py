@@ -6,7 +6,7 @@ import diverge.output as do
 import fancymaps as fm
 import matplotlib.pyplot as plt
 import os
-os.system( 'make; ./honeycomb_phonons.x' )
+os.system( 'make; ./honeycomb.x' )
 
 ccmap = fm.complex_cmap_factory( fm.Cycl_wdiv4 )
 # ccmap = fm.complex_cmap_factory( plt.cm.hsv )
@@ -18,7 +18,7 @@ plt.figure()
 plt.plot( do.bandstructure_xvals(pp), do.bandstructure_bands(pp) )
 plt.xticks( do.bandstructure_ticks(pp), 'GMKG' )
 
-g = np.fromfile('g.bin', dtype=complex).reshape((24*24, 20, -1))
+g = np.fromfile('g.bin', dtype=complex).reshape((np.prod(M.nk), 20, -1))
 
 tumap = P.mi_to_tuffidx
 formfactors = M.tu_ff[tumap]

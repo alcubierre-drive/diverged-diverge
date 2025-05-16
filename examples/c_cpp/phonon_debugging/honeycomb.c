@@ -5,45 +5,18 @@ LINALG_IMPLEMENT
 
 #include <tu/phonons.h>
 
-#include <stdarg.h>
-#include <assert.h>
-
-#define SELECTOR( type ) \
-type selector_##type( index_t idx, ... ) { va_list ap; va_start( ap, idx ); \
-    index_t result; while (idx-- >= 0) result = va_arg(ap, type); \
-    va_end( ap ); return result; \
-}
-SELECTOR(int)
-
 #define EQUAL( a, b ) (fabs((a)-(b)) < DIVERGE_EPS_MESH)
-
 static inline claM3d_t rotation_z( double theta ) {
     return (claM3d_t){{{ cos(theta), sin(theta), 0},
                        {-sin(theta), cos(theta), 0},
                        {          0,          0, 1}}};
 }
-
-FILE* vertex_file = NULL;
+static void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v );
+static FILE* vertex_file = NULL;
 const char vertex_file_name[] = "vertex_eig.bin";
-static inline void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v ) {
-    if (!vertex_file) {
-        vertex_file = fopen(vertex_file_name, "wb");
-        mpi_usr_printf("opening %s for vertices\n", vertex_file_name);
-    }
-    index_t sz = v.n_orbff, num = v.q_1 - v.q_0;
-    double* vals = calloc(num*sz, sizeof*vals);
-    complex128_t* vecs = calloc(num*POW2(sz), sizeof*vecs);
-    complex128_t* tmp = calloc(num*POW2(sz), sizeof*tmp);
-    for (index_t q=0; q<num; ++q) {
-        single_svd( v.ary + POW2(sz)*q, tmp + POW2(sz)*q, vecs + POW2(sz)*q, vals + sz*q, sz );
-        single_eigen_sort( tmp + POW2(sz)*q, vals + sz*q, sz, 'M' );
-    }
-    free( vecs );
-    free( tmp );
-    fwrite( vals, sizeof*vals, sz*num, vertex_file );
-    // fwrite( v.ary, sizeof*v.ary, sz*sz*num, vertex_file );
-    free( vals );
-}
+
+// TODO
+static int use_correct_elph_g = 1;
 
 int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );
@@ -193,11 +166,14 @@ int main( int argc, char** argv ) {
                      p.g = g;
                      p.OA = IDX2(t.o2,d,3);
                      VECTOR_PUSH_BACK( pv, p );
-                     for (int x=0; x<3; ++x) p.RA[x] = 0;
-                     p.g = -g;
-                     p.OA = IDX2(t.o1,d,3);
-                     VECTOR_PUSH_BACK( pv, p );
-                 }
+                     // TODO
+                     if (use_correct_elph_g) {
+                        for (int x=0; x<3; ++x) p.RA[x] = 0;
+                        p.g = -g;
+                        p.OA = IDX2(t.o1,d,3);
+                        VECTOR_PUSH_BACK( pv, p );
+                    }
+                }
             }
         }
     }
@@ -245,3 +221,24 @@ int main( int argc, char** argv ) {
     diverge_model_free(m);
     diverge_finalize();
 }
+
+static void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v ) {
+    if (!vertex_file) {
+        vertex_file = fopen(vertex_file_name, "wb");
+        mpi_usr_printf("opening %s for vertices\n", vertex_file_name);
+    }
+    index_t sz = v.n_orbff, num = v.q_1 - v.q_0;
+    double* vals = calloc(num*sz, sizeof*vals);
+    complex128_t* vecs = calloc(num*POW2(sz), sizeof*vecs);
+    complex128_t* tmp = calloc(num*POW2(sz), sizeof*tmp);
+    for (index_t q=0; q<num; ++q) {
+        single_svd( v.ary + POW2(sz)*q, tmp + POW2(sz)*q, vecs + POW2(sz)*q, vals + sz*q, sz );
+        single_eigen_sort( tmp + POW2(sz)*q, vals + sz*q, sz, 'M' );
+    }
+    free( vecs );
+    free( tmp );
+    fwrite( vals, sizeof*vals, sz*num, vertex_file );
+    // fwrite( v.ary, sizeof*v.ary, sz*sz*num, vertex_file );
+    free( vals );
+}
+

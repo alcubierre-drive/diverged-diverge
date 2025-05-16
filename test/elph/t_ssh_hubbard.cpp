@@ -48,15 +48,21 @@ static diverge_model_t* hubbard_ssh_model( double omega=1.0, double lambda=0.1,
     m->ibz_path[1][0] = m->ibz_path[2][0] = m->ibz_path[2][1] = 0.5;
     diverge_model_internals_common(m);
 
-    rs_hopping_t phop[2]; memset((void*)phop, 0, sizeof phop);
-    phop[0].o1 = phop[0].o2 = 0; phop[0].t = omega;
-    phop[1].o1 = phop[1].o2 = 1; phop[1].t = omega;
-    ph_vertex_t pvert[4]; memset((void*)pvert, 0, sizeof pvert);
-    pvert[0].R12[0] = 1; pvert[0].OA = 0; pvert[0].g = g;
-    pvert[1].R12[0] =-1; pvert[1].OA = 0; pvert[1].g = g;
-    pvert[2].R12[1] = 1; pvert[2].OA = 1; pvert[2].g = g;
-    pvert[3].R12[1] =-1; pvert[3].OA = 1; pvert[3].g = g;
-    diverge_model_internals_tu_phonons(m, max_dist, phop, 2, pvert, 4);
+    vector<rs_hopping_t> phop;
+    phop.push_back( { {0,0,0}, 0,0, 0,0, omega } );
+    phop.push_back( { {0,0,0}, 1,1, 0,0, omega } );
+    vector<ph_vertex_t> pvert;
+    pvert.push_back( {'x', { 1, 0, 0 }, 0,0, 0,0, 0, { 0, 0, 0 },  g } );
+    pvert.push_back( {'x', {-1, 0, 0 }, 0,0, 0,0, 0, { 0, 0, 0 },  g } );
+    pvert.push_back( {'y', { 0, 1, 0 }, 0,0, 0,0, 1, { 0, 0, 0 },  g } );
+    pvert.push_back( {'y', { 0,-1, 0 }, 0,0, 0,0, 1, { 0, 0, 0 },  g } );
+    // TODO do we need these?!
+    // pvert.push_back( {'x', { 1, 0, 0 }, 0,0, 0,0, 0, { 1, 0, 0 }, -g } );
+    // pvert.push_back( {'x', {-1, 0, 0 }, 0,0, 0,0, 0, {-1, 0, 0 }, -g } );
+    // pvert.push_back( {'y', { 0, 1, 0 }, 0,0, 0,0, 1, { 0, 1, 0 }, -g } );
+    // pvert.push_back( {'y', { 0,-1, 0 }, 0,0, 0,0, 1, { 0,-1, 0 }, -g } );
+    diverge_model_internals_tu_phonons(m, max_dist, phop.data(), phop.size(),
+            pvert.data(), pvert.size());
     return m;
 }
 

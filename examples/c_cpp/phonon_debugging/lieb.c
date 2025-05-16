@@ -5,11 +5,7 @@ LINALG_IMPLEMENT
 
 #include <tu/phonons.h>
 
-#include <stdarg.h>
-#include <assert.h>
-
 #define EQUAL( a, b ) (fabs((a)-(b)) < DIVERGE_EPS_MESH)
-
 static inline claM3d_t rotation_z( double theta ) {
     return (claM3d_t){{{ cos(theta), sin(theta), 0},
                        {-sin(theta), cos(theta), 0},
@@ -19,6 +15,9 @@ static inline claM3d_t rotation_z( double theta ) {
 FILE* vertex_file = NULL;
 const char vertex_file_name[] = "vertex_eig.bin";
 static void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v );
+
+// TODO
+static int use_correct_elph_g = 1;
 
 int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );
@@ -165,11 +164,13 @@ int main( int argc, char** argv ) {
                      p.g = g;
                      p.OA = IDX2(t.o2,d,3);
                      VECTOR_PUSH_BACK( pv, p );
-                     for (int x=0; x<3; ++x) p.RA[x] = 0;
-                     p.g = -g;
-                     p.OA = IDX2(t.o1,d,3);
-                     VECTOR_PUSH_BACK( pv, p );
-                 }
+                     if (use_correct_elph_g) {
+                        for (int x=0; x<3; ++x) p.RA[x] = 0;
+                        p.g = -g;
+                        p.OA = IDX2(t.o1,d,3);
+                        VECTOR_PUSH_BACK( pv, p );
+                    }
+                }
             }
         }
     }
