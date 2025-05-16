@@ -8,13 +8,6 @@ LINALG_IMPLEMENT
 #include <stdarg.h>
 #include <assert.h>
 
-#define SELECTOR( type ) \
-type selector_##type( index_t idx, ... ) { va_list ap; va_start( ap, idx ); \
-    index_t result; while (idx-- >= 0) result = va_arg(ap, type); \
-    va_end( ap ); return result; \
-}
-SELECTOR(int)
-
 #define EQUAL( a, b ) (fabs((a)-(b)) < DIVERGE_EPS_MESH)
 
 static inline claM3d_t rotation_z( double theta ) {
@@ -24,62 +17,41 @@ static inline claM3d_t rotation_z( double theta ) {
 }
 
 FILE* vertex_file = NULL;
-const char vertex_file_name[] = __FILE__ "_eig.bin";
-static inline void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v ) {
-    if (!vertex_file) {
-        vertex_file = fopen(vertex_file_name, "wb");
-        mpi_usr_printf("opening %s for vertices\n", vertex_file_name);
-    }
-    index_t sz = v.n_orbff, num = v.q_1 - v.q_0;
-    double* vals = calloc(num*sz, sizeof*vals);
-    complex128_t* vecs = calloc(num*POW2(sz), sizeof*vecs);
-    complex128_t* tmp = calloc(num*POW2(sz), sizeof*tmp);
-    for (index_t q=0; q<num; ++q) {
-        single_svd( v.ary + POW2(sz)*q, tmp + POW2(sz)*q, vecs + POW2(sz)*q, vals + sz*q, sz );
-        single_eigen_sort( tmp + POW2(sz)*q, vals + sz*q, sz, 'M' );
-    }
-    free( vecs );
-    free( tmp );
-    fwrite( vals, sizeof*vals, sz*num, vertex_file );
-    // fwrite( v.ary, sizeof*v.ary, sz*sz*num, vertex_file );
-    free( vals );
-}
+const char vertex_file_name[] = "vertex_eig.bin";
+static void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v );
 
 int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );
     // mpi_loglevel_set(6);
 
-    int nk = 18, nkf = 1;
+    int nk = 18, nkf = 5;
     double t1 = 1.0, t2 = 0.1;
     double U = 0.00, V1 = 0.00, V2 = 0.00;
 
     diverge_model_t* m = diverge_model_init();
     m->nk[0] = m->nk[1] = nk;
     m->nkf[0] = m->nkf[1] = nkf;
-    m->lattice[0][0] = cos(M_PI/6.);
-    m->lattice[0][1] = sin(M_PI/6.);
-    m->lattice[1][0] = cos(M_PI/6.+2.*M_PI/3.);
-    m->lattice[1][1] = sin(M_PI/6.+2.*M_PI/3.);
-    m->lattice[2][2] = 1.0;
+    m->lattice[0][0] = m->lattice[1][1] = m->lattice[2][2] = 1.0;
     claV3d_t a1 = claV3d_map(m->lattice[0]),
              a2 = claV3d_map(m->lattice[1]);
-    claV3d_t p1 = claV3d_scale(claV3d_add(a1,claV3d_scale(a2,2)),1./3.),
-             p2 = claV3d_scale(claV3d_add(a2,claV3d_scale(a1,2)),1./3.);
+    claV3d_t p1 = {{0,0,0}},
+             p2 = {{0.5,0,0}},
+             p3 = {{0,0.5,0}};
     claV3d_rmap(p1,m->positions[0]);
     claV3d_rmap(p2,m->positions[1]);
-    m->n_orb = 2;
+    claV3d_rmap(p3,m->positions[2]);
+    m->n_orb = 3;
     m->n_spin = m->SU2 = 1;
     m->n_ibz_path = 4;
-    m->ibz_path[1][0] = 0.5;
-    m->ibz_path[2][0] = m->ibz_path[2][1] = 1./3.;
+    m->ibz_path[1][0] = m->ibz_path[2][0] = m->ibz_path[2][1] = 0.5;
 
     double* dist = diverge_model_unique_distances(m, 8, 2);
     VECTOR_INIT( rs_hopping_t, hop );
     VECTOR_INIT( rs_vertex_t, vert );
     for (int i=-3; i<=3; ++i)
     for (int j=-3; j<=3; ++j)
-    for (int o1=0; o1<2; ++o1)
-    for (int o2=0; o2<2; ++o2) {
+    for (int o1=0; o1<m->n_orb; ++o1)
+    for (int o2=0; o2<m->n_orb; ++o2) {
         claV3d_t P = claV3d_sub(claV3d_map(m->positions[o2]), claV3d_map(m->positions[o1]));
         claV3d_t R = claV3d_add(P, claV3d_add(claV3d_scale(a1,i), claV3d_scale(a2,j)));
         double d = claV3d_norm2(R);
@@ -116,24 +88,24 @@ int main( int argc, char** argv ) {
     memcpy(ph->ibz_path, m->ibz_path, sizeof ph->ibz_path);
     ph->n_ibz_path = m->n_ibz_path;
 
-    for (int o=0; o<2; ++o)
+    for (int o=0; o<m->n_orb; ++o)
     for (int r=0; r<3; ++r)
         claV3d_rmap(claV3d_map(m->positions[o]), ph->positions[IDX2(o,r,3)]);
 
-    const double C1x = -365, C1y = -245, C1z = -98.2;
-    const double C2x = 0, C2xy = 0;
+    const double C1x = -100, C1y = -60, C1z = -40;
+    const double C2x = -50, C2y = -30, C2z = -10;
 
     const claV3d_t reference_bonds[] = {
         claV3d_sub(p2,p1),
-        a1,
+        claV3d_sub(p3,p2),
     };
     const claM3d_t reference_forces[] = {
         {{{   C1x,       0,       0},
           {     0,     C1y,       0},
           {     0,       0,     C1z}}},
-        {{{   C2x,    C2xy,       0},
-          { -C2xy, -C1y/6.,       0},
-          {     0,       0, -C1z/6.}}},
+        {{{C2x/2.+C2y/2., C2x/2.-C2y/2.,    0},
+          {C2x/2.-C2y/2., C2x/2.+C2y/2.,    0},
+          {            0,             0, C2z}}},
     };
     const int n_reference = 2;
 
@@ -141,9 +113,9 @@ int main( int argc, char** argv ) {
 
     for (int i=-3; i<=3; ++i)
     for (int j=-3; j<=3; ++j)
-    for (int o1=0; o1<2; ++o1)
-    for (int o2=0; o2<2; ++o2) {
-        claV3d_t D = claV3d_add(claV3d_sub(o2==0?p1:p2, o1==0?p1:p2),
+    for (int o1=0; o1<m->n_orb; ++o1)
+    for (int o2=0; o2<m->n_orb; ++o2) {
+        claV3d_t D = claV3d_add(claV3d_sub(claV3d_map(m->positions[o2]),claV3d_map(m->positions[o1])),
                 claV3d_add(claV3d_scale(a1,i), claV3d_scale(a2,j)));
         int rb = -1;
         for (rb=0; rb<n_reference; ++rb)
@@ -167,7 +139,7 @@ int main( int argc, char** argv ) {
     ph_hop = diverge_phonons_asr( ph_hop, &ph_hop_sz );
     ph_hop_cap = ph_hop_sz;
 
-    ph->n_orb = 6;
+    ph->n_orb = m->n_orb * 3;
     ph->hop = ph_hop;
     ph->n_hop = ph_hop_sz;
 
@@ -244,4 +216,24 @@ int main( int argc, char** argv ) {
     diverge_flow_step_free(s);
     diverge_model_free(m);
     diverge_finalize();
+}
+
+static void append_vertex_eigs_to_file( diverge_flow_step_vertex_t v ) {
+    if (!vertex_file) {
+        vertex_file = fopen(vertex_file_name, "wb");
+        mpi_usr_printf("opening %s for vertices\n", vertex_file_name);
+    }
+    index_t sz = v.n_orbff, num = v.q_1 - v.q_0;
+    double* vals = calloc(num*sz, sizeof*vals);
+    complex128_t* vecs = calloc(num*POW2(sz), sizeof*vecs);
+    complex128_t* tmp = calloc(num*POW2(sz), sizeof*tmp);
+    for (index_t q=0; q<num; ++q) {
+        single_svd( v.ary + POW2(sz)*q, tmp + POW2(sz)*q, vecs + POW2(sz)*q, vals + sz*q, sz );
+        single_eigen_sort( tmp + POW2(sz)*q, vals + sz*q, sz, 'M' );
+    }
+    free( vecs );
+    free( tmp );
+    fwrite( vals, sizeof*vals, sz*num, vertex_file );
+    // fwrite( v.ary, sizeof*v.ary, sz*sz*num, vertex_file );
+    free( vals );
 }

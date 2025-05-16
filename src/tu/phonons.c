@@ -17,9 +17,9 @@ LINALG_IMPLEMENT
 // Hubbard-Holstein: https://doi.org/10.1103/PhysRevB.92.195102
 
 // TODO this is some infrastructure for testing the factors
-static int fft_sign = 1;
+static int fft_sign = -1;
 static int conj_U = 0;
-static int conj_l = 0, conj_r = 1;
+static int conj_l = 1, conj_r = 0;
 static double phase_pref = 0.0;
 static void select_config( void ) {
     char* cvalue = getenv("PHONON_CFG");
