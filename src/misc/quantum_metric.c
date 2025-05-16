@@ -192,8 +192,8 @@ static complex128_t* diverge_qgt_tensor_impl_grad( double* lattice_, complex128_
                     P1_[o12] = dP_o1_o2[IDX2(o12,x,3)];
                     P2[o12] = dP_o1_o2[IDX2(o12,y,3)];
                 }
-                single_square_gemm( P1_, 0, Q_o1_o2, 0, P1, nb );
-                single_square_gemm( P1, 0, P2, 0, PQP, nb );
+                single_gemm_serial( P1_,Q_o1_o2,P1, nb,nb,nb, 1.0,0.0 );
+                single_gemm_serial( P1,P2,PQP, nb,nb,nb, 1.0,0.0 );
                 result[IDX3(k,x,y,3,3)] = 0.0;
                 for (index_t o=0; o<nb; ++o) result[IDX3(k,x,y,3,3)] += PQP[IDX2(o,o,nb)];
             }
