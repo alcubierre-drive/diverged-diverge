@@ -787,6 +787,10 @@ if not _libs["divERGe"] is None:
     phonons_asr.argtypes = [c_voidp, c_voidp]
     phonons_asr.restype = c_voidp
 
+    phonons_apply_sgnsqrt = _libs["divERGe"].get("diverge_phonons_apply_sgnsqrt", "cdecl")
+    phonons_apply_sgnsqrt.argtypes = [POINTER(model_t)]
+    phonons_apply_sgnsqrt.restype = None
+
     #Batched eigensolver
     batched_eigen_r = _libs["divERGe"].get("batched_eigen_r", "cdecl")
     batched_eigen_r.argtypes = [POINTER(index_t), index_t, POINTER(complex128_t), POINTER(c_double), index_t, index_t]

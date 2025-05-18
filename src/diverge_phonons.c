@@ -49,11 +49,12 @@ void diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {
         m->internals->model_phonons_imag_freq = bitary_alloc(kdimtot(m->nk,m->nkf)*m->n_orb);
     int nimag = 0;
     if (shared_exclusive_enter(E)) for (index_t k=0; k<kdimtot(m->nk,m->nkf)*m->n_orb; ++k) {
-        if (E[k] < -DIVERGE_EPS_MESH) {
+        int isimag = (E[k] < -DIVERGE_EPS_MESH);
+        if (isimag) {
             bitary_set(m->internals->model_phonons_imag_freq, k);
             nimag++;
         }
-        E[k] = sqrt(fabs(E[k]));
+        E[k] = (isimag?-1.0:1.0) * sqrt(fabs(E[k]));
     }
     shared_exclusive_wait(E);
     diverge_mpi_allreduce_int_max_inplace( &nimag, 1 );

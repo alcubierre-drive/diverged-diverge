@@ -239,8 +239,9 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
                 const claV3d_t R12 = {{formfacs[f].R12[0],formfacs[f].R12[1],formfacs[f].R12[2]}};
                 const double qR12 = claV3d_dot(claV3d_map(t->pmod->internals->kmesh + 3*q),
                                                claM3d_vecmat(R12, claM3d_map(t->pmod->lattice[0])));
-                ffbuf[IDX4(formfacs[f].s2,formfacs[f].s1,ph_vertex_to_mi_map[f],formfacs[f].OA,
-                        t->n_spin,t->n_orbff,t->nO)] += fftw_cbuf[IDX2(f,q,nk)] * cexp(phase_pref*I*qR12);
+                if (ph_vertex_to_mi_map[f] != -1)
+                    ffbuf[IDX4(formfacs[f].s2,formfacs[f].s1,ph_vertex_to_mi_map[f],formfacs[f].OA,
+                            t->n_spin,t->n_orbff,t->nO)] += fftw_cbuf[IDX2(f,q,nk)] * cexp(phase_pref*I*qR12);
             }
             single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO+kk*linsz*t->nO, linsz, t->nO, t->nO, 1.0, 0.0 );
         }
