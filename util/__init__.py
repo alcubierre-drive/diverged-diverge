@@ -521,6 +521,14 @@ if not _libs["divERGe"] is None:
     read_W90.argtypes = [c_char_p,index_t,POINTER(index_t),POINTER(index_t)]
     read_W90.restype = c_void_p
 
+    read_wout = _libs["divERGe"].get("diverge_read_wout", "cdecl")
+    read_wout.argtypes = [c_char_p,c_voidp,c_voidp]
+    read_wout.restype = c_voidp
+
+    read_W90_model = _libs["divERGe"].get("diverge_read_W90_model", "cdecl")
+    read_W90_model.argtypes = [c_char_p, c_char_p, index_t]
+    read_W90_model.restype = POINTER(model_t)
+
     W90_READER_SWAP_ORBITALS = -2
 
     def read_W90_PY( fname, nspin, swap_orbitals = False ):
