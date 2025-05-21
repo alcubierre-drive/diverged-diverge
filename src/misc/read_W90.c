@@ -215,6 +215,7 @@ double* diverge_read_wout( const char* fname, double* lattice/*3,3*/, index_t* n
 
 diverge_model_t* diverge_read_W90_model( const char* hr_dat, const char* wout, index_t n_spin ) {
     diverge_model_t* m = diverge_model_init();
+    m->n_spin = labs(n_spin);
     m->hop = diverge_read_W90( hr_dat, n_spin, &m->n_hop, &m->n_orb );
     index_t n_wan = 0;
     double* pos = diverge_read_wout( wout, m->lattice[0], &n_wan );
