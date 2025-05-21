@@ -227,8 +227,10 @@ DIVERGE_UNSTABLE {
         diverge_model_unique_distances;
         diverge_model_unique_distances_length;
         diverge_model_unique_distances_set_precision;
+        diverge_phonons_apply_asr;
         diverge_phonons_apply_sgnsqrt;
         diverge_phonons_asr;
+        diverge_phonons_get_g;
         diverge_phonons_get_ifrq;
         power_iteration;
         single_eigen;

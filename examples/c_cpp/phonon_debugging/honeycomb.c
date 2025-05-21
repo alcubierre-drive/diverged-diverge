@@ -5,7 +5,7 @@ LINALG_IMPLEMENT
 
 #include <tu/phonons.h>
 
-#define EQUAL( a, b ) (fabs((a)-(b)) < DIVERGE_EPS_MESH)
+#define EQUAL( a, b ) (fabs((a)-(b)) < 1.e-6)
 static inline claM3d_t rotation_z( double theta ) {
     return (claM3d_t){{{ cos(theta), sin(theta), 0},
                        {-sin(theta), cos(theta), 0},
@@ -149,7 +149,7 @@ int main( int argc, char** argv ) {
     diverge_model_to_file_finegrained(ph, "ph.dvg", &oc);
 
     double alpha = 1.0,
-           beta = 1.0;
+           beta = 0.1;
     VECTOR_INIT( ph_vertex_t, pv );
     for (index_t i=0; i<m->n_hop; ++i) {
         rs_hopping_t t = m->hop[i];
@@ -163,13 +163,13 @@ int main( int argc, char** argv ) {
                  double g = aa * eR.v[d];
                  if (!EQUAL(g, 0.0)) {
                      for (int x=0; x<3; ++x) p.RA[x] = p.R12[x];
-                     p.g = g;
+                     p.g = -g;
                      p.OA = IDX2(t.o2,d,3);
                      VECTOR_PUSH_BACK( pv, p );
                      // TODO
                      if (use_correct_elph_g) {
                         for (int x=0; x<3; ++x) p.RA[x] = 0;
-                        p.g = -g;
+                        p.g = g;
                         p.OA = IDX2(t.o1,d,3);
                         VECTOR_PUSH_BACK( pv, p );
                     }
@@ -189,10 +189,9 @@ int main( int argc, char** argv ) {
 
     diverge_flow_step_t* s = diverge_flow_step_init_any(m, "PCD");
     {
-        tu_data_phonons_t* pp = m->internals->tu_data_phonons;
         FILE* gfile = fopen("g.bin", "wb");
         diverge_flow_step_vertex_t v = diverge_flow_step_vertex( s, 'D' );
-        fwrite( pp->g_ob_qO, sizeof*pp->g_ob_qO, kdim(m->nk)*POW2(v.n_spin)*v.n_orbff * ph->n_orb, gfile );
+        fwrite( diverge_phonons_get_g(m), sizeof(complex128_t), kdim(m->nk)*POW2(v.n_spin)*v.n_orbff * ph->n_orb, gfile );
         fclose( gfile );
     }
     diverge_euler_t eu = diverge_euler_defaults;

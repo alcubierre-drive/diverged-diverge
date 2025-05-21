@@ -81,6 +81,16 @@ typedef struct ph_vertex_t {
 rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop );
 
 /**
+ * same as :c:func:`diverge_phonons_asr` except that it reallocates m->hop and
+ * sets m->n_hop, i.e.:
+ *
+ * .. sourcecode:: C
+ *
+ *  m->hop = diverge_phonons_asr( m->hop, &m->n_hop );
+ */
+void diverge_phonons_apply_asr( diverge_model_t* m );
+
+/**
  * convert eigenvalues to frequencies (by taking :math:`\sqrt{D}`) and fill an
  * internal array that tracks whether at a certain point in momentum space for a
  * certain mode we have *imaginary* frequencies. This bit-array may be retrieved
@@ -93,6 +103,15 @@ void diverge_phonons_apply_sgnsqrt( diverge_model_t* m );
  * whether at a certain k point and mode the phonon frequency is *imaginary*.
  */
 void* diverge_phonons_get_ifrq( diverge_model_t* m );
+
+/**
+ * returns the electron-phonon coupling as an array (my_nk, n_spin, n_spin,
+ * n_orbff, nO), with my_nk the symmetry-reduced BZ (see TU backend) and nO the
+ * number of phonon modes. In case this array is written to the changes are
+ * applied to the RG flow (*this is the actual buffer, not a copy*). May return
+ * NULL in case phonon internals are not initialized.
+ */
+complex128_t* diverge_phonons_get_g( diverge_model_t* m );
 
 #ifdef __cplusplus
 }

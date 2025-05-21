@@ -158,10 +158,9 @@ int main( int argc, char** argv ) {
 
     diverge_flow_step_t* s = diverge_flow_step_init_any(m, "PCD");
     {
-        tu_data_phonons_t* pp = m->internals->tu_data_phonons;
         FILE* gfile = fopen("g.bin", "wb");
         diverge_flow_step_vertex_t v = diverge_flow_step_vertex( s, 'D' );
-        fwrite( pp->g_ob_qO, sizeof*pp->g_ob_qO, kdim(m->nk)*POW2(v.n_spin)*v.n_orbff * ph->n_orb, gfile );
+        fwrite( diverge_phonons_get_g(m), sizeof(complex128_t), kdim(m->nk)*POW2(v.n_spin)*v.n_orbff * ph->n_orb, gfile );
         fclose( gfile );
     }
     diverge_euler_t eu = diverge_euler_defaults;

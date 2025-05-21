@@ -2,6 +2,7 @@
 #include "diverge_common.h"
 #include "diverge_model.h"
 #include "misc/mpi_functions.h"
+#include "tu/phonons.h"
 
 #include "misc/shared_mem.h"
 #include "misc/bitary.h"
@@ -42,6 +43,10 @@ rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop ) {
     return ph_hop;
 }
 
+void diverge_phonons_apply_asr( diverge_model_t* m ) {
+    m->hop = diverge_phonons_asr( m->hop, &m->n_hop );
+}
+
 void diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {
     assert( m->n_spin == 1 );
     double* E = diverge_model_internals_get_E(m);
@@ -64,4 +69,9 @@ void diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {
 
 void* diverge_phonons_get_ifrq( diverge_model_t* m ) {
     return m->internals->model_phonons_imag_freq;
+}
+
+complex128_t* diverge_phonons_get_g( diverge_model_t* m ) {
+    tu_data_phonons_t* p = m->internals->tu_data_phonons;
+    return p ? tu_data_phonons_get_g(p) : NULL;
 }
