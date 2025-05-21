@@ -2,13 +2,9 @@
 
 #include "read_W90.h"
 #include "../diverge_model.h"
+#include "text_io.h"
 #include <assert.h>
 
-#ifndef W90_GETLINE_MAX
-#define W90_GETLINE_MAX 8192
-#endif
-
-static inline index_t W90_getline( char* line, FILE* stream );
 static inline void unravel( index_t idx, index_t no, index_t ns, bool outer, index_t* o, index_t* s );
 
 rs_hopping_t* diverge_read_W90( const char* fname, index_t n_spin, index_t* n_hop, index_t* n_orb_out ) {
@@ -29,7 +25,7 @@ rs_hopping_t* diverge_read_W90( const char* fname, index_t n_spin, index_t* n_ho
 
     int i = 0;
     int weight_elem = 0;
-    char line[W90_GETLINE_MAX] = {0};
+    char line[DIVERGE_GETLINE_MAX] = {0};
     int outer = (n_spin>=0);
     n_spin = n_spin ? labs(n_spin) : 1;
     index_t n_orb = 0;
@@ -42,7 +38,7 @@ rs_hopping_t* diverge_read_W90( const char* fname, index_t n_spin, index_t* n_ho
     index_t R_cmp[3] = {0};
     rs_hopping_t helper = {0};
     int set_r = 0;
-    while (W90_getline(line, f) != -1) {
+    while (diverge_getline(line, f) != -1) {
         char* s = strtok(line, " ");
         if (i == 0) { // skip first line
         } else if (i == 1) { // number of orbitals + spins
@@ -127,14 +123,103 @@ rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* n_
     return diverge_read_W90( fname, n_spin, n_hop, n_orb_out );
 }
 
-static inline index_t W90_getline( char* line, FILE* stream ) {
-    if (!line) return -1;
-    fgets(line, W90_GETLINE_MAX-1, stream);
-    return feof(stream) ? -1 : (index_t)strlen(line);
-}
-
 static inline void unravel( index_t idx, index_t no, index_t ns, bool outer, index_t* o, index_t* s ) {
     *s = outer ? idx / no : idx % ns;
     *o = outer ? idx % no : idx / ns;
 }
 
+double* diverge_read_wout( const char* fname, double* lattice/*3,3*/, index_t* n_wan ) {
+    FILE* f = fopen( fname, "r" );
+    if (!f) {
+        mpi_err_printf( "could not open file %s\n", fname );
+        return NULL;
+    }
+
+    index_t nread = 0;
+    char line[DIVERGE_GETLINE_MAX] = {0};
+    int linenum = 0;
+
+    int errors = 0;
+
+    int system_lattice_vecs = 0;
+    int final_state = 0;
+
+    int system_lattice_vecs_ntimes = 0;
+    int final_state_ntimes = 0;
+
+    VECTOR_INIT( double, pos )
+
+    while ((nread = diverge_getline(line, f)) != -1) {
+        linenum++;
+
+        char* l = diverge_chomp(line, nread);
+        if (system_lattice_vecs == 0 && !strcmp(l,"------")) system_lattice_vecs++;
+        else if (system_lattice_vecs == 1 && !strcmp(l,"SYSTEM")) system_lattice_vecs++;
+        else if (system_lattice_vecs == 2 && !strcmp(l,"------")) system_lattice_vecs++;
+        else if (system_lattice_vecs == 3 && !strcmp(l,"")) system_lattice_vecs++;
+        else if (system_lattice_vecs == 4 && !strcmp(l,"Lattice Vectors (Ang)")) { system_lattice_vecs++;
+            system_lattice_vecs_ntimes++;
+        } else if (system_lattice_vecs >= 5 && system_lattice_vecs < 8) { system_lattice_vecs++;
+            int aind = -1;
+            double avec[3] = {0};
+            int nscan = sscanf( l, "a_%i %lf %lf %lf", &aind, &avec[0], &avec[1], &avec[2] );
+            int err = 0;
+            if (nscan != 4) {
+                mpi_err_printf( "scanned only %i/4 params in line %i\n", nscan, linenum );
+                err++;
+            }
+            if (aind > 3 || aind < 1) {
+                mpi_err_printf( "found wrong lattice vector index (%i)\n", aind );
+                err++;
+            }
+            if (!err) memcpy( lattice + (aind-1)*3, avec, sizeof avec );
+            else errors += err;
+        } else system_lattice_vecs = 0;
+
+        if (final_state == 0 && !strcmp(l,"Final State")) { final_state++;
+            final_state_ntimes++;
+            pos_sz = 0; // reset position vector length when we encounter a new final state
+        }
+        else if (final_state > 0 && !strncmp(l,"WF centre and spread",20)) { final_state++;
+            int wind = -1;
+            double wpos[3] = {0};
+            double wspread = 0.0;
+            int nscan = sscanf( l, "WF centre and spread %i ( %lf, %lf, %lf ) %lf",
+                    &wind, &wpos[0], &wpos[1], &wpos[2], &wspread );
+            int err = 0;
+            if (nscan != 5) {
+                mpi_err_printf( "scanned only %i/5 params in line %i\n", nscan, linenum );
+                err++;
+            }
+            if (wind < 1) {
+                mpi_err_printf( "found wrong WF index (%i)\n", wind );
+                err++;
+            }
+            if (!err) { for (int d=0; d<3; ++d) VECTOR_PUSH_BACK( pos, wpos[d] ); }
+            else errors += err;
+        } else if (final_state > 0 && !strncmp(l,"Sum of centres and spreads",26)) final_state = 0;
+        else final_state = 0;
+    }
+
+    if (errors)
+        mpi_err_printf( "encountered %i errors\n", errors );
+
+    mpi_vrb_printf( "encountered %i lattice vector and %i WF center sections\n",
+            system_lattice_vecs_ntimes, final_state_ntimes );
+
+    *n_wan = pos_sz/3;
+
+    fclose( f );
+    return pos;
+}
+
+diverge_model_t* diverge_read_W90_model( const char* hr_dat, const char* wout, index_t n_spin ) {
+    diverge_model_t* m = diverge_model_init();
+    m->hop = diverge_read_W90( hr_dat, n_spin, &m->n_hop, &m->n_orb );
+    index_t n_wan = 0;
+    double* pos = diverge_read_wout( wout, m->lattice[0], &n_wan );
+    if (n_wan != m->n_orb) mpi_err_printf( "found inconsistent n_orb(%li) and n_wan(%li)\n", m->n_orb, n_wan );
+    if (pos) memcpy( m->positions[0], pos, sizeof(double)*n_wan*3 );
+    free( pos );
+    return m;
+}

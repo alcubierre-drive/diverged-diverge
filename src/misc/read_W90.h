@@ -10,6 +10,7 @@ extern "C" {
 
 // forward declaration
 typedef struct rs_hopping_t rs_hopping_t;
+typedef struct diverge_model_t diverge_model_t;
 
 #ifndef DIVERGE_W90_READER_SWAP_ORBITALS
 #define DIVERGE_W90_READER_SWAP_ORBITALS -2
@@ -63,6 +64,27 @@ rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* le
  * calls :c:func:`diverge_read_W90_C`.
  */
 rs_hopping_t* diverge_read_W90( const char* fname, index_t n_spin, index_t* len, index_t* n_orb );
+
+/**
+ * read the lattice vectors and Wannier centers from a .wout file
+ *
+ * :param const char* fname: ``prefix.wout`` filename
+ * :param double* lattice: array of shape (3,3) that the lattice vectors are
+ *      stored into
+ * :param index_t* n_wan: pointer to an :c:type:`index_t` where the number of
+ *      WFs is stored on exit
+ *
+ * :returns: array of shape ``(*n_wan,3)`` with the Wannier centers. This array
+ *      must be free'd by the user (call to ``free`` or
+ *      :c:func:`diverge_mem_free`)
+ */
+double* diverge_read_wout( const char* fname, double* lattice, index_t* n_wan );
+
+/**
+ * convenience combination of :c:func:`diverge_read_W90` and
+ * :c:func:`diverge_read_wout` to directly yield a :c:type:`diverge_model_t`.
+ */
+diverge_model_t* diverge_read_W90_model( const char* hr_dat, const char* wout, index_t n_spin );
 
 #ifdef __cplusplus
 }

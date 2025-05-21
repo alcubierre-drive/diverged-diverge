@@ -145,7 +145,9 @@ DIVERGE_0.8 {
         diverge_qgt_tensor;
         diverge_read_W90;
         diverge_read_W90_C;
+        diverge_read_W90_model;
         diverge_read_fplo;
+        diverge_read_wout;
         diverge_reset;
         diverge_run_tests;
         diverge_supercell_set_sign;
