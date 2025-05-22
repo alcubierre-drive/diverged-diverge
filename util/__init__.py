@@ -820,6 +820,10 @@ if not _libs["divERGe"] is None:
     phonons_model_get_masses.argtypes = [POINTER(model_t)]
     phonons_model_get_masses.restype = c_voidp
 
+    phonons_read_ifc_and_elph = _libs["divERGe"].get("diverge_phonons_read_ifc_and_elph", "cdecl")
+    phonons_read_ifc_and_elph.argtypes = [String, String, String, c_double, c_voidp]
+    phonons_read_ifc_and_elph.restype = POINTER(model_t)
+
     #Batched eigensolver
     batched_eigen_r = _libs["divERGe"].get("batched_eigen_r", "cdecl")
     batched_eigen_r.argtypes = [POINTER(index_t), index_t, POINTER(complex128_t), POINTER(c_double), index_t, index_t]
