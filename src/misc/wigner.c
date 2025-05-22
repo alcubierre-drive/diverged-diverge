@@ -679,3 +679,12 @@ ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
 double* diverge_phonons_model_get_masses( diverge_model_t* m ) {
     return m->positions[MAX_N_ORBS-m->n_orb/3];
 }
+
+diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
+        const char* wigner, const char* epmatwp, double maxrel,
+        const diverge_wigner_config_t* wc ) {
+    diverge_model_t* m = diverge_phonons_read_ifc( ifc, wc );
+    m->vert = (rs_vertex_t*)diverge_phonons_read_elph( wigner, epmatwp,
+            diverge_phonons_model_get_masses(m), maxrel, &m->n_vert );
+    return m;
+}

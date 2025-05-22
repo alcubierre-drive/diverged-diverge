@@ -68,6 +68,16 @@ ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
  */
 double* diverge_phonons_model_get_masses( diverge_model_t* m );
 
+/**
+ * convenience wrapper around :c:func:`diverge_phonons_read_ifc` and
+ * :c:func:`diverge_phonons_read_elph` that reads the non-interacting part of
+ * the model as well as the electron-phonon coupling---which is stored in
+ * :c:member:`diverge_model_t.vert` and :c:member:`diverge_model_t.n_vert`.
+ */
+diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
+        const char* wigner, const char* epmatwp, double maxrel,
+        const diverge_wigner_config_t* wc );
+
 #ifdef __cplusplus
 }
 #endif
