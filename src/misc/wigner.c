@@ -325,16 +325,12 @@ void ifc_free( ifc_t* ifc ) {
 static void lattice_from_ibrav( int ibrav, const double celldm[6], double* lat ) {
     const double a = celldm[0], b_a = celldm[1], c_a = celldm[2],
                  cos_gamma = celldm[3], cos_beta = celldm[4], cos_alpha = celldm[5];
-    (void)a;
-    (void)b_a;
-    (void)c_a;
-    (void)cos_gamma;
-    (void)cos_beta;
-    (void)cos_alpha;
-
+    double tx = 0, ty = 0, tz = 0, u = 0, v = 0;
     claV3d_t v1 = {0}, v2 = {0}, v3 = {0};
+
     switch (ibrav) {
         /* cubic P (sc) */
+        cubic:
         case 1: v1=(claV3d_t){{a,0,0}};
                 v2=(claV3d_t){{0,a,0}};
                 v3=(claV3d_t){{0,0,a}}; break;
@@ -349,106 +345,126 @@ static void lattice_from_ibrav( int ibrav, const double celldm[6], double* lat )
                 v2=(claV3d_t){{-a/2.,a/2.,a/2.}};
                 v3=(claV3d_t){{-a/2.,-a/2.,a/2.}}; break;
 
+        /* cubic I (bcc), more symmetric axis: */
+        case -3: v1=claV3d_scale((claV3d_t){{-1,1,1}},  a/2.);
+                 v2=claV3d_scale((claV3d_t){{1,-1,1}},  a/2.);
+                 v3=claV3d_scale((claV3d_t){{1,1,-1}},  a/2.); break;
+
         /* Hexagonal and Trigonal P */
         case 4: v1=(claV3d_t){{a,0,0}};
                 v2=(claV3d_t){{-a/2.,sqrt(3.)/2.*a,0}};
                 v3=(claV3d_t){{0,0,a*c_a}}; break;
-        default:
-                mpi_err_printf( "ibrav = %i not implemented/wrong\n", ibrav );
-                break;
-        /* XXX from the QE manual
-         -3          cubic I (bcc), more symmetric axis:
-              v1 = (a/2)(-1,1,1), v2 = (a/2)(1,-1,1),  v3 = (a/2)(1,1,-1)
 
-          5          Trigonal R, 3fold axis c        celldm(4)=cos(gamma)
-              The crystallographic vectors form a three-fold star around
-              the z-axis, the primitive cell is a simple rhombohedron:
-              v1 = a(tx,-ty,tz),   v2 = a(0,2ty,tz),   v3 = a(-tx,-ty,tz)
-              where c=cos(gamma) is the cosine of the angle gamma between
-              any pair of crystallographic vectors, tx, ty, tz are:
-                tx=sqrt((1-c)/2), ty=sqrt((1-c)/6), tz=sqrt((1+2c)/3)
-         -5          Trigonal R, 3fold axis <111>    celldm(4)=cos(gamma)
-              The crystallographic vectors form a three-fold star around
-              <111>. Defining a' = a/sqrt(3) :
-              v1 = a' (u,v,v),   v2 = a' (v,u,v),   v3 = a' (v,v,u)
-              where u and v are defined as
-                u = tz - 2*sqrt(2)*ty,  v = tz + sqrt(2)*ty
-              and tx, ty, tz as for case ibrav=5
-              Note: if you prefer x,y,z as axis in the cubic limit,
-                    set  u = tz + 2*sqrt(2)*ty,  v = tz - sqrt(2)*ty
-                    See also the note in Modules/latgen.f90
+        /* Trigonal R, 3fold axis c */
+        case 5: tx=sqrt((1.-cos_gamma)/2.), ty=sqrt((1.-cos_gamma)/6.), tz=sqrt((1.+2.*cos_gamma)/3.);
+                v1=claV3d_scale((claV3d_t){{tx,-ty,tz}},   a);
+                v2=claV3d_scale((claV3d_t){{0,2.*ty,tz}},  a);
+                v3=claV3d_scale((claV3d_t){{-tx,-ty,tz}},  a); break;
 
-          6          Tetragonal P (st)               celldm(3)=c/a
-              v1 = a(1,0,0),  v2 = a(0,1,0),  v3 = a(0,0,c/a)
+        /* Trigonal R, 3fold axis <111>    celldm(4)=cos(gamma) */
+        case -5: tx=sqrt((1.-cos_gamma)/2.), ty=sqrt((1.-cos_gamma)/6.), tz=sqrt((1.+2.*cos_gamma)/3.);
+                 u = tz - 2.*sqrt(2.)*ty,  v = tz + sqrt(2.)*ty;
+                 v1=claV3d_scale((claV3d_t){{u,v,v}}, a/sqrt(3.) );
+                 v2=claV3d_scale((claV3d_t){{v,u,v}}, a/sqrt(3.) );
+                 v3=claV3d_scale((claV3d_t){{v,v,u}}, a/sqrt(3.) ); break;
 
-          7          Tetragonal I (bct)              celldm(3)=c/a
-              v1=(a/2)(1,-1,c/a),  v2=(a/2)(1,1,c/a),  v3=(a/2)(-1,-1,c/a)
+        /* Tetragonal P (st)               celldm(3)=c/a */
+        case 6: v1=claV3d_scale((claV3d_t){{1,0,0}},   a);
+                v2=claV3d_scale((claV3d_t){{0,1,0}},   a);
+                v3=claV3d_scale((claV3d_t){{0,0,c_a}}, a); break;
 
-          8          Orthorhombic P                  celldm(2)=b/a
-                                                     celldm(3)=c/a
-              v1 = (a,0,0),  v2 = (0,b,0), v3 = (0,0,c)
+        /* Tetragonal I (bct)              celldm(3)=c/a */
+        case 7: v1=claV3d_scale((claV3d_t){{1,-1,c_a}},  a/2.);
+                v2=claV3d_scale((claV3d_t){{1,1,c_a}},   a/2.);
+                v3=claV3d_scale((claV3d_t){{-1,-1,c_a}}, a/2.); break;
 
-          9          Orthorhombic base-centered(bco) celldm(2)=b/a
-                                                     celldm(3)=c/a
-              v1 = (a/2, b/2,0),  v2 = (-a/2,b/2,0),  v3 = (0,0,c)
-         -9          as 9, alternate description
-              v1 = (a/2,-b/2,0),  v2 = (a/2, b/2,0),  v3 = (0,0,c)
-         91          Orthorhombic one-face base-centered A-type
-                                                     celldm(2)=b/a
-                                                     celldm(3)=c/a
-              v1 = (a, 0, 0),  v2 = (0,b/2,-c/2),  v3 = (0,b/2,c/2)
+        /* Orthorhombic P                  celldm(2)=b/a
+                                           celldm(3)=c/a */
+        case 8: v1=(claV3d_t){{a,0,0}};
+                v2=(claV3d_t){{0,a*b_a,0}};
+                v3=(claV3d_t){{0,0,a*c_a}}; break;
 
-         10          Orthorhombic face-centered      celldm(2)=b/a
-                                                     celldm(3)=c/a
-              v1 = (a/2,0,c/2),  v2 = (a/2,b/2,0),  v3 = (0,b/2,c/2)
+        /* Orthorhombic base-centered(bco) celldm(2)=b/a
+                                           celldm(3)=c/a */
+        case 9: v1=(claV3d_t){{a/2.,b_a*a/2.,0}};
+                v2=(claV3d_t){{-a/2.,b_a*a/2.,0}};
+                v3=(claV3d_t){{0,0,c_a*a}}; break;
 
-         11          Orthorhombic body-centered      celldm(2)=b/a
-                                                     celldm(3)=c/a
-              v1=(a/2,b/2,c/2),  v2=(-a/2,b/2,c/2),  v3=(-a/2,-b/2,c/2)
+        /* as 9, alternate description */
+        case -9: v1=(claV3d_t){{a/2.,-b_a*a/2.,0}};
+                 v2=(claV3d_t){{a/2., b_a*a/2.,0}};
+                 v3=(claV3d_t){{0,0,c_a*a}}; break;
+        /* Orthorhombic one-face base-centered A-type celldm(2)=b/a
+                                                      celldm(3)=c/a */
+        case 91: v1=(claV3d_t){{a, 0, 0}};
+                 v2=(claV3d_t){{0,b_a*a/2.,-c_a*a/2.}};
+                 v3=(claV3d_t){{0,b_a*a/2., c_a*a/2.}}; break;
 
-         12          Monoclinic P, unique axis c     celldm(2)=b/a
-                                                     celldm(3)=c/a,
-                                                     celldm(4)=cos(ab)
-              v1=(a,0,0), v2=(b*cos(gamma),b*sin(gamma),0),  v3 = (0,0,c)
-              where gamma is the angle between axis a and b.
-        -12          Monoclinic P, unique axis b     celldm(2)=b/a
-                                                     celldm(3)=c/a,
-                                                     celldm(5)=cos(ac)
-              v1 = (a,0,0), v2 = (0,b,0), v3 = (c*cos(beta),0,c*sin(beta))
-              where beta is the angle between axis a and c
 
-         13          Monoclinic base-centered        celldm(2)=b/a
-                     (unique axis c)                 celldm(3)=c/a,
-                                                     celldm(4)=cos(gamma)
-              v1 = (  a/2,         0,          -c/2),
-              v2 = (b*cos(gamma), b*sin(gamma), 0  ),
-              v3 = (  a/2,         0,           c/2),
-              where gamma=angle between axis a and b projected on xy plane
+        /* Orthorhombic face-centered      celldm(2)=b/a
+                                           celldm(3)=c/a */
+        case 10: v1=(claV3d_t){{a/2.,0,c_a*a/2.}};
+                 v2=(claV3d_t){{a/2.,b_a*a/2.,0}};
+                 v3=(claV3d_t){{0,b_a*a/2.,c_a*a/2.}}; break;
 
-        -13          Monoclinic base-centered        celldm(2)=b/a
-                     (unique axis b)                 celldm(3)=c/a,
-                                                     celldm(5)=cos(beta)
-              v1 = (  a/2,       b/2,             0),
-              v2 = ( -a/2,       b/2,             0),
-              v3 = (c*cos(beta),   0,   c*sin(beta)),
-              where beta=angle between axis a and c projected on xz plane
-         IMPORTANT NOTICE: until QE v.6.4.1, axis for ibrav=-13 had a
-         different definition: v1(old) =-v2(now), v2(old) = v1(now)
+        /* Orthorhombic body-centered      celldm(2)=b/a
+                                           celldm(3)=c/a */
+        case 11: v1=(claV3d_t){{a/2.,b_a*a/2.,c_a*a/2.}};
+                 v2=(claV3d_t){{-a/2.,b_a*a/2.,c_a*a/2.}};
+                 v3=(claV3d_t){{-a/2.,-b_a*a/2.,c_a*a/2.}}; break;
 
-         14          Triclinic                       celldm(2)= b/a,
-                                                     celldm(3)= c/a,
-                                                     celldm(4)= cos(bc),
-                                                     celldm(5)= cos(ac),
-                                                     celldm(6)= cos(ab)
-              v1 = (a, 0, 0),
-              v2 = (b*cos(gamma), b*sin(gamma), 0)
-              v3 = (c*cos(beta),  c*(cos(alpha)-cos(beta)cos(gamma))/sin(gamma),
-                   c*sqrt( 1 + 2*cos(alpha)cos(beta)cos(gamma)
-                             - cos(alpha)^2-cos(beta)^2-cos(gamma)^2 )/sin(gamma) )
-              where alpha is the angle between axis b and c
-                     beta is the angle between axis a and c
-                    gamma is the angle between axis a and b
-        */
+        /* Monoclinic P, unique axis c     celldm(2)=b/a
+                                           celldm(3)=c/a,
+                                           celldm(4)=cos(ab) */
+        /* where gamma is the angle between axis a and b. */
+        case 12: v1=(claV3d_t){{a,0,0}};
+                 v2=claV3d_scale((claV3d_t){{cos_gamma,sin(acos(cos_gamma)),0}}, b_a*a);
+                 v3=(claV3d_t){{0,0,c_a*a}}; break;
+
+        /* Monoclinic P, unique axis b     celldm(2)=b/a
+                                           celldm(3)=c/a,
+                                           celldm(5)=cos(ac) */
+        /* where beta is the angle between axis a and c */
+        case -12: v1=(claV3d_t){{a,0,0}};
+                  v2=(claV3d_t){{0,b_a*a,0}};
+                  v3=claV3d_scale((claV3d_t){{cos_beta,0,sin(acos(cos_beta))}}, c_a*a); break;
+
+        /* Monoclinic base-centered        celldm(2)=b/a
+           (unique axis c)                 celldm(3)=c/a,
+                                           celldm(4)=cos(gamma) */
+        /* where gamma=angle between axis a and b projected on xy plane */
+        case 13: v1=(claV3d_t){{  a/2.,         0,          -c_a*a/2.}};
+                 v2=(claV3d_t){{b_a*a*cos_gamma, b_a*a*sin(acos(cos_gamma)), 0}};
+                 v3=(claV3d_t){{  a/2.,         0,           c_a*a/2.}}; break;
+
+        /* Monoclinic base-centered        celldm(2)=b/a
+           (unique axis b)                 celldm(3)=c/a,
+                                           celldm(5)=cos(beta) */
+        /* where beta=angle between axis a and c projected on xz plane
+            IMPORTANT NOTICE: until QE v.6.4.1, axis for ibrav=-13 had a
+            different definition: v1(old) =-v2(now), v2(old) = v1(now) */
+        case -13: v1=(claV3d_t){{  a/2.,        b_a*a/2.,             0}};
+                  v2=(claV3d_t){{ -a/2.,        b_a*a/2.,             0}};
+                  v3=(claV3d_t){{c_a*a*cos_beta,       0, c_a*a*sin(acos(cos_beta))}}; break;
+
+        /* Triclinic                       celldm(2)= b/a,
+                                           celldm(3)= c/a,
+                                           celldm(4)= cos(bc),
+                                           celldm(5)= cos(ac),
+                                           celldm(6)= cos(ab) */
+        /* where alpha is the angle between axis b and c
+                  beta is the angle between axis a and c
+                ´gamma is the angle between axis a and b */
+        case 14: v1=(claV3d_t){{a, 0, 0}};
+                 v2=claV3d_scale((claV3d_t){{cos_gamma, sin(acos(cos_gamma)), 0}}, b_a*a);
+                 v3=claV3d_scale((claV3d_t){{cos_beta,
+                        (cos_alpha-cos_beta*cos_gamma)/sin(acos(cos_gamma)),
+                        sqrt(1. + 2.*cos_alpha*cos_beta*cos_gamma -
+                                POW2(cos_alpha)-POW2(cos_beta)-POW2(cos_gamma))/sin(acos(cos_gamma))
+                  }}, c_a*a); break;
+
+        default: mpi_err_printf( "ibrav = %i not implemented or wrong, reset to cubic\n", ibrav );
+                 goto cubic; break;
     }
     memcpy( lat + 0*3, v1.v, sizeof(v1) );
     memcpy( lat + 1*3, v2.v, sizeof(v2) );
