@@ -47,7 +47,7 @@ void diverge_phonons_apply_asr( diverge_model_t* m ) {
     m->hop = diverge_phonons_asr( m->hop, &m->n_hop );
 }
 
-void diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {
+void* diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {
     assert( m->n_spin == 1 );
     double* E = diverge_model_internals_get_E(m);
     if (!m->internals->model_phonons_imag_freq)
@@ -65,6 +65,7 @@ void diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {
     diverge_mpi_allreduce_int_max_inplace( &nimag, 1 );
     if (nimag)
         mpi_wrn_printf( "found %li imaginary phonon frequencies\n", nimag );
+    return m->internals->model_phonons_imag_freq;
 }
 
 void* diverge_phonons_get_ifrq( diverge_model_t* m ) {

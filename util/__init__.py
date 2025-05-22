@@ -801,11 +801,24 @@ if not _libs["divERGe"] is None:
 
     phonons_apply_sgnsqrt = _libs["divERGe"].get("diverge_phonons_apply_sgnsqrt", "cdecl")
     phonons_apply_sgnsqrt.argtypes = [POINTER(model_t)]
-    phonons_apply_sgnsqrt.restype = None
+    phonons_apply_sgnsqrt.restype = c_voidp
 
     phonons_get_g = _libs["divERGe"].get("diverge_phonons_get_g", "cdecl")
     phonons_get_g.argtypes = [POINTER(model_t)]
     phonons_get_g.restype = c_voidp
+
+    # TODO wrap diverge_wigner_config_t in python
+    phonons_read_ifc = _libs["divERGe"].get("diverge_phonons_read_ifc", "cdecl")
+    phonons_read_ifc.argtypes = [String, c_voidp]
+    phonons_read_ifc.restype = POINTER(model_t)
+
+    phonons_read_elph = _libs["divERGe"].get("diverge_phonons_read_elph", "cdecl")
+    phonons_read_elph.argtypes = [String, String, c_voidp, c_double, c_voidp]
+    phonons_read_elph.restype = c_voidp
+
+    phonons_model_get_masses = _libs["divERGe"].get("diverge_phonons_model_get_masses", "cdecl")
+    phonons_model_get_masses.argtypes = [POINTER(model_t)]
+    phonons_model_get_masses.restype = c_voidp
 
     #Batched eigensolver
     batched_eigen_r = _libs["divERGe"].get("batched_eigen_r", "cdecl")

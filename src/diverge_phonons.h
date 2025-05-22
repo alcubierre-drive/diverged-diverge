@@ -94,10 +94,11 @@ void diverge_phonons_apply_asr( diverge_model_t* m );
 /**
  * convert eigenvalues to frequencies (by taking :math:`\sqrt{D}`) and fill an
  * internal array that tracks whether at a certain point in momentum space for a
- * certain mode we have *imaginary* frequencies. This bit-array may be retrieved
- * with :c:func:`diverge_phonons_get_ifrq`
+ * certain mode we have *imaginary* frequencies. If used, the returned pointer
+ * must be interpreted as bit-array, which may also be retrieved with
+ * :c:func:`diverge_phonons_get_ifrq`
  */
-void diverge_phonons_apply_sgnsqrt( diverge_model_t* m );
+void* diverge_phonons_apply_sgnsqrt( diverge_model_t* m );
 
 /**
  * return a bit-array (cf. :c:func:`bitary_get`) of shape (nk, nb) that tracks

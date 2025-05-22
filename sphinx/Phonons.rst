@@ -19,3 +19,5 @@ The electron-phonon coupling is given in real-space (similar to the file format
 in `EPW <https://epw-code.org/>`_).
 
 .. c:autodoc:: diverge_phonons.h
+
+.. c:autodoc:: misc/wigner.h

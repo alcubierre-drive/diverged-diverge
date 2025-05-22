@@ -234,6 +234,8 @@ DIVERGE_UNSTABLE {
         diverge_phonons_asr;
         diverge_phonons_get_g;
         diverge_phonons_get_ifrq;
+        diverge_phonons_model_get_masses;
+        diverge_phonons_read_elph;
         diverge_phonons_read_ifc;
         diverge_wigner_config_defaults_CPP;
         power_iteration;

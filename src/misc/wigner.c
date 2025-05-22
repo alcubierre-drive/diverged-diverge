@@ -7,9 +7,14 @@
 #include "btree.h"
 #include "bitary.h"
 
+#include <assert.h>
+
 #define LINALG_NO_LAPACKE
 #include "linalg.h"
 LINALG_IMPLEMENT
+
+static const double Rydberg = 13.605693122994,
+                    Bohr = 0.529177;
 
 // this is needed for the interpretation of the ifc file
 typedef struct {
@@ -40,8 +45,6 @@ typedef struct {
 ifc_t* read_ifc_file( const char* fname );
 void ifc_free( ifc_t* ifc );
 
-
-static inline index_t py_mod( index_t i, index_t n ) { return (n + (i % n)) % n; }
 diverge_wigner_config_t diverge_wigner_config_defaults_CPP( void ) { return diverge_wigner_config_defaults; }
 
 void wsdata_free( wsdata_t w ) {
@@ -54,11 +57,13 @@ static inline claV3d_t claV3ll_to_double( claV3ll_t v ) {
 
 typedef struct { int64_t v0:21, v1:21, v2:21, v3:1; } compressed_t;
 static inline index_t claV3ll_to_index( claV3ll_t v ) {
+    assert( sizeof(index_t) == sizeof(compressed_t) );
     compressed_t c = {.v0=v.v[0], .v1=v.v[1], .v2=v.v[2]};
     index_t cc = 0; memcpy( &cc, &c, sizeof cc );
     return cc;
 }
 static inline claV3ll_t index_to_claV3ll( index_t i ) {
+    assert( sizeof(index_t) == sizeof(compressed_t) );
     compressed_t c = {0}; memcpy( &c, &i, sizeof c );
     return (claV3ll_t){{ c.v0, c.v1, c.v2 }};
 }
@@ -84,7 +89,7 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
 
     wc = wc ? wc : &diverge_wigner_config_defaults;
     wsdata_t wsdata_global = {.sgn = wc->sgn, .n_orb = n_orb};
-    claM3d_t A = claM3d_scale(claM3d_map(lattice), wc->sgn);
+    claM3d_t A = claM3d_map(lattice);
 
     int dim = nr3 == 0 ? (nr2 == 0 ? (nr1 == 0 ? 0 : 1) : 2) : 3;
     nr1 = MAX(nr1,1); nr2 = MAX(nr2,1); nr3 = MAX(nr3,1);
@@ -94,7 +99,7 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
     if (dim == 0) return wsdata_global;
 
     index_t n_supercells = POW3(2*wc->nsc);
-    claV3ll_t supercells[n_supercells];
+    claV3ll_t* supercells = calloc(n_supercells, sizeof*supercells);
     n_supercells = 0;
     for (index_t s=-wc->nsc; s<wc->nsc; ++s)
     for (index_t t=-wc->nsc; t<wc->nsc; ++t)
@@ -104,38 +109,36 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
     const int nthr = diverge_omp_num_threads();
     #pragma omp parallel num_threads(nthr)
     {
-        xbtree_t* data = xbtree_init( 1024 );
+        xbtree_t* data = xbtree_init( nr1*nr2*nr3 );
+        claV3ll_t* copies = calloc(n_supercells, sizeof*copies);
+        claV3d_t* shifts = calloc(n_supercells, sizeof*shifts);
+        claV3d_t* bonds = calloc(n_supercells, sizeof*bonds);
+        double* lengths = calloc(n_supercells, sizeof*lengths);
 
         #pragma omp for collapse(3)
         for (index_t m1=0; m1<nr1; ++m1)
         for (index_t m2=0; m2<nr2; ++m2)
         for (index_t m3=0; m3<nr3; ++m3) {
 
-            claV3ll_t copies[n_supercells];
-            claV3d_t shifts[n_supercells];
             for (index_t s=0; s<n_supercells; ++s) {
-                copies[s] = (claV3ll_t){{ supercells[s].v[0] * nr1 + m1,
-                                          supercells[s].v[1] * nr2 + m2,
-                                          supercells[s].v[2] * nr3 + m3, }};
+                copies[s] = claV3ll_scale( (claV3ll_t){{ supercells[s].v[0] * nr1 + m1,
+                          supercells[s].v[1] * nr2 + m2, supercells[s].v[2] * nr3 + m3, }}, wc->sgn );
                 shifts[s] = claM3d_vecmat( claV3ll_to_double(copies[s]), A );
             }
 
             for (index_t i=0; i<n_orb; ++i)
             for (index_t j=0; j<n_orb; ++j) {
-                claV3d_t bonds[n_supercells];
-                double lengths[n_supercells];
+                double length = -2;
                 for (index_t s=0; s<n_supercells; ++s) {
                     bonds[s] = claV3d_add(shifts[s], claV3d_sub(claV3d_map(positions+3*j),
                                 claV3d_map(positions+3*i)));
                     lengths[s] = claV3d_norm(bonds[s]);
+                    length = length < -1 ? lengths[s] : MIN(length, lengths[s]);
                 }
-                double length = lengths[0];
-                for (index_t s=1; s<n_supercells; ++s) length = MIN(length,lengths[s]);
 
                 index_t nsel = 0;
                 for (index_t s=0; s<n_supercells; ++s)
-                    if (fabs(lengths[s] - length) < wc->eps)
-                        nsel++;
+                    if (fabs(lengths[s] - length) < wc->eps) nsel++;
 
                 for (index_t s=0; s<n_supercells; ++s) {
                     if (fabs(lengths[s] - length) < wc->eps) {
@@ -155,6 +158,12 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
                 }
             }
         }
+
+        free( copies );
+        free( shifts );
+        free( bonds );
+        free( lengths );
+
         wsdata_t wsdata = {.n_orb = n_orb};
         xbtree_iter( data, &wsdata_iter, &wsdata );
         xbtree_free( data );
@@ -190,6 +199,7 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
 
         wsdata_free( wsdata );
     }
+    free( supercells );
     return wsdata_global;
 }
 
@@ -206,7 +216,7 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
     double* pos = calloc( ifc->n_at, sizeof*pos * 3 );
     for (int a=0; a<ifc->n_at; ++a)
     for (int x=0; x<3; ++x) {
-        pos[IDX2(a,x,3)] = ifc->atoms[a].pos[x];
+        pos[IDX2(a,x,3)] = ifc->atoms[a].pos[x] * ifc->celldm[0];
         memcpy( m->positions[IDX2(a,x,3)], ifc->atoms[a].pos, sizeof(double)*3 );
         for (int d=0; d<3; ++d) m->positions[IDX2(a,x,3)][d] *= ifc->celldm[0];
     }
@@ -215,19 +225,26 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
             m->lattice[0], pos, ifc->n_at, wc );
     free( pos );
 
+    double* masses = diverge_phonons_model_get_masses( m );
+    for (index_t orb=0; orb<m->n_orb; ++orb)
+        masses[orb] = ifc->masses[ifc->atoms[orb/3].typ-1];
+
     VECTOR_INIT( rs_hopping_t, hop );
     for (index_t n=0; n<ws.irvec_sz; ++n) {
         claV3ll_t R = claV3ll_scale( ws.irvec[n], ws.sgn );
-        claV3ll_t mR = {0}; for (int d=0; d<3; ++d) mR.v[d] = py_mod(R.v[d], ifc->nq[d]);
-        claV3ll_t pR = mR; for (int d=0; d<3; ++d) { while (mR.v[d] < 0) mR.v[d] += ifc->nq[d]; }
-        index_t qq = IDX3( pR.v[0], pR.v[1], pR.v[2], ifc->nq[1], ifc->nq[2] );
+        claV3ll_t pR = R; for (int d=0; d<3; ++d) {
+            while (pR.v[d] < 0) pR.v[d] += ifc->nq[d];
+            pR.v[d] %= ifc->nq[d];
+        }
+        index_t qq = IDX3(pR.v[0],pR.v[1],pR.v[2], ifc->nq[1],ifc->nq[2]);
         for (index_t o1=0; o1<m->n_orb; ++o1)
         for (index_t o2=0; o2<m->n_orb; ++o2) {
             double tmp = ifc->data[IDX3(qq, o1, o2, m->n_orb, m->n_orb)];
             index_t ndg = ws.ndegen[IDX3(n, o1/3, o2/3, ifc->n_at, ifc->n_at)];
             if (ndg) {
                 tmp /= (double)ndg;
-                VECTOR_PUSH_BACK( hop, (rs_hopping_t){ .R={R.v[0],R.v[1],R.v[2]}, .o1=o1, .o2=o2, .t=tmp } );
+                VECTOR_PUSH_BACK( hop, (rs_hopping_t){ .R={R.v[0],R.v[1],R.v[2]},
+                        .o1=o2, .o2=o1, .t=tmp*POW2(Rydberg)/sqrt(masses[o1]*masses[o2]) } );
             }
         }
     }
@@ -310,6 +327,10 @@ ifc_t* read_ifc_file( const char* fname ) {
         ifc->data[IDX5(qxyz, a,x, b,y, ifc->n_at,3, ifc->n_at,3)] = d;
     }
     fclose( f );
+
+    // rescale lengths to Angstrom
+    ifc->celldm[0] *= Bohr;
+
     return ifc;
 }
 
@@ -472,3 +493,189 @@ static void lattice_from_ibrav( int ibrav, const double celldm[6], double* lat )
     memcpy( lat + 2*3, v3.v, sizeof(v3) );
 }
 
+typedef struct {
+    int nrr_k, nrr_q, nrr_g;
+    int dims, dims2; // dims2 is the ph n_at, dims is the el n_orb
+
+    claV3i_t *irvec_k, *irvec_q, *irvec_g;
+    int *ndegen_k /*(nrr_k,dims,dims)*/,
+        *ndegen_q /*(nrr_q,dims2,dims2)*/,
+        *ndegen_g /*(nrr_g,dims,dims2)*/;
+} qe_wigner_t;
+
+static void qe_wigner_free( qe_wigner_t* q ) {
+    if (q) {
+        free(q->irvec_k);
+        free(q->irvec_q);
+        free(q->irvec_g);
+        free(q->ndegen_k);
+        free(q->ndegen_q);
+        free(q->ndegen_g);
+        free(q);
+    }
+}
+
+static int ndegen_irvec_read( FILE* f, claV3i_t* irvec, int nrr, int* ndegen, int dim ) {
+    int errors = 0;
+    int ndegen_count = 0;
+    for (int ir=0; ir<nrr; ++ir) {
+        // read irvec
+        float discard = 0;
+        int nread = fscanf( f, "%i %i %i %f\n", &irvec[ir].v[0],
+                &irvec[ir].v[1], &irvec[ir].v[2], &discard );
+        VRB_ASSERT( nread == 4 );
+        // and then the ndegen (which are just dim integers in subsequent lines)
+        for (int d=0; d<dim; ++d) {
+            nread = fscanf( f, "%i", &ndegen[ndegen_count++] );
+            VRB_ASSERT( nread == 1 );
+        }
+    }
+    return errors;
+}
+
+#define READ_INT( nam ) \
+    nam = 0; \
+    { \
+        int tmp = 0; \
+        fread( &tmp, sizeof(int), 1, f ); \
+        mpi_vrb_printf( "read " #nam " = %i\n", tmp ); \
+        nam = tmp; \
+    }
+#define READ_INT_ARY( nam, sz ) \
+    nam = calloc( sz, sizeof(int) ); \
+    fread( nam, sizeof(int), sz, f ); \
+    mpi_vrb_printf( "read " #nam " (%li)\n", sz );
+static qe_wigner_t* epw_wigner_read( const char* fname ) {
+    FILE* f = fopen(fname, "rb");
+    if (!f) {
+        mpi_err_printf( "could not open file %s for reading\n", fname );
+        return NULL;
+    }
+    qe_wigner_t* w = calloc(1, sizeof*w);
+    READ_INT( w->dims );
+    READ_INT( w->dims2 );
+    READ_INT( w->nrr_k );
+    READ_INT_ARY( w->irvec_k, w->nrr_k*3 );
+    READ_INT_ARY( w->ndegen_k, POW2(w->dims)*w->nrr_k );
+    READ_INT( w->nrr_g );
+    READ_INT_ARY( w->irvec_g, w->nrr_g*3 );
+    READ_INT_ARY( w->ndegen_g, w->dims2*w->dims*w->nrr_g );
+    fclose( f );
+    return w;
+}
+
+static qe_wigner_t* qe_wigner_read( const char* fname ) {
+    int errors = 0;
+    FILE* f = fopen(fname, "r");
+    if (!f) {
+        mpi_err_printf( "could not open file %s for reading\n", fname );
+        return NULL;
+    }
+
+    qe_wigner_t* q = calloc(1, sizeof*q);
+    int nread = fscanf( f, "%i %i %i %i %i\n", &q->nrr_k, &q->nrr_q,
+            &q->nrr_g, &q->dims, &q->dims2 );
+    VRB_ASSERT( nread == 5 );
+
+    if (!errors) {
+        q->irvec_k = calloc(q->nrr_k, sizeof*q->irvec_k);
+        q->irvec_q = calloc(q->nrr_q, sizeof*q->irvec_q);
+        q->irvec_g = calloc(q->nrr_g, sizeof*q->irvec_g);
+        q->ndegen_k = calloc(POW2(q->dims) * q->nrr_k, sizeof*q->ndegen_k);
+        q->ndegen_q = calloc(POW2(q->dims2) * q->nrr_q, sizeof*q->ndegen_q);
+        q->ndegen_g = calloc(q->dims*q->dims2 * q->nrr_g, sizeof*q->ndegen_g);
+
+        errors += ndegen_irvec_read( f, q->irvec_k, q->nrr_k, q->ndegen_k, POW2(q->dims) );
+        errors += ndegen_irvec_read( f, q->irvec_q, q->nrr_q, q->ndegen_q, POW2(q->dims2) );
+        errors += ndegen_irvec_read( f, q->irvec_g, q->nrr_g, q->ndegen_g, q->dims*q->dims2 );
+    }
+
+    fclose(f);
+
+    if (errors) {
+        qe_wigner_free(q);
+        mpi_err_printf( "fallback to binary file (as in EPW)\n" );
+        return epw_wigner_read(fname);
+    } else {
+        return q;
+    }
+}
+
+static complex128_t* epmatwp_read( const char* fname, const qe_wigner_t* w ) {
+    const index_t n_ph = w->dims2 * 3,
+                  n_el = w->dims;
+    FILE* f = fopen( fname, "rb" );
+    if (!f) {
+        mpi_err_printf( "could not open file %s for reading\n", fname );
+        return NULL;
+    }
+    complex128_t* epw = calloc(POW2(n_el)*n_ph*w->nrr_k*w->nrr_g, sizeof*epw);
+    fread( epw, sizeof*epw, POW2(n_el)*n_ph*w->nrr_k*w->nrr_g, f );
+    fclose( f );
+
+    for (index_t irg=0; irg<w->nrr_g; ++irg)
+    for (index_t p=0; p<n_ph; ++p)
+    for (index_t irk=0; irk<w->nrr_k; ++irk)
+    for (index_t m=0; m<n_el; ++m)
+    for (index_t n=0; n<n_el; ++n) {
+        index_t ndg_el = w->ndegen_k[IDX3(irk,n,n, n_el,n_el)];
+        index_t ndg_ph = w->ndegen_g[IDX3(irg,n,p/3, n_el,n_ph/3)];
+        epw[IDX5(irg,p, irk,m,n, n_ph,w->nrr_k,n_el,n_el)] *=
+            (ndg_el != 0 ? 1./(double)ndg_el : 0.0) * (ndg_ph != 0 ? 1./(double)ndg_ph : 0.0);
+    }
+
+    return epw;
+}
+
+static ph_vertex_t* epmatwp_to_ph_vertex_t( const complex128_t* data,
+        claV3i_t* Rk, index_t nRk, claV3i_t* Rg, index_t nRg,
+        index_t n_orb_ph, index_t n_orb_el, double maxrel, index_t* p_vtx_sz ) {
+
+    double vtx_max = 0.0;
+    index_t ntot = nRg * n_orb_ph * nRk * POW2(n_orb_el);
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:vtx_max)
+    for (index_t i=0; i<ntot; ++i) {
+        double cv = cabs(data[i]);
+        vtx_max = MAX(vtx_max, cv);
+    }
+
+    index_t n_vtx = 0;
+    const double l_vtx = vtx_max*maxrel;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_vtx)
+    for (index_t i=0; i<ntot; ++i) {
+        if (cabs(data[i]) >= l_vtx)
+            n_vtx++;
+    }
+
+    *p_vtx_sz = n_vtx;
+    VECTOR_INIT_CAP( ph_vertex_t, vtx, n_vtx );
+    for (index_t g=0; g<nRg; ++g)
+    for (index_t OA=0; OA<n_orb_ph; ++OA)
+    for (index_t k=0; k<nRk; ++k)
+    for (index_t o1=0; o1<n_orb_el; ++o1)
+    for (index_t o2=0; o2<n_orb_el; ++o2) {
+        index_t i = IDX5(g,OA,k,o2,o1, n_orb_ph,nRk,n_orb_el,n_orb_el);
+        if (cabs(data[i]) >= l_vtx) {
+            VECTOR_PUSH_BACK( vtx, (ph_vertex_t){ .R12={Rk[k].v[0], Rk[k].v[1], Rk[k].v[2]},
+                    .o1=o1, .o2=o2, .OA=OA, .RA={Rg[g].v[0], Rg[g].v[1], Rg[g].v[2]},
+                    .g=data[i] * Rydberg } );
+        }
+    }
+    return vtx;
+}
+
+ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
+        const double* masses, double maxrel, index_t* p_vtx_sz ) {
+    qe_wigner_t* q = qe_wigner_read( wigner );
+    complex128_t* g = epmatwp_read( epmatwp, q );
+    ph_vertex_t* pv = epmatwp_to_ph_vertex_t( g, q->irvec_k, q->nrr_k,
+            q->irvec_g, q->nrr_g, q->dims2*3, q->dims, maxrel, p_vtx_sz );
+    for (index_t i=0; i<*p_vtx_sz; ++i) pv[i].g /= sqrt(masses[pv[i].OA]);
+    qe_wigner_free(q);
+    free( g );
+    return pv;
+}
+
+double* diverge_phonons_model_get_masses( diverge_model_t* m ) {
+    return m->positions[MAX_N_ORBS-m->n_orb/3];
+}
