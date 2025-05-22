@@ -3,6 +3,7 @@
 #pragma once
 
 #include "diverge_common.h"
+#include "misc/wigner.h"
 
 #ifdef __cplusplus
 extern "C" {

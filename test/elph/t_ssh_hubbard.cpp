@@ -2,23 +2,10 @@
 
 #include "../catch.hpp"
 #include "../../src/diverge.h"
-#include "../../src/tu/phonons.h"
-#include "../../src/diverge_misc.h"
+#include "../../src/diverge_phonons.h"
 #include "../../src/diverge_Eigen3.hpp"
 #include <vector>
 using std::vector;
-
-static inline double max_eigval( diverge_flow_step_vertex_t v ) {
-    index_t sz = v.n_orbff, num = v.q_1 - v.q_0;
-    vector<double> E(num*sz);
-    double maxval_ = 0.0;
-    batched_svd( NULL, -1, v.ary, NULL, NULL, E.data(), sz, num );
-    for (index_t i=0; i<num*sz; ++i) maxval_ = MAX(E[i], maxval_);
-
-    double maxval = maxval_;
-    diverge_mpi_allreduce_double_max( &maxval_, &maxval, 1 );
-    return maxval;
-}
 
 static diverge_model_t* hubbard_ssh_model( double omega=1.0, double lambda=0.1,
         double t=1.0, double U=0.0, double VP=0.0, double VD=0.0,
@@ -76,9 +63,9 @@ TEST_CASE("hubbard SSH model", "[phonons][hubbard-ssh]") {
         diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
         diverge_flow_step_chanmax( st, cmax );
         diverge_flow_step_vertmax( st, &vmax );
-        double Pmax = max_eigval( diverge_flow_step_vertex( st, 'p' ) );
-        double Cmax = max_eigval( diverge_flow_step_vertex( st, 'm' ) );
-        double Dmax = max_eigval( diverge_flow_step_vertex( st, 'h' ) );
+        double Pmax = diverge_flow_step_eigchan( st, 'p', 0 ),
+               Cmax = diverge_flow_step_eigchan( st, 'm', 0 ),
+               Dmax = diverge_flow_step_eigchan( st, 'h', 0 );
         for (double d: {Pmax, Cmax, Dmax}) PCD_max.push_back( d );
         mpi_log_printf("%s: %5.2f  %5.2f %5.2f %5.2f…", m->name, eu.Lambda, Pmax, Cmax, Dmax);
         mpi_eprintf( "\n%c[1A", 27 );
