@@ -1,5 +1,6 @@
 #include "wigner.h"
 
+#include "text_io.h"
 #include "../diverge_model.h"
 #include "../diverge_phonons.h"
 #include "mpi_functions.h"
@@ -272,7 +273,7 @@ ifc_t* read_ifc_file( const char* fname ) {
         VRB_ASSERT( nread == 5 );
     }
 
-    nread = fscanf( f, "F\n" );
+    char line[DIVERGE_GETLINE_MAX] = {0}; diverge_getline( line, f );
     nread = fscanf( f, "%li %li %li\n", &ifc->nq[0], &ifc->nq[1], &ifc->nq[2] );
     VRB_ASSERT( nread == 3 );
 
