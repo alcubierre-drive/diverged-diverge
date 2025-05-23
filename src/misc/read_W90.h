@@ -81,10 +81,20 @@ rs_hopping_t* diverge_read_W90( const char* fname, index_t n_spin, index_t* len,
 double* diverge_read_wout( const char* fname, double* lattice, index_t* n_wan );
 
 /**
- * convenience combination of :c:func:`diverge_read_W90` and
- * :c:func:`diverge_read_wout` to directly yield a :c:type:`diverge_model_t`.
+ * apply WS symmetry as given in the wsvec W90 file to hopping parameter array,
+ * act like realloc. The ``spin_outer`` parameter refers to the explanation
+ * given in :c:func:`diverge_read_W90_C`, i.e., ``spin_outer = (n_spin > 0)``.
  */
-diverge_model_t* diverge_read_W90_model( const char* hr_dat, const char* wout, index_t n_spin );
+rs_hopping_t* diverge_W90_apply_wsvec( rs_hopping_t* hop, index_t* p_n_hop,
+        int spin_outer, const char* wsvec );
+
+/**
+ * convenience combination of :c:func:`diverge_read_W90`,
+ * :c:func:`diverge_read_wout`, and :c:func:`diverge_W90_apply_wsvec` to
+ * directly yield a :c:type:`diverge_model_t`.
+ */
+diverge_model_t* diverge_read_W90_model( const char* hr_dat, const char* wout,
+        const char* wsvec, index_t n_spin );
 
 #ifdef __cplusplus
 }

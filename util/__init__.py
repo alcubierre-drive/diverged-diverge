@@ -553,8 +553,12 @@ if not _libs["divERGe"] is None:
     read_wout.argtypes = [String,c_voidp,c_voidp]
     read_wout.restype = c_voidp
 
+    W90_apply_wsvec = _libs["divERGe"].get("diverge_W90_apply_wsvec", "cdecl")
+    W90_apply_wsvec.argtypes = [c_voidp, c_voidp, c_int, String]
+    W90_apply_wsvec.restype = c_voidp
+
     read_W90_model = _libs["divERGe"].get("diverge_read_W90_model", "cdecl")
-    read_W90_model.argtypes = [String, String, index_t]
+    read_W90_model.argtypes = [String, String, String, index_t]
     read_W90_model.restype = POINTER(model_t)
 
     W90_READER_SWAP_ORBITALS = -2

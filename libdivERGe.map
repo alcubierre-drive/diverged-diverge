@@ -1,5 +1,6 @@
 DIVERGE_0.8 {
     global:
+        diverge_W90_apply_wsvec;
         diverge_channel_vertex_generator_default;
         diverge_compilation_status;
         diverge_compilation_status_cuda;

@@ -1,13 +1,10 @@
 #include "wigner.h"
 
-#include "text_io.h"
 #include "../diverge_model.h"
 #include "../diverge_phonons.h"
 #include "mpi_functions.h"
-#include "btree.h"
 #include "bitary.h"
-
-#include <assert.h>
+#include "text_io.h"
 
 #define LINALG_NO_LAPACKE
 #include "linalg.h"
@@ -55,24 +52,15 @@ static inline claV3d_t claV3ll_to_double( claV3ll_t v ) {
     return (claV3d_t){{v.v[0], v.v[1], v.v[2]}};
 }
 
-typedef struct { int64_t v0:21, v1:21, v2:21, v3:1; } compressed_t;
-static inline index_t claV3ll_to_index( claV3ll_t v ) {
-    assert( sizeof(index_t) == sizeof(compressed_t) );
-    compressed_t c = {.v0=v.v[0], .v1=v.v[1], .v2=v.v[2]};
-    index_t cc = 0; memcpy( &cc, &c, sizeof cc );
-    return cc;
-}
-static inline claV3ll_t index_to_claV3ll( index_t i ) {
-    assert( sizeof(index_t) == sizeof(compressed_t) );
-    compressed_t c = {0}; memcpy( &c, &i, sizeof c );
-    return (claV3ll_t){{ c.v0, c.v1, c.v2 }};
-}
+#define vtree_key_t claV3ll_t
+#define vtree_val_t index_t*
+#include "vtree.h"
 
-static inline void wsdata_iter( btree_t* node, void* ctx ) {
+static inline void wsdata_iter( vtree_node_t* node, void* ctx ) {
     wsdata_t* w = ctx;
 
-    claV3ll_t R = index_to_claV3ll( node->key );
-    index_t* ndeg_ary = (index_t*)node->val;
+    claV3ll_t R = node->key;
+    index_t* ndeg_ary = node->val;
     double* wslen_ary = (double*)(ndeg_ary + POW2(w->n_orb));
 
     VECTOR_PUSH_BACK( w->irvec, R );
@@ -109,7 +97,7 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
     const int nthr = diverge_omp_num_threads();
     #pragma omp parallel num_threads(nthr)
     {
-        xbtree_t* data = xbtree_init( nr1*nr2*nr3 );
+        xvtree_t* data = xvtree_init( nr1*nr2*nr3 );
         claV3ll_t* copies = calloc(n_supercells, sizeof*copies);
         claV3d_t* shifts = calloc(n_supercells, sizeof*shifts);
         claV3d_t* bonds = calloc(n_supercells, sizeof*bonds);
@@ -143,12 +131,10 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
                 for (index_t s=0; s<n_supercells; ++s) {
                     if (fabs(lengths[s] - length) < wc->eps) {
                         claV3ll_t R = copies[s];
-                        index_t R_key = claV3ll_to_index( R );
-                        btree_t* R_data = xbtree_find_or_insert( data, R_key );
-                        index_t* R_data_ndegen = (index_t*)R_data->val;
+                        vtree_node_t* R_data = xvtree_find_or_insert( data, R );
+                        index_t* R_data_ndegen = R_data->val;
                         if (!R_data_ndegen) {
-                            R_data_ndegen = calloc( POW2(n_orb), sizeof(index_t)+sizeof(double) );
-                            R_data->val = (index_t)R_data_ndegen;
+                            R_data->val = R_data_ndegen = calloc( POW2(n_orb), sizeof(index_t)+sizeof(double) );
                         }
                         double* R_data_length = (double*)(R_data_ndegen + POW2(n_orb));
 
@@ -165,8 +151,8 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
         free( lengths );
 
         wsdata_t wsdata = {.n_orb = n_orb};
-        xbtree_iter( data, &wsdata_iter, &wsdata );
-        xbtree_free( data );
+        xvtree_iter( data, &wsdata_iter, &wsdata );
+        xvtree_free( data );
 
         #pragma omp for ordered
         for (int t=0; t<nthr; ++t) {
@@ -258,7 +244,7 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
 }
 
 #define VRB_ASSERT( cond ) { \
-    if (!(cond)) { mpi_err_printf( "%s\n", #cond ); } \
+    if (!(cond)) { mpi_err_printf( "%s\n", #cond ); errors++; } \
 }
 
 ifc_t* read_ifc_file( const char* fname ) {
@@ -273,6 +259,7 @@ ifc_t* read_ifc_file( const char* fname ) {
     nread = fscanf( f, "%i %i %i %lf %lf %lf %lf %lf %lf\n", &ifc->ntyp, &ifc->n_at,
             &ifc->ibrav, &ifc->celldm[0], &ifc->celldm[1], &ifc->celldm[2],
             &ifc->celldm[3], &ifc->celldm[4], &ifc->celldm[5] );
+    int errors = 0;
     VRB_ASSERT( nread == 9 );
 
     ifc->names = calloc(ifc->ntyp, sizeof*ifc->names);
@@ -618,10 +605,9 @@ static complex128_t* epmatwp_read( const char* fname, const qe_wigner_t* w ) {
     for (index_t irk=0; irk<w->nrr_k; ++irk)
     for (index_t m=0; m<n_el; ++m)
     for (index_t n=0; n<n_el; ++n) {
-        index_t ndg_el = w->ndegen_k[IDX3(irk,n,n, n_el,n_el)];
+        index_t ndg_el = w->ndegen_k[IDX3(irk,m,n, n_el,n_el)];
         index_t ndg_ph = w->ndegen_g[IDX3(irg,n,p/3, n_el,n_ph/3)];
-        epw[IDX5(irg,p, irk,m,n, n_ph,w->nrr_k,n_el,n_el)] *=
-            (ndg_el != 0 ? 1./(double)ndg_el : 0.0) * (ndg_ph != 0 ? 1./(double)ndg_ph : 0.0);
+        epw[IDX5(irg,p, irk,m,n, n_ph,w->nrr_k,n_el,n_el)] *= (ndg_el?1./ndg_el:0.0) * (ndg_ph?1./ndg_ph:0.0);
     }
 
     return epw;
@@ -686,5 +672,6 @@ diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
     diverge_model_t* m = diverge_phonons_read_ifc( ifc, wc );
     m->vert = (rs_vertex_t*)diverge_phonons_read_elph( wigner, epmatwp,
             diverge_phonons_model_get_masses(m), maxrel, &m->n_vert );
+
     return m;
 }

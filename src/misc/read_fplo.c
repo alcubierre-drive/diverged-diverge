@@ -1,11 +1,7 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 #include "read_fplo.h"
-#include "text_io.h"
 #include "../diverge_common.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "text_io.h"
 
 #include "../diverge_model.h"
 #define LINALG_NO_LAPACKE
