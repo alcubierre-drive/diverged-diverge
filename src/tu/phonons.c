@@ -70,6 +70,7 @@ struct tu_data_phonons_t {
 
     complex128_t* g_ob_qO; // (my_nk, n_spin,n_spin,n_orbff, nO)
 
+    int ignore_imag_freq;
     complex128_t *gbuf, *gbuf_zero; // (my_nk, nO)
     double gbuf_last_Lambda, gbuf_zero_last_Lambda;
 
@@ -85,7 +86,8 @@ struct tu_data_phonons_t {
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
-static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda );
+static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
+        const double Lambda, const bool ignore_imag_freq );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
         bool buffered ) {
@@ -104,6 +106,7 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     t->vtx = (ph_vertex_t*)t->pmod->vert;
     t->n_vtx = t->pmod->n_vert;
     t->buffered = buffered;
+    t->ignore_imag_freq = 0; // TODO the option should be exposed to the user
     t->gbuf_last_Lambda = t->gbuf_zero_last_Lambda =
         t->Dch_last_Lambda = t->Dch_zero_last_Lambda = -1.0;
     tu_data_phonons_init_vertex( t, el->internals->tu_data, el->tu_ff, el->n_tu_ff, el->n_spin );
@@ -119,10 +122,13 @@ void tu_data_phonons_free( tu_data_phonons_t* t ) {
     free(t);
 }
 
-static inline complex128_t gf_gp_plus_gm( const double E, const bool E_imag, const double rLambda ) {
-    return 1./(+I*rLambda - (E_imag?I:1.0)*E ) + 1./(-I*rLambda - (E_imag?I:1.0)*E );
+static inline complex128_t gf_gp_plus_gm( const double E, const bool E_imag,
+        const bool ignore_imag_freq, const double rLambda ) {
+    return (ignore_imag_freq&&E_imag) ? 0.0 :
+        1./(+I*rLambda - (E_imag?I:1.0)*E ) + 1./(-I*rLambda - (E_imag?I:1.0)*E );
 }
-static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda ) {
+static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
+        const double Lambda, const bool ignore_imag_freq ) {
     const int iszero = Lambda == 0.0;
     complex128_t* buf = iszero ? t->gbuf_zero : t->gbuf;
     double* last = iszero ? &t->gbuf_zero_last_Lambda : &t->gbuf_last_Lambda;
@@ -137,7 +143,8 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda 
     for (index_t kk=0; kk<t->my_nk; ++kk)
     for (index_t b=0; b<t->nO; ++b) {
         const index_t q = kidxc2f( t->idx_ibz_in_fullmesh[t->my_nk_off+kk], t->nk, t->nkf );
-        buf[IDX2(kk,b,t->nO)] = gf_gp_plus_gm( E[IDX2(q,b,t->nO)], bitary_get(E_imag,IDX2(q,b,t->nO)), rLambda );
+        buf[IDX2(kk,b,t->nO)] = gf_gp_plus_gm( E[IDX2(q,b,t->nO)],
+                bitary_get(E_imag,IDX2(q,b,t->nO)), ignore_imag_freq, rLambda );
     }
     return buf;
 }
@@ -306,7 +313,7 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
 
     if (calc) {
         const complex128_t *g_ph_buf = t->g_ob_qO,
-                           *prop_buf = tu_data_phonons_gfill( t, Lambda );
+                           *prop_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq );
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(3)
         for (index_t kk=0; kk<my_nk; ++kk)
         for (index_t l=0; l<linsz; ++l)

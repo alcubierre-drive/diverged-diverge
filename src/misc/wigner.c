@@ -5,6 +5,7 @@
 #include "mpi_functions.h"
 #include "bitary.h"
 #include "text_io.h"
+#include "gemm.h"
 
 #define LINALG_NO_LAPACKE
 #include "linalg.h"
@@ -543,10 +544,18 @@ static qe_wigner_t* epw_wigner_read( const char* fname ) {
     READ_INT( w->dims2 );
     READ_INT( w->nrr_k );
     READ_INT_ARY( w->irvec_k, w->nrr_k*3 );
+
+    // must be transposed from (dims,dims, nrr_k) to (nrr_k, dims,dims)
     READ_INT_ARY( w->ndegen_k, POW2(w->dims)*w->nrr_k );
+    transpose_inplace_rect_i( w->ndegen_k, POW2(w->dims), w->nrr_k );
+
     READ_INT( w->nrr_g );
     READ_INT_ARY( w->irvec_g, w->nrr_g*3 );
+
+    // must be transposed from (dims2, nrr_g,dims) to (nrr_g,dims, dims2)
     READ_INT_ARY( w->ndegen_g, w->dims2*w->dims*w->nrr_g );
+    transpose_inplace_rect_i( w->ndegen_g, w->dims2, w->nrr_g*w->dims );
+
     fclose( f );
     return w;
 }

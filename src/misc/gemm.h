@@ -46,6 +46,12 @@ void transpose_inplace( complex128_t* A, index_t N );
 /** out-of-place transposition of square matrix ``A`` into ``B`` (dimension NxN) */
 void transpose_outofplace( complex128_t* B, const complex128_t* A, index_t N );
 
+/** quasi in-place transposition of rectangular matrix ``A(N,M)`` */
+void transpose_inplace_rect( complex128_t* A, index_t N, index_t M );
+
+/** quasi in-place transposition of rectangular integer matrix ``A(N,M)`` */
+void transpose_inplace_rect_i( int* A, index_t N, index_t M );
+
 /** out-of-place adjoint of square matrix ``A`` into ``B`` (dimension NxN) */
 void transpose_conj_outofplace( complex128_t* B, const complex128_t* A, index_t N );
 

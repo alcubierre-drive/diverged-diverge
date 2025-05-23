@@ -1,6 +1,7 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "gemm.h"
+#include "bitary.h"
 
 #ifdef USE_MKL
 #include <mkl.h>
@@ -36,6 +37,60 @@ void transpose_inplace( complex128_t* A, index_t N ) {
         A[IDX2(i,j,N)] = A[IDX2(j,i,N)];
         A[IDX2(j,i,N)] = tmp;
     }
+}
+
+void transpose_inplace_rect( complex128_t* data, index_t rows, index_t cols ) {
+    index_t size = rows * cols;
+    index_t visited_count = 0;
+    cbyte_t* visited = bitary_alloc(size);
+
+    for (index_t start=0; visited_count<size; ++start) {
+        if (bitary_get(visited,start)) continue;
+
+        index_t current = start;
+        complex128_t tmp = data[current];
+
+        do {
+            index_t next = (current % cols) * rows + (current / cols);
+            complex128_t swap = data[next];
+            data[next] = tmp;
+
+            bitary_set(visited, current);
+            visited_count++;
+
+            current = next;
+            tmp = swap;
+        } while (current != start);
+    }
+
+    free(visited);
+}
+
+void transpose_inplace_rect_i( int* data, index_t rows, index_t cols ) {
+    index_t size = rows * cols;
+    index_t visited_count = 0;
+    cbyte_t* visited = bitary_alloc(size);
+
+    for (index_t start=0; visited_count<size; ++start) {
+        if (bitary_get(visited,start)) continue;
+
+        index_t current = start;
+        int tmp = data[current];
+
+        do {
+            index_t next = (current % cols) * rows + (current / cols);
+            int swap = data[next];
+            data[next] = tmp;
+
+            bitary_set(visited, current);
+            visited_count++;
+
+            current = next;
+            tmp = swap;
+        } while (current != start);
+    }
+
+    free(visited);
 }
 
 void transpose_outofplace( complex128_t* B, const complex128_t* A, index_t N ) {

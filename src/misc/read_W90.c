@@ -321,6 +321,9 @@ static xvtree_t* wsvec_read( const char* fname ) {
         return NULL;
     }
 
+    // get the file size for a "reasonable" estimate
+    fseek( f, 0, SEEK_END ); index_t file_size = ftell( f ); rewind( f );
+
     // ignore first line
     char line[DIVERGE_GETLINE_MAX] = {0};
     if (diverge_getline(line, f) == -1) {
@@ -328,7 +331,7 @@ static xvtree_t* wsvec_read( const char* fname ) {
         return NULL;
     }
 
-    xvtree_t* x = xvtree_init( 128 );
+    xvtree_t* x = xvtree_init( MAX(file_size/10, 1024) );
     while (!feof(f)) {
         supvec_t s = {0};
         int nread = fscanf( f, "%li %li %li %li %li\n", &s.R.v[0], &s.R.v[1],
@@ -375,9 +378,8 @@ rs_hopping_t* diverge_W90_apply_wsvec( rs_hopping_t* hop, index_t* p_n_hop,
     n_spin++;
     mpi_log_printf( "found n_orb=%li, n_spin=%li\n", n_orb, n_spin );
 
-    VECTOR_INIT( rs_hopping_t, new_hop );
-
     xvtree_t* sup = wsvec_read( wsvec );
+    VECTOR_INIT_CAP( rs_hopping_t, new_hop, n_hop );
     for (index_t i=0; i<n_hop; ++i) {
         index_t s1 = MAX(hop[i].s1,0);
         index_t s2 = MAX(hop[i].s2,0);
