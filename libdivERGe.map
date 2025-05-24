@@ -259,6 +259,7 @@ DIVERGE_UNSTABLE {
         subspace_gfill_multi_init;
         transpose_conj_outofplace;
         transpose_inplace;
+        transpose_inplace_rect_any;
         transpose_outofplace;
         tu_highsym_vertex_free;
         tu_highsym_vertex_store;
