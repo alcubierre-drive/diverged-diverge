@@ -39,7 +39,8 @@ void transpose_inplace( complex128_t* A, index_t N ) {
     }
 }
 
-void transpose_inplace_rect( complex128_t* data, index_t rows, index_t cols ) {
+void transpose_inplace_rect_any( void* vdata, index_t data_sz, index_t rows, index_t cols ) {
+    unsigned char* data = vdata;
     index_t size = rows * cols;
     index_t visited_count = 0;
     cbyte_t* visited = bitary_alloc(size);
@@ -48,45 +49,20 @@ void transpose_inplace_rect( complex128_t* data, index_t rows, index_t cols ) {
         if (bitary_get(visited,start)) continue;
 
         index_t current = start;
-        complex128_t tmp = data[current];
+        unsigned char tmp[data_sz];
+        memcpy( tmp, data + data_sz*current, data_sz );
 
         do {
             index_t next = (current % cols) * rows + (current / cols);
-            complex128_t swap = data[next];
-            data[next] = tmp;
+            unsigned char swap[data_sz];
+            memcpy( swap, data + data_sz*next, data_sz );
+            memcpy( data + data_sz*next, tmp, data_sz );
 
             bitary_set(visited, current);
             visited_count++;
 
             current = next;
-            tmp = swap;
-        } while (current != start);
-    }
-
-    free(visited);
-}
-
-void transpose_inplace_rect_i( int* data, index_t rows, index_t cols ) {
-    index_t size = rows * cols;
-    index_t visited_count = 0;
-    cbyte_t* visited = bitary_alloc(size);
-
-    for (index_t start=0; visited_count<size; ++start) {
-        if (bitary_get(visited,start)) continue;
-
-        index_t current = start;
-        int tmp = data[current];
-
-        do {
-            index_t next = (current % cols) * rows + (current / cols);
-            int swap = data[next];
-            data[next] = tmp;
-
-            bitary_set(visited, current);
-            visited_count++;
-
-            current = next;
-            tmp = swap;
+            memcpy( tmp, swap, data_sz );
         } while (current != start);
     }
 
