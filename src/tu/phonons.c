@@ -90,7 +90,7 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
         const double Lambda, const bool ignore_imag_freq );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
-        bool buffered ) {
+        bool buffered, bool ignore_imag_freq ) {
     select_config();
     tu_data_phonons_t* t = calloc(1, sizeof*t);
     t->pmod = ph;
@@ -106,7 +106,7 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     t->vtx = (ph_vertex_t*)t->pmod->vert;
     t->n_vtx = t->pmod->n_vert;
     t->buffered = buffered;
-    t->ignore_imag_freq = 0; // TODO the option should be exposed to the user
+    t->ignore_imag_freq = ignore_imag_freq;
     t->gbuf_last_Lambda = t->gbuf_zero_last_Lambda =
         t->Dch_last_Lambda = t->Dch_zero_last_Lambda = -1.0;
     tu_data_phonons_init_vertex( t, el->internals->tu_data, el->tu_ff, el->n_tu_ff, el->n_spin );

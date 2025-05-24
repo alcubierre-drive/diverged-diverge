@@ -77,7 +77,7 @@ struct internals_t {
 
     // tu additional phonon internals
     int tu_phonon_model_dont_free;
-    int tu_phonons_buffered;
+    int tu_phonons_buffered, tu_phonons_ignore_imag_freq;
     void* tu_data_phonons;
     internals_destructor_t tu_data_phonons_destructor;
     void* model_phonons;

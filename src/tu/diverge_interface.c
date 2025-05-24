@@ -104,7 +104,9 @@ diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
     diverge_phonons_apply_sgnsqrt(m);
 
     m->internals->tu_phonon_model_dont_free = 1;
-    tu_data_phonons_t* p = tu_data_phonons_init( m, model, model->internals->tu_phonons_buffered );
+    tu_data_phonons_t* p = tu_data_phonons_init( m, model,
+            model->internals->tu_phonons_buffered,
+            model->internals->tu_phonons_ignore_imag_freq );
     model->internals->tu_data_phonons = p;
     model->internals->tu_data_phonons_destructor = &tu_data_phonons_destructor;
     model->internals->model_phonons = m;

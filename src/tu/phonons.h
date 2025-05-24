@@ -12,7 +12,7 @@ extern "C" {
 typedef struct tu_data_phonons_t tu_data_phonons_t;
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
-        bool buffered );
+        bool buffered, bool ignore_imag_freq );
 void tu_data_phonons_free( tu_data_phonons_t* t );
 
 // generates D channel vertex scaled by fac, adds to existing content of buffer
