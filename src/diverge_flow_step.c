@@ -635,3 +635,7 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         return MAX(smax, smax_red);
     }
 }
+
+complex128_t* diverge_flow_step_get_epc( const diverge_flow_step_t* s ) {
+    return s->tu_vertex->tu_ph->g_ob_qO;
+}

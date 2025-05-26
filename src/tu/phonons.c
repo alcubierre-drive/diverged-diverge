@@ -58,32 +58,6 @@ static void select_config( void ) {
     }
 }
 
-struct tu_data_phonons_t {
-    diverge_model_t* pmod;
-
-    index_t nk[3];
-    index_t nkf[3];
-    index_t nO;
-
-    ph_vertex_t* vtx;
-    index_t n_vtx;
-
-    complex128_t* g_ob_qO; // (my_nk, n_spin,n_spin,n_orbff, nO)
-
-    int ignore_imag_freq;
-    complex128_t *gbuf, *gbuf_zero; // (my_nk, nO)
-    double gbuf_last_Lambda, gbuf_zero_last_Lambda;
-
-    int buffered; // optional buffered operation for gen_vert()
-    complex128_t *Dch, *Dch_zero; // (my_nk, POW2(POW2(n_spin)*n_orbff))
-    double Dch_last_Lambda, Dch_zero_last_Lambda;
-
-    index_t n_spin, n_orbff;
-    index_t my_nk;
-    index_t my_nk_off;
-    const index_t* idx_ibz_in_fullmesh;
-};
-
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
