@@ -239,12 +239,6 @@ double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* 
  */
 double diverge_flow_step_get_filling_Hself( diverge_flow_step_t* s, void* workspace );
 
-
-/**
- * returns the internally generated epc on momentum mesh (nk, n_spin, n_spin, n_orbff, nO)
- */
-complex128_t* diverge_flow_step_get_epc( const diverge_flow_step_t* s );
-
 #ifdef __cplusplus
 }
 #endif
