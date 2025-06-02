@@ -104,10 +104,15 @@ void single_gemm_Xt_free( single_gemm_Xt_t* x ) {
 void single_gemm_Xt( single_gemm_Xt_t* x, const complex128_t* A,
         const complex128_t* B, complex128_t* C, index_t M, index_t N, index_t K,
         complex128_t alpha, complex128_t beta ) {
-    const index_t LDA = M, LDB = K, LDC = M;
-    CUBLAS_CHECK( cublasXtZgemm( x->t, CUBLAS_OP_N, CUBLAS_OP_N, M, N, K, (cuDoubleComplex*)&alpha,
-                (const cuDoubleComplex*)B, LDA, (const cuDoubleComplex*)A, LDB, (cuDoubleComplex*)&beta,
-                (cuDoubleComplex*)C, LDC ) );
+    if (x) {
+        const index_t LDA = M, LDB = K, LDC = M;
+        CUBLAS_CHECK( cublasXtZgemm( x->t, CUBLAS_OP_N, CUBLAS_OP_N, M, N, K, (cuDoubleComplex*)&alpha,
+                    (const cuDoubleComplex*)B, LDA, (const cuDoubleComplex*)A, LDB, (cuDoubleComplex*)&beta,
+                    (cuDoubleComplex*)C, LDC ) );
+    } else {
+        mpi_wrn_printf( "Xt GEMM not initialized, fallback to standard gemm\n" );
+        single_gemm( A, B, C, M, N, K, alpha, beta );
+    }
 }
 
 #else // USE_CUDA
