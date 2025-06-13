@@ -174,7 +174,7 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
     parse_latvec = parse_nwan = parse_centers = parse_sect_hop = parse_sect_spin = 0; \
 }
 
-    ssize_t nread = 0;
+    index_t nread = 0;
     char line[DIVERGE_GETLINE_MAX] = {0};
     int linenum = 0;
 
