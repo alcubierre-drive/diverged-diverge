@@ -19,7 +19,7 @@ extern "C" {
 
 static inline index_t diverge_getline( char* line, FILE* stream ) {
     if (!line) return -1;
-    fgets(line, DIVERGE_GETLINE_MAX-1, stream);
+    if (!fgets(line, DIVERGE_GETLINE_MAX-1, stream)) return -1;
     return feof(stream) ? -1 : (index_t)strlen(line);
 }
 
