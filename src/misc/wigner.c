@@ -319,6 +319,9 @@ ifc_t* read_ifc_file( const char* fname ) {
     // rescale lengths to Angstrom
     ifc->celldm[0] *= Bohr;
 
+    if (errors)
+        mpi_err_printf( "read_ifc_file with %i errors... trying to return anyways\n", errors );
+
     return ifc;
 }
 
