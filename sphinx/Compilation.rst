@@ -31,7 +31,11 @@ For installation of the python library (see :ref:`Simulation Output` and
     pip install .
 
 in the git repo's root. Note that you might want to create a virtual environment
-first, or pass ``--break-system-packages`` to the above pip call.
+first, or change the above pip call to
+
+.. sourcecode:: bash
+
+    pip install --editable . --config-settings editable_mode=strict --break-system-packages
 
 The makefile exposes several targets to build specific components of divERGe:
 

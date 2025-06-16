@@ -122,7 +122,10 @@ For installation of the python library (see <a class="reference internal" href="
 </pre></div>
 </div>
 <p>in the git repo’s root. Note that you might want to create a virtual environment
-first, or pass <code class="docutils literal notranslate"><span class="pre">--break-system-packages</span></code> to the above pip call.</p>
+first, or change the above pip call to</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--editable<span class="w"> </span>.<span class="w"> </span>--config-settings<span class="w"> </span><span class="nv">editable_mode</span><span class="o">=</span>strict<span class="w"> </span>--break-system-packages
+</pre></div>
+</div>
 <p>The makefile exposes several targets to build specific components of divERGe:</p>
 <blockquote>
 <div><dl class="field-list simple">
