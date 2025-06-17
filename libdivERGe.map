@@ -71,6 +71,7 @@ DIVERGE_0.8 {
         diverge_model_internals_get_E;
         diverge_model_internals_get_H;
         diverge_model_internals_get_U;
+        diverge_model_internals_get_dim;
         diverge_model_internals_get_greens;
         diverge_model_internals_get_kfmesh;
         diverge_model_internals_get_kmesh;
