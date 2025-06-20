@@ -875,6 +875,10 @@ if not _libs["divERGe"] is None:
     model_internals_get_greens.argtypes = [POINTER(model_t)]
     model_internals_get_greens.restype = POINTER(gf_complex_t)
 
+    model_internals_get_dim = _libs["divERGe"].get("diverge_model_internals_get_dim", "cdecl")
+    model_internals_get_dim.argtypes = [POINTER(model_t)]
+    model_internals_get_dim.restype = index_t
+
     # Filling
     model_get_filling = _libs["divERGe"].get("diverge_model_get_filling", "cdecl")
     model_get_filling.argtypes = [POINTER(model_t), POINTER(c_double), index_t]
