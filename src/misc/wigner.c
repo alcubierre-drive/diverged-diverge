@@ -677,11 +677,14 @@ ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
         const double* masses, double maxrel, index_t* p_vtx_sz ) {
     qe_wigner_t* q = qe_wigner_read( wigner );
     complex128_t* g = epmatwp_read( epmatwp, q );
-    ph_vertex_t* pv = epmatwp_to_ph_vertex_t( g, q->irvec_k, q->nrr_k,
-            q->irvec_g, q->nrr_g, q->dims2*3, q->dims, maxrel, p_vtx_sz );
-    for (index_t i=0; i<*p_vtx_sz; ++i) pv[i].g /= sqrt(masses[pv[i].OA]);
+    ph_vertex_t* pv = NULL;
+    if (g) {
+        pv = epmatwp_to_ph_vertex_t( g, q->irvec_k, q->nrr_k, q->irvec_g,
+                q->nrr_g, q->dims2*3, q->dims, maxrel, p_vtx_sz );
+        for (index_t i=0; i<*p_vtx_sz; ++i) pv[i].g /= sqrt(masses[pv[i].OA]);
+        free( g );
+    }
     qe_wigner_free(q);
-    free( g );
     return pv;
 }
 
