@@ -32,6 +32,7 @@ void wsdata_free( wsdata_t w );
 typedef struct {
     int32_t ntyp, n_at, ibrav;
     double celldm[6];
+    double lattice[3][3]; // if ibrav == 0
 
     struct {char n[64];}* names; // (ntyp,)
     double* masses; // (ntyp,)
@@ -197,7 +198,9 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
     ifc_t* ifc = read_ifc_file( fname );
     if (!ifc) return NULL;
 
-    lattice_from_ibrav( ifc->ibrav, ifc->celldm, m->lattice[0] );
+    if (ifc->ibrav) lattice_from_ibrav( ifc->ibrav, ifc->celldm, m->lattice[0] );
+    else            memcpy( m->lattice[0], ifc->lattice[0], sizeof m->lattice );
+
     m->n_orb = ifc->n_at * 3;
     m->n_spin = m->SU2 = 1;
     double* pos = calloc( ifc->n_at, sizeof*pos * 3 );
@@ -262,6 +265,14 @@ ifc_t* read_ifc_file( const char* fname ) {
             &ifc->celldm[3], &ifc->celldm[4], &ifc->celldm[5] );
     int errors = 0;
     VRB_ASSERT( nread == 9 );
+
+    if (ifc->ibrav == 0) {
+        mpi_log_printf( "found ibrav = %i, read lattice by hand\n", ifc->ibrav );
+        for (int i=0; i<9; ++i) {
+            nread = fscanf( f, "%lf", ((double*)ifc->lattice[0])+i );
+            VRB_ASSERT( nread == 1 );
+        }
+    }
 
     ifc->names = calloc(ifc->ntyp, sizeof*ifc->names);
     ifc->masses = calloc(ifc->ntyp, sizeof*ifc->masses);
