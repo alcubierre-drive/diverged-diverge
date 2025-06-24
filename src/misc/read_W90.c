@@ -308,10 +308,16 @@ double* diverge_read_wout( const char* fname, double* lattice/*3,3*/, index_t* n
     return pos;
 }
 
-typedef struct { claV3ll_t R; index_t O1; index_t O2; } supvec_t;
+#define LINALG_DATA_TYPE_s int16_t
+#define LINALG_LAPACKE_EIGH_s( ... ) { (void)H; (void)pU; }
+#define LINALG_LAPACKE_SVD_s( ... ) { (void)superb; (void)H; (void)pU; (void)pVT; }
+LINALG_VEC_TYPES( cla, 3, s )
+LINALG_VEC_IMPL( cla, 3, s )
+typedef struct { claV3s_t R; uint8_t O1; uint8_t O2; } supvec_t;
 #define vtree_key_t supvec_t
-typedef struct { VECTOR_DECL(claV3ll_t, v) } vec_claV3ll_t;
-#define vtree_val_t vec_claV3ll_t
+typedef struct { VECTOR_DECL(claV3s_t, v) } vec_claV3s_t;
+#define vtree_val_t vec_claV3s_t
+#define vtree_key_cmp( a, b ) (*((int64_t*)&(a)) - *((int64_t*)&(b)))
 #include "vtree.h"
 
 static xvtree_t* wsvec_read( const char* fname ) {
@@ -334,8 +340,9 @@ static xvtree_t* wsvec_read( const char* fname ) {
     xvtree_t* x = xvtree_init( MAX(file_size/10, 1024) );
     while (!feof(f)) {
         supvec_t s = {0};
-        int nread = fscanf( f, "%li %li %li %li %li\n", &s.R.v[0], &s.R.v[1],
-                &s.R.v[2], &s.O1, &s.O2 );
+        short _O1 = 0, _O2 = 0;
+        int nread = fscanf( f, "%hi %hi %hi %hi %hi\n", &s.R.v[0], &s.R.v[1], &s.R.v[2], &_O1, &_O2 );
+        s.O1 = _O1, s.O2 = _O2;
         if (nread == 0) break;
 
         VRB_ASSERT( nread == 5 );
@@ -344,11 +351,11 @@ static xvtree_t* wsvec_read( const char* fname ) {
         VRB_ASSERT( nread == 1 );
         VRB_ASSERT( nv > 0 );
 
-        vec_claV3ll_t supvecs = {0};
+        vec_claV3s_t supvecs = {0};
         VECTOR_RESERVE( supvecs.v, nv );
         for (index_t v=0; v<nv; ++v) {
-            claV3ll_t S = {0};
-            nread = fscanf( f, "%li %li %li\n", &S.v[0], &S.v[1], &S.v[2] );
+            claV3s_t S = {0};
+            nread = fscanf( f, "%hi %hi %hi\n", &S.v[0], &S.v[1], &S.v[2] );
             VRB_ASSERT( nread == 3 );
             VECTOR_PUSH_BACK( supvecs.v, S );
         }
@@ -388,12 +395,12 @@ rs_hopping_t* diverge_W90_apply_wsvec( rs_hopping_t* hop, index_t* p_n_hop,
             spin_outer ? IDX2(s2,hop[i].o2, n_orb) : IDX2(hop[i].o2,s2, n_spin) };
         vtree_node_t* vs = xvtree_find( sup, s );
         if (!vs) {
-            mpi_err_printf( "could not find hopping (%li,%li,%li @ %li:%li)\n",
+            mpi_err_printf( "could not find hopping (%hi,%hi,%hi @ %hi:%hi)\n",
                     s.R.v[0],s.R.v[1],s.R.v[2], s.O1,s.O2 );
         } else {
             index_t n_supvecs = vs->val.v_sz;
             for (index_t s=0; s<n_supvecs; ++s) {
-                claV3ll_t supvec = vs->val.v[s];
+                claV3s_t supvec = vs->val.v[s];
                 rs_hopping_t h = hop[i];
                 for (int d=0; d<3; ++d) h.R[d] += supvec.v[d];
                 h.t /= (double)n_supvecs;

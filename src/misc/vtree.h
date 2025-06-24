@@ -29,7 +29,9 @@ static inline void xvtree_iter( xvtree_t* x, void (*iter)(vtree_node_t*, void*),
 static inline void xvtree_iter_ascending( xvtree_t* x, void (*iter)(vtree_node_t*, void*), void* ctx );
 
 // IMPLEMENTATION
+#ifndef vtree_key_cmp
 static inline int vtree_key_cmp( vtree_key_t a, vtree_key_t b ) { return memcmp( &a, &b, sizeof(a) ); }
+#endif
 typedef enum { vtree_left = 0, vtree_right, } vtree_insertion_sel;
 
 static inline void vtree_node_iter( vtree_node_t* head, void (*iter)(vtree_node_t*, void*), void* ctx ) {
