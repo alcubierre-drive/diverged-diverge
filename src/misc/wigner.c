@@ -56,6 +56,7 @@ static inline claV3d_t claV3ll_to_double( claV3ll_t v ) {
 
 #define vtree_key_t claV3ll_t
 #define vtree_val_t index_t*
+#define vtree_padding_bytes 8
 #include "vtree.h"
 
 static inline void wsdata_iter( vtree_node_t* node, void* ctx ) {

@@ -10,15 +10,29 @@
 #ifndef vtree_val_t
 #define vtree_val_t int
 #endif
+#ifndef vtree_padding_bytes
+#define VTREE_PADDING_DISABLED
+#define vtree_padding_bytes 0
+#endif
 
 // API
 typedef struct vtree_node_t vtree_node_t;
 struct vtree_node_t {
-    vtree_node_t* parent;
-    vtree_node_t* children[2];
     vtree_key_t key;
     vtree_val_t val;
+    vtree_node_t* parent;
+#ifndef VTREE_PADDING_DISABLED
+    char _padding[vtree_padding_bytes];
+#endif
+    vtree_node_t* children[2];
 };
+
+#ifndef VTREE_PADDING_DISABLED
+#define vtree_padding_offset offsetof(vtree_node_t, _padding)
+#else // VTREE_PADDING_DISABLED
+#define vtree_padding_offset offsetof(vtree_node_t, children)
+#endif // VTREE_PADDING_DISABLED
+
 typedef struct xvtree_t xvtree_t;
 static inline xvtree_t* xvtree_init( size_t nreserve );
 static inline void xvtree_free( xvtree_t* x );
@@ -78,6 +92,17 @@ struct xvtree_t {
 
 static inline xvtree_t* xvtree_init( size_t nreserve ) {
     xvtree_t* x = calloc(1, sizeof*x);
+
+    mpi_vrb_printf( "vtree_node_t alignment: "
+            "key@%li(+%li), val@%li(+%li), parent@%li(+%li), "
+            "padding@%li(+%li), children@%li(+%li) ==> size=%li\n" ,
+            offsetof(vtree_node_t, key), sizeof(x->head->key),
+            offsetof(vtree_node_t, val), sizeof(x->head->val),
+            offsetof(vtree_node_t, parent), sizeof(x->head->parent),
+            vtree_padding_offset, vtree_padding_bytes,
+            offsetof(vtree_node_t, children), sizeof(x->head->children),
+            sizeof(*x->head) );
+
     x->n_mem = 1;
     x->i_mem = 0;
     x->mem = calloc(1, sizeof*(x->mem));
