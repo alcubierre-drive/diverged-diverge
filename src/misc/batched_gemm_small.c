@@ -1,3 +1,5 @@
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "batched_gemm_small.h"
 #include "mpi_functions.h"
 #include "gemm.h"

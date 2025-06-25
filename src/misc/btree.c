@@ -1,3 +1,5 @@
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "btree.h"
 
 btree_t* btree_insert( btree_t* head, index_t key ) {

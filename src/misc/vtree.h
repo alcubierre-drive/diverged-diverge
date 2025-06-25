@@ -1,3 +1,5 @@
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #pragma once
 
 #include <string.h>

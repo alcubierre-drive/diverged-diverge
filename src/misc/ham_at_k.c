@@ -1,3 +1,5 @@
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "ham_at_k.h"
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"

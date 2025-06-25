@@ -1,3 +1,5 @@
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "dos.h"
 #include "../diverge_model.h"
 #include "../diverge_model_internals.h"

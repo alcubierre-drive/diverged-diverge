@@ -1,3 +1,5 @@
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "symmetry.h"
 #include "../diverge_model.h"
 #include "../diverge_momentum_gen.h"
