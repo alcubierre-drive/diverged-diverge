@@ -88,8 +88,8 @@ npatch_loop_t* npatch_loop_init( diverge_model_t* dmodel ) {
         r->projLoop = p;
 
         // and allocate memory on the dispatched loop
-        p->Lp = (complex128_t*)calloc(p->L_sz, sizeof(complex128_t));
-        p->Lm = (complex128_t*)calloc(p->L_sz, sizeof(complex128_t));
+        p->Lp = calloc(p->L_sz, sizeof(complex128_t));
+        p->Lm = calloc(p->L_sz, sizeof(complex128_t));
     }
     return r;
 }

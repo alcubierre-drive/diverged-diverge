@@ -29,7 +29,7 @@ diverge_flow_step_t* diverge_flow_step_init_any( diverge_model_t* mod, const cha
 }
 
 diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* method, const char* channels ) {
-    diverge_flow_step_t* st = (diverge_flow_step_t*)calloc(1, sizeof(diverge_flow_step_t));
+    diverge_flow_step_t* st = calloc(1, sizeof(diverge_flow_step_t));
     st->mod = mod;
     st->intls = mod->internals;
 

@@ -599,7 +599,7 @@ static inline int mergesort_permutation_r_comp( index_t i, index_t j, const claV
 #define MERGESORT_COMP_R(i,j,_vt) mergesort_permutation_r_comp(i,j,(const claV2ll_t*)_vt)
 MERGESORT_IMPL_R( mergesort_permutation, index_t )
 static index_t* sort_permutation( const claV2ll_t* to, index_t to_sz ) {
-    index_t* p = (index_t*)calloc(to_sz, sizeof*p);
+    index_t* p = calloc(to_sz, sizeof*p);
     for (index_t i=0; i<to_sz; ++i) p[i] = i;
     mergesort_permutation_r(p, to_sz, (void*)to, diverge_omp_num_threads(), 0);
     return p;

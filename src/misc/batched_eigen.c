@@ -121,11 +121,11 @@ static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
 
     if (work_on_cpu) {
         ndevices = helper_batched_eigen_nthreads > 0 ? helper_batched_eigen_nthreads : diverge_omp_num_threads();
-        devices = (int*)calloc(ndevices, sizeof(int));
+        devices = calloc(ndevices, sizeof(int));
         should_free_device_array = true;
     }
 
-    index_t* counts = (index_t*)calloc(ndevices, sizeof(index_t));
+    index_t* counts = calloc(ndevices, sizeof(index_t));
     for (index_t i=0; i<N; ++i)
         counts[i%ndevices]++;
     index_t* displs = (index_t*)malloc(ndevices*sizeof(index_t));
@@ -133,7 +133,7 @@ static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
     for (int i=1; i<ndevices; ++i)
         displs[i] = displs[i-1] + counts[i-1];
 
-    batched_eigen_t* configs = (batched_eigen_t*)calloc(ndevices,sizeof(batched_eigen_t));
+    batched_eigen_t* configs = calloc(ndevices,sizeof(batched_eigen_t));
     for (int i=0; i<ndevices; ++i) {
         configs[i].device = devices[i];
         configs[i].nbatches = helper_batched_eigen_nchunks == -1 ? 1 : helper_batched_eigen_nchunks;
@@ -143,7 +143,7 @@ static void batched_eigen_wrap_r( int* devices, int ndevices, complex128_t* H,
         configs[i].E = E + n * displs[i];
     }
 
-    pthread_t* threads = (pthread_t*)calloc(ndevices,sizeof(pthread_t));
+    pthread_t* threads = calloc(ndevices,sizeof(pthread_t));
     for (int d=0; d<ndevices; ++d) {
         if (work_on_cpu)
             pthread_create( threads+d, NULL, batched_eigen_cpu, configs+d );

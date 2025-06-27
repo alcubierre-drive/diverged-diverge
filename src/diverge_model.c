@@ -14,7 +14,7 @@
 #include <assert.h>
 
 diverge_model_t* diverge_model_init(void) {
-    diverge_model_t* result = (diverge_model_t*)calloc(1,sizeof(diverge_model_t));
+    diverge_model_t* result = calloc(1,sizeof(diverge_model_t));
     result->hfill = &diverge_hamilton_generator_default;
     result->gfill = &diverge_greensfunc_generator_default;
     result->gproj = NULL;
@@ -23,7 +23,7 @@ diverge_model_t* diverge_model_init(void) {
     result->n_vert_chan[0] = -1;
     result->n_spin = 1;
     result->SU2 = 1;
-    result->internals = (internals_t*)calloc(1,sizeof(internals_t));
+    result->internals = calloc(1,sizeof(internals_t));
     result->internals->has_common_internals = 0;
     result->internals->tu_symcheck_mpi = environ_tu_symcheck_mpi();
     result->internals->symcheck_mpi = environ_symcheck_mpi();

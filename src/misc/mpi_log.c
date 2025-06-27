@@ -296,14 +296,14 @@ void mpi_py_eprint( const char* str ) {
 static char** mpi_string_gather( const char* str ) {
     int nranks = diverge_mpi_comm_size(),
         rank = diverge_mpi_comm_rank();
-    int* counts = (int*)calloc( nranks, sizeof(int) );
-    int* displs = (int*)calloc( nranks, sizeof(int) );
+    int* counts = calloc( nranks, sizeof(int) );
+    int* displs = calloc( nranks, sizeof(int) );
     for (int r=0; r<nranks; ++r) {
         counts[r] = sizeof(int);
         displs[r] = sizeof(int)*r;
     }
 
-    int* lengths = (int*)calloc( nranks, sizeof(int) );
+    int* lengths = calloc( nranks, sizeof(int) );
     lengths[rank] = strlen(str)+1;
 
     diverge_mpi_gatherv_bytes( lengths + rank, sizeof(int), lengths, counts, displs, 0 );
@@ -314,7 +314,7 @@ static char** mpi_string_gather( const char* str ) {
         counts[r] = lengths[r];
         displs[r] = r==0 ? 0 : counts[r-1]+displs[r-1];
     }
-    char* strbuf = (char*)calloc( ltot, 1 );
+    char* strbuf = calloc( ltot, 1 );
 
     diverge_mpi_gatherv_bytes( str, lengths[rank], strbuf, counts, displs, 0 );
 

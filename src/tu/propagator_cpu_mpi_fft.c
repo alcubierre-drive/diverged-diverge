@@ -98,8 +98,8 @@ fftw_mpi_plan_t* fftw_mpi_plan_init_l( index_t dims[3], index_t howmany,
             (fftw_complex*)p->in_mpi, (fftw_complex*)p->out_mpi, diverge_mpi_get_comm(), dir,
             fftw_mpi_plan_patience );
 
-    p->counts = (int*)calloc(p->nranks, sizeof(int));
-    p->displs = (int*)calloc(p->nranks, sizeof(int));
+    p->counts = calloc(p->nranks, sizeof(int));
+    p->displs = calloc(p->nranks, sizeof(int));
     int count = p->local_n0*p->dims[1]*p->dims[2]*p->howmany;
     int displ = p->local_0_start*p->dims[1]*p->dims[2]*p->howmany;
     diverge_mpi_allgather_int( &count, p->counts, 1 );

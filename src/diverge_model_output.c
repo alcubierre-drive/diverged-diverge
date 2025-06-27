@@ -62,7 +62,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
     uindex_t lmd5sum = 0;
     if (diverge_mpi_comm_rank() == 0) {
         // allocate the header
-        char* buf = (char*)calloc(256,sizeof(index_t));
+        char* buf = calloc(256,sizeof(index_t));
 
         // print the magic number
         index_t* ibuf = (index_t*)buf;

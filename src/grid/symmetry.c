@@ -307,10 +307,10 @@ static void grid_symm_transform_init_communicator( grid_symm_transform_t* s,
 
     s->loop_size = s->qcount * s->nk * POW4(s->nb);
 
-    complex128_t *pP = (complex128_t*)calloc( s->loop_size, sizeof*pP );
-    complex128_t *pC = (complex128_t*)calloc( s->loop_size, sizeof*pC );
-    index_t *mP = (index_t*)calloc( s->loop_size, sizeof*mP );
-    index_t *mC = (index_t*)calloc( s->loop_size, sizeof*mC );
+    complex128_t *pP = calloc( s->loop_size, sizeof*pP );
+    complex128_t *pC = calloc( s->loop_size, sizeof*pC );
+    index_t *mP = calloc( s->loop_size, sizeof*mP );
+    index_t *mC = calloc( s->loop_size, sizeof*mC );
 
     s->symops_P = calloc( s->nsym * s->loop_size, sizeof*s->symops_P );
     s->symops_C = calloc( s->nsym * s->loop_size, sizeof*s->symops_C );

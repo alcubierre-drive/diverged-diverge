@@ -72,8 +72,8 @@ typedef enum {
 
 static default_spin_index_t check_model_default_spin_index( const diverge_model_t* model ) {
     index_t result = 0;
-    index_t* count_zero_length_C = (index_t*)calloc(POW2(model->n_orb), sizeof(index_t));
-    index_t* count_zero_length_D = (index_t*)calloc(POW2(model->n_orb), sizeof(index_t));
+    index_t* count_zero_length_C = calloc(POW2(model->n_orb), sizeof(index_t));
+    index_t* count_zero_length_D = calloc(POW2(model->n_orb), sizeof(index_t));
     for (index_t idx=0; idx<model->n_vert; ++idx) {
         const rs_vertex_t* vert = model->vert + idx;
         result += vert->s1 == -1;
@@ -150,7 +150,7 @@ void diverge_model_internals_common( diverge_model_t* model ) {
 
     // the GF does not default to shared, as writing GF generators for
     // node-shared mem is a bit complicated (see diverge_hack.cpp)
-    intls->greens = (gf_complex_t*)calloc(nktot*nb*nb*2,sizeof(gf_complex_t));
+    intls->greens = calloc(nktot*nb*nb*2,sizeof(gf_complex_t));
 
     // we check here whether to symmetrize the Hamiltonian
     int symmetrize_hamiltonian = model->n_sym < 0;

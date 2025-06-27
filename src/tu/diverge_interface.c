@@ -191,8 +191,8 @@ void init_bond_descriptor(diverge_model_t* model) {
     index_t n_tu_ff = model->n_tu_ff;
     tu_formfactor_t* tu_ff = model->tu_ff;
     tu_data_t* tu_data = (tu_data_t*)model->internals->tu_data;
-    tu_data->bond_sizes = (index_t*)calloc(model->n_orb, sizeof(index_t));
-    tu_data->bond_offsets = (index_t*)calloc(model->n_orb, sizeof(index_t));
+    tu_data->bond_sizes = calloc(model->n_orb, sizeof(index_t));
+    tu_data->bond_offsets = calloc(model->n_orb, sizeof(index_t));
     for(index_t i = 0; i < n_tu_ff; ++i)
         tu_data->bond_sizes[tu_ff[i].ofrom] += 1;
 
@@ -201,13 +201,13 @@ void init_bond_descriptor(diverge_model_t* model) {
 
     for (index_t i=0; i<model->n_orb; ++i) // find max bond size
         tu_data->n_bonds = MAX(tu_data->n_bonds, tu_data->bond_sizes[i]);
-    tu_data->ob_to_orbff = (index_t*)calloc(model->n_orb * tu_data->n_bonds, sizeof(index_t));
+    tu_data->ob_to_orbff = calloc(model->n_orb * tu_data->n_bonds, sizeof(index_t));
     tu_data->n_orbff = n_tu_ff;
-    tu_data->mi_to_ofrom = (index_t*)calloc(n_tu_ff,sizeof(index_t));
-    tu_data->mi_to_oto = (index_t*)calloc(n_tu_ff,sizeof(index_t));
-    tu_data->mi_to_R = (index_t*)calloc(3*n_tu_ff,sizeof(index_t));
-    tu_data->mi_to_ffidx = (index_t*)calloc(n_tu_ff,sizeof(index_t));
-    tu_data->mi_to_tuffidx = (index_t*)calloc(n_tu_ff,sizeof(index_t));
+    tu_data->mi_to_ofrom = calloc(n_tu_ff,sizeof(index_t));
+    tu_data->mi_to_oto = calloc(n_tu_ff,sizeof(index_t));
+    tu_data->mi_to_R = calloc(3*n_tu_ff,sizeof(index_t));
+    tu_data->mi_to_ffidx = calloc(n_tu_ff,sizeof(index_t));
+    tu_data->mi_to_tuffidx = calloc(n_tu_ff,sizeof(index_t));
     index_t idx = 0;
     for(index_t b = 0; b < tu_data->n_bonds; ++b)
     for(index_t o = 0; o < model->n_orb; ++o){

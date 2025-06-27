@@ -143,9 +143,9 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     mpi_vrb_printf( "TU-MPI prop: %.2fs for FFT plans\n", tock-tick );
 
     tick = diverge_mpi_wtime();
-    t->kx_counts = (int*)calloc(t->size, sizeof(int));
+    t->kx_counts = calloc(t->size, sizeof(int));
     alloc_print( sizeof(int)*t->size );
-    t->kx_displs = (int*)calloc(t->size, sizeof(int));
+    t->kx_displs = calloc(t->size, sizeof(int));
     alloc_print( sizeof(int)*t->size );
     int kx_count_i = t->kx_count;
     int kx_displ_i = t->kx_displ;

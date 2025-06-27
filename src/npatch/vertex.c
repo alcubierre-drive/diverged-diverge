@@ -72,7 +72,7 @@ void npatch_qvert_mat_eigen( npatch_qvert_mat_t* qvm, index_t nq, index_t nv, ch
         }
         mpi_vrb_printf("vertex to eigenbasis (nq=%lli, Nmax=%lli)…\n", nq, Nmax);
         complex128_t* vector = vhelper_q_vertex_matrices_to_buffer( qvm, nq, Nmax );
-        double* valueR = (double*)calloc(Nmax*nq,sizeof(double));
+        double* valueR = calloc(Nmax*nq,sizeof(double));
         batched_eigen_shut_up(1);
         batched_eigen_r( NULL, -1, vector, valueR, Nmax, nq );
         batched_eigen_shut_up(0);

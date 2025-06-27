@@ -86,7 +86,7 @@ static void vhelper_vertex_sort_in_q( complex128_t* vertex, qkkp_t* vindex, inde
     }
     free( vsort );
 
-    index_t* qcounts = (index_t*)calloc(np*np, sizeof(index_t));
+    index_t* qcounts = calloc(np*np, sizeof(index_t));
     qcounts[0] = 1;
     index_t nq = 0;
     for (index_t p3=1; p3<np3; ++p3) {
