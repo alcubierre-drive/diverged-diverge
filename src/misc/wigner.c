@@ -194,13 +194,16 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
 
 static void lattice_from_ibrav( int ibrav, const double celldm[6], double* lat );
 
-diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wigner_config_t* wc ) {
+diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wigner_config_t* wc_ ) {
+    const diverge_wigner_config_t wc_defaults = diverge_wigner_config_defaults;
+    const diverge_wigner_config_t* wc = wc_ ? wc_ : &wc_defaults;
+
     diverge_model_t* m = diverge_model_init();
     ifc_t* ifc = read_ifc_file( fname );
     if (!ifc) return NULL;
 
     if (ifc->ibrav) lattice_from_ibrav( ifc->ibrav, ifc->celldm, m->lattice[0] );
-    else            memcpy( m->lattice[0], ifc->lattice[0], sizeof m->lattice );
+    else            claM3d_rmap( claM3d_scale(claM3d_map(ifc->lattice[0]),ifc->celldm[0]), m->lattice[0] );
 
     m->n_orb = ifc->n_at * 3;
     m->n_spin = m->SU2 = 1;
@@ -232,17 +235,20 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
         for (index_t o2=0; o2<m->n_orb; ++o2) {
             double tmp = ifc->data[IDX3(qq, o1, o2, m->n_orb, m->n_orb)];
             index_t ndg = ws.ndegen[IDX3(n, o1/3, o2/3, ifc->n_at, ifc->n_at)];
+            if (!wc->apply_ndegen) ndg = 1;
             if (ndg) {
                 tmp /= (double)ndg;
                 VECTOR_PUSH_BACK( hop, (rs_hopping_t){ .R={R.v[0],R.v[1],R.v[2]},
-                        .o1=o2, .o2=o1, .t=tmp*POW2(Rydberg)/sqrt(masses[o1]*masses[o2]) } );
+                        .o1=o2, .o2=o1, .t=tmp*(wc->apply_rydberg ? POW2(Rydberg) : 1.0)/
+                        sqrt(wc->apply_massdiv ? masses[o1]*masses[o2] : 1.0) } );
             }
         }
     }
     wsdata_free( ws );
     ifc_free( ifc );
 
-    m->hop = hop = diverge_phonons_asr( hop, &hop_sz );
+    if (wc->apply_asr) hop = diverge_phonons_asr( hop, &hop_sz );
+    m->hop = hop;
     m->n_hop = hop_cap = hop_sz;
 
     return m;

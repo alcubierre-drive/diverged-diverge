@@ -23,12 +23,21 @@ typedef struct {
     double eps;
     /** dimension of the model, defaults to -1, i.e., automatic */
     int dim;
+    /** apply the acoustic sum rule */
+    int apply_asr;
+    /** apply supercell degeneracy map */
+    int apply_ndegen;
+    /** apply mass division */
+    int apply_massdiv;
+    /** apply energy rescale from rydberg to eV */
+    int apply_rydberg;
 } diverge_wigner_config_t;
 
 #ifndef __cplusplus
 /** defaults for :c:type:`diverge_wigner_config_t` */
 static const diverge_wigner_config_t diverge_wigner_config_defaults = {
-    .nsc = 2, .sgn = -1, .eps = 1.e-7, .dim = -1,
+    .nsc = 2, .sgn = -1, .eps = 1.e-7, .dim = -1, .apply_asr = 0,
+    .apply_ndegen = 1, .apply_massdiv = 1, .apply_rydberg = 1,
 };
 #endif
 /**
