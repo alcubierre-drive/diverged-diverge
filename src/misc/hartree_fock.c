@@ -124,7 +124,7 @@ void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* dest, c
         dest[IDX3(k,o,p, m->nb,m->nb)] = tmp;
     }
 
-    // and copy it over to the -Lambda GF
+    // and copy it over to the -Lambda GF (TODO: not needed?!)
     memcpy( dest + nk_nb2, dest, sizeof*dest * nk_nb2 );
 }
 
@@ -136,7 +136,9 @@ static greensfunc_op_t hf_data_gfill( const diverge_model_t* m, complex128_t Lam
 void diverge_hartree_fock_step( diverge_hartree_fock_t* m, double T ) {
     const index_t nk_nb2 = m->nk * POW2(m->nb);
     memcpy( m->internal_sigma, m->flow_step_sigma, sizeof*m->flow_step_sigma * nk_nb2 );
-    diverge_flow_step_euler( m->step, T, -1.0 );
+    // do a flow step by -M_PI (\dd\Lambda vs. 1/2\pi\int\dd\omega, the factor
+    // of two cancels due to the two GFs)
+    diverge_flow_step_euler( m->step, T, -M_PI );
     for (index_t i=0; i<nk_nb2; ++i) m->flow_step_sigma[i] -= m->internal_sigma[i];
 }
 
