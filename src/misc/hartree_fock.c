@@ -139,6 +139,8 @@ void diverge_hartree_fock_step( diverge_hartree_fock_t* m, double T ) {
     const index_t nk_nb2 = m->nk * POW2(m->nb);
     memcpy( m->internal_sigma, m->flow_step_sigma, sizeof*m->flow_step_sigma * nk_nb2 );
     diverge_flow_step_euler( m->step, T, -1.0 );
+
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<nk_nb2; ++i) m->flow_step_sigma[i] -= m->internal_sigma[i];
 }
 
