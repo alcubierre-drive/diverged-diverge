@@ -126,8 +126,7 @@ void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* 
 }
 
 void diverge_hamilton_generator_default(const diverge_model_t* model, complex128_t* buf) {
-    memset( (void*)buf, 0, sizeof(complex128_t)*
-            POW2(model->n_orb*model->n_spin)*kdimtot(model->nk, model->nkf) );
+    ZERO_OUT( buf, POW2(model->n_orb*model->n_spin)*kdimtot(model->nk, model->nkf) );
     diverge_hamilton_generator_add( model, buf );
 }
 
