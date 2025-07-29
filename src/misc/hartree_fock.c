@@ -9,6 +9,7 @@
 #include "../diverge_internals_struct.h"
 #include "../diverge_model_internals.h"
 #include "../diverge_hack.h"
+#include "../tu/diverge_interface.h"
 
 struct diverge_hartree_fock_t {
     double nu;
@@ -27,9 +28,8 @@ struct diverge_hartree_fock_t {
     diverge_flow_step_t* step;
 };
 
-static inline double fermi( double E, double T ) {
-    return 1./(exp(E/T) + 1.);
-}
+static inline double fermi( double E, double T ) { return 1./(exp(E/T) + 1.); }
+static inline double fermi_zero( double E ) { return E <= 0.0 ? 1.0 : 0.0; }
 MERGESORT_IMPL( dblsort, double )
 
 static greensfunc_op_t hf_data_gfill( const diverge_model_t* m, complex128_t Lambda, gf_complex_t* buf );
@@ -50,6 +50,13 @@ diverge_hartree_fock_t* diverge_hartree_fock_init( diverge_model_t* model, doubl
     m->buf = calloc( m->nk * POW2(m->nb), sizeof(complex128_t) );
 
     // we force the user to use these two
+    tu_data_t* tu = model->internals->tu_data;
+    if (tu) {
+        if (kdim(model->nkf) > 1 && !tu->GF_fft_coarsify)
+            mpi_wrn_printf( "consider enabling hack \"tu_GF_fft_coarsify\" for SCHF\n" );
+    } else {
+        mpi_err_printf( "need TU internals for Hartree-Fock\n" );
+    }
     diverge_model_hack( model, "tu_gf_skip_selfenergy", "1" );
     diverge_model_hack( model, "tu_selfenergy_flow", "1" );
 
@@ -113,7 +120,8 @@ void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* dest, c
 
     // calculate the Fermi function and put it into dbuf
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t i=0; i<m->nk*m->nb; ++i) dbuf[i] = fermi(m->E[i], cabs(Lambda));
+    for (index_t i=0; i<m->nk*m->nb; ++i)
+        dbuf[i] = cabs(Lambda)==0.0 ? fermi_zero(m->E[i]) : fermi(m->E[i], cabs(Lambda));
 
     // calculate the 'orbital space' Fermi function (code from default gfill)
     #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
@@ -126,7 +134,7 @@ void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* dest, c
         dest[IDX3(k,o,p, m->nb,m->nb)] = tmp;
     }
 
-    // and copy it over to the -Lambda GF
+    // and copy it over to the -Lambda GF (TODO: not needed?!)
     memcpy( dest + nk_nb2, dest, sizeof*dest * nk_nb2 );
 }
 
@@ -138,8 +146,9 @@ static greensfunc_op_t hf_data_gfill( const diverge_model_t* m, complex128_t Lam
 void diverge_hartree_fock_step( diverge_hartree_fock_t* m, double T ) {
     const index_t nk_nb2 = m->nk * POW2(m->nb);
     memcpy( m->internal_sigma, m->flow_step_sigma, sizeof*m->flow_step_sigma * nk_nb2 );
-    diverge_flow_step_euler( m->step, T, -1.0 );
-
+    // do a flow step by -M_PI (\dd\Lambda vs. 1/2\pi\int\dd\omega, the factor
+    // of two cancels due to the two GFs)
+    diverge_flow_step_euler( m->step, T, -M_PI );
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<nk_nb2; ++i) m->flow_step_sigma[i] -= m->internal_sigma[i];
 }
