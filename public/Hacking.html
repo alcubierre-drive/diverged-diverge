@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hacking &mdash; divERGe 0.8 documentation</title>
+  <title>Hacking &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -15,7 +15,7 @@
   
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=a0e24af7"></script>
+        <script src="_static/documentation_options.js?v=049aceee"></script>
         <script src="_static/doctools.js?v=9bcbadda"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -109,7 +109,7 @@
 <span id="id1"></span><h1>Hacking<a class="headerlink" href="#hacking" title="Link to this heading"></a></h1>
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_hack">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_hack</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">key</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">val</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_hack" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_hack.h#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_hack</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">key</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">val</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_hack" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_hack.h#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>enable unsupported features. depending on the key, different stages of
 initialization of the model are required.</p>
 <p><em>usage is discouraged but this function exists in order to have an easy way
@@ -119,7 +119,7 @@ look at the (cpp) source file to see what the available hacks actually do.</em><
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_print_hacks">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_print_hacks</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_print_hacks" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_hack.h#L20"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_print_hacks</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_print_hacks" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_hack.h#L20"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>print which keys are available</p>
 </dd></dl>
 
