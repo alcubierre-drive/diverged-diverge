@@ -67,4 +67,4 @@ differently licensed software ([OpenBLAS](https://www.openblas.net/),
 <!-- non-free parts ([CUDA](https://developer.nvidia.com/cuda-toolkit)) and -->
 
 # Authors
-**Jonas B. Profe** and **Lennart Klebl**, 2024.
+**Jonas B. Profe** and **Lennart Klebl**, 2025.
