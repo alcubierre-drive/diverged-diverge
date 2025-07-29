@@ -3,19 +3,20 @@
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
-#include "../../src/tu/diverge_interface.hpp"
+#include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
-#include "../../src/tu/global.hpp"
-#include "../../src/tu/propagator.hpp"
+#include "../../src/tu/propagator.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
-#include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
-#include "../../src/tu/projection_handler.hpp"
-#include "../../src/tu/selfenergy.hpp"
+#include "../../src/diverge_flow_step_internal.h"
+#include "../../src/tu/vertex_details.h"
+#include "../../src/tu/projection.h"
+#include "../../src/tu/projection_handler.h"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
+
+#include <vector>
+using std::vector;
 
 diverge_model_t* RPA_model(int n_spin, int kx = 1, int kxf = 1) {
     diverge_model_t* mod1 = diverge_model_init();
@@ -72,34 +73,33 @@ diverge_model_t* RPA_model(int n_spin, int kx = 1, int kxf = 1) {
 }
 
 TEST_CASE("P flow","[RPA]") {
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod1 = RPA_model(1,10,5);
     diverge_model_t* mod2 = RPA_model(1,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
     diverge_model_internals_tu( mod2, 1.01 );
     diverge_flow_step_t* s1 = diverge_flow_step_init( mod1, "tu", "PCD" );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "P" );
-    Vertex* v1 = s1->tu_vertex;
-    Vertex* v2 = s2->tu_vertex;
-    Vertex* v3 = s1->tu_step->internal_vertex;
+    tu_vertex_t* v1 = s1->tu_vertex;
+    tu_vertex_t* v2 = s2->tu_vertex;
+    tu_vertex_t* v3 = tu_stepper_internal_vertex(s1->tu_step);
     P_projection(v1->projection_helper,v1,s1->tu_proj);
     CHECK(check_equal(v1->projection_helper,v2->Pch,v1->full_vert_size));
 
     double Lambda = 1.0;
     double dLambda = -0.1;
     diverge_flow_step_euler( s2, Lambda, dLambda );
-    
-    s1->tu_loop->GF_zero_T(Lambda*I128);
+
+    tu_prop_GF_zero_T( s1->tu_loop, Lambda*I128, NULL );
     P_projection(v1->projection_helper, v1, s1->tu_proj);
-    s1->tu_loop->pp_loop(v3->pp_bubble_int,v3->bubble_helper);
-    vertex_product(v3->Pch, v1->projection_helper,
-                v3->pp_bubble_int,v1->product_helper,
-                v3->GPU_gemm_buffer,v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0);
-    mfill(v3->Cch,v3->full_vert_size,0.0);
-    mfill(v3->Dch,v3->full_vert_size,0.0);
-    add(*v1,*v3, dLambda);
+    tu_prop_pp_loop( s1->tu_loop, v3->pp_bubble_int, v3->bubble_helper);
+    tu_vertex_product(v3->Pch, v1->projection_helper, v3->pp_bubble_int,v1->product_helper,
+                v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0,true,v3->GPU_gemm_buffer);
+    ZERO_OUT(v3->Cch,v3->full_vert_size);
+    ZERO_OUT(v3->Dch,v3->full_vert_size);
+    tu_vertex_add(v1,v3, dLambda);
     P_projection(v1->projection_helper, v1, s1->tu_proj);
-    
+
     CHECK(check_equal(v1->projection_helper,v2->Pch,v1->full_vert_size));
     CHECK(check_equal(v1->pp_bubble_int,v2->pp_bubble_int,v1->full_vert_size));
     diverge_flow_step_free( s1 );
@@ -108,32 +108,31 @@ TEST_CASE("P flow","[RPA]") {
     diverge_model_free( mod2 );
 }
 TEST_CASE("C flow","[RPA]") {
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod1 = RPA_model(1,10,5);
     diverge_model_t* mod2 = RPA_model(1,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
     diverge_model_internals_tu( mod2, 1.01 );
     diverge_flow_step_t* s1 = diverge_flow_step_init( mod1, "tu", "PCD" );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "C" );
-    Vertex* v1 = s1->tu_vertex;
-    Vertex* v2 = s2->tu_vertex;
-    Vertex* v3 = s1->tu_step->internal_vertex;
+    tu_vertex_t* v1 = s1->tu_vertex;
+    tu_vertex_t* v2 = s2->tu_vertex;
+    tu_vertex_t* v3 = tu_stepper_internal_vertex(s1->tu_step);
     C_projection(v1->projection_helper,v1,s1->tu_proj);
     CHECK(check_equal(v1->projection_helper,v2->Cch,v1->full_vert_size));
 
     double Lambda = 1.0;
     double dLambda = -0.1;
     diverge_flow_step_euler( s2, Lambda, dLambda );
-    
-    s1->tu_loop->GF_zero_T(Lambda*I128);
+
+    tu_prop_GF_zero_T(s1->tu_loop, Lambda*I128, NULL);
     C_projection(v1->projection_helper, v1, s1->tu_proj);
-    s1->tu_loop->ph_loop(v3->ph_bubble_int,v3->bubble_helper);
-    vertex_product(v3->Cch, v1->projection_helper,
-                v3->ph_bubble_int,v1->product_helper,
-                v3->GPU_gemm_buffer,v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0);
-    mfill(v3->Pch,v3->full_vert_size,0.0);
-    mfill(v3->Dch,v3->full_vert_size,0.0);
-    add(*v1,*v3, dLambda);    
+    tu_prop_ph_loop( s1->tu_loop, v3->ph_bubble_int, v3->bubble_helper);
+    tu_vertex_product(v3->Cch, v1->projection_helper, v3->ph_bubble_int,v1->product_helper,
+                v1->n_orbff*POW2(v1->n_spin),v1->my_nk,-1.0, true, v3->GPU_gemm_buffer);
+    ZERO_OUT(v3->Pch,v3->full_vert_size);
+    ZERO_OUT(v3->Dch,v3->full_vert_size);
+    tu_vertex_add(v1,v3, dLambda);
     C_projection(v1->projection_helper,v1,s1->tu_proj);
     CHECK(check_equal(v1->projection_helper,v2->Cch,v1->full_vert_size));
     CHECK(check_equal(v1->ph_bubble_int,v2->ph_bubble_int,v1->full_vert_size));

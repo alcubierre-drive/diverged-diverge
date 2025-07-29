@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -19,12 +19,7 @@ typedef struct diverge_model_t diverge_model_t;
  * * sets the number of spins (:c:member:`diverge_model_t.n_spin`)
  * * sets the real space lattice (:c:member:`diverge_model_t.lattice`)
  *   and positions (:c:member:`diverge_model_t.positions`)
- * * returns NULL on errors / if FPLO reader not compiled in
- *
- * .. note::
- *  This function is not compiled into the library by default. Enable
- *  compilation of the FPLO reader by passing the ``USE_FPLO_READER`` flag in
- *  the :ref:`Compilation` process (see :ref:`Compilation DEFINES`).
+ * * returns NULL on errors
  */
 diverge_model_t* diverge_read_fplo( const char* fname );
 

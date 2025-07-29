@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -18,6 +18,14 @@ extern "C" {
  * and free'd with :c:func:`diverge_flow_step_free`.
  */
 typedef struct diverge_flow_step_t diverge_flow_step_t;
+
+/** flow step timings given by :c:func:`diverge_flow_step_timings` */
+typedef struct {
+    /** time in seconds */
+    double t;
+    /** name given for this timing */
+    char nam[56];
+} diverge_timing_t;
 
 /**
  * internals of the ``model`` must be set up at the time of calling this
@@ -41,6 +49,15 @@ diverge_flow_type diverge_flow_step_type( const diverge_flow_step_t* st );
 void diverge_flow_step_get_channels( const diverge_flow_step_t* st, int chans[4] );
 
 /**
+ * Allows for a selective turning off of the feedback in between the channels,
+ * before or at any point during the flow. The format of the Feedback char is
+ * "C|D|CP" which means that in the P channel only the C channel, in the C
+ * channel only the D channel and in the D channel both of the other channels
+ * are included. The separators "|" are reqired!
+ */
+void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* feedback );
+
+/**
  * initialize the flow step instance from a model instance that has its
  * internals set to one method. Everything else works as in
  * :c:func:`diverge_flow_step_init`.
@@ -53,20 +70,48 @@ void diverge_flow_step_vertmax( diverge_flow_step_t* st, double vertmax[1] );
 void diverge_flow_step_loopmax( diverge_flow_step_t* st, double loopmax[2] );
 /** outputs the maximum channel vertex elements in ``chanmax`` */
 void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
+/**
+ * outputs the maximum channel singular value given a channel in ``chan``. If
+ * ``piter != 0``, calculate the leading eigenvalue using power iteration,
+ * otherwise use :c:func:`batched_svd`. For how the channels are defined, see
+ * :c:func:`diverge_flow_step_vertex`.
+ */
+double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter );
 
 /** Do an euler step starting at :math:`\Lambda` ending at :math:`\Lambda+d_\Lambda` */
 void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLambda );
 
 /** return the number of iterations carried out by the :c:type:`diverge_flow_step_t` */
 index_t diverge_flow_step_niter( diverge_flow_step_t* st );
+
 /** return the length of the timing list attached to :c:type:`diverge_flow_step_t` */
 index_t diverge_flow_step_ntimings( diverge_flow_step_t* st );
-/** return the timing list element at ``idx`` attached to :c:type:`diverge_flow_step_t` */
-double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx );
-/** return the timing list element name at ``idx`` attached to :c:type:`diverge_flow_step_t` */
-const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx );
+/**
+ * return timing vector (type :c:struct:`diverge_timing_t`, length given by
+ * :c:func:`diverge_flow_step_ntimings`) taken during the flow
+ */
+diverge_timing_t* diverge_flow_step_timings( diverge_flow_step_t* st );
 
 /**
+ * .. deprecated:: 0.9
+ *   use :c:func:`diverge_flow_step_timings` instead.
+ *
+ * return the timing list element at ``idx`` attached to
+ * :c:type:`diverge_flow_step_t`
+ */
+double diverge_flow_step_timing( diverge_flow_step_t* st, index_t idx );
+/**
+ * .. deprecated:: 0.9
+ *   use :c:func:`diverge_flow_step_timings` instead.
+ *
+ * the timing list element name at ``idx`` attached to
+ * :c:type:`diverge_flow_step_t`
+ */
+const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx );
+/**
+ * .. deprecated:: 0.9
+ *   use :c:func:`diverge_flow_step_timings` instead.
+ *
  * returns all timings as static vector (that must not be freed), maximal size
  * 128. last element [128] is zerod.
  *
@@ -74,6 +119,9 @@ const char* diverge_flow_step_timing_descr( diverge_flow_step_t* st, index_t idx
  */
 double* diverge_flow_step_timing_vec( diverge_flow_step_t* st );
 /**
+ * .. deprecated:: 0.9
+ *   use :c:func:`diverge_flow_step_timings` instead.
+ *
  * returns all timing descriptions as static vector (that must not be freed),
  * maximal size 128. last element [128] is zerod.
  *
@@ -127,12 +175,13 @@ typedef struct {
  *
  * :TUFRG: chan can be 'P', 'C', or 'D', both upper and lower case. For TUFRG,
  *         the case determines whether the vertex is just the channel (upper
- *         case) or the full vertex projected to the respective channel (lower
- *         case). The actual channel specific vertex object is returned, ordered
- *         as (q, s4,s3,ob2, s2,s1,ob1). Note that q is symmetry reduced as well
- *         as MPI distributed. Additionally, chan can be 'S' to yield the
- *         self-energy on the fine mesh (if used). Then, n_orbff contains the
- *         number of orbitals and nk the number of total (refined * coarse)
+ *         case), the full vertex projected to the respective channel (lower
+ *         case), or a physical channel (su'p'erconducting, 'm'agnetic,
+ *         c'h'arge). The actual channel specific vertex object is returned,
+ *         ordered as (q, s4,s3,ob2, s2,s1,ob1). Note that q is symmetry reduced
+ *         as well as MPI distributed. Additionally, chan can be 'S' to yield
+ *         the self-energy on the fine mesh (if used). Then, n_orbff contains
+ *         the number of orbitals and nk the number of total (refined * coarse)
  *         kpts.
  * :grid FRG: chan can be 'P', 'C', 'D', or 'V', both upper and lower case. In
  *            general, lower case references the differential vertex and upper

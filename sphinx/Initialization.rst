@@ -1,5 +1,5 @@
-Initialization
-==============
+Initialization & Miscellaneous Functions
+========================================
 
 To intialize the library, a call to :c:func:`diverge_init` is required.
 Correspondingly, the divERGe context must be cleaned up by calling
@@ -14,4 +14,6 @@ Correspondingly, the divERGe context must be cleaned up by calling
    Logging
    Datatypes
    Shared Memory
-
+   IEEE 754 Quiet NaN
+   Bit Arrays
+   Linear Algebra

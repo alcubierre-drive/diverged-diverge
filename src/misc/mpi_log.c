@@ -1,7 +1,9 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "mpi_log.h"
-#include "mpi_functions.h" // diverge_mpi_comm_rank()
+#include "mpi_functions.h"
+#include "init_internal_libs.h"
+#include "../diverge_internals_struct.h" // strdup_div
 #include <stdarg.h>
 
 #ifndef DIVERGE_LOG_PREFIX
@@ -18,6 +20,11 @@
 static int h_diverge_mpi_loglevel = 4;
 static int h_diverge_log_colors = 1;
 static mpi_log_control_t h_diverge_log_ctl = mpi_log_control_standard;
+
+static inline int zero_rank_or_no_init( void ) {
+    if (!diverge_has_init_internal_libs()) return 1;
+    return (diverge_mpi_comm_rank() == 0);
+}
 
 void mpi_log_control( mpi_log_control_t ctl ) {
     #pragma omp critical
@@ -53,7 +60,7 @@ static FILE* h_mpi_log_stderr( void ) {
 void mpi_printf( const char* fmt, ... ) {
     va_list ap;
     va_start( ap, fmt );
-    if (diverge_mpi_comm_rank() == 0)
+    if (zero_rank_or_no_init())
         vfprintf( h_mpi_log_stdout(), fmt, ap );
     va_end( ap );
 }
@@ -61,21 +68,20 @@ void mpi_printf( const char* fmt, ... ) {
 void mpi_eprintf( const char* fmt, ... ) {
     va_list ap;
     va_start(ap, fmt);
-    if (diverge_mpi_comm_rank() == 0)
+    if (zero_rank_or_no_init())
         vfprintf( h_mpi_log_stderr(), fmt, ap );
     va_end(ap);
 }
 
 static void mpi_veprintf( const char* fmt, va_list ap ) {
-    if (diverge_mpi_comm_rank() == 0) {
+    if (zero_rank_or_no_init())
         vfprintf( h_mpi_log_stderr(), fmt, ap );
-    }
 }
 
 void mpi_fprintf( FILE* file, const char* fmt, ... ) {
     va_list ap;
     va_start(ap, fmt);
-    if (diverge_mpi_comm_rank() == 0)
+    if (zero_rank_or_no_init())
         vfprintf( file, fmt, ap );
     va_end(ap);
 }
@@ -211,6 +217,10 @@ static const char* h_log_color( const char* descr ) {
 
 void mpi_loglevel_set( int loglevel ) {
     h_diverge_mpi_loglevel = loglevel;
+}
+
+int mpi_loglevel_get( void ) {
+    return h_diverge_mpi_loglevel;
 }
 
 void mpi_log_set_colors( int colors ) {
@@ -359,6 +369,11 @@ void mpi_dbg_printf_all( const char* logname, int loglevel, const char* fname, i
 
     if (h_diverge_mpi_loglevel < loglevel) return;
 
+    if (!diverge_has_init_internal_libs()) {
+        fprintf(h_mpi_log_stderr(), "%s", buf);
+        return;
+    }
+
     char** strings = mpi_string_gather( buf );
     if (diverge_mpi_comm_rank() == 0) {
         for (char** pstr = strings; *pstr; ++pstr) {
@@ -371,8 +386,14 @@ void mpi_dbg_printf_all( const char* logname, int loglevel, const char* fname, i
 }
 
 void mpi_py_print_all( const char* str ) {
-    char** strl = mpi_string_gather( str );
-    if (diverge_mpi_comm_rank() != 0) return;
+    char** strl = NULL;
+    if (!diverge_has_init_internal_libs()) {
+        strl = calloc(2, sizeof*strl);
+        *strl = strdup_div(str);
+    } else {
+        strl = mpi_string_gather( str );
+        if (diverge_mpi_comm_rank() != 0) return;
+    }
     for (char** pstrl = strl; *pstrl; ++pstrl) {
         fprintf( h_mpi_log_stdout(), "%s[%s%s%s] ", h_log_color( "user" ),
                  DIVERGE_LOG_PREFIX, DIVERGE_LOG_PREFIX_DIV, py_lg_name );
@@ -385,8 +406,14 @@ void mpi_py_print_all( const char* str ) {
 }
 
 void mpi_py_eprint_all( const char* str ) {
-    char** strl = mpi_string_gather( str );
-    if (diverge_mpi_comm_rank() != 0) return;
+    char** strl = NULL;
+    if (!diverge_has_init_internal_libs()) {
+        strl = calloc(2, sizeof*strl);
+        *strl = strdup_div(str);
+    } else {
+        strl = mpi_string_gather( str );
+        if (diverge_mpi_comm_rank() != 0) return;
+    }
     for (char** pstrl = strl; *pstrl; ++pstrl) {
         fprintf( h_mpi_log_stderr(), "%s[%s%s%s] ", h_log_color( "user" ),
              DIVERGE_LOG_PREFIX, DIVERGE_LOG_PREFIX_DIV, py_lg_name );

@@ -29,3 +29,5 @@ the following environment variables:
         function called upon symmetry map creation.
     :``DIVERGE_TU_SYMCHECK_MPI``: same as ``DIVERGE_SYMCHECK_MPI`` but for TUFRG
         specific data structures.
+    :``DIVERGE_BATCHED_EIGEN3``: enforce the batched eigensolver on CPU compiled
+        with Eigen3 even if CUDA is compiled in

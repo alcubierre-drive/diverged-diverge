@@ -3,4 +3,4 @@
 Supercells
 ==========
 
-.. c:autodoc:: misc/hoppings_to_supercell.h
+.. c:autodoc:: misc/supercells.h

@@ -3,20 +3,23 @@
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
+#include "../../src/diverge_flow_step_internal.h"
 #include "../../src/diverge_patching.h"
 #include "../../src/diverge_model_internals.h"
 #include "../../src/diverge_model_output.h"
+#include "../../src/diverge_symmetrize.h"
 
-#include "../../src/grid/vertex_memory.hpp"
+#include "../../src/grid/vertex_memory.h"
 
-#include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
-#include "../../src/tu/flow_stepper.hpp"
+#include "../../src/tu/vertex_details.h"
+#include "../../src/tu/projection.h"
 #include "../../src/npatch/symmetrize_vertex.h"
 
 #include "../model_examples/model_constructor.hpp"
+
 #include <sys/stat.h>
+#include <vector>
+using std::vector;
 
 #ifndef BHK_NK
 #define BHK_NK 4
@@ -186,9 +189,9 @@ static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
 
     switch (bhk_mode) {
         case bhk_mode_tu:
-            step->tu_vertex->project_fullV(mod,vertex); break;
+            tu_vertex_project_fullV( step->tu_vertex, mod, vertex ); break;
         case bhk_mode_grid:
-            ((grid::VertexMemory*)step->intls->grid_vertex)->get_vertex( vertex, 'V' ); break;
+            grid_vertex_get_chan_allranks( (grid_vertex_t*)step->intls->grid_vertex, vertex, 'V' ); break;
         case bhk_mode_patch:
             memcpy( vertex, diverge_flow_step_vertex( step, 'V' ).ary, sizeof(complex128_t)*fsize ); break;
         default: break;

@@ -3,14 +3,14 @@
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
+#include "../../src/diverge_flow_step_internal.h"
 #include "../model_examples/old.h"
 #include "../../src/diverge_model_internals.h"
 #include "../model_examples/model_constructor.hpp"
-#include "../../src/tu/propagator.hpp"
-#include "../../src/grid/loops.hpp"
-#include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
+#include "../../src/tu/propagator.h"
+#include "../../src/grid/loops.h"
+#include "../../src/tu/vertex.h"
+#include "../../src/tu/projection.h"
 #include "../helper_functions.hpp"
 
 void unproject_loop(complex128_t* buf,complex128_t* loop,const diverge_model_t* model) {
@@ -73,16 +73,16 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     complex128_t* Lreco = (complex128_t*)calloc(fsize,sizeof(complex128_t));
     complex128_t* Lrecog = (complex128_t*)calloc(fsize,sizeof(complex128_t));
 
-    tu_loop_t tu_loop(mod_tu);
-    Projection ProjMom (mod_tu);
-    Vertex VertMom(mod_tu, &ProjMom, &tu_loop);
-    
-    grid::Loops grid_loop (mod_grid);
-    tu_loop.GF_zero_T(I128*0.1);
-    tu_loop.ph_loop(Ltu);
-    Lgrid = grid_loop.X_C(0.1);
+    tu_prop_t* tu_loop = tu_prop_init(mod_tu);
+    tu_projection_t* ProjMom = tu_projection_init(mod_tu);
+    tu_vertex_t* VertMom = tu_vertex_init(mod_tu, ProjMom, tu_loop, 1,1,1,0);
+
+    grid_loop_t* grid_loop = grid_loop_init(mod_grid);
+    tu_prop_GF_zero_T( tu_loop, I128*0.1, NULL );
+    tu_prop_ph_loop( tu_loop, Ltu, NULL );
+    Lgrid = grid_loop_calc( grid_loop, 'C', 0.1 );
     memset((void*)Lrecog,0,fsize*sizeof(complex128_t));
-    memcpy(Lrecog + grid_loop.get_qstart()*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop.get_qsize()*nk*sizeof(complex128_t));
+    memcpy(Lrecog + grid_loop->qstart*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop->qsize*nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(Lrecog, fsize);
     unproject_loop(Lreco,Ltu,mod_tu);
     CHECK(check_hermicity(Ltu, n_spin*n_spin*n_orbff,nk));
@@ -97,10 +97,10 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     }
 
 
-    tu_loop.pp_loop(Ltu);
-    Lgrid = grid_loop.X_P(0.1);
+    tu_prop_pp_loop( tu_loop, Ltu, NULL );
+    Lgrid = grid_loop_calc( grid_loop, 'P', 0.1 );
     memset((void*)Lrecog,0,fsize*sizeof(complex128_t));
-    memcpy(Lrecog + grid_loop.get_qstart()*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop.get_qsize()*nk*sizeof(complex128_t));
+    memcpy(Lrecog + grid_loop->qstart*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop->qsize*nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(Lrecog, fsize);
     unproject_loop(Lreco,Ltu,mod_tu);
     CHECK(check_hermicity(Ltu, n_spin*n_spin*n_orbff,nk));
@@ -113,9 +113,14 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     for(index_t i = 0; i < fsize;++i) {
         CHECK(std::abs(std::abs(Lrecog[i])-std::abs(Lreco[i])) < 1e-10);
     }
+
+    free(grid_loop);
     free(Ltu);
     free(Lrecog);
     free(Lreco);
+    tu_vertex_free(VertMom);
+    tu_prop_free(tu_loop);
+    tu_projection_free(ProjMom);
     diverge_model_free(mod_tu);
     diverge_model_free(mod_grid);
 }

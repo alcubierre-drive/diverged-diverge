@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -49,7 +49,7 @@ struct internals_t {
     // src/diverge_model_internals_patch.c
 
     // grid internals
-    index_t grid_nk, grid_nkf, grid_nb, grid_kfzero;
+    index_t grid_nk, grid_nkf, grid_nb;
     index_t *grid_kfmesh, // grid_nk * grid_nkf
             *grid_kfrev, // grid_nkf
             *grid_k1m2, *grid_k1p2; // grid_nk * grid_nk
@@ -58,8 +58,6 @@ struct internals_t {
 
     void* grid_vertex;
     internals_destructor_t grid_vertex_destructor;
-    void* grid_sym;
-    internals_destructor_t grid_sym_destructor;
 
     // patch internals
     void* patch_vertex;
@@ -77,6 +75,9 @@ struct internals_t {
     void* tu_data;
     internals_destructor_t tu_data_destructor;
     int tu_symcheck_mpi;
+
+    // hartree fock internals
+    void* hf_data;
 
     // symmetry internals for two point functions
     index_t* symm_map_mom_fine;
@@ -136,6 +137,13 @@ static inline index_t kdim( const index_t nk[3] ) {
 
 static inline index_t kdimtot( const index_t nk[3], const index_t nkf[3] ) {
     return kdim(nk) * kdim(nkf);
+}
+
+static inline void unravel( index_t idx, const index_t* dim, index_t ndim, index_t* out ) {
+    for (index_t i=ndim-1; i>=0; i--) {
+        out[i] = idx % dim[i];
+        idx /= dim[i];
+    }
 }
 
 static inline char* strdup_div( const char* str ) {

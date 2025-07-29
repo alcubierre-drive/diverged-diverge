@@ -1,19 +1,20 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
 #include "../diverge_common.h"
 
 #ifdef __cplusplus
-
-#include <vector>
-using std::vector;
-
 extern "C" {
 #endif
 
 // forward declaration
 typedef struct rs_hopping_t rs_hopping_t;
+typedef struct diverge_model_t diverge_model_t;
+
+#ifndef DIVERGE_W90_READER_SWAP_ORBITALS
+#define DIVERGE_W90_READER_SWAP_ORBITALS -2
+#endif
 
 /**
  * reads Wannier90's \*_hr.dat file into divERGe's :c:struct:`rs_hopping_t` data
@@ -33,9 +34,16 @@ typedef struct rs_hopping_t rs_hopping_t;
  * :param index_t* len: output for the number of hoppings that have been read.
  * :param index_t* n_orb: output for the maximum number of orbitals that were
  *                        found in the hr.dat file. not considered if NULL. In
- *                        case ``n_orb != NULL`` and ``~(*n_orb) == 0``, swap
- *                        the orbital indices. Seems to be needed for standard
- *                        W90 ordering.
+ *                        case ``n_orb != NULL`` and ``*n_orb ==
+ *                        DIVERGE_W90_READER_SWAP_ORBITALS``, swap the orbital
+ *                        indices.
+ *
+ * .. note:: In previous versions, setting ``~(*n_orb) == 0`` would swap the
+ *           orbital ordering. Since we recently changed the *default* ordering
+ *           of o1/o2 for the W90 reader, the magic number to get swapped
+ *           ordering changed. In this way, previous codes that explicitly
+ *           swapped the ordering are still correct. If you provide ``~(*n_orb)
+ *           == 0``, a corresponding deprecation warning is issued.
  *
  * Example:
  *
@@ -51,21 +59,33 @@ typedef struct rs_hopping_t rs_hopping_t;
  */
 rs_hopping_t* diverge_read_W90_C( const char* fname, index_t n_spin, index_t* len, index_t* n_orb );
 
-#ifdef __cplusplus
-} // extern "C"
-
-/** alias of std::vector<:c:struct:`rs_hopping_t`> */
-typedef vector<rs_hopping_t> vector_rs_hopping_t;
+/**
+ * We do not support the C++ interface any longer. Instead, this function just
+ * calls :c:func:`diverge_read_W90_C`.
+ */
+rs_hopping_t* diverge_read_W90( const char* fname, index_t n_spin, index_t* len, index_t* n_orb );
 
 /**
- * .. sourcecode:: C++
+ * read the lattice vectors and Wannier centers from a .wout file
  *
- *  vector<rs_hopping_t> diverge_read_W90( const char* fname,
- *      index_t n_spin, index_t* n_orb );
+ * :param const char* fname: ``prefix.wout`` filename
+ * :param double* lattice: array of shape (3,3) that the lattice vectors are
+ *      stored into
+ * :param index_t* n_wan: pointer to an :c:type:`index_t` where the number of
+ *      WFs is stored on exit
  *
- * C++ function corresponding to :c:func:`diverge_read_W90_C` that facilitates
- * the usage by returning an std::vector<:c:struct:`rs_hopping_t`> instead of messing
- * with pointers.
+ * :returns: array of shape ``(*n_wan,3)`` with the Wannier centers. This array
+ *      must be free'd by the user (call to ``free`` or
+ *      :c:func:`diverge_mem_free`)
  */
-vector_rs_hopping_t diverge_read_W90( const char* fname, index_t n_spin, index_t* n_orb );
+double* diverge_read_wout( const char* fname, double* lattice, index_t* n_wan );
+
+/**
+ * convenience combination of :c:func:`diverge_read_W90` and
+ * :c:func:`diverge_read_wout` to directly yield a :c:type:`diverge_model_t`.
+ */
+diverge_model_t* diverge_read_W90_model( const char* hr_dat, const char* wout, index_t n_spin );
+
+#ifdef __cplusplus
+}
 #endif

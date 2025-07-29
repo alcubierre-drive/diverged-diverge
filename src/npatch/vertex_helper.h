@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -27,17 +27,9 @@ void vhelper_vertex_in_q_channel( const npatch_vertex_t* vert,
 // maximum np**2 entries
 // pnq: size of the array returned in pqcounts
 
-index_t* vhelper_qkkp_to_ary( const qkkp_t* q, index_t nq );
-// output is allocated and needs to be freed by the user.
-// returns the (nq,3) array of (q,k,k') for each entry in the qkkp_t* q array
-
 npatch_qvert_mat_t* vhelper_q_vertex_matrix_from_vertex(
         const complex128_t* q_vertex, const qkkp_t* q_vindex,
         const index_t* q_counts, index_t nq, index_t nb );
-
-// helper function written in c++
-void vhelper_vertex_sort_in_q( complex128_t* vertex, qkkp_t* vindex, index_t np,
-        index_t nb, index_t** pqcounts, index_t* pnq );
 
 // allocates a buffer of size Nmax*Nmax*nq and fills it with the matrices
 // extended by zeros as needed, so to prepare for the batched GEMM

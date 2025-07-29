@@ -3,11 +3,13 @@
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
-#include "../model_examples/old.h"
 #include "../../src/diverge_model_internals.h"
+#include "../../src/misc/mpi_functions.h"
+#include "../../src/tu/vertex.h"
+#include "../../src/tu/cuda_init.h"
+#include "../model_examples/old.h"
 #include "../model_examples/model_constructor.hpp"
-#include "../../src/tu/flow_stepper.hpp"
+
 #include <random>
 
 TEST_CASE("vert_prod", "[vprod]") {
@@ -45,7 +47,7 @@ TEST_CASE("vert_prod", "[vprod]") {
     }
     #endif
 
-    vertex_product(r1,B,C,help,buf,N,b,1.0);
+    tu_vertex_product(r1,B,C,help,N,b,1.0,true,buf);
     #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
     for(index_t k = 0; k<b;++k)
     for(index_t o1 = 0; o1<N;++o1)

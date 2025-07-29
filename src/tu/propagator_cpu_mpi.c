@@ -1,5 +1,6 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#include "propagator_details.h"
 #include "propagator_cpu_mpi.h"
 #include <omp.h>
 #include "../diverge_model.h"
@@ -8,9 +9,6 @@
 
 // global var
 unsigned propagator_cpu_mpi_planning_patience = FFTW_MEASURE;
-
-// this function resides in propagator.cpp
-void tu_loop_reconstruct_from_reduced( void* handle, complex128_t* loop );
 
 #if defined(USE_MPI) && defined(USE_MPI_FFTW)
 
@@ -47,12 +45,6 @@ static GF_FFTW(plan) GF_plan_transpose( int rows, int cols, gf_complex_t* in_out
             propagator_cpu_mpi_planning_patience );
 }
 
-
-static inline void scale_loop(complex128_t* loop, double pref, index_t len) {
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t idx = 0; idx<len; ++idx)
-        loop[idx] *= pref;
-}
 
 static inline int find_rank( const tu_mpi_loop_t* t, index_t k ) {
     for (int r=0; r<t->size; ++r)
@@ -500,7 +492,7 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
 
     tick = tock;
     if (rescale) {
-        if (!simple) tu_loop_reconstruct_from_reduced( t->tu_loop_handle, loop );
+        if (!simple) reconstruct_from_reduced( t->tu_loop_handle, loop );
         scale_loop(loop, prefac, t->my_nk*POW4(t->n_spin)*POW2(t->n_orbff));
     }
     free(stack);

@@ -3,18 +3,15 @@
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
+#include "../../src/diverge_flow_step_internal.h"
 #include "../../src/diverge_patching.h"
 #include "../../src/diverge_model_internals.h"
 #include "../../src/diverge_model_output.h"
 
-#include "../../src/grid/vertex_memory.hpp"
-
-#include "../../src/tu/diverge_interface.hpp"
-#include "../../src/tu/diverge_interface_symmstruct.hpp"
-#include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
-#include "../../src/tu/flow_stepper.hpp"
+#include "../../src/tu/diverge_interface.h"
+#include "../../src/tu/diverge_interface_symmstruct.h"
+#include "../../src/tu/vertex_details.h"
+#include "../../src/tu/projection.h"
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/diverge_symmetrize.h"
 
@@ -59,19 +56,22 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
     mod1->data = (char*)hbuf;
 
     complex128_t* buf = (complex128_t*) calloc( size, sizeof(complex128_t) );
-    step1->tu_vertex->project_fullV(mod1, hbuf);
+    tu_vertex_project_fullV( step1->tu_vertex, mod1, hbuf );
 
     mod1->ffill = &full_vertex;
-    Projection proj (mod1);
-    tu_loop_t loop (mod1);
-    Vertex v2(mod1, &proj,&loop);
-    v2.project_fullV(mod1, buf);
+    tu_projection_t* proj = tu_projection_init(mod1);
+    tu_prop_t* loop = tu_prop_init(mod1);
+    tu_vertex_t* v2 = tu_vertex_init(mod1, proj, loop, 1,1,1, 0);
+    tu_vertex_project_fullV( v2, mod1, buf );
     CHECK(check_equal(buf,hbuf,size));
 
+    tu_vertex_free( v2 );
+    tu_prop_free( loop );
     free(buf);
     free(hbuf);
     mod1->data = NULL;
     diverge_flow_step_free(step1);
+    tu_projection_free( proj );
     diverge_model_free( mod1 );
 }
 

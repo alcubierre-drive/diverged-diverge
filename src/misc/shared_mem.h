@@ -1,16 +1,17 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
 #ifdef __cplusplus
 extern "C" {
+#else
+#include <stddef.h>
 #endif
 
 /**
  * Memory that is shared among all ranks on a single node. Must be enabled with
  * the compilation flags -DUSE_MPI and -DUSE_SHARED_MEM (see :ref:`Compilation`).
- * reasonably recent linux kernel + headers required (memfd); as well as the
- * uthash.h library somewhere in your CPATH.
+ * reasonably recent linux kernel + headers required (memfd).
  *
  * There are three backends for shared memory (swapped through :ref:`Compilation
  * DEFINES`):
@@ -31,13 +32,13 @@ void shared_malloc_finalize( void );
  * allocate rank shared memory on a single node. signature equivalent to
  * stdlib's malloc
  */
-void* shared_malloc( long long sz );
+void* shared_malloc( size_t sz );
 
 /**
  * same as :c:func:`shared_malloc` but zero out the memory. signature equivalent
  * to stdlib's calloc
  */
-void* shared_calloc( long long cnt, long long sz );
+void* shared_calloc( size_t cnt, size_t sz );
 
 /**
  * free memory allocated with :c:func:`shared_malloc` or
@@ -54,6 +55,13 @@ void shared_free( void* ptr );
  *    // do something exclusively
  *  }
  *  shared_exclusive_wait(ptr);
+ *
+ * .. note::
+ *  When using the MPI implementation of shared memory
+ *  (``SHARED_MEM_MPI_IMPL``), entering *multiple* exclusive regions at the same
+ *  time does not work due to synchronization issues. Therefore,
+ *  :c:func:`shared_exclusive_wait` includes a call to
+ *  :c:func:`shared_malloc_barrier`.
  */
 int shared_exclusive_enter( void* ptr );
 

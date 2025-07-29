@@ -1,20 +1,13 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
 #include "diverge_common.h"
 
 #ifdef __cplusplus
-inline double cabs( complex128_t x ) {
-    return std::abs(*(complex128_t*)&x);
-}
+inline double cabs( complex128_t x ) { return std::abs(x); }
 extern "C" {
 #endif
-
-typedef union {
-    complex128_t k;
-    double kr[3];
-} kpoint_union_t;
 
 #ifndef NPATCH_PERIODIC_NORM_NG
 #define NPATCH_PERIODIC_NORM_NG 2
@@ -48,7 +41,12 @@ static inline index_t find_closest_patch( complex128_t ppt, const complex128_t* 
     return result;
 }
 
-static inline void atomic_add( complex128_t* addr, const complex128_t* val ) {
+#ifndef __cplusplus
+#define RESTRICT restrict
+#else
+#define RESTRICT 
+#endif
+static inline void atomic_add( complex128_t* RESTRICT addr, const complex128_t* RESTRICT val ) {
     double* paddr = (double*)addr;
     const double* pval = (const double*)val;
     #pragma omp atomic

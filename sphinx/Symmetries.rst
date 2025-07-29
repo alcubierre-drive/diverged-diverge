@@ -12,9 +12,9 @@ Symmetries
      * that your orbital axes align with the orbital axes defined in the
        previous steps of obtaining the TB model
      * the accuracy of what is considered "zero" or "one" in some of the
-       symmetrization routines of divERGe. These values can be changed upon
-       recompilation (see :ref:`Compilation DEFINES`), specifically the DEFINES
-       ``SYMNOORM_MIN_ORBITAL_WEIGHT`` and ``SYMNORM_MATRIX_ZERO``.
+       symmetrization routines of divERGe. These values could previously be
+       changed upon recompilation, but now they are accessible at run time
+       through :c:func:`diverge_generate_symm_maps_set_precision`.
      * build your symmetry operations "bottom-up", i.e. start with a small
        subgroup of your full point group and see if that works.
 

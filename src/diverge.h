@@ -1,6 +1,6 @@
 /* divERGe implements various ERG examples */
 /* framework for FRG simulations on real materials */
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl */
 
 /* This program is free software: you can redistribute it and/or modify */
 /* it under the terms of the GNU General Public License as published by */
@@ -23,7 +23,7 @@
 #include "misc/alloc.h"
 #include "misc/read_W90.h"
 #include "misc/read_fplo.h"
-#include "misc/hoppings_to_supercell.h"
+#include "misc/supercells.h"
 #include "misc/generate_symmetries.h"
 #include "misc/merge_orb_w_rs_symm.h"
 #include "misc/kmesh_to_bands.h"
@@ -31,6 +31,7 @@
 #include "misc/shared_mem.h"
 #include "misc/fukui.h"
 #include "misc/quantum_metric.h"
+#include "misc/ham_at_k.h"
 
 #include "diverge_common.h"
 #include "diverge_model.h"

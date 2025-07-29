@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -11,8 +11,30 @@ extern "C" {
 
 typedef struct diverge_model_t diverge_model_t;
 
-/** generates symmetry mappings needed to perform the tasks below */
+/**
+ * generates symmetry mappings needed to perform the tasks below. For certain
+ * models, the positions might not be given accurately enough. You can set the
+ * precision of position and orbital mapping via
+ * :c:func:`diverge_generate_symm_maps_set_precision`.
+ */
 void diverge_generate_symm_maps( diverge_model_t* model );
+
+/**
+ * set the precision for symmetry map generation.
+ *
+ * :param double ASSERT_POSITION_BEYOND: for assertion whether the beyond unit
+ *      cell portion of the position mapping is violated, ~0
+ * :param double ORBITAL_OVERLAP: minimal overlap of orbitals that is considered
+ *      nonzero, ~0
+ * :param double POS_EQUAL: finding whether obtials have same position, ~0
+ * :param double MIN_ORBITAL_WEIGHT: minimal orbital weight that is considered
+ *      'one', ~1
+ * :param double BOND_EQUAL: tu_symmstruct: find whether bonds are the same, ~0
+ * :param double MATRIX_ZERO: tu_symmstruct: when is a matrix zero?, ~0
+ */
+void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
+        double ORBITAL_OVERLAP, double POS_EQUAL, double MIN_ORBITAL_WEIGHT,
+        double BOND_EQUAL, double MATRIX_ZERO );
 
 /**
  * symmetrizes coarse mesh 2pt function stored in buf. returns maximum
@@ -74,6 +96,12 @@ double diverge_symmetrize_mom_fine( diverge_model_t* model, double* buf, index_t
 /**
  * symmetrizes hopping parameters of a divERGe model. Operates on the momentum
  * mesh associated to the ``model``.
+ *
+ * .. note::
+ *  In case ``hop == NULL``, this function operates on the internal hopping
+ *  parameter array :c:member:`diverge_model_t.hop`. If the model's internals
+ *  struct isn't initialized, we generate it automagically *and delete it again
+ *  thereafter*. For safe operation, we advise to *not* rely on this feature.
  *
  * :param diverge_model_t* model: the divERGe model which needs to have common
  *                                internals set (using

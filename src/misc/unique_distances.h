@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -25,10 +25,22 @@ typedef struct diverge_model_t diverge_model_t;
  * :param int dim: dimension of the model. The first ``dim`` lattice vectors are
  *                 considered in the iteration via ``Rmax``.
  *
- * :returns: allocated vector of unique distances terminated by a quiet NaN (see
- *           src/misc/qnan.h). Must be free'd manually using ``free``.
+ * :returns: allocated vector of unique distances terminated by an
+ *           :ref:`IEEE 754 Quiet NaN`. Must be free'd manually using ``free``.
  */
 double* diverge_model_unique_distances( diverge_model_t* m, int Rmax, int dim );
+
+/**
+ * set the precision used to calculate unique distances. not thread safe. useful
+ * in case the model has very large values as lattice constant.
+ *
+ * :param double prec: precision to use. if prec > 0, use absolute value. if
+ *                     prec < 0, use relative value with respect to the model's
+ *                     first lattice vector length. if qnan_isnan(prec) (see
+ *                     :c:func:`qnan_isnan`), reset to initial value
+ *                     DIVERGE_EPS_MESH (see :ref:`Compilation DEFINES`).
+ */
+void diverge_model_unique_distances_set_precision( double prec );
 
 /**
  * return the length of the unique distance array by checking for quiet NaN (see
@@ -45,10 +57,7 @@ double* diverge_model_unique_distances( diverge_model_t* m, int Rmax, int dim );
  *
  *  free( dists );
  */
-static inline index_t diverge_model_unique_distances_length( double* dists ) {
-    index_t n_dists = -1; while (!qnan_isnan(dists[++n_dists])) {}
-    return n_dists;
-}
+index_t diverge_model_unique_distances_length( double* dists );
 
 #ifdef __cplusplus
 }

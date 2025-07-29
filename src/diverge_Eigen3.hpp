@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -42,6 +42,7 @@ typedef Eigen::Matrix2d Mat2d;
 typedef Eigen::Matrix3d Mat3d;
 typedef Eigen::Matrix4d Mat4d;
 typedef Eigen::MatrixXd MatXd;
+typedef Eigen::Matrix<double,-1,-1,Eigen::RowMajor> cMatXd;
 
 typedef Eigen::Vector2cd Vec2cd;
 typedef Eigen::Vector3cd Vec3cd;
@@ -51,6 +52,7 @@ typedef Eigen::Matrix2cd Mat2cd;
 typedef Eigen::Matrix3cd Mat3cd;
 typedef Eigen::Matrix4cd Mat4cd;
 typedef Eigen::MatrixXcd MatXcd;
+typedef Eigen::Matrix<std::complex<double>,-1,-1,Eigen::RowMajor> cMatXcd;
 
 typedef Eigen::Rotation2Dd Rot2d;
 

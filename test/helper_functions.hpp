@@ -49,4 +49,12 @@ inline void fill_Rvec_from_vec(const diverge_model_t* model, index_t* R, double*
     }
 }
 
+class MPILoglevelWrapper {
+    public:
+        MPILoglevelWrapper( int l ) { ll = mpi_loglevel_get(); mpi_loglevel_set(l); }
+        ~MPILoglevelWrapper() { mpi_loglevel_set(ll); }
+    private:
+        int ll;
+};
+
 #endif // DIVERGE_SKIP_TESTS

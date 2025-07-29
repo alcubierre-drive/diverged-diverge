@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -101,6 +101,11 @@ typedef struct diverge_model_t diverge_model_t;
  * *Note that [displ, size] accounts for the full displacement and size of
  * the memory layout described above*
  *
+ *  :``header[97]``:       nonzero if the actual header size is ``256 *
+ *                         sizeof(int64_t)``. The extended header is currently
+ *                         unused, but this field is reserved for
+ *                         future extensions.
+ *
  * *if ibz_path is set, else all the following are zero*
  *
  *  :``header[98-99]``:    fatbands [displ, size]
@@ -137,10 +142,10 @@ typedef struct diverge_model_t diverge_model_t;
  *                         indicated in the following manner:
  *
  *                           * the leftmost (first) bit is one when floats are not
- *                             represented in iec559
+ *                             32bit wide
  *
  *                           * the second bit is one when doubles are not
- *                             represented in iec559
+ *                             64bit wide
  *
  *                           * the third bit is one when integers (int and
  *                             :c:type:`index_t`) are not little endian
@@ -183,8 +188,10 @@ typedef struct diverge_model_output_conf_t {
      * *integer*. use this as the number of points on the IBZ path (cf.
      * :c:func:`diverge_model_output_set_npath`). Only used when nonzero; but
      * then *with precedence* over what is/has been set in
-     * :c:func:`diverge_model_output_set_npath`. possible nonzero values: -1,
-     * >=1.
+     * :c:func:`diverge_model_output_set_npath`. possible nonzero values: -1
+     * (use eigenvalues on mesh), >=1 (explicitly calculate H from hoppings),
+     * <-1 (explcitly calculate H from hoppings in batched manner with this many
+     * pts).
      */
     int npath;
     /**
@@ -230,6 +237,10 @@ diverge_model_output_conf_t diverge_model_output_conf_defaults_CPP( void );
  * :param const diverge_model_output_conf_t* cfg: pointer to config structure, can be NULL for defaults.
  */
 char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname,
+        const diverge_model_output_conf_t* cfg );
+
+/** alias for :c:func:`diverge_model_to_file_finegrained` */
+char* diverge_model_to_file_fg( diverge_model_t* mod, const char* fname,
         const diverge_model_output_conf_t* cfg );
 
 /**

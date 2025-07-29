@@ -1,5 +1,5 @@
 #include "batched_gemm_small.h"
-#include "init_internal_libs.h"
+#include "mpi_functions.h"
 #include "gemm.h"
 
 #ifndef USE_CUDA

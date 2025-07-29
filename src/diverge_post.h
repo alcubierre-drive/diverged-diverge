@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -104,6 +104,17 @@ struct diverge_postprocess_conf_t {
      * from smallest)
      */
     char    tu_lingap_solver_mode[4];
+    /**
+     * output the (flowing) bare susceptibilities, i.e., the integrated loop
+     * derivative. May result in large files.
+     */
+    bool    tu_susceptibilities_bare;
+    /**
+     * project the full vertex into the respective diagrammatic channel (if > 0)
+     * for diagonalization, or to physical channels (if < 0). Note that this
+     * flag has an effect only when :c:member:`tu_skip_channel_calc` is false.
+     */
+    int     tu_channel_calc_project;
 
     // DEVELOPERS
     //
@@ -146,6 +157,8 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_n_decomp_values = 0,
     .tu_lingap_atscale = false,
     .tu_lingap_solver_mode = "sss",
+    .tu_susceptibilities_bare = false,
+    .tu_channel_calc_project = 0,
 };
 #endif
 
@@ -178,6 +191,10 @@ diverge_postprocess_conf_t diverge_postprocess_conf_defaults_CPP( void );
  *
  * TUFRG:
  *
+ * as for model output files (see :c:func:`diverge_model_to_file`), the TUFRG
+ * output file has reserved space for the future. If the 125th field is nonzero,
+ * the actual header size is ``256*sizeof(int64_t)``.
+ *
  * .. image:: img/diverge_tu_output.png
  *      :width: 800
  *      :alt: specification for TUFRG output files
@@ -193,6 +210,10 @@ void diverge_postprocess_and_write( diverge_flow_step_t* st, const char* file );
  * :c:func:`diverge_postprocess_conf_defaults_CPP`).
  */
 void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st, const char* file,
+        const diverge_postprocess_conf_t* cfg );
+
+/** alias for :c:func:`diverge_postprocess_and_write_finegrained` */
+void diverge_postprocess_and_write_fg( diverge_flow_step_t* st, const char* file,
         const diverge_postprocess_conf_t* cfg );
 
 // TODO(LK) we might want to include the Metznerish Way of doing a channel

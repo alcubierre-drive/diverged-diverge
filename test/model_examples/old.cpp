@@ -7,6 +7,9 @@
 #include "../../src/diverge_Eigen3.hpp"
 #include "../../src/diverge_patching.h"
 
+#include <vector>
+
+using std::vector;
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 
 diverge_model_t* model_examples_hubbard( bool grid ) {
@@ -65,13 +68,16 @@ diverge_model_t* model_examples_hubbard( bool grid ) {
     if (grid) {
         diverge_model_internals_grid( mod );
     } else {
-        vector<index_t> patches = diverge_patching_find_fs_pts( mod, NULL, 1, 4, 100 );
+        index_t* patches = diverge_patching_find_fs_pts( mod, NULL, 1, 4, 100 );
+        index_t npatches = 0; while (patches[npatches++] != -1) {}
         // adding some high symmetry points
-        patches.push_back(0);
-        patches.push_back(mod->nk[0]/2*mod->nk[1]+mod->nk[1]/2);
-        patches.push_back(mod->nk[0]/2*mod->nk[1]);
-        patches.push_back(mod->nk[1]/2);
-        mod->patching = diverge_patching_from_indices( mod, patches.data(), patches.size() );
+        patches = (index_t*) realloc( patches, (sizeof*patches) * (npatches + 4) );
+        patches[npatches++] = 0;
+        patches[npatches++] = mod->nk[0]/2*mod->nk[1]+mod->nk[1]/2;
+        patches[npatches++] = mod->nk[0]/2*mod->nk[1];
+        patches[npatches++] = mod->nk[1]/2;
+        mod->patching = diverge_patching_from_indices( mod, patches, npatches );
+        free( patches );
         diverge_patching_autofine( mod, mod->patching, NULL, 1, 40, 0.1, 2.0, 0.5 );
         diverge_patching_symmetrize_refinement( mod, mod->patching );
         diverge_model_internals_patch( mod, -1 );
@@ -177,8 +183,10 @@ diverge_model_t* model_examples_kagome( double U, double V ) {
         diverge_mpi_exit(EXIT_FAILURE);
 
     diverge_model_internals_common( mod );
-    vector<index_t> patches = diverge_patching_find_fs_pts( mod, NULL, mod->n_orb, np_ibz, 100 );
-    mod->patching = diverge_patching_from_indices( mod, patches.data(), patches.size() );
+    index_t* patches = diverge_patching_find_fs_pts( mod, NULL, mod->n_orb, np_ibz, 100 );
+    index_t npatches = 0; while (patches[npatches++] != -1) {}
+    mod->patching = diverge_patching_from_indices( mod, patches, npatches );
+    free( patches );
     diverge_patching_autofine( mod, mod->patching, NULL, mod->n_orb, 40, 0.3, 5.0, 0.5 );
     diverge_patching_symmetrize_refinement( mod, mod->patching );
     diverge_model_internals_patch( mod, -1 );

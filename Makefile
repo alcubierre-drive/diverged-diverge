@@ -34,10 +34,6 @@ DEVICES = -gencode arch=compute_70,code=sm_70 \
 	  -gencode arch=compute_75,code=sm_75 \
 	  -gencode arch=compute_80,code=sm_80
 
-DEFINE_VERSION := -DTAG_VERSION=\"$(shell git tag --list "v*.*" | tail -n1)\" \
-		  -DGIT_VERSION=\"$(shell git rev-parse --short HEAD)$(shell (git diff --quiet && git diff --cached --exit-code --quiet) || echo ':dirty')\" \
-		  -DGIT_VERSION_BRANCH=\"$(shell git rev-parse --abbrev-ref HEAD)\"
-
 SRC_C := $(shell find ./src/ -name '*.c') \
          $(shell find ./test/ -name '*.c')
 SRC_CPP := $(shell find ./src/ -name '*.cpp') \
@@ -70,6 +66,10 @@ HEADERS := $(shell find src/ -name '*.h') \
 
 -include Makefile.inc
 -include Makefile.local
+
+DEFINE_VERSION ?= -DTAG_VERSION=\"$(shell git tag --list "v*.*" | tail -n1)\" \
+		  -DGIT_VERSION=\"$(shell git rev-parse --short HEAD)$(shell (git diff --quiet && git diff --cached --exit-code --quiet) || echo ':dirty')\" \
+		  -DGIT_VERSION_BRANCH=\"$(shell git rev-parse --abbrev-ref HEAD)\"
 
 .PHONY: lib test clean types dist dist-src todos doc man pdf $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
 

@@ -4,7 +4,7 @@
 
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
+#include "../../src/diverge_flow_step_internal.h"
 #include "../model_examples/old.h"
 #include "../../src/diverge_model_internals.h"
 #include "../model_examples/model_constructor.hpp"

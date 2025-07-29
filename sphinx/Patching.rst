@@ -4,34 +4,36 @@ Patching
 ========
 Advanced npatch setup in divERGe
 
-We can call :cpp:func:`diverge_patching_find_fs_pts` (or
-:c:func:`diverge_patching_find_fs_pts_C` in plain C) to find the Fermi surface
-and store it in a vector. Note that we can provide NULL as the energy to the
+We can call :c:func:`diverge_patching_find_fs_pts` to find the Fermi surface
+and store it in an array. Note that we can provide NULL as the energy to the
 Fermi surface routine and make the code use its internals. To illustrate the
 usage of the extended :c:struct:`mom_patching_t` struct generation, we add some
 high symmetry points after finding the Fermi surface:
 
-.. sourcecode:: C++
+.. sourcecode:: C
 
-    vector<index_t> patches = diverge_patching_find_fs_pts( mod, NULL, 1, 4, 100 );
+    index_t* patches = diverge_patching_find_fs_pts( mod, NULL, 1, 4, 100 );
+    index_t n_patches = 0; while( patches[++n_patches] != -1 ) {}
+
     // adding some high symmetry points
-    patches.push_back(0);
-    patches.push_back(mod->nk[0]/2*mod->nk[1]+mod->nk[1]/2);
-    patches.push_back(mod->nk[0]/2*mod->nk[1]);
-    patches.push_back(mod->nk[1]/2);
+    patches = (index_t*)realloc( patches, sizeof(*patches) * (n_patches + 4) );
+    patches[n_patches++] = 0;
+    patches[n_patches++] = mod->nk[0]/2*mod->nk[1]+mod->nk[1]/2;
+    patches[n_patches++] = mod->nk[0]/2*mod->nk[1];
+    patches[n_patches++] = mod->nk[1]/2;
 
 Thereafter, we must allocate and fill the :c:struct:`mom_patching_t` struct
 :c:struct:`diverge_model_t` by calling :c:func:`diverge_patching_from_indices`:
 
-.. sourcecode:: C++
+.. sourcecode:: C
 
-    mod->patching = diverge_patching_from_indices( mod, patches.data(), patches.size() );
+    mod->patching = diverge_patching_from_indices( mod, patches, n_patches );
 
 We can find an automatically optimized integration refinement with
 :c:func:`diverge_patching_autofine` for each of the patches. Again, passing NULL
 for the energies makes the code use its internals:
 
-.. sourcecode:: C++
+.. sourcecode:: C
 
     diverge_patching_autofine( mod, mod->patching, NULL, 1, 40, 0.1, 2.0, 0.5 );
 
@@ -42,20 +44,20 @@ it is **strongly recommended** to also symmetrize the refinement with
 :c:func:`diverge_patching_symmetrize_refinement` – for this to work you must
 implement all the relevant :ref:`point-group symmetries <Symmetries>`.
 
-.. sourcecode:: C++
+.. sourcecode:: C
 
     diverge_patching_symmetrize_refinement( mod, mod->patching );
 
 Finally, we can call the patching internals :c:func:`diverge_model_internals_patch`:
 
-.. sourcecode:: C++
+.. sourcecode:: C
 
     diverge_model_internals_patch( mod, -1 );
 
 As ``mod->patching`` is now set, the second parameter is ignored in the above
 call to :c:func:`diverge_model_internals_patch`.
 
-.. cpp:autodoc:: diverge_patching.h
+.. c:autodoc:: diverge_patching.h
 
 In summary, calling of the above functions in the model would look like:
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -11,8 +11,7 @@ extern "C" {
 typedef struct {
     int device;
     complex128_t* H;
-    complex128_t* E;
-    double* Er;
+    double* E;
     index_t n;
     index_t N;
     index_t nbatches;
@@ -20,6 +19,8 @@ typedef struct {
 
 void* batched_eigen_gpu( void* );
 void* batched_eigen_cpu( void* );
+
+void batched_zheevd( const complex128_t* H, complex128_t* U, double* E, index_t num, index_t dim );
 
 #ifdef __cplusplus
 }

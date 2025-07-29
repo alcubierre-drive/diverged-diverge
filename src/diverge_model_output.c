@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "diverge_model_output.h"
 #include "diverge_internals_struct.h"
@@ -6,9 +6,11 @@
 #include "misc/number_repr_checks.h"
 #include "misc/mpi_functions.h"
 #include "misc/kmesh_to_bands.h"
+#include "misc/ham_at_k.h"
 
 #include "misc/qnan.h"
 #include "misc/eigen.h"
+#include "misc/batched_eigen.h"
 #include "misc/md5.h"
 #include "misc/version.h"
 
@@ -22,6 +24,12 @@ diverge_model_output_conf_t diverge_model_output_conf_defaults_CPP( void ) {
     return diverge_model_output_conf_defaults;
 }
 
+char* diverge_model_to_file_fg( diverge_model_t* mod, const char* fname,
+        const diverge_model_output_conf_t* cfg ) {
+    return diverge_model_to_file_finegrained( mod, fname, cfg );
+}
+
+// use batched eigen/alloc if npath < 0
 static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t npath );
 static index_t h_diverge_model_nbandstructure = DIVERGE_MODEL_NBANDSTRUCTURE;
 static void* kmesh_to_bands_serialize( diverge_model_t* mod, bool crs, index_t* psize );
@@ -54,11 +62,11 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
     uindex_t lmd5sum = 0;
     if (diverge_mpi_comm_rank() == 0) {
         // allocate the header
-        char* buf = (char*)calloc(128,sizeof(index_t));
+        char* buf = (char*)calloc(256,sizeof(index_t));
 
         // print the magic number
         index_t* ibuf = (index_t*)buf;
-        index_t displ = sizeof(index_t)*128;
+        index_t displ = sizeof(index_t)*256;
         int idx = 0;
         ibuf[idx++] = DIVERGE_MODEL_MAGIC_NUMBER;
 
@@ -213,13 +221,14 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
                     mpi_err_printf( "could not find band structure indices, skipping\n" );
                     ADD_ARRAY_TO_IBUF( 0 );
                 }
-            } else if (npath < -1) {
+            } else if (npath == 0) {
                 mpi_wrn_printf( "invalid value %li for npath\n", npath );
                 ADD_ARRAY_TO_IBUF( 0 );
             } else {
                 include_bandstructure = true;
+                int xnpath = abs(npath);
                 ADD_ARRAY_TO_IBUF( sizeof(double) * (mod->n_orb*mod->n_spin + 3) *
-                        ((mod->n_ibz_path-1)*npath + 1) );
+                        ((mod->n_ibz_path-1)*xnpath + 1) );
             }
         } else {
             ADD_ARRAY_TO_IBUF( 0 );
@@ -270,6 +279,10 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         ibuf[123] = offsetof(tu_formfactor_t, ffidx);
         ibuf[124] = sizeof(tu_formfactor_t);
 
+        // extended header
+        idx = 97;
+        ibuf[97] = ~(ibuf[97]);
+
         // file format version
         idx = 125;
         const char* version = tag_version();
@@ -279,9 +292,9 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         uindex_t checkmask = 0;
         uint8_t one = 1;
         uindex_t firstbit = checkmask | (one << 7);
-        if (!check_iec_float())
+        if (!check_32bit_float())
             checkmask |= firstbit >> 0;
-        if (!check_iec_double())
+        if (!check_64bit_double())
             checkmask |= firstbit >> 1;
         if (!check_little_endian())
             checkmask |= firstbit >> 2;
@@ -381,7 +394,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
                         out[cnt++] = kf[band_indices[i]*3+d];
                 }
             } else {
-                mpi_vrb_printf("generating bandstructure with %li points per segment\n", npath );
+                mpi_vrb_printf("generating bandstructure with %i points per segment\n", npath );
                 generate_bandstructure( mod, (double*)(buf+ibuf[100]), npath );
             }
         }
@@ -440,58 +453,95 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
     }
 
     claM3d_t Gvec = {0};
-    claM3d_t Lvec = claM3d_map(mod->lattice[0]);
     diverge_model_generate_mom_basis(mod->lattice[0], Gvec.m[0]);
 
-    index_t no = mod->n_orb,
-            ns = mod->n_spin,
-            nb = mod->n_orb * mod->n_spin;
+    index_t nb = mod->n_orb * mod->n_spin;
 
-    complex128_t* H = (complex128_t*)malloc(sizeof(complex128_t)*POW2(nb));
-    complex128_t* U = (complex128_t*)malloc(sizeof(complex128_t)*POW2(nb));
-    #define zero_out(Hbuf) { \
-        memset((void*)Hbuf, 0, sizeof(complex128_t)*POW2(nb)); \
-    }
+    if (npath > 0) {
+        complex128_t* H = malloc(sizeof(complex128_t)*POW2(nb));
+        complex128_t* U = malloc(sizeof(complex128_t)*POW2(nb));
 
-    index_t running_idx = 0;
-    index_t nseg = mod->n_ibz_path-1;
-    for (index_t seg=0; seg<nseg; ++seg) {
-        index_t ni = (seg != (nseg-1)) ? (npath) : (npath+1);
+        index_t running_idx = 0;
+        index_t nseg = mod->n_ibz_path-1;
+        for (index_t seg=0; seg<nseg; ++seg) {
+            index_t ni = (seg != (nseg-1)) ? (npath) : (npath+1);
 
-        claV3d_t s0vec = claV3d_map( mod->ibz_path[seg] ),
-                 s1vec = claV3d_map( mod->ibz_path[seg+1] );
+            claV3d_t s0vec = claV3d_map( mod->ibz_path[seg] ),
+                     s1vec = claV3d_map( mod->ibz_path[seg+1] );
 
-        uint32_t skip = 0;
-        for (int add=0; add<2; ++add) {
-            if (qnan_isnan(mod->ibz_path[seg+add][0]))
-                skip = qnan_get(mod->ibz_path[seg+add][0]);
+            uint32_t skip = 0;
+            for (int add=0; add<2; ++add) {
+                if (qnan_isnan(mod->ibz_path[seg+add][0]))
+                    skip |= qnan_get(mod->ibz_path[seg+add][0]);
+            }
+
+            for (index_t i=0; i<ni; ++i) {
+                double x = (double)i / (double)npath;
+                claV3d_t k0vec = claM3d_vecmat( s0vec, Gvec ),
+                         k1vec = claM3d_vecmat( s1vec, Gvec );
+                claV3d_t kvec = skip ? k0vec : claV3d_add( k0vec, claV3d_scale(claV3d_sub(k1vec,k0vec),x) );
+                if (!skip) {
+                    diverge_model_ham_at_kpt( mod, kvec.v, H );
+                    double* here_buf = buf + (nb+3) * running_idx;
+                    single_eigen(H, U, here_buf, nb);
+                    for (index_t b=0; b<nb; ++b) {
+                        here_buf[b] -= mod->internals->mu;
+                    }
+                    claV3d_rmap( kvec, here_buf + nb );
+                }
+                running_idx++;
+            }
         }
 
-        for (index_t i=0; i<ni; ++i) {
-            double x = (double)i / (double)npath;
-            claV3d_t k0vec = claM3d_matvec( Gvec, s0vec ),
-                     k1vec = claM3d_matvec( Gvec, s1vec );
-            claV3d_t kvec = claV3d_add( k0vec, claV3d_scale(claV3d_sub(k1vec,k0vec),x) );
-            if (skip) kvec = claV3d_zero();
-            zero_out(H);
-            for (index_t h=0; h<mod->n_hop; ++h) {
-                rs_hopping_t* hh = mod->hop+h;
-                claV3d_t hR = {{hh->R[0], hh->R[1], hh->R[2]}};
-                claV3d_t Rvec = claM3d_matvec( Lvec, hR );
-                H[IDX4(hh->s1, hh->o1, hh->s2, hh->o2, no, ns, no)] += cexp(-I*claV3d_dot(Rvec,kvec)) * hh->t;
-            }
-            double* here_buf = buf + (nb+3) * running_idx;
-            single_eigen(H, U, here_buf, nb);
-            for (index_t b=0; b<nb; ++b) {
-                here_buf[b] -= mod->internals->mu;
-            }
-            claV3d_rmap( kvec, here_buf + nb );
-            running_idx++;
-        }
-    }
+        free(H);
+        free(U);
+    } else {
+        npath = -npath;
+        index_t nseg = mod->n_ibz_path-1;
+        index_t ntot_m1 = npath * nseg;
+        complex128_t* H = calloc(POW2(nb)*(ntot_m1+1), sizeof(complex128_t));
+        double* K = calloc(ntot_m1+1, sizeof(double)*3);
+        double* E = calloc((ntot_m1+1)*nb, sizeof(double));
 
-    free(H);
-    free(U);
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t x=0; x<ntot_m1; ++x) {
+            index_t seg = x / npath, i = x % npath;
+            claV3d_t s0vec = claV3d_map( mod->ibz_path[seg] ),
+                     s1vec = claV3d_map( mod->ibz_path[seg+1] );
+            double y = (double)i/(double)npath;
+            claV3d_t k0vec = claM3d_vecmat( s0vec, Gvec ),
+                     k1vec = claM3d_vecmat( s1vec, Gvec );
+
+            uint32_t skip[2] = {0};
+            for (int add=0; add<2; ++add)
+                if (qnan_isnan(mod->ibz_path[seg+add][0]))
+                    skip[add] = qnan_get(mod->ibz_path[seg+add][0]);
+            claV3d_t kvec = claV3d_add( k0vec, claV3d_scale(claV3d_sub(k1vec,k0vec),y) );
+
+            if (skip[0]) kvec = k1vec;
+            if (skip[1]) kvec = k0vec;
+
+            claV3d_rmap( kvec, K + 3*x );
+
+            if (!(skip[0]||skip[1])) diverge_model_ham_at_kpt( mod, kvec.v, H+x*POW2(nb) );
+            if (seg == (nseg-1) && i == (npath-1)) {
+                if (!(skip[0]||skip[1])) diverge_model_ham_at_kpt( mod, k1vec.v, H+(x+1)*POW2(nb) );
+                claV3d_rmap( kvec, K + 3*(x+1) );
+            }
+        }
+
+        batched_eigen_r( NULL, -1, H, E, nb, ntot_m1+1 );
+
+        // map back
+        for (index_t x=ntot_m1; x>=0; --x) {
+            for (index_t b=0; b<nb; ++b) buf[IDX2(x,b,nb+3)] = E[IDX2(x,b,nb)];
+            for (index_t d=0; d<3; ++d) buf[IDX2(x,d+nb,nb+3)] = K[IDX2(x,d,3)];
+        }
+
+        free(E);
+        free(H);
+        free(K);
+    }
 }
 
 static void* kmesh_to_bands_serialize( diverge_model_t* mod, bool crs, index_t* psize ) {

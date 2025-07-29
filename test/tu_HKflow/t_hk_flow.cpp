@@ -3,21 +3,20 @@
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../catch.hpp"
-#include "../../src/tu/diverge_interface.hpp"
+#include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
-#include "../../src/tu/global.hpp"
-#include "../../src/tu/propagator.hpp"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
-#include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
-#include "../../src/tu/projection_handler.hpp"
-#include "../../src/grid/vertex_memory.hpp"
-#include "../../src/tu/selfenergy.hpp"
+#include "../../src/diverge_flow_step_internal.h"
+#include "../../src/tu/vertex_details.h"
+#include "../../src/tu/projection.h"
+#include "../../src/tu/projection_handler.h"
+#include "../../src/grid/vertex_memory.h"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
-#include<iostream>
+
+#include <vector>
+using std::vector;
 
 diverge_model_t* test_model(int n_spin, int kx = 1, int kxf = 1) {
     diverge_model_t* mod1 = diverge_model_init();
@@ -104,15 +103,15 @@ TEST_CASE("two orbital model in 1d","[hk]") {
         mpi_err_printf( "cannot test two orbital model in 1d [hk] with more than one MPI rank\n" );
         return;
     }
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod1 = test_model(1);
     diverge_model_t* mod2 = test_model(2);
     diverge_model_internals_tu( mod1, 4.01 );
     diverge_model_internals_tu( mod2, 4.01 );
     diverge_flow_step_t* s1 = diverge_flow_step_init( mod1, "tu", "PCD" );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "PCD" );
-    Vertex* v1 = s1->tu_vertex;
-    Vertex* v2 = s2->tu_vertex;
+    tu_vertex_t* v1 = s1->tu_vertex;
+    tu_vertex_t* v2 = s2->tu_vertex;
     CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
     CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
     CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
@@ -120,7 +119,7 @@ TEST_CASE("two orbital model in 1d","[hk]") {
 
     index_t fsize = POW4(mod2->n_orb*mod2->n_spin);
     complex128_t* vertex = (complex128_t*)calloc(fsize,sizeof(complex128_t));
-    s2->tu_vertex->project_fullV(mod2,vertex);
+    tu_vertex_project_fullV( s2->tu_vertex, mod2, vertex );
     index_t norb = mod2->n_orb*mod2->n_spin;
     for(index_t s4 = 0; s4<mod2->n_spin;++s4)
     for(index_t s3 = 0; s3<mod2->n_spin;++s3)
@@ -204,14 +203,14 @@ TEST_CASE("two orbital model in 1d","[hk]") {
 
 
 TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod2 = test_model(2);
     diverge_model_internals_grid( mod2 );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "grid", "PCD" );
 
     index_t fsize = POW4(mod2->n_orb*mod2->n_spin);
     complex128_t* vertex = (complex128_t*)calloc(fsize,sizeof(complex128_t));
-    ((grid::VertexMemory*)s2->intls->grid_vertex)->get_vertex( vertex, 'V' );
+    grid_vertex_get_chan_allranks( (grid_vertex_t*)(s2->intls->grid_vertex), vertex, 'V' );
     index_t norb = mod2->n_orb*mod2->n_spin;
     for(index_t s4 = 0; s4<mod2->n_spin;++s4)
     for(index_t s3 = 0; s3<mod2->n_spin;++s3)
@@ -265,15 +264,15 @@ TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
 }
 
 TEST_CASE("two orbital model in 1d mom","[mhk]") {
-    mpi_loglevel_set( 5 );
+    MPILoglevelWrapper LL(5);
     diverge_model_t* mod1 = test_model(1,10,5);
     diverge_model_t* mod2 = test_model(2,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
     diverge_model_internals_tu( mod2, 1.01 );
     diverge_flow_step_t* s1 = diverge_flow_step_init( mod1, "tu", "SPCD" );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "SPCD" );
-    Vertex* v1 = s1->tu_vertex;
-    Vertex* v2 = s2->tu_vertex;
+    tu_vertex_t* v1 = s1->tu_vertex;
+    tu_vertex_t* v2 = s2->tu_vertex;
     CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
     CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
     CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);

@@ -1,4 +1,5 @@
 #include <diverge.h>
+#include <diverge_misc.h>
 
 // helper functions and structures
 typedef struct {
@@ -8,8 +9,8 @@ static matrix_t rotation( double theta );
 static matrix_t reflection( int axis );
 static matrix_t matmul( matrix_t A, matrix_t B );
 static int sgn2( int x );
-static double* linspace( double min, double max, int num );
-static void calc_dos( double* E, index_t nkb, double* omega, double* dos, index_t nw, double dos_eta );
+static double* calc_dos( const diverge_model_t* m, const double* E,
+        double* omega_dos, index_t nw, double dos_eta );
 
 int main( int argc, char** argv ) {
     // init
@@ -89,8 +90,7 @@ int main( int argc, char** argv ) {
     double* E_work = (double*)workspace + nk*nb*nb*2;
     double nu_real = diverge_model_get_filling(m, NULL, -1);
 
-    double* omega = (double*)malloc(sizeof(double)*1000);
-    double* dos = (double*)malloc(sizeof(double)*1000);
+    double* omega_dos = (double*)malloc(sizeof(double)*1000);
     // output
     mpi_usr_printf( "model@%s\n", diverge_model_to_file(m, __FILE__ "_mod.dvg") );
 
@@ -105,16 +105,15 @@ int main( int argc, char** argv ) {
         diverge_flow_step_vertmax( f, &vmax );
         mpi_printf( "%.5e %.5e\n", eu.Lambda, vmax );
         diverge_flow_step_refill( f, nu_real, workspace );
-        calc_dos( E_work, nk*nb, omega, dos, 1000, 5e-2 );
-        fwrite( omega, sizeof(double), 1000, dosfile );
-        fwrite( dos, sizeof(double), 1000, dosfile );
+
+        omega_dos = calc_dos( m, E_work, omega_dos, 1000, 5e-2 );
+        fwrite( omega_dos, sizeof(double), 2*1000, dosfile );
     } while (diverge_euler_next(&eu, vmax));
 
     if (workspace) free(workspace);
 
     fclose( dosfile );
-    free( omega );
-    free( dos );
+    free( omega_dos );
 
     // post-process
     diverge_postprocess_and_write( f, __FILE__ "_out.dvg" );
@@ -164,18 +163,11 @@ static int sgn2( int x ) {
     return -1 + (x % 2)*2;
 }
 
-static double* linspace( double min, double max, int num ) {
-    double* ary = (double*)malloc(sizeof(double)*num);
-    for (int i=0; i<num; ++i)
-        ary[i] = min + (max-min)*(double)i/(double)(num-1);
-    return ary;
-}
-
 typedef struct {
-    double* pmin;
-    double* pmax;
+    const double* pmin;
+    const double* pmax;
 } minmax_t;
-static minmax_t minmax_element( double* ary, int num ) {
+static minmax_t minmax_element( const double* ary, int num ) {
     minmax_t result = {NULL, NULL};
     if (num <= 0) return result;
     double min = ary[0],
@@ -196,20 +188,14 @@ static minmax_t minmax_element( double* ary, int num ) {
     result.pmax = ary + imax;
     return result;
 }
-static void calc_dos( double* E, index_t nkb, double* omega, double* dos, index_t nw, double dos_eta ) {
-    minmax_t mmr = minmax_element( E, nkb );
+static double* calc_dos( const diverge_model_t* m, const double* E,
+        double* omega_dos, index_t nw, double dos_eta ) {
+    minmax_t mmr = minmax_element( E, kdimtot(m->nk,m->nkf) * m->n_orb * m->n_spin );
 
-    double* v_omega = linspace( *mmr.pmin, *mmr.pmax, nw );
-    memcpy( omega, v_omega, sizeof(double)*nw );
+    double* v_omega = diverge_linspace( *mmr.pmin, *mmr.pmax, nw );
+    memcpy( omega_dos, v_omega, sizeof(double)*nw );
     free( v_omega );
 
-    memset( dos, 0, sizeof(double)*nw );
-
-    #pragma omp parallel for
-    for (index_t w=0; w<nw; ++w)
-    for (index_t kb=0; kb<nkb; ++kb) {
-        double W = omega[w];
-        dos[w] += exp(-(W-E[kb])*(W-E[kb]) / (dos_eta*dos_eta));
-    }
+    return diverge_model_dos( m, E, m->n_orb*m->n_spin, omega_dos, -nw, -dos_eta );
 }
 

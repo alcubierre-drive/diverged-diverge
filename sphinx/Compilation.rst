@@ -31,7 +31,11 @@ For installation of the python library (see :ref:`Simulation Output` and
     pip install .
 
 in the git repo's root. Note that you might want to create a virtual environment
-first, or pass ``--break-system-packages`` to the above pip call.
+first, or change the above pip call to
+
+.. sourcecode:: bash
+
+    pip install --editable . --config-settings editable_mode=strict --break-system-packages
 
 The makefile exposes several targets to build specific components of divERGe:
 
@@ -110,11 +114,9 @@ DEFINES` are, in addition, listed here:
                          (Hamiltonian, Orbital/Band matrices) into
                          :ref:`node-global shared memory <Shared Memory>`,
                          i.e., creating a shared memory pool that is used by
-                         all MPI ranks on a single node. This flag requires
-                         the `uthash.h library
-                         <https://troydhanson.github.io/uthash/>`_ somewhere in
-                         your include path as well as some more recent linux
-                         kernel features (``memfd_create``, ``mmap``).
+                         all MPI ranks on a single node. This flag requires some
+                         more recent linux kernel features (``memfd_create``,
+                         ``mmap``).
     :``USE_MPI_FFTW``: use the MPI backend for FFTW in the TU propagator calculation.
                        this usually comes with an enormeous speedup
     :``MPI_VERBOSE_ALLOCATION_PRINT``: be extra verbose on TU propagator
@@ -337,34 +339,20 @@ written (i.e., the variable can be either *defined* or *not*), or
         equivalent to /usr/include/Eigen instead of /usr/include/eigen3/Eigen.
         This flag is there to enable the former.
     :``SKIP_FLOW_TIMING``: do not time the flow step in the grid FRG code
-    :``SYMNORM_SQUARED_POSITION=VAL``: maximum squared norm to consider two
-        positions equivalent under symmetries (default: ``1e-6``)
-    :``SYMNORM_ASSERT_POSITION_BEYOND=VAL``: in beyond unit-cell symmetry
-        contribution, value to check for in the assertion (default: ``1e-4``)
-    :``SYMNORM_ORBITAL_OVERLAP=VAL``: minimum value to consider for orbitals to
-        *overlap* (default: ``1e-5``)
-    :``SYMNORM_POS_EQUAL=VAL``: maximum norm to consider for positions to be
-        equal in the *overlap* check (default: ``1e-8``)
-    :``SYMNOORM_MIN_ORBITAL_WEIGHT=VAL``: minimal orbital weight to consider "1"
-        for checking if weight is conserved (default: ``0.99999``). *Very
-        important to set this to a lower value (e.g. 0.99) for many-orbital
-        systems on some machines.*
-    :``SYMNORM_MATRIX_ZERO=VAL``: maximum value that may pop up in a difference
-        matrix when checking whether symmetries have an inverse (default:
-        ``1.e-7``). *Very important to set this to a higher value (e.g. 1.e-3)
-        for many-orbital systems on some machines.*
     :``TAG_VERSION=VAL``: set the git tag version string to VAL
     :``TU_MAGIC_NUMBER_POST_PROCESSING=VAL``: set the TU backend post processing
         magic number (relevant for output) to VAL
     :``USE_ALTERNATIVE_TIME``: use an alternative method of measuring time when
         compiling without MPI
-    :``USE_BOOST_SORT``: use boost's implementation of parallel sort/stable sort
-        algorithms. Particularly useful for the grid FRG code.
     :``USE_EIGEN_BATCHED_GEMM``: use Eigen's matrix multiplication in batched
         gemms (CPU)
-    :``USE_FPLO_READER``: include the (still experimental) :c:func:`FPLO reader
-        <diverge_read_fplo>`. requires `utlist.h
-        <https://troydhanson.github.io/uthash/>`_ and POSIX regex.h.
+    :``USE_EIGEN3_CPU_EIGENSOLVER``: default to a CPU version of the batched
+        eigensolver, built with Eigen3. Can be turned off at run time via
+        :c:func:`batched_eigen_r_set_eigen3_mode`.
+    :``USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE=VAL``: compile extensive fixed-size
+        versions (up to dimension ``VAL`` up to ``VAL = 16`` for the CPU
+        eigensolver built with Eigen3. May be faster for small-size matrices,
+        but compilation times are terrible.
     :``USE_GF_FLOATS``: save Green's function in single point precision. should
         work for the npatch backend.
     :``USE_MKL``: use ``#include <mkl.h>`` instead of ``#include <lapacke.h>``
@@ -380,10 +368,8 @@ written (i.e., the variable can be either *defined* or *not*), or
     :``USE_SHARED_MEM``: experimental support for putting some objects
         (Hamiltonian, Orbital/Band matrices) into node-global shared memory,
         i.e., creating a shared memory pool that is used by all MPI ranks on a
-        single node. This flag requires the `uthash.h library
-        <https://troydhanson.github.io/uthash/>`_ somewhere in your include path
-        as well as some more recent linux kernel features (``memfd_create``,
-        ``mmap``).
+        single node. This flag requires some more recent linux kernel features
+        (``memfd_create``, ``mmap``).
     :``SHARED_MEM_MPI_IMPL``: use ``MPI_Win_XXX`` (and friends) for the
         implementation of the shared memory. Might behave strangely on clusters
         where pinning to certain sockets is enforced.

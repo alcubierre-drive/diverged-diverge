@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -46,6 +46,9 @@ void mpi_dbg_printf( const char* logname, int loglevel, const char* fname, int l
 
 /** set loglevel. all messages below this level are discarded and not printed */
 void mpi_loglevel_set( int loglevel );
+
+/** get current loglevel */
+int mpi_loglevel_get( void );
 
 /** turn colors for all messages on/off */
 void mpi_log_set_colors( int colors );

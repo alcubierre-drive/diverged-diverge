@@ -13,31 +13,35 @@ def version_compare( A, B ):
     # special cases
     if (A == B):
         return 0
-    if (A == "dev"):
+    if ("dev" in A):
         return 1
-    if (B == "dev"):
+    if ("dev" in B):
         return -1
 
-    # equalize lengths
-    A_list = [int(x) for x in A.lstrip('v').split('.')]
-    B_list = [int(x) for x in B.lstrip('v').split('.')]
-    vlen = max( len(A_list), len(B_list) )
-    if (len(A_list) < vlen):
-        A_list += [0] * (vlen - len(A_list))
-    if (len(B_list) < vlen):
-        B_list += [0] * (vlen - len(B_list))
+    try:
+        # equalize lengths
+        A_list = [int(x) for x in A.lstrip('v').split('.')]
+        B_list = [int(x) for x in B.lstrip('v').split('.')]
+        vlen = max( len(A_list), len(B_list) )
+        if (len(A_list) < vlen):
+            A_list += [0] * (vlen - len(A_list))
+        if (len(B_list) < vlen):
+            B_list += [0] * (vlen - len(B_list))
 
-    # and check for larger version
-    for i in range(vlen):
-        if A_list[i] > B_list[i]:
-            return 1
-        elif A_list[i] < B_list[i]:
-            return -1
-        else:
-            pass
+        # and check for larger version
+        for i in range(vlen):
+            if A_list[i] > B_list[i]:
+                return 1
+            elif A_list[i] < B_list[i]:
+                return -1
+            else:
+                pass
 
-    # default: versions are equal
-    return 0
+        # default: versions are equal
+        return 0
+    except:
+        print("version cannot be determined (A:'%s',B:'%s'), treat as dev" % (A,B))
+        return 1
 
 # this is due to some weird numpy version checking for the contents of a buffer
 def numpy_fromfile( fname, **kwargs ):
@@ -158,6 +162,12 @@ class diverge_model:
 
         #: diverge tag version (serves as file format version)
         self.version = self._displ_count( 125 ).tobytes().decode()
+
+        # we don't do anything with the extended header yet, but this doesn't
+        # really matter. It's implemented such that we won't run out of space
+        if self._f_header[97] and version_compare(self.version, "v0.8") >= 0:
+            self._f_header = numpy_fromfile(fname, dtype=np.longlong, count=256)
+
         #: dimension
         self.dim = self._head(3)
         #: number of kpts as (3,) array of :c:type:`index_t`
@@ -741,20 +751,38 @@ class diverge_post_tu:
         self.symm_o2m_off = get_array_header( iL, np.longlong )
         if(d_header[iL[0]-1] > 0):
             self.symm_o2m_off = self.symm_o2m_off.reshape(symm_shape)
-        #: index maps
+        #: index maps (two-dimensional array (-1,nkibz), first dimension described by o2m_len and o2m_off)
         self.symm_o2m_idx_map = get_array_header( iL, np.longlong )
-        #: complex prefactor for P
+        if self.symm_o2m_idx_map.size > 0: self.symm_o2m_idx_map = self.symm_o2m_idx_map.reshape((-1,self.nkibz))
+        #: complex prefactor for P (different for each :math:`\boldsymbol{q}`, therefore a two-dimensional array (-1,nkibz))
         self.symm_o2m_Ppref = get_array_header( iL, np.complex128 )
-        #: complex prefactor for C
+        if self.symm_o2m_Ppref.size > 0: self.symm_o2m_Ppref = self.symm_o2m_Ppref.reshape((-1,self.nkibz))
+        #: complex prefactor for C (different for each :math:`\boldsymbol{q}`, therefore a two-dimensional array (-1,nkibz))
         self.symm_o2m_Cpref = get_array_header( iL, np.complex128 )
+        if self.symm_o2m_Cpref.size > 0: self.symm_o2m_Cpref = self.symm_o2m_Cpref.reshape((-1,self.nkibz))
 
         #: diverge tag version (serves as file format version)
         self.version = get_array_header( iL, np.byte ).tobytes().decode()
+
+        # we don't do anything with the extended header yet, but this doesn't
+        # really matter. It's implemented such that we won't run out of space
+        if d_header[125] and version_compare(self.version, "v0.8") >= 0:
+            d_header = numpy_fromfile(fname, dtype=np.longlong, count=256)
 
         #: symmetry mapping of full BZ to IBZ (nk)
         self.kmaps_to = get_array_header( iL, np.longlong )
         #: multiindex to tu_ff index mapping; useful for analysis with model.tu_ff (n_orbff)
         self.mi_to_tuffidx = get_array_header( iL, np.longlong )
+
+        susc_shape = (self.nkibz, n_spin*n_spin, n_orbff, n_spin*n_spin, n_orbff)
+        #: particle particle susceptibility (bare)
+        self.chi0_pp = get_array_header( iL, np.complex128 )
+        if self.chi0_pp.size > 0:
+            self.chi0_pp = self.chi0_pp.reshape( susc_shape )
+        #: particle hole susceptibility (bare)
+        self.chi0_ph = get_array_header( iL, np.complex128 )
+        if self.chi0_ph.size > 0:
+            self.chi0_ph = self.chi0_ph.reshape( susc_shape )
 
 def read( fname ):
     r"""

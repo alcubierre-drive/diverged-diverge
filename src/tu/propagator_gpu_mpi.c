@@ -1,7 +1,8 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "propagator_gpu_mpi.h"
 #include "../misc/mpi_functions.h"
+#include "../misc/mergesort.h"
 #include <assert.h>
 
 static inline void atomic_set_complex128_t( complex128_t* dest_, const complex128_t* src_ ) {
@@ -320,13 +321,17 @@ void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
     }
 }
 
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) ((x).dest_rank - (y).dest_rank)
+MERGESORT_IMPL( packsort, pack_t )
+
 static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, complex128_t* L ) {
 
     double tick, tock;
 
     tick = diverge_mpi_wtime();
     // find the touched indices
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(static,8)
     for (index_t i=0; i<t->L_tot; ++i) {
         uint64_t* L_uint = (uint64_t*)(L + i);
         if (L_uint[0] | L_uint[1]) {
@@ -374,7 +379,7 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
     }
 
     // sort the send pack
-    sort_pack( t->send_pack, t->send_pack + t->n_touched );
+    packsort( t->send_pack, t->n_touched, diverge_omp_num_threads(), 0 );
 
     // set the send indices and communicate
     for (index_t s=0; s<t->n_touched; ++s)

@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <vector>
+using std::vector;
 
 diverge_model_t* gen_kagome_model( index_t nkx, index_t nky, double U ,
         double V , double VC , double VP, index_t nsym ) {

@@ -1,7 +1,7 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "kernels_helpers.h"
-#include "kernels_gpu_helpers.hpp"
+#include "kernels_gpu_helpers.h"
 
 #include "kernels_loop_gpu.h"
 #include "flow_step.h"
@@ -136,9 +136,9 @@ __global__ void npatch_loop_gen_gpu_krnl3( index_t np, index_t nk_flat, index_t 
     }
 }
 
-__global__ void loop_gen_gf_krnl( const __restrict__ cu_gf_complex_t* d_E_fine,
-        const __restrict__ cu_gf_complex_t* d_U_fine, index_t nk, index_t nb,
-        index_t offset, cu_gf_complex_t Lambda, __restrict__ cu_gf_complex_t* G ) {
+__global__ void loop_gen_gf_krnl( const cu_gf_complex_t* __restrict__ d_E_fine,
+        const cu_gf_complex_t* __restrict__ d_U_fine, index_t nk, index_t nb,
+        index_t offset, cu_gf_complex_t Lambda, cu_gf_complex_t* __restrict__ G ) {
 
     extern __shared__ cu_cdoub_t cache[];
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -150,13 +150,15 @@ double*       diverge_model_internals_get_kmesh(  const diverge_model_t* model )
  * NULL is returned.
  */
 double*       diverge_model_internals_get_kfmesh( const diverge_model_t* model );
-/** 
+/**
  * returns the internal Green's function buffer (2, nk*nkf, nb, nb)
  *
  * :c:func:`diverge_model_internals_common` must have been called, otherwise
  * NULL is returned.
  */
 gf_complex_t* diverge_model_internals_get_greens( const diverge_model_t* model );
+/** returns the dimension (:c:func:`diverge_model_internals_common` should be called prior) */
+index_t       diverge_model_internals_get_dim(    const diverge_model_t* model );
 #ifdef __cplusplus
 }
 #endif

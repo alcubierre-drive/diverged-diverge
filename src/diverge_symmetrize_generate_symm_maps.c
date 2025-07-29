@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "diverge_model.h"
 #include "diverge_symmetrize.h"
@@ -11,38 +11,30 @@
 #include "misc/linalg.h"
 LINALG_IMPLEMENT
 
+// extern double SYMNORM_TU_BOND_MAX;
+// extern double SYMNORM_MATRIX_ZERO;
+#include "tu/diverge_interface.h"
+
 #include <assert.h>
 
-#ifndef SYMNORM_SQUARED_POSITION
-#define SYMNORM_SQUARED_POSITION 1e-6
-#endif
-#ifndef SYMNORM_ASSERT_POSITION_BEYOND
-#define SYMNORM_ASSERT_POSITION_BEYOND 1e-4
-#endif
-#ifndef SYMNORM_ORBITAL_OVERLAP
-#define SYMNORM_ORBITAL_OVERLAP 1e-5
-#endif
-#ifndef SYMNORM_POS_EQUAL
-#define SYMNORM_POS_EQUAL 1e-8
-#endif
-#ifndef SYMNOORM_MIN_ORBITAL_WEIGHT
-#define SYMNOORM_MIN_ORBITAL_WEIGHT 0.99999
-#endif
+static double SYMNORM_ASSERT_POSITION_BEYOND = 1.e-4;
+static double SYMNORM_ORBITAL_OVERLAP = 1.e-5;
+static double SYMNORM_POS_EQUAL = 1.e-8;
+static double SYMNORM_MIN_ORBITAL_WEIGHT = 0.99999;
 
-#define VECTOR_INIT_CAP( type, ary, cap ) \
-    index_t ary##_cap = (cap); \
-    index_t ary##_sz = 0; \
-    type* ary = (type*)calloc(ary##_cap, sizeof(type));
-
-#define VECTOR_DEFAULT_CAP 1024
-#define VECTOR_INIT( type, ary ) VECTOR_INIT_CAP( type, ary, VECTOR_DEFAULT_CAP )
-
-#define VECTOR_PUSH_BACK( ary, val ) { \
-    if (ary##_sz >= ary##_cap) { \
-        void** p_ary = (void**)&ary; \
-        *p_ary = realloc(ary, sizeof(*ary) * ((ary##_cap <= 0) ? (ary##_cap = 1) : (ary##_cap *= 2))); \
-    } \
-    ary[ ary##_sz++ ] = val; \
+void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
+        double ORBITAL_OVERLAP, double POS_EQUAL, double MIN_ORBITAL_WEIGHT,
+        double TU_BOND_MAX, double MATRIX_ZERO ) {
+    #define SET_TO( THING ) { if (THING > 0) { \
+        SYMNORM_##THING = THING; \
+        mpi_log_printf( "SYMNORM_" #THING " = %.5e\n", THING ); \
+    } }
+    SET_TO( ASSERT_POSITION_BEYOND );
+    SET_TO( ORBITAL_OVERLAP );
+    SET_TO( POS_EQUAL );
+    SET_TO( MIN_ORBITAL_WEIGHT );
+    SET_TO( TU_BOND_MAX );
+    SET_TO( MATRIX_ZERO );
 }
 
 static inline bool map_back_to_BZ(claV3d_t* k_point, index_t* idx, const diverge_model_t* model, bool fine) {
@@ -174,7 +166,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
                                 claV3d_scale(UC2,im) ),
                                 claV3d_scale(UC3,iq) );
             claV3d_t trial = claV3d_add(to_trial, UC123);
-            if (claV3d_norm2(claV3d_sub(trial,to)) < SYMNORM_SQUARED_POSITION) {
+            if (claV3d_norm(claV3d_sub(trial,to)) < SYMNORM_POS_EQUAL) {
                 maps_to = o2;
                 mapped_pos[o1+n_orb*s] = to_trial;
                 bey_UC = claV3d_sub( to, to_trial );
@@ -183,7 +175,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
                 goto symmetrizer_orb_found;
             }
         }
-        if(maps_to == -1) {
+        if (maps_to == -1) {
             #pragma omp critical
             {
                 mpi_wrn_printf("position %li doesn't map under symmetry %li!\n", o1, s);
@@ -239,7 +231,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         for (index_t e=0; e<orbmaps_to_len[o1]; ++e)
             sum += cabs(POW2(orbmaps_to_prefac[orbmaps_to_off[o1]+e]));
         /* printf( "o1=%li, len=%li, off=%li, sum=%.5e\n", o1, orbmaps_to_len[o1], orbmaps_to_off[o1], sum ); */
-        if (sum < SYMNOORM_MIN_ORBITAL_WEIGHT) {
+        if (sum < SYMNORM_MIN_ORBITAL_WEIGHT) {
             mpi_err_printf("Orbitals do not sum up to one %1.3f\n", sum);
             model->n_sym = 0;
         }

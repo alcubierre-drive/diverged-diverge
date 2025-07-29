@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -71,10 +71,8 @@ int diverge_mpi_comm_size( void );
 int diverge_mpi_comm_rank( void );
 
 void diverge_mpi_allreduce_int_max_inplace( void* buf, int num );
-
 void diverge_mpi_allreduce_double_max( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int num );
-
 void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num );
 void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num );
@@ -118,6 +116,7 @@ void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcou
                                           complex128_t* recv, const int* recvcounts, const int* recvdispls );
 
 void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rdsp );
+void diverge_mpi_allgatherv_double( double* recv, const int* rcnt, const int* rdsp );
 void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp );
 void diverge_mpi_allgatherv_bytes( void* recv, int elementsz, const int* rcnt, const int* rdsp );
 double diverge_mpi_max( double* send );
@@ -131,6 +130,9 @@ void diverge_mpi_gather_double( const double* send, int scnt, double* recv, int 
 
 /** get the number of threads to use in diverge's OMP loops */
 int diverge_omp_num_threads( void );
+
+/** get the number of threads to use in diverge's FFTWs */
+int diverge_fftw_num_threads( void );
 
 /**
  * limit the number of threads for *every* OMP/FFTW parallel region; except for

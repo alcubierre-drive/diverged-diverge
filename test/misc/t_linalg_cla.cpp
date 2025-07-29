@@ -1,4 +1,5 @@
 #ifndef DIVERGE_SKIP_TESTS
+#ifndef DIVERGE_SKIP_TESTS_LINALG
 
 #include "../catch.hpp"
 #include "../../src/diverge_common.h"
@@ -159,6 +160,31 @@ TEST_CASE("C linalg vector " #dtype_long "@" #dim, "[cla][V" #dim #dtype_short "
  \
     test_claV##dim##dtype_short##_t c_norm2 = C_RANDOM_DATA; \
     CHECK( std::abs(test_claV##dim##dtype_short##_norm2(c_norm2) - c##dim##dtype_short##Xeigen(c_norm2).squaredNorm()) < CLA_ZERO ); \
+ \
+    test_claV##dim##dtype_short##_t c_cross_1 = C_RANDOM_DATA, c_cross_2 = C_RANDOM_DATA2; \
+    CHECK( check_cross<dim>( \
+        c##dim##dtype_short##Xeigen(c_cross_1), \
+        c##dim##dtype_short##Xeigen(c_cross_2), \
+        c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_cross(c_cross_1,c_cross_2)) \
+        ) ); \
+}
+
+// welcome to C++ and its template mess; all of this just to check whether the
+// vector type is complex
+template <class T, class U>
+struct are_same_template : std::is_same<T, U> {};
+template <template<class...> class T, class T1, class T2>
+struct are_same_template<T<T1>, T<T2>> : std::true_type {};
+template <class T, class U> constexpr bool CheckTypes(T, U) {
+    return are_same_template<T, U>::value;
+}
+template<int dim, typename V_eigen> bool check_cross( const V_eigen& a, const V_eigen& b, const V_eigen& c ) {
+    if constexpr(dim != 3) {
+        return true;
+    } else {
+        if (CheckTypes<typename V_eigen::Scalar, complex128_t>({},{})) return true;
+        return (a.cross(b) - c).norm() < CLA_ZERO;
+    }
 }
 
 VECTOR_TEST_CASE( 2, double, d )
@@ -365,4 +391,5 @@ MATRIX_DECOMPOSITION_TEST_CASE( 2, complex128_t, cd )
 MATRIX_DECOMPOSITION_TEST_CASE( 3, complex128_t, cd )
 MATRIX_DECOMPOSITION_TEST_CASE( 4, complex128_t, cd )
 
+#endif // DIVERGE_SKIP_TESTS_LINALG
 #endif // DIVERGE_SKIP_TESTS

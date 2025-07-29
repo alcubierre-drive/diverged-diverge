@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -6,6 +6,7 @@
 
 #ifndef LINALG_NO_LAPACKE
 #ifdef USE_MKL
+#define MKL_Complex16 complex128_t
 #include <mkl.h>
 #else
 #include <lapacke.h>
@@ -31,7 +32,13 @@ LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_zero( void
     cla_prefix##V##dim##type##_t result = {0}; \
     return result; \
 } \
-LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( LINALG_DATA_TYPE_##type* p ) { \
+LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_const( LINALG_DATA_TYPE_##type val ) { \
+    cla_prefix##V##dim##type##_t result; \
+    for (int i=0; i<dim; ++i) \
+        result.v[i] = val; \
+    return result; \
+} \
+LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( const LINALG_DATA_TYPE_##type* p ) { \
     cla_prefix##V##dim##type##_t result; \
     for (int i=0; i<dim; ++i) \
         result.v[i] = p[i]; \
@@ -39,6 +46,10 @@ LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_map( LINAL
 } \
 LINALG_EXPORT void cla_prefix##V##dim##type##_rmap( cla_prefix##V##dim##type##_t v, LINALG_DATA_TYPE_##type * p ) { \
     for (int i=0; i<dim; ++i) p[i] = v.v[i]; \
+} \
+LINALG_EXPORT int cla_prefix##V##dim##type##_equal( cla_prefix##V##dim##type##_t a, cla_prefix##V##dim##type##_t b ) { \
+    int not_equal = dim; for (int d=0; d<dim; ++d) not_equal -= (a.v[d] == b.v[d]); \
+    return !not_equal; \
 } \
 LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_scale( cla_prefix##V##dim##type##_t v, LINALG_DATA_TYPE_##type s ) { \
     cla_prefix##V##dim##type##_t result; \
@@ -80,8 +91,15 @@ LINALG_EXPORT double cla_prefix##V##dim##type##_norm2( cla_prefix##V##dim##type#
 LINALG_EXPORT double cla_prefix##V##dim##type##_norm( cla_prefix##V##dim##type##_t a ) { \
     return sqrt( cla_prefix##V##dim##type##_norm2( a ) ); \
 } \
+LINALG_EXPORT cla_prefix##V##dim##type##_t cla_prefix##V##dim##type##_cross( cla_prefix##V##dim##type##_t a, cla_prefix##V##dim##type##_t b ) { \
+    cla_prefix##V##dim##type##_t c; \
+    for (int i=0; i<dim; ++i) { \
+        c.v[i] = a.v[(i+1)%dim]*b.v[(i+2)%dim] - a.v[(i+2)%dim]*b.v[(i+1)%dim]; \
+    } \
+    return c; \
+} \
  \
-LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_map( LINALG_DATA_TYPE_##type* p ) { \
+LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_map( const LINALG_DATA_TYPE_##type* p ) { \
     cla_prefix##M##dim##type##_t result; \
     LINALG_DATA_TYPE_##type* ptr = result.m[0]; \
     for (int i=0; i<dim*dim; ++i) \
@@ -91,6 +109,13 @@ LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_map( LINAL
 LINALG_EXPORT void cla_prefix##M##dim##type##_rmap( cla_prefix##M##dim##type##_t m, LINALG_DATA_TYPE_##type * p ) { \
     LINALG_DATA_TYPE_##type* ptr = m.m[0]; \
     for (int i=0; i<dim*dim; ++i) p[i] = ptr[i]; \
+} \
+LINALG_EXPORT int cla_prefix##M##dim##type##_equal( cla_prefix##M##dim##type##_t a, cla_prefix##M##dim##type##_t b ) { \
+    int not_equal = dim*dim; \
+    for (int i=0; i<dim; ++i) for (int j=0; j<dim; ++j) { \
+        not_equal -= (a.m[i][j] == b.m[i][j]); \
+    } \
+    return !not_equal; \
 } \
 LINALG_EXPORT cla_prefix##M##dim##type##_t cla_prefix##M##dim##type##_zero( void ) { \
     cla_prefix##M##dim##type##_t result = {0}; \

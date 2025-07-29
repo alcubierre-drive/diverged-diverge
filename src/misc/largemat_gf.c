@@ -1,15 +1,9 @@
 #include "largemat_gf.h"
 #include "gemm.h"
-#include "init_internal_libs.h"
+#include "mpi_functions.h"
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
 #include "../diverge_model_internals.h"
-
-static void transpose_memcpy( complex128_t* out, const complex128_t* in, index_t nb ) {
-    for (index_t o1=0; o1<nb; ++o1)
-    for (index_t o2=0; o2<nb; ++o2)
-        out[IDX2(o1,o2,nb)] = in[IDX2(o2,o1,nb)];
-}
 
 greensfunc_op_t diverge_largemat_gf( const diverge_model_t* model, complex128_t Lambda, complex128_t* buf ) {
 
@@ -31,7 +25,7 @@ greensfunc_op_t diverge_largemat_gf( const diverge_model_t* model, complex128_t 
                 for (index_t b=0; b<nb; ++b) scratch1[b*nb+b] = 1./(L - E[IDX2(k,b,nb)]);
                 single_square_gemm( U+k*nb*nb, 1, scratch1, 0, scratch2, nb );
                 single_square_gemm( scratch2, 0, U+k*nb*nb, 0, scratch1, nb );
-                transpose_memcpy( buf + (s*nkf+k)*nb*nb, scratch1, nb );
+                transpose_outofplace( buf + (s*nkf+k)*nb*nb, scratch1, nb );
             }
             free(scratch1);
             free(scratch2);

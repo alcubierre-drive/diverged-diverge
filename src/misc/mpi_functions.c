@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "mpi_functions.h"
 #include "init_internal_libs.h"
@@ -319,6 +319,11 @@ void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rds
     MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_DOUBLE_COMPLEX, recv, rcnt, rdsp, MPI_DOUBLE_COMPLEX, diverge_mpi_comm );
 }
 
+void diverge_mpi_allgatherv_double( double* recv, const int* rcnt, const int* rdsp ) {
+    MPICHK();
+    MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_DOUBLE, recv, rcnt, rdsp, MPI_DOUBLE, diverge_mpi_comm );
+}
+
 void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp ) {
     MPICHK();
     MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_LONG_LONG, recv, rcnt, rdsp, MPI_LONG_LONG, diverge_mpi_comm );
@@ -528,6 +533,9 @@ void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcou
 void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rdsp ) {
     (void)recv; (void)rcnt; (void)rdsp;
 }
+void diverge_mpi_allgatherv_double( double* recv, const int* rcnt, const int* rdsp ) {
+    (void)recv; (void)rcnt; (void)rdsp;
+}
 void diverge_mpi_allgatherv_index( index_t* recv, const int* rcnt, const int* rdsp ) {
     (void)recv; (void)rcnt; (void)rdsp;
 }
@@ -551,3 +559,6 @@ void diverge_mpi_exit( int status ) {
     exit(status);
 }
 
+int diverge_omp_num_threads( void ) { return diverge_internal_omp_num_threads(); }
+void diverge_force_thread_limit( int n ) { diverge_internal_force_thread_limit( n ); }
+int diverge_fftw_num_threads( void ) { return diverge_internal_fftw_num_threads(); }

@@ -1,11 +1,27 @@
 #include "unique_distances.h"
 
 #include "../diverge_model.h"
-#include "init_internal_libs.h"
+#include "mpi_functions.h"
+#include "qnan.h"
 #define LINALG_NO_LAPACKE
-#define LINALG_EXPORT static inline
 #include "linalg.h"
 LINALG_IMPLEMENT
+
+static double unique_distance_equal = DIVERGE_EPS_MESH;
+static int unique_distance_relative = 0;
+
+void diverge_model_unique_distances_set_precision( double prec ) {
+    if (qnan_isnan(prec)) {
+        unique_distance_equal = DIVERGE_EPS_MESH;
+        unique_distance_relative = 0;
+    } else if (prec >= 0.0) {
+        unique_distance_equal = prec;
+        unique_distance_relative = 0;
+    } else {
+        unique_distance_equal = prec;
+        unique_distance_relative = 1;
+    }
+}
 
 static int compare_dbl( const void* a_, const void* b_ );
 
@@ -34,9 +50,11 @@ double* diverge_model_unique_distances( diverge_model_t* m, int Rmax, int dim ) 
     }
     qsort( dist, n_dist, sizeof(double), &compare_dbl );
 
+    double equal = unique_distance_equal * (unique_distance_relative ?
+            claV3d_norm(claV3d_map(m->lattice[0])) : 1.0);
     index_t last_unique_idx = 0;
     for (index_t idx=1; idx<n_dist; ++idx) {
-        if (fabs(dist[idx] - dist[last_unique_idx]) > DIVERGE_EPS_MESH) {
+        if (fabs(dist[idx] - dist[last_unique_idx]) > equal) {
             dist[++last_unique_idx] = dist[idx];
         }
     }
@@ -55,3 +73,7 @@ static int compare_dbl( const void* a_, const void* b_ ) {
         return 0;
 }
 
+index_t diverge_model_unique_distances_length( double* dists ) {
+    index_t n_dists = -1; while (!qnan_isnan(dists[++n_dists])) {}
+    return n_dists;
+}

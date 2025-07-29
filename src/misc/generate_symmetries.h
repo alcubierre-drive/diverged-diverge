@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #pragma once
 
@@ -23,44 +23,46 @@ typedef enum real_harmonics_t {
 
     /** py orbital */
     orb_pm1 = 1,
-    orb_py = 1,
     /** pz orbital */
-    orb_p_0 = 2,
-    orb_pz = 2,
+    orb_p_0,
     /** px orbital */
-    orb_p_1 = 3,
-    orb_px = 3,
+    orb_p_1,
+
+    orb_py = 1,
+    orb_pz,
+    orb_px,
 
     orb_dm2 = 4,
-    orb_dm1 = 5,
-    orb_d0 = 6,
-    orb_d1 = 7,
-    orb_d2 = 8,
+    orb_dm1,
+    orb_d0,
+    orb_d1,
+    orb_d2,
 
     orb_dxy = 4,
-    orb_dyz = 5,
-    orb_dz2 = 6,
-    orb_dxz = 7,
-    orb_dx2y2 = 8,
+    orb_dyz,
+    orb_dz2,
+    orb_dxz,
+    orb_dx2y2,
 
-    // Wikipedia
-    orb_fm3 = 9,
-    orb_fm2 = 10,
-    orb_fm1 = 11,
-    orb_f_0 = 12,
-    orb_f_1 = 13,
-    orb_f_2 = 14,
-    orb_f_3 = 15,
+    orb_fm3,
+    orb_fm2,
+    orb_fm1,
+    orb_f_0,
+    orb_f_1,
+    orb_f_2,
+    orb_f_3,
 
-    orb_gm4 = 16,
-    orb_gm3 = 17,
-    orb_gm2 = 18,
-    orb_gm1 = 19,
-    orb_g_0 = 20,
-    orb_g_1 = 21,
-    orb_g_2 = 22,
-    orb_g_3 = 23,
-    orb_g_4 = 24
+    orb_gm4,
+    orb_gm3,
+    orb_gm2,
+    orb_gm1,
+    orb_g_0,
+    orb_g_1,
+    orb_g_2,
+    orb_g_3,
+    orb_g_4,
+
+    REAL_HARMONICS_COUNT,
 } real_harmonics_t;
 
 /**

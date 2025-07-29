@@ -1,4 +1,4 @@
-/* Copyright (C) 2024 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "diverge_model_internals.h"
 
@@ -20,6 +20,8 @@ double diverge_max_dist_iobi( void ) {
 }
 
 void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... ) {
+    if (!model->internals->has_common_internals)
+        diverge_model_internals_common( model );
     diverge_flow_type t = diverge_flow_type_fromstr( mode );
     mpi_log_printf("internals mode: %s\n", mode);
     va_list ap;
@@ -113,7 +115,7 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         if (model->nk[d] == 0) model->nk[d] = 1;
         if (model->nkf[d] == 0) model->nkf[d] = 1;
     }
-    mpi_log_printf("model is %i dimensional \n", intls->dim);
+    mpi_log_printf("model is %iD\n", intls->dim);
 
     index_t nk = kdim(model->nk),
             nktot = kdimtot(model->nk, model->nkf),
@@ -132,10 +134,9 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     mpi_vrb_printf("allocating/generating meshes\n");
     intls->kmesh = shared_malloc(sizeof(double)*nk*3);
     intls->kfmesh = shared_malloc(sizeof(double)*nktot*3);
-    if (shared_exclusive_enter(intls->kmesh) && shared_exclusive_enter(intls->kfmesh))
+    if (shared_exclusive_enter(intls->kmesh))
         diverge_model_generate_meshes( intls->kmesh, intls->kfmesh, model->nk, model->nkf, model->lattice );
     shared_exclusive_wait(intls->kmesh);
-    shared_exclusive_wait(intls->kfmesh);
 
     mpi_vrb_printf("allocating internal common buffers\n");
     intls->ham = shared_calloc(nktot*nb*nb,sizeof(complex128_t));
@@ -158,24 +159,29 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     }
 
     mpi_vrb_printf("filling hamiltonian buffer\n");
-    if (shared_exclusive_enter(intls->ham) && shared_exclusive_enter(intls->U)) {
+    if (shared_exclusive_enter(intls->ham))
         (*(model->hfill))( model, intls->ham );
-        if (symmetrize_hamiltonian) {
-            mpi_vrb_printf( "symmetrizing Hamiltonain before diagonalization\n" );
-            double err = diverge_symmetrize_2pt_fine( model, intls->ham, intls->U );
-            if (err > DIVERGE_EPS_MESH) {
-                mpi_wrn_printf("resymmetrize hamiltonian->large error: %.5e\n", err);
-            }
-        }
-    }
     shared_exclusive_wait(intls->ham);
-    shared_exclusive_wait(intls->U);
+
+    if (symmetrize_hamiltonian) {
+        mpi_vrb_printf( "symmetrizing Hamiltonain before diagonalization\n" );
+        // copyin
+        memcpy( intls->greens, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
+        // symm
+        double err = diverge_symmetrize_2pt_fine( model, (complex128_t*)intls->greens, NULL );
+        if (err > DIVERGE_EPS_MESH) mpi_wrn_printf("resymmetrize hamiltonian->large error: %.5e\n", err);
+        // copyout
+        if (shared_exclusive_enter( intls->ham ))
+            memcpy( intls->ham, intls->greens, sizeof(complex128_t) * nktot*nb*nb );
+        shared_exclusive_wait( intls->ham );
+        memset( intls->greens, 0, sizeof(complex128_t)*nktot*nb*nb );
+    }
 
     if (intls->ignore_eigensolver_in_common) {
         mpi_vrb_printf("ignoring hamiltonian diag\n");
     } else {
         mpi_vrb_printf("diagonalizing hamiltonian\n");
-        if (shared_exclusive_enter(intls->U) && shared_exclusive_enter(intls->E)) {
+        if (shared_exclusive_enter(intls->U)) {
             memcpy( intls->U, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
             if (!intls->use_batched_svd_algo_in_common)
                 batched_eigen_r( NULL, -2, intls->U, intls->E, nb, nktot );
@@ -190,7 +196,6 @@ void diverge_model_internals_common( diverge_model_t* model ) {
             }
         }
         shared_exclusive_wait( intls->U );
-        shared_exclusive_wait( intls->E );
     }
 }
 
@@ -220,9 +225,6 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     if ((model->internals->grid_vertex != NULL) &&
         (model->internals->grid_vertex_destructor != NULL))
         (*(model->internals->grid_vertex_destructor))( model->internals->grid_vertex );
-    if ((model->internals->grid_sym != NULL) &&
-        (model->internals->grid_sym_destructor != NULL))
-        (*(model->internals->grid_sym_destructor))( model->internals->grid_sym );
     if ((model->internals->patch_vertex != NULL) &&
         (model->internals->patch_vertex_destructor != NULL))
         (*(model->internals->patch_vertex_destructor))( model->internals->patch_vertex );
@@ -375,4 +377,7 @@ double*       diverge_model_internals_get_kfmesh( const diverge_model_t* model )
 }
 gf_complex_t* diverge_model_internals_get_greens( const diverge_model_t* model ) {
     return model->internals->has_common_internals ? model->internals->greens : NULL;
+}
+index_t       diverge_model_internals_get_dim( const diverge_model_t* model ) {
+    return model->internals->dim;
 }

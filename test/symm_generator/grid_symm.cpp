@@ -3,14 +3,11 @@
 #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
-#include "../../src/diverge_flow_step_internal.hpp"
+#include "../../src/diverge_flow_step_internal.h"
 #include "../model_examples/old.h"
 #include "../../src/diverge_model_internals.h"
 #include "../model_examples/model_constructor.hpp"
-#include "../../src/tu/propagator.hpp"
-#include "../../src/grid/loops.hpp"
-#include "../../src/tu/vertex.hpp"
-#include "../../src/tu/projection_wrapper.hpp"
+#include "../../src/grid/loops.h"
 #include "../helper_functions.hpp"
 
 
@@ -19,24 +16,29 @@ TEST_CASE("loopgrid symmcheck", "[grid_symm]") {
     diverge_model_t* mod_grid = gen_triangular_pxpy_sym(6, 6);
     diverge_model_internals_grid(mod_grid);
     index_t nb = mod_grid->n_orb*mod_grid->n_spin;
-    index_t nk = 36;
+    index_t nk = kdim(mod_grid->nk);
 
     complex128_t* Lgrid;
     complex128_t* Lreco;
 
-    grid::Loops grid_loop(mod_grid);
-    index_t fsize = POW4(nb)*grid_loop.get_qsize()*nk;
+    grid_loop_t* grid_loop = grid_loop_init(mod_grid);
+    index_t fsize = POW4(nb)*grid_loop->qsize*nk;
 
-    Lgrid = grid_loop.X_C(0.1);
-    Lreco = grid_loop.symmetrize(Lgrid,'C');
+    grid_loop_toggle_symmetrizer(grid_loop);
+    Lgrid = grid_loop_calc( grid_loop, 'C', 0.1 );
+    grid_loop_toggle_symmetrizer(grid_loop);
+    Lreco = grid_loop_calc( grid_loop, 'C', 0.1 );
     for(index_t i = 0; i < fsize; ++i)
         CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
 
-    Lgrid = grid_loop.X_P(0.1);
-    Lreco = grid_loop.symmetrize(Lgrid,'P');
+    grid_loop_toggle_symmetrizer(grid_loop);
+    Lgrid = grid_loop_calc( grid_loop, 'P', 0.1 );
+    grid_loop_toggle_symmetrizer(grid_loop);
+    Lreco = grid_loop_calc( grid_loop, 'P', 0.1 );
     for(index_t i = 0; i < fsize; ++i)
         CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
 
+    grid_loop_free(grid_loop);
     diverge_model_free(mod_grid);
 }
 
