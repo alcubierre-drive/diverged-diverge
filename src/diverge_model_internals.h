@@ -3,6 +3,7 @@
 #pragma once
 
 #include "diverge_model.h"
+#include "diverge_momentum_gen.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -183,6 +184,9 @@ double*       diverge_model_internals_get_kfmesh( const diverge_model_t* model )
 gf_complex_t* diverge_model_internals_get_greens( const diverge_model_t* model );
 /** returns the dimension (:c:func:`diverge_model_internals_common` should be called prior) */
 index_t       diverge_model_internals_get_dim(    const diverge_model_t* model );
+/** return the reciprocal lattice (:c:func:`diverge_model_internals_common` should be called prior) */
+diverge_lattice_t diverge_model_internals_get_rlattice( const diverge_model_t* model );
+
 #ifdef __cplusplus
 }
 #endif

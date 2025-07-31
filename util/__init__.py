@@ -20,17 +20,18 @@ if not _libs["divERGe"] is None:
 
     class struct_complex128_t(Structure):
         pass
-    struct_complex128_t.__slots__ = [
-        'x',
-        'y',
-    ]
-    struct_complex128_t._fields_ = [
-        ('x', c_double),
-        ('y', c_double),
-    ]
+    struct_complex128_t.__slots__ = [ 'x', 'y', ]
+    struct_complex128_t._fields_ = [ ('x', c_double), ('y', c_double), ]
     complex128_t = struct_complex128_t
+
     gf_complex_t = complex128_t
     index_t = c_int64
+
+    class struct_lattice_t(Structure):
+        pass
+    struct_lattice_t.__slots__ = [ 'v', ]
+    struct_lattice_t._fields_ = [ ('v', c_double*int(9)), ]
+    lattice_t = struct_lattice_t
 
     # MPI functions
     init_ = _libs["divERGe"].get("diverge_init", "cdecl")
@@ -879,6 +880,10 @@ if not _libs["divERGe"] is None:
     model_internals_get_dim.argtypes = [POINTER(model_t)]
     model_internals_get_dim.restype = index_t
 
+    model_internals_get_rlattice = _libs["divERGe"].get("diverge_model_internals_get_rlattice", "cdecl")
+    model_internals_get_rlattice.argtypes = [POINTER(model_t)]
+    model_internals_get_rlattice.restype = lattice_t
+
     # Filling
     model_get_filling = _libs["divERGe"].get("diverge_model_get_filling", "cdecl")
     model_get_filling.argtypes = [POINTER(model_t), POINTER(c_double), index_t]
@@ -1244,7 +1249,7 @@ if not _libs["divERGe"] is None:
     # Momentum generator
     model_generate_meshes = _libs["divERGe"].get("diverge_model_generate_meshes", "cdecl")
     model_generate_meshes.argtypes = [POINTER(c_double), POINTER(c_double), index_t * int(3), index_t * int(3), (c_double * int(3)) * int(3)]
-    model_generate_meshes.restype = None
+    model_generate_meshes.restype = lattice_t
 
     model_generate_mom_basis = _libs["divERGe"].get("diverge_model_generate_mom_basis", "cdecl")
     model_generate_mom_basis.argtypes = [c_void_p, c_void_p]
