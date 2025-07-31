@@ -134,9 +134,14 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     mpi_vrb_printf("allocating/generating meshes\n");
     intls->kmesh = shared_malloc(sizeof(double)*nk*3);
     intls->kfmesh = shared_malloc(sizeof(double)*nktot*3);
-    if (shared_exclusive_enter(intls->kmesh))
-        diverge_model_generate_meshes( intls->kmesh, intls->kfmesh, model->nk, model->nkf, model->lattice );
+    diverge_lattice_t* rlattice = shared_malloc(sizeof *rlattice);
+    if (shared_exclusive_enter(intls->kmesh)) {
+        *rlattice = diverge_model_generate_meshes( intls->kmesh, intls->kfmesh,
+                model->nk, model->nkf, model->lattice );
+    }
     shared_exclusive_wait(intls->kmesh);
+    intls->rlattice = *rlattice;
+    shared_free(rlattice);
 
     mpi_vrb_printf("allocating internal common buffers\n");
     intls->ham = shared_calloc(nktot*nb*nb,sizeof(complex128_t));
@@ -380,4 +385,7 @@ gf_complex_t* diverge_model_internals_get_greens( const diverge_model_t* model )
 }
 index_t       diverge_model_internals_get_dim( const diverge_model_t* model ) {
     return model->internals->dim;
+}
+diverge_lattice_t diverge_model_internals_get_rlattice( const diverge_model_t* model ) {
+    return model->internals->rlattice;
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "diverge_common.h"
+#include "diverge_momentum_gen.h"
 #include <ctype.h>
 
 #ifdef __cplusplus
@@ -15,6 +16,7 @@ struct internals_t {
     // common internals
     double* kmesh;
     double* kfmesh;
+    diverge_lattice_t rlattice;
     complex128_t* ham;
     complex128_t* U;
     double* E;

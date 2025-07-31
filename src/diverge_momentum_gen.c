@@ -33,15 +33,16 @@ static void fill_mesh(double* mesh, const index_t nk[3], double kbasis[3][3]) {
 }
 
 
-void diverge_model_generate_meshes(double* kmesh, double* kfmesh,
+diverge_lattice_t diverge_model_generate_meshes(double* kmesh, double* kfmesh,
         const index_t nk[3], const index_t nkf[3], double lattice[3][3]) {
-    double kbasis[3][3];
-    diverge_model_generate_mom_basis(lattice[0],kbasis[0]);
+    diverge_lattice_t kbasis = {0};
+    diverge_model_generate_mom_basis(lattice[0],kbasis.v[0]);
     index_t nkff[3];
     for (int i=0; i<3; ++i) nkff[i] = nk[i] * nkf[i];
 
-    fill_mesh(kmesh,nk,kbasis);
-    fill_mesh(kfmesh,nkff,kbasis);
+    fill_mesh(kmesh,nk,kbasis.v);
+    fill_mesh(kfmesh,nkff,kbasis.v);
+    return kbasis;
 }
 
 

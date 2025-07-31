@@ -1,4 +1,4 @@
-DIVERGE_0.8 {
+DIVERGE_0.9 {
     global:
         diverge_channel_vertex_generator_default;
         diverge_compilation_status;
@@ -75,6 +75,7 @@ DIVERGE_0.8 {
         diverge_model_internals_get_greens;
         diverge_model_internals_get_kfmesh;
         diverge_model_internals_get_kmesh;
+        diverge_model_internals_get_rlattice;
         diverge_model_internals_grid;
         diverge_model_internals_patch;
         diverge_model_internals_reset;
