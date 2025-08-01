@@ -55,14 +55,9 @@ struct tu_vertex_t {
     // private
     bool owns;
 
-
     // phonon stuff
     bool elph;
     tu_data_phonons_t* tu_ph;
-    // XXX those beasts are not needed. It is totally sufficient to just add to
-    // the vertex *before* projecting.
-    complex128_t *Pch_phonon_backup, *Cch_phonon_backup, *Dch_phonon_backup;
-    complex128_t* phonon_helper;
 };
 
 // private functions
