@@ -23,8 +23,6 @@ LINALG_TYPES(test_cla, 4)
 #define CLA_ZERO 1e-9
 #endif
 
-#include <iostream>
-
 typedef Eigen::Matrix<int64_t,2,1> Vec2ll;
 typedef Eigen::Matrix<int64_t,3,1> Vec3ll;
 typedef Eigen::Matrix<int64_t,4,1> Vec4ll;
@@ -312,7 +310,6 @@ CT_TEST_NAME( claM##dim##dtype_short##_t, "cla,M" #dim #dtype_short ) { \
         c##dim##dtype_short##Xeigen(test_claM##dim##dtype_short##_matvec( c_matvec_m, c_matvec_v )); \
     Vec##dim##dtype_short matvec_eig = \
         c##dim##dtype_short##Meigen(c_matvec_m) * c##dim##dtype_short##Xeigen(c_matvec_v); \
-    /* std::cout << std::endl << matvec_cla << std::endl << std::endl << matvec_eig << std::endl; */ \
     CT_CHECK( (matvec_eig-matvec_cla).norm() < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_vecmat_v = C_RANDOM_DATA3; \
@@ -321,7 +318,6 @@ CT_TEST_NAME( claM##dim##dtype_short##_t, "cla,M" #dim #dtype_short ) { \
         c##dim##dtype_short##Xeigen(test_claM##dim##dtype_short##_vecmat( c_vecmat_v, c_vecmat_m )); \
     Vec##dim##dtype_short vecmat_eig = \
         c##dim##dtype_short##Meigen(c_vecmat_m).transpose() * c##dim##dtype_short##Xeigen(c_vecmat_v); \
-    /* std::cout << std::endl << vecmat_cla << std::endl << std::endl << vecmat_eig << std::endl; */ \
     CT_CHECK( (vecmat_eig-vecmat_cla).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_transpose = C_RANDOM_DATA; \
