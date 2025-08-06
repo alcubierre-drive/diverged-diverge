@@ -1,8 +1,10 @@
 #ifndef DIVERGE_SKIP_TESTS
 
+#define CT_SUITE_NAME HK
+#include "../ctest.h"
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/diverge_flow_step.h"
@@ -97,13 +99,13 @@ double err_X(complex128_t* pSU, complex128_t* pnSU, int n_orb, int n_orbff) {
     return mpi_err;
 }
 
-TEST_CASE("two orbital model in 1d","[hk]") {
-    CHECK( diverge_mpi_comm_size() == 1 );
+CT_TEST_NAME(onedim_twoorb_TU, "onedim_twoorb,tu") {
+    CT_CHECK( diverge_mpi_comm_size() == 1 );
     if (diverge_mpi_comm_size() > 1) {
         mpi_err_printf( "cannot test two orbital model in 1d [hk] with more than one MPI rank\n" );
         return;
     }
-    MPILoglevelWrapper LL(5);
+    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod1 = test_model(1);
     diverge_model_t* mod2 = test_model(2);
     diverge_model_internals_tu( mod1, 4.01 );
@@ -112,9 +114,9 @@ TEST_CASE("two orbital model in 1d","[hk]") {
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "PCD" );
     tu_vertex_t* v1 = s1->tu_vertex;
     tu_vertex_t* v2 = s2->tu_vertex;
-    CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
 
 
     index_t fsize = POW4(mod2->n_orb*mod2->n_spin);
@@ -138,31 +140,37 @@ TEST_CASE("two orbital model in 1d","[hk]") {
             if(s1!=s3){
                 if(o1==o4 && o3==o2){
                     if(o1==o2) {
-                        CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0) < 1e-10);
-                    }else
-                        CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0-2.*0.1) < 1e-10);
-                }else if(o1==o3 && o4==o2 && o2!=o1)
-                    CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
-                else if(o1==o2 && o3==o4&& o1!=o3)
-                    CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
+                        CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0) < 1e-10);
+                    } else {
+                        CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0-2.*0.1) < 1e-10);
+                    }
+                } else if(o1==o3 && o4==o2 && o2!=o1) {
+                    CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
+                } else if(o1==o2 && o3==o4&& o1!=o3) {
+                    CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
+                }
             }else{
-                if(o1==o4 && o2==o3 && o1!=o3)
-                    CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0*1.0-3.0*0.1) < 1e-10);
+                if(o1==o4 && o2==o3 && o1!=o3) {
+                    CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0*1.0-3.0*0.1) < 1e-10);
+                }
             }
         }else if(s1 == s3 && s4 == s2){
             if(s1!=s4){
                 if(o1==o3 && o2==o4){
                     if(o1==o2) {
-                        CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0) < 1e-10);
-                    }else
-                         CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0+2.*0.1) < 1e-10);
-                }else if(o1==o4 && o3==o2 && o3!=o1)
-                     CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
-                else if(o1==o2 && o3==o4 && o1!=o3)
-                     CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
-            }else{
-                if(o1==o3 && o2==o4 && o1!=o2)
-                     CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0*1.0+3.0*0.1) < 1e-10);
+                        CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0) < 1e-10);
+                    } else {
+                         CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0+2.*0.1) < 1e-10);
+                    }
+                } else if(o1==o4 && o3==o2 && o3!=o1) {
+                     CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
+                } else if(o1==o2 && o3==o4 && o1!=o3) {
+                     CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
+                }
+            } else {
+                if(o1==o3 && o2==o4 && o1!=o2) {
+                     CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0*1.0+3.0*0.1) < 1e-10);
+                }
             }
         }
     }
@@ -177,9 +185,9 @@ TEST_CASE("two orbital model in 1d","[hk]") {
                 i1243 = IDX4( s3, s4, s2, s1,norb,norb,norb),
                 i2143 = IDX4( s3, s4, s1, s2,norb,norb,norb);
         if(std::abs(vertex[i1234]) > 1e-10 ){
-            CHECK(std::abs(vertex[i1234]+vertex[i2134]) < 1e-10);
-            CHECK(std::abs(vertex[i1234]+vertex[i1243]) < 1e-10);
-            CHECK(std::abs(vertex[i1234]-vertex[i2143]) < 1e-10);
+            CT_CHECK(std::abs(vertex[i1234]+vertex[i2134]) < 1e-10);
+            CT_CHECK(std::abs(vertex[i1234]+vertex[i1243]) < 1e-10);
+            CT_CHECK(std::abs(vertex[i1234]-vertex[i2143]) < 1e-10);
         }
     }
 
@@ -191,19 +199,20 @@ TEST_CASE("two orbital model in 1d","[hk]") {
 
         Lambda += dLambda;
     }
-    CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
     diverge_flow_step_free( s1 );
     diverge_flow_step_free( s2 );
     free(vertex);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
+    mpi_loglevel_set(ll);
 }
 
 
-TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
-    MPILoglevelWrapper LL(5);
+CT_TEST_NAME(onedim_twoorb_grid, "onedim_twoorb,grid") {
+    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod2 = test_model(2);
     diverge_model_internals_grid( mod2 );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "grid", "PCD" );
@@ -229,31 +238,37 @@ TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
             if(s1!=s3){
                 if(o1==o4 && o3==o2){
                     if(o1==o2) {
-                        CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0) < 1e-10);
-                    }else
-                        CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0-2.*0.1) < 1e-10);
-                }else if(o1==o3 && o4==o2 && o2!=o1)
-                    CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
-                else if(o1==o2 && o3==o4&& o1!=o3)
-                    CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
-            }else{
-                if(o1==o4 && o2==o3 && o1!=o3)
-                    CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0*1.0-3.0*0.1) < 1e-10);
+                        CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0) < 1e-10);
+                    } else {
+                        CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0-2.*0.1) < 1e-10);
+                    }
+                } else if(o1==o3 && o4==o2 && o2!=o1) {
+                    CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
+                } else if(o1==o2 && o3==o4&& o1!=o3) {
+                    CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+0.1) < 1e-10);
+                }
+            } else {
+                if(o1==o4 && o2==o3 && o1!=o3) {
+                    CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]+1.0*1.0-3.0*0.1) < 1e-10);
+                }
             }
         }else if(s1 == s3 && s4 == s2){
             if(s1!=s4){
                 if(o1==o3 && o2==o4){
-                    if(o1==o2) {
-                        CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0) < 1e-10);
-                    }else
-                         CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0+2.*0.1) < 1e-10);
-                }else if(o1==o4 && o3==o2 && o3!=o1)
-                     CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
-                else if(o1==o2 && o3==o4 && o1!=o3)
-                     CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
-            }else{
-                if(o1==o3 && o2==o4 && o1!=o2)
-                     CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0*1.0+3.0*0.1) < 1e-10);
+                    if (o1==o2) {
+                        CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0) < 1e-10);
+                    } else {
+                        CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0+2.*0.1) < 1e-10);
+                    }
+                } else if (o1==o4 && o3==o2 && o3!=o1) {
+                     CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
+                } else if (o1==o2 && o3==o4 && o1!=o3) {
+                     CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-0.1) < 1e-10);
+                }
+            } else {
+                if (o1==o3 && o2==o4 && o1!=o2) {
+                     CT_CHECK(std::abs(vertex[so4+norb*(so3+norb*(so2+norb*so1))]-1.0*1.0+3.0*0.1) < 1e-10);
+                }
             }
         }
     }
@@ -261,10 +276,11 @@ TEST_CASE("two orbital model in 1d grid","[hk-grid]") {
     diverge_flow_step_free( s2 );
     free(vertex);
     diverge_model_free( mod2 );
+    mpi_loglevel_set(ll);
 }
 
-TEST_CASE("two orbital model in 1d mom","[mhk]") {
-    MPILoglevelWrapper LL(5);
+CT_TEST_NAME(onedim_twoorb_mom, "onedim_twoorb,momentum") {
+    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod1 = test_model(1,10,5);
     diverge_model_t* mod2 = test_model(2,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
@@ -273,9 +289,9 @@ TEST_CASE("two orbital model in 1d mom","[mhk]") {
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "tu", "SPCD" );
     tu_vertex_t* v1 = s1->tu_vertex;
     tu_vertex_t* v2 = s2->tu_vertex;
-    CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
 
     double Lambda = 1.0;
     double dLambda = -0.1;
@@ -284,13 +300,14 @@ TEST_CASE("two orbital model in 1d mom","[mhk]") {
         diverge_flow_step_euler( s2, Lambda, dLambda );
         Lambda += dLambda;
     }
-    CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
-    CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'D'>(v1->Dch, v2->Dch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'C'>(v1->Cch, v2->Cch, 2, v2->n_orbff) < 1e-9);
+    CT_CHECK(err_X<'P'>(v1->Pch, v2->Pch, 2, v2->n_orbff) < 1e-9);
     diverge_flow_step_free( s1 );
     diverge_flow_step_free( s2 );
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
+    mpi_loglevel_set(ll);
 }
 
 #endif // DIVERGE_SKIP_TESTS

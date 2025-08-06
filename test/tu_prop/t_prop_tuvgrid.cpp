@@ -1,6 +1,8 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
+#define CT_SUITE_NAME tu_prop_grid
+#include "../ctest.h"
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"
@@ -12,6 +14,7 @@
 #include "../../src/tu/vertex.h"
 #include "../../src/tu/projection.h"
 #include "../helper_functions.hpp"
+#include <algorithm>
 
 void unproject_loop(complex128_t* buf,complex128_t* loop,const diverge_model_t* model) {
     tu_data_t* tu_data = (tu_data_t*)(model -> internals-> tu_data);
@@ -53,7 +56,7 @@ void unproject_loop(complex128_t* buf,complex128_t* loop,const diverge_model_t* 
 }
 
 
-TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
+CT_TEST_NAME(tu_prop_loop_vs_grid, "tu_prop,grid") {
     diverge_model_t* mod_tu = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mod_tu, 12.0);
     diverge_model_t* mod_grid = gen_honeycomb_lat_hub(6, 6);
@@ -85,7 +88,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     memcpy(Lrecog + grid_loop->qstart*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop->qsize*nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(Lrecog, fsize);
     unproject_loop(Lreco,Ltu,mod_tu);
-    CHECK(check_hermicity(Ltu, n_spin*n_spin*n_orbff,nk));
+    CT_CHECK(check_hermicity(Ltu, n_spin*n_spin*n_orbff,nk));
 
     std::sort(Lrecog, Lrecog+fsize, [](complex128_t i, complex128_t j)
                         { return std::abs(i) > std::abs(j); });
@@ -93,7 +96,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
                         { return std::abs(i) > std::abs(j); });
 
     for(index_t i = 0; i < fsize;++i) {
-        CHECK(std::abs(std::abs(Lrecog[i])-std::abs(Lreco[i])) < 1e-10);
+        CT_CHECK(std::abs(std::abs(Lrecog[i])-std::abs(Lreco[i])) < 1e-10);
     }
 
 
@@ -103,7 +106,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
     memcpy(Lrecog + grid_loop->qstart*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop->qsize*nk*sizeof(complex128_t));
     diverge_mpi_allreduce_complex_sum_inplace(Lrecog, fsize);
     unproject_loop(Lreco,Ltu,mod_tu);
-    CHECK(check_hermicity(Ltu, n_spin*n_spin*n_orbff,nk));
+    CT_CHECK(check_hermicity(Ltu, n_spin*n_spin*n_orbff,nk));
 
     std::sort(Lrecog, Lrecog+fsize, [](complex128_t i, complex128_t j)
                         { return std::abs(i) > std::abs(j); });
@@ -111,7 +114,7 @@ TEST_CASE("loop tu v grid", "[prop][looptugrid]") {
                         { return std::abs(i) > std::abs(j); });
 
     for(index_t i = 0; i < fsize;++i) {
-        CHECK(std::abs(std::abs(Lrecog[i])-std::abs(Lreco[i])) < 1e-10);
+        CT_CHECK(std::abs(std::abs(Lrecog[i])-std::abs(Lreco[i])) < 1e-10);
     }
 
     free(grid_loop);

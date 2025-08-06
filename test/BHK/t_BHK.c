@@ -1,6 +1,7 @@
+#include <sys/stat.h>
+
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"
@@ -15,11 +16,10 @@
 #include "../../src/tu/projection.h"
 #include "../../src/npatch/symmetrize_vertex.h"
 
-#include "../model_examples/model_constructor.hpp"
+#include "../model_examples/model_constructor.h"
 
-#include <sys/stat.h>
-#include <vector>
-using std::vector;
+#define CT_SUITE_NAME BHK
+#include "../ctest.h"
 
 #ifndef BHK_NK
 #define BHK_NK 4
@@ -131,7 +131,7 @@ double test_symm_4_pnt( diverge_model_t* model, complex128_t* buf ) {
     double max_diff = 0.;
     #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
     for (index_t idx=0; idx<size; ++idx)
-        max_diff = MAX(max_diff, std::abs(buf[idx]-aux[idx]));
+        max_diff = MAX(max_diff, cabs(buf[idx]-aux[idx]));
     mpi_log_printf("maximal error %2.5f \n", max_diff);
     free(aux);
     return max_diff;
@@ -214,19 +214,20 @@ static inline void compare_vertices( complex128_t* v1, complex128_t* v2, index_t
 
     #pragma omp parallel for reduction(+:csum_nosort) reduction(max:cmax_nosort) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<size; ++i) {
-        double cval = std::abs(v1[i]-v2[i]);
+        double cval = cabs(v1[i]-v2[i]);
         csum_nosort += cval;
         cmax_nosort = MAX(cmax_nosort, cval);
     }
 
-    CHECK( csum_nosort / size < BHK_EQUAL );
-    CHECK( cmax_nosort < BHK_EQUAL );
+    CT_CHECK( csum_nosort / size < BHK_EQUAL );
+    CT_CHECK( cmax_nosort < BHK_EQUAL );
 }
 
 #define BHK_diverge_model_internals_patch( mod_patch ) \
     index_t nkp = mod_patch->nk[0]*mod_patch->nk[1]; \
-    vector<index_t> patches(nkp); for (int i=0; i<nkp; ++i) patches[i] = i; \
-    mod_patch->patching = diverge_patching_from_indices( mod_patch, patches.data(), patches.size() ); \
+    index_t* patches = calloc(nkp, sizeof*patches); for (int i=0; i<nkp; ++i) patches[i] = i; \
+    mod_patch->patching = diverge_patching_from_indices( mod_patch, patches, nkp ); \
+    free( patches ); \
     diverge_model_internals_patch(mod_patch, -1);
 
 #define BHK_diverge_model_internals_grid( mod_grid ) \
@@ -236,9 +237,9 @@ static inline void compare_vertices( complex128_t* v1, complex128_t* v2, index_t
     diverge_model_internals_tu( mod_tu, 12.0 );
 
 #define create_bhk_test_case( mode1, mode2, model ) \
-TEST_CASE( "diverge_flow_bhk_" #model "_" #mode1 "_" #mode2, "[BHK][" #model "][" #mode1 "-" #mode2 "]" ) { \
-    diverge_model_t* mod1 = gen_ ## model (BHK_NK, BHK_NK); \
-    diverge_model_t* mod2 = gen_ ## model (BHK_NK, BHK_NK); \
+CT_TEST_NAME( diverge_flow_bhk_##model##_##mode1##_##mode2, #model "," #mode1 "-" #mode2 ) { \
+    diverge_model_t* mod1 = C_gen_ ## model (BHK_NK, BHK_NK); \
+    diverge_model_t* mod2 = C_gen_ ## model (BHK_NK, BHK_NK); \
     strcpy( mod1->name, #model "_" #mode1 ); \
     strcpy( mod2->name, #model "_" #mode2 ); \
     BHK_diverge_model_internals_ ## mode1 ( mod1 ); \
@@ -255,10 +256,10 @@ TEST_CASE( "diverge_flow_bhk_" #model "_" #mode1 "_" #mode2, "[BHK][" #model "][
 }
 
 #define create_bhk_test_case_sym( mode, model ) \
-TEST_CASE( "diverge_flow_bhk_" #model "_" #mode "_sym", "[BHK][" #model "][" #mode ":sym]" ) { \
-    diverge_model_t* mod1 = gen_ ## model##_sym (BHK_NK, BHK_NK); \
+CT_TEST_NAME( diverge_flow_bhk_##model##_##mode##_sym, #model "," #mode ":sym" ) { \
+    diverge_model_t* mod1 = C_gen_ ## model##_sym (BHK_NK, BHK_NK); \
     mod1->n_sym = 0;\
-    diverge_model_t* mod2 = gen_ ## model##_sym (BHK_NK, BHK_NK); \
+    diverge_model_t* mod2 = C_gen_ ## model##_sym (BHK_NK, BHK_NK); \
     strcpy( mod1->name, #model "_" #mode ); \
     strcpy( mod2->name, #model "_" #mode "_sym" ); \
     { BHK_diverge_model_internals_ ## mode ( mod1 ); } \
@@ -268,8 +269,8 @@ TEST_CASE( "diverge_flow_bhk_" #model "_" #mode "_sym", "[BHK][" #model "][" #mo
     complex128_t* v1 = BHK_test_run( mod1 ); \
     complex128_t* v2 = BHK_test_run( mod2 ); \
     compare_vertices( v1, v2, POW3(kdim(mod1->nk)) * POW4(mod1->n_orb * mod1->n_spin) ); \
-    CHECK(test_symm_4_pnt( mod2, v1 ) < 1e-12); \
-    CHECK(test_symm_4_pnt( mod2, v2 ) < 1e-12); \
+    CT_CHECK(test_symm_4_pnt( mod2, v1 ) < 1e-12); \
+    CT_CHECK(test_symm_4_pnt( mod2, v2 ) < 1e-12); \
     diverge_model_free( mod1 ); \
     diverge_model_free( mod2 ); \
     free( v1 ); \

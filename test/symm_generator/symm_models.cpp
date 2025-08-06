@@ -1,6 +1,7 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
+#define CT_SUITE_NAME symmetrize_models
+#include "../ctest.h"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"
@@ -121,7 +122,7 @@ static double shmem_diverge_symmetrize_2pt_fine( diverge_model_t* mod, complex12
     return all_error;
 }
 
-TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
+CT_TEST(honeycomb) {
 
     diverge_model_t* mod1 = gen_honeycomb_lat_hub_sym(6,6);
     diverge_model_t* mod2 = gen_honeycomb_lat_hub(6,6);
@@ -129,9 +130,9 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
     diverge_model_internals_tu( mod1, 1.0 );
     diverge_model_internals_tu( mod2, 1.0 );
     double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     err = shmem_diverge_symmetrize_2pt_fine( mod1, mod2->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
     diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
 
@@ -149,7 +150,7 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
         Lambda += dLambda;
     }
     double maxdiff = 0.0;
-    CHECK( test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10 );
+    CT_CHECK( test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10 );
 
     tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
@@ -158,7 +159,7 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
         maxdiff = d>maxdiff ? d : maxdiff;
     }
 
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -166,7 +167,7 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -175,7 +176,7 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
 
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
@@ -185,14 +186,14 @@ TEST_CASE("check symm honey","[symm_2pnt][symm_honey]") {
     diverge_model_free( mod2 );
 }
 
-TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
+CT_TEST(rashba) {
 
     diverge_model_t* mod1 = gen_square_lat_rashba_sym(6,6);
     diverge_model_t* mod2 = gen_square_lat_rashba(6,6);
     double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     err = shmem_diverge_symmetrize_2pt_fine( mod1, mod2->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.0 );
     diverge_model_internals_tu( mod2, 1.0 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
@@ -216,7 +217,7 @@ TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
         double d = std::abs(mod1->internals->ham[i]-mod2->internals->ham[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     maxdiff = 0.0;
     tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
@@ -224,7 +225,7 @@ TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -232,7 +233,7 @@ TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -242,7 +243,7 @@ TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
         maxdiff = d>maxdiff ? d : maxdiff;
     }
 
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
     free(reco_vert1);
@@ -251,14 +252,14 @@ TEST_CASE("check symm rashba","[symm_2pnt][symm_rashba]") {
     diverge_model_free( mod2 );
 }
 
-TEST_CASE("check symm hub","[symm_2pnt][symm_hub]") {
+CT_TEST(hubbard) {
 
     diverge_model_t* mod1 = gen_square_lat_hub_sym(6,6);
     diverge_model_t* mod2 = gen_square_lat_hub(6,6);
     double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     err = shmem_diverge_symmetrize_2pt_fine( mod2, mod2->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.1 );
     diverge_model_internals_tu( mod2, 1.1 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
@@ -283,7 +284,7 @@ TEST_CASE("check symm hub","[symm_2pnt][symm_hub]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -291,7 +292,7 @@ TEST_CASE("check symm hub","[symm_2pnt][symm_hub]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -299,7 +300,7 @@ TEST_CASE("check symm hub","[symm_2pnt][symm_hub]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
     free(reco_vert1);
@@ -308,13 +309,12 @@ TEST_CASE("check symm hub","[symm_2pnt][symm_hub]") {
     diverge_model_free( mod2 );
 }
 
-
-TEST_CASE("check symm hub ref","[symm_2pnt][symm_hub][symm_ref]") {
+CT_TEST_NAME( hubbard_ref, "hubbard,refined" ) {
     diverge_model_t* mod1 = gen_square_lat_hub_sym(6,6,3,3);
     diverge_model_t* mod2 = gen_square_lat_hub_sym(6,6,3,3);
     mod2->n_sym = 0;
     double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 2.0 );
     diverge_model_internals_tu( mod2, 2.0 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
@@ -342,7 +342,7 @@ TEST_CASE("check symm hub ref","[symm_2pnt][symm_hub][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -350,7 +350,7 @@ TEST_CASE("check symm hub ref","[symm_2pnt][symm_hub][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -358,7 +358,7 @@ TEST_CASE("check symm hub ref","[symm_2pnt][symm_hub][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
     free(reco_vert1);
@@ -368,12 +368,12 @@ TEST_CASE("check symm hub ref","[symm_2pnt][symm_hub][symm_ref]") {
 }
 
 
-TEST_CASE("check symm honey ref","[symm_2pnt][symm_honey][symm_ref]") {
+CT_TEST_NAME( honeycomb_ref, "honeycomb,refined" ) {
     diverge_model_t* mod1 = gen_honeycomb_lat_hub_sym(6,6,3,3);
     diverge_model_t* mod2 = gen_honeycomb_lat_hub_sym(6,6,3,3);
     mod2->n_sym = 0;
     double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.3 );
     diverge_model_internals_tu( mod2, 1.3 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
@@ -401,7 +401,7 @@ TEST_CASE("check symm honey ref","[symm_2pnt][symm_honey][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -409,7 +409,7 @@ TEST_CASE("check symm honey ref","[symm_2pnt][symm_honey][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -417,7 +417,7 @@ TEST_CASE("check symm honey ref","[symm_2pnt][symm_honey][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
     free(reco_vert1);
@@ -427,12 +427,12 @@ TEST_CASE("check symm honey ref","[symm_2pnt][symm_honey][symm_ref]") {
 }
 
 
-TEST_CASE("check symm rashba ref","[symm_2pnt][symm_rashba][symm_ref]") {
+CT_TEST_NAME( rashba_refined, "rashba,refined" ) {
     diverge_model_t* mod1 = gen_square_lat_rashba_sym(6,6,3,3);
     diverge_model_t* mod2 = gen_square_lat_rashba_sym(6,6,3,3);
     mod2->n_sym = 0;
     double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.3 );
     diverge_model_internals_tu( mod2, 1.3 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
@@ -460,7 +460,7 @@ TEST_CASE("check symm rashba ref","[symm_2pnt][symm_rashba][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -468,7 +468,7 @@ TEST_CASE("check symm rashba ref","[symm_2pnt][symm_rashba][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -476,7 +476,7 @@ TEST_CASE("check symm rashba ref","[symm_2pnt][symm_rashba][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
     free(reco_vert1);
@@ -485,12 +485,12 @@ TEST_CASE("check symm rashba ref","[symm_2pnt][symm_rashba][symm_ref]") {
     diverge_model_free( mod2 );
 }
 
-TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
+CT_TEST_NAME( tri_ref, "triangular_pxpy,refined" ) {
     diverge_model_t* mod1 = gen_triangular_pxpy_sym(4,false);
     diverge_model_t* mod2 = gen_triangular_pxpy_sym(4,false);
     mod2->n_sym = 0;
     double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.0 );
     diverge_model_internals_tu( mod2, 1.0 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
@@ -507,8 +507,8 @@ TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
         diverge_flow_step_euler( step2, Lambda, dLambda );
         Lambda += dLambda;
     }
-    CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
-    CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
+    CT_CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
+    CT_CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
     // check P,C,D bubble_helper
     tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
@@ -517,7 +517,7 @@ TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -525,7 +525,7 @@ TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -533,7 +533,7 @@ TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
     free(reco_vert1);
@@ -542,12 +542,12 @@ TEST_CASE("check symm triangular pxpy ref","[symm_2pnt][symm_tri][symm_ref]") {
     diverge_model_free( mod2 );
 }
 
-TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
+CT_TEST_NAME( triangular_rashba, "triangular,rashba" ) {
     diverge_model_t* mod1 = gen_triangular_lat_rashba(4);
     diverge_model_t* mod2 = gen_triangular_lat_rashba(4);
     mod2->n_sym = 0;
     double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
     diverge_model_internals_tu( mod1, 1.1 );
     diverge_model_internals_tu( mod2, 1.1 );
     diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
@@ -564,8 +564,8 @@ TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
         diverge_flow_step_euler( step2, Lambda, dLambda );
         Lambda += dLambda;
     }
-    CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
-    CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
+    CT_CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
+    CT_CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
     // check P,C,D bubble_helper
     tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
@@ -574,7 +574,7 @@ TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -582,7 +582,7 @@ TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -590,7 +590,7 @@ TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
     free(reco_vert1);
@@ -599,15 +599,15 @@ TEST_CASE("check symm triangular rashba ref","[symm_2pnt][symm_trirash]") {
     diverge_model_free( mod2 );
 }
 
-TEST_CASE("check symm triangular p+p- ref","[symm_2pnt][symm_tri][symm_ref]") {
+CT_TEST_NAME( triangular_pppm_refined, "triangular_pppm,refined" ) {
     diverge_model_t* mod1 = gen_triangular_pxpy_sym(6,true);
     diverge_model_t* mod2 = gen_triangular_pxpy_sym(6,true);
     mod2->n_sym = 0;
     double err = shmem_diverge_symmetrize_2pt_fine( mod1, mod1->internals->ham, NULL );
-    CHECK(err < 1e-12);
+    CT_CHECK(err < 1e-12);
 
     bool test = check_hermicity(mod1->internals->ham, 2, 36);
-    CHECK(test);
+    CT_CHECK(test);
 
     diverge_model_internals_tu( mod1, 0.0 );
     diverge_model_internals_tu( mod2, 0.0 );
@@ -635,7 +635,7 @@ TEST_CASE("check symm triangular p+p- ref","[symm_2pnt][symm_tri][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -643,7 +643,7 @@ TEST_CASE("check symm triangular p+p- ref","[symm_2pnt][symm_tri][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
     tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
@@ -651,7 +651,7 @@ TEST_CASE("check symm triangular p+p- ref","[symm_2pnt][symm_tri][symm_ref]") {
         double d = std::abs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
-    CHECK(maxdiff < 1e-8);
+    CT_CHECK(maxdiff < 1e-8);
     diverge_flow_step_free(step1);
     diverge_flow_step_free(step2);
     free(reco_vert1);

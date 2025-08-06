@@ -1,6 +1,8 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
+#define CT_SUITE_NAME tu_init_from_full
+#include "../ctest.h"
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"
@@ -29,7 +31,7 @@ void full_vertex(const diverge_model_t* mod, index_t k1, index_t k2, index_t k3,
     memcpy((void*)buf,(void*)(hbuf + size_batch * koff), sizeof(complex128_t)*size_batch);
 }
 
-TEST_CASE("check init_from_full","[tu_from_full]") {
+CT_TEST(tu_init_from_full) {
 
     diverge_model_t* mod1 = gen_honeycomb_lat_hub_sym(6,6);
 
@@ -63,7 +65,7 @@ TEST_CASE("check init_from_full","[tu_from_full]") {
     tu_prop_t* loop = tu_prop_init(mod1);
     tu_vertex_t* v2 = tu_vertex_init(mod1, proj, loop, 1,1,1, 0);
     tu_vertex_project_fullV( v2, mod1, buf );
-    CHECK(check_equal(buf,hbuf,size));
+    CT_CHECK(check_equal(buf,hbuf,size));
 
     tu_vertex_free( v2 );
     tu_prop_free( loop );

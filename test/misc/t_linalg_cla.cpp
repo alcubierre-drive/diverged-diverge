@@ -1,7 +1,8 @@
 #ifndef DIVERGE_SKIP_TESTS
 #ifndef DIVERGE_SKIP_TESTS_LINALG
 
-#include "../catch.hpp"
+#define CT_SUITE_NAME linalg_cla
+#include "../ctest.h"
 #include "../../src/diverge_common.h"
 #include "../../src/diverge_Eigen3.hpp"
 #include "t_linalg_cla_solvers.hpp"
@@ -111,7 +112,7 @@ static inline Vec##dim##dtype_short c##dim##dtype_short##Xeigen( test_claV##dim#
     return Map<Vec##dim##dtype_short>( vec.v ); \
 } \
 \
-TEST_CASE("C linalg vector " #dtype_long "@" #dim, "[cla][V" #dim #dtype_short "]") { \
+CT_TEST_NAME( claV##dim##dtype_short##_t, "cla,V" #dim #dtype_short ) { \
     Vec##dim##dtype_short RANDOM_DATA = RANDOM_DATA_GEN_V##dim##dtype_short ; \
     test_claV##dim##dtype_short##_t C_RANDOM_DATA; \
     for (int i=0; i<dim; ++i) C_RANDOM_DATA.v[i] = RANDOM_DATA(i); \
@@ -129,40 +130,40 @@ TEST_CASE("C linalg vector " #dtype_long "@" #dim, "[cla][V" #dim #dtype_short "
  \
     test_claV##dim##dtype_short##_t c_zero = test_claV##dim##dtype_short##_zero(); \
     Vec##dim##dtype_short zero = Vec##dim##dtype_short::Zero(); \
-    CHECK( (zero - c##dim##dtype_short##Xeigen(c_zero)).norm() < CLA_ZERO ); \
+    CT_CHECK( (zero - c##dim##dtype_short##Xeigen(c_zero)).norm() < CLA_ZERO ); \
  \
     Vec##dim##dtype_short map = RANDOM_DATA; \
     test_claV##dim##dtype_short##_t c_map = test_claV##dim##dtype_short##_map( map.data() ); \
-    CHECK( (map - c##dim##dtype_short##Xeigen(c_map)).norm() < CLA_ZERO ); \
+    CT_CHECK( (map - c##dim##dtype_short##Xeigen(c_map)).norm() < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_rmap = C_RANDOM_DATA; \
     Vec##dim##dtype_short rmap; \
     test_claV##dim##dtype_short##_rmap( c_rmap, rmap.data() ); \
-    CHECK( (rmap - c##dim##dtype_short##Xeigen(c_rmap)).norm() < CLA_ZERO ); \
+    CT_CHECK( (rmap - c##dim##dtype_short##Xeigen(c_rmap)).norm() < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_scale = C_RANDOM_DATA; \
-    CHECK( (c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_scale(c_scale,2 )) - c##dim##dtype_short##Xeigen(c_scale)*2).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_scale(c_scale,2 )) - c##dim##dtype_short##Xeigen(c_scale)*2).norm() < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_add_1 = C_RANDOM_DATA, c_add_2 = C_RANDOM_DATA2; \
-    CHECK( (c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_add(c_add_1,c_add_2)) - (c##dim##dtype_short##Xeigen(c_add_1)+c##dim##dtype_short##Xeigen(c_add_2))).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_add(c_add_1,c_add_2)) - (c##dim##dtype_short##Xeigen(c_add_1)+c##dim##dtype_short##Xeigen(c_add_2))).norm() < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_sub_1 = C_RANDOM_DATA, c_sub_2 = C_RANDOM_DATA2; \
-    CHECK( (c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_sub(c_sub_1,c_sub_2)) - (c##dim##dtype_short##Xeigen(c_sub_1)-c##dim##dtype_short##Xeigen(c_sub_2))).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_sub(c_sub_1,c_sub_2)) - (c##dim##dtype_short##Xeigen(c_sub_1)-c##dim##dtype_short##Xeigen(c_sub_2))).norm() < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_odot_1 = C_RANDOM_DATA, c_odot_2 = C_RANDOM_DATA2; \
-    CHECK( (c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_odot(c_odot_1,c_odot_2)) - (c##dim##dtype_short##Xeigen(c_odot_1).array() * c##dim##dtype_short##Xeigen(c_odot_2).array()).matrix()).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_odot(c_odot_1,c_odot_2)) - (c##dim##dtype_short##Xeigen(c_odot_1).array() * c##dim##dtype_short##Xeigen(c_odot_2).array()).matrix()).norm() < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_dot_1 = C_RANDOM_DATA, c_dot_2 = C_RANDOM_DATA2; \
-    CHECK( std::abs(test_claV##dim##dtype_short##_dot(c_dot_1, c_dot_2) - c##dim##dtype_short##Xeigen(c_dot_1).dot(c##dim##dtype_short##Xeigen(c_dot_2))) < CLA_ZERO ); \
+    CT_CHECK( std::abs(test_claV##dim##dtype_short##_dot(c_dot_1, c_dot_2) - c##dim##dtype_short##Xeigen(c_dot_1).dot(c##dim##dtype_short##Xeigen(c_dot_2))) < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_norm = C_RANDOM_DATA; \
-    CHECK( std::abs(test_claV##dim##dtype_short##_norm(c_norm) - sqrt((double)(c##dim##dtype_short##Xeigen(c_norm).squaredNorm()))) < CLA_ZERO ); \
+    CT_CHECK( std::abs(test_claV##dim##dtype_short##_norm(c_norm) - sqrt((double)(c##dim##dtype_short##Xeigen(c_norm).squaredNorm()))) < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_norm2 = C_RANDOM_DATA; \
-    CHECK( std::abs(test_claV##dim##dtype_short##_norm2(c_norm2) - c##dim##dtype_short##Xeigen(c_norm2).squaredNorm()) < CLA_ZERO ); \
+    CT_CHECK( std::abs(test_claV##dim##dtype_short##_norm2(c_norm2) - c##dim##dtype_short##Xeigen(c_norm2).squaredNorm()) < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_cross_1 = C_RANDOM_DATA, c_cross_2 = C_RANDOM_DATA2; \
-    CHECK( check_cross<dim>( \
+    CT_CHECK( check_cross<dim>( \
         c##dim##dtype_short##Xeigen(c_cross_1), \
         c##dim##dtype_short##Xeigen(c_cross_2), \
         c##dim##dtype_short##Xeigen(test_claV##dim##dtype_short##_cross(c_cross_1,c_cross_2)) \
@@ -232,7 +233,7 @@ static inline CMat##dim##dtype_short c##dim##dtype_short##Meigen( test_claM##dim
     return Map<CMat##dim##dtype_short>( vec.m[0] ); \
 } \
 \
-TEST_CASE("C linalg matrix " #dtype_long "@" #dim, "[cla][M" #dim #dtype_short "]") { \
+CT_TEST_NAME( claM##dim##dtype_short##_t, "cla,M" #dim #dtype_short ) { \
     CMat##dim##dtype_short RANDOM_DATA = RANDOM_DATA_GEN_M##dim##dtype_short ; \
     test_claM##dim##dtype_short##_t C_RANDOM_DATA; \
     for (int i=0; i<dim*dim; ++i) ((dtype_long*)C_RANDOM_DATA.m[0])[i] = RANDOM_DATA.data()[i]; \
@@ -259,65 +260,71 @@ TEST_CASE("C linalg matrix " #dtype_long "@" #dim, "[cla][M" #dim #dtype_short "
  \
     test_claM##dim##dtype_short##_t c_zero = test_claM##dim##dtype_short##_zero(); \
     CMat##dim##dtype_short zero = CMat##dim##dtype_short::Zero(); \
-    CHECK( (zero - c##dim##dtype_short##Meigen(c_zero)).norm() < CLA_ZERO ); \
+    CT_CHECK( (zero - c##dim##dtype_short##Meigen(c_zero)).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_id = test_claM##dim##dtype_short##_id(); \
     CMat##dim##dtype_short id = CMat##dim##dtype_short::Identity(); \
-    CHECK( (id - c##dim##dtype_short##Meigen(c_id)).norm() < CLA_ZERO ); \
+    CT_CHECK( (id - c##dim##dtype_short##Meigen(c_id)).norm() < CLA_ZERO ); \
  \
     CMat##dim##dtype_short map = RANDOM_DATA; \
     test_claM##dim##dtype_short##_t c_map = test_claM##dim##dtype_short##_map( map.data() ); \
-    CHECK( (map - c##dim##dtype_short##Meigen(c_map)).norm() < CLA_ZERO ); \
+    CT_CHECK( (map - c##dim##dtype_short##Meigen(c_map)).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_rmap = C_RANDOM_DATA; \
     CMat##dim##dtype_short rmap; \
     test_claM##dim##dtype_short##_rmap( c_rmap, rmap.data() ); \
-    CHECK( (rmap - c##dim##dtype_short##Meigen(c_rmap)).norm() < CLA_ZERO ); \
+    CT_CHECK( (rmap - c##dim##dtype_short##Meigen(c_rmap)).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_scale = C_RANDOM_DATA; \
-    CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_scale(c_scale,2 )) - c##dim##dtype_short##Meigen(c_scale)*2).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_scale(c_scale,2 )) - c##dim##dtype_short##Meigen(c_scale)*2).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_add_1 = C_RANDOM_DATA, c_add_2 = C_RANDOM_DATA2; \
-    CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_add(c_add_1,c_add_2)) - (c##dim##dtype_short##Meigen(c_add_1)+c##dim##dtype_short##Meigen(c_add_2))).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_add(c_add_1,c_add_2)) - (c##dim##dtype_short##Meigen(c_add_1)+c##dim##dtype_short##Meigen(c_add_2))).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_sub_1 = C_RANDOM_DATA, c_sub_2 = C_RANDOM_DATA2; \
-    CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_sub(c_sub_1,c_sub_2)) - (c##dim##dtype_short##Meigen(c_sub_1)-c##dim##dtype_short##Meigen(c_sub_2))).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_sub(c_sub_1,c_sub_2)) - (c##dim##dtype_short##Meigen(c_sub_1)-c##dim##dtype_short##Meigen(c_sub_2))).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_odot_1 = C_RANDOM_DATA, c_odot_2 = C_RANDOM_DATA2; \
-    CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_odot(c_odot_1,c_odot_2)) - (c##dim##dtype_short##Meigen(c_odot_1).array() * c##dim##dtype_short##Meigen(c_odot_2).array()).matrix()).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_odot(c_odot_1,c_odot_2)) - (c##dim##dtype_short##Meigen(c_odot_1).array() * c##dim##dtype_short##Meigen(c_odot_2).array()).matrix()).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_dot_1 = C_RANDOM_DATA, c_dot_2 = C_RANDOM_DATA2; \
-    CHECK( std::abs(test_claM##dim##dtype_short##_dot(c_dot_1, c_dot_2) - (c##dim##dtype_short##Meigen(c_dot_1).array().conjugate() * c##dim##dtype_short##Meigen(c_dot_2).array()).sum()) < CLA_ZERO ); \
+    CT_CHECK( std::abs(test_claM##dim##dtype_short##_dot(c_dot_1, c_dot_2) - (c##dim##dtype_short##Meigen(c_dot_1).array().conjugate() * c##dim##dtype_short##Meigen(c_dot_2).array()).sum()) < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_norm = C_RANDOM_DATA; \
-    CHECK( std::abs(test_claM##dim##dtype_short##_norm(c_norm) - sqrt((double)(c##dim##dtype_short##Meigen(c_norm).squaredNorm()))) < CLA_ZERO ); \
+    CT_CHECK( std::abs(test_claM##dim##dtype_short##_norm(c_norm) - sqrt((double)(c##dim##dtype_short##Meigen(c_norm).squaredNorm()))) < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_norm2 = C_RANDOM_DATA; \
-    CHECK( std::abs(test_claM##dim##dtype_short##_norm2(c_norm2) - c##dim##dtype_short##Meigen(c_norm2).squaredNorm()) < CLA_ZERO ); \
+    CT_CHECK( std::abs(test_claM##dim##dtype_short##_norm2(c_norm2) - c##dim##dtype_short##Meigen(c_norm2).squaredNorm()) < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_matmul_1 = C_RANDOM_DATA, c_matmul_2 = C_RANDOM_DATA2; \
-    CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_matmul(c_matmul_1,c_matmul_2)) - \
+    CT_CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_matmul(c_matmul_1,c_matmul_2)) - \
                 (c##dim##dtype_short##Meigen(c_matmul_1) * c##dim##dtype_short##Meigen(c_matmul_2))).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_trace = C_RANDOM_DATA; \
-    CHECK( std::abs(test_claM##dim##dtype_short##_trace(c_trace) - c##dim##dtype_short##Meigen(c_trace).trace()) < CLA_ZERO ); \
+    CT_CHECK( std::abs(test_claM##dim##dtype_short##_trace(c_trace) - c##dim##dtype_short##Meigen(c_trace).trace()) < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_matvec_v = C_RANDOM_DATA3; \
     test_claM##dim##dtype_short##_t c_matvec_m = C_RANDOM_DATA; \
-    CHECK( (c##dim##dtype_short##Xeigen(test_claM##dim##dtype_short##_matvec( c_matvec_m, c_matvec_v )) - \
-            c##dim##dtype_short##Meigen(c_matvec_m) * c##dim##dtype_short##Xeigen(c_matvec_v)).norm() < CLA_ZERO ); \
+    Vec##dim##dtype_short matvec_cla = \
+        c##dim##dtype_short##Xeigen(test_claM##dim##dtype_short##_matvec( c_matvec_m, c_matvec_v )); \
+    Vec##dim##dtype_short matvec_eig = \
+        c##dim##dtype_short##Meigen(c_matvec_m) * c##dim##dtype_short##Xeigen(c_matvec_v); \
+    CT_CHECK( (matvec_eig-matvec_cla).norm() < CLA_ZERO ); \
  \
     test_claV##dim##dtype_short##_t c_vecmat_v = C_RANDOM_DATA3; \
     test_claM##dim##dtype_short##_t c_vecmat_m = C_RANDOM_DATA; \
-    CHECK( (c##dim##dtype_short##Xeigen(test_claM##dim##dtype_short##_vecmat( c_vecmat_v, c_vecmat_m )) - \
-           (c##dim##dtype_short##Xeigen(c_vecmat_v).transpose() * c##dim##dtype_short##Meigen(c_vecmat_m)).transpose() ).norm() < CLA_ZERO ); \
+    Vec##dim##dtype_short vecmat_cla = \
+        c##dim##dtype_short##Xeigen(test_claM##dim##dtype_short##_vecmat( c_vecmat_v, c_vecmat_m )); \
+    Vec##dim##dtype_short vecmat_eig = \
+        c##dim##dtype_short##Meigen(c_vecmat_m).transpose() * c##dim##dtype_short##Xeigen(c_vecmat_v); \
+    CT_CHECK( (vecmat_eig-vecmat_cla).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_transpose = C_RANDOM_DATA; \
-    CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_transpose(c_transpose)) - \
+    CT_CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_transpose(c_transpose)) - \
             c##dim##dtype_short##Meigen(c_transpose).transpose()).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_adjoint = C_RANDOM_DATA; \
-    CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_adjoint(c_adjoint)) - \
+    CT_CHECK( (c##dim##dtype_short##Meigen(test_claM##dim##dtype_short##_adjoint(c_adjoint)) - \
             c##dim##dtype_short##Meigen(c_adjoint).adjoint()).norm() < CLA_ZERO ); \
 }
 
@@ -336,7 +343,7 @@ MATRIX_TEST_CASE( 4, int64_t, ll )
 
 #define MATRIX_DECOMPOSITION_TEST_CASE( dim, dtype_long, dtype_short ) \
 \
-TEST_CASE("C decomp matrix " #dtype_long "@" #dim, "[cla][decomp_M" #dim #dtype_short "]") { \
+CT_TEST_NAME( claM##dim##dtype_short##_decomp, "cla,decompose,M" #dim #dtype_short ) { \
     CMat##dim##dtype_short RANDOM_DATA0 = RANDOM_DATA_GEN_M##dim##dtype_short ; \
     CMat##dim##dtype_short RANDOM_DATA = RANDOM_DATA0 + RANDOM_DATA0.adjoint(); \
     test_claM##dim##dtype_short##_t C_RANDOM_DATA; \
@@ -357,17 +364,17 @@ TEST_CASE("C decomp matrix " #dtype_long "@" #dim, "[cla][decomp_M" #dim #dtype_
     test_claM##dim##dtype_short##_t c_eigvalsh_H = C_RANDOM_DATA; \
     test_claV##dim##d_t c_eigvalsh_E = test_claM##dim##dtype_short##_eigvalsh( c_eigvalsh_H ); \
     auto S = eigensolve_##dim##dtype_short( RANDOM_DATA ); \
-    CHECK( (c##dim##dXeigen(c_eigvalsh_E) - S.E).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dXeigen(c_eigvalsh_E) - S.E).norm() < CLA_ZERO ); \
  \
     test_claM##dim##dtype_short##_t c_eigh_H = C_RANDOM_DATA; \
     test_claM##dim##dtype_short##_t c_eigh_U, c_eigh_UE; \
     test_claV##dim##d_t c_eigh_E = test_claM##dim##dtype_short##_eigh( c_eigh_H, &c_eigh_U ); \
-    CHECK( (c##dim##dXeigen(c_eigh_E) - S.E).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dXeigen(c_eigh_E) - S.E).norm() < CLA_ZERO ); \
     c_eigh_UE = c_eigh_U; \
     for (int i=0; i<dim; ++i) \
     for (int j=0; j<dim; ++j) \
         c_eigh_UE.m[i][j] *= c_eigh_E.v[j]; \
-    CHECK( test_claM##dim##dtype_short##_norm( test_claM##dim##dtype_short##_sub( \
+    CT_CHECK( test_claM##dim##dtype_short##_norm( test_claM##dim##dtype_short##_sub( \
             test_claM##dim##dtype_short##_matmul( c_eigh_UE, test_claM##dim##dtype_short##_adjoint(c_eigh_U) ), \
             c_eigh_H ) ) < CLA_ZERO ); \
  \
@@ -375,11 +382,11 @@ TEST_CASE("C decomp matrix " #dtype_long "@" #dim, "[cla][decomp_M" #dim #dtype_
     test_claM##dim##dtype_short##_t c_svd_U, c_svd_V; \
     test_claV##dim##d_t c_svd_E = test_claM##dim##dtype_short##_svd( c_svd_A, &c_svd_U, &c_svd_V ); \
     Vec##dim##d singularValues = svd_##dim##dtype_short( RANDOM_DATA2 ); \
-    CHECK( (c##dim##dXeigen(c_svd_E) - singularValues).norm() < CLA_ZERO ); \
+    CT_CHECK( (c##dim##dXeigen(c_svd_E) - singularValues).norm() < CLA_ZERO ); \
     for (int i=0; i<dim; ++i) \
     for (int j=0; j<dim; ++j) \
         c_svd_U.m[i][j] *= c_svd_E.v[j]; \
-    CHECK( test_claM##dim##dtype_short##_norm( test_claM##dim##dtype_short##_sub( \
+    CT_CHECK( test_claM##dim##dtype_short##_norm( test_claM##dim##dtype_short##_sub( \
             test_claM##dim##dtype_short##_matmul( c_svd_U, c_svd_V ), \
             c_svd_A ) ) < CLA_ZERO ); \
 }

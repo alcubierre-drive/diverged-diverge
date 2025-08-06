@@ -1,7 +1,8 @@
 #ifndef DIVERGE_SKIP_TESTS
 #ifndef DIVERGE_SKIP_TESTS_LINALG
 
-#include "../catch.hpp"
+#define CT_SUITE_NAME linalg
+#include "../ctest.h"
 #include "../../src/diverge_common.h"
 #include "../../src/diverge_Eigen3.hpp"
 
@@ -21,7 +22,7 @@ static complex128_t* gen_random_matrix_batch( index_t dim, index_t num ) {
 
 static const index_t N = 50, num = 20;
 
-TEST_CASE("batched gemm", "[batched][gemm-small]") {
+CT_TEST_NAME( batched_gemm_small, "batched,gemm_small" ) {
     complex128_t *A = gen_random_matrix_batch( N, num ),
                  *B = gen_random_matrix_batch( N, num ),
                  *C = gen_random_matrix_batch( N, num );
@@ -39,7 +40,7 @@ TEST_CASE("batched gemm", "[batched][gemm-small]") {
     // and then compare C with B
     for (index_t i=0; i<num; ++i) {
         double err = (Map<cMatXcd>(B+i*N*N, N, N) - Map<cMatXcd>(C+i*N*N, N, N)).norm();
-        CHECK(err < 1.e-7);
+        CT_CHECK(err < 1.e-7);
     }
 
     free(A);
@@ -48,7 +49,7 @@ TEST_CASE("batched gemm", "[batched][gemm-small]") {
     batched_gemm_small_destroy( h );
 }
 
-TEST_CASE("batched eigen", "[batched][eigen]") {
+CT_TEST_NAME( batched_eigen, "batched,eigen" ) {
     complex128_t *A = gen_random_matrix_batch(N, num),
                  *H = gen_random_matrix_batch(N, num),
                  *U = gen_random_matrix_batch(N, num);
@@ -87,13 +88,13 @@ TEST_CASE("batched eigen", "[batched][eigen]") {
         MatXcd xU1 = Map<MatXcd>(U1+i*N*N, N,N);
         double N1 = (xU1.adjoint() * H3 * xU1 - xE1).norm();
 
-        CHECK( N3 < 1.e-7 );
-        CHECK( N2 < 1.e-7 );
-        CHECK( N1 < 1.e-7 );
+        CT_CHECK( N3 < 1.e-7 );
+        CT_CHECK( N2 < 1.e-7 );
+        CT_CHECK( N1 < 1.e-7 );
 
-        CHECK( (E3 - xE2).norm() < 1.e-7 );
-        CHECK( (E3 - xE1).norm() < 1.e-7 );
-        CHECK( (xE2 - xE1).norm() < 1.e-7 );
+        CT_CHECK( (E3 - xE2).norm() < 1.e-7 );
+        CT_CHECK( (E3 - xE1).norm() < 1.e-7 );
+        CT_CHECK( (xE2 - xE1).norm() < 1.e-7 );
     }
 
     free(E1);
@@ -103,7 +104,7 @@ TEST_CASE("batched eigen", "[batched][eigen]") {
     free(U);
 }
 
-TEST_CASE("batched eigen svd", "[batched][eigen_svd]") {
+CT_TEST_NAME( batched_eigen_svd, "batched,eigen_svd" ) {
     complex128_t *A = gen_random_matrix_batch(N, num),
                  *H = gen_random_matrix_batch(N, num),
                  *U = gen_random_matrix_batch(N, num);
@@ -131,10 +132,10 @@ TEST_CASE("batched eigen svd", "[batched][eigen_svd]") {
         MatXcd xU1 = Map<MatXcd>(U1+i*N*N, N,N);
         double N1 = (xU1.adjoint() * H3 * xU1 - xE1).norm();
 
-        CHECK( N2 < 1.e-7 );
-        CHECK( N1 < 1.e-7 );
+        CT_CHECK( N2 < 1.e-7 );
+        CT_CHECK( N1 < 1.e-7 );
 
-        CHECK( (xE2 - xE1).norm() < 1.e-7 );
+        CT_CHECK( (xE2 - xE1).norm() < 1.e-7 );
     }
 
     free(E1);
@@ -144,7 +145,7 @@ TEST_CASE("batched eigen svd", "[batched][eigen_svd]") {
     free(U);
 }
 
-TEST_CASE("batched svd", "[batched][svd]") {
+CT_TEST_NAME( batched_svd, "batched,svd" ) {
     complex128_t *A = gen_random_matrix_batch(N, num),
                  *V = gen_random_matrix_batch(N, num),
                  *U = gen_random_matrix_batch(N, num);
@@ -159,15 +160,15 @@ TEST_CASE("batched svd", "[batched][svd]") {
                VV = sol.matrixV().transpose();
         VecXd SS = sol.singularValues();
         double X1 = (UU * SS.asDiagonal() * VV.conjugate() - AA).norm();
-        CHECK( X1 < 1.e-7 );
+        CT_CHECK( X1 < 1.e-7 );
 
         Map<cMatXcd> U2( U+i*N*N, N, N ),
                      V2( V+i*N*N, N, N );
         Map<VecXd> S2( S+i*N, N );
         double X2 = (U2 * S2.asDiagonal() * V2.conjugate() - AA).norm();
-        CHECK( X2 < 1.e-7 );
+        CT_CHECK( X2 < 1.e-7 );
 
-        CHECK( (SS - S2).norm() < 1.e-7 );
+        CT_CHECK( (SS - S2).norm() < 1.e-7 );
     }
 
     free(A);

@@ -1,18 +1,20 @@
 #ifndef DIVERGE_SKIP_TESTS
 
+#define CT_SUITE_NAME twopoint_sym
+#include "../ctest.h"
+
 #include "../../src/diverge_momentum_gen.h"
 #include "../../src/diverge_symmetrize.h"
 #include "../../src/diverge_common.h"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_internals_struct.h"
-#include "../catch.hpp"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/misc/shared_mem.h"
 
-TEST_CASE("symmetrize 2pnt simple","[symm_2pnt][symm_2pntsim]") {
+CT_TEST(toymodel) {
     site_descr_t sites[1];
 
     sites[0].n_functions = 1;
@@ -101,13 +103,13 @@ TEST_CASE("symmetrize 2pnt simple","[symm_2pnt][symm_2pntsim]") {
     shared_exclusive_wait( model2->internals->ham );
 
     for(index_t i = 0; i < 6*6; ++i) {
-        CHECK(std::abs(model->internals->ham[i] - model2->internals->ham[i]) < 1e-10);
+        CT_CHECK(std::abs(model->internals->ham[i] - model2->internals->ham[i]) < 1e-10);
     }
     diverge_model_free(model);
     diverge_model_free(model2);
 }
 
-TEST_CASE("symmetrize 2pnt","[symm_2pnt]") {
+CT_TEST(honeycomb) {
     mpi_log_printf("symm_honey \n");
     site_descr_t sites[2];
 
@@ -212,7 +214,7 @@ TEST_CASE("symmetrize 2pnt","[symm_2pnt]") {
     shared_exclusive_wait( model2->internals->ham );
 
     for(index_t i = 0; i < 6*6*4; ++i) {
-        CHECK(std::abs(model->internals->ham[i] - model2->internals->ham[i]) < 1e-10);
+        CT_CHECK(std::abs(model->internals->ham[i] - model2->internals->ham[i]) < 1e-10);
     }
     diverge_model_free(model);
     diverge_model_free(model2);

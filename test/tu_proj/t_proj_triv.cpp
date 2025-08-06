@@ -1,8 +1,10 @@
 #ifndef DIVERGE_SKIP_TESTS
 
+#define CT_SUITE_NAME tu_proj_triv
+#include "../ctest.h"
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/vertex_details.h"
@@ -16,9 +18,7 @@
 #include "trivial_proj.hpp"
 #include <random>
 
-
-TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
-{
+CT_TEST_NAME( proj_triv, "proj,triv" ) {
     diverge_model_t* mom = gen_square_lat_hub(6,6,1,1);
     diverge_model_internals_tu(mom, 1.1);
 
@@ -39,11 +39,11 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
 
     tu_vertex_t* VertOrb = tu_vertex_copy( VertMom );
 
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
-    CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMom->Cch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
 
     complex128_t* r2 = (complex128_t*)calloc(VertOrb->full_vert_size,sizeof(complex128_t));
@@ -51,15 +51,15 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
 
     P_projection(r2,VertMom,ProjMom);
     t_P_projection(r1,VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
+    CT_CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
     C_projection(r2,VertMom,ProjMom);
     t_C_projection(r1,VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
+    CT_CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
     D_projection(r2,VertMom,ProjMom);
     t_D_projection(r1,VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
+    CT_CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
     tu_vertex_free( VertOrb );
     tu_vertex_free( VertMom );
@@ -70,8 +70,7 @@ TEST_CASE("check vs trivial projections ", "[proj][proj_triv]")
     free(r2);
 }
 
-TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
-{
+CT_TEST_NAME( proj_triv_honey, "proj,triv,honeycomb" ) {
     diverge_model_t* mom = gen_honeycomb_lat_hub(6,6,1,1);
     diverge_model_internals_tu(mom, 0.7);
 
@@ -92,11 +91,11 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
 
     tu_vertex_t* VertOrb = tu_vertex_copy( VertMom );
 
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
-    CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMom->Cch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->my_nk)) < 1e-10);
 
     complex128_t* r2 = (complex128_t*)calloc(VertOrb->full_vert_size,sizeof(complex128_t));
@@ -104,15 +103,15 @@ TEST_CASE("check vs trivial projections honey ", "[proj][proj_triv_honey]")
 
     P_projection(r2,VertMom,ProjMom);
     t_P_projection(r1,VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
+    CT_CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
     C_projection(r2,VertMom,ProjMom);
     t_C_projection(r1,VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
+    CT_CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
     D_projection(r2,VertMom,ProjMom);
     t_D_projection(r1,VertOrb,mom);
-    CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
+    CT_CHECK(check_equal(r1,r2,POW2(VertOrb->n_orbff)*VertOrb->my_nk));
 
     tu_vertex_free( VertOrb );
     tu_vertex_free( VertMom );

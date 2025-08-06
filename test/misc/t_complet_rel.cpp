@@ -1,6 +1,5 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../model_examples/old.h"
@@ -9,7 +8,10 @@
 #include "../model_examples/model_constructor.hpp"
 #include "../helper_functions.hpp"
 
-TEST_CASE("check completness_relations ", "[complete]") {
+#define CT_SUITE_NAME tu_completeness
+#include "../ctest.h"
+
+CT_TEST(tu_honeycomb) {
     diverge_model_t* model = gen_honeycomb_lat_hub(6,6,1,1);
     diverge_model_internals_tu(model, 19.0);
     tu_data_t* tu_data = (tu_data_t*)(model -> internals-> tu_data);
@@ -32,9 +34,9 @@ TEST_CASE("check completness_relations ", "[complete]") {
                     *std::conj(ff(kmesh+3*kp,Rvec+3*o));
         }
         if(k==kp && o1==o2) {
-            CHECK(std::abs(help-(double)nk*(double)n_orb) < 1e-10);
+            CT_CHECK(std::abs(help-(double)nk*(double)n_orb) < 1e-10);
         }else{
-            CHECK(std::abs(help) < 1e-10);
+            CT_CHECK(std::abs(help) < 1e-10);
         }
     }
 
@@ -49,9 +51,9 @@ TEST_CASE("check completness_relations ", "[complete]") {
                     *std::conj(ff(kmesh+3*k,Rvec+3*b2));
         }
         if(b1==b2) {
-            CHECK(std::abs(help-(double)nk) < 1e-10);
+            CT_CHECK(std::abs(help-(double)nk) < 1e-10);
         }else{
-            CHECK(std::abs(help) < 1e-10);
+            CT_CHECK(std::abs(help) < 1e-10);
         }
     }
 

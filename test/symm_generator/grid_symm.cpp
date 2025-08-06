@@ -1,6 +1,7 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
+#define CT_SUITE_NAME grid_sym
+#include "../ctest.h"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"
@@ -12,7 +13,7 @@
 
 
 
-TEST_CASE("loopgrid symmcheck", "[grid_symm]") {
+CT_TEST(loop) {
     diverge_model_t* mod_grid = gen_triangular_pxpy_sym(6, 6);
     diverge_model_internals_grid(mod_grid);
     index_t nb = mod_grid->n_orb*mod_grid->n_spin;
@@ -29,14 +30,14 @@ TEST_CASE("loopgrid symmcheck", "[grid_symm]") {
     grid_loop_toggle_symmetrizer(grid_loop);
     Lreco = grid_loop_calc( grid_loop, 'C', 0.1 );
     for(index_t i = 0; i < fsize; ++i)
-        CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
+        CT_CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
 
     grid_loop_toggle_symmetrizer(grid_loop);
     Lgrid = grid_loop_calc( grid_loop, 'P', 0.1 );
     grid_loop_toggle_symmetrizer(grid_loop);
     Lreco = grid_loop_calc( grid_loop, 'P', 0.1 );
     for(index_t i = 0; i < fsize; ++i)
-        CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
+        CT_CHECK(std::abs(Lreco[i]-Lgrid[i]) < 1e-12);
 
     grid_loop_free(grid_loop);
     diverge_model_free(mod_grid);
