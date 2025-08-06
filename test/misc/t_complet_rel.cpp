@@ -1,6 +1,5 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-// #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../model_examples/old.h"

@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+
 #ifndef DIVERGE_SKIP_TESTS
 
 #include "../../src/diverge_model.h"
@@ -16,9 +18,6 @@
 
 #include "../model_examples/model_constructor.h"
 
-#include <sys/stat.h>
-
-#define CT_PRINTF mpi_printf
 #define CT_SUITE_NAME BHK
 #include "../ctest.h"
 

@@ -8,7 +8,6 @@
 #include "../../src/diverge_common.h"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_internals_struct.h"
-// #include "../catch.hpp"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"

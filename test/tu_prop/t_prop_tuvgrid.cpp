@@ -3,7 +3,6 @@
 #define CT_SUITE_NAME tu_prop_grid
 #include "../ctest.h"
 
-// #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"

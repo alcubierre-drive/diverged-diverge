@@ -1,5 +1,13 @@
 #pragma once
 
+// XXX this is a divERGe "quirk". Maybe also for CUDA; dunno.
+#ifdef USE_MPI
+#define CT_NO_FORK
+#endif
+// XXX this also is a divERGe "quirk", more of a feature, though.
+#include "../src/misc/mpi_log.h"
+#define CT_PRINTF mpi_eprintf
+
 #ifndef CT_NO_FORK
 #include <sys/wait.h>
 #include <unistd.h>
