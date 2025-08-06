@@ -1,8 +1,11 @@
 #ifndef DIVERGE_SKIP_TESTS
 
+#define CT_SUITE_NAME tu_proj_gpu
+#include "../ctest.h"
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/vertex_details.h"
@@ -17,8 +20,7 @@
 
 #ifdef USE_CUDA
 
-TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
-{
+CT_TEST_NAME(tu_proj_gpu, "proj,gpu") {
     diverge_model_t* mom = gen_honeycomb_lat_hub(4,4,1,1);
     diverge_model_internals_tu(mom, 22);
 
@@ -42,15 +44,15 @@ TEST_CASE("check vs cpu projections honey ", "[proj][proj_gpu_honey]")
 
     P_projection(r2,VertMom,ProjMom);
     P_projection_no_GPU(r1,VertMom,ProjMom);
-    CHECK(check_equal(r1,r2,POW2(VertMom->n_orbff)*VertMom->my_nk));
+    CT_CHECK(check_equal(r1,r2,POW2(VertMom->n_orbff)*VertMom->my_nk));
 
     C_projection(r2,VertMom,ProjMom);
     C_projection_no_GPU(r1,VertMom,ProjMom);
-    CHECK(check_equal(r1,r2,POW2(VertMom->n_orbff)*VertMom->my_nk));
+    CT_CHECK(check_equal(r1,r2,POW2(VertMom->n_orbff)*VertMom->my_nk));
 
     D_projection(r2,VertMom,ProjMom);
     D_projection_no_GPU(r1,VertMom,ProjMom);
-    CHECK(check_equal(r1,r2,POW2(VertMom->n_orbff)*VertMom->my_nk));
+    CT_CHECK(check_equal(r1,r2,POW2(VertMom->n_orbff)*VertMom->my_nk));
 
     tu_vertex_free(VertMom);
     tu_prop_free(LoopMom);

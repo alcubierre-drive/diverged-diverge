@@ -1,8 +1,11 @@
 #ifndef DIVERGE_SKIP_TESTS
 
+#define CT_SUITE_NAME single_channel_flow
+#include "../ctest.h"
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/propagator.h"
@@ -72,8 +75,8 @@ diverge_model_t* RPA_model(int n_spin, int kx = 1, int kxf = 1) {
     return mod1;
 }
 
-TEST_CASE("P flow","[RPA]") {
-    MPILoglevelWrapper LL(5);
+CT_TEST_NAME(RPA_P, "RPA,P_channel") {
+    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod1 = RPA_model(1,10,5);
     diverge_model_t* mod2 = RPA_model(1,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
@@ -84,7 +87,7 @@ TEST_CASE("P flow","[RPA]") {
     tu_vertex_t* v2 = s2->tu_vertex;
     tu_vertex_t* v3 = tu_stepper_internal_vertex(s1->tu_step);
     P_projection(v1->projection_helper,v1,s1->tu_proj);
-    CHECK(check_equal(v1->projection_helper,v2->Pch,v1->full_vert_size));
+    CT_CHECK(check_equal(v1->projection_helper,v2->Pch,v1->full_vert_size));
 
     double Lambda = 1.0;
     double dLambda = -0.1;
@@ -100,15 +103,17 @@ TEST_CASE("P flow","[RPA]") {
     tu_vertex_add(v1,v3, dLambda);
     P_projection(v1->projection_helper, v1, s1->tu_proj);
 
-    CHECK(check_equal(v1->projection_helper,v2->Pch,v1->full_vert_size));
-    CHECK(check_equal(v1->pp_bubble_int,v2->pp_bubble_int,v1->full_vert_size));
+    CT_CHECK(check_equal(v1->projection_helper,v2->Pch,v1->full_vert_size));
+    CT_CHECK(check_equal(v1->pp_bubble_int,v2->pp_bubble_int,v1->full_vert_size));
     diverge_flow_step_free( s1 );
     diverge_flow_step_free( s2 );
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
+    mpi_loglevel_set(ll);
 }
-TEST_CASE("C flow","[RPA]") {
-    MPILoglevelWrapper LL(5);
+
+CT_TEST_NAME(RPA_C, "RPA,C_channel") {
+    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod1 = RPA_model(1,10,5);
     diverge_model_t* mod2 = RPA_model(1,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
@@ -119,7 +124,7 @@ TEST_CASE("C flow","[RPA]") {
     tu_vertex_t* v2 = s2->tu_vertex;
     tu_vertex_t* v3 = tu_stepper_internal_vertex(s1->tu_step);
     C_projection(v1->projection_helper,v1,s1->tu_proj);
-    CHECK(check_equal(v1->projection_helper,v2->Cch,v1->full_vert_size));
+    CT_CHECK(check_equal(v1->projection_helper,v2->Cch,v1->full_vert_size));
 
     double Lambda = 1.0;
     double dLambda = -0.1;
@@ -134,11 +139,12 @@ TEST_CASE("C flow","[RPA]") {
     ZERO_OUT(v3->Dch,v3->full_vert_size);
     tu_vertex_add(v1,v3, dLambda);
     C_projection(v1->projection_helper,v1,s1->tu_proj);
-    CHECK(check_equal(v1->projection_helper,v2->Cch,v1->full_vert_size));
-    CHECK(check_equal(v1->ph_bubble_int,v2->ph_bubble_int,v1->full_vert_size));
+    CT_CHECK(check_equal(v1->projection_helper,v2->Cch,v1->full_vert_size));
+    CT_CHECK(check_equal(v1->ph_bubble_int,v2->ph_bubble_int,v1->full_vert_size));
     diverge_flow_step_free( s1 );
     diverge_flow_step_free( s2 );
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
+    mpi_loglevel_set(ll);
 }
 #endif // DIVERGE_SKIP_TESTS

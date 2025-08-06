@@ -2,7 +2,7 @@
 
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/propagator.h"
@@ -14,9 +14,12 @@
 #include "../../src/tu/projection.h"
 #include "../../src/tu/projection_handler.h"
 
+#define CT_SUITE_NAME speed
+#include "../ctest.h"
+
 #ifdef USE_CUDA
-TEST_CASE("loop speed", "[.][loopspeed]") {
-    MPILoglevelWrapper LL(5);
+CT_TEST_HIDDEN(loopspeed) {
+    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mom = gen_square_lat_hub(30, 30,2,2,1,-0.1, 3, -0.4,45,45);
     diverge_model_internals_tu(mom, 2.1);
     tu_prop_t* PropMom = tu_prop_init(mom);
@@ -39,10 +42,11 @@ TEST_CASE("loop speed", "[.][loopspeed]") {
     tu_prop_free( PropMom );
     diverge_model_free(mom);
     free(lm);
+    mpi_loglevel_set(ll);
 }
 
-TEST_CASE("loop proj", "[.][projspeed]") {
-    MPILoglevelWrapper LL(5);
+CT_TEST_HIDDEN(projspeed) {
+    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mom = gen_honeycomb_lat_hub(30,30,1,1);
     diverge_model_internals_tu(mom, 2.5);
     tu_projection_t* ProjMom = tu_projection_init(mom);
@@ -63,6 +67,7 @@ TEST_CASE("loop proj", "[.][projspeed]") {
     tu_projection_free( ProjMom );
     diverge_model_free(mom);
     free(r2);
+    mpi_loglevel_set(ll);
 }
 
 #endif

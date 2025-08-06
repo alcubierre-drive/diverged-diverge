@@ -1,11 +1,14 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../../src/diverge_common.h"
 #include "../../src/misc/mpi_functions.h"
 
 #include "../../src/misc/mergesort.h"
 #include <algorithm>
+
+#define CT_SUITE_NAME parsort
+#include "../ctest.h"
 
 typedef struct {
     index_t idx;
@@ -46,7 +49,7 @@ static index_t* gen_indices( index_t N ) {
     return ii;
 }
 
-TEST_CASE("mergesort direct", "[mergesort][direct]") {
+CT_TEST(direct) {
     index_t N = 1024*128;
     testdata_t* d = gen_random_data( N );
     testdata_t *c = copy_random_data( d, N ), *s = copy_random_data( d, N );
@@ -66,7 +69,7 @@ TEST_CASE("mergesort direct", "[mergesort][direct]") {
 
     mpi_tim_printf( "mergesort: %.3fs, std::sort: %.3fs\n", tim_mergesort, tim_stdsort );
     index_t equiv = 0; for (index_t i=0; i<N; ++i) equiv += (s[i] == c[i]);
-    CHECK( equiv == N );
+    CT_CHECK( equiv == N );
 
     free(c);
     free(s);
@@ -83,7 +86,7 @@ MERGESORT_IMPL_R( sort_idx, index_t )
                                        ((const testdata_t*)ctx)[x].val > ((const testdata_t*)ctx)[y].val ? 1 : 0)
 MERGESORT_IMPL_R( sort_val, index_t )
 
-TEST_CASE("mergesort indirect", "[mergesort][indirect]") {
+CT_TEST(indirect) {
     index_t N = 1024*128;
     testdata_t* d = gen_random_data( N );
     index_t *c = gen_indices(N), *s = gen_indices(N);
@@ -103,7 +106,7 @@ TEST_CASE("mergesort indirect", "[mergesort][indirect]") {
 
     mpi_tim_printf( "mergesort: %.3fs, std::sort: %.3fs\n", tim_mergesort, tim_stdsort );
     index_t equiv = 0; for (index_t i=0; i<N; ++i) equiv += (s[i] == c[i]);
-    CHECK( equiv == N );
+    CT_CHECK( equiv == N );
 
     free(c);
     free(s);

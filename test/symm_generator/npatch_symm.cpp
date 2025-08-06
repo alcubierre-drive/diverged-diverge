@@ -1,6 +1,8 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
+// #include "../catch.hpp"
+#define CT_SUITE_NAME npatch_sym
+#include "../ctest.h"
 
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
@@ -13,7 +15,7 @@
 #include "../helper_functions.hpp"
 
 
-TEST_CASE("npatch vertex symmetrization", "[npatch_symm]") {
+CT_TEST(vertex) {
     diverge_model_t* m = gen_kagome_model(12,12);
     diverge_model_internals_patch( m, 6 );
     diverge_flow_step_t* s = diverge_flow_step_init( m, "patch", "PCD" );
@@ -29,7 +31,7 @@ TEST_CASE("npatch vertex symmetrization", "[npatch_symm]") {
     for (index_t idx=0; idx<size; ++idx) {
         max_diff = MAX(max_diff, std::abs(V[idx]-helper[idx]));
     }
-    CHECK(max_diff < 1e-5);
+    CT_CHECK(max_diff < 1e-5);
 
     diverge_flow_step_free( s );
     diverge_model_free( m );

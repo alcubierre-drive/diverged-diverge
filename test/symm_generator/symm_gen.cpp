@@ -2,17 +2,20 @@
 
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/diverge_Eigen3.hpp"
 
+#define CT_SUITE_NAME symmetry_generator
+#include "../ctest.h"
+
 typedef Eigen::Matrix<double,3,3,Eigen::RowMajor> CMat3d;
 typedef Eigen::Matrix<complex128_t,-1,-1,Eigen::RowMajor> CMatXcd;
 
-TEST_CASE("symmetry generation","[symm_gen]") {
+CT_TEST( SU2 ) {
     sym_op_t curr_symm[5];
     site_descr_t sites[3];
     sites[0].amplitude[0] = 1.;
@@ -55,8 +58,8 @@ TEST_CASE("symmetry generation","[symm_gen]") {
     Mat3cd test_orb; test_orb << 1.0,0.0,0.0,
                                  0.0,0.0,-1.0,
                                  0.0,-1.0,0.0;
-    CHECK((m_rs-test_rs).lpNorm<Eigen::Infinity>() < 1e-10);
-    CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_rs-test_rs).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
 
 
     // 90 degree rotation around z
@@ -73,8 +76,8 @@ TEST_CASE("symmetry generation","[symm_gen]") {
     test_orb << 1.0,0.0,0.0,
                 0.0,-I128,0.0,
                 0.0,0.0,I128;
-    CHECK((m_rs-test_rs).lpNorm<Eigen::Infinity>() < 1e-10);
-    CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_rs-test_rs).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
 
     len_sym = 3;
     curr_symm[0].type = 'R'; curr_symm[0].normal_vector[0] = 0.;
@@ -97,16 +100,15 @@ TEST_CASE("symmetry generation","[symm_gen]") {
     test_orb << 1.0,0.0,0.0,
                 0.0,0.,-I128,
                 0.0,I128,0.0;
-    CHECK((m_rs-test_rs).lpNorm<Eigen::Infinity>() < 1e-10);
-    CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_rs-test_rs).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
 
 
     free(rst);
     free(orb_trafo);
 }
 
-
-TEST_CASE("symmetry generation spin","[symm_gen]") {
+CT_TEST( nonSU2 ) {
     sym_op_t curr_symm[5];
     site_descr_t sites[1];
     sites[0].amplitude[0] = 1.;
@@ -128,7 +130,7 @@ TEST_CASE("symmetry generation spin","[symm_gen]") {
 
     Mat2cd test_orb; test_orb << 0.0,-I128,
                                  -I128,0.0;
-    CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
 
     // rotation 90 z
     len_sym = 1;
@@ -140,7 +142,7 @@ TEST_CASE("symmetry generation spin","[symm_gen]") {
 
     test_orb << (1.-I128)/sqrt(2),0.0,
                 0.0,(1.+I128)/sqrt(2);
-    CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
 
 
     // mirror 45
@@ -161,7 +163,7 @@ TEST_CASE("symmetry generation spin","[symm_gen]") {
 
     test_orb << 0.0,(1.-I128)/sqrt(2),
                 (-1.-I128)/sqrt(2),0.0;
-    CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
 
 
     len_sym = 1;
@@ -173,7 +175,7 @@ TEST_CASE("symmetry generation spin","[symm_gen]") {
 
     test_orb << 0.0,(1.-I128)/sqrt(2),
                 (-1.-I128)/sqrt(2),0.0;
-    CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
+    CT_CHECK((m_orb-test_orb).lpNorm<Eigen::Infinity>() < 1e-10);
 
     free(rst);
     free(orb_trafo);
