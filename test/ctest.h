@@ -1,3 +1,5 @@
+/** ctest.h developed by Lennart Klebl (c) 2025, GPLv3 */
+
 #pragma once
 
 // XXX this is a divERGe "quirk". Maybe also for CUDA; dunno.
