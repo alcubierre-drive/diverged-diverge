@@ -1,8 +1,11 @@
 #ifndef DIVERGE_SKIP_TESTS
 
+#define CT_SUITE_NAME tu_prop_gpu
+#include "../ctest.h"
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/propagator.h"
@@ -17,8 +20,7 @@
 #ifndef USE_GF_FLOATS
 #ifndef USE_MPI
 #ifdef USE_CUDA
-TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
-{
+CT_TEST_NAME(tu_prop_gpu, "tu_prop,gpu") {
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
 
@@ -44,9 +46,9 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
     S_ph_loop_static_simple_gpu( PropMom, helper );
     merge_gpu_cpu_loop( PropMom, lmg, helper );
 
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
-    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
-    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
     ZERO_OUT( lmg, POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk );
     ZERO_OUT( lmrg, POW2(n_orbffm*POW2(mom->n_spin))*PropMom->nk );
 
@@ -60,9 +62,9 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
     S_pp_loop_static_red_gpu( PropMom, helper );
     merge_gpu_cpu_loop( PropMom, lmrg, helper );
 
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
-    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
-    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
 
     tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
@@ -75,8 +77,7 @@ TEST_CASE("momentum loop cpu gpu variants", "[prop][prop_gpu]")
     free(lmg);
 }
 
-TEST_CASE("momentum loop cpu gpu offloading", "[prop][prop_offload]")
-{
+CT_TEST_NAME(tu_prop_offload, "tu_prop,gpu,offload") {
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
@@ -92,11 +93,11 @@ TEST_CASE("momentum loop cpu gpu offloading", "[prop][prop_offload]")
 
     S_loop_static_simple( PropMom, false, false, lmr, -1, 0, true );
     tu_prop_ph_loop(PropMom, lmrg, NULL);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
     S_loop_static_simple( PropMom, true, false, lmr, -1, 0, true );
     tu_prop_pp_loop(PropMom, lmrg, NULL);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
     tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
@@ -107,8 +108,7 @@ TEST_CASE("momentum loop cpu gpu offloading", "[prop][prop_offload]")
 }
 
 
-TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu_nofull]")
-{
+CT_TEST_NAME(tu_prop_nofull, "tu_prop,gpu,nofull") {
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
 
@@ -134,9 +134,9 @@ TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu_nofull]
     S_ph_loop_static_simple_gpu(PropMom, helper);
     merge_gpu_cpu_loop(PropMom, lmg, helper);
 
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
-    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
-    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
     ZERO_OUT(lmg, POW2(n_orbffm*mom->n_spin)*PropMom->nk);
     ZERO_OUT(lmrg, POW2(n_orbffm*mom->n_spin)*PropMom->nk);
 
@@ -149,9 +149,9 @@ TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu_nofull]
     S_pp_loop_static_red_gpu(PropMom, helper);
     merge_gpu_cpu_loop(PropMom, lmrg, helper);
 
-    CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
-    CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
-    CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmr,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lm,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmg,lm,POW2(n_orbffm)*PropMom->nk));
 
     tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
@@ -164,8 +164,7 @@ TEST_CASE("momentum loop cpu gpu variants  no full GF", "[prop][prop_gpu_nofull]
     free(lmg);
 }
 
-TEST_CASE("momentum loop cpu gpu offloading no full GF", "[prop][prop_offload]")
-{
+CT_TEST_NAME(tu_prop_nofull_offload, "tu_prop,gpu,offload,nofull") {
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
@@ -182,11 +181,11 @@ TEST_CASE("momentum loop cpu gpu offloading no full GF", "[prop][prop_offload]")
 
     S_loop_static_simple( PropMom, false, false, lmr, -1, 0, true );
     tu_prop_ph_loop(PropMom, lmrg, NULL);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
     S_loop_static_simple( PropMom, true, false, lmr, -1, 0, true );
     tu_prop_pp_loop(PropMom, lmrg, NULL);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
     tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
@@ -196,8 +195,7 @@ TEST_CASE("momentum loop cpu gpu offloading no full GF", "[prop][prop_offload]")
     free(lmrg);
 }
 
-TEST_CASE("momentum loop cpu gpu offloading simple", "[prop][prop_offload]")
-{
+CT_TEST_NAME(tu_prop_offload_simple, "tu_prop,gpu,offload,simple") {
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
@@ -214,11 +212,11 @@ TEST_CASE("momentum loop cpu gpu offloading simple", "[prop][prop_offload]")
 
     S_loop_static_simple( PropMom, false, false, lmr, -1, 0, true );
     tu_prop_ph_loop(PropMom, lmrg, NULL);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
     S_loop_static_simple( PropMom, true, false, lmr, -1, 0, true );
     tu_prop_pp_loop(PropMom, lmrg, NULL);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
     tu_vertex_free( VertMom );
     tu_prop_free( PropMom );
@@ -227,8 +225,8 @@ TEST_CASE("momentum loop cpu gpu offloading simple", "[prop][prop_offload]")
     free(lmr);
     free(lmrg);
 }
-TEST_CASE("momentum loop cpu gpu offloading no full GF simple", "[prop][prop_offload]")
-{
+
+CT_TEST_NAME(tu_prop_offload_simple_nofull, "tu_prop,gpu,offload,simple,nofull") {
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_internals_tu(mom, 1.5);
     ((tu_data_t*)mom->internals->tu_data)->offload_cpu = 0.5;
@@ -246,11 +244,11 @@ TEST_CASE("momentum loop cpu gpu offloading no full GF simple", "[prop][prop_off
 
     S_loop_static_simple( PropMom, false, false, lmr, -1, 0, true );
     tu_prop_ph_loop(PropMom, lmrg, NULL);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
     S_loop_static_simple( PropMom, true, false, lmr, -1, 0, true );
     tu_prop_pp_loop(PropMom, lmrg, NULL);
-    CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
+    CT_CHECK(check_equal(lmrg,lmr,POW2(n_orbffm)*PropMom->nk));
 
     tu_vertex_free( VertMom );
     tu_prop_free( PropMom );

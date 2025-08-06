@@ -1,8 +1,11 @@
 #ifndef DIVERGE_SKIP_TESTS
 
+#define CT_SUITE_NAME tu_proj_spaces
+#include "../ctest.h"
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/vertex_details.h"
@@ -15,8 +18,7 @@
 #include <stdio.h>
 
 #ifndef USE_MPI
-TEST_CASE("momentum vs realspace projections ", "[proj][proj_orbVSreal]")
-{
+CT_TEST_NAME( proj_orb_real, "proj,orb:real" ) {
     diverge_model_t* mom = gen_square_lat_hub(6, 6);
     diverge_model_t* orb = gen_square_lat_hub(1, 1, 6, 6);
     diverge_model_internals_tu(orb, 1.2);
@@ -31,7 +33,7 @@ TEST_CASE("momentum vs realspace projections ", "[proj][proj_orbVSreal]")
     tu_vertex_t* VertMom = tu_vertex_init(mom, ProjMom, LoopMom, 1,1,1,0);
     tu_vertex_t* VertOrb = tu_vertex_init(orb, ProjOrb, LoopOrb, 1,1,1,0);
 
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     tu_data_t* tu_o = (tu_data_t*)(orb -> internals-> tu_data);
     tu_data_t* tu_m = (tu_data_t*)(mom -> internals-> tu_data);
@@ -60,23 +62,23 @@ TEST_CASE("momentum vs realspace projections ", "[proj][proj_orbVSreal]")
         VertMom->Pch[j + n_orbffm * tu_ffm[bom[j]+bj].oto+POW2(n_orbffm)*k]
                     += ff(mom->internals->kmesh+3*k,Rvecm + (boo[j]+bj)*3);
     }
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     D_projection(VertMom->Dch,VertMom,ProjMom);
     D_projection(VertOrb->Dch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     C_projection(VertMom->Cch,VertMom,ProjMom);
     C_projection(VertOrb->Cch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Cch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     P_projection(VertMom->Pch,VertMom,ProjMom);
     P_projection(VertOrb->Pch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     D_projection(VertMom->Dch,VertMom,ProjMom);
     D_projection(VertOrb->Dch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
 
     tu_vertex_free(VertMom);
@@ -91,8 +93,7 @@ TEST_CASE("momentum vs realspace projections ", "[proj][proj_orbVSreal]")
     free(Rvecm);
 }
 
-TEST_CASE("momentum vs mixed projections ", "[proj][proj_mixVSreal]")
-{
+CT_TEST_NAME( proj_mix_real, "proj,mix:real" ) {
     diverge_model_t* mom = gen_square_lat_hub(12, 12);
     diverge_model_t* orb = gen_square_lat_hub(4, 6, 3, 2);
     diverge_model_internals_tu(orb, 1.2);
@@ -111,7 +112,7 @@ TEST_CASE("momentum vs mixed projections ", "[proj][proj_mixVSreal]")
     fill_Rvec(orb, Rveco);
     fill_Rvec(mom, Rvecm);
 
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     tu_data_t* tu_o = (tu_data_t*)(orb -> internals-> tu_data);
     tu_data_t* tu_m = (tu_data_t*)(mom -> internals-> tu_data);
@@ -138,23 +139,23 @@ TEST_CASE("momentum vs mixed projections ", "[proj][proj_mixVSreal]")
                     += ff(mom->internals->kmesh+3*k,Rvecm + (boo[j]+bj)*3);
     }
 
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     D_projection(VertMom->Dch,VertMom,ProjMom);
     D_projection(VertOrb->Dch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     C_projection(VertMom->Cch,VertMom,ProjMom);
     C_projection(VertOrb->Cch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Cch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     P_projection(VertMom->Pch,VertMom,ProjMom);
     P_projection(VertOrb->Pch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     D_projection(VertMom->Dch,VertMom,ProjMom);
     D_projection(VertOrb->Dch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
 
     tu_vertex_free(VertMom);
@@ -169,8 +170,7 @@ TEST_CASE("momentum vs mixed projections ", "[proj][proj_mixVSreal]")
     free(Rvecm);
 }
 
-TEST_CASE("momentum vs mixed projections graphene", "[proj][proj_mixVSrealgr]")
-{
+CT_TEST_NAME( proj_mix_real_gr, "proj,mix:real,graphene" ) {
     diverge_model_t* mom = gen_honeycomb_lat_hub(6, 6);
     diverge_model_t* orb = gen_honeycomb_lat_hub(1, 1, 6, 6);
     diverge_model_internals_tu(orb, 1.2);
@@ -189,7 +189,7 @@ TEST_CASE("momentum vs mixed projections graphene", "[proj][proj_mixVSrealgr]")
     fill_Rvec(orb, Rveco);
     fill_Rvec(mom, Rvecm);
 
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     tu_data_t* tu_o = (tu_data_t*)(orb -> internals-> tu_data);
     tu_data_t* tu_m = (tu_data_t*)(mom -> internals-> tu_data);
@@ -216,23 +216,23 @@ TEST_CASE("momentum vs mixed projections graphene", "[proj][proj_mixVSrealgr]")
                     += ff(mom->internals->kmesh+3*k,Rvecm + (boo[j]+bj)*3);
     }
 
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     D_projection(VertMom->Dch,VertMom,ProjMom);
     D_projection(VertOrb->Dch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     C_projection(VertMom->Cch,VertMom,ProjMom);
     C_projection(VertOrb->Cch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Cch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     P_projection(VertMom->Pch,VertMom,ProjMom);
     P_projection(VertOrb->Pch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
     D_projection(VertMom->Dch,VertMom,ProjMom);
     D_projection(VertOrb->Dch,VertOrb,ProjOrb);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->nk)
                   -trace(VertMom->Dch,VertMom->n_orbff,VertMom->nk)) < 1e-10);
 
     tu_vertex_free(VertMom);

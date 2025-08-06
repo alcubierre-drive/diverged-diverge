@@ -1,8 +1,11 @@
 #ifndef DIVERGE_SKIP_TESTS
 
+#define CT_SUITE_NAME tu_self
+#include "../ctest.h"
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../../src/tu/diverge_interface.h"
 #include "../model_examples/old.h"
 #include "../../src/tu/propagator.h"
@@ -52,7 +55,7 @@ void init_random_PCD(diverge_model_t* model, tu_vertex_t* vertex, tu_projection_
 
 
 #ifndef USE_MPI
-TEST_CASE("self energy Realspace vs k space SU2 static","[self][self_kVSr_SU2]"){
+CT_TEST_NAME(real_vs_k_SU2,"self,real:mom,SU2") {
     diverge_model_t* mom = gen_square_lat_hub(12, 12);
     diverge_model_t* orb = gen_square_lat_hub(1, 1, 12, 12);
     diverge_model_t* mix = gen_square_lat_hub(4, 4, 3, 3);
@@ -76,9 +79,9 @@ TEST_CASE("self energy Realspace vs k space SU2 static","[self][self_kVSr_SU2]")
     init_random_PCD(mom,VertMom,ProjMom,value);
     init_random_PCD(mix,VertMix,ProjMix,value);
 
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMom->Pch,VertMom->n_orbff,VertMom->my_nk)) < 1e-8);
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMix->Pch,VertMix->n_orbff,VertMix->my_nk)) < 1e-8);
 
     tu_selfenergy_t* selfOrb = tu_selfenergy_init(VertOrb);
@@ -98,13 +101,13 @@ TEST_CASE("self energy Realspace vs k space SU2 static","[self][self_kVSr_SU2]")
                     VertMom->Dch, PropMom->gf_buf, 1.0);
     tu_selfenergy_flow(selfMix, VertMix->self_en, VertMix->Pch, VertMix->Cch,
                     VertMix->Dch, gfmix, 1.0);
-    CHECK(std::abs(trace(PropMom->gf_buf,PropMom->n_orb,PropMom->nk)
+    CT_CHECK(std::abs(trace(PropMom->gf_buf,PropMom->n_orb,PropMom->nk)
                   -trace(PropMix->gf_buf,PropMix->n_orb,PropMix->nk)) < 1e-8);
     free(gfmix);
-    CHECK(std::abs(trace(VertMom->self_en,PropMom->n_orb,PropMom->nk)
+    CT_CHECK(std::abs(trace(VertMom->self_en,PropMom->n_orb,PropMom->nk)
                   -trace(VertOrb->self_en,PropOrb->n_orb,PropOrb->nk)) < 1e-8);
 
-    CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb,PropMix->nk)
+    CT_CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb,PropMix->nk)
                   -trace(VertOrb->self_en,PropOrb->n_orb,PropOrb->nk)) < 1e-8);
 
     tu_vertex_free( VertOrb );
@@ -124,7 +127,7 @@ TEST_CASE("self energy Realspace vs k space SU2 static","[self][self_kVSr_SU2]")
     diverge_model_free(mix);
 }
 
-TEST_CASE("self energy honey","[self][self_honey]") {
+CT_TEST_NAME(honey,"self,honey") {
     diverge_model_t* mix = gen_honeycomb_lat_hub(12, 12);
     diverge_model_t* orb = gen_honeycomb_lat_hub(4, 4, 3, 3);
     diverge_model_internals_tu(orb, 1.1);
@@ -142,11 +145,11 @@ TEST_CASE("self energy honey","[self][self_honey]") {
     init_random_PCD(orb,VertOrb,ProjOrb,value);
     init_random_PCD(mix,VertMix,ProjMix,value);
 
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMix->Pch,VertMix->n_orbff,VertMix->my_nk)) < 1e-8);
-    CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMix->Cch,VertMix->n_orbff,VertMix->my_nk)) < 1e-8);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff,VertOrb->my_nk)
                   -trace(VertMix->Dch,VertMix->n_orbff,VertMix->my_nk)) < 1e-8);
 
     tu_selfenergy_t* selfOrb = tu_selfenergy_init( VertOrb );
@@ -155,14 +158,14 @@ TEST_CASE("self energy honey","[self][self_honey]") {
     const double Lambda = 1e-1;
     tu_prop_GF_zero_T(PropOrb, Lambda, NULL);
     tu_prop_GF_zero_T(PropMix, Lambda, NULL);
-    CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nk)
+    CT_CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nk)
                   -trace(orb->internals->greens,orb->n_orb*orb->n_spin,PropOrb->nk)) < 1e-8);
     complex128_t* gfmix = (complex128_t*)calloc(VertMix->selfenergy_size,sizeof(complex128_t));
     tu_prop_GF_for_self(PropMix, gfmix);
     complex128_t* gfmix2 = (complex128_t*)calloc(VertOrb->selfenergy_size,sizeof(complex128_t));
     tu_prop_GF_for_self(PropOrb, gfmix2);
 
-    CHECK(std::abs(trace_batch_lin(gfmix,PropMix->n_orb*VertOrb->n_spin,PropMix->nk)
+    CT_CHECK(std::abs(trace_batch_lin(gfmix,PropMix->n_orb*VertOrb->n_spin,PropMix->nk)
                   -trace_batch_lin(gfmix2,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nk)) < 1e-8);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
@@ -173,7 +176,7 @@ TEST_CASE("self energy honey","[self][self_honey]") {
     free(gfmix);
     free(gfmix2);
 
-    CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb,PropMix->nk)
+    CT_CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb,PropMix->nk)
                   -trace(VertOrb->self_en,PropOrb->n_orb,PropOrb->nk)) < 1e-8);
 
     tu_vertex_free( VertOrb );
@@ -188,7 +191,7 @@ TEST_CASE("self energy honey","[self][self_honey]") {
     diverge_model_free(mix);
 }
 
-TEST_CASE("self energy honey sym","[self][self_honey]") {
+CT_TEST_NAME(honey_sym,"self,honeycomb,sym") {
     diverge_model_t* mix = gen_honeycomb_lat_hub_sym(12, 12);
     diverge_model_t* orb = gen_honeycomb_lat_hub(4, 4, 3, 3);
     diverge_model_internals_tu(orb, 1.1);
@@ -212,14 +215,14 @@ TEST_CASE("self energy honey sym","[self][self_honey]") {
     const double Lambda = 1e-1;
     tu_prop_GF_zero_T(PropOrb, Lambda, NULL);
     tu_prop_GF_zero_T(PropMix, Lambda, NULL);
-    CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nk)
+    CT_CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nk)
                   -trace(orb->internals->greens,orb->n_orb*orb->n_spin,PropOrb->nk)) < 1e-8);
     complex128_t* gfmix = (complex128_t*)calloc(VertMix->selfenergy_size,sizeof(complex128_t));
     tu_prop_GF_for_self(PropMix, gfmix);
     complex128_t* gfmix2 = (complex128_t*)calloc(VertOrb->selfenergy_size,sizeof(complex128_t));
     tu_prop_GF_for_self(PropOrb, gfmix2);
 
-    CHECK(std::abs(trace_batch_lin(gfmix,PropMix->n_orb*VertOrb->n_spin,PropMix->nk)
+    CT_CHECK(std::abs(trace_batch_lin(gfmix,PropMix->n_orb*VertOrb->n_spin,PropMix->nk)
                   -trace_batch_lin(gfmix2,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nk)) < 1e-8);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
@@ -230,7 +233,7 @@ TEST_CASE("self energy honey sym","[self][self_honey]") {
     free(gfmix);
     free(gfmix2);
 
-    CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb,PropMix->nk)
+    CT_CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb,PropMix->nk)
                   -trace(VertOrb->self_en,PropOrb->n_orb,PropOrb->nk)) < 1e-8);
 
     tu_vertex_free( VertMix );
@@ -245,7 +248,7 @@ TEST_CASE("self energy honey sym","[self][self_honey]") {
     diverge_model_free(mix);
 }
 
-TEST_CASE("self energy honey rash","[self][self_rash]") {
+CT_TEST_NAME(honey_rashba,"self,honeycomb,rashba") {
     diverge_model_t* mix = gen_honeycomb_lat_rash(12, 12);
     diverge_model_t* orb = gen_honeycomb_lat_rash(4, 4, 3, 3);
     diverge_model_internals_tu(orb, 1.1);
@@ -253,7 +256,7 @@ TEST_CASE("self energy honey rash","[self][self_rash]") {
 
     tu_prop_t* PropOrb = tu_prop_init(orb);
     tu_prop_t* PropMix = tu_prop_init(mix);
-    CHECK(std::abs(trace(mix->internals->ham,mix->n_orb*mix->n_spin,PropMix->nk)
+    CT_CHECK(std::abs(trace(mix->internals->ham,mix->n_orb*mix->n_spin,PropMix->nk)
                   -trace(orb->internals->ham,orb->n_orb*orb->n_spin,PropOrb->nk)) < 1e-8);
 
     tu_projection_t* ProjOrb = tu_projection_init(orb);
@@ -266,11 +269,11 @@ TEST_CASE("self energy honey rash","[self][self_rash]") {
     init_random_PCD(orb,VertOrb,ProjOrb,value);
     init_random_PCD(mix,VertMix,ProjMix,value);
 
-    CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff*n_sp2,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Pch,VertOrb->n_orbff*n_sp2,VertOrb->my_nk)
                   -trace(VertMix->Pch,VertMix->n_orbff*n_sp2,VertMix->my_nk)) < 1e-8);
-    CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff*n_sp2,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Cch,VertOrb->n_orbff*n_sp2,VertOrb->my_nk)
                   -trace(VertMix->Cch,VertMix->n_orbff*n_sp2,VertMix->my_nk)) < 1e-8);
-    CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff*n_sp2,VertOrb->my_nk)
+    CT_CHECK(std::abs(trace(VertOrb->Dch,VertOrb->n_orbff*n_sp2,VertOrb->my_nk)
                   -trace(VertMix->Dch,VertMix->n_orbff*n_sp2,VertMix->my_nk)) < 1e-8);
 
     tu_selfenergy_t* selfOrb = tu_selfenergy_init( VertOrb );
@@ -279,14 +282,14 @@ TEST_CASE("self energy honey rash","[self][self_rash]") {
     const double Lambda = 1e-1;
     tu_prop_GF_zero_T(PropOrb, Lambda, NULL);
     tu_prop_GF_zero_T(PropMix, Lambda, NULL);
-    CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nk)
+    CT_CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nk)
                   -trace(orb->internals->greens,orb->n_orb*orb->n_spin,PropOrb->nk)) < 1e-8);
     complex128_t* gfmix = (complex128_t*)calloc(VertMix->selfenergy_size,sizeof(complex128_t));
     tu_prop_GF_for_self(PropMix, gfmix);
     complex128_t* gfmix2 = (complex128_t*)calloc(VertOrb->selfenergy_size,sizeof(complex128_t));
     tu_prop_GF_for_self(PropOrb, gfmix2);
 
-    CHECK(std::abs(trace_batch_lin(gfmix,PropMix->n_orb*VertOrb->n_spin,PropMix->nk)
+    CT_CHECK(std::abs(trace_batch_lin(gfmix,PropMix->n_orb*VertOrb->n_spin,PropMix->nk)
                   -trace_batch_lin(gfmix2,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nk)) < 1e-8);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
@@ -297,7 +300,7 @@ TEST_CASE("self energy honey rash","[self][self_rash]") {
     free(gfmix);
     free(gfmix2);
 
-    CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb*VertOrb->n_spin,PropMix->nk)
+    CT_CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb*VertOrb->n_spin,PropMix->nk)
                   -trace(VertOrb->self_en,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nk)) < 1e-8);
 
     tu_vertex_free( VertMix );
@@ -319,7 +322,7 @@ inline static void fftw_execute_dft_helper(const fftw_plan p, complex128_t* in,
                         reinterpret_cast<fftw_complex*>(out));
 }
 
-TEST_CASE("self energy honey rash ref","[self][self_ref]") {
+CT_TEST_NAME(honey_rash_ref,"self,rashba,refined") {
     diverge_model_t* mix = gen_honeycomb_lat_rash(44*3, 44*3, 1, 1, 1, 1);
     diverge_model_t* orb = gen_honeycomb_lat_rash(44, 44, 1, 1, 3, 3);
     diverge_model_internals_tu(orb, 0.0);
@@ -327,7 +330,7 @@ TEST_CASE("self energy honey rash ref","[self][self_ref]") {
 
     tu_prop_t* PropOrb = tu_prop_init(orb);
     tu_prop_t* PropMix = tu_prop_init(mix);
-    CHECK(std::abs(trace(mix->internals->ham,mix->n_orb*mix->n_spin,PropMix->nktot)
+    CT_CHECK(std::abs(trace(mix->internals->ham,mix->n_orb*mix->n_spin,PropMix->nktot)
                   -trace(orb->internals->ham,orb->n_orb*orb->n_spin,PropOrb->nktot)) < 1e-8);
 
     tu_projection_t* ProjOrb = tu_projection_init(orb);
@@ -349,7 +352,7 @@ TEST_CASE("self energy honey rash ref","[self][self_ref]") {
     tu_prop_GF_for_self(PropMix, gfmix);
     complex128_t* gfmix2 = (complex128_t*)calloc(VertMix->selfenergy_size,sizeof(complex128_t));
     tu_prop_GF_for_self(PropOrb, gfmix2);
-    CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nktot)
+    CT_CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nktot)
                   -trace(orb->internals->greens,orb->n_orb*orb->n_spin,PropOrb->nktot)) < 1e-8);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
@@ -359,7 +362,7 @@ TEST_CASE("self energy honey rash ref","[self][self_ref]") {
 
     free(gfmix);
     free(gfmix2);
-    CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb*VertOrb->n_spin,PropMix->nktot)
+    CT_CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb*VertOrb->n_spin,PropMix->nktot)
                   -trace(VertOrb->self_en,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nktot)) < 1e-3);
 
     tu_vertex_free( VertMix );
@@ -374,7 +377,7 @@ TEST_CASE("self energy honey rash ref","[self][self_ref]") {
     diverge_model_free(mix);
 }
 
-TEST_CASE("self energy hub ref","[self][self_href]") {
+CT_TEST_NAME(honey_refined,"self,refined") {
     diverge_model_t* mix = gen_square_lat_hub_sym(100*3, 100*3, 1, 1, 1, 0.1, 3, 0.5);
     diverge_model_t* orb = gen_square_lat_hub_sym(100, 100, 3, 3, 1, 0.1, 3, 0.5);
     diverge_model_internals_tu(orb, 0.0);
@@ -382,7 +385,7 @@ TEST_CASE("self energy hub ref","[self][self_href]") {
 
     tu_prop_t* PropOrb = tu_prop_init(orb);
     tu_prop_t* PropMix = tu_prop_init(mix);
-    CHECK(std::abs(trace(mix->internals->ham,mix->n_orb*mix->n_spin,PropMix->nktot)
+    CT_CHECK(std::abs(trace(mix->internals->ham,mix->n_orb*mix->n_spin,PropMix->nktot)
                   -trace(orb->internals->ham,orb->n_orb*orb->n_spin,PropOrb->nktot)) < 1e-8);
 
     tu_projection_t* ProjOrb = tu_projection_init(orb);
@@ -400,7 +403,7 @@ TEST_CASE("self energy hub ref","[self][self_href]") {
     const double Lambda = 0.4;
     tu_prop_GF_zero_T(PropOrb, I128*Lambda, NULL);
     tu_prop_GF_zero_T(PropMix, I128*Lambda, NULL);
-    CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nktot)
+    CT_CHECK(std::abs(trace(mix->internals->greens,mix->n_orb*mix->n_spin,PropMix->nktot)
                   -trace(orb->internals->greens,orb->n_orb*orb->n_spin,PropOrb->nktot)) < 1e-8);
     complex128_t* gfmix = (complex128_t*)calloc(VertMix->selfenergy_size,sizeof(complex128_t));
     tu_prop_GF_for_self(PropMix, gfmix);
@@ -417,12 +420,12 @@ TEST_CASE("self energy hub ref","[self][self_href]") {
     fftw_execute_dft_helper(tu_selfenergy_get_ifft_self_ip(selfOrb), gfmix2, gfmix2);
     tu_selfenergy_fft_interpolate(selfOrb, gfmix2);
 
-    CHECK(std::abs(trace(gfmix,PropMix->n_orb*VertOrb->n_spin,PropMix->nktot)
+    CT_CHECK(std::abs(trace(gfmix,PropMix->n_orb*VertOrb->n_spin,PropMix->nktot)
                   -trace(gfmix2,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nktot)) < 1e-3);
     free(gfmix);
     free(gfmix2);
     free(gf3);
-    CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb*VertOrb->n_spin,PropMix->nktot)
+    CT_CHECK(std::abs(trace(VertMix->self_en,PropMix->n_orb*VertOrb->n_spin,PropMix->nktot)
                   -trace(VertOrb->self_en,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nktot)) < 1e-3);
     tu_vertex_free( VertMix );
     tu_vertex_free( VertOrb );
@@ -437,7 +440,7 @@ TEST_CASE("self energy hub ref","[self][self_href]") {
 }
 
 
-TEST_CASE("self energy Realspace vs k space SU2 flow","[self][self_flow]"){
+CT_TEST_NAME(real_vs_k_SU2_other,"self,real:mom,SU2,other") {
     diverge_model_t* mom = gen_square_lat_hub(12, 12);
     diverge_model_t* orb = gen_square_lat_hub(1, 1, 12, 12);
     diverge_model_internals_tu(mom, 1.1);
@@ -457,7 +460,7 @@ TEST_CASE("self energy Realspace vs k space SU2 flow","[self][self_flow]"){
     mpi_log_printf( "trace_orb:%.5e, trace_mom:%.5e\n",
             std::abs(trace(stepo->tu_vertex->self_en,stepo->tu_vertex->n_orb,stepo->tu_vertex->nk)),
             std::abs(trace(stepm->tu_vertex->self_en,stepm->tu_vertex->n_orb,stepm->tu_vertex->nk)) );
-    CHECK(std::abs(trace(stepo->tu_vertex->self_en,stepo->tu_vertex->n_orb,stepo->tu_vertex->nk)
+    CT_CHECK(std::abs(trace(stepo->tu_vertex->self_en,stepo->tu_vertex->n_orb,stepo->tu_vertex->nk)
                   -trace(stepm->tu_vertex->self_en,stepm->tu_vertex->n_orb,stepm->tu_vertex->nk)) < 1e-8);
     diverge_flow_step_free(stepo);
     diverge_flow_step_free(stepm);
@@ -465,7 +468,7 @@ TEST_CASE("self energy Realspace vs k space SU2 flow","[self][self_flow]"){
     diverge_model_free(mom);
 }
 
-TEST_CASE("pure selfenergy flow","[self][self_flow]"){
+CT_TEST_NAME(pure,"self,pure") {
     diverge_model_t* mom = gen_square_lat_hub(4, 4);
     diverge_model_internals_tu(mom, 1.1);
     ((tu_data_t*)mom->internals->tu_data)->tu_selfenergy_flow = true;
@@ -483,7 +486,7 @@ TEST_CASE("pure selfenergy flow","[self][self_flow]"){
     diverge_model_free(mom);
 }
 
-TEST_CASE("P+self","[self][self_flow]"){
+CT_TEST_NAME(pchan,"self,P_channel") {
     diverge_model_t* mom = gen_square_lat_hub(4, 4);
     diverge_model_internals_tu(mom, 1.1);
 
@@ -500,7 +503,7 @@ TEST_CASE("P+self","[self][self_flow]"){
     diverge_model_free(mom);
 }
 
-TEST_CASE("D+self","[self][self_flow]"){
+CT_TEST_NAME(dchan,"self,D_channel") {
     diverge_model_t* mom = gen_square_lat_hub(4, 4);
     diverge_model_internals_tu(mom, 1.1);
 

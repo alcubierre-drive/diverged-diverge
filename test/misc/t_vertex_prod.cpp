@@ -1,6 +1,6 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_model_internals.h"
@@ -12,7 +12,10 @@
 
 #include <random>
 
-TEST_CASE("vert_prod", "[vprod]") {
+#define CT_SUITE_NAME tu_vertex_product
+#include "../ctest.h"
+
+CT_TEST(tu_vertex_product) {
     index_t N = 12;
     index_t b = 5;
     complex128_t* B = (complex128_t*)malloc(N*N*b*sizeof(complex128_t));
@@ -66,7 +69,7 @@ TEST_CASE("vert_prod", "[vprod]") {
         if(std::abs(r1[j]-r2[j]) > max_diff)
             max_diff = std::abs(r1[j]-r2[j]);
     }
-    CHECK(max_diff < 1e-11);
+    CT_CHECK(max_diff < 1e-11);
 
     free(r1);
     free(r2);

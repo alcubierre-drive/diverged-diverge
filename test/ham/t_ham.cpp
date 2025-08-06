@@ -1,9 +1,12 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../model_examples/model_constructor.hpp"
 
 #include "../../src/diverge.h"
+
+#define CT_SUITE_NAME hamilton
+#include "../ctest.h"
 
 template<typename T>
 index_t array_equal( const T* A, const T* B, index_t sz ) {
@@ -12,7 +15,7 @@ index_t array_equal( const T* A, const T* B, index_t sz ) {
     return nequal == sz;
 }
 
-TEST_CASE("hamiltonian generator fine mesh", "[ham][fine]") {
+CT_TEST(generator_fine) {
     diverge_model_t* m = gen_kagome_model(12,12);
 
     double* kfmesh = diverge_model_internals_get_kfmesh( m );
@@ -31,8 +34,8 @@ TEST_CASE("hamiltonian generator fine mesh", "[ham][fine]") {
         ntot++;
     }
 
-    CHECK( nsame_idx == ntot );
-    CHECK( nsame_kpt == ntot );
+    CT_CHECK( nsame_idx == ntot );
+    CT_CHECK( nsame_kpt == ntot );
 
     free( H_kpt );
     free( H_idx );
@@ -40,7 +43,7 @@ TEST_CASE("hamiltonian generator fine mesh", "[ham][fine]") {
     diverge_model_free( m );
 }
 
-TEST_CASE("hamiltonian generator coarse mesh", "[ham][coarse]") {
+CT_TEST(generator_coarse) {
     diverge_model_t* m = gen_kagome_model(12,12);
 
     double* kmesh = diverge_model_internals_get_kmesh( m );
@@ -59,8 +62,8 @@ TEST_CASE("hamiltonian generator coarse mesh", "[ham][coarse]") {
         ntot++;
     }
 
-    CHECK( nsame_idx == ntot );
-    CHECK( nsame_kpt == ntot );
+    CT_CHECK( nsame_idx == ntot );
+    CT_CHECK( nsame_kpt == ntot );
 
     free( H_kpt );
     free( H_idx );

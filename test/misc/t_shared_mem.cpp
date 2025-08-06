@@ -2,7 +2,10 @@
 
 #include <iostream>
 
-#include "../catch.hpp"
+// #include "../catch.hpp"
+#define CT_SUITE_NAME shared_mem
+#include "../ctest.h"
+
 #include "../../src/misc/shared_mem.h"
 #include "../../src/misc/mpi_functions.h"
 #include "../../src/diverge_common.h"
@@ -17,7 +20,7 @@
 #include "../../src/tu/propagator.h"
 #include "../../src/tu/propagator_details.h"
 
-TEST_CASE("MPI shared memory exclusive", "[shared_mem][exclusive]") {
+CT_TEST(exclusive) {
     mpi_log_printf_all( "shared malloc: overall rank %i, shared rank %i, shared sz %i\n",
             diverge_mpi_comm_rank(), shared_malloc_rank(), shared_malloc_size() );
 
@@ -38,13 +41,13 @@ TEST_CASE("MPI shared memory exclusive", "[shared_mem][exclusive]") {
     double error_sum = 0.0;
     diverge_mpi_allreduce_double_sum( &error, &error_sum, 1 );
 
-    CHECK(error_sum < 1.e-11);
+    CT_CHECK(error_sum < 1.e-11);
 
     shared_free( data );
     free( local_data );
 }
 
-TEST_CASE("MPI shared memory barrier", "[shared_mem][barrier]") {
+CT_TEST(barrier) {
     index_t N = 1024 * 1024;
     double* local_data = (double*)calloc( N, sizeof(double) );
     double* data = (double*)shared_malloc( N*sizeof(double) );
@@ -74,13 +77,13 @@ TEST_CASE("MPI shared memory barrier", "[shared_mem][barrier]") {
     double error_sum = 0.0;
     diverge_mpi_allreduce_double_sum( &error, &error_sum, 1 );
 
-    CHECK(error_sum < 1.e-11);
+    CT_CHECK(error_sum < 1.e-11);
 
     shared_free( data );
     free( local_data );
 }
 
-TEST_CASE("MPI shared memory GF", "[shared_mem][GF]") {
+CT_TEST(greens) {
     int nk = 128;
     diverge_model_t* m_loc = gen_random( nk, nk );
     diverge_model_t* m_shm = gen_random( nk, nk );
@@ -98,7 +101,7 @@ TEST_CASE("MPI shared memory GF", "[shared_mem][GF]") {
     double error_sum = 0.0;
     diverge_mpi_allreduce_double_sum( &error, &error_sum, 1 );
 
-    CHECK(error_sum < 1.e-11);
+    CT_CHECK(error_sum < 1.e-11);
 
     diverge_model_free( m_loc );
     diverge_model_free( m_shm );
@@ -126,7 +129,7 @@ class tu_loop_test_t {
         tu_prop_t* _loop;
 };
 
-TEST_CASE("MPI shared memory GF->loop", "[shared_mem][loop]") {
+CT_TEST(loop) {
     int nk = 12;
     diverge_model_t *m_loc = gen_random( nk, nk ),
                     *m_shm = gen_random( nk, nk );
@@ -150,7 +153,7 @@ TEST_CASE("MPI shared memory GF->loop", "[shared_mem][loop]") {
     double error_sum = 0.0;
     diverge_mpi_allreduce_double_sum( &error, &error_sum, 1 );
 
-    CHECK(error_sum < 1.e-11);
+    CT_CHECK(error_sum < 1.e-11);
 
     diverge_model_free( m_loc );
     diverge_model_free( m_shm );

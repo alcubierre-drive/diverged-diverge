@@ -2,12 +2,15 @@
 
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
-#include "../catch.hpp"
+// #include "../catch.hpp"
 #include "../model_examples/model_constructor.hpp"
 #include "../../src/diverge_model_internals.h"
 #include "../helper_functions.hpp"
 #include "../../src/misc/read_W90.h"
 #include "../../src/misc/read_fplo.h"
+
+#define CT_SUITE_NAME read_hoppings
+#include "../ctest.h"
 
 #include "graphene_dat.h"
 #include <cstdio>
@@ -17,7 +20,7 @@
 
 using std::vector;
 
-TEST_CASE("FPLO read in","[FPLOreader]") {
+CT_TEST(FPLO_reader) {
     std::string fname_W90 = gen_graphene_hr_dat(0);
     std::string fname_FPLO = gen_graphene_hr_dat(1);
     FILE* fptr = fopen(fname_FPLO.c_str(), "r");
@@ -29,7 +32,7 @@ TEST_CASE("FPLO read in","[FPLOreader]") {
             fname_FPLO.c_str(), fcontent );
 
     diverge_model_t* fplo_model = diverge_read_fplo( fname_FPLO.c_str() );
-    CHECK( fplo_model != NULL );
+    CT_CHECK( fplo_model != NULL );
     if (!fplo_model) return;
 
     index_t len = -1;
@@ -53,14 +56,14 @@ TEST_CASE("FPLO read in","[FPLOreader]") {
     for (index_t i=0; i<len; ++i) {
         if (std::abs(w90_hop[i].t) < 1.e-5)
             masked_hoppings[i] = true;
-        CHECK( masked_hoppings[i] );
+        CT_CHECK( masked_hoppings[i] );
     }
 
     diverge_model_free( fplo_model );
     free( w90_hop );
 }
 
-TEST_CASE("W90 read in","[W90reader]") {
+CT_TEST(W90_reader) {
     diverge_model_t* model = gen_honeycomb_lat_hub(2,2,1,1,1,0,0,0);
     index_t len = 0;
     index_t n_spin = 0;
@@ -78,7 +81,7 @@ TEST_CASE("W90 read in","[W90reader]") {
     rs_hopping_t* hop = diverge_read_W90_C(fname.c_str(),n_spin,&len,NULL);
     remove( fname.c_str() );
     // check all hoppings exist and are equal
-    CHECK(len > 0);
+    CT_CHECK(len > 0);
     for(index_t elem = 0; elem < len; ++elem) {
         bool found = false;
         if(std::abs(hop[elem].t) > 1e-10) {
@@ -96,13 +99,13 @@ TEST_CASE("W90 read in","[W90reader]") {
         } else {
             found = true;
         }
-        CHECK( found );
+        CT_CHECK( found );
     }
     free( hop );
     diverge_model_free( model );
 }
 
-TEST_CASE("W90 read in, reversed orbitals", "[W90reader][reversed]") {
+CT_TEST_NAME(W90_reader_rev, "W90_reader,reversed") {
     diverge_model_t* model = gen_honeycomb_lat_hub(2,2,1,1,1,0,0,0);
     index_t len = 0;
     index_t n_spin = 0;
@@ -121,7 +124,7 @@ TEST_CASE("W90 read in, reversed orbitals", "[W90reader][reversed]") {
     rs_hopping_t* hop = diverge_read_W90_C(fname.c_str(),n_spin,&len,&n_orb);
     remove( fname.c_str() );
     // check all hoppings exist and are equal
-    CHECK(len > 0);
+    CT_CHECK(len > 0);
     for(index_t elem = 0; elem < len; ++elem) {
         bool found = false;
         if(std::abs(hop[elem].t) > 1e-10) {
@@ -140,7 +143,7 @@ TEST_CASE("W90 read in, reversed orbitals", "[W90reader][reversed]") {
         } else {
             found = true;
         }
-        CHECK( found );
+        CT_CHECK( found );
     }
     free( hop );
     diverge_model_free( model );
