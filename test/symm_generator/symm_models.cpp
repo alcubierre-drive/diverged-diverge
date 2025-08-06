@@ -2,7 +2,6 @@
 
 #define CT_SUITE_NAME symmetrize_models
 #include "../ctest.h"
-// #include "../catch.hpp"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"

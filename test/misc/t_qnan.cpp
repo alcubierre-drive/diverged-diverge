@@ -2,7 +2,6 @@
 
 #define CT_SUITE_NAME quiet_nan
 #include "../ctest.h"
-// #include "../catch.hpp"
 #include "../../src/misc/qnan.h"
 #include "../../src/misc/mpi_functions.h"
 #include "../../src/diverge_common.h"

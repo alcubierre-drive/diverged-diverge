@@ -3,7 +3,6 @@
 #define CT_SUITE_NAME greens
 #include "../ctest.h"
 
-// #include "../catch.hpp"
 #include "../model_examples/model_constructor.h"
 #include "../helper_functions.hpp"
 

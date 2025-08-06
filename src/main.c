@@ -2,11 +2,7 @@
 
 #include "diverge.h"
 
-// Namespace: main
-// File that is compiled to an executable when making the tests via
-// === Code ===
-// make test
-// ============
+/** File that is compiled to an executable when using ``make test`` */
 
 int main( int argc, char** argv ) {
     diverge_init( &argc, &argv );

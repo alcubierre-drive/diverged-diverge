@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-// #include "../catch.hpp"
 #define CT_SUITE_NAME shared_mem
 #include "../ctest.h"
 

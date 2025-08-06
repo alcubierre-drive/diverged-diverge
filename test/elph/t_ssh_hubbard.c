@@ -3,7 +3,6 @@
 #include "../../src/diverge.h"
 #include "../../src/diverge_phonons.h"
 
-#define CT_PRINTF mpi_printf
 #define CT_SUITE_NAME phonons
 #include "../ctest.h"
 

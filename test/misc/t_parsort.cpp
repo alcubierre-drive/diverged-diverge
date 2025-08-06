@@ -1,6 +1,5 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-// #include "../catch.hpp"
 #include "../../src/diverge_common.h"
 #include "../../src/misc/mpi_functions.h"
 

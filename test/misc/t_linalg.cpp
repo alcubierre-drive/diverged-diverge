@@ -3,7 +3,6 @@
 
 #define CT_SUITE_NAME linalg
 #include "../ctest.h"
-// #include "../catch.hpp"
 #include "../../src/diverge_common.h"
 #include "../../src/diverge_Eigen3.hpp"
 

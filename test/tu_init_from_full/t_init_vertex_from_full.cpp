@@ -1,6 +1,5 @@
 #ifndef DIVERGE_SKIP_TESTS
 
-// #include "../catch.hpp"
 #define CT_SUITE_NAME tu_init_from_full
 #include "../ctest.h"
 
