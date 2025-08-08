@@ -197,7 +197,9 @@ typedef struct diverge_model_output_conf_t {
     /**
      * if (:c:member:`diverge_model_output_conf_t.npath` == -1 &&
      * :c:member:`diverge_model_t.n_ibz_path` > 0 && common internals are set),
-     * output the absolute value of the orbital to band matrices
+     * output the absolute value of the orbital to band matrices (**transposed
+     * wrt.** :c:func:`diverge_model_internals_get_U` **, i.e.,** ``(k, o, b)``
+     * **and not** ``(k, b, o)``).
      */
     int fatbands;
 } diverge_model_output_conf_t;
