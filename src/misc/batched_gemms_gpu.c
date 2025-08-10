@@ -124,7 +124,8 @@ void batched_gemm_overlapping( const complex128_t* Astart, const complex128_t* B
     }
     dev_stops[numdev-1] = num;
 
-    auto batch_part_on_dev = [&]( index_t d ){
+    #pragma omp parallel for num_threads(numdev)
+    for (index_t d=0; d<numdev; ++d) {
         CUDA_CHECK( cudaSetDevice( d ) );
         for (index_t i=dev_starts[d]; i<dev_stops[d]; ++i) {
             memcpy( helper_cublas_host_memory[0][d], Astart+N*N*i, N*N*sizeof(complex128_t) );
@@ -146,12 +147,8 @@ void batched_gemm_overlapping( const complex128_t* Astart, const complex128_t* B
             CUDA_CHECK( cudaMemcpy( helper_cublas_host_memory[2][d], helper_cublas_dev_memory[2][d], N*N*sizeof(complex128_t), cudaMemcpyDeviceToHost ) );
             memcpy( Cstart+N*N*i, helper_cublas_host_memory[2][d], N*N*sizeof(complex128_t) );
         }
-    };
-
-    #pragma omp parallel for num_threads(numdev)
-    for (index_t d=0; d<numdev; ++d) {
-        batch_part_on_dev(d);
     }
+
     free(dev_stops);
     free(dev_starts);
 }
@@ -178,7 +175,8 @@ void batched_gemm_with_buffers( const complex128_t* Astart, const complex128_t* 
     }
     dev_stops[numdev-1] = num;
 
-    auto batch_part_on_dev = [&]( index_t d ){
+    #pragma omp parallel for num_threads(numdev)
+    for (index_t d=0; d<numdev; ++d) {
         CUDA_CHECK( cudaSetDevice( d ) );
         for (index_t i=dev_starts[d]; i<dev_stops[d]; ++i) {
             CUDA_CHECK( cudaMemcpy( AGPU[d][0], Astart+N*N*i, N*N*sizeof(cuDoubleComplex) , cudaMemcpyHostToDevice ) );
@@ -193,12 +191,8 @@ void batched_gemm_with_buffers( const complex128_t* Astart, const complex128_t* 
                 (cuDoubleComplex*)AGPU[d][2], N ) );
             CUDA_CHECK( cudaMemcpy( Cstart+N*N*i, AGPU[d][2], N*N*sizeof(cuDoubleComplex), cudaMemcpyDeviceToHost ) );
         }
-    };
-
-    #pragma omp parallel for num_threads(numdev)
-    for (index_t d=0; d<numdev; ++d) {
-        batch_part_on_dev(d);
     }
+
     free(dev_stops);
     free(dev_starts);
 }
