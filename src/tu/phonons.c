@@ -255,6 +255,8 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     const index_t linsz = POW2(t->n_spin)*t->n_orbff;
     const complex128_t* U = t->pmod->internals->U;
     t->g_ob_qO = calloc(t->my_nk * linsz * t->nO, sizeof*t->g_ob_qO);
+    if (!t->g_ob_qO)
+        mpi_err_printf( "could not allocate t->g_ob_qO(%li,%li,%li) array\n", t->my_nk, linsz, t->nO );
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
         complex128_t* ffbuf = calloc(linsz * t->nO, sizeof*ffbuf);
