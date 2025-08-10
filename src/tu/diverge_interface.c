@@ -11,6 +11,7 @@ LINALG_IMPLEMENT
 #include "../diverge_model_internals.h"
 #include "../misc/mergesort.h"
 #include "../misc/btree.h"
+#include "../misc/hashtable.h"
 #include <assert.h>
 
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
@@ -36,6 +37,11 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_greedy;
     #endif
     info->propagator_extra_cpu_timings = false;
+    #ifdef DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE
+    info->unique_orbff_hashtable_impl = 1;
+    #else
+    info->unique_orbff_hashtable_impl = 0;
+    #endif
     model->internals->tu_data = (void*)info;
     model->internals->tu_data_destructor = tu_data_destructor;
 
@@ -460,31 +466,52 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
         return ;
     }
     mpi_vrb_printf("%d unique orbff pairs, gen maps…\n", num_unique_pairs);
-    VECTOR_INIT( vec_claV2ll_t, _lmap );
+    VECTOR_INIT_CAP( vec_claV2ll_t, _lmap, MAX(tu_data->n_orbff,1024) );
     index_t nff = tu_data->existing_ff_sz;
     // iterate over all unique pair combinations
-    xbtree_t* index_to_reduced = xbtree_init( MAX(tu_data->n_orbff,1024) );
-    index_t curr_idx = 0;
-    for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
-    for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
-        index_t fidx1 = mi_to_ffidx[m1];
-        index_t fidx3 = mi_to_ffidx[m3];
-        index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
-                          mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
-                          n_orb,n_orb,n_orb,n_orb);
-        btree_t* found = xbtree_find( index_to_reduced, trial );
-        if (!found) {
-            btree_t* node = xbtree_insert( index_to_reduced, trial );
-            node->val = curr_idx++;
-
-            claV2ll_t l = {{m1,m3}};
-            vec_claV2ll_t b = {0};
-            VECTOR_PUSH_BACK( b.v, l );
-            VECTOR_PUSH_BACK( _lmap, b );
-        } else {
-            claV2ll_t l = {{m1,m3}};
-            VECTOR_PUSH_BACK( _lmap[found->val].v, l );
+    if (tu_data->unique_orbff_hashtable_impl) {
+        hashtable_t* index_to_reduced = hashtable_init( MAX(tu_data->n_orbff*4096,1024), 4 );
+        index_t curr_idx = 1;
+        for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
+        for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
+            index_t fidx1 = mi_to_ffidx[m1];
+            index_t fidx3 = mi_to_ffidx[m3];
+            index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
+                              mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
+                              n_orb,n_orb,n_orb,n_orb);
+            index_t found = (index_t)hashtable_find( index_to_reduced, trial );
+            if (!found) {
+                hashtable_insert( index_to_reduced, trial, (void*)(curr_idx++) );
+                vec_claV2ll_t b = {0};
+                VECTOR_PUSH_BACK( b.v, (claV2ll_t){{m1,m3}} );
+                VECTOR_PUSH_BACK( _lmap, b );
+            } else {
+                VECTOR_PUSH_BACK( _lmap[found-1].v, (claV2ll_t){{m1,m3}} );
+            }
         }
+        hashtable_free( index_to_reduced );
+    } else {
+        xbtree_t* index_to_reduced = xbtree_init( MAX(tu_data->n_orbff,1024) );
+        index_t curr_idx = 0;
+        for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
+        for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
+            index_t fidx1 = mi_to_ffidx[m1];
+            index_t fidx3 = mi_to_ffidx[m3];
+            index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
+                              mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
+                              n_orb,n_orb,n_orb,n_orb);
+            btree_t* found = xbtree_find( index_to_reduced, trial );
+            if (!found) {
+                btree_t* node = xbtree_insert( index_to_reduced, trial );
+                node->val = curr_idx++;
+                vec_claV2ll_t b = {0};
+                VECTOR_PUSH_BACK( b.v, (claV2ll_t){{m1,m3}} );
+                VECTOR_PUSH_BACK( _lmap, b );
+            } else {
+                VECTOR_PUSH_BACK( _lmap[found->val].v, (claV2ll_t){{m1,m3}} );
+            }
+        }
+        xbtree_free( index_to_reduced );
     }
 
     VECTOR_RESIZE( tu_data->unique_mi_l, _lmap_sz );
@@ -513,7 +540,6 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
 
     for (index_t i=0; i<_lmap_sz; ++i) VECTOR_FREE( _lmap[i].v );
     VECTOR_FREE( _lmap );
-    xbtree_free( index_to_reduced );
 }
 
 void init_MPI_dist(diverge_model_t* model) {
