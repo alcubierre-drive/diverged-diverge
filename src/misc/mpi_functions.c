@@ -131,6 +131,11 @@ void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int n
     MPI_Allreduce( sendbuf, recvbuf, num, MPI_DOUBLE, MPI_SUM, diverge_mpi_comm );
 }
 
+void diverge_mpi_allreduce_double_sum_inplace( void* sendrecvbuf, int num ) {
+    MPICHK();
+    MPI_Allreduce( MPI_IN_PLACE, sendrecvbuf, num, MPI_DOUBLE, MPI_SUM, diverge_mpi_comm );
+}
+
 void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int num ){
     MPICHK();
     MPI_Allreduce( sendbuf, recvbuf, num, MPI_C_DOUBLE_COMPLEX, MPI_SUM, diverge_mpi_comm );
@@ -397,6 +402,9 @@ void diverge_mpi_allreduce_double_max( const void* sendbuf, void* recvbuf, int n
 }
 void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int num ) {
     (void)sendbuf; (void)recvbuf; (void)num;
+}
+void diverge_mpi_allreduce_double_sum_inplace( void* sendrecvbuf, int num ) {
+    (void)sendrecvbuf; (void)num;
 }
 void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int num ){
     (void)sendbuf; (void)recvbuf; (void)num;

@@ -8,7 +8,7 @@
 #endif
 // XXX this also is a divERGe "quirk", more of a feature, though.
 #include "../src/misc/mpi_log.h"
-#define CT_PRINTF mpi_eprintf
+#define CT_PRINTF mpi_printf
 
 #ifndef CT_NO_FORK
 #include <sys/wait.h>
@@ -298,14 +298,17 @@ static inline int ct_list( char** filters ) {
             }
             nc++;
         }
-        if (nc != nc_run)
-            CT_PRINTF( "%s>suite<%s %s filtered %3u/%3u cases\n", ct_color_yellow,
-                    ct_color_reset, ss->name, nc_run, nc );
+        if (nc != nc_run) {
+            const char up_line[16] = "\033[F";
+            const char no_up[16] = "";
+            CT_PRINTF( "%s%s>suite<%s %s found %u/%u cases\n", nc_run == 0 ? up_line : no_up,
+                    ct_color_yellow, ct_color_reset, ss->name, nc_run, nc );
+        }
         nc_total += nc;
         nc_total_run += nc_run;
     }
     if (nc_total != nc_total_run)
-        CT_PRINTF( "%s=== filtered %3u/%3u cases in %u suites ===%s\n", ct_color_yellow,
+        CT_PRINTF( "%s=== found %u/%u cases in %u suites ===%s\n", ct_color_yellow,
                 nc_total_run, nc_total, ct_nsuites_nz, ct_color_reset );
     return 0;
 }
@@ -368,7 +371,7 @@ static inline int ct_run( char** filters ) {
                     suite_success ? ct_color_green : ct_color_red, ct_suites[s]->name, npassed,
                     nassert, ncases_run, ncases, ct_color_reset );
             } else {
-                CT_PRINTF( "%s=== ct suite '%s' filtered out ===%s\n", ct_color_yellow,
+                CT_PRINTF( "\033[F%s=== ct suite '%s' filtered out ===%s\n", ct_color_yellow,
                     ct_suites[s]->name, ct_color_reset );
             }
         }
