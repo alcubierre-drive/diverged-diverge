@@ -63,6 +63,7 @@ struct tu_data_t {
                        which_fft_greens,
                        which_fft_red;
     bool propagator_extra_cpu_timings;
+    bool unique_orbff_hashtable_impl;
 
     // reduction of computational cost of the loop
     VECTOR_DECL( claV3i_t, existing_ff )
