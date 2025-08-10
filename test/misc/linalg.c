@@ -2,7 +2,6 @@
 #include "../ctest.h"
 
 #ifndef DIVERGE_SKIP_TESTS
-#ifndef DIVERGE_SKIP_TESTS_LINALG
 
 #include "../../src/diverge_common.h"
 #include "../../src/misc/gemm.h"
@@ -255,5 +254,4 @@ CT_TEST_NAME( batched_svd, "batched,svd" ) {
     free(S);
 }
 
-#endif // DIVERGE_SKIP_TESTS_LINALG
 #endif // DIVERGE_SKIP_TESTS
