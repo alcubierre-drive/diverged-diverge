@@ -1,3 +1,6 @@
+#define CT_SUITE_NAME tu_completeness
+#include "../ctest.h"
+
 #ifndef DIVERGE_SKIP_TESTS
 
 #include "../../src/diverge_model.h"
@@ -6,9 +9,6 @@
 #include "../../src/diverge_model_internals.h"
 #include "../models/all.h"
 #include "../helper_functions.h"
-
-#define CT_SUITE_NAME tu_completeness
-#include "../ctest.h"
 
 CT_TEST(tu_honeycomb) {
     diverge_model_t* model = KWARGS(gen_honeycomb_lat_hub, .nkx=6, .nky=6, .lx=1, .ly=1);

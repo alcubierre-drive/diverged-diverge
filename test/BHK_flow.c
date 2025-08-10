@@ -1,4 +1,5 @@
-#include <sys/stat.h>
+#define CT_SUITE_NAME BHK
+#include "ctest.h"
 
 #ifndef DIVERGE_SKIP_TESTS
 
@@ -9,17 +10,13 @@
 #include "../src/diverge_model_internals.h"
 #include "../src/diverge_model_output.h"
 #include "../src/diverge_symmetrize.h"
-
 #include "../src/grid/vertex_memory.h"
-
 #include "../src/tu/vertex_details.h"
 #include "../src/tu/projection.h"
 #include "../src/npatch/symmetrize_vertex.h"
 
 #include "models/all.h"
-
-#define CT_SUITE_NAME BHK
-#include "ctest.h"
+#include <sys/stat.h>
 
 #ifndef BHK_NK
 #define BHK_NK 4

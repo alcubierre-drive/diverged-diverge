@@ -1,10 +1,10 @@
+#define CT_SUITE_NAME phonons
+#include "ctest.h"
+
 #ifndef DIVERGE_SKIP_TESTS
 
 #include "../src/diverge.h"
 #include "../src/diverge_phonons.h"
-
-#define CT_SUITE_NAME phonons
-#include "ctest.h"
 
 static diverge_model_t* hubbard_ssh_model() {
     double omega=1.0;

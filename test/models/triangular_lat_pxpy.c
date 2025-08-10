@@ -1,5 +1,3 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #include "all.h"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_model_internals.h"
@@ -7,6 +5,8 @@
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/misc/linalg.h"
 LINALG_IMPLEMENT
+
+#ifndef DIVERGE_SKIP_TESTS
 
 #define isqrt2 0.7071067811865475
 static const claM2cd_t xy_pm = {{{isqrt2, I*isqrt2},

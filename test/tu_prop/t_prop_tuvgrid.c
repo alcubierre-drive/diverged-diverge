@@ -1,7 +1,7 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME tu_prop_grid
 #include "../ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"

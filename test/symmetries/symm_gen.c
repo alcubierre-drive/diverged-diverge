@@ -1,3 +1,6 @@
+#define CT_SUITE_NAME symmetry_generator
+#include "../ctest.h"
+
 #ifndef DIVERGE_SKIP_TESTS
 
 #include "../helper_functions.h"
@@ -7,9 +10,6 @@
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/misc/linalg.h"
 LINALG_IMPLEMENT
-
-#define CT_SUITE_NAME symmetry_generator
-#include "../ctest.h"
 
 CT_TEST( SU2 ) {
     sym_op_t curr_symm[5] = {0};

@@ -1,5 +1,3 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #include "all.h"
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_model_internals.h"
@@ -7,6 +5,8 @@
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/misc/linalg.h"
 LINALG_IMPLEMENT
+
+#ifndef DIVERGE_SKIP_TESTS
 
 diverge_model_t* gen_triangular_lat_rashba(index_t nkx, index_t nky) {
     diverge_model_t* model = diverge_model_init();

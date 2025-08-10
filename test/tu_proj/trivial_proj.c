@@ -1,7 +1,7 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #include "trivial_proj.h"
 #include "../../src/tu/vertex_details.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 void t_P_projection(complex128_t* proj_vertex,
                     const tu_vertex_t* const vertex,

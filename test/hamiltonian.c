@@ -1,11 +1,10 @@
-#ifndef DIVERGE_SKIP_TESTS
-
-#include "models/all.h"
-
-#include "../src/diverge.h"
-
 #define CT_SUITE_NAME hamilton
 #include "ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
+
+#include "../src/diverge.h"
+#include "models/all.h"
 
 static inline index_t array_equal( const complex128_t* A, const complex128_t* B, index_t sz ) {
     index_t nequal = 0;

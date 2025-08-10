@@ -1,7 +1,7 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME twopoint_sym
 #include "../ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 #include "../../src/diverge_momentum_gen.h"
 #include "../../src/diverge_symmetrize.h"
@@ -9,9 +9,9 @@
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_internals_struct.h"
 #include "../../src/diverge_model_internals.h"
-#include "../helper_functions.h"
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/misc/shared_mem.h"
+#include "../helper_functions.h"
 
 CT_TEST(toymodel) {
     site_descr_t sites[1];

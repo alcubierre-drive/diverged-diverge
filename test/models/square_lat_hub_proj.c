@@ -1,7 +1,7 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #include "all.h"
 #include "../../src/diverge.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 static greensfunc_op_t hubbard_proj_gf(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf);
 

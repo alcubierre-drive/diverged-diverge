@@ -1,7 +1,8 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME symmetrize_models
 #include "../ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"

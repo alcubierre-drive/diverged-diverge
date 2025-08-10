@@ -1,6 +1,8 @@
 #include "all.h"
 #include <string.h>
 
+#ifndef DIVERGE_SKIP_TESTS
+
 model_constructor_opts_t model_constructor_opts_defaults_CPP( void ) {
     return model_constructor_opts_defaults;
 }
@@ -120,3 +122,4 @@ KWARG_WRAP(gen_kagome_model)
     return gen_kagome_model(nkx, nky, U, V, VC, VP, nsym);
 KWARG_WRAP_END
 
+#endif // DIVERGE_SKIP_TESTS

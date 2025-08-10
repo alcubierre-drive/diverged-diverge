@@ -1,14 +1,16 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME grid_sym
 #include "../ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"
 #include "../../src/diverge_model_internals.h"
-#include "../models/all.h"
 #include "../../src/grid/loops.h"
+
 #include "../helper_functions.h"
+#include "../models/all.h"
 
 CT_TEST(loop) {
     diverge_model_t* mod_grid = KWARGS(gen_triangular_pxpy_sym, .nkx=6, .nky=6);

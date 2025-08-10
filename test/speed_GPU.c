@@ -1,3 +1,6 @@
+#define CT_SUITE_NAME speed
+#include "ctest.h"
+
 #ifndef DIVERGE_SKIP_TESTS
 
 #include "../src/diverge_model.h"
@@ -5,15 +8,12 @@
 #include "../src/tu/diverge_interface.h"
 #include "../src/tu/propagator.h"
 #include "../src/tu/propagator_details.h"
-#include "models/all.h"
 #include "../src/diverge_model_internals.h"
-#include "helper_functions.h"
 #include "../src/tu/vertex_details.h"
 #include "../src/tu/projection.h"
 #include "../src/tu/projection_handler.h"
-
-#define CT_SUITE_NAME speed
-#include "ctest.h"
+#include "helper_functions.h"
+#include "models/all.h"
 
 CT_TEST_HIDDEN(loopspeed) {
     int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
