@@ -1,10 +1,10 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #include "all.h"
 #include "../../src/diverge_model_internals.h"
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/misc/linalg.h"
 LINALG_IMPLEMENT
+
+#ifndef DIVERGE_SKIP_TESTS
 
 diverge_model_t* gen_honeycomb_lat_hub( index_t nkx, index_t nky, index_t lx,
         index_t ly, double t, double tp, double U, double mu ) {

@@ -1,3 +1,6 @@
+#define CT_SUITE_NAME tu_vertex_product
+#include "../ctest.h"
+
 #ifndef DIVERGE_SKIP_TESTS
 
 #include "../../src/diverge_model.h"
@@ -7,9 +10,6 @@
 #include "../../src/tu/vertex.h"
 #include "../../src/tu/cuda_init.h"
 #include "../helper_functions.h"
-
-#define CT_SUITE_NAME tu_vertex_product
-#include "../ctest.h"
 
 CT_TEST(tu_vertex_product) {
     index_t N = 12;

@@ -1,12 +1,11 @@
+#define CT_SUITE_NAME parsort
+#include "../ctest.h"
+
 #ifndef DIVERGE_SKIP_TESTS
 
 #include "../../src/diverge_common.h"
 #include "../../src/misc/mpi_functions.h"
-
 #include "../../src/misc/mergesort.h"
-
-#define CT_SUITE_NAME parsort
-#include "../ctest.h"
 
 typedef struct {
     index_t idx;

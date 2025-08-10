@@ -1,7 +1,7 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME greens
 #include "ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 #include "models/all.h"
 #include "helper_functions.h"

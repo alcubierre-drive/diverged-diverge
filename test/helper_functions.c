@@ -1,9 +1,9 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #include "helper_functions.h"
 #include "../src/misc/mpi_log.h"
 #include "../src/misc/mpi_functions.h"
 #include "../src/misc/mergesort.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 bool check_hermicity(complex128_t* data, index_t linsize,index_t batches) {
     double tmp = 0.;

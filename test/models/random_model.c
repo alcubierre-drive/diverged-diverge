@@ -1,8 +1,8 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #include "all.h"
 #include "../helper_functions.h"
 #include "../../src/diverge_model_internals.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 diverge_model_t* gen_random(index_t nkx, index_t nky) {
     diverge_model_t* mod = diverge_model_init();

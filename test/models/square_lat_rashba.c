@@ -1,10 +1,10 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #include "all.h"
 #include "../../src/diverge_model_internals.h"
 #include "../../src/misc/generate_symmetries.h"
 #include "../../src/misc/linalg.h"
 LINALG_IMPLEMENT
+
+#ifndef DIVERGE_SKIP_TESTS
 
 diverge_model_t* gen_square_lat_rashba(index_t nkx, index_t nky, double t,
         double tp, double U, double mu, double alpha) {

@@ -1,7 +1,7 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME tu_self
 #include "ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 #include "../src/diverge_model.h"
 #include "../src/diverge_momentum_gen.h"
@@ -14,9 +14,9 @@
 #include "../src/tu/projection.h"
 #include "../src/tu/projection_handler.h"
 #include "../src/tu/selfenergy.h"
-#include "models/all.h"
 #include "../src/diverge_model_internals.h"
 #include "helper_functions.h"
+#include "models/all.h"
 
 static inline int compilation_options( void ) {
     // no gf_floats, no MPI

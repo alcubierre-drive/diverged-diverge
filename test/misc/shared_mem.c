@@ -1,7 +1,7 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME shared_mem
 #include "../ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 #include "../../src/misc/shared_mem.h"
 #include "../../src/misc/mpi_functions.h"

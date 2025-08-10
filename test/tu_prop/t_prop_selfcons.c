@@ -1,18 +1,18 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME tu_prop_spaces
 #include "../ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_momentum_gen.h"
 #include "../../src/tu/diverge_interface.h"
 #include "../../src/tu/propagator.h"
 #include "../../src/tu/propagator_details.h"
-#include "../models/all.h"
 #include "../../src/diverge_model_internals.h"
-#include "../helper_functions.h"
 #include "../../src/tu/vertex.h"
 #include "../../src/tu/projection.h"
+#include "../helper_functions.h"
+#include "../models/all.h"
 
 CT_TEST_NAME(tu_prop_orb_real, "tu_prop,orb:real") {
     if (sizeof(gf_complex_t) != sizeof(complex128_t)) return; // no GF floats

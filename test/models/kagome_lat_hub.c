@@ -1,11 +1,11 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #include "all.h"
 #include "../../src/diverge.h"
 #include "../../src/misc/linalg.h"
 LINALG_IMPLEMENT
 
 #include <assert.h>
+
+#ifndef DIVERGE_SKIP_TESTS
 
 diverge_model_t* gen_kagome_model( index_t nkx, index_t nky, double U ,
         double V , double VC , double VP, index_t nsym ) {

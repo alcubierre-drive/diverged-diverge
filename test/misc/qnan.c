@@ -1,7 +1,8 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME qnan
 #include "../ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
+
 #include "../../src/misc/qnan.h"
 #include "../../src/misc/mpi_functions.h"
 #include "../../src/diverge_common.h"

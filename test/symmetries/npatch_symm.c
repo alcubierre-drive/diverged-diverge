@@ -1,17 +1,16 @@
-#ifndef DIVERGE_SKIP_TESTS
-
 #define CT_SUITE_NAME npatch_sym
 #include "../ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
 
 #include "../../src/diverge_model.h"
 #include "../../src/diverge_flow_step.h"
 #include "../../src/diverge_flow_step_internal.h"
 #include "../../src/diverge_model_internals.h"
-#include "../models/all.h"
 #include "../../src/npatch/vertex.h"
 #include "../../src/npatch/symmetrize_vertex.h"
 #include "../helper_functions.h"
-
+#include "../models/all.h"
 
 CT_TEST(vertex) {
     diverge_model_t* m = KWARGS(gen_kagome_model,.nkx=12,.nky=12);

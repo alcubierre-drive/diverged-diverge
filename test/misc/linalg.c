@@ -1,8 +1,9 @@
+#define CT_SUITE_NAME linalg
+#include "../ctest.h"
+
 #ifndef DIVERGE_SKIP_TESTS
 #ifndef DIVERGE_SKIP_TESTS_LINALG
 
-#define CT_SUITE_NAME linalg
-#include "../ctest.h"
 #include "../../src/diverge_common.h"
 #include "../../src/misc/gemm.h"
 #include "../../src/misc/eigen.h"
