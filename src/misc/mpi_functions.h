@@ -73,6 +73,7 @@ int diverge_mpi_comm_rank( void );
 void diverge_mpi_allreduce_int_max_inplace( void* buf, int num );
 void diverge_mpi_allreduce_double_max( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int num );
+void diverge_mpi_allreduce_double_sum_inplace( void* sendrecvbuf, int num );
 void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int num );
 void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num );
 void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num );
