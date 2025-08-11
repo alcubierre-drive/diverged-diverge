@@ -46,6 +46,7 @@ DIVERGE_0.9 {
         diverge_greensfunc_generator_default;
         diverge_hamilton_generator_add;
         diverge_hamilton_generator_default;
+        diverge_hamilton_generator_set_fftw_options;
         diverge_init;
         diverge_kmesh_to_bands;
         diverge_kmesh_to_bands_crs;
@@ -107,6 +108,7 @@ DIVERGE_0.9 {
         diverge_mpi_allreduce_complex_sum_inplace;
         diverge_mpi_allreduce_double_max;
         diverge_mpi_allreduce_double_sum;
+        diverge_mpi_allreduce_double_sum_inplace;
         diverge_mpi_allreduce_int_max_inplace;
         diverge_mpi_alltoall_index;
         diverge_mpi_alltoallv_bytes;

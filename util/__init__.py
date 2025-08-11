@@ -530,6 +530,10 @@ if not _libs["divERGe"] is None:
     diverge_greensfunc_generator_default.argtypes = [POINTER(model_t), complex128_t, POINTER(gf_complex_t)]
     diverge_greensfunc_generator_default.restype = greensfunc_op_t
 
+    hamilton_generator_set_fftw_options = _libs["divERGe"].get("diverge_hamilton_generator_set_fftw_options", "cdecl")
+    hamilton_generator_set_fftw_options.argtypes = [c_int]
+    hamilton_generator_set_fftw_options.restype = None
+
     diverge_channel_vertex_generator_default = _libs["divERGe"].get("diverge_channel_vertex_generator_default", "cdecl")
     diverge_channel_vertex_generator_default.argtypes = [POINTER(model_t), c_char, POINTER(complex128_t)]
     diverge_channel_vertex_generator_default.restype = c_int

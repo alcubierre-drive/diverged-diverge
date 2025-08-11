@@ -425,6 +425,12 @@ struct diverge_model_t {
 };
 
 /**
+ * set FFTW planner flags for the Hamiltonian generator (useful if the
+ * generator is called many times).
+ */
+void diverge_hamilton_generator_set_fftw_options( int flags );
+
+/**
  * The standard :c:type:`hamiltonian_generator_t` used by
  * :c:func:`diverge_model_internals_common`. It takes the hopping elements
  * :c:member:`diverge_model_t.hop` and Fourier transforms them to momentum
