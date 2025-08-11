@@ -95,6 +95,7 @@ struct xvtree_t {
 static inline xvtree_t* xvtree_init( size_t nreserve ) {
     xvtree_t* x = calloc(1, sizeof*x);
 
+    #ifdef XVTREE_ALIGNMENT_PRINT
     mpi_vrb_printf( "vtree_node_t alignment: "
             "key@%li(+%li), val@%li(+%li), parent@%li(+%li), "
             "padding@%li(+%li), children@%li(+%li) ==> size=%li\n" ,
@@ -104,6 +105,7 @@ static inline xvtree_t* xvtree_init( size_t nreserve ) {
             vtree_padding_offset, vtree_padding_bytes,
             offsetof(vtree_node_t, children), sizeof(x->head->children),
             sizeof(*x->head) );
+    #endif
 
     x->n_mem = 1;
     x->i_mem = 0;
