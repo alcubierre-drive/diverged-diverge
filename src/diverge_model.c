@@ -58,6 +58,11 @@ void diverge_model_free(diverge_model_t* model) {
     free(model);
 }
 
+static int diverge_hamilton_generator_add_planning_flag = FFTW_ESTIMATE;
+void diverge_hamilton_generator_set_fftw_options( int flags ) {
+    diverge_hamilton_generator_add_planning_flag = flags;
+}
+
 void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* buf) {
     const index_t n_hop = model->n_hop;
     const rs_hopping_t* hop = model->hop;
@@ -79,7 +84,7 @@ void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* 
     dims[0].os = n_kz*n_ky*stride_fft, dims[1].os = n_kz*stride_fft, dims[2].os = stride_fft;
     fftw_iodim64 howmany;
     howmany.n = stride_fft, howmany.is = 1, howmany.os = 1;
-    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, FFTW_ESTIMATE);
+    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, diverge_hamilton_generator_add_planning_flag);
 
     memset((void*)fftw_cbuf, 0, buf_sz);
 
