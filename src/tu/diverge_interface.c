@@ -15,6 +15,8 @@ LINALG_IMPLEMENT
 #include "../misc/hashtable.h"
 #include <assert.h>
 
+int generate_reduced_loop_maps_disabled = 0;
+
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     if (!model->internals->has_common_internals) {
         mpi_err_printf("model needs common internals before tu internals!\n");
@@ -55,7 +57,8 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->selfenergy_circular_cutoff = false;
 
     init_ff_struct(max_dist, model);
-    generate_reduced_loop_maps(model);
+    if (!generate_reduced_loop_maps_disabled)
+        generate_reduced_loop_maps(model);
     tu_init_symmetries(model);
     info->offload_cpu = 0.0;
     info->percent_mem_GPU_blocked = 0.9;

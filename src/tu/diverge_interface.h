@@ -94,6 +94,7 @@ void tu_data_destructor( void* model );
 // zeros...)
 extern double SYMNORM_TU_BOND_MAX;
 extern double SYMNORM_MATRIX_ZERO;
+extern int generate_reduced_loop_maps_disabled;
 
 #ifdef __cplusplus
 }
