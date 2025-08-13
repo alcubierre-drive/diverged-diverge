@@ -81,44 +81,43 @@ unsigned ct_nsuites = 0;
 #endif
 
 // stupid initializer code
-#ifndef CT_SKIP_INITIALIZERS
-
 #ifdef __cplusplus
+
     #define INITIALIZER(f) \
         static void f(void); \
         struct CT_PASTE_HELPER(f,_t_) { CT_PASTE_HELPER(f,_t_)(void) { f(); } }; \
         static CT_PASTE_HELPER(f,_t_) CT_PASTE_HELPER(f,_); \
         static void f(void)
-#elif defined(_MSC_VER)
-    #pragma section(".CRT$XCU",read)
-    #define INITIALIZER2_(f,p) \
-        static void f(void); \
-        __declspec(allocate(".CRT$XCU")) void (*CT_PASTE_HELPER(f,_))(void) = f; \
-        __pragma(comment(linker,"/include:" p #f "_")) \
-        static void f(void)
-    #ifdef _WIN64
-        #define INITIALIZER(f) INITIALIZER2_(f,"")
-    #else
-        #define INITIALIZER(f) INITIALIZER2_(f,"_")
-    #endif
-#else
-    #define INITIALIZER(f) \
-        static void f(void) __attribute__((constructor)); \
-        static void f(void)
-#endif
 
-#else // CT_SKIP_INITIALIZERS
+#else // __cplusplus
 
-    #ifdef __cplusplus
-        #define CT_INITIALIZER_PREFIX extern "C"
-    #else
-        #define CT_INITIALIZER_PREFIX 
-    #endif
+    #ifndef CT_SKIP_INITIALIZERS
 
-    #define INITIALIZER(f) \
-        CT_INITIALIZER_PREFIX void f( void )
+        #if defined(_MSC_VER)
+            #pragma section(".CRT$XCU",read)
+            #define INITIALIZER2_(f,p) \
+                static void f(void); \
+                __declspec(allocate(".CRT$XCU")) void (*CT_PASTE_HELPER(f,_))(void) = f; \
+                __pragma(comment(linker,"/include:" p #f "_")) \
+                static void f(void)
+            #ifdef _WIN64
+                #define INITIALIZER(f) INITIALIZER2_(f,"")
+            #else
+                #define INITIALIZER(f) INITIALIZER2_(f,"_")
+            #endif
+        #else
+            #define INITIALIZER(f) \
+                static void f(void) __attribute__((constructor)); \
+                static void f(void)
+        #endif
 
-#endif // CT_SKIP_INITIALIZERS
+    #else // CT_SKIP_INITIALIZERS
+
+        #define INITIALIZER(f) void f( void )
+
+    #endif // CT_SKIP_INITIALIZERS
+
+#endif // __cplusplus
 
 #ifndef CT_SUITE_NAME
 #define CT_SUITE_NAME _anon_

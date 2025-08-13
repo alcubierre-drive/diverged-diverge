@@ -123,7 +123,7 @@ static double shmem_diverge_symmetrize_2pt_fine( diverge_model_t* mod, complex12
     return all_error;
 }
 
-CT_TEST(honeycomb) {
+CT_TEST_NAME(honeycomb_standard, "honeycomb") {
 
     diverge_model_t* mod1 = KWARGS(gen_honeycomb_lat_hub_sym, .nkx=6, .nky=6);
     diverge_model_t* mod2 = KWARGS(gen_honeycomb_lat_hub, .nkx=6, .nky=6);
