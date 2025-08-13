@@ -81,7 +81,7 @@ CT_TEST(barrier) {
     free( local_data );
 }
 
-CT_TEST(greens) {
+CT_TEST(shared_greens) {
     int nk = 128;
     diverge_model_t* m_loc = gen_random( nk, nk );
     diverge_model_t* m_shm = gen_random( nk, nk );
@@ -121,7 +121,7 @@ static inline void tu_loop_test_calculate( tu_loop_test_t t, complex128_t* buf, 
     tu_prop_ph_loop( t._loop, buf, NULL );
 }
 
-CT_TEST(loop) {
+CT_TEST(shared_greens_loop) {
     // only execute without cuda
     if (diverge_compilation_status_cuda(NULL)) return;
     int nk = 12;
