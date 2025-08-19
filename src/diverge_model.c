@@ -31,30 +31,32 @@ diverge_model_t* diverge_model_init(void) {
     return result;
 }
 
-void diverge_model_free(diverge_model_t* model) {
+void diverge_model_free_set_options(diverge_model_t* model, int ignore_hop,
+        int ignore_vert, int ignore_orb_symmetries) {
+    model->internals->ignore_hop_free = ignore_hop;
+    model->internals->ignore_vert_free = ignore_vert;
+    model->internals->ignore_orb_symmetries_free = ignore_orb_symmetries;
+}
 
+void diverge_model_free(diverge_model_t* model) {
     dependency_tree_remove_model(model);
 
     if (model->patching) {
         diverge_patching_free(model->patching);
         model->patching = NULL;
     }
-    if (model->internals)
-        diverge_model_internals_reset(model);
-    free(model->internals);
     free(model->tu_ff);
-    free(model->orb_symmetries);
 
-    if (model->data_destructor)
-        (*model->data_destructor)(model->data);
-    else if (model->nbytes_data > 0)
-        free(model->data);
-    else if (model->data)
-        mpi_log_printf( "data ptr set but not free'd (nbytes_data == 0)\n" );
+    if (model->data_destructor) (*model->data_destructor)(model->data);
+    else if (model->nbytes_data > 0) free(model->data);
+    else if (model->data) mpi_log_printf( "data ptr set but not free'd (nbytes_data == 0)\n" );
 
-    free(model->hop);
-    free(model->vert);
+    if (!model->internals->ignore_orb_symmetries_free) free(model->orb_symmetries);
+    if (!model->internals->ignore_hop_free) free(model->hop);
+    if (!model->internals->ignore_vert_free) free(model->vert);
 
+    if (model->internals) diverge_model_internals_reset(model);
+    free(model->internals);
     free(model);
 }
 

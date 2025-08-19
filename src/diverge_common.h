@@ -217,7 +217,7 @@ typedef uint64_t uindex_t;
 
 #ifndef VECTOR_RESIZE
 #define VECTOR_RESIZE( ary, sz ) { \
-    VECTOR_RESERVE( ary, sz ); \
+    if ((sz) != ary##_sz) { VECTOR_RESERVE( ary, sz ); } \
     ary##_sz = (sz); \
 }
 #endif

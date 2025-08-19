@@ -58,6 +58,7 @@ DIVERGE_0.9 {
         diverge_mem_alloc_tu_formfactor_t;
         diverge_mem_free;
         diverge_model_free;
+        diverge_model_free_set_options;
         diverge_model_generate_meshes;
         diverge_model_generate_mom_basis;
         diverge_model_get_filling;

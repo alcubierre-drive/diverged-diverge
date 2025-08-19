@@ -709,6 +709,10 @@ if not _libs["divERGe"] is None:
     model_free.argtypes = [POINTER(model_t)]
     model_free.restype = None
 
+    model_free_set_options = _libs["divERGe"].get("diverge_model_free_set_options", "cdecl")
+    model_free_set_options.argtypes = [POINTER(model_t), c_int, c_int, c_int]
+    model_free_set_options.restype = None
+
     # Memory allocation routines
     mem_alloc_rs_hopping_t = _libs["divERGe"].get("diverge_mem_alloc_rs_hopping_t", "cdecl")
     mem_alloc_rs_hopping_t.argtypes = [index_t]

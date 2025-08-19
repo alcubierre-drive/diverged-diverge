@@ -652,7 +652,7 @@ static vec_claV2ll_t sort_and_filter( vec_claV2ll_t* to, vec_claV2ll_t* from_hel
     memcpy( to_padded.v, to->v, msize*sizeof(claV2ll_t) );
     claV2ll_t lr = to->v[0];
 
-    VECTOR_RESIZE( to->v, 0 );
+    to->v_sz = 0;
     index_t len = 0;
     for (index_t i=0; i<msize; ++i) {
         if (claV2ll_equal(to_padded.v[i], lr)) {

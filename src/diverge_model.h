@@ -466,9 +466,19 @@ int diverge_channel_vertex_generator_default(diverge_model_t* model, char channe
 diverge_model_t* diverge_model_init(void);
 /**
  * clean up a :c:struct:`diverge_model_t` instance and all the attached arrays. Usage
- * **required**.
+ * **required**, see :c:func:`diverge_model_free_set_options` for possible
+ * non-standard settings.
  */
 void diverge_model_free(diverge_model_t* model);
+/**
+ * set options in the model cleanup :c:func:`diverge_model_free`. For the
+ * members :c:member:`diverge_model_t.hop`, :c:member:`diverge_model_t.vert`, or
+ * :c:member:`diverge_model_t.orb_symmetries`, the ``free()`` function is
+ * usually called, assuming allocation via ``malloc()`` (and friends). For stack
+ * allocated data, one can set to skip this call to ``free()``.
+ */
+void diverge_model_free_set_options(diverge_model_t* model, int ignore_hop,
+        int ignore_vert, int ignore_orb_symmetries);
 
 /**
  * return special NaN that allows to skip segments in the IBZ path. The
