@@ -30,6 +30,10 @@ struct internals_t {
     index_t has_common_internals;
     double mu;
 
+    int ignore_orb_symmetries_free;
+    int ignore_hop_free;
+    int ignore_vert_free;
+
     bool ignore_eigensolver_in_common;
     int use_batched_svd_algo_in_common;
 
