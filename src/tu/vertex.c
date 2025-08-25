@@ -306,6 +306,7 @@ static inline double absmax( const complex128_t* start, index_t length ) {
 }
 
 void tu_vertex_max(const tu_vertex_t* V, double out[6]) {
+    ZERO_OUT( out, 6 );
     if (V->P_flow) {
         double max_trial = absmax(V->Pch,V->full_vert_size);
         out[0] = diverge_mpi_max(&max_trial);
