@@ -50,6 +50,12 @@ index_t* diverge_kmesh_to_bands( diverge_model_t* m, index_t** indices, index_t*
 /** same as :c:func:`diverge_kmesh_to_bands`, but for the coarse mesh. */
 index_t* diverge_kmesh_to_bands_crs( diverge_model_t* m, index_t** indices, index_t* n_indices );
 
+/**
+ * set floating point 'zero' value for kmesh to bands, defaults to
+ * ``DIVERGE_EPS_MESH``. Returns previous value.
+ */
+double diverge_kmesh_to_bands_set_zero( double zero );
+
 #ifdef __cplusplus
 }
 #endif
