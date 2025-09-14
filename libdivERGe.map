@@ -50,6 +50,7 @@ DIVERGE_0.9 {
         diverge_init;
         diverge_kmesh_to_bands;
         diverge_kmesh_to_bands_crs;
+        diverge_kmesh_to_bands_set_zero;
         diverge_license;
         diverge_license_print;
         diverge_max_dist_iobi;

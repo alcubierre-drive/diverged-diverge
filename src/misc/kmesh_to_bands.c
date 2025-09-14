@@ -13,6 +13,13 @@
 #include "linalg.h"
 LINALG_IMPLEMENT
 
+static double KMESH_TO_BANDS_ZERO = DIVERGE_EPS_MESH;
+double diverge_kmesh_to_bands_set_zero( double zero ) {
+    double prev = KMESH_TO_BANDS_ZERO;
+    KMESH_TO_BANDS_ZERO = fabs(zero);
+    return prev;
+}
+
 static void find_bandstructure_segment_indices( const double start[3],
         const double stop[3], const double* kfmesh, index_t nktot, index_t**
         indices, index_t* n_indices );
@@ -59,9 +66,9 @@ static void find_bandstructure_segment_indices( const double start_[3], const do
             claV3d_t K = claV3d_map(kfmesh + 3*k);
             claV3d_t KA = claV3d_sub(K,A);
             double tval = claV3d_dot( KA, B ) / B2;
-            short ortho_1 = (fabs(claV3d_dot(KA,Bo1)) < DIVERGE_EPS_MESH),
-                  ortho_2 = (fabs(claV3d_dot(KA,Bo2)) < DIVERGE_EPS_MESH);
-            if (ortho_1 && ortho_2 && tval > (-DIVERGE_EPS_MESH) && tval < (1.+DIVERGE_EPS_MESH)) {
+            short ortho_1 = (fabs(claV3d_dot(KA,Bo1)) < KMESH_TO_BANDS_ZERO),
+                  ortho_2 = (fabs(claV3d_dot(KA,Bo2)) < KMESH_TO_BANDS_ZERO);
+            if (ortho_1 && ortho_2 && tval > (-KMESH_TO_BANDS_ZERO) && tval < (1.+KMESH_TO_BANDS_ZERO)) {
                 VECTOR_PUSH_BACK( kts, (kidx_tval_t){.kidx=k, .tval=tval} );
             }
         }
@@ -117,7 +124,7 @@ static index_t* diverge_kmesh_to_bands_both( diverge_model_t* m, index_t**
             claV3d_t start = claM3d_vecmat( start_crystal, Gvec ),
                      stop = claM3d_vecmat( stop_crystal, Gvec );
 
-            if (claV3d_norm(claV3d_sub(start,stop)) < DIVERGE_EPS_MESH)
+            if (claV3d_norm(claV3d_sub(start,stop)) < KMESH_TO_BANDS_ZERO)
                 mpi_err_printf( "each segment must cover nonzero distance\n" );
 
             index_t *sres = NULL, nsres = 0;
