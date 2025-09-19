@@ -182,6 +182,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         if (atoi(val) == -1)
             INTERNALS->use_batched_svd_algo_in_common = -1;
     }
+    CHECKKEY("model_internals_only_mesh") {
+        INTERNALS->common_internals_mesh_only = 1;
+    }
     CHECKKEY("fftw_mpi_plan_patience") {
         // either set with 'G' (GX) to address fftw_mpi_plan_patience (for
         // GPU/MPI) or without (X) to address
