@@ -143,6 +143,11 @@ void diverge_model_internals_common( diverge_model_t* model ) {
     intls->rlattice = *rlattice;
     shared_free(rlattice);
 
+    if (intls->common_internals_mesh_only) {
+        mpi_wrn_printf( "early termination of common_internals, only kmesh\n" );
+        return;
+    }
+
     mpi_vrb_printf("allocating internal common buffers\n");
     intls->ham = shared_calloc(nktot*nb*nb,sizeof(complex128_t));
     intls->U = shared_calloc(nktot*nb*nb,sizeof(complex128_t));
