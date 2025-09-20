@@ -191,7 +191,7 @@ typedef struct diverge_model_output_conf_t {
      * :c:func:`diverge_model_output_set_npath`. possible nonzero values: -1
      * (use eigenvalues on mesh), >=1 (explicitly calculate H from hoppings),
      * <-1 (explcitly calculate H from hoppings in batched manner with this many
-     * pts).
+     * pts). If ``INT_MIN`` skip the band structure output.
      */
     int npath;
     /**
