@@ -821,7 +821,10 @@ def bandstructure_kpts( model ):
     return the momentum points (nk,3) from the band structure obtained from a
     :class:`diverge_model`. Useful for plotting and post-processing.
     """
-    return model.bandstructure[:,-3:]
+    if model.npath == -2**31 and model.kf_ibz_path is not None:
+        return model.kf_ibz_path[2]
+    else:
+        return model.bandstructure[:,-3:]
 
 def bandstructure_xvals( model ):
     r"""
@@ -845,7 +848,7 @@ def bandstructure_xvals( model ):
     """
     K = bandstructure_kpts(model)
     vals = np.concatenate( [[0], np.sqrt((np.diff(K,axis=0)**2).sum(axis=1))] )
-    if model.npath == -1 and not model.kf_ibz_path is None:
+    if (model.npath == -1 or model.npath == -2**31) and not model.kf_ibz_path is None:
         n_per_segment = model.kf_ibz_path[0]
         offsets = np.cumsum( n_per_segment )
         offset_zero = offsets[n_per_segment == 0]
@@ -879,7 +882,7 @@ def bandstructure_ticks( model ):
 
     elif model.npath >= 1:
         ticks += list( x[ np.arange(n_ibz_path) * model.npath ] )
-    elif model.npath == -1:
+    elif model.npath == -1 or model.npath == -2**31:
         if not model.kf_ibz_path is None:
             n_per_segment = model.kf_ibz_path[0]
             ticks += list( x[np.concatenate( [[0], np.cumsum( n_per_segment ) - 1] )] )

@@ -16,6 +16,8 @@
 
 #include "diverge_momentum_gen.h"
 
+#include <limits.h>
+
 #define LINALG_NO_LAPACKE
 #include "misc/linalg.h"
 LINALG_IMPLEMENT
@@ -206,9 +208,10 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         // precedence behavior: using config value only if it is *not* zero:
         int npath = cfg->npath == 0 ? h_diverge_model_nbandstructure : cfg->npath;
         ibuf[idx++] = npath; // 94
+        bool skip_bandstructure = (npath == INT_MIN);
 
         idx = 100;
-        if (mod->n_ibz_path > 0) {
+        if (mod->n_ibz_path > 0 && !skip_bandstructure) {
             // bandstructure, including the k coordinates *after* the bands
             if (npath == -1 && mod->internals->has_common_internals) {
                 mpi_vrb_printf( "using fine kmesh data for band structure\n" );
@@ -231,6 +234,8 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
                         ((mod->n_ibz_path-1)*xnpath + 1) );
             }
         } else {
+            if (skip_bandstructure)
+                mpi_vrb_printf( "skipping band structure (npath == INT_MIN)\n" );
             ADD_ARRAY_TO_IBUF( 0 );
         }
 
