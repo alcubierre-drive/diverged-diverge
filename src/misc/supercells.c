@@ -188,7 +188,9 @@ static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
 
     rs_hopping_t* new_hop = calloc(m->n_hop * s->n_cells, sizeof(rs_hopping_t));
     rs_vertex_t* new_vert = map_vertices ? calloc(m->n_vert * s->n_cells, sizeof(rs_vertex_t)) : NULL;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    index_t n_errors_hop = 0,
+            n_errors_vtx = 0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_errors_hop) reduction(+:n_errors_vtx)
     for (index_t c=0; c<s->n_cells; ++c) {
         claV3i_t cell = s->cells[c];
         for (index_t h=0; h<m->n_hop; ++h) {
@@ -198,6 +200,7 @@ static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
             index_t r = -1;
             claV3i_t R_old = {{H->R[0], H->R[1], H->R[2]}};
             supercell_map( s, claV3i_add(R_old, cell), &R, &r );
+            n_errors_hop += (r < 0 || r >= s->n_cells);
 
             index_t new_hop_idx = c*m->n_hop + h;
             rs_hopping_t* Hnew = new_hop + new_hop_idx;
@@ -215,6 +218,7 @@ static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
                 index_t r = -1;
                 claV3i_t R_old = {{V->R[0], V->R[1], V->R[2]}};
                 supercell_map( s, claV3i_add(R_old, cell), &R, &r );
+                n_errors_vtx += (r < 0 || r >= s->n_cells);
 
                 index_t new_vert_idx = c*m->n_vert + v;
                 rs_vertex_t* Vnew = new_vert + new_vert_idx;
@@ -226,6 +230,10 @@ static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
             }
         }
     }
+    if (n_errors_hop)
+        mpi_err_printf( "%li hoppings did not map to supercell\n", n_errors_hop );
+    if (n_errors_vtx)
+        mpi_err_printf( "%li vertices did not map to supercell\n", n_errors_vtx );
     free(m->hop);
     m->hop = new_hop;
     m->n_hop *= s->n_cells;
