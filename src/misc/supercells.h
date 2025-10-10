@@ -76,6 +76,10 @@ void diverge_model_to_fractcell_mat( diverge_model_t* m, int* N123 );
  */
 void diverge_supercell_set_sign( double sign );
 
+/** to swap the orbital convention only in the hoppings, not in the positions.
+ * returns whether original state is used */
+int diverge_supercell_swap_hop( void );
+
 #ifdef __cplusplus
 }
 #endif

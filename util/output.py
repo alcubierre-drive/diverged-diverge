@@ -43,9 +43,30 @@ def version_compare( A, B ):
         print("version cannot be determined (A:'%s',B:'%s'), treat as dev" % (A,B))
         return 1
 
+DIVERGE_OUTPUT_USE_MEMMAP = False
+
+# this is to swap out numpy_fromfile
+def _numpy_memmap( fname, **kwargs ):
+    memmap_kwargs = dict(offset=0, dtype=np.uint8, mode='r')
+    try: memmap_kwargs['offset'] = kwargs.pop('offset')
+    except: pass
+    try: memmap_kwargs['shape'] = (kwargs.pop('count'),)
+    except: pass
+    try: memmap_kwargs['dtype'] = kwargs.pop('dtype')
+    except: pass
+    return np.memmap( fname, **memmap_kwargs )
+
 # this is due to some weird numpy version checking for the contents of a buffer
-def numpy_fromfile( fname, **kwargs ):
+def _numpy_fromfile( fname, **kwargs ):
     return np.frombuffer( open(fname, "rb").read(), **kwargs )
+
+def numpy_fromfile( *args, **kwargs ):
+    global DIVERGE_OUTPUT_USE_MEMMAP
+    if DIVERGE_OUTPUT_USE_MEMMAP:
+        print( "diverge.output: using memmap instead of frombuffer" )
+        return _numpy_memmap( *args, **kwargs )
+    else:
+        return _numpy_fromfile( *args, **kwargs )
 
 def qmatrices( data, displ, count, nq ):
     data_d = data[displ:displ+count]
