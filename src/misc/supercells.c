@@ -25,6 +25,12 @@ void diverge_supercell_set_sign( double sign ) {
     SUPERCELL_SIGN = sign;
 }
 
+static int SUPERCELL_SWAPPED = 0;
+int diverge_supercell_swap_hop( void ) {
+    SUPERCELL_SWAPPED = !SUPERCELL_SWAPPED;
+    return !SUPERCELL_SWAPPED;
+}
+
 static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
         double scsgn, int map_vertices );
 
@@ -207,8 +213,8 @@ static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
 
             memcpy( Hnew, H, sizeof(rs_hopping_t) );
             for (int i=0; i<3; ++i) Hnew->R[i] = R.v[i];
-            Hnew->o1 += n_orb_mini * r;
-            Hnew->o2 += n_orb_mini * c;
+            Hnew->o1 += n_orb_mini * (SUPERCELL_SWAPPED ? c : r);
+            Hnew->o2 += n_orb_mini * (SUPERCELL_SWAPPED ? r : c);
         }
         if (map_vertices) {
             for (index_t v=0; v<m->n_vert; ++v) {
@@ -225,8 +231,8 @@ static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
 
                 memcpy( Vnew, V, sizeof(rs_vertex_t) );
                 for (int i=0; i<3; ++i) Vnew->R[i] = R.v[i];
-                Vnew->o1 += n_orb_mini * r;
-                Vnew->o2 += n_orb_mini * c;
+                Vnew->o1 += n_orb_mini * (SUPERCELL_SWAPPED ? c : r);
+                Vnew->o2 += n_orb_mini * (SUPERCELL_SWAPPED ? r : c);
             }
         }
     }

@@ -157,6 +157,7 @@ DIVERGE_0.9 {
         diverge_reset;
         diverge_run_tests;
         diverge_supercell_set_sign;
+        diverge_supercell_swap_hop;
         diverge_symmetrize_2pt_coarse;
         diverge_symmetrize_2pt_fine;
         diverge_symmetrize_greens;

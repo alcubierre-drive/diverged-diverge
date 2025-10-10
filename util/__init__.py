@@ -587,6 +587,10 @@ if not _libs["divERGe"] is None:
     supercell_set_sign.argtypes = [c_double]
     supercell_set_sign.restype = None
 
+    supercell_swap_hop = _libs["divERGe"].get("diverge_supercell_swap_hop", "cdecl")
+    supercell_swap_hop.argtypes = []
+    supercell_swap_hop.restype = c_int
+
     linspace = _libs["divERGe"].get("diverge_linspace", "cdecl")
     linspace.argtypes = [c_double, c_double, index_t]
     linspace.restype = c_voidp
