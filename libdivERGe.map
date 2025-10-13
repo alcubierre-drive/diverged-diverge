@@ -24,6 +24,7 @@ DIVERGE_0.9 {
         diverge_flow_step_init_any;
         diverge_flow_step_lambda;
         diverge_flow_step_loopmax;
+        diverge_flow_step_mi_to_tuffidx;
         diverge_flow_step_niter;
         diverge_flow_step_ntimings;
         diverge_flow_step_refill;
@@ -34,6 +35,7 @@ DIVERGE_0.9 {
         diverge_flow_step_timing_descr_vec;
         diverge_flow_step_timing_vec;
         diverge_flow_step_timings;
+        diverge_flow_step_tuffidx_to_mi;
         diverge_flow_step_type;
         diverge_flow_step_vertex;
         diverge_flow_step_vertmax;
