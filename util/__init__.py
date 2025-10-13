@@ -954,6 +954,14 @@ if not _libs["divERGe"] is None:
     flow_step_vertex.argtypes = [POINTER(flow_step_t), c_char]
     flow_step_vertex.restype = struct_flow_step_vertex_t
 
+    flow_step_mi_to_tuffidx = _libs["divERGe"].get("diverge_flow_step_mi_to_tuffidx")
+    flow_step_mi_to_tuffidx.argtypes = [POINTER(flow_step_t)]
+    flow_step_mi_to_tuffidx.restype = POINTER(index_t)
+
+    flow_step_tuffidx_to_mi = _libs["divERGe"].get("diverge_flow_step_tuffidx_to_mi")
+    flow_step_tuffidx_to_mi.argtypes = [POINTER(flow_step_t)]
+    flow_step_tuffidx_to_mi.restype = POINTER(index_t)
+
     flow_step_refill = _libs["divERGe"].get("diverge_flow_step_refill")
     flow_step_refill.argtypes = [POINTER(flow_step_t), c_double, c_void_p]
     flow_step_refill.restype = None

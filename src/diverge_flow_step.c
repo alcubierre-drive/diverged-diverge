@@ -590,6 +590,27 @@ void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* fe
     if(st->tu_vertex->C_to_D) mpi_vrb_printf("C to D feedback active\n");
 }
 
+const index_t* diverge_flow_step_mi_to_tuffidx( const diverge_flow_step_t* st ) {
+    if (st->type != diverge_tu)
+        return NULL;
+    tu_data_t* td = st->intls->tu_data;
+    if (!td)
+        return NULL;
+    return td->mi_to_tuffidx;
+}
+
+index_t* diverge_flow_step_tuffidx_to_mi( const diverge_flow_step_t* st ) {
+    const index_t* to = diverge_flow_step_mi_to_tuffidx( st );
+    if (!to) return NULL;
+    tu_data_t* td = st->intls->tu_data;
+    index_t* from = calloc(td->n_orbff, sizeof*from);
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<td->n_orbff; ++i) {
+        for (index_t j=0; j<td->n_orbff; ++j) if (to[j] == i) from[i] = j;
+    }
+    return from;
+}
+
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter ) {
     diverge_flow_step_vertex_t v = diverge_flow_step_vertex( st, chan );
     index_t nq = (v.q_1 - v.q_0);
