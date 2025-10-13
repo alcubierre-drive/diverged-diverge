@@ -606,7 +606,7 @@ void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* fe
 }
 
 const index_t* diverge_flow_step_mi_to_tuffidx( const diverge_flow_step_t* st ) {
-    if (st->type != diverge_tu)
+    if (st->type != diverge_tu && st->type != diverge_tu_phonons)
         return NULL;
     tu_data_t* td = st->intls->tu_data;
     if (!td)
