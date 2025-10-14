@@ -28,6 +28,10 @@ struct diverge_hartree_fock_t {
     diverge_flow_step_t* step;
 };
 
+diverge_flow_step_t* diverge_hartree_fock_get_flow_step( diverge_hartree_fock_t* h ) {
+    return h->step;
+}
+
 static inline double fermi( double E, double T ) { return 1./(exp(E/T) + 1.); }
 static inline double fermi_zero( double E ) { return E <= 0.0 ? 1.0 : 0.0; }
 MERGESORT_IMPL( dblsort, double )

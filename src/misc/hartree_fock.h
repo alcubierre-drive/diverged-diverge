@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 typedef struct diverge_model_t diverge_model_t;
+typedef struct diverge_flow_step_t diverge_flow_step_t;
 
 /** opaque typedef for the handle */
 typedef struct diverge_hartree_fock_t diverge_hartree_fock_t;
@@ -26,6 +27,9 @@ typedef struct diverge_hartree_fock_t diverge_hartree_fock_t;
  * :param const char* chans: interaction channels as string
  */
 diverge_hartree_fock_t* diverge_hartree_fock_init( diverge_model_t* model, double nu, const char* chans );
+
+/** return the flow step backend of a HF calculation, s.t. one can access the vertices etc */
+diverge_flow_step_t* diverge_hartree_fock_get_flow_step( diverge_hartree_fock_t* h );
 
 /**
  * perform a step of the Hartre-Fock self-consistency iteration (at temperature

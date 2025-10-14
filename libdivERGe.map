@@ -227,6 +227,7 @@ DIVERGE_UNSTABLE {
         diverge_energy_fill_gaps;
         diverge_filling_to_energy;
         diverge_hartree_fock_free;
+        diverge_hartree_fock_get_flow_step;
         diverge_hartree_fock_get_sigma;
         diverge_hartree_fock_get_sigma_prev;
         diverge_hartree_fock_init;
