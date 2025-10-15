@@ -651,9 +651,6 @@ if not _libs["divERGe"] is None:
     hartree_fock_step = _libs["divERGe"].get("diverge_hartree_fock_step", "cdecl")
     hartree_fock_step.argtypes = [c_voidp, c_double]
     hartree_fock_step.restype = None
-    hartree_fock_get_flow_step = _libs["divERGe"].get("diverge_hartree_fock_get_flow_step", "cdecl")
-    hartree_fock_get_flow_step.argtypes = [c_voidp]
-    hartree_fock_get_flow_step.restype = c_voidp
     hartree_fock_get_sigma = _libs["divERGe"].get("diverge_hartree_fock_get_sigma", "cdecl")
     hartree_fock_get_sigma.argtypes = [c_voidp]
     hartree_fock_get_sigma.restype = c_voidp
@@ -1035,6 +1032,14 @@ if not _libs["divERGe"] is None:
     flow_step_tuffidx_to_mi.argtypes = [POINTER(flow_step_t)]
     flow_step_tuffidx_to_mi.restype = POINTER(index_t)
 
+    flow_step_ibz = _libs["divERGe"].get("diverge_flow_step_ibz")
+    flow_step_ibz.argtypes = [POINTER(flow_step_t)]
+    flow_step_ibz.restype = POINTER(index_t)
+
+    flow_step_n_ibz = _libs["divERGe"].get("diverge_flow_step_n_ibz")
+    flow_step_n_ibz.argtypes = [POINTER(flow_step_t)]
+    flow_step_n_ibz.restype = index_t
+
     flow_step_refill = _libs["divERGe"].get("diverge_flow_step_refill")
     flow_step_refill.argtypes = [POINTER(flow_step_t), c_double, c_void_p]
     flow_step_refill.restype = None
@@ -1045,6 +1050,11 @@ if not _libs["divERGe"] is None:
     flow_step_get_filling_Hself = _libs["divERGe"].get("diverge_flow_step_get_filling_Hself")
     flow_step_get_filling_Hself.argtypes = [POINTER(flow_step_t), c_void_p]
     flow_step_get_filling_Hself.restype = c_double
+
+    # this function is here in order to have the flow_step_t defined...
+    hartree_fock_get_flow_step = _libs["divERGe"].get("diverge_hartree_fock_get_flow_step", "cdecl")
+    hartree_fock_get_flow_step.argtypes = [c_voidp]
+    hartree_fock_get_flow_step.restype = POINTER(flow_step_t)
 
     # Euler integrator
     class struct_euler_t(Structure):

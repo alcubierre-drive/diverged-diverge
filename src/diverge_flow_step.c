@@ -626,6 +626,22 @@ index_t* diverge_flow_step_tuffidx_to_mi( const diverge_flow_step_t* st ) {
     return from;
 }
 
+const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st ) {
+    if (st->type != diverge_tu) return NULL;
+    tu_data_t* td = st->intls->tu_data;
+    if (!td) return NULL;
+    if (!td->symm) return NULL;
+    return td->symm->idx_ibz_in_fullmesh;
+}
+
+index_t diverge_flow_step_n_ibz( const diverge_flow_step_t* st ) {
+    if (diverge_flow_step_ibz( st )) {
+        tu_data_t* td = st->intls->tu_data;
+        return td->nkibz;
+    }
+    return 0;
+}
+
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter ) {
     diverge_flow_step_vertex_t v = diverge_flow_step_vertex( st, chan );
     index_t nq = (v.q_1 - v.q_0);

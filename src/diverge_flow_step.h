@@ -210,6 +210,21 @@ const index_t* diverge_flow_step_mi_to_tuffidx( const diverge_flow_step_t* st );
 index_t* diverge_flow_step_tuffidx_to_mi( const diverge_flow_step_t* st );
 
 /**
+ * returns ibz mapping for the TU vertex (not MPI distributed, the offset given
+ * by :c:func:`diverge_flow_step_vertex` must be applied to get the rank-local
+ * result). returns NULL if TU is not selected as backend. returned array must
+ * not be freed manually. shape: (n_ibz,).
+ */
+const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st );
+
+/**
+ * returns size of ibz for the TU vertex (not MPI distributed, use
+ * :c:func:`diverge_flow_step_vertex` for MPI distribution information), 0 if TU
+ * is not selected as backend.
+ */
+index_t diverge_flow_step_n_ibz( const diverge_flow_step_t* st );
+
+/**
  * Filling
  * =======
  *
