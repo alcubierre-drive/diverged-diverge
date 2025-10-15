@@ -19,11 +19,13 @@ DIVERGE_0.9 {
         diverge_flow_step_free;
         diverge_flow_step_get_channels;
         diverge_flow_step_get_filling_Hself;
+        diverge_flow_step_ibz;
         diverge_flow_step_init;
         diverge_flow_step_init_any;
         diverge_flow_step_lambda;
         diverge_flow_step_loopmax;
         diverge_flow_step_mi_to_tuffidx;
+        diverge_flow_step_n_ibz;
         diverge_flow_step_niter;
         diverge_flow_step_ntimings;
         diverge_flow_step_refill;
