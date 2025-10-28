@@ -235,7 +235,7 @@ void* npatch_loop_gen_gpu_impl( void* data ) {
     if (!loop_info->calc_gf_on_gpu) {
         for (int x=2; x<4; ++x) { // copy GF
             CUDA_CHECK( cudaMemcpy( helper_klp_mem[g][x], host_mem[x], helper_klp_sz[x], cudaMemcpyHostToHost ) );
-            CUDA_CHECK( cudaMemPrefetchAsync( helper_klp_mem[g][x], helper_klp_sz[x], helper_klp_gpus[g], krnl_stream ) );
+            CUDA_CHECK( cudaMemPrefetchAsync_( helper_klp_mem[g][x], helper_klp_sz[x], helper_klp_gpus[g], krnl_stream ) );
         }
     } else {
         index_t per_iter = helper_klp_nblocks[0] * helper_klp_nblocks[1];
@@ -256,7 +256,7 @@ void* npatch_loop_gen_gpu_impl( void* data ) {
     if (loop_info->needs_gpu_copy) {
         for (int x=4; x<helper_klp_cnt; ++x) { // do not copy loops, only copy stuff if needed
             CUDA_CHECK( cudaMemcpy( helper_klp_mem[g][x], host_mem[x], helper_klp_sz[x], cudaMemcpyHostToHost ) );
-            CUDA_CHECK( cudaMemPrefetchAsync( helper_klp_mem[g][x], helper_klp_sz[x], helper_klp_gpus[g], krnl_stream ) );
+            CUDA_CHECK( cudaMemPrefetchAsync_( helper_klp_mem[g][x], helper_klp_sz[x], helper_klp_gpus[g], krnl_stream ) );
         }
     }
 
@@ -373,7 +373,7 @@ void* npatch_loop_gen_gpu( void* data ) {
             CUDA_CHECK( cudaMallocManaged( helper_klp_dispptr+g, sizeof(cu_gf_complex_t)*nknb*(1+nb) ) );
             memcpy( helper_klp_dispptr[g], h_E_fine, sizeof(cu_gf_complex_t)*nknb );
             memcpy( ((cu_gf_complex_t*)helper_klp_dispptr[g]) + nknb, h_U_fine, sizeof(cu_gf_complex_t)*nknb*nb );
-            CUDA_CHECK( cudaMemPrefetchAsync( helper_klp_dispptr[g], sizeof(cu_gf_complex_t)*nknb*(nb+1), helper_klp_gpus[g], helper_klp_streams[g] ) );
+            CUDA_CHECK( cudaMemPrefetchAsync_( helper_klp_dispptr[g], sizeof(cu_gf_complex_t)*nknb*(nb+1), helper_klp_gpus[g], helper_klp_streams[g] ) );
         }
         double additional_mem = sizeof(cu_gf_complex_t)*nknb*(1+nb);
         mpi_vrb_printf( "initializing GF on GPUs, using additional %.1fGiB\n", additional_mem/(1024.*1024.*1024.) );
