@@ -47,7 +47,7 @@ void* single_cusolver_thread( void* data ) {
     for (index_t ii=0; ii<cfg->n_indices; ++ii) {
         index_t i = cfg->indices[ii];
         transpose_outofplace( (complex128_t*)cfg->dA, cfg->A + i*POW2(cfg->dim), cfg->dim );
-        CUDA_CHECK( cudaMemPrefetchAsync( cfg->dA, sizeof(complex128_t)*POW2(cfg->dim), cfg->dev, cfg->stream ) );
+        CUDA_CHECK( cudaMemPrefetchAsync_( cfg->dA, sizeof(complex128_t)*POW2(cfg->dim), cfg->dev, cfg->stream ) );
         CUDA_CHECK( cudaStreamSynchronize( cfg->stream ) );
 
         // those are exclusive

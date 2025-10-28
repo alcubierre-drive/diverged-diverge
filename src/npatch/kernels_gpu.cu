@@ -128,11 +128,11 @@ static void* exec_call_gpu_kernel( void* _params ) {
     cudaStream_t& stream = helper_kernel_streams[params->device];
 
     memcpy( V_d, params->V->V, sz*sizeof(cu_cdoub_t) );
-    CUDA_CHECK( cudaMemPrefetchAsync( V_d, sz*sizeof(cu_cdoub_t), helper_kernel_gpus[params->device], stream ) );
+    CUDA_CHECK( cudaMemPrefetchAsync_( V_d, sz*sizeof(cu_cdoub_t), helper_kernel_gpus[params->device], stream ) );
     memcpy( L_d, L, sz*sizeof(cu_cdoub_t) );
-    CUDA_CHECK( cudaMemPrefetchAsync( L_d, sz*sizeof(cu_cdoub_t), helper_kernel_gpus[params->device], stream  ) );
+    CUDA_CHECK( cudaMemPrefetchAsync_( L_d, sz*sizeof(cu_cdoub_t), helper_kernel_gpus[params->device], stream  ) );
     memcpy( k3map_d, params->L->k3map, np*np*np*sizeof(index_t) );
-    CUDA_CHECK( cudaMemPrefetchAsync( k3map_d, np*np*np*sizeof(index_t), helper_kernel_gpus[params->device], stream  ) );
+    CUDA_CHECK( cudaMemPrefetchAsync_( k3map_d, np*np*np*sizeof(index_t), helper_kernel_gpus[params->device], stream  ) );
     CUDA_CHECK( cudaMemset( dPhi_d, 0, sz*sizeof(cu_cdoub_t) ) );
     CUDA_CHECK( cudaMemcpy( W_d, params->L->wgh, np*sizeof(double), cudaMemcpyHostToDevice ) );
 
