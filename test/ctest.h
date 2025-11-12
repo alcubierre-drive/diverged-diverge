@@ -219,13 +219,29 @@ static inline void ct_strsit_iter( const char* name, void* ctx_ ) {
  */
 static inline int ct_matches_filters( char** filters, ct_suite_t* s, int i,
         int* matches_case_filters, int* matches_suite_filters ) {
-    int nfilters = 0;
+    int nfilters = 0,
+        nfilters_neg = 0;
     *matches_case_filters = *matches_suite_filters = 0;
+    int matches_neg_case_filters = 0,
+        matches_neg_suite_filters = 0;
     for (char** f = filters; *f; f++) {
+        int is_neg_filter = (strlen(*f) > 1) && (*f[0] == '~' || *f[0] == '!');
+        nfilters_neg += is_neg_filter;
         nfilters++;
+        ct_strsit_iter_ctx_t ctx_neg = { &matches_neg_case_filters, *f + 1 };
         ct_strsit_iter_ctx_t ctx = { matches_case_filters, *f };
-        ct_strsit( s->tests[i].name, CT_NAME_DELIM, ct_strsit_iter, (void*)&ctx );
-        if (!strcmp(s->name, *f)) *matches_suite_filters += 1;
+        ct_strsit( s->tests[i].name, CT_NAME_DELIM, ct_strsit_iter,
+                is_neg_filter ? (void*)&ctx_neg : (void*)&ctx );
+        if (!strcmp(s->name, is_neg_filter ? (*f + 1) : *f)) {
+            if (!is_neg_filter) *matches_suite_filters += 1;
+            else matches_neg_suite_filters += 1;
+        }
+    }
+    if (nfilters_neg > 0) {
+        if (matches_neg_suite_filters || matches_neg_case_filters)
+            *matches_case_filters = *matches_suite_filters = 0;
+        else
+            nfilters -= nfilters_neg;
     }
     return nfilters;
 }
