@@ -37,6 +37,23 @@ void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
     SET_TO( MATRIX_ZERO );
 }
 
+diverge_generate_symm_maps_precision_t diverge_generate_symm_maps_precision_get( void ) {
+    return (diverge_generate_symm_maps_precision_t){
+        .ASSERT_POSITION_BEYOND = SYMNORM_ASSERT_POSITION_BEYOND,
+        .ORBITAL_OVERLAP = SYMNORM_ORBITAL_OVERLAP,
+        .POS_EQUAL = SYMNORM_POS_EQUAL,
+        .MIN_ORBITAL_WEIGHT = SYMNORM_MIN_ORBITAL_WEIGHT,
+        .BOND_EQUAL = SYMNORM_TU_BOND_MAX,
+        .MATRIX_ZERO = SYMNORM_MATRIX_ZERO,
+    };
+}
+
+void diverge_generate_symm_maps_precision_set( diverge_generate_symm_maps_precision_t p ) {
+    diverge_generate_symm_maps_set_precision( p.ASSERT_POSITION_BEYOND,
+            p.ORBITAL_OVERLAP, p.POS_EQUAL, p.MIN_ORBITAL_WEIGHT, p.BOND_EQUAL,
+            p.MATRIX_ZERO );
+}
+
 static inline bool map_back_to_BZ(claV3d_t* k_point, index_t* idx, const diverge_model_t* model, bool fine) {
     index_t nk[3]; memcpy( nk, model->nk, sizeof(nk) );
     if (fine) { for (int d=0; d<3; ++d) nk[d] *= model->nkf[d]; }

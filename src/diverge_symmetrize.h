@@ -36,6 +36,18 @@ void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
         double ORBITAL_OVERLAP, double POS_EQUAL, double MIN_ORBITAL_WEIGHT,
         double BOND_EQUAL, double MATRIX_ZERO );
 
+typedef struct {
+    double ASSERT_POSITION_BEYOND;
+    double ORBITAL_OVERLAP;
+    double POS_EQUAL;
+    double MIN_ORBITAL_WEIGHT;
+    double BOND_EQUAL;
+    double MATRIX_ZERO;
+} diverge_generate_symm_maps_precision_t;
+
+diverge_generate_symm_maps_precision_t diverge_generate_symm_maps_precision_get( void );
+void diverge_generate_symm_maps_precision_set( diverge_generate_symm_maps_precision_t p );
+
 /**
  * symmetrizes coarse mesh 2pt function stored in buf. returns maximum
  * difference between symmetrized and un-symmetrized buffer
