@@ -1348,6 +1348,32 @@ if not _libs["divERGe"] is None:
     generate_symm_maps_set_precision.argtypes = [c_double, c_double, c_double, c_double, c_double, c_double]
     generate_symm_maps_set_precision.restype = None
 
+    # get/set new interface
+    class generate_symm_maps_precision_t(Structure):
+        pass
+    generate_symm_maps_precision_t.__slots__ = [
+        'ASSERT_POSITION_BEYOND',
+        'ORBITAL_OVERLAP',
+        'POS_EQUAL',
+        'MIN_ORBITAL_WEIGHT',
+        'BOND_EQUAL',
+        'MATRIX_ZERO',
+    ]
+    generate_symm_maps_precision_t._fields_ = [
+        ('ASSERT_POSITION_BEYOND', c_double),
+        ('ORBITAL_OVERLAP', c_double),
+        ('POS_EQUAL', c_double),
+        ('MIN_ORBITAL_WEIGHT', c_double),
+        ('BOND_EQUAL', c_double),
+        ('MATRIX_ZERO', c_double),
+    ]
+    generate_symm_maps_precision_set = _libs["divERGe"].get("diverge_generate_symm_maps_precision_set", "cdecl")
+    generate_symm_maps_precision_set.argtypes = [generate_symm_maps_precision_t]
+    generate_symm_maps_precision_set.restype = None
+    generate_symm_maps_precision_get = _libs["divERGe"].get("diverge_generate_symm_maps_precision_get", "cdecl")
+    generate_symm_maps_precision_get.argtypes = []
+    generate_symm_maps_precision_get.restype = generate_symm_maps_precision_t
+
     symmetrize_2pt_coarse = _libs["divERGe"].get("diverge_symmetrize_2pt_coarse", "cdecl")
     symmetrize_2pt_coarse.argtypes = [POINTER(model_t), POINTER(complex128_t), POINTER(complex128_t)]
     symmetrize_2pt_coarse.restype = c_double
