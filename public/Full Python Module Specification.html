@@ -63,11 +63,13 @@
 <li class="toctree-l3"><a class="reference internal" href="#diverge.euler_t"><code class="docutils literal notranslate"><span class="pre">euler_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.flow_step_t"><code class="docutils literal notranslate"><span class="pre">flow_step_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.flow_step_vertex_t"><code class="docutils literal notranslate"><span class="pre">flow_step_vertex_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#diverge.generate_symm_maps_precision_t"><code class="docutils literal notranslate"><span class="pre">generate_symm_maps_precision_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.generate_symm_trafo"><code class="docutils literal notranslate"><span class="pre">generate_symm_trafo()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.gf_complex_t"><code class="docutils literal notranslate"><span class="pre">gf_complex_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.info"><code class="docutils literal notranslate"><span class="pre">info()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.internals_t"><code class="docutils literal notranslate"><span class="pre">internals_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.kmesh_to_bands_PY"><code class="docutils literal notranslate"><span class="pre">kmesh_to_bands_PY()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#diverge.lattice_t"><code class="docutils literal notranslate"><span class="pre">lattice_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.model_internals_any_PY"><code class="docutils literal notranslate"><span class="pre">model_internals_any_PY()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.model_output_conf_t"><code class="docutils literal notranslate"><span class="pre">model_output_conf_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.model_t"><code class="docutils literal notranslate"><span class="pre">model_t</span></code></a></li>
@@ -88,6 +90,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#diverge.struct_flow_step_t"><code class="docutils literal notranslate"><span class="pre">struct_flow_step_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.struct_flow_step_vertex_t"><code class="docutils literal notranslate"><span class="pre">struct_flow_step_vertex_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.struct_internals_t"><code class="docutils literal notranslate"><span class="pre">struct_internals_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#diverge.struct_lattice_t"><code class="docutils literal notranslate"><span class="pre">struct_lattice_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.struct_model_output_conf_t"><code class="docutils literal notranslate"><span class="pre">struct_model_output_conf_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.struct_model_t"><code class="docutils literal notranslate"><span class="pre">struct_model_t</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.struct_mom_patching_t"><code class="docutils literal notranslate"><span class="pre">struct_mom_patching_t</span></code></a></li>
@@ -249,6 +252,11 @@ symmetry path for band structures
 <dd><p>alias of <a class="reference internal" href="#diverge.struct_flow_step_vertex_t" title="diverge.struct_flow_step_vertex_t"><code class="xref py py-class docutils literal notranslate"><span class="pre">struct_flow_step_vertex_t</span></code></a></p>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="diverge.generate_symm_maps_precision_t">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.</span></span><span class="sig-name descname"><span class="pre">generate_symm_maps_precision_t</span></span><a class="headerlink" href="#diverge.generate_symm_maps_precision_t" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="diverge.generate_symm_trafo">
 <span class="sig-prename descclassname"><span class="pre">diverge.</span></span><span class="sig-name descname"><span class="pre">generate_symm_trafo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_spin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orbs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syms</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.generate_symm_trafo" title="Link to this definition"></a></dt>
@@ -313,6 +321,12 @@ length of <code class="docutils literal notranslate"><span class="pre">pts</span
 <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">index_t</span></code></a>, integer)</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.lattice_t">
+<span class="sig-prename descclassname"><span class="pre">diverge.</span></span><span class="sig-name descname"><span class="pre">lattice_t</span></span><a class="headerlink" href="#diverge.lattice_t" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#diverge.struct_lattice_t" title="diverge.struct_lattice_t"><code class="xref py py-class docutils literal notranslate"><span class="pre">struct_lattice_t</span></code></a></p>
 </dd></dl>
 
 <dl class="py function">
@@ -499,6 +513,11 @@ args=[‘[BHK]’].</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="diverge.struct_internals_t">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.</span></span><span class="sig-name descname"><span class="pre">struct_internals_t</span></span><a class="headerlink" href="#diverge.struct_internals_t" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="diverge.struct_lattice_t">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.</span></span><span class="sig-name descname"><span class="pre">struct_lattice_t</span></span><a class="headerlink" href="#diverge.struct_lattice_t" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
