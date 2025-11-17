@@ -66,7 +66,9 @@ struct diverge_postprocess_conf_t {
     /**
      * choose how to handle non hermitian entries of the channel
      * diagonalization. options: 'a'(utomatic), 's'(vd), 'e'(igen), 'b'(atched
-     * eigen), 'B'(atched SVD)
+     * eigen), 'B'(atched SVD). For 'a'(utomatic), one can use
+     * :c:member:`tu_which_solver_mode_hermiticity_limit` to set a "zero" value
+     * for hermiticity detection.
      */
     char    tu_which_solver_mode;
     /** if true, the eigenvectors of each channel are not calculated. useful for RPA calculations */
@@ -115,6 +117,13 @@ struct diverge_postprocess_conf_t {
      * flag has an effect only when :c:member:`tu_skip_channel_calc` is false.
      */
     int     tu_channel_calc_project;
+    /**
+     * limit up to which to consider a matrix "hermitian" when the solver mode
+     * in :c:member:`tu_which_solver_mode` is 'a'. limit is applied to the
+     * maximum entry of the difference of the matrix and its hermitian
+     * conjugate.
+     */
+    double  tu_which_solver_mode_hermiticity_limit;
 
     // DEVELOPERS
     //
@@ -159,6 +168,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_lingap_solver_mode = "sss",
     .tu_susceptibilities_bare = false,
     .tu_channel_calc_project = 0,
+    .tu_which_solver_mode_hermiticity_limit = 1.e-11,
 };
 #endif
 

@@ -20,6 +20,7 @@ typedef struct {
     bool skip_channel_calc;
     index_t tu_n_singular_values;
     char algo;
+    double algo_zero;
     double cutoff;
     bool cutoff_rel;
     index_t tu_n_decomp_values;
@@ -41,6 +42,7 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .skip_channel_calc = false,
     .tu_n_singular_values = 1,
     .algo = 'a',
+    .algo_zero = 1.e-11,
     .cutoff = 25.,
     .cutoff_rel = false,
     .tu_n_decomp_values = 0,
@@ -57,7 +59,6 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .phonon_vertex = true,
 };
 #endif // __cplusplus
-tu_postproduction_conf_t tu_postproduction_conf_defaults_CPP( void );
 
 void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
         tu_projection_t* proj, const diverge_model_t* model,

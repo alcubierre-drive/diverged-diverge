@@ -17,10 +17,6 @@ LINALG_IMPLEMENT
 #include <assert.h>
 #include <stddef.h>
 
-tu_postproduction_conf_t tu_postproduction_conf_defaults_CPP( void ) {
-    return tu_postproduction_conf_defaults;
-}
-
 typedef struct tu_postproduction_t tu_postproduction_t;
 
 // main functions
@@ -30,7 +26,7 @@ static void save_channel_leading_ev( tu_postproduction_t* p );
 static void to_file( tu_postproduction_t* p, const char* filename );
 
 // helper functions
-static bool check_hermicity( complex128_t* data, index_t linsize );
+static bool check_hermiticity( complex128_t* data, index_t linsize, double lim/*=1.e-11*/ );
 static void _save_channel_leading_ev( tu_postproduction_t* p, complex128_t* channel,
         complex128_t* vec, double* val, char* type, index_t* len, index_t* off );
 static void _susc_o14k(const diverge_model_t* model, const complex128_t* inp, complex128_t* susc);
@@ -230,7 +226,7 @@ static void _save_channel_leading_ev( tu_postproduction_t* p, complex128_t* chan
             memcpy(_vec, vec+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
         } else {
             memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
-            bool hermitian = check_hermicity(_vec,linsize);
+            bool hermitian = check_hermiticity(_vec,linsize,p->c.algo_zero);
             if (p->c.algo == 'e' || (p->c.algo == 'a' && hermitian)) {
                 single_eigen( NULL, _vec, _val, linsize);
                 type[q] = 'e';
@@ -522,14 +518,14 @@ static void calc_susc( tu_postproduction_t* p ) {
     free(suscff);
 }
 
-static bool check_hermicity( complex128_t* data, index_t linsize ) {
+static bool check_hermiticity( complex128_t* data, index_t linsize, double lim/*=1.e-11*/ ) {
     double err_max = 0.;
     #pragma omp parallel for reduction(max:err_max) collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<linsize; ++i) for (index_t j=0; j<linsize; ++j) {
         double err = cabs(data[IDX2(i,j,linsize)] - conj(data[IDX2(j,i,linsize)]));
         err_max = MAX(err_max, err);
     }
-    return err_max < 1e-11;
+    return err_max < lim;
 }
 
 static inline claV3d_t claV3i_d( const claV3i_t in ) { return (claV3d_t){.v={in.v[0],in.v[1],in.v[2]}}; }

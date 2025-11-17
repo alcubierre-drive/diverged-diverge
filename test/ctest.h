@@ -181,6 +181,7 @@ static inline void ct_test_append( const char* name, void(*run)(void), int hidde
 static const char ct_color_red[] = "\x1b[31;1m",
                   ct_color_green[] = "\x1b[32;1m",
                   ct_color_yellow[] = "\x1b[33;1m",
+                  ct_color_blue[] = "\x1b[34;1m",
                   ct_color_reset[] = "\033[0m";
 
 // and this is the macro to make assertions
@@ -317,7 +318,7 @@ static inline int ct_list( char** filters ) {
             const char up_line[16] = "\033[F";
             const char no_up[16] = "";
             CT_PRINTF( "%s%s>suite<%s %s found %u/%u cases\n", nc_run == 0 ? up_line : no_up,
-                    ct_color_yellow, ct_color_reset, ss->name, nc_run, nc );
+                    ct_color_blue, ct_color_reset, ss->name, nc_run, nc );
         }
         nc_total += nc;
         nc_total_run += nc_run;
