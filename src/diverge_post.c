@@ -33,7 +33,7 @@ void diverge_postprocess_and_write( diverge_flow_step_t* st, const char* file ) 
 void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st,
         const char* file, const diverge_postprocess_conf_t* pc ) {
     mpi_log_printf( "writing postprocessing file %s\n", file );
-    diverge_postprocess_conf_t pc_def = diverge_postprocess_conf_defaults_CPP();
+    diverge_postprocess_conf_t pc_def = diverge_postprocess_conf_defaults;
     if (pc == NULL) pc = &pc_def;
 
     switch (st->type) {
@@ -103,10 +103,11 @@ static void patch_pp( diverge_flow_step_t* st,
 
 static void tu_pp( diverge_flow_step_t* st,
         const diverge_postprocess_conf_t* pc, const char* file ) {
-    tu_postproduction_conf_t tc = tu_postproduction_conf_defaults_CPP();
+    tu_postproduction_conf_t tc = tu_postproduction_conf_defaults;
     tc.skip_channel_calc = pc->tu_skip_channel_calc;
     tc.tu_n_singular_values = pc->tu_n_singular_values;
     tc.algo = pc->tu_which_solver_mode;
+    tc.algo_zero = pc->tu_which_solver_mode_hermiticity_limit;
     tc.cutoff = pc->tu_storing_threshold;
     tc.cutoff_rel = pc->tu_storing_relative;
     tc.tu_n_decomp_values = pc->tu_n_decomp_values;

@@ -1063,6 +1063,7 @@ if not _libs["divERGe"] is None:
         'tu_lingap_solver_mode',
         'tu_susceptibilities_bare',
         'tu_channel_calc_project',
+        'tu_which_solver_mode_hermiticity_limit',
     ]
     struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
@@ -1097,6 +1098,7 @@ if not _libs["divERGe"] is None:
         ('tu_lingap_solver_mode', c_char * int(4)),
         ('tu_susceptibilities_bare', c_bool),
         ('tu_channel_calc_project', c_int),
+        ('tu_which_solver_mode_hermiticity_limit', c_double),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 
