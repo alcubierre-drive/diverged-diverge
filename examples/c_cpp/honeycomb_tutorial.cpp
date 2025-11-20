@@ -1,5 +1,6 @@
 #include <diverge.h>
 #include <diverge_Eigen3.hpp>
+#include <cassert>
 
 int main(int argc, char** argv) {
     diverge_init( &argc, &argv );

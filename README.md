@@ -34,14 +34,15 @@ infrastructure to your availability.
 
 # Testing
 We use a slightly modified version of
-[Catch2](https://github.com/catchorg/Catch2) for testing. To check divERGe's
-health from python, run
+[ctest.h](https://github.com/alcubierre-drive/ctest) for testing. To check
+divERGe's health from python, run
 ```
 import diverge
 diverge.init(None, None)
 diverge.run_tests()
 diverge.finalize()
 ```
+If one or more tests fail, you've found a bug.
 
 # Citation
 Please cite [this paper](https://doi.org/10.21468/SciPostPhysCodeb.26) when
