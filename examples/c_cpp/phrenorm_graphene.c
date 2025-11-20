@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 
     // TODO setenv is only necessary because conventions are a mess (and not
     // sorted out properly yet)
-    setenv( "PHONON_CFG", "4", 1 );
+    // setenv( "PHONON_CFG", "4", 1 );
 
     diverge_init(&argc, &argv);
 
@@ -55,9 +55,11 @@ int main(int argc, char** argv) {
     diverge_model_t* e = diverge_read_W90_model( "phrenorm_graphene/graphene_hr.dat",
             "phrenorm_graphene/graphene.wout", "phrenorm_graphene/graphene_wsvec.dat", 0 );
 
+    diverge_wigner_config_t wc = diverge_wigner_config_defaults;
+    // wc.apply_asr = 1;
     // read the phonon model (+elph)
     diverge_model_t* p = diverge_phonons_read_ifc_and_elph( "phrenorm_graphene/dfpt.ifc",
-            "phrenorm_graphene/wigner.fmt", "phrenorm_graphene/dfpt.epmatwp", 5.e-2, NULL );
+            "phrenorm_graphene/wigner.fmt", "phrenorm_graphene/dfpt.epmatwp", 5.e-2, &wc );
 
     // scale the interaction
     // ph_vertex_t* pv = (ph_vertex_t*)p->vert; for (index_t i=0; i<p->n_vert; ++i) { pv[i].g  *= 3.0; }
@@ -97,6 +99,10 @@ int main(int argc, char** argv) {
     // we reset the electronic symmetries; that way, we have symmetrization but
     // do *not* symmetry-enforce vertices
     e->n_sym = 0;
+    // diverge_model_internals_common( p );
+    // diverge_symmetrize_hoppings( p, NULL, NULL, 1.e-4 );
+    // diverge_phonons_apply_asr( p );
+    // diverge_model_internals_reset( p );
 
     // common internals for phononic model, and the sqrt() for the dispersion
     diverge_model_internals_common( p );
@@ -112,9 +118,14 @@ int main(int argc, char** argv) {
     diverge_model_to_file_fg( e, __FILE__ "_e.dvg", &oc );
     diverge_model_to_file_fg( p, __FILE__ "_p.dvg", &oc );
 
-    // set up the phonon TUFRG with 1.01 lattice vectors FF distance
+    // add some electronic vertices
+    e->vert = calloc(1024, sizeof*e->vert);
+    e->vert[e->n_vert++] = (rs_vertex_t){ .chan='C', .o1=0, .o2=0, .V=1.0 };
+    e->vert[e->n_vert++] = (rs_vertex_t){ .chan='C', .o1=1, .o2=1, .V=1.0 };
+
+    // set up the phonon TUFRG with 1.51 lattice vectors FF distance
     diverge_model_t* pp = diverge_model_internals_tu_phonons( e,
-            1.01*claV3d_norm(claV3d_map(e->lattice[0])),
+            1.51*claV3d_norm(claV3d_map(e->lattice[0])),
             p->hop, p->n_hop, (ph_vertex_t*)p->vert, p->n_vert );
 
     diverge_model_to_file_fg( pp, __FILE__ "_pp.dvg", &oc );
@@ -122,7 +133,7 @@ int main(int argc, char** argv) {
     // and do the flow+postproc
     diverge_flow_step_t* st = diverge_flow_step_init_any( e, "PCD" );
     diverge_euler_t eu = diverge_euler_defaults;
-    eu.maxiter = 50;
+    eu.maxiter = 5;
     double maxvert = 0;
     do {
         diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );

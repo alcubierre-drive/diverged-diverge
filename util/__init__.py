@@ -394,6 +394,8 @@ if not _libs["divERGe"] is None:
         ('V', complex128_t),
     ]
 
+    # TODO this is broken with the new version that allows for both SSH-like
+    # phonons and regular ones.
     struct_ph_vertex_t.__slots__ = [
         '_chan',
         'R12',

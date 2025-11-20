@@ -16,6 +16,7 @@ typedef struct diverge_model_t diverge_model_t;
 /**
  * electron-phonon vertex structure in real space. Some member types are chosen
  * in a specific way to yield a type that's as large as :c:type:`rs_vertex_t`.
+ * **This equivalence is important and must not be violated!**
  *
  * The three-leg vertex is characterized by three quantum numbers. Two
  * electronic ones (1,2) and one bosonic one (A). Its real-space version
@@ -38,8 +39,14 @@ typedef struct diverge_model_t diverge_model_t;
  * look at the examples.
  */
 typedef struct ph_vertex_t {
-    /** padding to be equivalent to :c:type:`rs_vertex_t` */
-    char _chan;
+    // TODO the mode is only implemented here, nowhere else as of now.
+    /**
+     * mode selection for the phononic 'transfer' vector. If ``mode == 'p' ||
+     * mode == 'f' || mode == 'P' || mode == 'F'`` then the phonon is situated
+     * at the floating point position :c:member:`RA_pos`, otherwise use the
+     * lattice vector :c:member:`RA`.
+     */
+    char mode;
     /**
      * electronic bond (R vector, analogous to :c:type:`tu_formfactor_t` or
      * :c:type:`rs_hopping_t`)
@@ -60,7 +67,16 @@ typedef struct ph_vertex_t {
     /** phononic 'orbital' (site,xyz) multiindex */
     index_t OA;
     /** phononic 'transfer' vector (only an FFT of :math:`\boldsymbol{q}`) */
-    index_t RA[3];
+    // TODO the RA/RA_pos selection is *only* implemented in this structure,
+    // nowhere else as of now.
+    int32_t RA[3];
+    /**
+     * phononic 'transfer' vector (only an FFT of :math:`\boldsymbol{q}`),
+     * but in real coordinates. Use this when :c:member:`mode` is set to
+     * ``mode == 'p' || mode == 'f' || mode == 'P' || mode == 'F'``.
+     * Otherwise use the lattice vector position :c:member:`RA`.
+     */
+    float RA_pos[3];
 
     /** coupling strength */
     complex128_t g;
