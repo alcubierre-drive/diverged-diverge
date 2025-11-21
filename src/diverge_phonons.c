@@ -78,3 +78,7 @@ complex128_t* diverge_phonons_get_g( diverge_model_t* m ) {
     tu_data_phonons_t* p = m->internals->tu_data_phonons;
     return p ? tu_data_phonons_get_g(p) : NULL;
 }
+
+double diverge_phonons_change_regulator( double eta ) {
+    return tu_data_phonons_change_regulator( eta );
+}

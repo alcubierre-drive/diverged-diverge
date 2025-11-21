@@ -131,6 +131,21 @@ void* diverge_phonons_get_ifrq( diverge_model_t* m );
  */
 complex128_t* diverge_phonons_get_g( diverge_model_t* m );
 
+/**
+ * Changes the phonon propagator regulator :math:`\eta` for the
+ * :math:`iq_0 \to 0` limit:
+ *
+ * .. math::
+ *
+ *  D_\nu(\boldsymbol{q}, iq_0) = \mathrm{Re}\bigg[ \frac{1}{(i(q_0 + i\eta))^2 - \omega_{\nu}(\boldsymbol{q})^2} \bigg]
+ *
+ * This is highly relevant for the application of the theory to acoustic modes.
+ * The function returns the old value for :math:`\eta`. If ``qnan_isnan(eta)``
+ * the regulator is left unchanged; this serves the purpose of allowing to look
+ * up the current value.
+ */
+double diverge_phonons_change_regulator( double eta );
+
 #ifdef __cplusplus
 }
 #endif

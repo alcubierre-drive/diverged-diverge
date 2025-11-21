@@ -108,17 +108,13 @@ diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
     memcpy(&m->n_ibz_path, &model->n_ibz_path, sizeof m->n_ibz_path);
     memcpy(m->ibz_path, model->ibz_path, sizeof m->ibz_path);
     if (model->n_sym > 0) mpi_log_printf( "symmetries not added to phonon model\n" );
-    if (model->n_orb > 0) mpi_log_printf( "nontrivial basis positions not set in phonon model\n" );
+    if (model->n_orb > 1) mpi_log_printf( "nontrivial basis positions not set in phonon model\n" );
     diverge_model_internals_common(m);
     diverge_phonons_apply_sgnsqrt(m);
 
     m->internals->tu_phonon_model_dont_free = 1;
-    tu_data_phonons_t* p = tu_data_phonons_init( m, model,
-            model->internals->tu_phonons_buffered,
-            model->internals->tu_phonons_ignore_imag_freq,
-            // TODO
-            // NULL, -1 ); // automatic acoustic mode detection
-            NULL, 0 ); // no acoustic modes
+    tu_data_phonons_t* p = tu_data_phonons_init( m, model, model->internals->tu_phonons_buffered,
+            model->internals->tu_phonons_ignore_imag_freq );
     model->internals->tu_data_phonons = p;
     model->internals->tu_data_phonons_destructor = &tu_data_phonons_destructor;
     model->internals->model_phonons = m;

@@ -43,6 +43,11 @@ int main(int argc, char** argv) {
 
     diverge_init(&argc, &argv);
 
+    double U = 0.0;
+    index_t nk = 24,
+            nkf = 5;
+    index_t maxiter = 5;
+
     DIR* dir = opendir("phrenorm_graphene");
     if (dir) closedir(dir);
     else if (ENOENT == errno) {
@@ -56,7 +61,7 @@ int main(int argc, char** argv) {
             "phrenorm_graphene/graphene.wout", "phrenorm_graphene/graphene_wsvec.dat", 0 );
 
     diverge_wigner_config_t wc = diverge_wigner_config_defaults;
-    // wc.apply_asr = 1;
+    wc.apply_asr = 1;
     // read the phonon model (+elph)
     diverge_model_t* p = diverge_phonons_read_ifc_and_elph( "phrenorm_graphene/dfpt.ifc",
             "phrenorm_graphene/wigner.fmt", "phrenorm_graphene/dfpt.epmatwp", 5.e-2, &wc );
@@ -70,8 +75,8 @@ int main(int argc, char** argv) {
     add_symmetries( p );
 
     // kpt setup
-    e->nk[0] = e->nk[1] = 24;
-    e->nkf[0] = e->nkf[1] = 5;
+    e->nk[0] = e->nk[1] = nk;
+    e->nkf[0] = e->nkf[1] = nkf;
     e->ibz_path[1][0] = 0.5;
     e->ibz_path[2][0] = 1./3.; e->ibz_path[2][1] = 1./3.;
     e->n_ibz_path = 4;
@@ -111,29 +116,38 @@ int main(int argc, char** argv) {
     // write phonons and electrons to file
     diverge_model_output_conf_t oc = diverge_model_output_conf_defaults;
     oc.kf_ibz_path = 1;
+    oc.kc_ibz_path = 1;
     oc.npath = -1;
     oc.kf = 1;
     oc.kc = 1;
     oc.U = oc.E = 1;
-    diverge_model_to_file_fg( e, __FILE__ "_e.dvg", &oc );
-    diverge_model_to_file_fg( p, __FILE__ "_p.dvg", &oc );
 
     // add some electronic vertices
     e->vert = calloc(1024, sizeof*e->vert);
-    e->vert[e->n_vert++] = (rs_vertex_t){ .chan='C', .o1=0, .o2=0, .V=1.0 };
-    e->vert[e->n_vert++] = (rs_vertex_t){ .chan='C', .o1=1, .o2=1, .V=1.0 };
+    e->vert[e->n_vert++] = (rs_vertex_t){ .chan='C', .o1=0, .o2=0, .V=U };
+    e->vert[e->n_vert++] = (rs_vertex_t){ .chan='C', .o1=1, .o2=1, .V=U };
 
     // set up the phonon TUFRG with 1.51 lattice vectors FF distance
     diverge_model_t* pp = diverge_model_internals_tu_phonons( e,
             1.51*claV3d_norm(claV3d_map(e->lattice[0])),
             p->hop, p->n_hop, (ph_vertex_t*)p->vert, p->n_vert );
 
+    // save models only after tu internals are set to get the formfactors
+    diverge_model_to_file_fg( e, __FILE__ "_e.dvg", &oc );
+    diverge_model_to_file_fg( p, __FILE__ "_p.dvg", &oc );
+
+    // attach elph to the model and save it
+    pp->data = diverge_phonons_get_g( e );
+    pp->nbytes_data = sizeof(complex128_t) * kdim(e->nk) * pp->n_orb * e->n_tu_ff;
     diverge_model_to_file_fg( pp, __FILE__ "_pp.dvg", &oc );
+    pp->nbytes_data = 0;
+    pp->data = NULL;
 
     // and do the flow+postproc
     diverge_flow_step_t* st = diverge_flow_step_init_any( e, "PCD" );
+
     diverge_euler_t eu = diverge_euler_defaults;
-    eu.maxiter = 5;
+    eu.maxiter = maxiter;
     double maxvert = 0;
     do {
         diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
@@ -149,6 +163,7 @@ int main(int argc, char** argv) {
     pc.tu_symmetry_maps = 1;
     pc.tu_which_solver_mode = 'B';
     pc.tu_lingap = 0;
+    pc.tu_channel_calc_project = -1;
     diverge_postprocess_and_write_fg( st, __FILE__ "_post.dvg", &pc );
     diverge_flow_step_free( st );
 

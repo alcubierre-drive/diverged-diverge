@@ -6,6 +6,7 @@ LINALG_IMPLEMENT
 #include "../misc/mergesort.h"
 #include "../misc/gemm.h"
 #include "../misc/bitary.h"
+#include "../misc/qnan.h"
 #include <assert.h>
 #include <fftw3.h>
 
@@ -20,7 +21,7 @@ static int fft_sign = -1;
 static int conj_U = 0;
 static int conj_l = 1, conj_r = 0;
 
-static int invert_tuff = 0; // TODO NEW
+static int invert_tuff = 0; // TODO NEW, but not needed :)
 
 // TODO this factor is correct for square lattice systems
 // (selection #4)
@@ -72,10 +73,6 @@ struct tu_data_phonons_t {
 
     complex128_t* g_ob_qO; // (my_nk, n_spin,n_spin,n_orbff, nO)
 
-    cbyte_t* mode_is_acoustic; // (nO,), bit array
-    complex128_t* D_hessian_at_Gamma; // (3,3,nO)
-    complex128_t* g_gradient_at_Gamma; // (3,n_orbff,nO)
-
     int ignore_imag_freq;
     complex128_t *gbuf, *gbuf_zero; // (my_nk, nO)
     double gbuf_last_Lambda, gbuf_zero_last_Lambda;
@@ -94,13 +91,9 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
         const double Lambda, const bool ignore_imag_freq );
-static void tu_data_phonons_gen_g_grad(tu_data_phonons_t* t, tu_data_t* d,
-        const tu_formfactor_t* tu_ff, index_t n_tu_ff, complex128_t* gg/*(3,n_orbff,nO)*/);
-static void tu_data_phonons_gen_D_hess( tu_data_phonons_t* t, complex128_t* HD/*(3,3,nO)*/ );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
-        bool buffered, bool ignore_imag_freq, const index_t* acoustic_modes,
-        index_t n_acoustic_modes ) {
+        bool buffered, bool ignore_imag_freq ) {
     select_config();
     tu_data_phonons_t* t = calloc(1, sizeof*t);
     t->pmod = ph;
@@ -120,36 +113,8 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     t->gbuf_last_Lambda = t->gbuf_zero_last_Lambda =
         t->Dch_last_Lambda = t->Dch_zero_last_Lambda = -1.0;
 
-    t->D_hessian_at_Gamma = calloc( POW2(3)*t->nO, sizeof*t->D_hessian_at_Gamma );
-    tu_data_phonons_gen_D_hess( t, t->D_hessian_at_Gamma );
-    t->g_gradient_at_Gamma = calloc( 3*el->n_tu_ff*t->nO, sizeof*t->g_gradient_at_Gamma );
-    tu_data_phonons_gen_g_grad( t, el->internals->tu_data, el->tu_ff, el->n_tu_ff, t->g_gradient_at_Gamma );
-
-    t->mode_is_acoustic = bitary_alloc( t->nO );
-    tu_data_phonons_set_acoustic_modes( t, acoustic_modes, n_acoustic_modes );
-
     tu_data_phonons_init_vertex( t, el->internals->tu_data, el->tu_ff, el->n_tu_ff, el->n_spin );
     return t;
-}
-
-void tu_data_phonons_set_acoustic_modes( tu_data_phonons_t* t,
-        const index_t* acoustic_modes, index_t n_acoustic_modes ) {
-    ZERO_OUT( t->mode_is_acoustic, bitary_nbytes(t->nO) );
-    if (n_acoustic_modes >= 0) {
-        for (index_t a=0; a<n_acoustic_modes; ++a)
-            bitary_set(t->mode_is_acoustic, acoustic_modes[a]);
-    } else { // automatic operation
-        mpi_log_printf( "automatic acoustic mode detection…\n" );
-        const double* E = t->pmod->internals->E;
-        n_acoustic_modes = 0;
-        for (index_t o=0; o<t->nO; ++o) {
-            if (fabs(E[o]) < DIVERGE_EPS_MESH) {
-                bitary_set(t->mode_is_acoustic, o);
-                n_acoustic_modes++;
-            }
-        }
-        mpi_log_printf( "found %li acoustic modes in total\n", n_acoustic_modes );
-    }
 }
 
 void tu_data_phonons_free( tu_data_phonons_t* t ) {
@@ -157,19 +122,26 @@ void tu_data_phonons_free( tu_data_phonons_t* t ) {
     free(t->gbuf_zero);
     free(t->Dch);
     free(t->Dch_zero);
-    free(t->mode_is_acoustic);
-    free(t->D_hessian_at_Gamma);
-    free(t->g_gradient_at_Gamma);
     free(t->g_ob_qO);
     free(t);
 }
 
-static const double PHONON_FREQ_REGULATOR = 1.e-5;
+static double PHONON_FREQ_REGULATOR = 1.e-7;
+
+double tu_data_phonons_change_regulator( double reg ) {
+    if (qnan_isnan(reg)) {
+        return PHONON_FREQ_REGULATOR;
+    } else {
+        double old = PHONON_FREQ_REGULATOR;
+        PHONON_FREQ_REGULATOR = reg;
+        return old;
+    }
+}
 
 static inline complex128_t gf_gp_plus_gm( const double E, const bool E_imag,
         const bool ignore_imag_freq, const double Lambda ) {
     double E2 = E_imag ? -POW2(E) : POW2(E);
-    return (ignore_imag_freq&&E_imag) ? 0.0 : creal(-1.0/(PHONON_FREQ_REGULATOR*I + POW2(Lambda) + E2));
+    return (ignore_imag_freq&&E_imag) ? 0.0 : creal(-1./(POW2(Lambda + I*PHONON_FREQ_REGULATOR) + E2));
 }
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
         const double Lambda, const bool ignore_imag_freq ) {
@@ -360,7 +332,6 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
     }
 
     if (calc) {
-        const index_t dim = t->pmod->internals->dim;
         const complex128_t *g_ph_buf = t->g_ob_qO,
                            *prop_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq );
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(3)
@@ -376,21 +347,7 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
                 if (conj_l) gl = conj(gl);
                 if (conj_r) gr = conj(gr);
 
-                // TODO acoustic_modes, how do I choose the direction of the derivative?
-                // Is it given that all directions are equal?
-                if (iszero && bitary_get(t->mode_is_acoustic, b) && t->idx_ibz_in_fullmesh[kk] == 0) {
-                    for (index_t x=0; x<dim; ++x) {
-                        complex128_t glx = t->g_gradient_at_Gamma[IDX3(x,l,b, linsz,nO)],
-                                     grx = t->g_gradient_at_Gamma[IDX3(x,r,b, linsz,nO)],
-                                     ipropx = -0.5*t->D_hessian_at_Gamma[IDX3(x,x,b, 3,nO)];
-                        // TODO conjugates
-                        if (conj_l) glx = conj(glx);
-                        if (conj_l) grx = conj(grx);
-                        tmp += glx * grx / ((double)dim * ipropx);
-                    }
-                } else {
-                    tmp += gl * prop * gr;
-                }
+                tmp += gl * prop * gr;
             }
             buf[IDX3(kk,l,r, linsz,linsz)] += (t->buffered ? 1.0 : fac) * tmp;
         }
@@ -405,104 +362,3 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
 diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t ) { return t->pmod; }
 complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t ) { return t->g_ob_qO; }
 
-static void tu_data_phonons_gen_D_hess( tu_data_phonons_t* t, complex128_t* HD/*(3,3,nO)*/ ) {
-    complex128_t* HD_orb = calloc(POW2(t->nO*3), sizeof*HD_orb);
-    const claM3d_t lat = claM3d_map(t->pmod->lattice[0]);
-    for (index_t h=0; h<t->pmod->n_hop; ++h) {
-        const rs_hopping_t* hp = &t->pmod->hop[h];
-        claV3d_t R = claM3d_vecmat((claV3d_t){{hp->R[0],hp->R[1],hp->R[2]}}, lat);
-        for (index_t x=0; x<3; ++x)
-        for (index_t y=0; y<3; ++y)
-            HD_orb[IDX4(x,y, hp->o1,hp->o2, 3,t->nO,t->nO)] -= hp->t * R.v[x] * R.v[y];
-    }
-
-    // transform to mode (phonon band) space
-    const complex128_t* U = t->pmod->internals->U;
-    complex128_t* Ubuf = calloc(POW2(t->nO), sizeof*Ubuf);
-    complex128_t* Ubuf_conj = calloc(POW2(t->nO), sizeof*Ubuf_conj);
-    complex128_t* tmp = calloc(POW2(t->nO), sizeof*tmp);
-    // TODO conjugate
-    if (conj_U) {
-        transpose_conj_outofplace( Ubuf, U, t->nO );
-        transpose_outofplace( Ubuf_conj, U, t->nO );
-        transpose_inplace( Ubuf_conj, t->nO );
-    } else {
-        transpose_outofplace( Ubuf, U, t->nO );
-        transpose_conj_outofplace( Ubuf_conj, U, t->nO );
-        transpose_inplace( Ubuf_conj, t->nO );
-    }
-    for (index_t xy=0; xy<9; ++xy) {
-        complex128_t* HD_xy_oo = HD_orb + xy*POW2(t->nO);
-        single_gemm_serial( HD_xy_oo, Ubuf, tmp, t->nO, t->nO, t->nO, 1.0, 0.0 );
-        single_gemm_serial( Ubuf_conj, tmp, HD_xy_oo, t->nO, t->nO, t->nO, 1.0, 0.0 );
-        for (index_t o=0; o<t->nO; ++o)
-            HD[IDX2(xy,o, t->nO)] = HD_xy_oo[IDX2(o,o, t->nO)];
-    }
-    free( tmp );
-    free( Ubuf );
-    free( Ubuf_conj );
-
-    free( HD_orb );
-}
-
-static void tu_data_phonons_gen_g_grad(tu_data_phonons_t* t, tu_data_t* d,
-        const tu_formfactor_t* tu_ff, index_t n_tu_ff, complex128_t* gg/*(3,n_orbff,nO)*/) {
-
-    index_t* tuffidx_to_mi = calloc(n_tu_ff, sizeof*tuffidx_to_mi);
-    index_t tuffidx_not_found = 0;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:tuffidx_not_found)
-    for (index_t tu=0; tu<n_tu_ff; ++tu) {
-        tuffidx_to_mi[tu] = -1;
-        for (index_t mi=0; mi<n_tu_ff; ++mi) {
-            if (d->mi_to_tuffidx[mi] == tu) {
-                tuffidx_to_mi[tu] = mi;
-                break;
-            }
-        }
-        if (tuffidx_to_mi[tu] == -1) tuffidx_not_found++;
-    }
-    if (tuffidx_not_found) mpi_err_printf( "could not find %li tu ff indices in mi\n", tuffidx_not_found );
-
-    complex128_t* gg_orb = calloc(t->nO*n_tu_ff*3, sizeof*gg_orb);
-    const claM3d_t lat = claM3d_map(t->pmod->lattice[0]);
-    index_t vtx_not_found = 0;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t v=0; v<t->pmod->n_vert; ++v) {
-        const ph_vertex_t* pv = (const ph_vertex_t*)&t->pmod->vert[v];
-        index_t mapped_tu = find_tu_ff( tu_ff, n_tu_ff, *pv, t->nk, invert_tuff );
-        if (mapped_tu != -1) {
-            index_t mapped_mi = tuffidx_to_mi[mapped_tu];
-            if (mapped_mi != -1) {
-                claV3d_t R = claM3d_vecmat((claV3d_t){{pv->RA[0], pv->RA[1], pv->RA[2]}}, lat);
-                for (index_t x=0; x<3; ++x) {
-                    double* gg_orb_out = (double*)(gg_orb + IDX3(x, mapped_mi, pv->OA, n_tu_ff, t->nO));
-                    complex128_t gg_orb_add_ = I * pv->g * R.v[x];
-                    const double* gg_orb_add = (double*)&gg_orb_add_;
-                    #pragma omp atomic
-                    gg_orb_out[0] += gg_orb_add[0];
-                    #pragma omp atomic
-                    gg_orb_out[1] += gg_orb_add[1];
-                }
-            } else {
-                vtx_not_found++;
-            }
-        } else {
-            vtx_not_found++;
-        }
-    }
-    if (vtx_not_found) mpi_wrn_printf( "could not find %li tu_ff for ph_vert\n", vtx_not_found );
-
-    // intermediate cleanup
-    free( tuffidx_to_mi );
-
-    // transform to mode (phonon band) space
-    const complex128_t* U = t->pmod->internals->U;
-    complex128_t* Ubuf = calloc(POW2(t->nO), sizeof*Ubuf);
-    // TODO conjugate
-    (conj_U ? transpose_conj_outofplace : transpose_outofplace)( Ubuf, U, t->nO );
-    single_gemm_serial( gg_orb, Ubuf, gg, 3*n_tu_ff, t->nO, t->nO, 1.0, 0.0 );
-    free( Ubuf );
-
-    // and clean up the orbital array
-    free( gg_orb );
-}
