@@ -146,6 +146,28 @@ complex128_t* diverge_phonons_get_g( diverge_model_t* m );
  */
 double diverge_phonons_change_regulator( double eta );
 
+/**
+ * apply an acoustic sum rule to the electron phonon coupling vertices. assumes
+ * three dimensional phonon "orbitals", i.e., (o,d) ordering of the OA index
+ * (with o=0...n_sites-1 and d=0..2). Ensures that
+ *
+ * .. math::
+ *
+ *  \sum_{\boldsymbol{R}_A, o_A} g_{xy}(\boldsymbol{R}_A, (o_A, d_A)) = 0
+ *
+ * with :math:`x,y` electronic indices (orbital, spin, formfactor) and
+ * :math:`o_A, d_A` the phononic sites/directions.
+ *
+ * :param ph_vertex_t* vtx: vertex array, must be allocated via
+ *      calloc/malloc/realloc (or their divERGe wrappers) because we use realloc
+ *      on this pointer internally!
+ * :param index_t* n_vtx: number of hoppings, points to new number of
+ *      vertices on return.
+ *
+ * :returns ph_vertex_t*: vertex array, reallocated.
+ */
+ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx );
+
 #ifdef __cplusplus
 }
 #endif

@@ -247,7 +247,8 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
     wsdata_free( ws );
     ifc_free( ifc );
 
-    if (wc->apply_asr) hop = diverge_phonons_asr( hop, &hop_sz );
+    if (wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS)
+        hop = diverge_phonons_asr( hop, &hop_sz );
     m->hop = hop;
     m->n_hop = hop_cap = hop_sz;
 
@@ -681,7 +682,7 @@ static ph_vertex_t* epmatwp_to_ph_vertex_t( const complex128_t* data,
 }
 
 ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
-        const double* masses, double maxrel, index_t* p_vtx_sz ) {
+        const double* masses, double maxrel, index_t* p_vtx_sz, int apply_asr ) {
     qe_wigner_t* q = qe_wigner_read( wigner );
     complex128_t* g = epmatwp_read( epmatwp, q );
     ph_vertex_t* pv = NULL;
@@ -690,6 +691,9 @@ ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
                 q->nrr_g, q->dims2*3, q->dims, maxrel, p_vtx_sz );
         for (index_t i=0; i<*p_vtx_sz; ++i) pv[i].g /= sqrt(masses[pv[i].OA]);
         free( g );
+
+        if (apply_asr)
+            pv = diverge_phonons_asr_vertex(pv, p_vtx_sz);
     }
     qe_wigner_free(q);
     return pv;
@@ -704,7 +708,8 @@ diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
         const diverge_wigner_config_t* wc ) {
     diverge_model_t* m = diverge_phonons_read_ifc( ifc, wc );
     m->vert = (rs_vertex_t*)diverge_phonons_read_elph( wigner, epmatwp,
-            diverge_phonons_model_get_masses(m), maxrel, &m->n_vert );
+            diverge_phonons_model_get_masses(m), maxrel, &m->n_vert,
+            wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES );
 
     return m;
 }

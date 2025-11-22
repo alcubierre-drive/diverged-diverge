@@ -9,6 +9,11 @@ extern "C" {
 typedef struct diverge_model_t diverge_model_t;
 typedef struct ph_vertex_t ph_vertex_t;
 
+// TODO documentation missing
+// TODO python interface for wigner config missing
+#define DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS 0x1
+#define DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES 0x2
+
 /**
  * configuration for reading wigner(.fmt) files. defaults in
  * :c:var:`diverge_wigner_config_default` (or
@@ -23,7 +28,11 @@ typedef struct {
     double eps;
     /** dimension of the model, defaults to -1, i.e., automatic */
     int dim;
-    /** apply the acoustic sum rule */
+    /**
+     * apply the acoustic sum rule to hoppings/vertices (bit-or of
+     * DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS and
+     * DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES)
+     */
     int apply_asr;
     /** apply supercell degeneracy map */
     int apply_ndegen;
@@ -64,12 +73,14 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
  *      this cutoff. Then all elements :math:`g_{Rx}^{R'ab}` that fulfill
  *      :math:`|g_{Rx}^{R'ab}| < RM` are discarded.
  * :param index_t* p_vtx_sz: length of the returned array.
+ * :param int apply_asr: apply the vertex acoustic sum rule (cf.
+ *      :c:func:`diverge_phonons_asr_vertex`).
  *
  * :returns: array of type :c:type:`ph_vertex_t` with the real-space elph
  *      elements, shape (``*p_vtx_sz``,).
  */
 ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
-        const double* masses, double maxrel, index_t* p_vtx_sz );
+        const double* masses, double maxrel, index_t* p_vtx_sz, int apply_asr );
 
 /**
  * provide the memory region where atom masses are stored in a phonon model

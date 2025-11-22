@@ -82,3 +82,69 @@ complex128_t* diverge_phonons_get_g( diverge_model_t* m ) {
 double diverge_phonons_change_regulator( double eta ) {
     return tu_data_phonons_change_regulator( eta );
 }
+
+
+typedef struct { int32_t R12[3], o1, s1, o2, s2, dim; } ph_vertex_asr_t;
+
+ph_vertex_asr_t ph_vertex_to_asr( ph_vertex_t p ) {
+    return (ph_vertex_asr_t){ .R12={p.R12[0],p.R12[1],p.R12[2]},
+        .o1=p.o1, .s1=p.s1, .o2=p.o2, .s2=p.s2, .dim=p.OA%3 };
+}
+
+#define vtree_key_t ph_vertex_asr_t
+#define vtree_val_t complex128_t
+#include "misc/vtree.h"
+
+static inline void xvtree_count( vtree_node_t* node, void* ctx ) { (void)node; (*((index_t*)ctx))++; }
+
+typedef struct {
+    ph_vertex_t* vtx;
+    index_t n_vtx;
+    index_t n_orb;
+} vtx_push_t;
+
+static inline void vtx_push( vtree_node_t* node, void* ctx ) {
+    vtx_push_t* vp = ctx;
+
+    ph_vertex_t node_vtx = {
+        .R12={ node->key.R12[0], node->key.R12[1], node->key.R12[2] },
+        .o1 = node->key.o1,
+        .s1 = node->key.s1,
+        .o2 = node->key.o2,
+        .s2 = node->key.s2,
+        .g = node->val,
+    };
+
+    for (index_t o=0; o<vp->n_orb; ++o) {
+        node_vtx.OA = IDX2(o,node->key.dim,3);
+        vp->vtx[vp->n_vtx++] = node_vtx;
+    }
+}
+
+ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx ) {
+    mpi_log_printf( "apply ASR to phonon vertices in format o1/o2 -> (site, direction)\n" );
+    xvtree_t* x = xvtree_init(MIN(1024, *n_vtx));
+
+    index_t n_orb = 0;
+    for (index_t v=0; v<*n_vtx; ++v) {
+        vtree_node_t* nd = xvtree_find_or_insert(x, ph_vertex_to_asr(vtx[v]));
+        nd->val -= vtx[v].g;
+        n_orb = MAX(n_orb, vtx[v].OA);
+    }
+    n_orb = (n_orb+1)/3;
+    mpi_vrb_printf( "found (%li,3) orbitals\n", n_orb );
+
+    // count the number of vertices to add (without the orbitals!)
+    index_t n_add = 0;
+    xvtree_iter(x, &xvtree_count, &n_add);
+
+    // and realloc that size (with the orbitals)
+    vtx = realloc( vtx, sizeof*vtx * (*n_vtx + n_orb * n_add) );
+
+    vtx_push_t vp = { .vtx=vtx, .n_vtx=*n_vtx, .n_orb=n_orb };
+    xvtree_iter(x, &vtx_push, &vp);
+    xvtree_free(x);
+    *n_vtx += n_orb * n_add;
+    assert( *n_vtx == vp.n_vtx );
+    return vtx;
+}

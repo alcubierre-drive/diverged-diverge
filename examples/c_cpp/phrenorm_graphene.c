@@ -45,8 +45,8 @@ int main(int argc, char** argv) {
 
     double U = 0.0;
     index_t nk = 24,
-            nkf = 5;
-    index_t maxiter = 5;
+            nkf = 1;
+    index_t maxiter = 10;
 
     DIR* dir = opendir("phrenorm_graphene");
     if (dir) closedir(dir);
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
             "phrenorm_graphene/graphene.wout", "phrenorm_graphene/graphene_wsvec.dat", 0 );
 
     diverge_wigner_config_t wc = diverge_wigner_config_defaults;
-    wc.apply_asr = 1;
+    wc.apply_asr = DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS | DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES;
     // read the phonon model (+elph)
     diverge_model_t* p = diverge_phonons_read_ifc_and_elph( "phrenorm_graphene/dfpt.ifc",
             "phrenorm_graphene/wigner.fmt", "phrenorm_graphene/dfpt.epmatwp", 5.e-2, &wc );

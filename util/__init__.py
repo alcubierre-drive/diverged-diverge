@@ -830,13 +830,21 @@ if not _libs["divERGe"] is None:
     phonons_get_g.argtypes = [POINTER(model_t)]
     phonons_get_g.restype = c_voidp
 
+    phonons_change_regulator = _libs["divERGe"].get("diverge_phonons_change_regulator", "cdecl")
+    phonons_change_regulator.argtypes = [c_double]
+    phonons_change_regulator.restype = c_double
+
+    phonons_asr_vertex = _libs["divERGe"].get("diverge_phonons_asr_vertex", "cdecl")
+    phonons_asr_vertex.argtypes = [c_voidp, c_voidp]
+    phonons_asr_vertex.restype = c_voidp
+
     # TODO wrap diverge_wigner_config_t in python
     phonons_read_ifc = _libs["divERGe"].get("diverge_phonons_read_ifc", "cdecl")
     phonons_read_ifc.argtypes = [String, c_voidp]
     phonons_read_ifc.restype = POINTER(model_t)
 
     phonons_read_elph = _libs["divERGe"].get("diverge_phonons_read_elph", "cdecl")
-    phonons_read_elph.argtypes = [String, String, c_voidp, c_double, c_voidp]
+    phonons_read_elph.argtypes = [String, String, c_voidp, c_double, c_voidp, c_int]
     phonons_read_elph.restype = c_voidp
 
     phonons_model_get_masses = _libs["divERGe"].get("diverge_phonons_model_get_masses", "cdecl")
