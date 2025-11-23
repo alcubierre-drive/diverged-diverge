@@ -107,6 +107,7 @@ static inline void vtx_push( vtree_node_t* node, void* ctx ) {
     vtx_push_t* vp = ctx;
 
     ph_vertex_t node_vtx = {
+        .mode = 'F', // TODO we should think about this
         .R12={ node->key.R12[0], node->key.R12[1], node->key.R12[2] },
         .o1 = node->key.o1,
         .s1 = node->key.s1,
