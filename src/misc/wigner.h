@@ -9,9 +9,18 @@ extern "C" {
 typedef struct diverge_model_t diverge_model_t;
 typedef struct ph_vertex_t ph_vertex_t;
 
-// TODO documentation missing
-// TODO python interface for wigner config missing
+/**
+ * bit-or of this constant and
+ * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES` to set which ASR to apply
+ * for model read by :c:func:`diverge_phonons_read_ifc` and
+ * :c:func:`diverge_phonons_read_ifc_and_elph`
+ */
 #define DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS 0x1
+/**
+ * bit-or of this constant and
+ * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS` to set which ASR to apply
+ * for model read by :c:func:`diverge_phonons_read_ifc_and_elph`
+ */
 #define DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES 0x2
 
 /**
@@ -30,8 +39,8 @@ typedef struct {
     int dim;
     /**
      * apply the acoustic sum rule to hoppings/vertices (bit-or of
-     * DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS and
-     * DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES)
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS` and
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES`)
      */
     int apply_asr;
     /** apply supercell degeneracy map */

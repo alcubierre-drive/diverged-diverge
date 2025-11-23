@@ -838,7 +838,35 @@ if not _libs["divERGe"] is None:
     phonons_asr_vertex.argtypes = [c_voidp, c_voidp]
     phonons_asr_vertex.restype = c_voidp
 
-    # TODO wrap diverge_wigner_config_t in python
+    class wigner_config_t(Structure):
+        pass
+    wigner_config_t.__slots__ = [
+        'nsc',
+        'sgn',
+        'eps',
+        'dim',
+        'apply_asr',
+        'apply_ndegen',
+        'apply_massdiv',
+        'apply_rydberg',
+    ]
+    wigner_config_t._fields_ = [
+        ('nsc', index_t),
+        ('sgn', c_int),
+        ('eps', c_double),
+        ('dim', c_int),
+        ('apply_asr', c_int),
+        ('apply_ndegen', c_int),
+        ('apply_massdiv', c_int),
+        ('apply_rydberg', c_int),
+    ]
+    wigner_config_defaults_CPP = _libs["divERGe"].get("diverge_wigner_config_defaults_CPP")
+    wigner_config_defaults_CPP.argtypes = []
+    wigner_config_defaults_CPP.restype = wigner_config_t
+
+    WIGNER_CONFIG_APPLY_ASR_HOPPINGS = 0x1
+    WIGNER_CONFIG_APPLY_ASR_VERTICES = 0x2
+
     phonons_read_ifc = _libs["divERGe"].get("diverge_phonons_read_ifc", "cdecl")
     phonons_read_ifc.argtypes = [String, c_voidp]
     phonons_read_ifc.restype = POINTER(model_t)
