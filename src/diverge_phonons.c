@@ -14,7 +14,7 @@
 #include <assert.h>
 
 rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop ) {
-    mpi_log_printf( "apply ASR to phonon hoppings in format o1/o2 -> (site, direction)\n" );
+    mpi_log_printf( "ASR (hoppings) with phonon orb index -> (site, xyz)\n" );
     index_t n_hop = *n_ph_hop;
 
     index_t n_orb = 0;
@@ -32,6 +32,7 @@ rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop ) {
     }
 
     ph_hop = realloc(ph_hop, (*n_ph_hop = (n_hop + (n_orb*9))) * sizeof*ph_hop);
+    double forcemax = 0.0;
     for (index_t o=0; o<n_orb; ++o)
     for (index_t r1=0; r1<3; ++r1)
     for (index_t r2=0; r2<3; ++r2) {
@@ -39,7 +40,9 @@ rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop ) {
             .o1=IDX2(o,r1,3), .o2=IDX2(o,r2,3),
             .t=-self_forces[IDX3(o,r1,r2, 3,3)],
         };
+        forcemax = MAX(forcemax, cabs(self_forces[IDX3(o,r1,r2, 3,3)]));
     }
+    mpi_log_printf( "ASR (hoppings) maximal restoring force value: %.5e\n", forcemax );
 
     free(self_forces);
     return ph_hop;
@@ -101,6 +104,8 @@ typedef struct {
     ph_vertex_t* vtx;
     index_t n_vtx;
     index_t n_orb;
+
+    double maximum;
 } vtx_push_t;
 
 static inline void vtx_push( vtree_node_t* node, void* ctx ) {
@@ -116,6 +121,8 @@ static inline void vtx_push( vtree_node_t* node, void* ctx ) {
         .g = node->val,
     };
 
+    vp->maximum = MAX( vp->maximum, cabs(node->val) );
+
     for (index_t o=0; o<vp->n_orb; ++o) {
         node_vtx.OA = IDX2(o,node->key.dim,3);
         vp->vtx[vp->n_vtx++] = node_vtx;
@@ -123,7 +130,7 @@ static inline void vtx_push( vtree_node_t* node, void* ctx ) {
 }
 
 ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx ) {
-    mpi_log_printf( "apply ASR to phonon vertices in format o1/o2 -> (site, direction)\n" );
+    mpi_log_printf( "ASR (vertices) with phonon orb index -> (site, xyz)\n" );
     xvtree_t* x = xvtree_init(MIN(1024, *n_vtx));
 
     index_t n_orb = 0;
@@ -142,10 +149,11 @@ ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx ) {
     // and realloc that size (with the orbitals)
     vtx = realloc( vtx, sizeof*vtx * (*n_vtx + n_orb * n_add) );
 
-    vtx_push_t vp = { .vtx=vtx, .n_vtx=*n_vtx, .n_orb=n_orb };
+    vtx_push_t vp = { .vtx=vtx, .n_vtx=*n_vtx, .n_orb=n_orb, .maximum=0 };
     xvtree_iter(x, &vtx_push, &vp);
     xvtree_free(x);
     *n_vtx += n_orb * n_add;
     assert( *n_vtx == vp.n_vtx );
+    mpi_log_printf( "ASR (vertices) maximal restoring element value: %.5e\n", vp.maximum );
     return vtx;
 }
