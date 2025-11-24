@@ -168,6 +168,16 @@ double diverge_phonons_change_regulator( double eta );
  */
 ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx );
 
+/**
+ * change implementation behavior of :c:func:`diverge_phonons_asr_vertex` to an
+ * implementation that sorts all vertex elements and then looks at
+ * displacements/counts of unequal 'formfactor' components in order to sum them
+ * up and thus executes in parallel. should be faster for very large models, but
+ * slower for small models. returns previous mode (in order to save/restore
+ * state).
+ */
+int diverge_phonons_asr_vertex_set_sorted_mode( int sorted );
+
 #ifdef __cplusplus
 }
 #endif

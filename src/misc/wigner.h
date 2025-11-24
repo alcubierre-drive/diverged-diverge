@@ -22,6 +22,13 @@ typedef struct ph_vertex_t ph_vertex_t;
  * for model read by :c:func:`diverge_phonons_read_ifc_and_elph`
  */
 #define DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES 0x2
+/**
+ * bit-or this constant with the other ones to set how to apply ASR for
+ * :c:func:`diverge_phonons_read_ifc_and_elph`. This constant only sets the
+ * algorithm to the sorted one, but doesn't enable the ASR, i.e., it has to be
+ * used in conjunction with :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES`.
+ */
+#define DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED 0x4
 
 /**
  * configuration for reading wigner(.fmt) files. defaults in
@@ -39,8 +46,9 @@ typedef struct {
     int dim;
     /**
      * apply the acoustic sum rule to hoppings/vertices (bit-or of
-     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS` and
-     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES`)
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS`,
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES`, and
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED`)
      */
     int apply_asr;
     /** apply supercell degeneracy map */

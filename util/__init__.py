@@ -838,6 +838,10 @@ if not _libs["divERGe"] is None:
     phonons_asr_vertex.argtypes = [c_voidp, c_voidp]
     phonons_asr_vertex.restype = c_voidp
 
+    phonons_asr_vertex_set_sorted_mode = _libs["divERGe"].get("diverge_phonons_asr_vertex_set_sorted_mode", "cdecl")
+    phonons_asr_vertex_set_sorted_mode.argtypes = [c_int]
+    phonons_asr_vertex_set_sorted_mode.restype = c_int
+
     class wigner_config_t(Structure):
         pass
     wigner_config_t.__slots__ = [
@@ -866,6 +870,7 @@ if not _libs["divERGe"] is None:
 
     WIGNER_CONFIG_APPLY_ASR_HOPPINGS = 0x1
     WIGNER_CONFIG_APPLY_ASR_VERTICES = 0x2
+    WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED = 0x4
 
     phonons_read_ifc = _libs["divERGe"].get("diverge_phonons_read_ifc", "cdecl")
     phonons_read_ifc.argtypes = [String, c_voidp]

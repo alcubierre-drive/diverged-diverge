@@ -666,6 +666,9 @@ static ph_vertex_t* epmatwp_to_ph_vertex_t( const complex128_t* data,
 
     *p_vtx_sz = n_vtx;
     VECTOR_INIT_CAP( ph_vertex_t, vtx, n_vtx );
+    if (!vtx)
+        mpi_err_printf( "cant allocate %.0fGB ph_vertex_t(%li,)\n",
+                (double)(sizeof(ph_vertex_t)*n_vtx) / (double)(1024*1024*1024), n_vtx );
     for (index_t g=0; g<nRg; ++g)
     for (index_t OA=0; OA<n_orb_ph; ++OA)
     for (index_t k=0; k<nRk; ++k)
@@ -707,9 +710,15 @@ diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
         const char* wigner, const char* epmatwp, double maxrel,
         const diverge_wigner_config_t* wc ) {
     diverge_model_t* m = diverge_phonons_read_ifc( ifc, wc );
+
+    int prev_asr_algorithm = diverge_phonons_asr_vertex_set_sorted_mode(
+            wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED);
+
     m->vert = (rs_vertex_t*)diverge_phonons_read_elph( wigner, epmatwp,
             diverge_phonons_model_get_masses(m), maxrel, &m->n_vert,
             wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES );
+
+    diverge_phonons_asr_vertex_set_sorted_mode(prev_asr_algorithm);
 
     return m;
 }

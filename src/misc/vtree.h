@@ -43,6 +43,7 @@ static inline vtree_node_t* xvtree_insert( xvtree_t* x, vtree_key_t key );
 static inline vtree_node_t* xvtree_find_or_insert( xvtree_t* x, vtree_key_t key );
 static inline void xvtree_iter( xvtree_t* x, void (*iter)(vtree_node_t*, void*), void* ctx );
 static inline void xvtree_iter_ascending( xvtree_t* x, void (*iter)(vtree_node_t*, void*), void* ctx );
+static inline index_t xvtree_size( xvtree_t* x );
 
 // IMPLEMENTATION
 #ifndef vtree_key_cmp
@@ -196,6 +197,14 @@ static inline void xvtree_iter( xvtree_t* x, void (*iter)(vtree_node_t*, void*),
 static inline void xvtree_iter_ascending( xvtree_t* x, void (*iter)(vtree_node_t*, void*), void* ctx ) {
     for (vtree_node_t* start=vtree_node_minimum(x->head); start!=NULL; start=vtree_node_next(start))
         (*iter)( start, ctx );
+}
+
+static inline void xvtree_size_iter_( vtree_node_t* v, void* c ) { (void)v; (*((index_t*)c))++; }
+
+static inline index_t xvtree_size( xvtree_t* x ) {
+    index_t size = 0;
+    xvtree_iter( x, &xvtree_size_iter_, &size );
+    return size;
 }
 
 #ifdef __cplusplus
