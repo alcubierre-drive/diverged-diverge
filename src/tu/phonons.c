@@ -184,6 +184,9 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
     fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, fft_sign, FFTW_ESTIMATE);
     ZERO_OUT(fftw_buf, nk*formfacs_sz);
+
+    double tick, t_fft, t_ft;
+    tick = diverge_mpi_wtime();
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t ff=0; ff<n_FFT; ++ff) {
         for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
@@ -196,11 +199,13 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         }
     }
     fftw_execute(p);
+    t_fft = diverge_mpi_wtime() - tick;
     fftw_destroy_plan(p);
 
     // now turn to the FT part, i.e., the nontrivial basis position phonons
     // (which cannot be part of the regular ones somehow)
     const claM3d_t latt = claM3d_map(t->pmod->lattice[0]);
+    tick = diverge_mpi_wtime();
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t kk=0; kk<nk; ++kk) {
         claV3d_t qvec = claV3d_map(t->pmod->internals->kmesh + 3*kk);
@@ -212,6 +217,10 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             fftw_cbuf[IDX2(ff,kk, nk)] += t->vtx[f].g * cexp(I*(double)fft_sign*RA_pos_dot_qvec);
         }
     }
+    t_ft = diverge_mpi_wtime() - tick;
+
+    mpi_tim_printf( "PH: FFT @ %.2fs, FT @ %.2fs\n", t_fft, t_ft );
+
     free( formfacs_count );
     VECTOR_FREE( formfacs_displ );
 
