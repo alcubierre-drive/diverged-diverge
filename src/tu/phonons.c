@@ -16,50 +16,8 @@ LINALG_IMPLEMENT
 // CBO in Kagome/Phonon: https://doi.org/10.1103/PhysRevB.109.075130
 // Hubbard-Holstein: https://doi.org/10.1103/PhysRevB.92.195102
 
-// TODO this is some infrastructure for testing the factors
-static int fft_sign = -1;
-static int conj_U = 0;
-static int conj_l = 1, conj_r = 0;
-
-static int invert_tuff = 0; // TODO NEW, but not needed :)
-
-// TODO this factor is correct for square lattice systems
-// (selection #4)
-static double phase_pref = 0.0;
-
-// TODO this factor works for the SSH model, and also for all other ones to
-// produce symmetric results as soon as the inverted (RA=0) couplings are
-// removed
-// (selection #20)
-// static double phase_pref = -0.5;
-
-static void select_config( void ) {
-    char* cvalue = getenv("PHONON_CFG");
-    if (cvalue) {
-        int value = atoi(cvalue);
-        if (value != -1) {
-            int selectors[] = {value & (1<<0), value & (1<<1), value & (1<<2), value & (1<<3),
-                               value & (1<<4), value & (1<<5), value & (1<<6), value & (1<<7)};
-            fft_sign = selectors[0] ? 1 : -1;
-            conj_U = selectors[1] ? 1 : 0;
-            conj_l = selectors[2] ? 1 : 0;
-            conj_r = selectors[3] ? 1 : 0;
-            int s456 = (selectors[4] | selectors[5] | selectors[6]) >> 4;
-            switch (s456) {
-                case 0: phase_pref =  0.0; break;
-                case 1: phase_pref = -0.5; break;
-                case 2: phase_pref = -1.0; break;
-                case 3: phase_pref = -2.0; break;
-                case 4: phase_pref =  0.5; break;
-                case 5: phase_pref =  1.0; break;
-                case 6: phase_pref =  2.0; break;
-                default: phase_pref = 0.0; break;
-            }
-            mpi_scc_printf( "config #%2i: fft_sign=%i, conj_U=%i, conj_l=%i, conj_r=%i, phase_pref=%.1f\n",
-                    value, fft_sign, conj_U, conj_l, conj_r, phase_pref );
-        }
-    }
-}
+// TODO this is allright the way it is?!
+static const int fft_sign = -1;
 
 struct tu_data_phonons_t {
     diverge_model_t* pmod;
@@ -94,7 +52,6 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
         bool buffered, bool ignore_imag_freq ) {
-    select_config();
     tu_data_phonons_t* t = calloc(1, sizeof*t);
     t->pmod = ph;
     memcpy( t->nk, t->pmod->nk, sizeof t->nk );
@@ -173,12 +130,8 @@ static inline int formfac_equal( const ph_vertex_t* a, const ph_vertex_t* b ) {
 }
 
 static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff,
-        ph_vertex_t ff, const index_t* nk, int invert ) {
+        ph_vertex_t ff, const index_t* nk ) {
     index_t idx = -1;
-    if (invert) {
-        for (int d=0; d<3; ++d) ff.R12[d] *= -1;
-        XORSWAP( ff.o1, ff.o2 );
-    }
     for (int d=0; d<3; ++d) while (ff.R12[d] < 0) ff.R12[d] += nk[d]; // make positive
     for (index_t i=0; i<n_tu_ff; ++i) {
         if (tu_ff[i].ofrom == ff.o2 && tu_ff[i].oto == ff.o1 && tu_ff[i].R[0] == ff.R12[0] &&
@@ -211,25 +164,30 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         formfacs_count[formfacs_sz-1] = t->n_vtx - formfacs_displ[formfacs_sz-1];
     }
 
+    // find how many modes need FFT treatment. the rest requires hand-made FT.
+    index_t n_FFT = 0;
+    for (; n_FFT<formfacs_sz; n_FFT++) if (formfacs[n_FFT].mode) break;
+
+    mpi_log_printf( "PH: found %li unique FFT formfacs, and %li non-FFT ones\n", n_FFT, formfacs_sz-n_FFT );
+
     // perform the FFT
     const index_t nk = kdim(t->nk);
     fftw_iodim64 dims[3];
     dims[0].n = t->nk[0], dims[1].n = t->nk[1], dims[2].n = t->nk[2];
     dims[0].is = t->nk[2]*t->nk[1], dims[1].is = t->nk[2], dims[2].is = 1;
     dims[0].os = t->nk[2]*t->nk[1], dims[1].os = t->nk[2], dims[2].os = 1;
-    fftw_iodim64 howmany = { .n=formfacs_sz, .is=nk, .os=nk };
+    fftw_iodim64 howmany = { .n=n_FFT, .is=nk, .os=nk };
 
+    // allocate space for not just the FFT but also the FT. Then perform the
+    // FFT on that part of the array that needs an FFT.
     fftw_complex* fftw_buf = fftw_malloc(sizeof*fftw_buf * nk*formfacs_sz);
     complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
-    // TODO sign of the FFT
     fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, fft_sign, FFTW_ESTIMATE);
     ZERO_OUT(fftw_buf, nk*formfacs_sz);
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t ff=0; ff<formfacs_sz; ++ff) {
+    for (index_t ff=0; ff<n_FFT; ++ff) {
         for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
             index_t f = formfacs_displ[ff] + cc;
-            // TODO maybe we have to put another R vector in the FFT? or an
-            // additional one?
             const int32_t* R = t->vtx[f].RA;
             index_t z_id = (R[2]<0)? t->nk[2] + R[2] : R[2],
                     y_id = (R[1]<0)? t->nk[1] + R[1] : R[1],
@@ -239,6 +197,21 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     }
     fftw_execute(p);
     fftw_destroy_plan(p);
+
+    // now turn to the FT part, i.e., the nontrivial basis position phonons
+    // (which cannot be part of the regular ones somehow)
+    const claM3d_t latt = claM3d_map(t->pmod->lattice[0]);
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t kk=0; kk<nk; ++kk) {
+        claV3d_t qvec = claV3d_map(t->pmod->internals->kmesh + 3*kk);
+        for (index_t ff=n_FFT; ff<formfacs_sz; ++ff)
+        for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
+            index_t f = formfacs_displ[ff] + cc;
+            claV3d_t RA_pos = {{t->vtx[f].RA_pos[0], t->vtx[f].RA_pos[1], t->vtx[f].RA_pos[2]}};
+            double RA_pos_dot_qvec = claV3d_dot( claM3d_vecmat( RA_pos, latt ), qvec );
+            fftw_cbuf[IDX2(ff,kk, nk)] += t->vtx[f].g * cexp(I*(double)fft_sign*RA_pos_dot_qvec);
+        }
+    }
     free( formfacs_count );
     VECTOR_FREE( formfacs_displ );
 
@@ -253,7 +226,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_not_found)
     for (index_t f=0; f<formfacs_sz; ++f) {
         // find tu_ff index
-        index_t mapped_tu = find_tu_ff( tu_ff, n_tu_ff, formfacs[f], t->nk, invert_tuff );
+        index_t mapped_tu = find_tu_ff( tu_ff, n_tu_ff, formfacs[f], t->nk );
         index_t mapped_mi = -1;
         if (mapped_tu == -1) {
             n_not_found++;
@@ -282,18 +255,12 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         #pragma omp for
         for (index_t kk=0; kk<t->my_nk; ++kk) {
             index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
-            // TODO conjugate
-            (conj_U ? transpose_conj_outofplace : transpose_outofplace)( Ubuf,
-                    U+POW2(t->nO)*kidxc2f(q,t->nk,t->nkf), t->nO );
+            transpose_outofplace( Ubuf, U+POW2(t->nO)*kidxc2f(q,t->nk,t->nkf), t->nO );
             ZERO_OUT( ffbuf, linsz * t->nO );
             for (index_t f=0; f<formfacs_sz; ++f) {
-                // TODO value of the phase
-                const claV3d_t R12 = {{formfacs[f].R12[0],formfacs[f].R12[1],formfacs[f].R12[2]}};
-                const double qR12 = claV3d_dot(claV3d_map(t->pmod->internals->kmesh + 3*q),
-                                               claM3d_vecmat(R12, claM3d_map(t->pmod->lattice[0])));
                 if (ph_vertex_to_mi_map[f] != -1)
                     ffbuf[IDX4(formfacs[f].s2,formfacs[f].s1,ph_vertex_to_mi_map[f],formfacs[f].OA,
-                            t->n_spin,t->n_orbff,t->nO)] += fftw_cbuf[IDX2(f,q,nk)] * cexp(phase_pref*I*qR12);
+                            t->n_spin,t->n_orbff,t->nO)] += fftw_cbuf[IDX2(f,q,nk)];
             }
             single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO+kk*linsz*t->nO, linsz, t->nO, t->nO, 1.0, 0.0 );
         }
@@ -340,13 +307,9 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
         for (index_t r=0; r<linsz; ++r) {
             complex128_t tmp = 0.0;
             for (index_t b=0; b<nO; ++b) {
-                complex128_t gl = g_ph_buf[IDX3(kk,l,b, linsz,nO)];
+                complex128_t gl = conj(g_ph_buf[IDX3(kk,l,b, linsz,nO)]);
                 complex128_t gr = g_ph_buf[IDX3(kk,r,b, linsz,nO)];
                 complex128_t prop = prop_buf[IDX2(kk,b, nO)];
-                // TODO conjugates
-                if (conj_l) gl = conj(gl);
-                if (conj_r) gr = conj(gr);
-
                 tmp += gl * prop * gr;
             }
             buf[IDX3(kk,l,r, linsz,linsz)] += (t->buffered ? 1.0 : fac) * tmp;

@@ -111,7 +111,6 @@ static inline void vtx_push( vtree_node_t* node, void* ctx ) {
     vtx_push_t* vp = ctx;
 
     ph_vertex_t node_vtx = {
-        .mode = 'F', // TODO we should think about this
         .R12={ node->key.R12[0], node->key.R12[1], node->key.R12[2] },
         .o1 = node->key.o1,
         .s1 = node->key.s1,
@@ -202,8 +201,11 @@ static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t
     n_orb = (n_orb + 1)/3;
     mpi_vrb_printf( "found (%li,3) orbitals\n", n_orb );
 
+    VECTOR_SHRINK_TO_FIT( asr_ff )
     VECTOR_PUSH_BACK( asr_ff_displ, *n_vtx ); // in order to easily count :)
+    VECTOR_SHRINK_TO_FIT( asr_ff_displ )
     for (index_t a=0; a<asr_ff_sz; ++a) VECTOR_PUSH_BACK( asr_ff_count, asr_ff_displ[a+1] - asr_ff_displ[a] );
+    VECTOR_SHRINK_TO_FIT( asr_ff_count )
 
     double gmax = 0.0;
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:gmax)

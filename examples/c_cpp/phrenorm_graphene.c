@@ -31,15 +31,7 @@ static void add_symmetries( diverge_model_t* m ) {
     m->n_sym *= -1;
 }
 
-// TODO setenv is only necessary because conventions are a mess (and not sorted
-// out properly yet)
-int setenv(const char *name, const char *value, int overwrite);
-
 int main(int argc, char** argv) {
-
-    // TODO setenv is only necessary because conventions are a mess (and not
-    // sorted out properly yet)
-    // setenv( "PHONON_CFG", "4", 1 );
 
     diverge_init(&argc, &argv);
 
@@ -64,7 +56,9 @@ int main(int argc, char** argv) {
             "phrenorm_graphene/graphene.wout", "phrenorm_graphene/graphene_wsvec.dat", 0 );
 
     diverge_wigner_config_t wc = diverge_wigner_config_defaults;
-    wc.apply_asr = DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS | DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES;
+    wc.apply_asr = DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS |
+                   DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES |
+                   DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED;
     // read the phonon model (+elph)
     diverge_model_t* p = diverge_phonons_read_ifc_and_elph( "phrenorm_graphene/dfpt.ifc",
             "phrenorm_graphene/wigner.fmt", "phrenorm_graphene/dfpt.epmatwp", phabs, &wc );

@@ -8,7 +8,7 @@
 
 static diverge_model_t* hubbard_ssh_model() {
     double omega=1.0;
-    double lambda=0.1;
+    double g=2.0;
     double t=1.0;
     double U=0.0;
     double VP=0.0;
@@ -17,7 +17,6 @@ static diverge_model_t* hubbard_ssh_model() {
     index_t nk=12;
     index_t nkf=5;
 
-    double g = sqrt(lambda * (8.*t) * omega);
     diverge_model_t* m = diverge_model_init();
     strcpy(m->name, "hubbard ssh");
     m->nk[0] = m->nk[1] = nk;
@@ -28,7 +27,7 @@ static diverge_model_t* hubbard_ssh_model() {
         m->hop[m->n_hop].R[i/2] = i%2 ? 1:-1;
         m->hop[m->n_hop++].t = t;
     }
-    m->vert = (rs_vertex_t*)calloc(9, sizeof*m->vert);
+    m->vert = (rs_vertex_t*)calloc(64, sizeof*m->vert);
     m->vert[m->n_vert].chan = 'C'; m->vert[m->n_vert].s1 = -1; m->vert[m->n_vert++].V = U;
     for (int c=0; c<2; ++c)
     for (int i=0; i<4; ++i) {
@@ -47,16 +46,11 @@ static diverge_model_t* hubbard_ssh_model() {
         { {0,0,0}, 1,1, 0,0, omega },
     };
     ph_vertex_t pvert[] = {
-        {'x', { 1, 0, 0 }, 0,0, 0,0, 0, .RA={ 0, 0, 0 }, .g=g },
-        {'x', {-1, 0, 0 }, 0,0, 0,0, 0, .RA={ 0, 0, 0 }, .g=g },
-        {'y', { 0, 1, 0 }, 0,0, 0,0, 1, .RA={ 0, 0, 0 }, .g=g },
-        {'y', { 0,-1, 0 }, 0,0, 0,0, 1, .RA={ 0, 0, 0 }, .g=g },
+        {.mode='x', { 1, 0, 0 }, 0,0, 0,0, 0, .RA_pos={+0.5, 0, 0 }, .g=g },
+        {.mode='x', {-1, 0, 0 }, 0,0, 0,0, 0, .RA_pos={-0.5, 0, 0 }, .g=g },
+        {.mode='y', { 0, 1, 0 }, 0,0, 0,0, 1, .RA_pos={ 0,+0.5, 0 }, .g=g },
+        {.mode='y', { 0,-1, 0 }, 0,0, 0,0, 1, .RA_pos={ 0,-0.5, 0 }, .g=g },
     };
-    // TODO do we need these?!
-    // pvert.push_back( {'x', { 1, 0, 0 }, 0,0, 0,0, 0, { 1, 0, 0 }, -g } );
-    // pvert.push_back( {'x', {-1, 0, 0 }, 0,0, 0,0, 0, {-1, 0, 0 }, -g } );
-    // pvert.push_back( {'y', { 0, 1, 0 }, 0,0, 0,0, 1, { 0, 1, 0 }, -g } );
-    // pvert.push_back( {'y', { 0,-1, 0 }, 0,0, 0,0, 1, { 0,-1, 0 }, -g } );
     diverge_model_internals_tu_phonons(m, max_dist, phop, sizeof(phop)/sizeof(phop[0]),
             pvert, sizeof(pvert)/sizeof(pvert[0]));
     return m;

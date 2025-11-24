@@ -39,12 +39,14 @@ typedef struct diverge_model_t diverge_model_t;
  * look at the examples.
  */
 typedef struct ph_vertex_t {
-    // TODO the mode is only implemented here, nowhere else as of now.
     /**
-     * mode selection for the phononic 'transfer' vector. If ``mode == 'p' ||
-     * mode == 'f' || mode == 'P' || mode == 'F'`` then the phonon is situated
-     * at the floating point position :c:member:`RA_pos`, otherwise use the
-     * lattice vector :c:member:`RA`.
+     * mode selection for the phononic 'transfer' vector. If ``mode == '0'`` use
+     * the lattice vector FFT (:c:member:`RA`). Otherwise the phonon is situated
+     * at the floating point position :c:member:`RA_pos` (in crystal
+     * coordinates; the real position is :math:`R_A^\mathrm{pos} \cdot L` with
+     * :math:`L` the lattice vector matrix) and an explicit floating point
+     * fourier transform (i.e. not an FFT) is performed for the respective
+     * component.
      */
     char mode;
     /**
@@ -67,14 +69,13 @@ typedef struct ph_vertex_t {
     /** phononic 'orbital' (site,xyz) multiindex */
     index_t OA;
     /** phononic 'transfer' vector (only an FFT of :math:`\boldsymbol{q}`) */
-    // TODO the RA/RA_pos selection is *only* implemented in this structure,
-    // nowhere else as of now.
     int32_t RA[3];
     /**
-     * phononic 'transfer' vector (only an FFT of :math:`\boldsymbol{q}`),
-     * but in real coordinates. Use this when :c:member:`mode` is set to
-     * ``mode == 'p' || mode == 'f' || mode == 'P' || mode == 'F'``.
-     * Otherwise use the lattice vector position :c:member:`RA`.
+     * phononic 'transfer' vector (fourier transform of :math:`\boldsymbol{q}`),
+     * but in crystal coordinates (i.e. with the possibility to use fractional
+     * coordinates). Use this when :c:member:`mode` is set to something nonzero.
+     * Otherwise use the lattice vector position :c:member:`RA` (and therefore
+     * also an FFT!)
      */
     float RA_pos[3];
 
@@ -149,7 +150,8 @@ double diverge_phonons_change_regulator( double eta );
 /**
  * apply an acoustic sum rule to the electron phonon coupling vertices. assumes
  * three dimensional phonon "orbitals", i.e., (o,d) ordering of the OA index
- * (with o=0...n_sites-1 and d=0..2). Ensures that
+ * (with o=0...n_sites-1 and d=0..2). operates on *all* vertex elements
+ * irrespective of their :c:member:`ph_vertex_t.mode` setting. Ensures that
  *
  * .. math::
  *
