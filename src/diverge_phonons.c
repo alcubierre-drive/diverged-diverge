@@ -118,7 +118,7 @@ static inline void vtx_push( vtree_node_t* node, void* ctx ) {
         .s1 = node->key.s1,
         .o2 = node->key.o2,
         .s2 = node->key.s2,
-        .g = node->val,
+        .g = -node->val / (double)vp->n_orb, // this is important to get the zero right!
     };
 
     vp->maximum = MAX( vp->maximum, cabs(node->val) );
@@ -136,7 +136,7 @@ ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx ) {
     index_t n_orb = 0;
     for (index_t v=0; v<*n_vtx; ++v) {
         vtree_node_t* nd = xvtree_find_or_insert(x, ph_vertex_to_asr(vtx[v]));
-        nd->val -= vtx[v].g;
+        nd->val += vtx[v].g;
         n_orb = MAX(n_orb, vtx[v].OA);
     }
     n_orb = (n_orb+1)/3;
