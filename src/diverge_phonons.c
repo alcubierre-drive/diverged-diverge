@@ -111,7 +111,7 @@ static inline void vtx_push( vtree_node_t* node, void* ctx ) {
     vtx_push_t* vp = ctx;
 
     ph_vertex_t node_vtx = {
-        .R12={ node->key.R12[0], node->key.R12[1], node->key.R12[2] },
+        .R12 = { node->key.R12[0], node->key.R12[1], node->key.R12[2] },
         .o1 = node->key.o1,
         .s1 = node->key.s1,
         .o2 = node->key.o2,
@@ -132,6 +132,14 @@ static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t
 
 ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx ) {
     mpi_log_printf( "ASR (vertices) with phonon orb index -> (site, xyz)\n" );
+
+    index_t n_vert_nontriv = 0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_vert_nontriv)
+    for (index_t v=0; v<*n_vtx; ++v) if (vtx[v].mode) n_vert_nontriv++;
+
+    if (n_vert_nontriv)
+        mpi_wrn_printf( "found %li non-FFT elph components (.mode!=0), ASR maybe broken\n", n_vert_nontriv );
+
     if (DIVERGE_PHONONS_ASR_VERTEX_USE_COUNT_DISPL_SORTED)
         return diverge_phonons_asr_vertex_sorted( vtx, n_vtx );
     xvtree_t* x = xvtree_init(MIN(1024, *n_vtx));

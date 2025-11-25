@@ -68,6 +68,7 @@ typedef struct ph_vertex_t {
 
     /** phononic 'orbital' (site,xyz) multiindex */
     index_t OA;
+
     /** phononic 'transfer' vector (only an FFT of :math:`\boldsymbol{q}`) */
     int32_t RA[3];
     /**
