@@ -6,7 +6,7 @@
 #include "../src/diverge.h"
 #include "../src/diverge_phonons.h"
 
-static diverge_model_t* hubbard_ssh_model() {
+static diverge_model_t* hubbard_ssh_model( void ) {
     double omega=1.0;
     double g=2.0;
     double t=1.0;

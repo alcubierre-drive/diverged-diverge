@@ -40,9 +40,9 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
     V->Pch = calloc(V->full_vert_size, sizeof(complex128_t));
     V->pp_bubble_int = calloc(V->full_vert_size, sizeof(complex128_t));
     memsize += 2*2*V->full_vert_size;
-    V->Cch = calloc(V->full_vert_size, sizeof(complex128_t)); 
+    V->Cch = calloc(V->full_vert_size, sizeof(complex128_t));
     memsize += 2*V->full_vert_size;
-    V->Dch = calloc(V->full_vert_size, sizeof(complex128_t)); 
+    V->Dch = calloc(V->full_vert_size, sizeof(complex128_t));
     memsize += 2*V->full_vert_size;
     if (V->use_self) {
         V->self_en = calloc(V->selfenergy_size, sizeof(complex128_t));

@@ -46,7 +46,7 @@ struct tu_highsym_vertex_t {
     index_t* qpts_descr_lens;
     /**
      * description of the qpts, number of high-symmetry names (only used for
-     * output via :c:func:`tu_highsym_vertex_to_file`) 
+     * output via :c:func:`tu_highsym_vertex_to_file`)
      */
     index_t n_qpts_descr;
 

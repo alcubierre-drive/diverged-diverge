@@ -210,13 +210,13 @@ static complex128_t* diverge_qgt_tensor_impl_grad( double* lattice_, complex128_
 
 static complex128_t* diverge_qgt_tensor_impl( complex128_t* U, index_t nb, index_t* nk,
         index_t* which_bands, index_t n_which_bands, qgt_improper_gauge_t* ig ) {
-    claM3d_t lattice = claM3d_id(); 
+    claM3d_t lattice = claM3d_id();
     return diverge_qgt_tensor_impl_grad( lattice.m[0], U, nb, nk, which_bands, n_which_bands, ig );
 }
 
 static double* diverge_qgt_impl( complex128_t* U, index_t nb, index_t* nk,
         index_t* which_bands, index_t n_which_bands, qgt_improper_gauge_t* ig ) {
-    claM3d_t lattice = claM3d_id(); 
+    claM3d_t lattice = claM3d_id();
     return diverge_qgt_impl_grad( lattice.m[0], U, nb, nk, which_bands, n_which_bands, ig );
 }
 

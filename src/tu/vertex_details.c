@@ -84,10 +84,10 @@ void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_
             proj_mem += (proj_memtype[mem] == 0) ? proj_memsize[mem] : 0;
             proj_mem_managed += (proj_memtype[mem] == 1) ? proj_memsize[mem] : 0;
             if (mem>0) {
-                proj_memoffset[mem] = (proj_memtype[mem-1] == 0) 
+                proj_memoffset[mem] = (proj_memtype[mem-1] == 0)
                                 ? proj_memsize[mem-1] + proj_memoffset[mem-1]
                                 : proj_memoffset[mem-1];
-                proj_memoffset_managed[mem] = (proj_memtype[mem-1] == 1) 
+                proj_memoffset_managed[mem] = (proj_memtype[mem-1] == 1)
                                 ? proj_memsize[mem-1] + proj_memoffset_managed[mem-1]
                                 : proj_memoffset_managed[mem-1];
             }
