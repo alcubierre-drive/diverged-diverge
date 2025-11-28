@@ -19,6 +19,9 @@ LINALG_IMPLEMENT
 // TODO this is allright the way it is?!
 static const int fft_sign = -1;
 
+typedef struct { index_t kf_idx; double weight; } refinement_t;
+typedef struct { VECTOR_DECL( refinement_t, v ) } vec_refinement_t;
+
 struct tu_data_phonons_t {
     diverge_model_t* pmod;
 
@@ -43,7 +46,12 @@ struct tu_data_phonons_t {
     index_t my_nk;
     index_t my_nk_off;
     const index_t* idx_ibz_in_fullmesh;
+
+    vec_refinement_t refine;
 };
+
+static double DIVERGE_PH_REFINEMENT_GEN_EPS_MESH = 1.e-4; // TODO make this actually variable
+static vec_refinement_t refinement_gen( tu_data_phonons_t* t );
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
@@ -70,11 +78,25 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     t->gbuf_last_Lambda = t->gbuf_zero_last_Lambda =
         t->Dch_last_Lambda = t->Dch_zero_last_Lambda = -1.0;
 
+    t->refine = refinement_gen( t );
+    mpi_log_printf( "automatic Gamma refinement found %li points per coarse point\n",
+        t->refine.v_sz );
+    // TODO: we must take the product of elph vertices *and* the acoustic modes'
+    // propagator and refine over the result. This seems to be the only way to
+    // achieve a smoothened object that behaves correctly in the q->0 limit.
+    // It's a bit nasty because the fourier transformation for these q points
+    // will need to be an FFT on the fine mesh for each formfactor component
+    // separately; we're short on memory if we want to do it for the full g at
+    // once. But this can be hacked together in a similar fashion to what
+    // already exists in this file. Most notably, the amount of storage for the
+    // resulting object is of reasonable size (~same size as g)
+
     tu_data_phonons_init_vertex( t, el->internals->tu_data, el->tu_ff, el->n_tu_ff, el->n_spin );
     return t;
 }
 
 void tu_data_phonons_free( tu_data_phonons_t* t ) {
+    VECTOR_FREE( t->refine.v );
     free(t->gbuf);
     free(t->gbuf_zero);
     free(t->Dch);
@@ -98,7 +120,7 @@ double tu_data_phonons_change_regulator( double reg ) {
 static inline complex128_t gf_gp_plus_gm( const double E, const bool E_imag,
         const bool ignore_imag_freq, const double Lambda ) {
     double E2 = E_imag ? -POW2(E) : POW2(E);
-    return (ignore_imag_freq&&E_imag) ? 0.0 : creal(-1./(POW2(Lambda + I*PHONON_FREQ_REGULATOR) + E2));
+    return (ignore_imag_freq&&E_imag) ? 0.0 : creal(-1./(POW2(Lambda) + I*PHONON_FREQ_REGULATOR + E2));
 }
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
         const double Lambda, const bool ignore_imag_freq ) {
@@ -333,4 +355,111 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
 
 diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t ) { return t->pmod; }
 complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t ) { return t->g_ob_qO; }
+
+static inline double periodic_norm( claV3d_t k, claM3d_t G, const index_t shift[3] ) {
+    double norm = claV3d_norm(k);
+    for (index_t sx=-shift[0]; sx<=shift[0]; ++sx)
+    for (index_t sy=-shift[1]; sy<=shift[1]; ++sy)
+    for (index_t sz=-shift[2]; sz<=shift[2]; ++sz) {
+        double snorm = claV3d_norm(claV3d_add(k,
+                    claM3d_vecmat( (claV3d_t){{sx,sy,sz}}, G )));
+        norm = MIN(norm, snorm);
+    }
+    return norm;
+}
+
+typedef struct { double norm_to_star_idx; index_t star_idx; } star_norm_t;
+#undef SERISORT_COMP
+#define SERISORT_COMP(x, y) ((x.norm_to_star_idx)-(y.norm_to_star_idx))
+SERISORT_IMPL( serisort_star_norm, star_norm_t )
+
+static vec_refinement_t refinement_gen( tu_data_phonons_t* t ) {
+    diverge_model_t* m = t->pmod;
+    const index_t nkkf = kdimtot(m->nk, m->nkf);
+    const claM3d_t G = claM3d_map(m->internals->rlattice.v[0]);
+
+    double Gnorm = claV3d_norm(claV3d_map(G.m[0]));
+    for (int d=1; d<m->internals->dim; ++d) {
+        double Gnorm_d = claV3d_norm(claV3d_map(G.m[d]));
+        Gnorm = MIN(Gnorm,Gnorm_d);
+    }
+
+    // set up the star around Gamma
+    index_t dk[3] = {2, 2, 2};
+    index_t n_star = 1;
+    for (int d=0; d<3; ++d) {
+        if (labs(dk[d]) > m->nk[d]/2) {
+            if (dk[d] > 0)
+                dk[d] = m->nk[d]/2;
+            else
+                dk[d] = -m->nk[d]/2;
+        }
+        if (d >= m->internals->dim)
+            dk[d] = 0;
+        n_star *= 2*dk[d]+1;
+    }
+    index_t star_zero = -1;
+    VECTOR_INIT_CAP( claV3d_t, star, n_star );
+    for (index_t dkx=-dk[0]; dkx<=dk[0]; ++dkx)
+    for (index_t dky=-dk[1]; dky<=dk[1]; ++dky)
+    for (index_t dkz=-dk[2]; dkz<=dk[2]; ++dkz) {
+        claV3d_t dk_vec = {{dkx, dky, dkz}};
+        for (int d=0; d<3; ++d) dk_vec.v[d] /= (double)m->nk[d];
+        if (dkx==0 && dky==0 && dkz==0) star_zero = star_sz;
+        VECTOR_PUSH_BACK( star, claM3d_vecmat(dk_vec, G) );
+    }
+
+    vec_refinement_t result = {0};
+    double refinement_total_weight = 0.0;
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
+    {
+    star_norm_t* star_norms = calloc( n_star, sizeof*star_norms );
+    star_norm_t* tmp = calloc( n_star, sizeof*tmp );
+    VECTOR_INIT( refinement_t, t_refinement );
+
+    #pragma omp for
+    for (index_t k=0; k<nkkf; ++k) {
+        claV3d_t kfvec = claV3d_map(m->internals->kfmesh + 3*k);
+        for (index_t s=0; s<n_star; ++s)
+            star_norms[s] = (star_norm_t){
+                .norm_to_star_idx=periodic_norm(claV3d_sub(kfvec, star[s]), G, dk),
+                .star_idx=s,
+            };
+        serisort_star_norm_s( star_norms, n_star, tmp );
+        index_t n_closest = 0;
+        int close_to_zero = 0;
+        for (index_t s=0; s<n_star; ++s) {
+            n_closest = s+1;
+            if (fabs(star_norms[s].norm_to_star_idx-star_norms[0].norm_to_star_idx) >
+                    (DIVERGE_PH_REFINEMENT_GEN_EPS_MESH * Gnorm))
+                break;
+            if (star_norms[s].star_idx == star_zero)
+                close_to_zero = 1;
+        }
+        if (!close_to_zero) continue;
+
+        VECTOR_PUSH_BACK( t_refinement, (refinement_t){.kf_idx=k, .weight=1./(double)n_closest} );
+    }
+    VECTOR_SHRINK_TO_FIT( t_refinement );
+    free( tmp );
+    free( star_norms );
+
+    #pragma omp critical
+    {
+        for (index_t r=0; r<t_refinement_sz; ++r) {
+            VECTOR_PUSH_BACK( result.v, t_refinement[r] );
+            refinement_total_weight += t_refinement[r].weight;
+        }
+    }
+
+    VECTOR_FREE( t_refinement );
+    } // pragma omp parallel
+
+    VECTOR_FREE( star );
+
+    for (index_t r=0; r<result.v_sz; ++r)
+        result.v[r].weight /= refinement_total_weight;
+    VECTOR_SHRINK_TO_FIT( result.v );
+    return result;
+}
 
