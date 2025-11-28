@@ -84,6 +84,14 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("tu_extra_propagator_timings") {
         TU_INTERNALS->propagator_extra_cpu_timings = atoi(val);
     }
+    CHECKKEY("tu_unique_orbff_impl") {
+        if (!strcmp(val, "mergesort"))
+            tu_data_unique_orbff_impl = unique_orbff_impl_mergesort;
+        else if (!strcmp(val, "hashtable"))
+            tu_data_unique_orbff_impl = unique_orbff_impl_hashtable;
+        else if (!strcmp(val, "btree"))
+            tu_data_unique_orbff_impl = unique_orbff_impl_btree;
+    }
     CHECKKEY("tu_phonons_buffered") {
         INTERNALS->tu_phonons_buffered = atoi(val);
     }

@@ -24,6 +24,12 @@ typedef enum {
     tu_fft_algorithm_mpi_new,
 } tu_fft_algorithm_t;
 
+typedef enum {
+    unique_orbff_impl_btree,
+    unique_orbff_impl_hashtable,
+    unique_orbff_impl_mergesort,
+} unique_orbff_impl_t;
+
 typedef struct tu_data_t tu_data_t;
 typedef struct tu_data_phonons_t tu_data_phonons_t;
 
@@ -63,7 +69,7 @@ struct tu_data_t {
                        which_fft_greens,
                        which_fft_red;
     bool propagator_extra_cpu_timings;
-    bool unique_orbff_hashtable_impl;
+    unique_orbff_impl_t unique_orbff_impl;
 
     // reduction of computational cost of the loop
     VECTOR_DECL( claV3i_t, existing_ff )
@@ -95,6 +101,7 @@ void tu_data_destructor( void* model );
 extern double SYMNORM_TU_BOND_MAX;
 extern double SYMNORM_MATRIX_ZERO;
 extern int generate_reduced_loop_maps_disabled;
+extern unique_orbff_impl_t tu_data_unique_orbff_impl;
 
 #ifdef __cplusplus
 }

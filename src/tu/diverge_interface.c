@@ -17,6 +17,14 @@ LINALG_IMPLEMENT
 
 int generate_reduced_loop_maps_disabled = 0;
 
+#if   defined(DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE)
+unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_hashtable;
+#elif defined(DIVERGE_UNIQUE_ORBFF_FIND_MERGESORT)
+unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_mergesort;
+#else // DIVERGE_UNIQUE_ORBFF_FIND
+unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_btree;
+#endif // DIVERGE_UNIQUE_ORBFF_FIND
+
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     if (!model->internals->has_common_internals) {
         mpi_err_printf("model needs common internals before tu internals!\n");
@@ -40,11 +48,9 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_greedy;
     #endif
     info->propagator_extra_cpu_timings = false;
-    #ifdef DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE
-    info->unique_orbff_hashtable_impl = 1;
-    #else
-    info->unique_orbff_hashtable_impl = 0;
-    #endif
+
+    info->unique_orbff_impl = tu_data_unique_orbff_impl;
+
     model->internals->tu_data = (void*)info;
     model->internals->tu_data_destructor = tu_data_destructor;
 
@@ -505,6 +511,10 @@ void sort_loopmaps(diverge_model_t* model) {
 
 typedef struct { VECTOR_DECL( claV2ll_t, v ) } vec_claV2ll_t;
 
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) ((x).v[2]-(y).v[2])
+MERGESORT_IMPL( mergesort_trial_vecs, claV3ll_t )
+
 void generate_reduced_loop_maps(diverge_model_t* model) {
     tu_data_t* tu_data = model->internals->tu_data;
 
@@ -531,7 +541,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     VECTOR_INIT_CAP( vec_claV2ll_t, _lmap, MAX(tu_data->n_orbff,1024) );
     index_t nff = tu_data->existing_ff_sz;
     // iterate over all unique pair combinations
-    if (tu_data->unique_orbff_hashtable_impl) {
+    if (tu_data->unique_orbff_impl == unique_orbff_impl_hashtable) {
         hashtable_t* index_to_reduced = hashtable_init( MAX(tu_data->n_orbff*4096,1024), 4 );
         index_t curr_idx = 1;
         for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
@@ -552,7 +562,42 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
             }
         }
         hashtable_free( index_to_reduced );
+    } else if (tu_data->unique_orbff_impl == unique_orbff_impl_mergesort) {
+        claV3ll_t* m1m3_to_trial = calloc(POW2(tu_data->n_orbff), sizeof*m1m3_to_trial);
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2)
+        for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
+        for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
+            index_t fidx1 = mi_to_ffidx[m1];
+            index_t fidx3 = mi_to_ffidx[m3];
+            index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
+                              mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
+                              n_orb,n_orb,n_orb,n_orb);
+            m1m3_to_trial[IDX2(m1,m3, tu_data->n_orbff)] = (claV3ll_t){{ m1,m3, trial }};
+        }
+
+        const index_t n_orbff_2 = POW2(tu_data->n_orbff);
+        mergesort_trial_vecs( m1m3_to_trial, n_orbff_2, diverge_omp_num_threads(), 0 );
+
+        // this is serial...
+        claV3ll_t* prev = NULL;
+        for (index_t i=0; i<n_orbff_2; ++i) {
+            int is_new = prev ? prev->v[2] != m1m3_to_trial[i].v[2] : !prev;
+            if (is_new) {
+                prev = &m1m3_to_trial[i];
+
+                vec_claV2ll_t b = {0};
+                VECTOR_SHRINK_TO_FIT( _lmap[_lmap_sz-1].v );
+                VECTOR_PUSH_BACK( b.v, (claV2ll_t){{m1m3_to_trial[i].v[0], m1m3_to_trial[i].v[1]}} );
+                VECTOR_PUSH_BACK( _lmap, b );
+            } else {
+                VECTOR_PUSH_BACK( _lmap[_lmap_sz-1].v, (claV2ll_t){{m1m3_to_trial[i].v[0], m1m3_to_trial[i].v[1]}} );
+            }
+        }
+        VECTOR_SHRINK_TO_FIT( _lmap );
+        free(m1m3_to_trial);
     } else {
+        if (tu_data->unique_orbff_impl != unique_orbff_impl_btree)
+            mpi_err_printf( "invalid unique_orbff_impl (%i), reset to btree\n", tu_data->unique_orbff_impl );
         xbtree_t* index_to_reduced = xbtree_init( MAX(tu_data->n_orbff,1024) );
         index_t curr_idx = 0;
         for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
