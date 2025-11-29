@@ -47,16 +47,22 @@ struct tu_data_phonons_t {
     index_t my_nk_off;
     const index_t* idx_ibz_in_fullmesh;
 
-    vec_refinement_t refine;
+    int enable_refinement;
+    refinement_t* refine;
+    index_t n_refine;
+
+    complex128_t* g_ob_qO_refined; // (n_refine, n_spin,n_spin,n_orbff, nO)
+    complex128_t *gbuf_ref, *gbuf_ref_zero; // (n_refined, nO)
+    double gbuf_ref_last_Lambda, gbuf_ref_zero_last_Lambda;
 };
 
 static double DIVERGE_PH_REFINEMENT_GEN_EPS_MESH = 1.e-4; // TODO make this actually variable
-static vec_refinement_t refinement_gen( tu_data_phonons_t* t );
+static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, index_t* n_ref );
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
-        const double Lambda, const bool ignore_imag_freq );
+        const double Lambda, const bool ignore_imag_freq, const bool refined );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
         bool buffered, bool ignore_imag_freq ) {
@@ -70,38 +76,32 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     if (memcmp( t->nk, el->nk, sizeof(t->nk) ) != 0)
         mpi_err_printf( "kpoints from ph (%li)/el (%li) don't match\n", kdim(t->nk), kdim(el->nk) );
     assert( t->pmod->n_spin == 1 );
-    assert( t->pmod->internals->E_imag != NULL );
+    assert( t->pmod->internals->model_phonons_imag_freq != NULL );
     t->vtx = (ph_vertex_t*)t->pmod->vert;
     t->n_vtx = t->pmod->n_vert;
     t->buffered = buffered;
     t->ignore_imag_freq = ignore_imag_freq;
-    t->gbuf_last_Lambda = t->gbuf_zero_last_Lambda =
-        t->Dch_last_Lambda = t->Dch_zero_last_Lambda = -1.0;
+    t->gbuf_last_Lambda = t->gbuf_zero_last_Lambda = t->gbuf_ref_last_Lambda =
+        t->gbuf_ref_zero_last_Lambda = t->Dch_last_Lambda = t->Dch_zero_last_Lambda = -1.0;
 
-    t->refine = refinement_gen( t );
-    mpi_log_printf( "automatic Gamma refinement found %li points per coarse point\n",
-        t->refine.v_sz );
-    // TODO: we must take the product of elph vertices *and* the acoustic modes'
-    // propagator and refine over the result. This seems to be the only way to
-    // achieve a smoothened object that behaves correctly in the q->0 limit.
-    // It's a bit nasty because the fourier transformation for these q points
-    // will need to be an FFT on the fine mesh for each formfactor component
-    // separately; we're short on memory if we want to do it for the full g at
-    // once. But this can be hacked together in a similar fashion to what
-    // already exists in this file. Most notably, the amount of storage for the
-    // resulting object is of reasonable size (~same size as g)
+    t->enable_refinement = 0; /* TODO */ mpi_log_printf( "automatic Gamma refinement not enabled\n" );
+    t->refine = tu_data_phonons_generate_refinement( t, &t->n_refine );
+    mpi_log_printf( "automatic Gamma refinement found %li points per coarse point\n", t->n_refine );
 
     tu_data_phonons_init_vertex( t, el->internals->tu_data, el->tu_ff, el->n_tu_ff, el->n_spin );
     return t;
 }
 
 void tu_data_phonons_free( tu_data_phonons_t* t ) {
-    VECTOR_FREE( t->refine.v );
+    free(t->refine);
     free(t->gbuf);
     free(t->gbuf_zero);
+    free(t->gbuf_ref);
+    free(t->gbuf_ref_zero);
     free(t->Dch);
     free(t->Dch_zero);
     free(t->g_ob_qO);
+    free(t->g_ob_qO_refined);
     free(t);
 }
 
@@ -123,22 +123,34 @@ static inline complex128_t gf_gp_plus_gm( const double E, const bool E_imag,
     return (ignore_imag_freq&&E_imag) ? 0.0 : creal(-1./(POW2(Lambda) + I*PHONON_FREQ_REGULATOR + E2));
 }
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
-        const double Lambda, const bool ignore_imag_freq ) {
+        const double Lambda, const bool ignore_imag_freq, const bool refined ) {
     const int iszero = Lambda == 0.0;
-    complex128_t* buf = iszero ? t->gbuf_zero : t->gbuf;
-    double* last = iszero ? &t->gbuf_zero_last_Lambda : &t->gbuf_last_Lambda;
+    complex128_t* buf = refined ? (iszero ? t->gbuf_ref_zero : t->gbuf_ref) :
+                                  (iszero ? t->gbuf_zero : t->gbuf);
+    double* last = refined ? (iszero ? &t->gbuf_ref_zero_last_Lambda : &t->gbuf_ref_last_Lambda) :
+                             (iszero ? &t->gbuf_zero_last_Lambda : &t->gbuf_last_Lambda);
     if (*last == Lambda) return buf;
     *last = Lambda;
 
     const double* E = t->pmod->internals->E;
     const cbyte_t* E_imag = t->pmod->internals->model_phonons_imag_freq;
 
-    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
-    for (index_t kk=0; kk<t->my_nk; ++kk)
-    for (index_t b=0; b<t->nO; ++b) {
-        const index_t q = kidxc2f( t->idx_ibz_in_fullmesh[t->my_nk_off+kk], t->nk, t->nkf );
-        buf[IDX2(kk,b,t->nO)] = gf_gp_plus_gm( E[IDX2(q,b,t->nO)],
-                bitary_get(E_imag,IDX2(q,b,t->nO)), ignore_imag_freq, Lambda );
+    if (refined) {
+        #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+        for (index_t r=0; r<t->n_refine; ++r)
+        for (index_t b=0; b<t->nO; ++b) {
+            const index_t q = t->refine[r].kf_idx;
+            buf[IDX2(r,b,t->nO)] = gf_gp_plus_gm( E[IDX2(q,b,t->nO)],
+                    bitary_get(E_imag,IDX2(q,b,t->nO)), ignore_imag_freq, Lambda );
+        }
+    } else {
+        #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+        for (index_t kk=0; kk<t->my_nk; ++kk)
+        for (index_t b=0; b<t->nO; ++b) {
+            const index_t q = kidxc2f( t->idx_ibz_in_fullmesh[t->my_nk_off+kk], t->nk, t->nkf );
+            buf[IDX2(kk,b,t->nO)] = gf_gp_plus_gm( E[IDX2(q,b,t->nO)],
+                    bitary_get(E_imag,IDX2(q,b,t->nO)), ignore_imag_freq, Lambda );
+        }
     }
     return buf;
 }
@@ -207,7 +219,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, fft_sign, FFTW_ESTIMATE);
     ZERO_OUT(fftw_buf, nk*formfacs_sz);
 
-    double tick, t_fft, t_ft;
+    double tick, t_fft, t_ft, t_ref;
     tick = diverge_mpi_wtime();
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t ff=0; ff<n_FFT; ++ff) {
@@ -241,11 +253,6 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     }
     t_ft = diverge_mpi_wtime() - tick;
 
-    mpi_tim_printf( "PH: FFT @ %.2fs, FT @ %.2fs\n", t_fft, t_ft );
-
-    free( formfacs_count );
-    VECTOR_FREE( formfacs_displ );
-
     t->my_nk = d->my_nk;
     t->my_nk_off = d->my_nk_off;
     t->idx_ibz_in_fullmesh = d->symm->idx_ibz_in_fullmesh;
@@ -273,9 +280,47 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     if (n_not_found > 0)
         mpi_err_printf( "%li elph entries not found in tu_ff\n", n_not_found );
 
-    // write out the objects to g_ob_qO, but in phonon band space!
     const index_t linsz = POW2(t->n_spin)*t->n_orbff;
     const complex128_t* U = t->pmod->internals->U;
+
+    tick = diverge_mpi_wtime();
+    // do the refinement at the Gamma point
+    t->g_ob_qO_refined = calloc(t->n_refine * linsz * t->nO, sizeof*t->g_ob_qO_refined);
+    if (!t->g_ob_qO_refined)
+        mpi_err_printf( "cant allocate t->g_ob_qO_refined(%li,%li,%li) array\n", t->n_refine, linsz, t->nO )
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
+    { complex128_t* ffbuf = calloc(linsz * t->nO, sizeof*ffbuf);
+      complex128_t* Ubuf = calloc(POW2(t->nO), sizeof*Ubuf);
+    #pragma omp for
+    for (index_t r=0; r<t->n_refine; ++r) {
+        index_t qf = t->refine[r].kf_idx;
+        transpose_outofplace( Ubuf, U+POW2(t->nO)*qf, t->nO );
+        ZERO_OUT( ffbuf, linsz*t->nO );
+        claV3d_t qvec = claV3d_map(t->pmod->internals->kfmesh + 3*qf);
+        for (index_t ff=0; ff<formfacs_sz; ++ff)
+        for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
+            index_t f = formfacs_displ[ff] + cc;
+            index_t mi = ph_vertex_to_mi_map[ff];
+            if (mi != -1) {
+                claV3d_t RA_pos = t->vtx[f].mode ?
+                    (claV3d_t){{t->vtx[f].RA_pos[0], t->vtx[f].RA_pos[1], t->vtx[f].RA_pos[2]}} :
+                    (claV3d_t){{t->vtx[f].RA[0], t->vtx[f].RA[1], t->vtx[f].RA[2]}};
+                double RA_pos_dot_qvec = claV3d_dot( claM3d_vecmat( RA_pos, latt ), qvec );
+                ffbuf[IDX4(formfacs[f].s2, formfacs[f].s1, mi, formfacs[f].OA,
+                        t->n_spin, t->n_orbff, t->nO)] += t->vtx[f].g * cexp(I*(double)fft_sign*RA_pos_dot_qvec);
+            }
+        }
+        single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO_refined+r*linsz*t->nO, linsz,
+                t->nO, t->nO, 1.0, 0.0 );
+    } free( Ubuf );
+      free( ffbuf ); }
+    t_ref = diverge_mpi_wtime() - tick;
+    mpi_tim_printf( "PH: FFT @ %.2fs, FT @ %.2f, REF @ %.2fs\n", t_fft, t_ft, t_ref );
+
+    free( formfacs_count );
+    VECTOR_FREE( formfacs_displ );
+
+    // write out the objects to g_ob_qO, but in phonon band space
     t->g_ob_qO = calloc(t->my_nk * linsz * t->nO, sizeof*t->g_ob_qO);
     if (!t->g_ob_qO)
         mpi_err_printf( "cant allocate t->g_ob_qO(%li,%li,%li) array\n", t->my_nk, linsz, t->nO );
@@ -306,6 +351,8 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     }
     t->gbuf_zero = calloc(t->my_nk * t->nO, sizeof*t->gbuf_zero);
     t->gbuf = calloc(t->my_nk * t->nO, sizeof*t->gbuf);
+    t->gbuf_ref_zero = calloc(t->n_refine * t->nO, sizeof*t->gbuf_ref_zero);
+    t->gbuf_ref = calloc(t->n_refine * t->nO, sizeof*t->gbuf_ref);
 
     free( ph_vertex_to_mi_map );
     fftw_free(fftw_buf);
@@ -331,11 +378,20 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
 
     if (calc) {
         const complex128_t *g_ph_buf = t->g_ob_qO,
-                           *prop_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq );
+                           *prop_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq, false ),
+                           *g_ph_ref_buf = t->g_ob_qO_refined,
+                           *prop_ref_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq, true );
+        index_t kk_gamma = -1;
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(3)
         for (index_t kk=0; kk<my_nk; ++kk)
         for (index_t l=0; l<linsz; ++l)
         for (index_t r=0; r<linsz; ++r) {
+            index_t is_gamma = t->enable_refinement ? (t->idx_ibz_in_fullmesh[t->my_nk_off+kk] == 0) : 0;
+            if (is_gamma) {
+                #pragma omp atomic write
+                kk_gamma = kk; // this case will only occur for one thread at a time
+                continue;
+            }
             complex128_t tmp = 0.0;
             for (index_t b=0; b<nO; ++b) {
                 complex128_t gl = conj(g_ph_buf[IDX3(kk,l,b, linsz,nO)]);
@@ -344,6 +400,22 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
                 tmp += gl * prop * gr;
             }
             buf[IDX3(kk,l,r, linsz,linsz)] += (t->buffered ? 1.0 : fac) * tmp;
+        }
+
+        if (kk_gamma != -1) {
+            #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2)
+            for (index_t l=0; l<linsz; ++l)
+            for (index_t r=0; r<linsz; ++r) {
+                complex128_t tmp = 0.0;
+                for (index_t f=0; f<t->n_refine; ++f)
+                for (index_t b=0; b<nO; ++b) {
+                    complex128_t gl = conj(g_ph_ref_buf[IDX3(f,l,b, linsz,nO)]);
+                    complex128_t gr = g_ph_ref_buf[IDX3(f,r,b, linsz,nO)];
+                    complex128_t prop = prop_ref_buf[IDX2(f,b, nO)];
+                    tmp += gl * prop * gr * t->refine[f].weight;
+                }
+                buf[IDX3(kk_gamma,l,r, linsz,linsz)] += (t->buffered ? 1.0 : fac) * tmp;
+            }
         }
     }
 
@@ -373,7 +445,11 @@ typedef struct { double norm_to_star_idx; index_t star_idx; } star_norm_t;
 #define SERISORT_COMP(x, y) ((x.norm_to_star_idx)-(y.norm_to_star_idx))
 SERISORT_IMPL( serisort_star_norm, star_norm_t )
 
-static vec_refinement_t refinement_gen( tu_data_phonons_t* t ) {
+#undef MERGESORT_COMP
+#define MERGESORT_COMP(x, y) ((x).kf_idx-(y).kf_idx)
+MERGESORT_IMPL( mergesort_refinement, refinement_t )
+
+static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, index_t* n_ref ) {
     diverge_model_t* m = t->pmod;
     const index_t nkkf = kdimtot(m->nk, m->nkf);
     const claM3d_t G = claM3d_map(m->internals->rlattice.v[0]);
@@ -460,6 +536,10 @@ static vec_refinement_t refinement_gen( tu_data_phonons_t* t ) {
     for (index_t r=0; r<result.v_sz; ++r)
         result.v[r].weight /= refinement_total_weight;
     VECTOR_SHRINK_TO_FIT( result.v );
-    return result;
+    *n_ref = result.v_sz;
+
+    // consistent behaviour across MPI ranks
+    mergesort_refinement( result.v, result.v_sz, diverge_omp_num_threads(), 0 );
+    return result.v;
 }
 
