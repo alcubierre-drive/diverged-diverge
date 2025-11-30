@@ -11,6 +11,9 @@
 #include "misc/kmeans_lloyd.h"
 #include "misc/batched_eigen.h"
 #include "misc/shared_mem.h"
+#include "misc/qnan.h"
+
+#include "tu/phonons.h"
 #include "tu/propagator_cpu_mpi.h"
 #include "tu/propagator_cpu_mpi_fft.h"
 
@@ -28,7 +31,7 @@ extern double autofine_gamma;
 static int parse_vector_int( int* vec, int len, const char* str );
 static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf);
 
-static char hacking_keys[48][48] = {{0}};
+static char hacking_keys[128][48] = {{0}};
 static int hacking_keys_setup = 0;
 
 #define CHECKKEY( ckey ) \

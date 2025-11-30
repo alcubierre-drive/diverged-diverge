@@ -130,8 +130,31 @@ void* diverge_phonons_get_ifrq( diverge_model_t* m );
  * number of phonon modes. In case this array is written to the changes are
  * applied to the RG flow (*this is the actual buffer, not a copy*). May return
  * NULL in case phonon internals are not initialized.
+ *
+ * ``if (refined)``, return the *refined* electron-phonon coupling buffer, size
+ * being (n_refine, n_spin, n_spin, n_orbff, nO). The size of refinement can be
+ * returned with :c:func:`diverge_phonons_get_refine`.
  */
-complex128_t* diverge_phonons_get_g( diverge_model_t* m );
+complex128_t* diverge_phonons_get_g( diverge_model_t* m, int refined );
+
+/** refinement structure, simple tuple of (kf_index, weight). */
+typedef struct {
+    /** index of the refined point in the fine mesh */
+    index_t kf_idx;
+    /**
+     * weight of the refined point. All refined points are weighted such that
+     * the sum of the weights is one.
+     */
+    double weight;
+} refinement_t;
+// TODO wrap in python
+
+/**
+ * returns the refinement (or NULL) of the phonon-Gamma point vertex.
+ * ``n_refine`` is set to the length of the refinement.
+ */
+refinement_t* diverge_phonons_get_refine( diverge_model_t* m, index_t* n_refine );
+// TODO wrap in python
 
 /**
  * Changes the phonon propagator regulator :math:`\eta` for the
@@ -139,7 +162,7 @@ complex128_t* diverge_phonons_get_g( diverge_model_t* m );
  *
  * .. math::
  *
- *  D_\nu(\boldsymbol{q}, iq_0) = \mathrm{Re}\bigg[ \frac{1}{(i(q_0 + i\eta))^2 - \omega_{\nu}(\boldsymbol{q})^2} \bigg]
+ *  D_\nu(\boldsymbol{q}, iq_0) = \mathrm{Re}\bigg[ \frac{1}{(iq_0)^2 - i\eta - \omega_{\nu}(\boldsymbol{q})^2} \bigg]
  *
  * This is highly relevant for the application of the theory to acoustic modes.
  * The function returns the old value for :math:`\eta`. If ``qnan_isnan(eta)``
@@ -180,6 +203,22 @@ ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx );
  * state).
  */
 int diverge_phonons_asr_vertex_set_sorted_mode( int sorted );
+
+
+/**
+ * enable refinement of the Gamma point D channel vertex value, must be called
+ * prior to :c:func:`diverge_model_internals_tu_phonons`.
+ *
+ * :param diverge_model_t* el: electronic model
+ * :param int enable_refinement: whether to enable refinement or not
+ * :param double eps_mesh: This value is considered zero for the construction of
+ *      the refinement. the previous value is returned. setting a non-default
+ *      value can be avioded by passing a quiet nan (:c:func:`qnan_gen()`).
+ *
+ * :returns double: previous value for ``eps_mesh``, in order to have some
+ *      introspection.
+ */
+double diverge_phonons_enable_refinement( diverge_model_t* el, int enable_refinement, double eps_mesh );
 
 #ifdef __cplusplus
 }

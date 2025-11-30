@@ -79,9 +79,9 @@ void* diverge_phonons_get_ifrq( diverge_model_t* m ) {
     return m->internals->model_phonons_imag_freq;
 }
 
-complex128_t* diverge_phonons_get_g( diverge_model_t* m ) {
+complex128_t* diverge_phonons_get_g( diverge_model_t* m, int refined ) {
     tu_data_phonons_t* p = m->internals->tu_data_phonons;
-    return p ? tu_data_phonons_get_g(p) : NULL;
+    return p ? (refined ? tu_data_phonons_get_g_ref(p) : tu_data_phonons_get_g(p)) : NULL;
 }
 
 double diverge_phonons_change_regulator( double eta ) {
@@ -245,4 +245,15 @@ static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t
 int diverge_phonons_asr_vertex_set_sorted_mode( int sorted ) {
     XORSWAP( DIVERGE_PHONONS_ASR_VERTEX_USE_COUNT_DISPL_SORTED, sorted );
     return sorted;
+}
+
+double diverge_phonons_enable_refinement( diverge_model_t* el, int enable_refinement, double eps_mesh ) {
+    el->internals->tu_phonons_refined = enable_refinement;
+    return tu_data_phonons_change_refinement_eps(eps_mesh);
+}
+
+refinement_t* diverge_phonons_get_refine( diverge_model_t* m, index_t* n_refine ) {
+    tu_data_phonons_t* p = m->internals->tu_data_phonons;
+    if (!p) return NULL;
+    return tu_data_phonons_get_refine( p, n_refine );
 }

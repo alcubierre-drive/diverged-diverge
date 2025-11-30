@@ -250,8 +250,10 @@ DIVERGE_UNSTABLE {
         diverge_phonons_asr_vertex;
         diverge_phonons_asr_vertex_set_sorted_mode;
         diverge_phonons_change_regulator;
+        diverge_phonons_enable_refinement;
         diverge_phonons_get_g;
         diverge_phonons_get_ifrq;
+        diverge_phonons_get_refine;
         diverge_phonons_model_get_masses;
         diverge_phonons_read_elph;
         diverge_phonons_read_ifc;

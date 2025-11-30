@@ -191,13 +191,13 @@ component.</p>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.RA">
-<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RA</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.ph_vertex_t.RA" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L70"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RA</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.ph_vertex_t.RA" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L71"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>phononic ‘transfer’ vector (only an FFT of <span class="math notranslate nohighlight">\(\boldsymbol{q}\)</span>)</p>
 </dd></dl>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.RA_pos">
-<span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RA_pos</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.ph_vertex_t.RA_pos" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L73"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RA_pos</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.ph_vertex_t.RA_pos" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L74"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>phononic ‘transfer’ vector (fourier transform of <span class="math notranslate nohighlight">\(\boldsymbol{q}\)</span>),
 but in crystal coordinates (i.e. with the possibility to use fractional
 coordinates). Use this when <a class="reference internal" href="#c.ph_vertex_t.mode" title="mode"><code class="xref c c-member docutils literal notranslate"><span class="pre">mode</span></code></a> is set to something nonzero.
@@ -207,7 +207,7 @@ also an FFT!)</p>
 
 <dl class="c member">
 <dt class="sig sig-object c" id="c.ph_vertex_t.g">
-<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">g</span></span></span><a class="headerlink" href="#c.ph_vertex_t.g" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L81"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">g</span></span></span><a class="headerlink" href="#c.ph_vertex_t.g" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L82"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>coupling strength</p>
 </dd></dl>
 
@@ -215,7 +215,7 @@ also an FFT!)</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_phonons_asr">
-<a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_asr</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">ph_hop</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">n_ph_hop</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_asr" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L86"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_asr</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">ph_hop</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">n_ph_hop</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_asr" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L87"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>apply the acoustic sum rule (ASR) to a set of phonon hopping parameters. This
 function <em>invalidates</em> the pointer <code class="docutils literal notranslate"><span class="pre">ph_hop</span></code>, use as if <code class="docutils literal notranslate"><span class="pre">realloc</span></code> were
 called (i.e. use the returned pointer!).</p>
@@ -237,7 +237,7 @@ hoppings on return.</p></li>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_phonons_apply_asr">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_apply_asr</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_apply_asr" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L101"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_apply_asr</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_apply_asr" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L102"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>same as <a class="reference internal" href="#c.diverge_phonons_asr" title="diverge_phonons_asr"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_phonons_asr()</span></code></a> except that it reallocates m-&gt;hop and
 sets m-&gt;n_hop, i.e.:</p>
 <div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="n">m</span><span class="o">-&gt;</span><span class="n">hop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">diverge_phonons_asr</span><span class="p">(</span><span class="w"> </span><span class="n">m</span><span class="o">-&gt;</span><span class="n">hop</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">m</span><span class="o">-&gt;</span><span class="n">n_hop</span><span class="w"> </span><span class="p">);</span>
@@ -247,7 +247,7 @@ sets m-&gt;n_hop, i.e.:</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_phonons_apply_sgnsqrt">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_apply_sgnsqrt</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_apply_sgnsqrt" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L111"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_apply_sgnsqrt</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_apply_sgnsqrt" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L112"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>convert eigenvalues to frequencies (by taking <span class="math notranslate nohighlight">\(\sqrt{D}\)</span>) and fill an
 internal array that tracks whether at a certain point in momentum space for a
 certain mode we have <em>imaginary</em> frequencies. If used, the returned pointer
@@ -257,28 +257,57 @@ must be interpreted as bit-array, which may also be retrieved with
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_phonons_get_ifrq">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_get_ifrq</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_get_ifrq" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L120"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_get_ifrq</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_get_ifrq" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L121"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>return a bit-array (cf. <a class="reference internal" href="Bit%20Arrays.html#c.bitary_get" title="bitary_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">bitary_get()</span></code></a>) of shape (nk, nb) that tracks
 whether at a certain k point and mode the phonon frequency is <em>imaginary</em>.</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_phonons_get_g">
-<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_get_g</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_get_g" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L126"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_get_g</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">refined</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_get_g" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L127"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>returns the electron-phonon coupling as an array (my_nk, n_spin, n_spin,
 n_orbff, nO), with my_nk the symmetry-reduced BZ (see TU backend) and nO the
 number of phonon modes. In case this array is written to the changes are
 applied to the RG flow (<em>this is the actual buffer, not a copy</em>). May return
 NULL in case phonon internals are not initialized.</p>
+<p><code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">(refined)</span></code>, return the <em>refined</em> electron-phonon coupling buffer, size
+being (n_refine, n_spin, n_spin, n_orbff, nO). The size of refinement can be
+returned with <a class="reference internal" href="#c.diverge_phonons_get_refine" title="diverge_phonons_get_refine"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_phonons_get_refine()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.refinement_t">
+<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">refinement_t</span></span></span><a class="headerlink" href="#c.refinement_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L139"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>refinement structure, simple tuple of (kf_index, weight).</p>
+<dl class="c member">
+<dt class="sig sig-object c" id="c.refinement_t.kf_idx">
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kf_idx</span></span></span><a class="headerlink" href="#c.refinement_t.kf_idx" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L141"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>index of the refined point in the fine mesh</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.refinement_t.weight">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">weight</span></span></span><a class="headerlink" href="#c.refinement_t.weight" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L144"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>weight of the refined point. All refined points are weighted such that
+the sum of the weights is one.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_phonons_get_refine">
+<a class="reference internal" href="#c.refinement_t" title="refinement_t"><span class="n"><span class="pre">refinement_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_get_refine</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">n_refine</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_get_refine" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L152"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns the refinement (or NULL) of the phonon-Gamma point vertex.
+<code class="docutils literal notranslate"><span class="pre">n_refine</span></code> is set to the length of the refinement.</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_phonons_change_regulator">
-<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_change_regulator</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_change_regulator" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L135"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_change_regulator</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eta</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_change_regulator" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L159"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Changes the phonon propagator regulator <span class="math notranslate nohighlight">\(\eta\)</span> for the
 <span class="math notranslate nohighlight">\(iq_0 \to 0\)</span> limit:</p>
 <div class="math notranslate nohighlight">
-\[D_\nu(\boldsymbol{q}, iq_0) = \mathrm{Re}\bigg[ \frac{1}{(i(q_0 + i\eta))^2 - \omega_{\nu}(\boldsymbol{q})^2} \bigg]\]</div>
+\[D_\nu(\boldsymbol{q}, iq_0) = \mathrm{Re}\bigg[ \frac{1}{(iq_0)^2 - i\eta - \omega_{\nu}(\boldsymbol{q})^2} \bigg]\]</div>
 <p>This is highly relevant for the application of the theory to acoustic modes.
 The function returns the old value for <span class="math notranslate nohighlight">\(\eta\)</span>. If <code class="docutils literal notranslate"><span class="pre">qnan_isnan(eta)</span></code>
 the regulator is left unchanged; this serves the purpose of allowing to look
@@ -287,7 +316,7 @@ up the current value.</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_phonons_asr_vertex">
-<a class="reference internal" href="#c.ph_vertex_t" title="ph_vertex_t"><span class="n"><span class="pre">ph_vertex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_asr_vertex</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.ph_vertex_t" title="ph_vertex_t"><span class="n"><span class="pre">ph_vertex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">vtx</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">n_vtx</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_asr_vertex" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L150"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<a class="reference internal" href="#c.ph_vertex_t" title="ph_vertex_t"><span class="n"><span class="pre">ph_vertex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_asr_vertex</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.ph_vertex_t" title="ph_vertex_t"><span class="n"><span class="pre">ph_vertex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">vtx</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">n_vtx</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_asr_vertex" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L174"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>apply an acoustic sum rule to the electron phonon coupling vertices. assumes
 three dimensional phonon “orbitals”, i.e., (o,d) ordering of the OA index
 (with o=0…n_sites-1 and d=0..2). operates on <em>all</em> vertex elements
@@ -314,13 +343,35 @@ vertices on return.</p></li>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_phonons_asr_vertex_set_sorted_mode">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_asr_vertex_set_sorted_mode</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">sorted</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_asr_vertex_set_sorted_mode" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L173"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_asr_vertex_set_sorted_mode</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">sorted</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_asr_vertex_set_sorted_mode" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L197"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>change implementation behavior of <a class="reference internal" href="#c.diverge_phonons_asr_vertex" title="diverge_phonons_asr_vertex"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_phonons_asr_vertex()</span></code></a> to an
 implementation that sorts all vertex elements and then looks at
 displacements/counts of unequal ‘formfactor’ components in order to sum them
 up and thus executes in parallel. should be faster for very large models, but
 slower for small models. returns previous mode (in order to save/restore
 state).</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_phonons_enable_refinement">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_phonons_enable_refinement</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">el</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">enable_refinement</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">eps_mesh</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_phonons_enable_refinement" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_phonons.h#L208"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>enable refinement of the Gamma point D channel vertex value, must be called
+prior to <a class="reference internal" href="Internals.html#c.diverge_model_internals_tu_phonons" title="diverge_model_internals_tu_phonons"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_internals_tu_phonons()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>el</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n">diverge_model_t</span></a><span class="p">*</span></span></span>) – electronic model</p></li>
+<li><p><strong>enable_refinement</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">int</span></span></span>) – whether to enable refinement or not</p></li>
+<li><p><strong>eps_mesh</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – This value is considered zero for the construction of
+the refinement. the previous value is returned. setting a non-default
+value can be avioded by passing a quiet nan (<a class="reference internal" href="IEEE%20754%20Quiet%20NaN.html#c.qnan_gen" title="qnan_gen"><code class="xref c c-func docutils literal notranslate"><span class="pre">qnan_gen()</span></code></a>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns double<span class="colon">:</span></dt>
+<dd class="field-even"><p>previous value for <code class="docutils literal notranslate"><span class="pre">eps_mesh</span></code>, in order to have some
+introspection.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="c macro">

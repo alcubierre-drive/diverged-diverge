@@ -827,7 +827,7 @@ if not _libs["divERGe"] is None:
     phonons_apply_sgnsqrt.restype = c_voidp
 
     phonons_get_g = _libs["divERGe"].get("diverge_phonons_get_g", "cdecl")
-    phonons_get_g.argtypes = [POINTER(model_t)]
+    phonons_get_g.argtypes = [POINTER(model_t), c_int]
     phonons_get_g.restype = c_voidp
 
     phonons_change_regulator = _libs["divERGe"].get("diverge_phonons_change_regulator", "cdecl")
@@ -841,6 +841,10 @@ if not _libs["divERGe"] is None:
     phonons_asr_vertex_set_sorted_mode = _libs["divERGe"].get("diverge_phonons_asr_vertex_set_sorted_mode", "cdecl")
     phonons_asr_vertex_set_sorted_mode.argtypes = [c_int]
     phonons_asr_vertex_set_sorted_mode.restype = c_int
+
+    phonons_enable_refinement = _libs["divERGe"].get("diverge_phonons_enable_refinement", "cdecl")
+    phonons_enable_refinement.argtypes = [POINTER(model_t), c_int, c_double]
+    phonons_enable_refinement.restype = c_double
 
     class wigner_config_t(Structure):
         pass

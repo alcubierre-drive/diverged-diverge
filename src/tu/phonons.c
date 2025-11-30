@@ -16,10 +16,9 @@ LINALG_IMPLEMENT
 // CBO in Kagome/Phonon: https://doi.org/10.1103/PhysRevB.109.075130
 // Hubbard-Holstein: https://doi.org/10.1103/PhysRevB.92.195102
 
-// TODO this is allright the way it is?!
+// This is allright the way it is. Will get removed at some point.
 static const int fft_sign = -1;
 
-typedef struct { index_t kf_idx; double weight; } refinement_t;
 typedef struct { VECTOR_DECL( refinement_t, v ) } vec_refinement_t;
 
 struct tu_data_phonons_t {
@@ -56,16 +55,15 @@ struct tu_data_phonons_t {
     double gbuf_ref_last_Lambda, gbuf_ref_zero_last_Lambda;
 };
 
-static double DIVERGE_PH_REFINEMENT_GEN_EPS_MESH = 1.e-4; // TODO make this actually variable
 static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, index_t* n_ref );
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
-        const double Lambda, const bool ignore_imag_freq, const bool refined );
+        const double Lambda, const bool ignore_imag_freq, bool refined );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
-        bool buffered, bool ignore_imag_freq ) {
+        bool buffered, bool ignore_imag_freq, bool enable_refinement ) {
     tu_data_phonons_t* t = calloc(1, sizeof*t);
     t->pmod = ph;
     memcpy( t->nk, t->pmod->nk, sizeof t->nk );
@@ -84,9 +82,11 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     t->gbuf_last_Lambda = t->gbuf_zero_last_Lambda = t->gbuf_ref_last_Lambda =
         t->gbuf_ref_zero_last_Lambda = t->Dch_last_Lambda = t->Dch_zero_last_Lambda = -1.0;
 
-    t->enable_refinement = 0; /* TODO */ mpi_log_printf( "automatic Gamma refinement not enabled\n" );
-    t->refine = tu_data_phonons_generate_refinement( t, &t->n_refine );
-    mpi_log_printf( "automatic Gamma refinement found %li points per coarse point\n", t->n_refine );
+    t->enable_refinement = enable_refinement;
+    if (enable_refinement) {
+        t->refine = tu_data_phonons_generate_refinement( t, &t->n_refine );
+        mpi_log_printf( "automatic Gamma refinement found %li points per coarse point\n", t->n_refine );
+    }
 
     tu_data_phonons_init_vertex( t, el->internals->tu_data, el->tu_ff, el->n_tu_ff, el->n_spin );
     return t;
@@ -120,10 +120,11 @@ double tu_data_phonons_change_regulator( double reg ) {
 static inline complex128_t gf_gp_plus_gm( const double E, const bool E_imag,
         const bool ignore_imag_freq, const double Lambda ) {
     double E2 = E_imag ? -POW2(E) : POW2(E);
-    return (ignore_imag_freq&&E_imag) ? 0.0 : creal(-1./(POW2(Lambda) + I*PHONON_FREQ_REGULATOR + E2));
+    return (ignore_imag_freq&&E_imag) ? 0.0 : creal(-1./(POW2(Lambda) - I*PHONON_FREQ_REGULATOR + E2));
 }
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
-        const double Lambda, const bool ignore_imag_freq, const bool refined ) {
+        const double Lambda, const bool ignore_imag_freq, bool refined ) {
+    if (!t->enable_refinement) refined = false;
     const int iszero = Lambda == 0.0;
     complex128_t* buf = refined ? (iszero ? t->gbuf_ref_zero : t->gbuf_ref) :
                                   (iszero ? t->gbuf_zero : t->gbuf);
@@ -284,36 +285,39 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     const complex128_t* U = t->pmod->internals->U;
 
     tick = diverge_mpi_wtime();
-    // do the refinement at the Gamma point
-    t->g_ob_qO_refined = calloc(t->n_refine * linsz * t->nO, sizeof*t->g_ob_qO_refined);
-    if (!t->g_ob_qO_refined)
-        mpi_err_printf( "cant allocate t->g_ob_qO_refined(%li,%li,%li) array\n", t->n_refine, linsz, t->nO )
-    #pragma omp parallel num_threads(diverge_omp_num_threads())
-    { complex128_t* ffbuf = calloc(linsz * t->nO, sizeof*ffbuf);
-      complex128_t* Ubuf = calloc(POW2(t->nO), sizeof*Ubuf);
-    #pragma omp for
-    for (index_t r=0; r<t->n_refine; ++r) {
-        index_t qf = t->refine[r].kf_idx;
-        transpose_outofplace( Ubuf, U+POW2(t->nO)*qf, t->nO );
-        ZERO_OUT( ffbuf, linsz*t->nO );
-        claV3d_t qvec = claV3d_map(t->pmod->internals->kfmesh + 3*qf);
-        for (index_t ff=0; ff<formfacs_sz; ++ff)
-        for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
-            index_t f = formfacs_displ[ff] + cc;
-            index_t mi = ph_vertex_to_mi_map[ff];
-            if (mi != -1) {
-                claV3d_t RA_pos = t->vtx[f].mode ?
-                    (claV3d_t){{t->vtx[f].RA_pos[0], t->vtx[f].RA_pos[1], t->vtx[f].RA_pos[2]}} :
-                    (claV3d_t){{t->vtx[f].RA[0], t->vtx[f].RA[1], t->vtx[f].RA[2]}};
-                double RA_pos_dot_qvec = claV3d_dot( claM3d_vecmat( RA_pos, latt ), qvec );
-                ffbuf[IDX4(formfacs[f].s2, formfacs[f].s1, mi, formfacs[f].OA,
-                        t->n_spin, t->n_orbff, t->nO)] += t->vtx[f].g * cexp(I*(double)fft_sign*RA_pos_dot_qvec);
+    if (t->enable_refinement) {
+        // do the refinement at the Gamma point
+        t->g_ob_qO_refined = calloc(t->n_refine * linsz * t->nO, sizeof*t->g_ob_qO_refined);
+        if (!t->g_ob_qO_refined)
+            mpi_err_printf( "cant allocate t->g_ob_qO_refined(%li,%li,%li) array\n", t->n_refine, linsz, t->nO )
+        #pragma omp parallel num_threads(diverge_omp_num_threads())
+        { complex128_t* ffbuf = calloc(linsz * t->nO, sizeof*ffbuf);
+          complex128_t* Ubuf = calloc(POW2(t->nO), sizeof*Ubuf);
+        #pragma omp for
+        for (index_t r=0; r<t->n_refine; ++r) {
+            index_t qf = t->refine[r].kf_idx;
+            transpose_outofplace( Ubuf, U+POW2(t->nO)*qf, t->nO );
+            ZERO_OUT( ffbuf, linsz*t->nO );
+            claV3d_t qvec = claV3d_map(t->pmod->internals->kfmesh + 3*qf);
+            for (index_t ff=0; ff<formfacs_sz; ++ff)
+            for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
+                index_t f = formfacs_displ[ff] + cc;
+                index_t mi = ph_vertex_to_mi_map[ff];
+                if (mi != -1) {
+                    claV3d_t RA_pos = t->vtx[f].mode ?
+                        (claV3d_t){{t->vtx[f].RA_pos[0], t->vtx[f].RA_pos[1], t->vtx[f].RA_pos[2]}} :
+                        (claV3d_t){{t->vtx[f].RA[0], t->vtx[f].RA[1], t->vtx[f].RA[2]}};
+                    double RA_pos_dot_qvec = claV3d_dot( claM3d_vecmat( RA_pos, latt ), qvec );
+                    ffbuf[IDX4(formfacs[f].s2, formfacs[f].s1, mi, formfacs[f].OA,
+                            t->n_spin, t->n_orbff, t->nO)] += t->vtx[f].g *
+                        cexp(I*(double)fft_sign*RA_pos_dot_qvec);
+                }
             }
-        }
-        single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO_refined+r*linsz*t->nO, linsz,
-                t->nO, t->nO, 1.0, 0.0 );
-    } free( Ubuf );
-      free( ffbuf ); }
+            single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO_refined+r*linsz*t->nO, linsz,
+                    t->nO, t->nO, 1.0, 0.0 );
+        } free( Ubuf );
+          free( ffbuf ); }
+    }
     t_ref = diverge_mpi_wtime() - tick;
     mpi_tim_printf( "PH: FFT @ %.2fs, FT @ %.2f, REF @ %.2fs\n", t_fft, t_ft, t_ref );
 
@@ -351,8 +355,10 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     }
     t->gbuf_zero = calloc(t->my_nk * t->nO, sizeof*t->gbuf_zero);
     t->gbuf = calloc(t->my_nk * t->nO, sizeof*t->gbuf);
-    t->gbuf_ref_zero = calloc(t->n_refine * t->nO, sizeof*t->gbuf_ref_zero);
-    t->gbuf_ref = calloc(t->n_refine * t->nO, sizeof*t->gbuf_ref);
+    if (t->enable_refinement) {
+        t->gbuf_ref_zero = calloc(t->n_refine * t->nO, sizeof*t->gbuf_ref_zero);
+        t->gbuf_ref = calloc(t->n_refine * t->nO, sizeof*t->gbuf_ref);
+    }
 
     free( ph_vertex_to_mi_map );
     fftw_free(fftw_buf);
@@ -378,15 +384,13 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
 
     if (calc) {
         const complex128_t *g_ph_buf = t->g_ob_qO,
-                           *prop_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq, false ),
-                           *g_ph_ref_buf = t->g_ob_qO_refined,
-                           *prop_ref_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq, true );
+                           *prop_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq, false );
         index_t kk_gamma = -1;
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(3)
         for (index_t kk=0; kk<my_nk; ++kk)
         for (index_t l=0; l<linsz; ++l)
         for (index_t r=0; r<linsz; ++r) {
-            index_t is_gamma = t->enable_refinement ? (t->idx_ibz_in_fullmesh[t->my_nk_off+kk] == 0) : 0;
+            index_t is_gamma = t->enable_refinement && (t->idx_ibz_in_fullmesh[t->my_nk_off+kk] == 0);
             if (is_gamma) {
                 #pragma omp atomic write
                 kk_gamma = kk; // this case will only occur for one thread at a time
@@ -402,7 +406,9 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
             buf[IDX3(kk,l,r, linsz,linsz)] += (t->buffered ? 1.0 : fac) * tmp;
         }
 
-        if (kk_gamma != -1) {
+        if (t->enable_refinement && (kk_gamma != -1)) {
+            const complex128_t *g_ph_ref_buf = t->g_ob_qO_refined,
+                               *prop_ref_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq, true );
             #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2)
             for (index_t l=0; l<linsz; ++l)
             for (index_t r=0; r<linsz; ++r) {
@@ -438,6 +444,17 @@ static inline double periodic_norm( claV3d_t k, claM3d_t G, const index_t shift[
         norm = MIN(norm, snorm);
     }
     return norm;
+}
+
+static double DIVERGE_PH_REFINEMENT_GEN_EPS_MESH = 1.e-4;
+double tu_data_phonons_change_refinement_eps( double eps ) {
+    if (qnan_isnan(eps)) {
+        return DIVERGE_PH_REFINEMENT_GEN_EPS_MESH;
+    } else {
+        double old = DIVERGE_PH_REFINEMENT_GEN_EPS_MESH;
+        DIVERGE_PH_REFINEMENT_GEN_EPS_MESH = eps;
+        return old;
+    }
 }
 
 typedef struct { double norm_to_star_idx; index_t star_idx; } star_norm_t;
@@ -543,3 +560,8 @@ static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, 
     return result.v;
 }
 
+refinement_t* tu_data_phonons_get_refine( tu_data_phonons_t* t, index_t* n_refine ) {
+    if (n_refine) *n_refine = t->n_refine;
+    return t->refine;
+}
+complex128_t* tu_data_phonons_get_g_ref( tu_data_phonons_t* t ) { return t->g_ob_qO_refined; }
