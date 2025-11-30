@@ -29,7 +29,7 @@ static inline double qnan_gen( uint32_t payload ) {
     return result;
 }
 
-/** get the 32bit unsigned integer payload from a quiete NaN (see :c:func:`fnan_get`) */
+/** get the 32bit unsigned integer payload from a quiet NaN (see :c:func:`fnan_get`) */
 static inline uint32_t qnan_get( double qnan ) {
     if (!qnan_isnan( qnan ))
         return NOT_A_NAN;
@@ -53,13 +53,40 @@ static inline double fnan_gen( float payload ) {
     return result;
 }
 
-/** get the 32bit floating point payload from a quiete NaN (see :c:func:`qnan_get`) */
+/** get the 32bit floating point payload from a quiet NaN (see :c:func:`qnan_get`) */
 static inline float fnan_get( double fnan ) {
     float result = 0;
     if (!fnan_isnan( fnan ))
         memcpy( &result, &NOT_A_NAN, sizeof(result) );
     else
         memcpy( &result, &fnan, sizeof(result) );
+    return result;
+}
+
+static const uint32_t NANF_MASK = 0xFFF00000;
+static const uint16_t NOT_A_NANF = 0xFFFF;
+
+/** check whether a float holds a quiet NaNf */
+static inline int qnanf_isnan( float qnan ) {
+    uint32_t unan = 0;
+    memcpy( &unan, &qnan, sizeof(unan) );
+    return ((unan & NANF_MASK) == NANF_MASK);
+}
+
+/** generate a quiet NaNf that has a 16bit unsigned integer payload */
+static inline float qnanf_gen( uint16_t payload ) {
+    float result = 0;
+    memcpy( &result, &NANF_MASK, sizeof(NANF_MASK) );
+    memcpy( &result, &payload, sizeof(payload) );
+    return result;
+}
+
+/** get the 16bit unsigned integer payload from a quiet NaNf */
+static inline uint16_t qnanf_get( float qnan ) {
+    if (!qnanf_isnan( qnan ))
+        return NOT_A_NANF;
+    uint16_t result = 0;
+    memcpy( &result, &qnan, sizeof(result) );
     return result;
 }
 

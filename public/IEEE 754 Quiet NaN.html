@@ -121,7 +121,7 @@ listed below:</p>
 <dl class="c function">
 <dt class="sig sig-object c" id="c.qnan_get">
 <span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">qnan_get</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">qnan</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.qnan_get" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/qnan.h#L31"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>get the 32bit unsigned integer payload from a quiete NaN (see <a class="reference internal" href="#c.fnan_get" title="fnan_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">fnan_get()</span></code></a>)</p>
+<dd><p>get the 32bit unsigned integer payload from a quiet NaN (see <a class="reference internal" href="#c.fnan_get" title="fnan_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">fnan_get()</span></code></a>)</p>
 </dd></dl>
 
 <dl class="c function">
@@ -139,7 +139,25 @@ listed below:</p>
 <dl class="c function">
 <dt class="sig sig-object c" id="c.fnan_get">
 <span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fnan_get</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">fnan</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.fnan_get" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/qnan.h#L55"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>get the 32bit floating point payload from a quiete NaN (see <a class="reference internal" href="#c.qnan_get" title="qnan_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">qnan_get()</span></code></a>)</p>
+<dd><p>get the 32bit floating point payload from a quiet NaN (see <a class="reference internal" href="#c.qnan_get" title="qnan_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">qnan_get()</span></code></a>)</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.qnanf_isnan">
+<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">qnanf_isnan</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="n"><span class="pre">qnan</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.qnanf_isnan" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/qnan.h#L68"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>check whether a float holds a quiet NaNf</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.qnanf_gen">
+<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">qnanf_gen</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n"><span class="pre">payload</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.qnanf_gen" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/qnan.h#L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>generate a quiet NaNf that has a 16bit unsigned integer payload</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.qnanf_get">
+<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">qnanf_get</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="n"><span class="pre">qnan</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.qnanf_get" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/qnan.h#L83"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>get the 16bit unsigned integer payload from a quiet NaNf</p>
 </dd></dl>
 
 </section>
