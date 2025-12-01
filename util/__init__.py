@@ -591,6 +591,20 @@ if not _libs["divERGe"] is None:
     supercell_swap_hop.argtypes = []
     supercell_swap_hop.restype = c_int
 
+    class supercell_configure_t(Structure):
+        pass
+    supercell_configure_t.__slots__ = [
+        'sign',
+        'swap',
+    ]
+    supercell_configure_t._fields_ = [
+        ('sign', c_float),
+        ('swap', c_int),
+    ]
+    supercell_configure = _libs["divERGe"].get("diverge_supercell_configure", "cdecl")
+    supercell_configure.argtypes = [supercell_configure_t]
+    supercell_configure.restype = supercell_configure_t
+
     linspace = _libs["divERGe"].get("diverge_linspace", "cdecl")
     linspace.argtypes = [c_double, c_double, index_t]
     linspace.restype = c_voidp

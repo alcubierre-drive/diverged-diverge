@@ -162,6 +162,7 @@ DIVERGE_0.9 {
         diverge_read_wout;
         diverge_reset;
         diverge_run_tests;
+        diverge_supercell_configure;
         diverge_supercell_set_sign;
         diverge_supercell_swap_hop;
         diverge_symmetrize_2pt_coarse;

@@ -5,6 +5,7 @@
 #include "mpi_functions.h"
 #include <assert.h>
 
+#include "qnan.h"
 #define LINALG_NO_LAPACKE
 #include "linalg.h"
 LINALG_IMPLEMENT
@@ -20,15 +21,25 @@ typedef struct {
 
 #define SGN( i ) ((i)>0 ? 1 : -1)
 
-static double SUPERCELL_SIGN = 1.0;
+static diverge_supercell_configure_t SUPERCELL_CONFIG = {
+    .sign = 1.0,
+    .swap = 0,
+};
+
 void diverge_supercell_set_sign( double sign ) {
-    SUPERCELL_SIGN = sign;
+    SUPERCELL_CONFIG.sign = sign;
 }
 
-static int SUPERCELL_SWAPPED = 0;
 int diverge_supercell_swap_hop( void ) {
-    SUPERCELL_SWAPPED = !SUPERCELL_SWAPPED;
-    return !SUPERCELL_SWAPPED;
+    SUPERCELL_CONFIG.swap = !SUPERCELL_CONFIG.swap;
+    return !SUPERCELL_CONFIG.swap;
+}
+
+diverge_supercell_configure_t diverge_supercell_configure( diverge_supercell_configure_t cfg ) {
+    diverge_supercell_configure_t prev = SUPERCELL_CONFIG;
+    if (!qnanf_isnan(cfg.sign)) SUPERCELL_CONFIG.sign = cfg.sign;
+    if (cfg.swap != -1) SUPERCELL_CONFIG.swap = cfg.swap;
+    return prev;
 }
 
 static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
@@ -118,7 +129,7 @@ static void supercell_map( supercell_t* s, claV3i_t R, claV3i_t* S, index_t* idx
 }
 
 void rs_hopping_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
-    model_to_fractcell( m, N1, N2, N3, SUPERCELL_SIGN, 0 );
+    model_to_fractcell( m, N1, N2, N3, SUPERCELL_CONFIG.sign, 0 );
 }
 void rs_hopping_to_supercell( diverge_model_t* m, int* nr ) {
     int N[3][3] = {0};
@@ -130,7 +141,7 @@ void rs_hopping_to_fractcell_mat( diverge_model_t* m, int* N123 ) {
 }
 
 void diverge_model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3 ) {
-    model_to_fractcell( m, N1, N2, N3, SUPERCELL_SIGN, 1 );
+    model_to_fractcell( m, N1, N2, N3, SUPERCELL_CONFIG.sign, 1 );
 }
 void diverge_model_to_supercell( diverge_model_t* m, int* nr ) {
     int N[3][3] = {0};
@@ -213,8 +224,8 @@ static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
 
             memcpy( Hnew, H, sizeof(rs_hopping_t) );
             for (int i=0; i<3; ++i) Hnew->R[i] = R.v[i];
-            Hnew->o1 += n_orb_mini * (SUPERCELL_SWAPPED ? c : r);
-            Hnew->o2 += n_orb_mini * (SUPERCELL_SWAPPED ? r : c);
+            Hnew->o1 += n_orb_mini * (SUPERCELL_CONFIG.swap ? c : r);
+            Hnew->o2 += n_orb_mini * (SUPERCELL_CONFIG.swap ? r : c);
         }
         if (map_vertices) {
             for (index_t v=0; v<m->n_vert; ++v) {
@@ -231,8 +242,8 @@ static void model_to_fractcell( diverge_model_t* m, int* N1, int* N2, int* N3,
 
                 memcpy( Vnew, V, sizeof(rs_vertex_t) );
                 for (int i=0; i<3; ++i) Vnew->R[i] = R.v[i];
-                Vnew->o1 += n_orb_mini * (SUPERCELL_SWAPPED ? c : r);
-                Vnew->o2 += n_orb_mini * (SUPERCELL_SWAPPED ? r : c);
+                Vnew->o1 += n_orb_mini * (SUPERCELL_CONFIG.swap ? c : r);
+                Vnew->o2 += n_orb_mini * (SUPERCELL_CONFIG.swap ? r : c);
             }
         }
     }
