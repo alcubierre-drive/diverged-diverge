@@ -76,9 +76,39 @@ void diverge_model_to_fractcell_mat( diverge_model_t* m, int* N123 );
  */
 void diverge_supercell_set_sign( double sign );
 
-/** to swap the orbital convention only in the hoppings, not in the positions.
- * returns whether original state is used */
+/**
+ * to swap the orbital convention only in the hoppings, not in the positions.
+ * returns whether original state is used. Also not thread-safe, call before
+ * generation.
+ */
 int diverge_supercell_swap_hop( void );
+
+
+/**
+ * structure to set/get configuration of supercell, cf.
+ * :c:func:`diverge_supercell_configure`.
+ */
+typedef struct {
+    /**
+     * sign (±1, cf. :c:func:`diverge_supercell_set_sign`). If
+     * ``qnanf_isnan(sign)`` do not change this value and only return current
+     * setting.
+     */
+    float sign;
+    /**
+     * swap orbitals (0|1, cf. :c:func:`diverge_supercell_swap_hop`). If
+     * ``swap==-1`` do not change this value and only return current setting.
+     */
+    int swap;
+} diverge_supercell_configure_t;
+
+/**
+ * advanced configuration interface that also returns previous state. See
+ * :c:struct:`diverge_supercell_configure_t` for parameters. Comprehensive
+ * wrapper around both :c:func:`diverge_supercell_set_sign` and
+ * :c:func:`diverge_supercell_swap_hop`.
+ */
+diverge_supercell_configure_t diverge_supercell_configure( diverge_supercell_configure_t cfg );
 
 #ifdef __cplusplus
 }

@@ -207,13 +207,41 @@ instead of the default, i.e., 1. Not thread-safe. Call before generation.</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_supercell_swap_hop">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_supercell_swap_hop</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_supercell_swap_hop" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/supercells.h#L78"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><dl class="simple">
-<dt>to swap the orbital convention only in the hoppings, not in the positions.</dt><dd><ul class="simple">
-<li><p>returns whether original state is used</p></li>
-</ul>
-</dd>
-</dl>
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_supercell_swap_hop</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_supercell_swap_hop" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/supercells.h#L79"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>to swap the orbital convention only in the hoppings, not in the positions.
+returns whether original state is used. Also not thread-safe, call before
+generation.</p>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.diverge_supercell_configure_t">
+<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_supercell_configure_t</span></span></span><a class="headerlink" href="#c.diverge_supercell_configure_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/supercells.h#L87"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>structure to set/get configuration of supercell, cf.
+<a class="reference internal" href="#c.diverge_supercell_configure" title="diverge_supercell_configure"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_supercell_configure()</span></code></a>.</p>
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_supercell_configure_t.sign">
+<span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">sign</span></span></span><a class="headerlink" href="#c.diverge_supercell_configure_t.sign" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/supercells.h#L92"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>sign (±1, cf. <a class="reference internal" href="#c.diverge_supercell_set_sign" title="diverge_supercell_set_sign"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_supercell_set_sign()</span></code></a>). If
+<code class="docutils literal notranslate"><span class="pre">qnanf_isnan(sign)</span></code> do not change this value and only return current
+setting.</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.diverge_supercell_configure_t.swap">
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">swap</span></span></span><a class="headerlink" href="#c.diverge_supercell_configure_t.swap" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/supercells.h#L98"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>swap orbitals (0|1, cf. <a class="reference internal" href="#c.diverge_supercell_swap_hop" title="diverge_supercell_swap_hop"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_supercell_swap_hop()</span></code></a>). If
+<code class="docutils literal notranslate"><span class="pre">swap==-1</span></code> do not change this value and only return current setting.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_supercell_configure">
+<a class="reference internal" href="#c.diverge_supercell_configure_t" title="diverge_supercell_configure_t"><span class="n"><span class="pre">diverge_supercell_configure_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_supercell_configure</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_supercell_configure_t" title="diverge_supercell_configure_t"><span class="n"><span class="pre">diverge_supercell_configure_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">cfg</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_supercell_configure" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/supercells.h#L105"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>advanced configuration interface that also returns previous state. See
+<a class="reference internal" href="#c.diverge_supercell_configure_t" title="diverge_supercell_configure_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_supercell_configure_t</span></code></a> for parameters. Comprehensive
+wrapper around both <a class="reference internal" href="#c.diverge_supercell_set_sign" title="diverge_supercell_set_sign"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_supercell_set_sign()</span></code></a> and
+<a class="reference internal" href="#c.diverge_supercell_swap_hop" title="diverge_supercell_swap_hop"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_supercell_swap_hop()</span></code></a>.</p>
 </dd></dl>
 
 </section>
