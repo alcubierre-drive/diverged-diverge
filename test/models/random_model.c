@@ -19,7 +19,7 @@ diverge_model_t* gen_random(index_t nkx, index_t nky) {
         lattice_norm += POW2(mod->lattice[i][j]);
     }
     for (int i=0; i<2; ++i) for (int j=0; j<2; ++j) mod->lattice[i][j] /= sqrt(lattice_norm);
-    mod->lattice[2][2] = -1.0;
+    mod->lattice[2][2] = 1.0;
     for (int i=0; i<2; ++i)
     for (int j=0; j<2; ++j)
         mod->positions[i][j] = fabs(random_dbl());
