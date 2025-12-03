@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
 
     // attach elph to the model and save it (after the flow to get the vertex
     // size)
-    pp->data = diverge_phonons_get_g( e );
+    pp->data = diverge_phonons_get_g( e, 0 );
     diverge_flow_step_vertex_t vtx = diverge_flow_step_vertex( st, 'D' );
     pp->nbytes_data = sizeof(complex128_t) * (vtx.q_1-vtx.q_0) * vtx.n_orbff *
         POW2(vtx.n_spin) * pp->n_orb;

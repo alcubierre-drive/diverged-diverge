@@ -35,7 +35,6 @@ typedef struct {
     bool save_self;
     bool save_full;
     bool save_symmetries;
-    bool phonon_vertex;
 } tu_postproduction_conf_t;
 #ifndef __cplusplus
 static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
@@ -56,7 +55,6 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .save_self = false,
     .save_full = false,
     .save_symmetries = false,
-    .phonon_vertex = true,
 };
 #endif // __cplusplus
 

@@ -37,7 +37,6 @@ struct tu_data_phonons_t {
     complex128_t *gbuf, *gbuf_zero; // (my_nk, nO)
     double gbuf_last_Lambda, gbuf_zero_last_Lambda;
 
-    int buffered; // optional buffered operation for gen_vert()
     complex128_t *Dch, *Dch_zero; // (my_nk, POW2(POW2(n_spin)*n_orbff))
     double Dch_last_Lambda, Dch_zero_last_Lambda;
 
@@ -63,7 +62,7 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
         const double Lambda, const bool ignore_imag_freq, bool refined );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
-        bool buffered, bool ignore_imag_freq, bool enable_refinement ) {
+        bool ignore_imag_freq, bool enable_refinement ) {
     tu_data_phonons_t* t = calloc(1, sizeof*t);
     t->pmod = ph;
     memcpy( t->nk, t->pmod->nk, sizeof t->nk );
@@ -77,7 +76,6 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     assert( t->pmod->internals->model_phonons_imag_freq != NULL );
     t->vtx = (ph_vertex_t*)t->pmod->vert;
     t->n_vtx = t->pmod->n_vert;
-    t->buffered = buffered;
     t->ignore_imag_freq = ignore_imag_freq;
     t->gbuf_last_Lambda = t->gbuf_zero_last_Lambda = t->gbuf_ref_last_Lambda =
         t->gbuf_ref_zero_last_Lambda = t->Dch_last_Lambda = t->Dch_zero_last_Lambda = -1.0;
@@ -349,10 +347,8 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     }
 
     // and do some allocation
-    if (t->buffered) {
-        t->Dch = calloc(t->my_nk * POW2(linsz), sizeof*t->Dch);
-        t->Dch_zero = calloc(t->my_nk * POW2(linsz), sizeof*t->Dch_zero);
-    }
+    t->Dch = calloc(t->my_nk * POW2(linsz), sizeof*t->Dch);
+    t->Dch_zero = calloc(t->my_nk * POW2(linsz), sizeof*t->Dch_zero);
     t->gbuf_zero = calloc(t->my_nk * t->nO, sizeof*t->gbuf_zero);
     t->gbuf = calloc(t->my_nk * t->nO, sizeof*t->gbuf);
     if (t->enable_refinement) {
@@ -372,14 +368,11 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
 
     int calc = 1;
     const int iszero = Lambda == 0.0;
-    complex128_t* buf = out;
-    if (t->buffered) {
-        buf = iszero ? t->Dch_zero : t->Dch;
-        double* last = iszero ? &t->Dch_zero_last_Lambda : &t->Dch_last_Lambda;
-        if ((calc = (*last != Lambda))) {
-            *last = Lambda;
-            ZERO_OUT(buf, my_nk*POW2(linsz));
-        }
+    complex128_t* buf = iszero ? t->Dch_zero : t->Dch;
+    double* last = iszero ? &t->Dch_zero_last_Lambda : &t->Dch_last_Lambda;
+    if ((calc = (*last != Lambda))) {
+        *last = Lambda;
+        ZERO_OUT(buf, my_nk*POW2(linsz));
     }
 
     if (calc) {
@@ -403,7 +396,7 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
                 complex128_t prop = prop_buf[IDX2(kk,b, nO)];
                 tmp += gl * prop * gr;
             }
-            buf[IDX3(kk,l,r, linsz,linsz)] += (t->buffered ? 1.0 : fac) * tmp;
+            buf[IDX3(kk,l,r, linsz,linsz)] += tmp;
         }
 
         if (t->enable_refinement && (kk_gamma != -1)) {
@@ -420,15 +413,13 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
                     complex128_t prop = prop_ref_buf[IDX2(f,b, nO)];
                     tmp += gl * prop * gr * t->refine[f].weight;
                 }
-                buf[IDX3(kk_gamma,l,r, linsz,linsz)] += (t->buffered ? 1.0 : fac) * tmp;
+                buf[IDX3(kk_gamma,l,r, linsz,linsz)] += tmp;
             }
         }
     }
 
-    if (t->buffered) {
-        #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (index_t i=0; i<my_nk*POW2(linsz); ++i) out[i] += fac * buf[i];
-    }
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<my_nk*POW2(linsz); ++i) out[i] += fac * buf[i];
 }
 
 diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t ) { return t->pmod; }

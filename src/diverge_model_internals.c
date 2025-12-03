@@ -126,7 +126,7 @@ void diverge_model_internals_common( diverge_model_t* model ) {
             nktot = kdimtot(model->nk, model->nkf),
             nb = model->n_spin * model->n_orb;
 
-    intls->enforce_exchange = model->SU2 == 0;
+    intls->enforce_exchange = (model->SU2 == 0);
 
     if (nk < diverge_mpi_comm_size() * diverge_omp_num_threads()) {
         int nthr_new = nk / diverge_mpi_comm_size();

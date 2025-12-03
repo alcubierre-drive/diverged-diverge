@@ -27,7 +27,6 @@ diverge_model_t* diverge_model_init(void) {
     result->internals->has_common_internals = 0;
     result->internals->tu_symcheck_mpi = environ_tu_symcheck_mpi();
     result->internals->symcheck_mpi = environ_symcheck_mpi();
-    result->internals->tu_phonons_buffered = 1;
     dependency_tree_insert_model(result);
     return result;
 }

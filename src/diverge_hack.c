@@ -95,9 +95,6 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         else if (!strcmp(val, "btree"))
             tu_data_unique_orbff_impl = unique_orbff_impl_btree;
     }
-    CHECKKEY("tu_phonons_buffered") {
-        INTERNALS->tu_phonons_buffered = atoi(val);
-    }
     CHECKKEY("tu_phonons_ignore_imag_freq") {
         INTERNALS->tu_phonons_ignore_imag_freq = atoi(val);
     }

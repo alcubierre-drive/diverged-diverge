@@ -605,8 +605,10 @@ void tu_vertex_product( complex128_t* result, const complex128_t* B,
 }
 
 void tu_vertex_init_phonons( tu_vertex_t* V, tu_data_phonons_t* p ) {
-    if (!V->D_flow) {
-        mpi_err_printf( "cannot use phonon flow without D channel\n" );
+    int phonons_possible = V->D_flow;
+    if (!V->SU2) phonons_possible = phonons_possible && V->C_flow;
+    if (!phonons_possible) {
+        mpi_err_printf( "cannot use phonon flow without D (&C iff !SU2) channel\n" );
         return;
     }
     V->elph = true;

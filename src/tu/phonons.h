@@ -21,7 +21,7 @@ double tu_data_phonons_change_regulator( double reg );
 double tu_data_phonons_change_refinement_eps( double eps );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
-        bool buffered, bool ignore_imag_freq, bool enable_refinement );
+        bool ignore_imag_freq, bool enable_refinement );
 void tu_data_phonons_free( tu_data_phonons_t* t );
 
 // generates D channel vertex scaled by fac, adds to existing content of buffer
