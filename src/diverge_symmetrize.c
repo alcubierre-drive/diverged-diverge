@@ -3,6 +3,7 @@
 #include "diverge_model.h"
 #include "diverge_symmetrize.h"
 #include "diverge_internals_struct.h"
+#include "diverge_patching_helpers.h" // atomic_add
 #include "misc/mpi_functions.h"
 #include "diverge_model_internals.h"
 #include <fftw3.h>
@@ -250,6 +251,7 @@ double diverge_symmetrize_mom_fine( diverge_model_t* model, double* buf, index_t
 
 rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
         rs_hopping_t* hop_, index_t* n_hop_, double hoplim ) {
+    const bool SU2 = model->SU2;
     // some preparations
     if (model->n_sym == 0 || model->orb_symmetries == NULL) {
         mpi_err_printf( "need symmetries in order to symmetrize hoppings\n" );
@@ -322,18 +324,21 @@ rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
                 s2 = hop[idx].s2;
         index_t R[3]; for (int i=0; i<3; ++i) R[i] = hop[idx].R[i];
 
-        index_t x_id = (nr[0] + R[0]) % nr[0],
-                y_id = (nr[1] + R[1]) % nr[1],
-                z_id = (nr[2] + R[2]) % nr[2];
-        index_t Ridx = IDX3(x_id, y_id, z_id, nr[1], nr[2]);
+        const index_t x_id = (nr[0] + R[0]) % nr[0],
+                      y_id = (nr[1] + R[1]) % nr[1],
+                      z_id = (nr[2] + R[2]) % nr[2];
+        const index_t Ridx = IDX3(x_id, y_id, z_id, nr[1], nr[2]);
 
         if (cabs(hop[idx].t) > hoplim) {
-            double* out = (double*)(fftw_cbuf + IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb));
-            double* in = (double*)(&hop[idx].t);
-            #pragma omp atomic
-            out[0] += in[0];
-            #pragma omp atomic
-            out[1] += in[1];
+            const index_t sconfig[] = {s1,s2};
+            const index_t sconfig_m1[] = {0,0,1,1};
+            const index_t* sc = (s1 == -1) ? sconfig_m1 : sconfig;
+            const index_t nsc = (s1 == -1 && !SU2) ?  2 :       1;
+            for (index_t isc=0; isc<nsc; ++isc) {
+                s1 = sc[IDX2(isc,0,2)];
+                s2 = sc[IDX2(isc,1,2)];
+                atomic_add(fftw_cbuf + IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb), &hop[idx].t);
+            }
         }
     }
 

@@ -57,7 +57,7 @@ struct tu_data_phonons_t {
 static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, index_t* n_ref );
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
-        const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin );
+        const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin, const bool SU2 );
 static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
         const double Lambda, const bool ignore_imag_freq, bool refined );
 
@@ -86,7 +86,7 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
         mpi_log_printf( "automatic Gamma refinement found %li points per coarse point\n", t->n_refine );
     }
 
-    tu_data_phonons_init_vertex( t, el->internals->tu_data, el->tu_ff, el->n_tu_ff, el->n_spin );
+    tu_data_phonons_init_vertex( t, el->internals->tu_data, el->tu_ff, el->n_tu_ff, el->n_spin, el->SU2 );
     return t;
 }
 
@@ -177,7 +177,7 @@ static inline index_t find_tu_ff( const tu_formfactor_t* tu_ff, index_t n_tu_ff,
 }
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
-        const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin ) {
+        const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin, const bool SU2 ) {
     // unique formfactors
     ph_vertex_sort( t->vtx, t->n_vtx, diverge_omp_num_threads(), 0 );
     VECTOR_INIT( ph_vertex_t, formfacs );
@@ -205,10 +205,9 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 
     // perform the FFT
     const index_t nk = kdim(t->nk);
-    fftw_iodim64 dims[3];
-    dims[0].n = t->nk[0], dims[1].n = t->nk[1], dims[2].n = t->nk[2];
-    dims[0].is = t->nk[2]*t->nk[1], dims[1].is = t->nk[2], dims[2].is = 1;
-    dims[0].os = t->nk[2]*t->nk[1], dims[1].os = t->nk[2], dims[2].os = 1;
+    fftw_iodim64 dims[3] = {{.n = t->nk[0], .is = 1*t->nk[2]*t->nk[1], .os = 1*t->nk[2]*t->nk[1],},
+                            {.n = t->nk[1], .is = 1*t->nk[2],          .os = 1*t->nk[2],         },
+                            {.n = t->nk[2], .is = 1,                   .os = 1,                  },};
     fftw_iodim64 howmany = { .n=n_FFT, .is=nk, .os=nk };
 
     // allocate space for not just the FFT but also the FT. Then perform the
@@ -299,16 +298,24 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             claV3d_t qvec = claV3d_map(t->pmod->internals->kfmesh + 3*qf);
             for (index_t ff=0; ff<formfacs_sz; ++ff)
             for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
-                index_t f = formfacs_displ[ff] + cc;
-                index_t mi = ph_vertex_to_mi_map[ff];
+                const index_t f = formfacs_displ[ff] + cc;
+                const index_t mi = ph_vertex_to_mi_map[ff];
                 if (mi != -1) {
                     claV3d_t RA_pos = t->vtx[f].mode ?
                         (claV3d_t){{t->vtx[f].RA_pos[0], t->vtx[f].RA_pos[1], t->vtx[f].RA_pos[2]}} :
                         (claV3d_t){{t->vtx[f].RA[0], t->vtx[f].RA[1], t->vtx[f].RA[2]}};
                     double RA_pos_dot_qvec = claV3d_dot( claM3d_vecmat( RA_pos, latt ), qvec );
-                    ffbuf[IDX4(formfacs[f].s2, formfacs[f].s1, mi, formfacs[f].OA,
-                            t->n_spin, t->n_orbff, t->nO)] += t->vtx[f].g *
-                        cexp(I*(double)fft_sign*RA_pos_dot_qvec);
+
+                    const index_t s1s2_ff[] = {formfacs[f].s1, formfacs[f].s2};
+                    const index_t s1s2_m1[] = {0,0, 1,1};
+                    const index_t* si = (s1s2_ff[0] == -1) ? s1s2_m1 : s1s2_ff;
+                    const index_t nsi = (s1s2_ff[0] == -1 && !SU2) ? 2 : 1;
+                    for (index_t s=0; s<nsi; ++s) {
+                        const index_t s1 = si[IDX2(s,0,2)],
+                                      s2 = si[IDX2(s,1,2)];
+                        ffbuf[IDX4(s2,s1,mi,formfacs[f].OA, t->n_spin,t->n_orbff,t->nO)] +=
+                            t->vtx[f].g * cexp(I*(double)fft_sign*RA_pos_dot_qvec);
+                    }
                 }
             }
             single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO_refined+r*linsz*t->nO, linsz,
@@ -327,24 +334,30 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     if (!t->g_ob_qO)
         mpi_err_printf( "cant allocate t->g_ob_qO(%li,%li,%li) array\n", t->my_nk, linsz, t->nO );
     #pragma omp parallel num_threads(diverge_omp_num_threads())
-    {
-        complex128_t* ffbuf = calloc(linsz * t->nO, sizeof*ffbuf);
-        complex128_t* Ubuf = calloc(POW2(t->nO), sizeof*Ubuf);
-        #pragma omp for
-        for (index_t kk=0; kk<t->my_nk; ++kk) {
-            index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
-            transpose_outofplace( Ubuf, U+POW2(t->nO)*kidxc2f(q,t->nk,t->nkf), t->nO );
-            ZERO_OUT( ffbuf, linsz * t->nO );
-            for (index_t f=0; f<formfacs_sz; ++f) {
-                if (ph_vertex_to_mi_map[f] != -1)
-                    ffbuf[IDX4(formfacs[f].s2,formfacs[f].s1,ph_vertex_to_mi_map[f],formfacs[f].OA,
-                            t->n_spin,t->n_orbff,t->nO)] += fftw_cbuf[IDX2(f,q,nk)];
+    { complex128_t* ffbuf = calloc(linsz * t->nO, sizeof*ffbuf);
+      complex128_t* Ubuf = calloc(POW2(t->nO), sizeof*Ubuf);
+    #pragma omp for
+    for (index_t kk=0; kk<t->my_nk; ++kk) {
+        const index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
+        transpose_outofplace( Ubuf, U+POW2(t->nO)*kidxc2f(q,t->nk,t->nkf), t->nO );
+        ZERO_OUT( ffbuf, linsz * t->nO );
+        for (index_t f=0; f<formfacs_sz; ++f) {
+            const index_t mi = ph_vertex_to_mi_map[f];
+            if (mi != -1) {
+                const index_t s1s2_ff[] = {formfacs[f].s1, formfacs[f].s2};
+                const index_t s1s2_m1[] = {0,0, 1,1};
+                const index_t* si = (s1s2_ff[0] == -1) ? s1s2_m1 : s1s2_ff;
+                const index_t nsi = (s1s2_ff[0] == -1 && !SU2) ? 2 : 1;
+                for (index_t s=0; s<nsi; ++s) {
+                    const index_t s1 = si[IDX2(s,0,2)],
+                                  s2 = si[IDX2(s,1,2)];
+                    ffbuf[IDX4(s2,s1,mi,formfacs[f].OA, t->n_spin,t->n_orbff,t->nO)] += fftw_cbuf[IDX2(f,q,nk)];
+                }
             }
-            single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO+kk*linsz*t->nO, linsz, t->nO, t->nO, 1.0, 0.0 );
         }
-        free( ffbuf );
-        free( Ubuf );
-    }
+        single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO+kk*linsz*t->nO, linsz, t->nO, t->nO, 1.0, 0.0 );
+    } free( ffbuf );
+      free( Ubuf ); }
 
     // and do some allocation
     t->Dch = calloc(t->my_nk * POW2(linsz), sizeof*t->Dch);

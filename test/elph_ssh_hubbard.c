@@ -22,10 +22,9 @@ static diverge_model_t* hubbard_ssh_model( int SU2, int nk ) {
     m->n_orb = 1;
 
     m->hop = calloc(64, sizeof*m->hop);
-    for (index_t s=0; s<m->n_spin; ++s)
     for (int i=0; i<4; ++i) {
         m->hop[m->n_hop].R[i/2] = i%2 ? 1:-1;
-        m->hop[m->n_hop].s1 = m->hop[m->n_hop].s2 = s;
+        m->hop[m->n_hop].s1 = -1; // auto SU2
         m->hop[m->n_hop++].t = t;
     }
     m->vert = calloc(1, sizeof*m->vert);
@@ -37,17 +36,13 @@ static diverge_model_t* hubbard_ssh_model( int SU2, int nk ) {
         { .o1=1, .o2=1, .t=omega },
     };
     ph_vertex_t pvert[] = {
-        {.mode='x', .R12={ 1, 0, 0}, .s1=0, .s2=0, .OA=0, .RA_pos={+0.5, 0, 0 }, .g=g },
-        {.mode='x', .R12={-1, 0, 0}, .s1=0, .s2=0, .OA=0, .RA_pos={-0.5, 0, 0 }, .g=g },
-        {.mode='y', .R12={ 0, 1, 0}, .s1=0, .s2=0, .OA=1, .RA_pos={ 0,+0.5, 0 }, .g=g },
-        {.mode='y', .R12={ 0,-1, 0}, .s1=0, .s2=0, .OA=1, .RA_pos={ 0,-0.5, 0 }, .g=g },
-        {.mode='x', .R12={ 1, 0, 0}, .s1=1, .s2=1, .OA=0, .RA_pos={+0.5, 0, 0 }, .g=g },
-        {.mode='x', .R12={-1, 0, 0}, .s1=1, .s2=1, .OA=0, .RA_pos={-0.5, 0, 0 }, .g=g },
-        {.mode='y', .R12={ 0, 1, 0}, .s1=1, .s2=1, .OA=1, .RA_pos={ 0,+0.5, 0 }, .g=g },
-        {.mode='y', .R12={ 0,-1, 0}, .s1=1, .s2=1, .OA=1, .RA_pos={ 0,-0.5, 0 }, .g=g },
+        {.mode='x', .R12={ 1, 0, 0}, .s1=-1, .OA=0, .RA_pos={+0.5, 0, 0 }, .g=g },
+        {.mode='x', .R12={-1, 0, 0}, .s1=-1, .OA=0, .RA_pos={-0.5, 0, 0 }, .g=g },
+        {.mode='y', .R12={ 0, 1, 0}, .s1=-1, .OA=1, .RA_pos={ 0,+0.5, 0 }, .g=g },
+        {.mode='y', .R12={ 0,-1, 0}, .s1=-1, .OA=1, .RA_pos={ 0,-0.5, 0 }, .g=g },
     };
     diverge_model_internals_tu_phonons(m, max_dist, phop, sizeof(phop)/sizeof(phop[0]),
-            pvert, sizeof(pvert)/sizeof(pvert[0]) / (SU2?2:1));
+            pvert, sizeof(pvert)/sizeof(pvert[0]));
     return m;
 }
 

@@ -5,6 +5,7 @@
 #include "misc/init_interaction_channels.h"
 #include "misc/mpi_functions.h"
 #include "diverge_patching.h"
+#include "diverge_patching_helpers.h" // atomic_add
 #include "diverge_model_internals.h"
 #include "misc/dependency_tree.h"
 #include "misc/qnan.h"
@@ -78,25 +79,25 @@ void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* 
     const index_t n_kpts = n_kx*n_ky*n_kz;
     const index_t n_spin = model->n_spin;
     const index_t n_orb = model->n_orb;
+    const bool SU2 = model->SU2;
 
     index_t buf_sz = sizeof(complex128_t)*n_kpts*POW2(n_orb*n_spin);
     fftw_complex* fftw_buf = (fftw_complex*)fftw_malloc(buf_sz);
     complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
 
     index_t stride_fft = POW2(n_orb*n_spin);
-    fftw_iodim64 dims[3];
-    dims[0].n = n_kx, dims[1].n = n_ky, dims[2].n = n_kz;
-    dims[0].is = n_kz*n_ky*stride_fft, dims[1].is = n_kz*stride_fft, dims[2].is = stride_fft;
-    dims[0].os = n_kz*n_ky*stride_fft, dims[1].os = n_kz*stride_fft, dims[2].os = stride_fft;
-    fftw_iodim64 howmany;
-    howmany.n = stride_fft, howmany.is = 1, howmany.os = 1;
-    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, diverge_hamilton_generator_add_planning_flag);
+    fftw_iodim64 dims[3] = {{.n = n_kx, .is = n_kz*n_ky*stride_fft, .os = n_kz*n_ky*stride_fft,},
+                            {.n = n_ky, .is = n_kz*stride_fft,      .os = n_kz*stride_fft,},
+                            {.n = n_kz, .is = stride_fft,           .os = stride_fft},};
+    fftw_iodim64 howmany = { .n = stride_fft, .is = 1, .os = 1 };
+    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1,
+            diverge_hamilton_generator_add_planning_flag);
 
     memset((void*)fftw_cbuf, 0, buf_sz);
 
     double invalid_hoppings_norm = 0;
     // fill fftw_cbuf as H[R]
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:invalid_hoppings_norm)
     for (index_t idx = 0; idx < n_hop; ++idx) {
         index_t o1 = hop[idx].o1,
                 s1 = hop[idx].s1,
@@ -104,22 +105,24 @@ void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* 
                 s2 = hop[idx].s2;
         index_t R[3]; for (int i=0; i<3; ++i) R[i] = hop[idx].R[i];
 
-        index_t x_id = (n_kx + R[0]) % n_kx,
-                y_id = (n_ky + R[1]) % n_ky,
-                z_id = (n_kz + R[2]) % n_kz;
-        index_t Ridx = IDX3(x_id, y_id, z_id, n_ky, n_kz);
+        const index_t x_id = (n_kx + R[0]) % n_kx,
+                      y_id = (n_ky + R[1]) % n_ky,
+                      z_id = (n_kz + R[2]) % n_kz;
+        const index_t Ridx = IDX3(x_id, y_id, z_id, n_ky, n_kz);
         if (Ridx < 0) {
-            #pragma omp atomic
             invalid_hoppings_norm += cabs(hop[idx].t);
             continue;
         }
 
-        double* out = (double*)(fftw_cbuf + IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb));
-        double* in = (double*)(&hop[idx].t);
-        #pragma omp atomic
-        out[0] += in[0];
-        #pragma omp atomic
-        out[1] += in[1];
+        const index_t sconfig[] = {s1,s2};
+        const index_t sconfig_m1[] = {0,0, 1,1};
+        const index_t* sc = (s1 == -1) ? sconfig_m1 : sconfig;
+        const index_t nsc = (s1 == -1 && !SU2) ?  2 :       1;
+        for (index_t isc=0; isc<nsc; ++isc) {
+            s1 = sc[IDX2(isc,0,2)];
+            s2 = sc[IDX2(isc,1,2)];
+            atomic_add( fftw_cbuf + IDX5(Ridx, s1, o1, s2, o2, n_spin, n_orb, n_spin, n_orb), &hop[idx].t );
+        }
     }
 
     if ((n_kpts*POW2(n_spin*n_orb) < n_hop && n_kpts > 1) || (invalid_hoppings_norm > 1e-9))
