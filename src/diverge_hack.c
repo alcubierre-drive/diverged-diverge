@@ -5,6 +5,8 @@
 #include "diverge_internals_struct.h"
 
 #include "tu/diverge_interface.h"
+#include "tu/projection.h"
+
 #include "npatch/vertex.h"
 #include "npatch/flow_step.h"
 #include "grid/vertex_memory.h"
@@ -94,6 +96,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
             tu_data_unique_orbff_impl = unique_orbff_impl_hashtable;
         else if (!strcmp(val, "btree"))
             tu_data_unique_orbff_impl = unique_orbff_impl_btree;
+    }
+    CHECKKEY("tu_proj_to_r_impl") {
+        tu_projection_configure_implementation( !strcmp(val, "hashtable") );
     }
     CHECKKEY("tu_phonons_ignore_imag_freq") {
         INTERNALS->tu_phonons_ignore_imag_freq = atoi(val);

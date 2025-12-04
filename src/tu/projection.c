@@ -5,6 +5,7 @@
 LINALG_IMPLEMENT
 
 #include "../misc/btree.h"
+#include "../misc/hashtable.h"
 #include "../misc/mergesort.h"
 #include "../misc/bitary.h"
 #include <assert.h>
@@ -486,6 +487,23 @@ static void init_P_to_D_proj( tu_projection_t* p, const diverge_model_t* model )
 
 static inline void tree_count( btree_t* node, void* ctx ) { (void)node; index_t* pcount = ctx; (*pcount)++; }
 
+static inline void table_writeout( index_t key, void* val, void* ctx ) {
+    (void)val;
+    vec_index_t* indices = ctx;
+    VECTOR_PUSH_BACK( indices->v, key );
+}
+
+static inline index_t binsearch( const index_t* vals, index_t sz, index_t val ) {
+    index_t low = 0, high = sz - 1;
+    while (low <= high) {
+        index_t mid = low + (high - low) / 2;
+        if (vals[mid] == val)       return mid;
+        else if (vals[mid] < val)   low = mid + 1;
+        else                        high = mid - 1;
+    }
+    return -1;
+}
+
 #define UNRAVEL_IDX3( a, nk ) (claV3i_t){{a/(nk[1]*nk[2]), (a%(nk[1]*nk[2]))/nk[2], a%nk[2]}}
 static inline void index_to_reduced_iterate( btree_t* node, void* ctx ) {
     tu_projection_t* p = ctx;
@@ -493,29 +511,75 @@ static inline void index_to_reduced_iterate( btree_t* node, void* ctx ) {
     p->existing_r[p->nr++] = UNRAVEL_IDX3( node->key, p->nk );
 }
 
+#undef MERGESORT_COMP
+#define MERGESORT_COMP(x,y) ((x)-(y))
+MERGESORT_IMPL( mergesort_index_t, index_t )
+
+#ifdef DIVERGE_TU_PROJ_TO_R_HASHTABLE
+static int EXISTING_R_HASHTABLE_IMPL = 1;
+#else // DIVERGE_TU_PROJ_TO_R_HASHTABLE
+static int EXISTING_R_HASHTABLE_IMPL = 0;
+#endif // DIVERGE_TU_PROJ_TO_R_HASHTABLE
+void tu_projection_configure_implementation( int hashtable ) { EXISTING_R_HASHTABLE_IMPL = hashtable; }
+
 static void init_to_mom_map_existing_r( tu_projection_t* p ) {
     index_t t_sz = (p->PC_r_sz + p->DC_r_sz + p->DP_r_sz + p->PD_r_sz)/4;
-    xbtree_t* t = xbtree_init( MAX(t_sz,1024) );
+    if (EXISTING_R_HASHTABLE_IMPL) {
+        hashtable_t* t = hashtable_init_fg( MAX(t_sz,1024), 16, INT64_MAX );
 
-    for (index_t i=0; i<p->PC_r_sz; ++i) xbtree_find_or_insert( t, p->PC_r[i] );
-    for (index_t i=0; i<p->DC_r_sz; ++i) xbtree_find_or_insert( t, p->DC_r[i] );
-    for (index_t i=0; i<p->DP_r_sz; ++i) xbtree_find_or_insert( t, p->DP_r[i] );
-    for (index_t i=0; i<p->PD_r_sz; ++i) xbtree_find_or_insert( t, p->PD_r[i] );
+        for (index_t i=0; i<p->PC_r_sz; ++i) hashtable_insert_safe( t, p->PC_r[i], NULL );
+        for (index_t i=0; i<p->DC_r_sz; ++i) hashtable_insert_safe( t, p->DC_r[i], NULL );
+        for (index_t i=0; i<p->DP_r_sz; ++i) hashtable_insert_safe( t, p->DP_r[i], NULL );
+        for (index_t i=0; i<p->PD_r_sz; ++i) hashtable_insert_safe( t, p->PD_r[i], NULL );
 
-    index_t tree_size = 0; xbtree_iter( t, &tree_count, &tree_size );
-    p->existing_r = calloc( tree_size, sizeof*p->existing_r );
-    xbtree_iter_ascending( t, &index_to_reduced_iterate, p );
+        vec_index_t keys = {0};
+        hashtable_iterate( t, &table_writeout, &keys );
+        VECTOR_SHRINK_TO_FIT( keys.v );
+        hashtable_free( t );
 
-    p->PC_CP_mom = calloc(p->PC_r_sz, sizeof*p->PC_CP_mom);
-    for (index_t i=0; i<p->PC_r_sz; ++i) p->PC_CP_mom[i] = xbtree_find( t, p->PC_r[i] )->val;
-    p->DC_CD_mom = calloc(p->DC_r_sz, sizeof*p->DC_CD_mom);
-    for (index_t i=0; i<p->DC_r_sz; ++i) p->DC_CD_mom[i] = xbtree_find( t, p->DC_r[i] )->val;
-    p->P_to_D_mom = calloc(p->PD_r_sz, sizeof*p->P_to_D_mom);
-    for (index_t i=0; i<p->PD_r_sz; ++i) p->P_to_D_mom[i] = xbtree_find( t, p->PD_r[i] )->val;
-    p->D_to_P_mom = calloc(p->DP_r_sz, sizeof*p->D_to_P_mom);
-    for (index_t i=0; i<p->DP_r_sz; ++i) p->D_to_P_mom[i] = xbtree_find( t, p->DP_r[i] )->val;
+        mergesort_index_t( keys.v, keys.v_sz, diverge_omp_num_threads(), 0 );
+        p->nr = keys.v_sz;
+        p->existing_r = calloc( keys.v_sz, sizeof*p->existing_r );
+        for (index_t nr=0; nr<keys.v_sz; ++nr)
+            p->existing_r[nr] = UNRAVEL_IDX3( keys.v[nr], p->nk );
 
-    xbtree_free(t);
+        p->PC_CP_mom = calloc(p->PC_r_sz, sizeof*p->PC_CP_mom);
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<p->PC_r_sz; ++i) p->PC_CP_mom[i] = binsearch( keys.v, keys.v_sz, p->PC_r[i] );
+        p->DC_CD_mom = calloc(p->DC_r_sz, sizeof*p->DC_CD_mom);
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<p->DC_r_sz; ++i) p->DC_CD_mom[i] = binsearch( keys.v, keys.v_sz, p->DC_r[i] );
+        p->P_to_D_mom = calloc(p->PD_r_sz, sizeof*p->P_to_D_mom);
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<p->PD_r_sz; ++i) p->P_to_D_mom[i] = binsearch( keys.v, keys.v_sz, p->PD_r[i] );
+        p->D_to_P_mom = calloc(p->DP_r_sz, sizeof*p->D_to_P_mom);
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<p->DP_r_sz; ++i) p->D_to_P_mom[i] = binsearch( keys.v, keys.v_sz, p->DP_r[i] );
+
+        VECTOR_FREE( keys.v );
+    } else {
+        xbtree_t* t = xbtree_init( MAX(t_sz,1024) );
+
+        for (index_t i=0; i<p->PC_r_sz; ++i) xbtree_find_or_insert( t, p->PC_r[i] );
+        for (index_t i=0; i<p->DC_r_sz; ++i) xbtree_find_or_insert( t, p->DC_r[i] );
+        for (index_t i=0; i<p->DP_r_sz; ++i) xbtree_find_or_insert( t, p->DP_r[i] );
+        for (index_t i=0; i<p->PD_r_sz; ++i) xbtree_find_or_insert( t, p->PD_r[i] );
+
+        index_t tree_size = 0; xbtree_iter( t, &tree_count, &tree_size );
+        p->existing_r = calloc( tree_size, sizeof*p->existing_r );
+        xbtree_iter_ascending( t, &index_to_reduced_iterate, p );
+
+        p->PC_CP_mom = calloc(p->PC_r_sz, sizeof*p->PC_CP_mom);
+        for (index_t i=0; i<p->PC_r_sz; ++i) p->PC_CP_mom[i] = xbtree_find( t, p->PC_r[i] )->val;
+        p->DC_CD_mom = calloc(p->DC_r_sz, sizeof*p->DC_CD_mom);
+        for (index_t i=0; i<p->DC_r_sz; ++i) p->DC_CD_mom[i] = xbtree_find( t, p->DC_r[i] )->val;
+        p->P_to_D_mom = calloc(p->PD_r_sz, sizeof*p->P_to_D_mom);
+        for (index_t i=0; i<p->PD_r_sz; ++i) p->P_to_D_mom[i] = xbtree_find( t, p->PD_r[i] )->val;
+        p->D_to_P_mom = calloc(p->DP_r_sz, sizeof*p->D_to_P_mom);
+        for (index_t i=0; i<p->DP_r_sz; ++i) p->D_to_P_mom[i] = xbtree_find( t, p->DP_r[i] )->val;
+
+        xbtree_free(t);
+    }
 }
 
 void mpi_communicate( tu_projection_t* p ) {
