@@ -14,9 +14,7 @@
 #include "../helper_functions.h"
 
 CT_TEST(toymodel) {
-    diverge_generate_symm_maps_precision_t smp = diverge_generate_symm_maps_precision_get();
-    diverge_generate_symm_maps_set_precision( 1.e-3, 1.e-3, 1.e-3, 0.999, 1.e-3, 1.e-3 );
-    site_descr_t sites[1];
+    site_descr_t sites[1] = {0};
 
     sites[0].n_functions = 1;
     sites[0].amplitude[0] = 1.;
@@ -35,7 +33,7 @@ CT_TEST(toymodel) {
     // s, p+ and p- hubbard model with C4
 
     model->orb_symmetries = (complex128_t*)calloc(1*4,sizeof(complex128_t));
-    sym_op_t curr_symm;
+    sym_op_t curr_symm = {0};
     curr_symm.type = 'E'; curr_symm.normal_vector[0] = 0.;
     curr_symm.normal_vector[1] = 0.;curr_symm.normal_vector[2] = 1.;
     model->n_sym = 4;
@@ -108,14 +106,11 @@ CT_TEST(toymodel) {
     }
     diverge_model_free(model);
     diverge_model_free(model2);
-    diverge_generate_symm_maps_precision_set( smp );
 }
 
 CT_TEST(honeycomb) {
-    diverge_generate_symm_maps_precision_t smp = diverge_generate_symm_maps_precision_get();
-    diverge_generate_symm_maps_set_precision( 1.e-3, 1.e-3, 1.e-3, 0.999, 1.e-3, 1.e-3 );
     mpi_log_printf("symm_honey \n");
-    site_descr_t sites[2];
+    site_descr_t sites[2] = {0};
 
     sites[0].n_functions = 2;
     sites[1].n_functions = 2;
@@ -143,7 +138,7 @@ CT_TEST(honeycomb) {
     // s, p+ and p- hubbard model with C4
 
     model->orb_symmetries = (complex128_t*)calloc(4*4,sizeof(complex128_t));
-    sym_op_t curr_symm;
+    sym_op_t curr_symm = {0};
     curr_symm.type = 'E'; curr_symm.normal_vector[0] = 0.;
     curr_symm.normal_vector[1] = 0.;curr_symm.normal_vector[2] = 1.;
     model->n_sym = 4;
@@ -222,7 +217,6 @@ CT_TEST(honeycomb) {
     }
     diverge_model_free(model);
     diverge_model_free(model2);
-    diverge_generate_symm_maps_precision_set( smp );
 }
 
 #endif // DIVERGE_SKIP_TESTS
