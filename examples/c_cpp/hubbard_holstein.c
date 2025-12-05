@@ -26,27 +26,18 @@ int main( int argc, char** argv ) {
     m->SU2 = SU2;
     m->n_spin = m->SU2 ? 1 : 2;
 
-    m->hop = calloc(128, sizeof*m->hop);
-    for (index_t s=0; s<m->n_spin; ++s) {
-        m->hop[m->n_hop++] = (rs_hopping_t){ .R={ 1,0,0}, .s1=s, .s2=s, .t=1 };
-        m->hop[m->n_hop++] = (rs_hopping_t){ .R={-1,0,0}, .s1=s, .s2=s, .t=1 };
-        m->hop[m->n_hop++] = (rs_hopping_t){ .R={0, 1,0}, .s1=s, .s2=s, .t=1 };
-        m->hop[m->n_hop++] = (rs_hopping_t){ .R={0,-1,0}, .s1=s, .s2=s, .t=1 };
-    }
-    m->vert = calloc(128, sizeof*m->vert);
+    m->hop = calloc(4, sizeof*m->hop);
+    m->hop[m->n_hop++] = (rs_hopping_t){ .R={ 1,0,0}, .s1=-1, .t=1 };
+    m->hop[m->n_hop++] = (rs_hopping_t){ .R={-1,0,0}, .s1=-1, .t=1 };
+    m->hop[m->n_hop++] = (rs_hopping_t){ .R={0, 1,0}, .s1=-1, .t=1 };
+    m->hop[m->n_hop++] = (rs_hopping_t){ .R={0,-1,0}, .s1=-1, .t=1 };
+    m->vert = calloc(1, sizeof*m->vert);
     m->vert[m->n_vert++] = (rs_vertex_t){ .chan='D', .s1=-1, .V=U };
 
     diverge_model_internals_common(m);
-    rs_hopping_t phonon_modes[] = {
-        { .o1=0, .o2=0, .t=omega_2 },
-    };
-    ph_vertex_t phonon_vertex[] = {
-        { .OA=0, .s1=0, .s2=0, .g=g },
-        { .OA=0, .s1=1, .s2=1, .g=g },
-    };
-    diverge_model_internals_tu_phonons(m, ffdist,
-            &phonon_modes[0], SU2?1:sizeof(phonon_modes)/sizeof(phonon_modes[0]),
-            &phonon_vertex[0], SU2?1:sizeof(phonon_vertex)/sizeof(phonon_vertex[0]));
+    rs_hopping_t phonon_modes[] = { { .t=omega_2 }, };
+    ph_vertex_t phonon_vertex[] = { { .s1=-1, .g=g }, };
+    diverge_model_internals_tu_phonons(m, ffdist, phonon_modes, 1, phonon_vertex, 1);
 
     m->data = diverge_phonons_get_g(m, 0);
     m->nbytes_data = sizeof(complex128_t) * kdim(m->nk) * POW2(m->n_spin) * m->n_tu_ff;
@@ -70,7 +61,7 @@ int main( int argc, char** argv ) {
             chmax[1] = diverge_flow_step_eigchan(s,'m',0);
             chmax[2] = diverge_flow_step_eigchan(s,'h',0);
         } else {
-            chmax[0] = diverge_flow_step_eigchan(s,'p',0);
+            chmax[0] = 0.5 * diverge_flow_step_eigchan(s,'p',0);
             chmax[1] = diverge_flow_step_eigchan(s,'c',0);
             chmax[2] = diverge_flow_step_eigchan(s,'d',0);
         }
