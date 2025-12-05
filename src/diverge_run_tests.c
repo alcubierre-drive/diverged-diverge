@@ -4,6 +4,7 @@
 #include "misc/compilation_status.h"
 #include "misc/mpi_log.h"
 #include "misc/quotes.h"
+#include "misc/init_internal_libs.h"
 
 #define CT_MAIN
 #include "../test/ctest.h"
@@ -11,7 +12,7 @@
 
 int diverge_run_tests(int argc, char** argv ) {
     #ifndef DIVERGE_SKIP_TESTS
-        mpi_loglevel_set(5);
+        if (!environ_loglevel_set()) mpi_loglevel_set(5);
         #ifdef CT_SKIP_INITIALIZERS
             ct__register__all();
         #endif

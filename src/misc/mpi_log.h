@@ -17,8 +17,8 @@ void mpi_fprintf( FILE* file, const char* fmt, ... );
 
 void mpi_dbg_printf_all( const char* logname, int loglevel, const char* fname, int line, const char* fmt, ... );
 void mpi_dbg_printf( const char* logname, int loglevel, const char* fname, int line, const char* fmt, ... );
-/** debug time measurement (loglevel -1) */
-#define mpi_tim_printf( ... ) mpi_dbg_printf( "time", -1, __FILE__, __LINE__, __VA_ARGS__ );
+/** debug time measurement (loglevel 1) */
+#define mpi_tim_printf( ... ) mpi_dbg_printf( "time", 1, __FILE__, __LINE__, __VA_ARGS__ );
 /** print error message (loglevel 0) */
 #define mpi_err_printf( ... ) mpi_dbg_printf( "error", 0, __FILE__, __LINE__, __VA_ARGS__ );
 /** print error message on all ranks (loglevel 0) */
