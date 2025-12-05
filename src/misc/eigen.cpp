@@ -115,7 +115,7 @@ index_t single_eigen_sort_part( complex128_t* U, double* E, index_t N, char whic
 
 index_t single_eigen_sort_N( complex128_t* U, double* E, index_t N, char which, double abs_limit ) {
     int use_all_or_num = 0;
-    uint32_t num_limit = 0;
+    index_t num_limit = 0;
     if (qnan_isnan(abs_limit)) {
         num_limit = qnan_get(abs_limit);
         use_all_or_num = 1;

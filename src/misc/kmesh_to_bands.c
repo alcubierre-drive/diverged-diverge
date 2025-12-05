@@ -110,9 +110,9 @@ static index_t* diverge_kmesh_to_bands_both( diverge_model_t* m, index_t**
                 skip_segment = (qnan_get( m->ibz_path[segment+add][0] ) ==
                                 qnan_get(diverge_model_ibz_path_skip_segment()));
                 if (!skip_segment) {
-                    mpi_wrn_printf( "segment contains qnan-skip (%u), but not the right one (%u)\n",
-                            qnan_get( m->ibz_path[segment+add][0] ),
-                            qnan_get( diverge_model_ibz_path_skip_segment() ) );
+                    mpi_wrn_printf( "segment contains qnan-skip (%lu), but not the right one (%lu)\n",
+                            qnan_get(m->ibz_path[segment+add][0]),
+                            qnan_get(diverge_model_ibz_path_skip_segment()) );
                 }
             }
         }

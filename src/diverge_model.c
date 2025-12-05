@@ -236,8 +236,8 @@ int diverge_channel_vertex_generator_default(diverge_model_t* model, char channe
 }
 
 double diverge_model_ibz_path_skip_segment( void ) {
-    uint32_t number = 0;
-    memcpy( &number, "skip", sizeof(uint32_t) );
+    uint64_t number = 0;
+    memcpy( &number, "skip", MIN(sizeof(uint64_t),sizeof("skip")) );
     return qnan_gen( number );
 }
 

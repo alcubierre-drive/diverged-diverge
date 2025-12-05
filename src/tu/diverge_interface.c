@@ -198,13 +198,13 @@ static inline int contains_claV4d_t( const claV4d_t* ary, index_t sz, claV4d_t t
 void init_ff_struct(const double max_dist, diverge_model_t* model) {
     bool iobi_setup = false;
     if (qnan_isnan(max_dist) && model->n_tu_ff == 0) {
-        uint32_t payload = qnan_get(max_dist);
-        mpi_vrb_printf( "found NAN for max_dist, read payload '%u'\n", payload );
+        uint64_t payload = qnan_get(max_dist);
+        mpi_vrb_printf( "found NAN for max_dist, read payload '%lu'\n", payload );
         if (payload == IOBI_FORMFACTOR_MAGIC_NUMBER) {
             mpi_log_printf( "dispatching to IOBI FRG\n" );
             iobi_setup = true;
         } else {
-            mpi_err_printf( "invalid payload '%u', anyways doing IOBI\n", payload );
+            mpi_err_printf( "invalid payload '%lu', anyways doing IOBI\n", payload );
             // we could do different special cases here
             iobi_setup = true;
         }
