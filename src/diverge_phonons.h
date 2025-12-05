@@ -147,14 +147,12 @@ typedef struct {
      */
     double weight;
 } refinement_t;
-// TODO wrap in python
 
 /**
  * returns the refinement (or NULL) of the phonon-Gamma point vertex.
  * ``n_refine`` is set to the length of the refinement.
  */
 refinement_t* diverge_phonons_get_refine( diverge_model_t* m, index_t* n_refine );
-// TODO wrap in python
 
 /**
  * Changes the phonon propagator regulator :math:`\eta` for the
