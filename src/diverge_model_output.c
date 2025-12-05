@@ -474,7 +474,7 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
             claV3d_t s0vec = claV3d_map( mod->ibz_path[seg] ),
                      s1vec = claV3d_map( mod->ibz_path[seg+1] );
 
-            uint32_t skip = 0;
+            uint64_t skip = 0;
             for (int add=0; add<2; ++add) {
                 if (qnan_isnan(mod->ibz_path[seg+add][0]))
                     skip |= qnan_get(mod->ibz_path[seg+add][0]);
@@ -517,7 +517,7 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
             claV3d_t k0vec = claM3d_vecmat( s0vec, Gvec ),
                      k1vec = claM3d_vecmat( s1vec, Gvec );
 
-            uint32_t skip[2] = {0};
+            uint64_t skip[2] = {0};
             for (int add=0; add<2; ++add)
                 if (qnan_isnan(mod->ibz_path[seg+add][0]))
                     skip[add] = qnan_get(mod->ibz_path[seg+add][0]);
