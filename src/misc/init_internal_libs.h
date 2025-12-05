@@ -17,6 +17,7 @@ int diverge_internal_fftw_num_threads( void );
 
 int environ_tu_symcheck_mpi( void );
 int environ_symcheck_mpi( void );
+int environ_loglevel_set( void );
 
 #ifdef __cplusplus
 }

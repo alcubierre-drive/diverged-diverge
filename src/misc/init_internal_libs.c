@@ -34,6 +34,7 @@ static struct {
     tag_t tu_symcheck_mpi;
     tag_t shared_malloc_extra_colors;
     tag_t batched_eigen_r_eigen3;
+    tag_t loglevel;
 } dvg_env = {0};
 
 static int dvg_has_fftw_init = 0;
@@ -51,6 +52,10 @@ int environ_tu_symcheck_mpi( void ) {
 
 int environ_symcheck_mpi( void ) {
     return dvg_env.symcheck_mpi.set;
+}
+
+int environ_loglevel_set( void ) {
+    return dvg_env.loglevel.set;
 }
 
 void init_internal_libs( void ) {
@@ -83,6 +88,8 @@ void init_internal_libs( void ) {
         batched_eigen_r_set_eigen3_mode( 1 );
 
     // logging
+    if (dvg_env.loglevel.set)
+        mpi_loglevel_set( dvg_env.loglevel.val );
     dvg_previous_log_color = mpi_log_get_colors();
     #ifndef DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT
     if (dvg_previous_log_color)
@@ -162,6 +169,7 @@ static void read_environment( void ) {
     char* env_dvg_symcheck_mpi = getenv( "DIVERGE_SYMCHECK_MPI" );
     char* env_dvg_tu_symcheck_mpi = getenv( "DIVERGE_TU_SYMCHECK_MPI" );
     char* env_dvg_batched_eigen_r_eigen3 = getenv( "DIVERGE_BATCHED_EIGEN3" );
+    char* env_dvg_loglevel = getenv( "DIVERGE_LOGLEVEL" );
 
 #define SET_ENV_VAR( nam ) \
     if ((dvg_env.nam.set = (env_dvg_##nam != NULL))) { \
@@ -174,6 +182,7 @@ static void read_environment( void ) {
     SET_ENV_VAR( symcheck_mpi );
     SET_ENV_VAR( tu_symcheck_mpi );
     SET_ENV_VAR( batched_eigen_r_eigen3 );
+    SET_ENV_VAR( loglevel );
 
     // and check
 #define CHECK_ENV_VAR( nam, default ) \
