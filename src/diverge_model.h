@@ -117,18 +117,14 @@ struct rs_hopping_t {
     complex128_t t;
 };
 
-// TODO(LK): We need to comment on the fact that for the -1 components, either
-// the C or D channel objects can be set, but not both. This is necessitated
-// through our wish to keep notation consistent between SU(2) and non-SU(2)
-// vertex initialization and enforcing exchange symmetries
-// TODO(LK): As a consequence, one should also think about what actually happens
-// to the P channel. @JP: Have we thought this through?
 /**
  * Single vertex element in real space. Distance is measured in the same manner
  * as for hopping parameters (:c:struct:`rs_hopping_t`). In case the model is
  * non-:math:`SU(2)` but still spin-1/2, i.e., has two spin indices, setting
  * ``s1 = -1`` allows to auto-generate all :math:`SU(2)`-symmetry related
- * components. Useful for models where :math:`SU(2)` is broken in the kinetic
+ * components. Note that in this case, you must not double-count the
+ * interactions, i.e., still initialize, e.g., the Hubbard-U in only one of the
+ * channels. Useful for models where :math:`SU(2)` is broken in the kinetic
  * sector.
  */
 struct rs_vertex_t {
