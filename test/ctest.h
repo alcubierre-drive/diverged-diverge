@@ -208,43 +208,101 @@ static inline void ct_strsit( const char* str_, const char* delim,
     free(str);
 }
 /** filter substring iteration */
-typedef struct { int* matches_case_filters; const char* filter; } ct_strsit_iter_ctx_t;
+typedef struct { int nkeywords; int nmatches; const char* filter; } ct_strsit_iter_ctx_t;
 static inline void ct_strsit_iter( const char* name, void* ctx_ ) {
     ct_strsit_iter_ctx_t* ctx = (ct_strsit_iter_ctx_t*)ctx_;
-    if (!strcmp(name, ctx->filter)) *ctx->matches_case_filters += 1;
+    ctx->nkeywords++;
+    if (!strcmp(name, ctx->filter)) ctx->nmatches++;
+}
+typedef struct { int nkeywords, nmatches, is_neg, is_and; } ct_filter_eval_t;
+static const ct_filter_eval_t ct_filter_eval_skip = { -1, -1, -1, -1 };
+static inline int ct_filter_eval_is_skip( ct_filter_eval_t fe ) {
+    return (fe.nkeywords == ct_filter_eval_skip.nkeywords) &&
+           (fe.nmatches == ct_filter_eval_skip.nmatches) &&
+           (fe.is_neg == ct_filter_eval_skip.is_neg) &&
+           (fe.is_and == ct_filter_eval_skip.is_and);
 }
 
 /**
- * returns nfilters, checks suite name and test (index i) name and puts result
- * into ptrs matches_case_filters and matches_suite_filters
+ * returns whether suite name or test keywords (of index i) matches with the
+ * filters given in the zero terminated array. If -1 is returned, this means we
+ * don't have any filters or only negative filters that don't match
  */
-static inline int ct_matches_filters( char** filters, ct_suite_t* s, int i,
-        int* matches_case_filters, int* matches_suite_filters ) {
-    int nfilters = 0,
+static inline int ct_matches_filters( char** filters, ct_suite_t* s, int i ) {
+
+    if (!*filters) return -1; // no filters
+
+    int nfilters = 0;
+    for (char** f=filters; *f; f++) nfilters++;
+
+    ct_filter_eval_t* fev = (ct_filter_eval_t*)calloc(nfilters, sizeof*fev);
+
+    nfilters = 0;
+    for (char** f=filters; *f; f++) {
+        char* filt = *f;
+        int len = strlen(filt);
+        int is_neg = (len > 1) && (*f[0] == '~' || *f[0] == '!'),
+            is_and = (len > 1) && (*f[0] == '&' || *f[0] == '+');
+        if (is_neg || is_and) filt++;
+
+        // case keywords
+        ct_strsit_iter_ctx_t ctx = { 0, 0, filt };
+        ct_strsit( s->tests[i].name, CT_NAME_DELIM, ct_strsit_iter, (void*)&ctx );
+
+        // suite name
+        ctx.nkeywords++;
+        if (!strcmp(s->name, filt)) ctx.nmatches++;
+
+        ct_filter_eval_t fev_cur = { ctx.nkeywords, ctx.nmatches, is_neg, is_and };
+        fev[nfilters++] = fev_cur;
+    }
+
+    int result = 0;
+    // prevent goto initialization crossing
+    int nfilters_and = 0,
+        nmatches_and = 0,
         nfilters_neg = 0;
-    *matches_case_filters = *matches_suite_filters = 0;
-    int matches_neg_case_filters = 0,
-        matches_neg_suite_filters = 0;
-    for (char** f = filters; *f; f++) {
-        int is_neg_filter = (strlen(*f) > 1) && (*f[0] == '~' || *f[0] == '!');
-        nfilters_neg += is_neg_filter;
-        nfilters++;
-        ct_strsit_iter_ctx_t ctx_neg = { &matches_neg_case_filters, *f + 1 };
-        ct_strsit_iter_ctx_t ctx = { matches_case_filters, *f };
-        ct_strsit( s->tests[i].name, CT_NAME_DELIM, ct_strsit_iter,
-                is_neg_filter ? (void*)&ctx_neg : (void*)&ctx );
-        if (!strcmp(s->name, is_neg_filter ? (*f + 1) : *f)) {
-            if (!is_neg_filter) *matches_suite_filters += 1;
-            else matches_neg_suite_filters += 1;
+
+    // check for any negative matches and early return
+    for (int f=0; f<nfilters; ++f) {
+        if (!ct_filter_eval_is_skip(fev[f]) && fev[f].is_neg) {
+            if (fev[f].nmatches > 0) goto ct_matches_filters_return;
+            nfilters_neg++;
+            fev[f] = ct_filter_eval_skip; // flag skipped
         }
     }
-    if (nfilters_neg > 0) {
-        if (matches_neg_suite_filters || matches_neg_case_filters)
-            *matches_case_filters = *matches_suite_filters = 0;
-        else
-            nfilters -= nfilters_neg;
+
+    // early return in case *just* negative filters are applied
+    if (nfilters_neg == nfilters) {
+        result = -1;
+        goto ct_matches_filters_return;
     }
-    return nfilters;
+
+    // now check for the number of AND matches
+    for (int f=0; f<nfilters; ++f) {
+        if (!ct_filter_eval_is_skip(fev[f]) && fev[f].is_and) {
+            if (fev[f].nmatches) nmatches_and++;
+            nfilters_and++;
+            fev[f] = ct_filter_eval_skip; // flag skipped
+        }
+    }
+    if ((nfilters_and == nmatches_and) && (nfilters_and != 0)) {
+        // we have a match for all AND filters (in case there are any) so we can return
+        result = 1;
+        goto ct_matches_filters_return;
+    }
+
+    // last check for the OR filters, if any matches we're good and return
+    for (int f=0; f<nfilters; ++f) {
+        if (!ct_filter_eval_is_skip(fev[f])) {
+            if (fev[f].nmatches) {
+                result = 1;
+                goto ct_matches_filters_return;
+            }
+        }
+    }
+
+    ct_matches_filters_return: free( fev ); return result;
 }
 
 /**
@@ -261,12 +319,10 @@ static inline void ct_suite_run( ct_suite_t* s, unsigned* nassert,
     unsigned nc = 0, nc_run = 0;
 
     for (unsigned i=0; i<s->ntests; ++i) {
-        int matches_case_filters = 0;
-        int matches_suite_filters = 0;
-        int nfilters = ct_matches_filters( filters, s, i, &matches_case_filters, &matches_suite_filters );
-        if (matches_suite_filters || matches_case_filters || nfilters==0) {
+        int nmatches = ct_matches_filters( filters, s, i );
+        if (nmatches) {
             if (s->tests[i].hidden) {
-                if (matches_case_filters || matches_suite_filters) {
+                if (nmatches > 0) {
                     CT_PRINTF( "... run test '%s'\n", s->tests[i].name );
                     s->tests[i].run();
                     nc++;
@@ -304,10 +360,8 @@ static inline int ct_list( char** filters ) {
         CT_PRINTF( "%s>suite<%s %s\n", ct_color_yellow, ct_color_reset, ss->name );
         unsigned nc = 0, nc_run = 0;
         for (unsigned i=0; i<ss->ntests; ++i) {
-            int matches_case_filters = 0;
-            int matches_suite_filters = 0;
-            int nfilters = ct_matches_filters( filters, ss, i, &matches_case_filters, &matches_suite_filters );
-            if (matches_suite_filters || matches_case_filters || nfilters==0) {
+            int nmatches = ct_matches_filters( filters, ss, i );
+            if (nmatches) {
                 CT_PRINTF( "%s->%ccase%s %s\n", ss->tests[i].hidden ? ct_color_red : ct_color_green,
                         ss->tests[i].hidden ? '.' : ' ', ct_color_reset, ss->tests[i].name );
                 nc_run++;
