@@ -14,6 +14,10 @@ extern "C" {
 #define NAN_BITSHIFT 13
 #define NANF_BITSHIFT 10
 
+#ifdef DIVERGE_QNAN_DISABLE_CLANG_OPTS
+_Pragma("clang optimize off")
+#endif
+
 typedef union { uint64_t bits; double f; } qnan_u;
 static const uint64_t NAN_MASK = ((~(0ULL)) >> (64-NAN_BITSHIFT)) << (64-NAN_BITSHIFT);
 static const uint64_t NAN_LOAD = ~NAN_MASK;
@@ -103,6 +107,10 @@ static inline float fnanf_get( float x ) {
 
 /** check whether a float holds a quiet NaNf (same as :c:func:`qnanf_isnsn`) */
 static inline int fnanf_isnan( float x ) { return qnanf_isnan(x); }
+
+#ifdef DIVERGE_QNAN_DISABLE_CLANG_OPTS
+_Pragma("clang optimize on")
+#endif
 
 #ifdef __cplusplus
 }

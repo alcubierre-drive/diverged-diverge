@@ -97,7 +97,6 @@ CT_TEST_NAME(onedim_twoorb_TU, "onedim_twoorb,tu") {
         mpi_err_printf( "cannot test two orbital model in 1d [hk] with more than one MPI rank\n" );
         return;
     }
-    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod1 = test_model(1, 1, 1);
     diverge_model_t* mod2 = test_model(2, 1, 1);
     diverge_model_internals_tu( mod1, 4.01 );
@@ -199,12 +198,10 @@ CT_TEST_NAME(onedim_twoorb_TU, "onedim_twoorb,tu") {
     free(vertex);
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
-    mpi_loglevel_set(ll);
 }
 
 
 CT_TEST_NAME(onedim_twoorb_grid, "onedim_twoorb,grid") {
-    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod2 = test_model(2, 1, 1);
     diverge_model_internals_grid( mod2 );
     diverge_flow_step_t* s2 = diverge_flow_step_init( mod2, "grid", "PCD" );
@@ -268,11 +265,9 @@ CT_TEST_NAME(onedim_twoorb_grid, "onedim_twoorb,grid") {
     diverge_flow_step_free( s2 );
     free(vertex);
     diverge_model_free( mod2 );
-    mpi_loglevel_set(ll);
 }
 
 CT_TEST_NAME(onedim_twoorb_mom, "onedim_twoorb,momentum") {
-    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod1 = test_model(1,10,5);
     diverge_model_t* mod2 = test_model(2,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
@@ -299,7 +294,6 @@ CT_TEST_NAME(onedim_twoorb_mom, "onedim_twoorb,momentum") {
     diverge_flow_step_free( s2 );
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
-    mpi_loglevel_set(ll);
 }
 
 #endif // DIVERGE_SKIP_TESTS

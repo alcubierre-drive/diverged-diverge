@@ -68,7 +68,6 @@ diverge_model_t* RPA_model(int n_spin, int kx, int kxf) {
 }
 
 CT_TEST_NAME(RPA_P, "RPA,P_channel") {
-    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod1 = RPA_model(1,10,5);
     diverge_model_t* mod2 = RPA_model(1,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
@@ -101,11 +100,9 @@ CT_TEST_NAME(RPA_P, "RPA,P_channel") {
     diverge_flow_step_free( s2 );
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
-    mpi_loglevel_set(ll);
 }
 
 CT_TEST_NAME(RPA_C, "RPA,C_channel") {
-    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mod1 = RPA_model(1,10,5);
     diverge_model_t* mod2 = RPA_model(1,10,5);
     diverge_model_internals_tu( mod1, 1.01 );
@@ -137,6 +134,5 @@ CT_TEST_NAME(RPA_C, "RPA,C_channel") {
     diverge_flow_step_free( s2 );
     diverge_model_free( mod1 );
     diverge_model_free( mod2 );
-    mpi_loglevel_set(ll);
 }
 #endif // DIVERGE_SKIP_TESTS
