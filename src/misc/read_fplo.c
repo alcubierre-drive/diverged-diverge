@@ -126,6 +126,47 @@ static inline claM3d_t claM3d_inv( claM3d_t A ) {
     return claM3d_scale( B, 1./claV3d_dot(claV3d_map(B.m[0]),claV3d_map(A.m[0])) );
 }
 
+static const int REGEX_MATCH_FPLO_LABEL_SUCCESS = 0,
+                 REGEX_MATCH_FPLO_LABEL_NO_COLON = 1,
+                 REGEX_MATCH_FPLO_LABEL_NO_TRAILING_SPACE = 2,
+                 REGEX_MATCH_FPLO_LABEL_EMPTY_STRING = 4;
+static inline int regex_match_fplo_label( const char* line ) {
+    const char label_ranges[][2] = { {'A','Z'}, {'a','z'}, {'0','9'}, {'_','_'}, {' ',' '}, {',',','} };
+    const int n_label_ranges = sizeof label_ranges / 2;
+    const char space_chars[] = { ' ', '\t', '\r', '\n', '\v', '\f', };
+    const int n_space_chars = sizeof space_chars;
+
+    int parse_label = 1;
+    size_t nchar = 0;
+    for (const char* c=line; *c; c++) {
+        nchar++;
+        if (parse_label) {
+            int is_label_char = 0;
+            for (int r=0; r<n_label_ranges; ++r) {
+                if (((*c) >= label_ranges[r][0]) && ((*c) <= label_ranges[r][1])) {
+                    is_label_char = 1;
+                    break;
+                }
+            }
+            if (!is_label_char) {
+                parse_label = 0;
+                if (*c != ':') return REGEX_MATCH_FPLO_LABEL_NO_COLON;
+            }
+        } else {
+            int is_space_char = 0;
+            for (int s=0; s<n_space_chars; ++s) {
+                if (*c == space_chars[s]) {
+                    is_space_char = 1;
+                    break;
+                }
+            }
+            if (!is_space_char) return REGEX_MATCH_FPLO_LABEL_NO_TRAILING_SPACE;
+        }
+    }
+    if (nchar == 0) return REGEX_MATCH_FPLO_LABEL_EMPTY_STRING;
+    return REGEX_MATCH_FPLO_LABEL_SUCCESS;
+}
+
 static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file ) {
 
     fplo_intermediate_output_t io = {.valid = 0};
@@ -137,10 +178,11 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
     }
 
     // regex: start, possibly some space and the key, colon, space, end line
-    regex_t regex;
+    int fplo_reader_use_custom_regex = 0;
+    regex_t regex = {0};
     if (regcomp(&regex, "^[A-Z,a-z,0-9,_, ]*:\\s*$", 0)) {
-        mpi_err_printf( "could not compile regex\n" );
-        return io;
+        mpi_wrn_printf( "could not compile regex, try custom regex\n" );
+        fplo_reader_use_custom_regex = 1;
     }
 
     // output objects
@@ -180,7 +222,9 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
         linenum++;
 
         regmatch_t match = {0};
-        if (regexec(&regex, line, 1, &match, 0) == 0) {
+        int res = fplo_reader_use_custom_regex ? regex_match_fplo_label(line) :
+                                                 regexec(&regex, line, 1, &match, 0) ;
+        if (res == 0) {
             char str[DIVERGE_GETLINE_MAX] = {0};
             char *l = line, *s = str;
             while ((*s++ = *l++) != ':') {}
