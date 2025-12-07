@@ -16,7 +16,6 @@
 #include "models/all.h"
 
 CT_TEST_HIDDEN(loopspeed) {
-    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mom = KWARGS(gen_square_lat_hub, .nkx=30, .nky=30, .lx=2, .ly=2, .nkxf=45, .nkyf=45);
     diverge_model_internals_tu(mom, 2.1);
     tu_prop_t* PropMom = tu_prop_init(mom);
@@ -39,11 +38,9 @@ CT_TEST_HIDDEN(loopspeed) {
     tu_prop_free( PropMom );
     diverge_model_free(mom);
     free(lm);
-    mpi_loglevel_set(ll);
 }
 
 CT_TEST_HIDDEN(projspeed) {
-    int ll = mpi_loglevel_get(); mpi_loglevel_set(5);
     diverge_model_t* mom = KWARGS(gen_honeycomb_lat_hub, .nkx=30, .nky=30);
     diverge_model_internals_tu(mom, 2.5);
     tu_projection_t* ProjMom = tu_projection_init(mom);
@@ -64,7 +61,6 @@ CT_TEST_HIDDEN(projspeed) {
     tu_projection_free( ProjMom );
     diverge_model_free(mom);
     free(r2);
-    mpi_loglevel_set(ll);
 }
 
 #endif // DIVERGE_SKIP_TESTS
