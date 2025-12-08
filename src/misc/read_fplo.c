@@ -1,18 +1,25 @@
 /* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 #include "read_fplo.h"
 #include "text_io.h"
-#include "../diverge_common.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "invert.h"
 
 #include "../diverge_model.h"
 #define LINALG_NO_LAPACKE
 #include "linalg.h"
 LINALG_IMPLEMENT
 
+#ifndef DIVERGE_SKIP_REGEX_H_INCLUDE
 #include <regex.h>
+#else
+typedef void* regex_t;
+typedef void* regmatch_t;
+static inline int regcomp(regex_t *restrict preg, const char *restrict pattern,
+        int cflags) { (void)preg; (void)pattern; (void)cflags; return -1; }
+static inline int regexec(const regex_t *restrict preg, const char *restrict string,
+        size_t nmatch, regmatch_t pmatch[restrict], int eflags) { (void)preg;
+    (void)string; (void)nmatch; (void)pmatch; (void)eflags; return -1; }
+static inline void regfree(regex_t *preg) { (void)preg; }
+#endif
 
 typedef struct {
     rs_hopping_t* hop;
@@ -56,9 +63,8 @@ typedef struct {
 
 typedef struct fplo_hop_element_t fplo_hop_element_t;
 typedef struct fplo_hop_element_t {
-    fplo_single_hopping_t* hops;
-    index_t n_hops;
-    index_t c_hops;
+    VECTOR_DECL(fplo_single_hopping_t, hops)
+
     index_t o1, o2;
     index_t spin;
 
@@ -66,7 +72,6 @@ typedef struct fplo_hop_element_t {
 } fplo_hop_element_t;
 
 static fplo_hop_element_t* fplo_hop_element_init( void );
-static void fplo_hop_element_push( fplo_hop_element_t* e, fplo_single_hopping_t h );
 static void fplo_hop_element_free( fplo_hop_element_t* e );
 static fplo_hop_element_t* fplo_hop_element_append( fplo_hop_element_t* head, fplo_hop_element_t* elm ) {
     if (!head) return (head = elm);
@@ -104,30 +109,14 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
 
 static fplo_hop_element_t* fplo_hop_element_init( void ) {
     fplo_hop_element_t* e = calloc( 1, sizeof(fplo_hop_element_t) );
-    e->c_hops = 4096;
-    e->hops = calloc( e->c_hops, sizeof(fplo_single_hopping_t) );
+    VECTOR_RESERVE(e->hops, 8);
     e->o1 = e->o2 = e->spin = -1;
     return e;
 }
 
-static void fplo_hop_element_push( fplo_hop_element_t* e, fplo_single_hopping_t h ) {
-    if (e->n_hops >= e->c_hops) {
-        e->c_hops = (e->c_hops+1)*2;
-        e->hops = realloc(e->hops, sizeof(fplo_single_hopping_t) * e->c_hops);
-    }
-    e->hops[e->n_hops++] = h;
-}
-
 static void fplo_hop_element_free( fplo_hop_element_t* e ) {
-    free( e->hops );
+    VECTOR_FREE(e->hops);
     free( e );
-}
-
-static inline claM3d_t claM3d_inv( claM3d_t A ) {
-    claM3d_t B = {0};
-    for (int i=0; i<3; ++i)
-        claV3d_rmap( claV3d_cross( claV3d_map(A.m[(i+1)%3]), claV3d_map(A.m[(i+2)%3]) ), B.m[i] );
-    return claM3d_scale( B, 1./claV3d_dot(claV3d_map(B.m[0]),claV3d_map(A.m[0])) );
 }
 
 static const int REGEX_MATCH_FPLO_LABEL_SUCCESS = 0,
@@ -317,9 +306,8 @@ static fplo_intermediate_output_t fplo_intermediate_read( const char* fplo_file 
                         mpi_err_printf( "could not read hopping (l.%i)\n", linenum );
                         errors++;
                     }
-                    fplo_single_hopping_t h = {.R = {dbls[0], dbls[1], dbls[2]}};
-                    h.t = dbls[3] + I*dbls[4];
-                    fplo_hop_element_push( current_hopping, h );
+                    VECTOR_PUSH_BACK(current_hopping->hops, (fplo_single_hopping_t){
+                            .R = {dbls[0], dbls[1], dbls[2]}, .t = dbls[3] + I*dbls[4] });
                 }
             }
         }
@@ -355,7 +343,9 @@ static fplo_hamiltonian_t* fplo_hamiltonian_read( const char* fplo_file ) {
     memcpy( h->lattice[0], io.lattice_vectors[0], sizeof(double)*9 );
 
     claM3d_t lattice = claM3d_map(h->lattice[0]);
-    claM3d_t rlattice = claM3d_inv(lattice);
+    claM3d_t rlattice = {0};
+    matrix_invert( lattice.m[0], 3, rlattice.m[0] );
+    rlattice = claM3d_transpose(rlattice);
 
     h->pos = calloc( h->n_orb*3, sizeof(double) );
     index_t n_pos = 0;
@@ -366,13 +356,13 @@ static fplo_hamiltonian_t* fplo_hamiltonian_read( const char* fplo_file ) {
     }
 
     for (fplo_hop_element_t* hop=io.fplo_hops; hop; hop = hop->next)
-        h->n_hop += hop->n_hops;
+        h->n_hop += hop->hops_sz;
     h->hop = calloc(h->n_hop, sizeof(rs_hopping_t));
     h->n_hop = 0;
     for (fplo_hop_element_t* hop=io.fplo_hops; hop; ) {
         index_t o1 = hop->o1-1,
                 o2 = hop->o2-1;
-        for (index_t i=0; i<hop->n_hops; ++i) {
+        for (index_t i=0; i<hop->hops_sz; ++i) {
             claV3d_t Rvec = claV3d_add( claV3d_map(hop->hops[i].R),
                     claV3d_sub(claV3d_map(h->pos+o1*3), claV3d_map(h->pos+o2*3)) );
             claV3d_t Rivec = claM3d_matvec( rlattice, Rvec );
