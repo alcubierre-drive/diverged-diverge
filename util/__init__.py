@@ -1532,6 +1532,44 @@ if not _libs["divERGe"] is None:
     shared_malloc_barrier.argtypes = []
     shared_malloc_barrier.restype = None
 
+    # qnan
+    qnan_gen = _libs["divERGe"].get("diverge_qnan_gen", "cdecl")
+    qnan_gen.argtypes = [ c_uint64 ]
+    qnan_gen.restype = c_double
+    qnan_get = _libs["divERGe"].get("diverge_qnan_get", "cdecl")
+    qnan_get.argtypes = [ c_double ]
+    qnan_get.restype = c_uint64
+    qnan_isnan = _libs["divERGe"].get("diverge_qnan_isnan", "cdecl")
+    qnan_isnan.argtypes = [ c_double ]
+    qnan_isnan.restype = c_int
+    fnan_gen = _libs["divERGe"].get("diverge_fnan_gen", "cdecl")
+    fnan_gen.argtypes = [ c_double ]
+    fnan_gen.restype = c_double
+    fnan_get = _libs["divERGe"].get("diverge_fnan_get", "cdecl")
+    fnan_get.argtypes = [ c_double ]
+    fnan_get.restype = c_double
+    fnan_isnan = _libs["divERGe"].get("diverge_fnan_isnan", "cdecl")
+    fnan_isnan.argtypes = [ c_double ]
+    fnan_isnan.restype = c_int
+    qnanf_gen = _libs["divERGe"].get("diverge_qnanf_gen", "cdecl")
+    qnanf_gen.argtypes = [ c_uint32 ]
+    qnanf_gen.restype = c_float
+    qnanf_get = _libs["divERGe"].get("diverge_qnanf_get", "cdecl")
+    qnanf_get.argtypes = [ c_float ]
+    qnanf_get.restype = c_uint32
+    qnanf_isnan = _libs["divERGe"].get("diverge_qnanf_isnan", "cdecl")
+    qnanf_isnan.argtypes = [ c_float ]
+    qnanf_isnan.restype = c_int
+    fnanf_gen = _libs["divERGe"].get("diverge_fnanf_gen", "cdecl")
+    fnanf_gen.argtypes = [ c_float ]
+    fnanf_gen.restype = c_float
+    fnanf_get = _libs["divERGe"].get("diverge_fnanf_get", "cdecl")
+    fnanf_get.argtypes = [ c_float ]
+    fnanf_get.restype = c_float
+    fnanf_isnan = _libs["divERGe"].get("diverge_fnanf_isnan", "cdecl")
+    fnanf_isnan.argtypes = [ c_float ]
+    fnanf_isnan.restype = c_int
+
     # redo the typedefs
     rs_hopping_t = struct_rs_hopping_t
     rs_vertex_t = struct_rs_vertex_t
