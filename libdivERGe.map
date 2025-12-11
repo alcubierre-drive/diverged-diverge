@@ -229,6 +229,12 @@ DIVERGE_UNSTABLE {
         diverge_dos_use_gpu;
         diverge_energy_fill_gaps;
         diverge_filling_to_energy;
+        diverge_fnan_gen;
+        diverge_fnan_get;
+        diverge_fnan_isnan;
+        diverge_fnanf_gen;
+        diverge_fnanf_get;
+        diverge_fnanf_isnan;
         diverge_hartree_fock_free;
         diverge_hartree_fock_get_flow_step;
         diverge_hartree_fock_get_sigma;
@@ -243,6 +249,12 @@ DIVERGE_UNSTABLE {
         diverge_model_unique_distances;
         diverge_model_unique_distances_length;
         diverge_model_unique_distances_set_precision;
+        diverge_qnan_gen;
+        diverge_qnan_get;
+        diverge_qnan_isnan;
+        diverge_qnanf_gen;
+        diverge_qnanf_get;
+        diverge_qnanf_isnan;
         power_iteration;
         single_eigen;
         single_eigen_sort;
