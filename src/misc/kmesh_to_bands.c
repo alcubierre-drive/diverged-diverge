@@ -15,6 +15,7 @@ LINALG_IMPLEMENT
 
 static double KMESH_TO_BANDS_ZERO = DIVERGE_EPS_MESH;
 double diverge_kmesh_to_bands_set_zero( double zero ) {
+    if (qnan_isnan(zero)) zero = KMESH_TO_BANDS_ZERO;
     double prev = KMESH_TO_BANDS_ZERO;
     KMESH_TO_BANDS_ZERO = fabs(zero);
     return prev;
