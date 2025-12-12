@@ -68,6 +68,10 @@ if not _libs["divERGe"] is None:
     mpi_distribute.argtypes = [index_t]
     mpi_distribute.restype = POINTER(index_t)
 
+    distribute = _libs["divERGe"].get("diverge_distribute", "cdecl")
+    distribute.argtypes = [index_t, index_t]
+    distribute.restype = POINTER(index_t)
+
     mpi_barrier = _libs["divERGe"].get("diverge_mpi_barrier", "cdecl")
     mpi_barrier.argtypes = []
     mpi_barrier.restype = None
