@@ -63,7 +63,8 @@ def _numpy_fromfile( fname, **kwargs ):
 def numpy_fromfile( *args, **kwargs ):
     global DIVERGE_OUTPUT_USE_MEMMAP
     if DIVERGE_OUTPUT_USE_MEMMAP:
-        print( "diverge.output: using memmap instead of frombuffer" )
+        if DIVERGE_OUTPUT_USE_MEMMAP > 0:
+            print( "diverge.output: using memmap instead of frombuffer" )
         return _numpy_memmap( *args, **kwargs )
     else:
         return _numpy_fromfile( *args, **kwargs )
