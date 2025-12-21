@@ -889,6 +889,10 @@ if not _libs["divERGe"] is None:
     flow_step_vertmax.argtypes = [POINTER(flow_step_t), c_voidp]
     flow_step_vertmax.restype = None
 
+    flow_step_vertmax_r = _libs["divERGe"].get("diverge_flow_step_vertmax_r", "cdecl")
+    flow_step_vertmax_r.argtypes = [POINTER(flow_step_t), c_voidp]
+    flow_step_vertmax_r.restype = c_double
+
     flow_step_loopmax = _libs["divERGe"].get("diverge_flow_step_loopmax", "cdecl")
     flow_step_loopmax.argtypes = [POINTER(flow_step_t), c_voidp]
     flow_step_loopmax.restype = None

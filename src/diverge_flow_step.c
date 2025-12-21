@@ -299,6 +299,12 @@ char** diverge_flow_step_timing_descr_vec( diverge_flow_step_t* st ) {
     return (char**)dvg_timings_descr;
 }
 
+double diverge_flow_step_vertmax_r( diverge_flow_step_t* st, double* vertmax ) {
+    double vmax = 0; diverge_flow_step_vertmax( st, &vmax );
+    if (vertmax) *vertmax = vmax;
+    return vmax;
+}
+
 void diverge_flow_step_vertmax( diverge_flow_step_t* st, double vertmax[1] ) {
     memcpy( vertmax, &st->vertmax, sizeof(double) );
 }

@@ -66,6 +66,11 @@ diverge_flow_step_t* diverge_flow_step_init_any( diverge_model_t* mod, const cha
 
 /** outputs the maximum vertex element in ``vertmax`` */
 void diverge_flow_step_vertmax( diverge_flow_step_t* st, double vertmax[1] );
+/**
+ * same as :c:func:`diverge_flow_step_vertmax` but with return value. Ignores
+ * argument in case it's set to NULL
+ */
+double diverge_flow_step_vertmax_r( diverge_flow_step_t* st, double* vertmax );
 /** outputs the maximum loop elements in ``loopmax`` */
 void diverge_flow_step_loopmax( diverge_flow_step_t* st, double loopmax[2] );
 /** outputs the maximum channel vertex elements in ``chanmax`` */
