@@ -41,6 +41,7 @@ DIVERGE_0.9 {
         diverge_flow_step_type;
         diverge_flow_step_vertex;
         diverge_flow_step_vertmax;
+        diverge_flow_step_vertmax_r;
         diverge_force_thread_limit;
         diverge_fukui;
         diverge_fukui_non_abelian;
