@@ -45,7 +45,7 @@ def t2g_model( U = 1.0, J=0.1, nk=24, nkf=1,
                 vertex[elem] = ('P', [0,0,0],o1,o2,0,0,0,0,(J,0.0))
                 elem+=1
     model.contents.vert = vertex.ctypes.data
-    model.contents.n_vert = vertex.size
+    model.contents.n_vert = elem
 
     syms = np.zeros( 1, dtype=diverge.sym_op_t )
     orbs = np.zeros( 3, dtype=diverge.site_descr_t )
@@ -85,7 +85,9 @@ def t2g_model( U = 1.0, J=0.1, nk=24, nkf=1,
 def flow( model, maxvert=200, outfile="flow.dat", chans="PCD" ):
     step = diverge.flow_step_init( model, "tu", chans )
 
-    maxs = dict(vert=np.zeros(1), loop=np.zeros(2), chan=np.zeros(3))
+    maxs_vert = np.zeros(1, dtype=np.float64)
+    maxs_loop = np.zeros(2, dtype=np.float64)
+    maxs_chan = np.zeros(3, dtype=np.float64)
     eu = diverge.euler_defaults_CPP()
     eu.dLambda_fac_scale = 1.0
     eu.dLambda_fac = 0.1
@@ -98,12 +100,12 @@ def flow( model, maxvert=200, outfile="flow.dat", chans="PCD" ):
     diverge.print( "# Lambda dLambda Lp Lm dP dC dD V" )
     while True:
         diverge.flow_step_euler( step, eu.Lambda, eu.dLambda )
-        diverge.flow_step_vertmax( step, maxs['vert'].ctypes.data )
-        diverge.flow_step_loopmax( step, maxs['loop'].ctypes.data )
-        diverge.flow_step_chanmax( step, maxs['chan'].ctypes.data )
+        diverge.flow_step_vertmax( step, maxs_vert.ctypes.data )
+        diverge.flow_step_loopmax( step, maxs_loop.ctypes.data )
+        diverge.flow_step_chanmax( step, maxs_chan.ctypes.data )
         diverge.print( "%.5e %.5e %.5e %.5e %.5e %.5e %.5e %.5e" %
-                  (eu.Lambda, eu.dLambda, *maxs['loop'], *maxs['chan'], *maxs['vert']) )
-        eu_next = diverge.euler_next( diverge.byref(eu), maxs['vert'][0] )
+                  (eu.Lambda, eu.dLambda, *maxs_loop, *maxs_chan, *maxs_vert) )
+        eu_next = diverge.euler_next( diverge.byref(eu), maxs_vert[0] )
         if not eu_next:
             break
 

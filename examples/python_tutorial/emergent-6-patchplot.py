@@ -8,7 +8,7 @@ from cycler import cycler
 default_cycle = cycler(color=plt.cm.tab20( np.linspace(0,1,20) ))
 plt.rc( "axes", prop_cycle=default_cycle )
 
-M = do.read('.model_npatch.dvg')
+M = do.read('model_npatch.dvg')
 
 fig = plt.figure(layout="constrained", figsize=(4,4))
 
