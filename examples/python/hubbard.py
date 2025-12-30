@@ -147,7 +147,7 @@ else:
     diverge.model_internals_patch( model, 6 )
 
 # now write the model output
-checksum = diverge.model_to_file( model, "mod.dvg" )
+checksum = diverge.model_to_file_PY( model, "mod.dvg", kc=True )
 
 ################################################################################
 ######################### FLOW STEPPER AND FLOW ################################
@@ -196,9 +196,9 @@ if myrank != 0:
     exit(0)
 
 # read the output files
-import diverge.output as rd
-model_result = rd.read( "mod.dvg" )
-post_result = rd.read( "out.dvg" )
+import diverge.output as do
+model_result = do.read( "mod.dvg" )
+post_result = do.read( "out.dvg" )
 
 import matplotlib.pyplot as plt
 
@@ -210,9 +210,11 @@ import matplotlib.pyplot as plt
 # case, the shape of the bandstructure array therefore is (901, 4): 300 + 300 +
 # 300 + 1 points with 1 band and 3 momentum coordinates each
 plt.figure( figsize=(4,3), layout="constrained" )
-xvals = np.concatenate( [[0], np.cumsum(np.sqrt((np.diff(model_result.bandstructure[:,1:],axis=0)**2).sum(axis=1)))] )
-plt.plot( xvals, model_result.bandstructure[:,0] )
-plt.xticks( [xvals[0], xvals[300], xvals[600], xvals[900]], [r'$\Gamma$', r'$M$', r'$K$', r'$\Gamma$'] )
+xvals = do.bandstructure_xvals(model_result)
+bands = do.bandstructure_bands(model_result)
+ticks = do.bandstructure_ticks(model_result)
+plt.plot( xvals, bands )
+plt.xticks( ticks, [r'$\Gamma$', r'$M$', r'$K$', r'$\Gamma$'] )
 plt.xlim( xvals[0], xvals[-1] )
 plt.ylabel( r'$\epsilon({\bf k})$' )
 plt.title( 'Bandstructure of the $t/t^\prime$-Hubbard model' )
