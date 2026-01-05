@@ -1,24 +1,22 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flow Integration &mdash; divERGe 0.8 documentation</title>
+  <title>Flow Integration &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=a0e24af7"></script>
-        <script src="_static/doctools.js?v=9bcbadda"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=049aceee"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -200,7 +198,7 @@ value of <span class="math notranslate nohighlight">\(\Lambda\)</span></p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_euler_next">
-<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_next</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">de</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">Vmax</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_next" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_euler.h#L63"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_next</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">de</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">Vmax</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_next" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_euler.h#L63"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>performs adaptive step, without calling any <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a>
 related routines. example usage:</p>
 <div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="c1">// diverge_flow_step_t* st = ...;</span>
@@ -235,7 +233,7 @@ right).</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Jonas B. Profe, Lennart Klebl.</p>
+    <p>&#169; Copyright 2026, Jonas B. Profe, Lennart Klebl.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

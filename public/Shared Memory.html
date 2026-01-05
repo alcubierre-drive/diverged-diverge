@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shared Memory &mdash; divERGe 0.8 documentation</title>
+  <title>Shared Memory &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=a0e24af7"></script>
-        <script src="_static/doctools.js?v=9bcbadda"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=049aceee"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -121,14 +119,14 @@ reasonably recent linux kernel + headers required (memfd).</p>
 </div></blockquote>
 <dl class="c function">
 <dt class="sig sig-object c" id="c.shared_malloc">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">shared_malloc</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">sz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_malloc" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/shared_mem.h#L31"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">shared_malloc</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">sz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_malloc" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/shared_mem.h#L31"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>allocate rank shared memory on a single node. signature equivalent to
 stdlib’s malloc</p>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.shared_calloc">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">shared_calloc</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">cnt</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">sz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_calloc" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/shared_mem.h#L37"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">shared_calloc</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">cnt</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">sz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.shared_calloc" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/shared_mem.h#L37"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>same as <a class="reference internal" href="#c.shared_malloc" title="shared_malloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">shared_malloc()</span></code></a> but zero out the memory. signature equivalent
 to stdlib’s calloc</p>
 </dd></dl>
@@ -201,7 +199,7 @@ continues</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Jonas B. Profe, Lennart Klebl.</p>
+    <p>&#169; Copyright 2026, Jonas B. Profe, Lennart Klebl.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

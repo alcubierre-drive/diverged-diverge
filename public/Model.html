@@ -1,24 +1,22 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Model &mdash; divERGe 0.8 documentation</title>
+  <title>Model &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=a0e24af7"></script>
-        <script src="_static/doctools.js?v=9bcbadda"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=049aceee"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -122,7 +120,7 @@ appropriately release all allocated memory.</p>
 
 <dl class="c type">
 <dt class="sig sig-object c" id="c.hamiltonian_generator_t">
-<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">hamiltonian_generator_t</span></span></span><a class="headerlink" href="#c.hamiltonian_generator_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_model.h#L19"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">hamiltonian_generator_t</span></span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buf</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.hamiltonian_generator_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_model.h#L19"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">hamiltonian_generator_t</span><span class="p">)(</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">diverge_model_t</span><span class="o">*</span><span class="w"> </span><span class="n">model</span><span class="p">,</span>
 <span class="w">    </span><span class="n">complex128_t</span><span class="o">*</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="p">);</span>
@@ -154,7 +152,7 @@ then the <a class="reference internal" href="#c.greensfunc_generator_t" title="g
 
 <dl class="c type">
 <dt class="sig sig-object c" id="c.greensfunc_generator_t">
-<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">greensfunc_generator_t</span></span></span><a class="headerlink" href="#c.greensfunc_generator_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_model.h#L46"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><a class="reference internal" href="#c.greensfunc_op_t" title="greensfunc_op_t"><span class="n"><span class="pre">greensfunc_op_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">greensfunc_generator_t</span></span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">Lambda</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.gf_complex_t" title="gf_complex_t"><span class="n"><span class="pre">gf_complex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buf</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.greensfunc_generator_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_model.h#L46"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Function pointer for Green’s function generators. Similar to
 <a class="reference internal" href="#c.hamiltonian_generator_t" title="hamiltonian_generator_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">hamiltonian_generator_t</span></code></a>, but buffer must be double the size, i.e.,
 (2, prod(nk*nkf), n_spin,n_orb, n_spin,n_orb).</p>
@@ -168,7 +166,7 @@ then the <a class="reference internal" href="#c.greensfunc_generator_t" title="g
 
 <dl class="c type">
 <dt class="sig sig-object c" id="c.channel_vertex_generator_t">
-<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">channel_vertex_generator_t</span></span></span><a class="headerlink" href="#c.channel_vertex_generator_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_model.h#L61"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">channel_vertex_generator_t</span></span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buf</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.channel_vertex_generator_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_model.h#L61"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">channel_vertex_generator_t</span><span class="p">)(</span>
 <span class="w">    </span><span class="n">diverge_model_t</span><span class="o">*</span><span class="w"> </span><span class="n">model</span><span class="p">,</span>
 <span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">channel</span><span class="p">,</span>
@@ -183,7 +181,7 @@ n_spin,n_spin,n_orb)</p>
 
 <dl class="c type">
 <dt class="sig sig-object c" id="c.full_vertex_generator_t">
-<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">full_vertex_generator_t</span></span></span><a class="headerlink" href="#c.full_vertex_generator_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_model.h#L76"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">full_vertex_generator_t</span></span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">k1</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">k2</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">k3</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buf</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.full_vertex_generator_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_model.h#L76"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">full_vertex_generator_t</span><span class="p">)(</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">diverge_model_t</span><span class="o">*</span><span class="w"> </span><span class="n">model</span><span class="p">,</span>
 <span class="w">    </span><span class="n">index_t</span><span class="w"> </span><span class="n">k1</span><span class="p">,</span><span class="w"> </span><span class="n">index_t</span><span class="w"> </span><span class="n">k2</span><span class="p">,</span><span class="w"> </span><span class="n">index_t</span><span class="w"> </span><span class="n">k3</span><span class="p">,</span>
@@ -744,7 +742,7 @@ following example skips segments (1,2) and (2,3):</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Jonas B. Profe, Lennart Klebl.</p>
+    <p>&#169; Copyright 2026, Jonas B. Profe, Lennart Klebl.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
