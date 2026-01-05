@@ -1,4 +1,4 @@
-/* Copyright (C) 2025 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+/* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #define LINALG_NO_LAPACKE
 #include "../misc/linalg.h"
