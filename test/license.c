@@ -6,6 +6,7 @@
 #include "../src/misc/license.h"
 
 CT_TEST(license) {
+    CT_CHECK( diverge_license() != NULL );
     diverge_license_print();
 }
 
