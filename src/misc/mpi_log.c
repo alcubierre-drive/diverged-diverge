@@ -65,6 +65,11 @@ void mpi_printf( const char* fmt, ... ) {
     va_end( ap );
 }
 
+static void mpi_vprintf( const char* fmt, va_list ap ) {
+    if (zero_rank_or_no_init())
+        vfprintf( h_mpi_log_stdout(), fmt, ap );
+}
+
 void mpi_eprintf( const char* fmt, ... ) {
     va_list ap;
     va_start(ap, fmt);
@@ -229,6 +234,14 @@ void mpi_log_set_colors( int colors ) {
 
 int mpi_log_get_colors( void ) {
     return h_diverge_log_colors;
+}
+
+void mpi_lll_printf( int loglevel, const char* fmt, ... ) {
+    if (h_diverge_mpi_loglevel < loglevel) return;
+    va_list ap;
+    va_start(ap, fmt);
+    mpi_vprintf(fmt, ap);
+    va_end(ap);
 }
 
 void mpi_dbg_printf( const char* logname_, int loglevel, const char* fname,

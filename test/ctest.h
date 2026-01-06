@@ -6,9 +6,12 @@
 #ifdef USE_MPI
 #define CT_NO_FORK
 #endif
-// XXX this also is a divERGe "quirk", more of a feature, though.
+// XXX this is a divERGe "quirk". More of a feature, though.
 #include "../src/misc/mpi_log.h"
-#define CT_PRINTF mpi_printf
+#ifndef DIVERGE_CTEST_LOGLEVEL
+#define DIVERGE_CTEST_LOGLEVEL 0
+#endif//DIVERGE_CTEST_LOGLEVEL
+#define CT_PRINTF( ... ) mpi_lll_printf(DIVERGE_CTEST_LOGLEVEL, __VA_ARGS__)
 
 #ifndef CT_NO_FORK
 #include <sys/wait.h>
