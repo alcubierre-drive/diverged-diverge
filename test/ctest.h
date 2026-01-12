@@ -386,6 +386,24 @@ static inline int ct_list( char** filters ) {
     return 0;
 }
 
+static inline int ct_suite_compar_( const void* s1_, const void* s2_ ) {
+    const ct_suite_t **s1 = (const ct_suite_t**)s1_, **s2 = (const ct_suite_t**)s2_;
+    return strcmp((*s1)->name, (*s2)->name);
+}
+static inline int ct_test_compar_( const void* s1_, const void* s2_ ) {
+    const ct_test_t *s1 = (const ct_test_t*)s1_, *s2 = (const ct_test_t*)s2_;
+    return strcmp(s1->name, s2->name);
+}
+
+// sort all suites and tests within the suites
+static inline void ct_sort_suites( void ) {
+    qsort( ct_suites, ct_nsuites, sizeof(ct_suites[0]), &ct_suite_compar_ );
+    for (unsigned s=0; s<ct_nsuites; ++s) {
+        qsort( ct_suites[s]->tests, ct_suites[s]->ntests,
+                sizeof(ct_suites[s]->tests[0]), &ct_test_compar_ );
+    }
+}
+
 /**
  * runs all suites that match the given filters
  */
