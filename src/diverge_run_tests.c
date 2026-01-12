@@ -16,6 +16,7 @@ int diverge_run_tests(int argc, char** argv ) {
         #ifdef CT_SKIP_INITIALIZERS
             ct__register__all();
         #endif
+        ct_sort_suites();
         return ct_list_or_run(argc, argv);
     #else // DIVERGE_SKIP_TESTS
         (void)argc; (void)argv;
