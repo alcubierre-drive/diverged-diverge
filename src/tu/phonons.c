@@ -16,10 +16,8 @@ LINALG_IMPLEMENT
 // CBO in Kagome/Phonon: https://doi.org/10.1103/PhysRevB.109.075130
 // Hubbard-Holstein: https://doi.org/10.1103/PhysRevB.92.195102
 
-// This is allright the way it is. Will get removed at some point.
-static const int fft_sign = -1;
-
-typedef struct { VECTOR_DECL( refinement_t, v ) } vec_refinement_t;
+// make the FFT convention human-readable
+#define DIVERGE_PH_FFT_SIGN -1
 
 struct tu_data_phonons_t {
     diverge_model_t* pmod;
@@ -214,7 +212,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     // FFT on that part of the array that needs an FFT.
     fftw_complex* fftw_buf = fftw_malloc(sizeof*fftw_buf * nk*formfacs_sz);
     complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
-    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, fft_sign, FFTW_ESTIMATE);
+    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, DIVERGE_PH_FFT_SIGN, FFTW_ESTIMATE);
     ZERO_OUT(fftw_buf, nk*formfacs_sz);
 
     double tick, t_fft, t_ft, t_ref;
@@ -246,7 +244,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             index_t f = formfacs_displ[ff] + cc;
             claV3d_t RA_pos = {{t->vtx[f].RA_pos[0], t->vtx[f].RA_pos[1], t->vtx[f].RA_pos[2]}};
             double RA_pos_dot_qvec = claV3d_dot( claM3d_vecmat( RA_pos, latt ), qvec );
-            fftw_cbuf[IDX2(ff,kk, nk)] += t->vtx[f].g * cexp(I*(double)fft_sign*RA_pos_dot_qvec);
+            fftw_cbuf[IDX2(ff,kk, nk)] += t->vtx[f].g * cexp(I*(double)DIVERGE_PH_FFT_SIGN*RA_pos_dot_qvec);
         }
     }
     t_ft = diverge_mpi_wtime() - tick;
@@ -314,7 +312,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
                         const index_t s1 = si[IDX2(s,0,2)],
                                       s2 = si[IDX2(s,1,2)];
                         ffbuf[IDX4(s2,s1,mi,formfacs[f].OA, t->n_spin,t->n_orbff,t->nO)] +=
-                            t->vtx[f].g * cexp(I*(double)fft_sign*RA_pos_dot_qvec);
+                            t->vtx[f].g * cexp(I*(double)DIVERGE_PH_FFT_SIGN*RA_pos_dot_qvec);
                     }
                 }
             }
@@ -396,10 +394,12 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
         for (index_t kk=0; kk<my_nk; ++kk)
         for (index_t l=0; l<linsz; ++l)
         for (index_t r=0; r<linsz; ++r) {
-            index_t is_gamma = t->enable_refinement && (t->idx_ibz_in_fullmesh[t->my_nk_off+kk] == 0);
-            if (is_gamma) {
+            if (t->enable_refinement && (t->idx_ibz_in_fullmesh[t->my_nk_off+kk] == 0)) {
+                // we found the gamma point and *dont* add the vertex to it!
+                // instead we save its index (only happens for one thread at a
+                // time)
                 #pragma omp atomic write
-                kk_gamma = kk; // this case will only occur for one thread at a time
+                kk_gamma = kk;
                 continue;
             }
             complex128_t tmp = 0.0;
@@ -412,6 +412,8 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
             buf[IDX3(kk,l,r, linsz,linsz)] += tmp;
         }
 
+        // now we take that saved index for the gamma point and perform the
+        // refinement summation (in case it's enabled)
         if (t->enable_refinement && (kk_gamma != -1)) {
             const complex128_t *g_ph_ref_buf = t->g_ob_qO_refined,
                                *prop_ref_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq, true );
@@ -506,7 +508,7 @@ static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, 
         VECTOR_PUSH_BACK( star, claM3d_vecmat(dk_vec, G) );
     }
 
-    vec_refinement_t result = {0};
+    VECTOR_INIT_CAP( refinement_t, result, 0 );
     double refinement_total_weight = 0.0;
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
@@ -544,7 +546,7 @@ static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, 
     #pragma omp critical
     {
         for (index_t r=0; r<t_refinement_sz; ++r) {
-            VECTOR_PUSH_BACK( result.v, t_refinement[r] );
+            VECTOR_PUSH_BACK( result, t_refinement[r] );
             refinement_total_weight += t_refinement[r].weight;
         }
     }
@@ -554,14 +556,14 @@ static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, 
 
     VECTOR_FREE( star );
 
-    for (index_t r=0; r<result.v_sz; ++r)
-        result.v[r].weight /= refinement_total_weight;
-    VECTOR_SHRINK_TO_FIT( result.v );
-    *n_ref = result.v_sz;
+    for (index_t r=0; r<result_sz; ++r)
+        result[r].weight /= refinement_total_weight;
+    VECTOR_SHRINK_TO_FIT( result );
+    *n_ref = result_sz;
 
     // consistent behaviour across MPI ranks
-    mergesort_refinement( result.v, result.v_sz, diverge_omp_num_threads(), 0 );
-    return result.v;
+    mergesort_refinement( result, result_sz, diverge_omp_num_threads(), 0 );
+    return result;
 }
 
 refinement_t* tu_data_phonons_get_refine( tu_data_phonons_t* t, index_t* n_refine ) {
