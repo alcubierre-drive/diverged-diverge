@@ -11,12 +11,13 @@
 #include "../../src/diverge_model_internals.h"
 #include "../../src/tu/vertex.h"
 #include "../../src/tu/projection.h"
+#include "../../src/misc/compilation_status.h"
 #include "../helper_functions.h"
 #include "../models/all.h"
 
 CT_TEST_NAME(tu_prop_orb_real, "tu_prop,orb:real") {
     if (sizeof(gf_complex_t) != sizeof(complex128_t)) return; // no GF floats
-    if (diverge_mpi_comm_size() != 1) return; // no MPI
+    if (diverge_compilation_status_mpi()) return; // no MPI
 
     diverge_model_t* mom = KWARGS(gen_square_lat_hub, .nkx=12, .nky=12, .lx=1,  .ly=1 );
     diverge_model_t* orb = KWARGS(gen_square_lat_hub, .nkx=1,  .nky=1,  .lx=12, .ly=12);
@@ -83,7 +84,7 @@ CT_TEST_NAME(tu_prop_orb_real, "tu_prop,orb:real") {
 
 CT_TEST_NAME(tu_prop_basis, "tu_prop,basis") {
     if (sizeof(gf_complex_t) != sizeof(complex128_t)) return; // no GF floats
-    if (diverge_mpi_comm_size() != 1) return; // no MPI
+    if (diverge_compilation_status_mpi()) return; // no MPI
 
     diverge_model_t* mom = KWARGS(gen_honeycomb_lat_hub, .nkx=12, .nky=12);
     diverge_model_t* orb = KWARGS(gen_honeycomb_lat_hub, .nkx=1,  .nky=1, .lx=12, .ly=12);
@@ -160,7 +161,7 @@ CT_TEST_NAME(tu_prop_basis, "tu_prop,basis") {
 
 CT_TEST_NAME(tu_prop_variants, "tu_prop,variants") {
     if (sizeof(gf_complex_t) != sizeof(complex128_t)) return; // no GF floats
-    if (diverge_mpi_comm_size() != 1) return; // no MPI
+    if (diverge_compilation_status_mpi()) return; // no MPI
 
     diverge_model_t* mom = KWARGS(gen_honeycomb_lat_hub, .nkx=12, .nky=12);
     diverge_model_internals_tu(mom, 1.1);
