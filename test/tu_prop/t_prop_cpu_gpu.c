@@ -19,7 +19,7 @@
 static inline int compilation_options( void ) {
     // no floats for greens functions, no MPI, but CUDA
     if ((sizeof(gf_complex_t) != sizeof(complex128_t)) ||
-        (diverge_mpi_comm_size() != 1) ||
+        (diverge_compilation_status_mpi()) ||
         (!diverge_compilation_status_cuda(NULL)))
         return 1;
     else

@@ -15,13 +15,13 @@
 #include "../src/tu/projection_handler.h"
 #include "../src/tu/selfenergy.h"
 #include "../src/diverge_model_internals.h"
+#include "../src/misc/compilation_status.h"
 #include "helper_functions.h"
 #include "models/all.h"
 
 static inline int compilation_options( void ) {
     // no gf_floats, no MPI
-    if ((sizeof(complex128_t) != sizeof(gf_complex_t)) ||
-        (diverge_mpi_comm_size() != 1))
+    if ((sizeof(complex128_t) != sizeof(gf_complex_t)) || diverge_compilation_status_mpi())
         return 1;
     else
         return 0;
