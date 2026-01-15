@@ -8,15 +8,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simulation Output Python Module Spec &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=049aceee"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -293,7 +293,7 @@ conjuction with <a class="reference internal" href="#diverge.output.bandstructur
 
 <dl class="py class">
 <dt class="sig sig-object py" id="diverge.output.diverge_model">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_model" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_model" title="Link to this definition"></a></dt>
 <dd><p>class to read diverge model files (.dvg, “magic number” = 145)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -565,7 +565,7 @@ present without TU internals</em>.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="diverge.output.diverge_post_grid">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_grid" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_grid" title="Link to this definition"></a></dt>
 <dd><p>class to read diverge postprocessing files for grid FRG</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="diverge.output.diverge_post_grid.C_mf_EU">
@@ -721,7 +721,7 @@ present without TU internals</em>.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="diverge.output.diverge_post_patch">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_patch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_patch" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_patch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_patch" title="Link to this definition"></a></dt>
 <dd><p>class to read diverge postprocessing files for <span class="math notranslate nohighlight">\(N\)</span>-patch FRG</p>
 <p>vertices and loops may be None if not explicitly asked for in the
 postprocessing routines. They all are of shape (np, np, np, nb, nb, nb, nb),
@@ -871,7 +871,7 @@ with shape: (len(k_kp_descr), nb, nb, len(k_kp_descr), nb, nb).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="diverge.output.diverge_post_tu">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_tu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_tu" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_tu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_tu" title="Link to this definition"></a></dt>
 <dd><p>class to read diverge postprocessing files for tu FRG</p>
 <p>Vertex diagonalisation: For each channel <span class="math notranslate nohighlight">\(X \in \{P,C,D\}\)</span>, we include</p>
 <blockquote>

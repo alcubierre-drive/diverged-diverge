@@ -8,14 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Postprocessing and Output &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=049aceee"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -54,7 +54,15 @@
 <li class="toctree-l3"><a class="reference internal" href="Flow%20Step%20Object.html">Flow Step Object</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Flowing%20Vertices.html">Flowing Vertices</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Flow%20Integration.html">Flow Integration</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Postprocessing and Output</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Postprocessing and Output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_postprocess_conf_t"><code class="docutils literal notranslate"><span class="pre">diverge_postprocess_conf_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_postprocess_conf_defaults"><code class="docutils literal notranslate"><span class="pre">diverge_postprocess_conf_defaults</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_postprocess_conf_defaults_CPP"><code class="docutils literal notranslate"><span class="pre">diverge_postprocess_conf_defaults_CPP()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_postprocess_and_write"><code class="docutils literal notranslate"><span class="pre">diverge_postprocess_and_write()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_postprocess_and_write_finegrained"><code class="docutils literal notranslate"><span class="pre">diverge_postprocess_and_write_finegrained()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_postprocess_and_write_fg"><code class="docutils literal notranslate"><span class="pre">diverge_postprocess_and_write_fg()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="Testing.html">Testing</a></li>
@@ -360,16 +368,16 @@ datatype. For the other backends, all units are <a class="reference internal" hr
 use <a class="reference internal" href="#c.diverge_postprocess_and_write_finegrained" title="diverge_postprocess_and_write_finegrained"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_postprocess_and_write_finegrained()</span></code></a> or its pyhton wrapper
 <a class="reference internal" href="Full%20Python%20Module%20Specification.html#diverge.postprocess_and_write_PY" title="diverge.postprocess_and_write_PY"><code class="xref py py-func docutils literal notranslate"><span class="pre">diverge.postprocess_and_write_PY()</span></code></a>.</p>
 <p>Grid-FRG:</p>
-<a class="reference internal image-reference" href="_images/diverge_grid_output.png"><img alt="specification for grid frg output files" src="_images/diverge_grid_output.png" style="width: 800px;" />
+<a class="reference internal image-reference" href="_images/diverge_grid_output.png"><img alt="specification for grid frg output files" src="_images/diverge_grid_output.png" width="800" />
 </a>
 <p>Patch-FRG:</p>
-<a class="reference internal image-reference" href="_images/diverge_patch_output.png"><img alt="specification for patch frg output files" src="_images/diverge_patch_output.png" style="width: 800px;" />
+<a class="reference internal image-reference" href="_images/diverge_patch_output.png"><img alt="specification for patch frg output files" src="_images/diverge_patch_output.png" width="800" />
 </a>
 <p>TUFRG:</p>
 <p>as for model output files (see <a class="reference internal" href="Output.html#c.diverge_model_to_file" title="diverge_model_to_file"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_to_file()</span></code></a>), the TUFRG
 output file has reserved space for the future. If the 125th field is nonzero,
 the actual header size is <code class="docutils literal notranslate"><span class="pre">256*sizeof(int64_t)</span></code>.</p>
-<a class="reference internal image-reference" href="_images/diverge_tu_output.png"><img alt="specification for TUFRG output files" src="_images/diverge_tu_output.png" style="width: 800px;" />
+<a class="reference internal image-reference" href="_images/diverge_tu_output.png"><img alt="specification for TUFRG output files" src="_images/diverge_tu_output.png" width="800" />
 </a>
 </dd></dl>
 
