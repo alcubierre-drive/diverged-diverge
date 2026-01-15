@@ -9,7 +9,6 @@
 #include "../diverge_internals_struct.h"
 #include "../misc/mergesort.h"
 #include "../misc/mpi_functions.h"
-#include "../misc/btree.h"
 #define LINALG_NO_LAPACKE
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
@@ -231,25 +230,6 @@ static void transform_to_gbuf( const gf_complex_t* greens, complex128_t* greens_
 
 }
 
-static inline index_t claV3ll_to_key( claV3ll_t vec, index_t mabs ) {
-    index_t  idx = IDX3( mabs+vec.v[0], mabs+vec.v[1], mabs+vec.v[2], 2*mabs+1, 2*mabs+1 );
-    index_t nidx = IDX3( mabs-vec.v[0], mabs-vec.v[1], mabs-vec.v[2], 2*mabs+1, 2*mabs+1 );
-    return MIN(idx, nidx);
-}
-
-static inline claV3ll_t key_to_claV3ll_t( index_t key, index_t mabs ) {
-    claV3ll_t result = {0};
-    index_t dim[3] = {2*mabs+1, 2*mabs+1, 2*mabs+1};
-    unravel( key, dim, 3, result.v );
-    return claV3ll_sub( result, (claV3ll_t){{mabs, mabs, mabs}} );
-}
-
-typedef struct { VECTOR_DECL( claV3ll_t, v ) index_t mabs; } vec_claV3ll_t;
-static inline void candidates_write_out( btree_t* node, void* ctx ) {
-    vec_claV3ll_t* ff = ctx;
-    VECTOR_PUSH_BACK( ff->v, key_to_claV3ll_t(node->key, ff->mabs) );
-}
-
 static inline int mergesort_formfactors_comp( claV3ll_t i, claV3ll_t j, const claM3d_t* lat ) {
     double ni = claV3d_norm(claM3d_vecmat( (claV3d_t){{i.v[0],i.v[1],i.v[2]}}, *lat )),
            nj = claV3d_norm(claM3d_vecmat( (claV3d_t){{j.v[0],j.v[1],j.v[2]}}, *lat ));
@@ -259,30 +239,34 @@ static inline int mergesort_formfactors_comp( claV3ll_t i, claV3ll_t j, const cl
 #define MERGESORT_COMP_R( x, y, ctx ) mergesort_formfactors_comp( x, y, ctx )
 MERGESORT_IMPL_R( mergesort_formfactors, claV3ll_t )
 
-static inline void normalize( complex128_t* v, index_t sz ) {
+static inline void formfac_normalize( complex128_t* v, index_t sz ) {
     double norm = 0.0;
     for (index_t i=0; i<sz; ++i) norm += POW2(cabs(v[i]));
     norm = 1./sqrt(norm);
     for (index_t i=0; i<sz; ++i) v[i] *= norm;
 }
 
-static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_t* nff ) {
-    internals_t* intls = dmod->internals;
-    claV3d_t lattice[3];
-    for (int d=0; d<3; ++d) lattice[d] = claV3d_map(dmod->lattice[d]);
+#define vtree_key_t claV3ll_t
+#include "../misc/vtree.h"
 
-    VECTOR_INIT_CAP( claV3ll_t, rs_ff_candidates, POW2(GRID_FF_SHELL_DISTANCE*2+1) );
+typedef struct { VECTOR_DECL( claV3ll_t, v ) } vec_claV3ll_t;
+
+static inline void xvtree_vec_writeout( vtree_node_t* node, void* ctx_ ) {
+    vec_claV3ll_t* ctx = ctx_;
+    VECTOR_PUSH_BACK( ctx->v, node->key );
+}
+
+static complex128_t* generate_trivial_formfactors( diverge_model_t* m, index_t* nff ) {
+    internals_t* intls = m->internals;
+    const claV3d_t lattice[3] = {claV3d_map(m->lattice[0]), claV3d_map(m->lattice[1]), claV3d_map(m->lattice[2])};
     double norm_fac = claV3d_norm(lattice[0]);
-    for (int d=1; d<intls->dim; ++d) norm_fac += claV3d_norm(lattice[d]);
-    norm_fac /= (double)intls->dim;
-    if (norm_fac < DIVERGE_EPS_MESH) {
-        mpi_wrn_printf( "tiny values for lattice vector norms (%.5e)\n", norm_fac );
-        norm_fac = 1.0;
-    }
+    if (norm_fac < DIVERGE_EPS_MESH)
+        mpi_wrn_printf( "tiny values for lattice vector norm (%.5e), reset to %.1f\n", (norm_fac=1.0) );
 
+    // find and save nonzero R vectors, do not save -R when R is already saved
+    xvtree_t* x = xvtree_init( 1024 );
     int run_dim[3] = {3*GRID_FF_SHELL_DISTANCE, 3*GRID_FF_SHELL_DISTANCE, 3*GRID_FF_SHELL_DISTANCE};
     for (int d=intls->dim; d<3; ++d) run_dim[d] = 0;
-    index_t mabs = 0;
     for (int r1=-run_dim[0]; r1<=run_dim[0]; ++r1)
     for (int r2=-run_dim[1]; r2<=run_dim[1]; ++r2)
     for (int r3=-run_dim[2]; r3<=run_dim[2]; ++r3) {
@@ -290,51 +274,43 @@ static complex128_t* generate_trivial_formfactors( diverge_model_t* dmod, index_
                                            claV3d_scale(lattice[1], r2)),
                                            claV3d_scale(lattice[2], r3));
         if ((claV3d_norm(R)/norm_fac) < GRID_FF_SHELL_DISTANCE && (r1 != 0 || r2 != 0 || r3 != 0)) {
-            VECTOR_PUSH_BACK( rs_ff_candidates, (claV3ll_t){{r1,r2,r3}} );
-            mabs = MAX(abs(r1), mabs); mabs = MAX(abs(r2), mabs); mabs = MAX(abs(r3), mabs);
+            claV3ll_t r123 = {{r1,r2,r3}};
+            if (!xvtree_find(x,r123) && !xvtree_find(x,claV3ll_scale(r123,-1)))
+                xvtree_insert(x, r123);
         }
     }
-    mabs++;
 
-    // only the 'positive' ones, claV3ll_to_key maps positive/negative vecs to the same integer
-    xbtree_t* rs_ff = xbtree_init( MAX(rs_ff_candidates_sz/2+1, 512) );
-    for (index_t x=0; x<rs_ff_candidates_sz; ++x)
-        xbtree_find_or_insert( rs_ff, claV3ll_to_key(rs_ff_candidates[x], mabs) );
+    // write all nonzero R to a vector and sort them by length
+    vec_claV3ll_t rs_ff_vec = {0};
+    xvtree_iter( x, &xvtree_vec_writeout, &rs_ff_vec );
+    xvtree_free( x );
+    mergesort_formfactors_r( rs_ff_vec.v, rs_ff_vec.v_sz, &m->lattice[0], diverge_omp_num_threads(), 0 );
 
-    vec_claV3ll_t rs_ff_vec = { .v=rs_ff_candidates, .v_sz=0,
-        .v_cap=rs_ff_candidates_cap, .mabs=mabs };
-
-    xbtree_iter( rs_ff, &candidates_write_out, &rs_ff_vec );
-    xbtree_free( rs_ff );
-
-    mergesort_formfactors_r( rs_ff_vec.v, rs_ff_vec.v_sz, &lattice, diverge_omp_num_threads(), 0 );
+    // clip the maximum size to not have anything that's larger than nk (unphysical!)
     *nff = rs_ff_vec.v_sz*2+1;
-
     if (*nff > intls->grid_nk) {
-        mpi_wrn_printf( "small grid (nk=%li), truncating #formfactors (nff=%li)\n",
-                intls->grid_nk, *nff );
+        mpi_wrn_printf( "small grid_nk=%li, truncating #formfactors=%li->%li\n",
+                intls->grid_nk, *nff, intls->grid_nk );
         rs_ff_vec.v_sz = MAX(intls->grid_nk/2-1,0);
         *nff = intls->grid_nk;
     }
-    complex128_t* formfac = malloc(sizeof(complex128_t)*(*nff)*intls->grid_nk);
-    complex128_t* buf = formfac;
-    for (index_t k=0; k<intls->grid_nk; ++k) buf[k] = 1.0;
-    buf += intls->grid_nk;
-    for (index_t ff=0; ff<rs_ff_vec.v_sz; ++ff) {
-        claV3d_t Rvec = claM3d_vecmat( (claV3d_t){{rs_ff_vec.v[ff].v[0],
-                rs_ff_vec.v[ff].v[1],rs_ff_vec.v[ff].v[2]}}, claM3d_map(dmod->lattice[0]) );
-        for (index_t sign=0; sign<2; ++sign) {
-            for (index_t k=0; k<intls->grid_nk; ++k) {
-                claV3d_t Kvec = claV3d_map(intls->kmesh+3*k);
-                buf[k] = sign ? cos(claV3d_dot(Rvec,Kvec)) : sin(claV3d_dot(Rvec,Kvec));
-            }
-            buf += intls->grid_nk;
+
+    // and output the formfactors
+    complex128_t* formfac = calloc( *nff*intls->grid_nk, sizeof *formfac );
+    index_t ff = 0;
+    for (index_t k=0; k<intls->grid_nk; ++k)
+        formfac[IDX2(ff,k,intls->grid_nk)] = 1.0;
+    formfac_normalize(formfac+(ff++)*intls->grid_nk, intls->grid_nk);
+    for (index_t rs=0; rs<rs_ff_vec.v_sz; ++rs) {
+        claV3d_t Rvec = claM3d_vecmat( (claV3d_t){{rs_ff_vec.v[rs].v[0],
+                rs_ff_vec.v[rs].v[1],rs_ff_vec.v[rs].v[2]}}, claM3d_map(m->lattice[0]) );
+        for (int odd=0; odd<2; ++odd) {
+            for (index_t k=0; k<intls->grid_nk; ++k)
+                formfac[IDX2(ff,k,intls->grid_nk)] = (odd?sin:cos)(claV3d_dot(Rvec,claV3d_map(intls->kmesh+3*k)));
+            formfac_normalize(formfac+(ff++)*intls->grid_nk, intls->grid_nk);
         }
     }
-
-    VECTOR_FREE( rs_ff_candidates );
-
-    for (index_t ff=0; ff<*nff; ++ff) normalize(formfac+ff*intls->grid_nk, intls->grid_nk);
+    VECTOR_FREE( rs_ff_vec.v );
     return formfac;
 }
 

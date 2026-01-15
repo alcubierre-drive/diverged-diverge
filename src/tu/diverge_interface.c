@@ -11,7 +11,9 @@ LINALG_IMPLEMENT
 #include "../misc/qnan.h"
 #include "../diverge_model_internals.h"
 #include "../misc/mergesort.h"
-#include "../misc/btree.h"
+#define vtree_key_t index_t
+#define vtree_val_t index_t
+#include "../misc/vtree.h"
 #include "../misc/hashtable.h"
 #include <assert.h>
 
@@ -599,7 +601,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     } else {
         if (tu_data->unique_orbff_impl != unique_orbff_impl_btree)
             mpi_err_printf( "invalid unique_orbff_impl (%i), reset to btree\n", tu_data->unique_orbff_impl );
-        xbtree_t* index_to_reduced = xbtree_init( MAX(tu_data->n_orbff,1024) );
+        xvtree_t* index_to_reduced = xvtree_init( MAX(tu_data->n_orbff,1024) );
         index_t curr_idx = 0;
         for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
         for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
@@ -608,9 +610,9 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
             index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
                               mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
                               n_orb,n_orb,n_orb,n_orb);
-            btree_t* found = xbtree_find( index_to_reduced, trial );
+            vtree_node_t* found = xvtree_find( index_to_reduced, trial );
             if (!found) {
-                btree_t* node = xbtree_insert( index_to_reduced, trial );
+                vtree_node_t* node = xvtree_insert( index_to_reduced, trial );
                 node->val = curr_idx++;
                 vec_claV2ll_t b = {0};
                 VECTOR_PUSH_BACK( b.v, (claV2ll_t){{m1,m3}} );
@@ -619,7 +621,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
                 VECTOR_PUSH_BACK( _lmap[found->val].v, (claV2ll_t){{m1,m3}} );
             }
         }
-        xbtree_free( index_to_reduced );
+        xvtree_free( index_to_reduced );
     }
 
     VECTOR_RESIZE( tu_data->unique_mi_l, _lmap_sz );

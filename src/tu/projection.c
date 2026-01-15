@@ -4,7 +4,6 @@
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
 
-#include "../misc/btree.h"
 #include "../misc/hashtable.h"
 #include "../misc/mergesort.h"
 #include "../misc/bitary.h"
@@ -12,6 +11,10 @@ LINALG_IMPLEMENT
 
 // this must follow the LINALG include to pre-define the types
 #include "projection.h"
+
+#define vtree_key_t index_t
+#define vtree_val_t index_t
+#include "../misc/vtree.h"
 
 static void init_CP_PC_proj( tu_projection_t* p, const diverge_model_t* model );
 static void init_CD_DC_proj( tu_projection_t* p, const diverge_model_t* model );
@@ -485,7 +488,7 @@ static void init_P_to_D_proj( tu_projection_t* p, const diverge_model_t* model )
     VECTOR_FREE( r_helper );
 }
 
-static inline void tree_count( btree_t* node, void* ctx ) { (void)node; index_t* pcount = ctx; (*pcount)++; }
+static inline void tree_count( vtree_node_t* node, void* ctx ) { (void)node; index_t* pcount = ctx; (*pcount)++; }
 
 static inline void table_writeout( index_t key, void* val, void* ctx ) {
     (void)val;
@@ -505,7 +508,7 @@ static inline index_t binsearch( const index_t* vals, index_t sz, index_t val ) 
 }
 
 #define UNRAVEL_IDX3( a, nk ) (claV3i_t){{a/(nk[1]*nk[2]), (a%(nk[1]*nk[2]))/nk[2], a%nk[2]}}
-static inline void index_to_reduced_iterate( btree_t* node, void* ctx ) {
+static inline void index_to_reduced_iterate( vtree_node_t* node, void* ctx ) {
     tu_projection_t* p = ctx;
     node->val = p->nr;
     p->existing_r[p->nr++] = UNRAVEL_IDX3( node->key, p->nk );
@@ -558,27 +561,27 @@ static void init_to_mom_map_existing_r( tu_projection_t* p ) {
 
         VECTOR_FREE( keys.v );
     } else {
-        xbtree_t* t = xbtree_init( MAX(t_sz,1024) );
+        xvtree_t* t = xvtree_init( MAX(t_sz,1024) );
 
-        for (index_t i=0; i<p->PC_r_sz; ++i) xbtree_find_or_insert( t, p->PC_r[i] );
-        for (index_t i=0; i<p->DC_r_sz; ++i) xbtree_find_or_insert( t, p->DC_r[i] );
-        for (index_t i=0; i<p->DP_r_sz; ++i) xbtree_find_or_insert( t, p->DP_r[i] );
-        for (index_t i=0; i<p->PD_r_sz; ++i) xbtree_find_or_insert( t, p->PD_r[i] );
+        for (index_t i=0; i<p->PC_r_sz; ++i) xvtree_find_or_insert( t, p->PC_r[i] );
+        for (index_t i=0; i<p->DC_r_sz; ++i) xvtree_find_or_insert( t, p->DC_r[i] );
+        for (index_t i=0; i<p->DP_r_sz; ++i) xvtree_find_or_insert( t, p->DP_r[i] );
+        for (index_t i=0; i<p->PD_r_sz; ++i) xvtree_find_or_insert( t, p->PD_r[i] );
 
-        index_t tree_size = 0; xbtree_iter( t, &tree_count, &tree_size );
+        index_t tree_size = 0; xvtree_iter( t, &tree_count, &tree_size );
         p->existing_r = calloc( tree_size, sizeof*p->existing_r );
-        xbtree_iter_ascending( t, &index_to_reduced_iterate, p );
+        xvtree_iter_ascending( t, &index_to_reduced_iterate, p );
 
         p->PC_CP_mom = calloc(p->PC_r_sz, sizeof*p->PC_CP_mom);
-        for (index_t i=0; i<p->PC_r_sz; ++i) p->PC_CP_mom[i] = xbtree_find( t, p->PC_r[i] )->val;
+        for (index_t i=0; i<p->PC_r_sz; ++i) p->PC_CP_mom[i] = xvtree_find( t, p->PC_r[i] )->val;
         p->DC_CD_mom = calloc(p->DC_r_sz, sizeof*p->DC_CD_mom);
-        for (index_t i=0; i<p->DC_r_sz; ++i) p->DC_CD_mom[i] = xbtree_find( t, p->DC_r[i] )->val;
+        for (index_t i=0; i<p->DC_r_sz; ++i) p->DC_CD_mom[i] = xvtree_find( t, p->DC_r[i] )->val;
         p->P_to_D_mom = calloc(p->PD_r_sz, sizeof*p->P_to_D_mom);
-        for (index_t i=0; i<p->PD_r_sz; ++i) p->P_to_D_mom[i] = xbtree_find( t, p->PD_r[i] )->val;
+        for (index_t i=0; i<p->PD_r_sz; ++i) p->P_to_D_mom[i] = xvtree_find( t, p->PD_r[i] )->val;
         p->D_to_P_mom = calloc(p->DP_r_sz, sizeof*p->D_to_P_mom);
-        for (index_t i=0; i<p->DP_r_sz; ++i) p->D_to_P_mom[i] = xbtree_find( t, p->DP_r[i] )->val;
+        for (index_t i=0; i<p->DP_r_sz; ++i) p->D_to_P_mom[i] = xvtree_find( t, p->DP_r[i] )->val;
 
-        xbtree_free(t);
+        xvtree_free(t);
     }
 }
 
