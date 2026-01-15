@@ -8,15 +8,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Advanced Features &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=049aceee"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -51,6 +51,26 @@
 <li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Initialization.html">Initialization &amp; Miscellaneous Functions</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="Model.html">Model</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.internals_t"><code class="docutils literal notranslate"><span class="pre">internals_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.hamiltonian_generator_t"><code class="docutils literal notranslate"><span class="pre">hamiltonian_generator_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.greensfunc_op_t"><code class="docutils literal notranslate"><span class="pre">greensfunc_op_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.greensfunc_generator_t"><code class="docutils literal notranslate"><span class="pre">greensfunc_generator_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.channel_vertex_generator_t"><code class="docutils literal notranslate"><span class="pre">channel_vertex_generator_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.full_vertex_generator_t"><code class="docutils literal notranslate"><span class="pre">full_vertex_generator_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.rs_hopping_t"><code class="docutils literal notranslate"><span class="pre">rs_hopping_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.rs_vertex_t"><code class="docutils literal notranslate"><span class="pre">rs_vertex_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.mom_patching_t"><code class="docutils literal notranslate"><span class="pre">mom_patching_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.tu_formfactor_t"><code class="docutils literal notranslate"><span class="pre">tu_formfactor_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_model_t"><code class="docutils literal notranslate"><span class="pre">diverge_model_t</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_hamilton_generator_set_fftw_options"><code class="docutils literal notranslate"><span class="pre">diverge_hamilton_generator_set_fftw_options()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_hamilton_generator_default"><code class="docutils literal notranslate"><span class="pre">diverge_hamilton_generator_default()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_hamilton_generator_add"><code class="docutils literal notranslate"><span class="pre">diverge_hamilton_generator_add()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_greensfunc_generator_default"><code class="docutils literal notranslate"><span class="pre">diverge_greensfunc_generator_default()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_channel_vertex_generator_default"><code class="docutils literal notranslate"><span class="pre">diverge_channel_vertex_generator_default()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_model_init"><code class="docutils literal notranslate"><span class="pre">diverge_model_init()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_model_free"><code class="docutils literal notranslate"><span class="pre">diverge_model_free()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_model_free_set_options"><code class="docutils literal notranslate"><span class="pre">diverge_model_free_set_options()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Model.html#c.diverge_model_ibz_path_skip_segment"><code class="docutils literal notranslate"><span class="pre">diverge_model_ibz_path_skip_segment()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="Internals.html">Internals</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Meshing.html">Meshing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Wannier90.html">Wannier90</a></li>

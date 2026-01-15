@@ -8,15 +8,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flow Step Object &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=049aceee"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -53,6 +53,27 @@
 <li class="toctree-l2"><a class="reference internal" href="Model.html">Model</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="Flow.html">Flow</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Flow Step Object</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_t"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_timing_t"><code class="docutils literal notranslate"><span class="pre">diverge_timing_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_init"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_set_interchannel"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_set_interchannel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_init_any"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_init_any()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_vertmax"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_vertmax()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_vertmax_r"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_vertmax_r()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_loopmax"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_loopmax()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_chanmax"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_chanmax()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_eigchan"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_eigchan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_euler"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_euler()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_niter"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_niter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_ntimings"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_ntimings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_timings"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_timings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_timing"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_timing()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_timing_descr"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_timing_descr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_timing_vec"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_timing_vec()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_timing_descr_vec"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_timing_descr_vec()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_lambda"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_lambda()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_dlambda"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_dlambda()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_flow_step_free"><code class="docutils literal notranslate"><span class="pre">diverge_flow_step_free()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#vertices">Vertices</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#filling">Filling</a></li>
 </ul>

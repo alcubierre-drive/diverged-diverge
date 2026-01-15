@@ -8,15 +8,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Linear Algebra &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=049aceee"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -50,6 +50,16 @@
 <li class="toctree-l1 current"><a class="reference internal" href="C%20Interface.html">C Interface</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="Initialization.html">Initialization &amp; Miscellaneous Functions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.MPI_Comm"><code class="docutils literal notranslate"><span class="pre">MPI_Comm</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_init"><code class="docutils literal notranslate"><span class="pre">diverge_init()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_finalize"><code class="docutils literal notranslate"><span class="pre">diverge_finalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_embed"><code class="docutils literal notranslate"><span class="pre">diverge_embed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_reset"><code class="docutils literal notranslate"><span class="pre">diverge_reset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_exit"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_exit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_wtime"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_wtime()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_get_comm"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_get_comm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_distribute"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_distribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_distribute"><code class="docutils literal notranslate"><span class="pre">diverge_distribute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="Initialization.html#actual-mpi-functions">Actual MPI Functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Initialization.html#other-miscellaneous-parallel-functions">Other miscellaneous (parallel) functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Allocators.html">Allocators</a></li>
@@ -60,7 +70,48 @@
 <li class="toctree-l3"><a class="reference internal" href="Shared%20Memory.html">Shared Memory</a></li>
 <li class="toctree-l3"><a class="reference internal" href="IEEE%20754%20Quiet%20NaN.html">IEEE 754 Quiet NaN</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Bit%20Arrays.html">Bit Arrays</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Linear Algebra</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Linear Algebra</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_eigen_r"><code class="docutils literal notranslate"><span class="pre">batched_eigen_r()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_eigen_r_set_eigen3_mode"><code class="docutils literal notranslate"><span class="pre">batched_eigen_r_set_eigen3_mode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_eigen_r_get_eigen3_mode"><code class="docutils literal notranslate"><span class="pre">batched_eigen_r_get_eigen3_mode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_eigen_set_nchunks"><code class="docutils literal notranslate"><span class="pre">batched_eigen_set_nchunks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_eigen_get_nchunks"><code class="docutils literal notranslate"><span class="pre">batched_eigen_get_nchunks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_eigen_set_nthreads"><code class="docutils literal notranslate"><span class="pre">batched_eigen_set_nthreads()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_eigen_shut_up"><code class="docutils literal notranslate"><span class="pre">batched_eigen_shut_up()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_svd"><code class="docutils literal notranslate"><span class="pre">batched_svd()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_overlapping"><code class="docutils literal notranslate"><span class="pre">batched_gemm_overlapping()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm"><code class="docutils literal notranslate"><span class="pre">batched_gemm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_with_buffers"><code class="docutils literal notranslate"><span class="pre">batched_gemm_with_buffers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_vertex_loop"><code class="docutils literal notranslate"><span class="pre">batched_gemm_vertex_loop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_loop_vertex"><code class="docutils literal notranslate"><span class="pre">batched_gemm_loop_vertex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_cublas_init"><code class="docutils literal notranslate"><span class="pre">batched_gemm_cublas_init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_cublas_clear"><code class="docutils literal notranslate"><span class="pre">batched_gemm_cublas_clear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_cublas_w_buffer_clear"><code class="docutils literal notranslate"><span class="pre">batched_gemm_cublas_w_buffer_clear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_N_ll_num"><code class="docutils literal notranslate"><span class="pre">batched_gemm_N_ll_num()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_small_handle_t"><code class="docutils literal notranslate"><span class="pre">batched_gemm_small_handle_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_small_init"><code class="docutils literal notranslate"><span class="pre">batched_gemm_small_init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_small_destroy"><code class="docutils literal notranslate"><span class="pre">batched_gemm_small_destroy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_small_mode_t"><code class="docutils literal notranslate"><span class="pre">batched_gemm_small_mode_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_small_mode"><code class="docutils literal notranslate"><span class="pre">batched_gemm_small_mode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_gemm_small"><code class="docutils literal notranslate"><span class="pre">batched_gemm_small()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.batched_zgemd_r"><code class="docutils literal notranslate"><span class="pre">batched_zgemd_r()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.single_eigen"><code class="docutils literal notranslate"><span class="pre">single_eigen()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.single_svd"><code class="docutils literal notranslate"><span class="pre">single_svd()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.single_eigen_sort"><code class="docutils literal notranslate"><span class="pre">single_eigen_sort()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.single_eigen_sort_part"><code class="docutils literal notranslate"><span class="pre">single_eigen_sort_part()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.single_eigen_sort_N"><code class="docutils literal notranslate"><span class="pre">single_eigen_sort_N()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.power_iteration"><code class="docutils literal notranslate"><span class="pre">power_iteration()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.single_gemm"><code class="docutils literal notranslate"><span class="pre">single_gemm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.single_gemm_serial"><code class="docutils literal notranslate"><span class="pre">single_gemm_serial()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.single_gemm_adjoint"><code class="docutils literal notranslate"><span class="pre">single_gemm_adjoint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.single_square_gemm"><code class="docutils literal notranslate"><span class="pre">single_square_gemm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.transpose_inplace"><code class="docutils literal notranslate"><span class="pre">transpose_inplace()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.transpose_outofplace"><code class="docutils literal notranslate"><span class="pre">transpose_outofplace()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.transpose_inplace_rect_any"><code class="docutils literal notranslate"><span class="pre">transpose_inplace_rect_any()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.transpose_conj_outofplace"><code class="docutils literal notranslate"><span class="pre">transpose_conj_outofplace()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.LINALG_IMPLEMENT"><code class="docutils literal notranslate"><span class="pre">LINALG_IMPLEMENT</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="Model.html">Model</a></li>

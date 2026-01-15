@@ -8,14 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shared Memory &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=049aceee"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -49,6 +49,16 @@
 <li class="toctree-l1 current"><a class="reference internal" href="C%20Interface.html">C Interface</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="Initialization.html">Initialization &amp; Miscellaneous Functions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.MPI_Comm"><code class="docutils literal notranslate"><span class="pre">MPI_Comm</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_init"><code class="docutils literal notranslate"><span class="pre">diverge_init()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_finalize"><code class="docutils literal notranslate"><span class="pre">diverge_finalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_embed"><code class="docutils literal notranslate"><span class="pre">diverge_embed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_reset"><code class="docutils literal notranslate"><span class="pre">diverge_reset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_exit"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_exit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_wtime"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_wtime()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_get_comm"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_get_comm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_distribute"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_distribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_distribute"><code class="docutils literal notranslate"><span class="pre">diverge_distribute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="Initialization.html#actual-mpi-functions">Actual MPI Functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Initialization.html#other-miscellaneous-parallel-functions">Other miscellaneous (parallel) functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Allocators.html">Allocators</a></li>
@@ -56,7 +66,17 @@
 <li class="toctree-l3"><a class="reference internal" href="Status.html">Status</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Logging.html">Logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Datatypes.html">Datatypes &amp; Common Macros</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Shared Memory</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Shared Memory</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.shared_malloc"><code class="docutils literal notranslate"><span class="pre">shared_malloc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.shared_calloc"><code class="docutils literal notranslate"><span class="pre">shared_calloc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.shared_free"><code class="docutils literal notranslate"><span class="pre">shared_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.shared_exclusive_enter"><code class="docutils literal notranslate"><span class="pre">shared_exclusive_enter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.shared_exclusive_wait"><code class="docutils literal notranslate"><span class="pre">shared_exclusive_wait()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.shared_malloc_rank"><code class="docutils literal notranslate"><span class="pre">shared_malloc_rank()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.shared_malloc_size"><code class="docutils literal notranslate"><span class="pre">shared_malloc_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.shared_malloc_barrier"><code class="docutils literal notranslate"><span class="pre">shared_malloc_barrier()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="IEEE%20754%20Quiet%20NaN.html">IEEE 754 Quiet NaN</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Bit%20Arrays.html">Bit Arrays</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Linear%20Algebra.html">Linear Algebra</a></li>
