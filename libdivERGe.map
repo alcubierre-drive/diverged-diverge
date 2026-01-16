@@ -227,6 +227,9 @@ DIVERGE_UNSTABLE {
         batched_gemm_with_buffers;
         batched_svd;
         batched_zgemd_r;
+        cfmatrix_invert_F;
+        cmatrix_determinant;
+        cmatrix_invert;
         diverge_dos_set_eta_factor;
         diverge_dos_use_gpu;
         diverge_energy_fill_gaps;
@@ -257,6 +260,7 @@ DIVERGE_UNSTABLE {
         diverge_qnanf_gen;
         diverge_qnanf_get;
         diverge_qnanf_isnan;
+        matrix_invert;
         power_iteration;
         single_eigen;
         single_eigen_sort;
