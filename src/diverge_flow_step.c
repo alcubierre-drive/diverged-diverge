@@ -624,11 +624,12 @@ index_t* diverge_flow_step_tuffidx_to_mi( const diverge_flow_step_t* st ) {
     const index_t* to = diverge_flow_step_mi_to_tuffidx( st );
     if (!to) return NULL;
     tu_data_t* td = st->intls->tu_data;
-    index_t* from = calloc(td->n_orbff, sizeof*from);
+    index_t* from = calloc(td->n_orbff + 1, sizeof*from);
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<td->n_orbff; ++i) {
         for (index_t j=0; j<td->n_orbff; ++j) if (to[j] == i) from[i] = j;
     }
+    from[td->n_orbff] = -1;
     return from;
 }
 
