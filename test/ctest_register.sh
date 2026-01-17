@@ -1,7 +1,7 @@
 #!/bin/bash
 
 registry=( $(find . ! -name ctest_register.c.o -name '*.o' \
-    -exec nm --format=just-symbols {} \; | grep ct__register__) )
+    -exec nm --format=just-symbols {} \; | grep ct__register__ | sort) )
 
 echo "#include \"ctest_register.h\""
 echo "#ifdef CT_SKIP_INITIALIZERS"
