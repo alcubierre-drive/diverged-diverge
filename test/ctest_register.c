@@ -2,6 +2,7 @@
 #ifdef CT_SKIP_INITIALIZERS
 void ct__register__suite__BHK(void);
 void ct__register__suite__HK(void);
+void ct__register__suite__dicts(void);
 void ct__register__suite__greens(void);
 void ct__register__suite__grid_sym(void);
 void ct__register__suite__hamilton(void);
@@ -9,6 +10,7 @@ void ct__register__suite__linalg(void);
 void ct__register__suite__misc(void);
 void ct__register__suite__npatch_sym(void);
 void ct__register__suite__parsort(void);
+void ct__register__suite__phonons(void);
 void ct__register__suite__qnan(void);
 void ct__register__suite__read_hoppings(void);
 void ct__register__suite__shared_mem(void);
@@ -84,6 +86,8 @@ void ct__register__test__honeycomb_ref(void);
 void ct__register__test__honeycomb_standard(void);
 void ct__register__test__hub_refined(void);
 void ct__register__test__hubbard(void);
+void ct__register__test__hubbard_SSH_model(void);
+void ct__register__test__hubbard_SSH_model_nonSU2(void);
 void ct__register__test__hubbard_ref(void);
 void ct__register__test__indirect(void);
 void ct__register__test__int(void);
@@ -134,11 +138,13 @@ void ct__register__test__tu_prop_variants_refine(void);
 void ct__register__test__tu_prop_variants_refine_conv(void);
 void ct__register__test__tu_vertex_product(void);
 void ct__register__test__vertex(void);
+void ct__register__test__vtree_hashtable(void);
 #endif
 void ct__register__all(void) {
 #ifdef CT_SKIP_INITIALIZERS
 ct__register__suite__BHK();
 ct__register__suite__HK();
+ct__register__suite__dicts();
 ct__register__suite__greens();
 ct__register__suite__grid_sym();
 ct__register__suite__hamilton();
@@ -146,6 +152,7 @@ ct__register__suite__linalg();
 ct__register__suite__misc();
 ct__register__suite__npatch_sym();
 ct__register__suite__parsort();
+ct__register__suite__phonons();
 ct__register__suite__qnan();
 ct__register__suite__read_hoppings();
 ct__register__suite__shared_mem();
@@ -221,6 +228,8 @@ ct__register__test__honeycomb_ref();
 ct__register__test__honeycomb_standard();
 ct__register__test__hub_refined();
 ct__register__test__hubbard();
+ct__register__test__hubbard_SSH_model();
+ct__register__test__hubbard_SSH_model_nonSU2();
 ct__register__test__hubbard_ref();
 ct__register__test__indirect();
 ct__register__test__int();
@@ -271,5 +280,6 @@ ct__register__test__tu_prop_variants_refine();
 ct__register__test__tu_prop_variants_refine_conv();
 ct__register__test__tu_vertex_product();
 ct__register__test__vertex();
+ct__register__test__vtree_hashtable();
 #endif
 }
