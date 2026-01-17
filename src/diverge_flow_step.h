@@ -204,13 +204,17 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
 /**
  * returns formfactor mapping from vertex convention to model convention (for
  * the TU backend). returns NULL if TU is not selected as backend. returned
- * array must not be freed manually. shape: (n_orbff,).
+ * array must not be freed manually. shape: (n_orbff,). Allocated memory extends
+ * one spot further than n_orbff, and last element is set to -1. That way you
+ * can obtain the array's length without any other function call.
  */
 const index_t* diverge_flow_step_mi_to_tuffidx( const diverge_flow_step_t* st );
 
 /**
  * returns inverse mapping to :c:func:`diverge_flow_step_mi_to_tuffidx`.
- * Returned array must be free'd by the user. shape: (n_orbff,).
+ * Returned array must be free'd by the user. shape: (n_orbff,). Allocated
+ * memory extends one spot further than n_orbff, and last element is set to -1.
+ * That way you can obtain the array's length without any other function call.
  */
 index_t* diverge_flow_step_tuffidx_to_mi( const diverge_flow_step_t* st );
 
