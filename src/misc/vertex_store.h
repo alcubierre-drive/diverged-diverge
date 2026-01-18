@@ -5,84 +5,73 @@
 #include "../diverge_common.h"
 #include "../diverge_flow_step.h"
 
-typedef struct tu_highsym_vertex_t tu_highsym_vertex_t;
+typedef struct tu_vertex_storage_t tu_vertex_storage_t;
+typedef struct tu_vertex_storage_qpt_t tu_vertex_storage_qpt_t;
 
-/**
- * utility struct to allow saving of TUFRG vertices at each flow step.
- *
- * .. note::
- *      this functionality is restricted to TUFRG and in its current
- *      implementation only works when all channels are included in the
- *      simulation.
- */
-struct tu_highsym_vertex_t {
-    /** number of steps that have a saved vertex */
-    index_t nsteps;
-    /** number of :c:type:`complex128_t` elements in a single step */
-    index_t stepsz;
+/** utility struct to save qpoint and ints name */
+struct tu_vertex_storage_qpt_t {
+    /** qpt index (wrt ibz, cf. :c:func:`diverge_flow_step_ibz`) */
+    index_t qpt;
+    /** and a name that you can set if you'd like to */
+    char name[24];
+};
 
-    /** number of momentum points to save the vertices on */
-    index_t nqpts;
+/** utility struct to allow saving of TUFRG vertices at each flow step. */
+struct tu_vertex_storage_t {
     /**
-     * number of orbitals/formfactors *and spins* (i.e. the linear dimension,
-     * this is strictly speaking *not* ``n_orbff``) in each channel
+     * channel info, follows :c:func:`diverge_flow_step_vertex`. Channel may be
+     * inaccurate in case :c:func:`tu_vertex_storage_snap_chan` has been used.
      */
-    index_t n_orbff_P, n_orbff_C, n_orbff_D;
+    char chan;
 
-    /**
-     * array of which momentum transfer indices are actually saved. only used
-     * for output via :c:func:`tu_highsym_vertex_to_file`, must be set manually
-     */
-    index_t* qpts;
-    /**
-     * description of the qpts, names of the high-symmetry points. only used for
-     * output via :c:func:`tu_highsym_vertex_to_file`
-     */
-    char* qpts_descr_nams;
-    /**
-     * description of the qpts, number of symmetry-equivalent points per name;
-     * also only used for output via :c:func:`tu_highsym_vertex_to_file`
-     */
-    index_t* qpts_descr_lens;
-    /**
-     * description of the qpts, number of high-symmetry names (only used for
-     * output via :c:func:`tu_highsym_vertex_to_file`) 
-     */
-    index_t n_qpts_descr;
+    /** number of times :c:func:`tu_vertex_storage_snap` has been called on this object for storage */
+    index_t n_steps;
 
-    // those are private
-    complex128_t* memory;
-    index_t memory_idx;
-    index_t memory_cap;
+    /** number of momentum points */
+    index_t n_qpts;
+    /** and actual momentum points */
+    tu_vertex_storage_qpt_t* qpts;
+
+    /** linear dimension of vertex (n_orbff,n_spin,n_spin) */
+    index_t linsz;
+
+    // private
+    VECTOR_DECL( complex128_t, memory )
+    int* qpts_ranks;
+    diverge_flow_step_t* s;
 };
 
 /**
- * store the channels of the current flow step into ``vert``. if ``vert ==
- * NULL``, initialize a new :c:struct:`tu_highsym_vertex_t` object.
- *
- * :param diverge_flow_step_t* step: flow step object (must be TUFRG!)
- * :param index_t* qpts: indices of the coarse k-mesh to save the vertex on. In
- *                       case MPI and/or symmetries are used, these indices
- *                       refer to the reduced mesh
- * :param index_t nqpts: length of the ``qpts`` array.
- * :param tu_highsym_vertex_t* vert: object to work on. If NULL, a new object is
- *                                   initialized and returned (similar behavior
- *                                   to the realloc library function).
+ * initialize the vertex storage for a specific channel (following nomenclature
+ * in :c:func:`diverge_flow_step_vertex`
  */
-tu_highsym_vertex_t* tu_highsym_vertex_store( diverge_flow_step_t* step,
-        index_t* qpts, index_t nqpts, tu_highsym_vertex_t* vert );
+tu_vertex_storage_t* tu_vertex_storage_init( diverge_flow_step_t* s, char chan,
+        const index_t* qpts, index_t n_qpts );
+/**
+ * initialize the vertex storage for a specific channel, but with names for
+ * qpts. nomenclature follows :c:func:`diverge_flow_step_vertex`.
+ */
+tu_vertex_storage_t* tu_vertex_storage_init_fg( diverge_flow_step_t* s, char chan,
+        const tu_vertex_storage_qpt_t* qpts, index_t n_qpts );
+
+/** get the stored array at qpt index ``iq`` and snap index ``istep`` on rank 0 */
+complex128_t* tu_vertex_storage_get( tu_vertex_storage_t* t, index_t istep, index_t iq );
 
 /**
- * save the contents of a :c:struct:`tu_highsym_vertex_t` to disk. As of now,
- * the file format is not fixed. It works along the lines of the other file
- * formats encountered in the divERGe world:
- *
- * A header of 128 64-bit (signed) integers describes the file type, and the
- * contents, which are appended to this header. For a description, see the
- * source file (src/misc/vertex_store.c)
+ * add one more step to the storage object (which keeps a reference of
+ * :c:struct:`diverge_flow_step_t` around)
  */
-void tu_highsym_vertex_to_file( tu_highsym_vertex_t* vert, const char* fname );
+void tu_vertex_storage_snap( tu_vertex_storage_t* t );
 
-/** free a :c:struct:`tu_highsym_vertex_t` object */
-void tu_highsym_vertex_free( tu_highsym_vertex_t* vert );
+/** same as :c:func:`tu_vertex_storage_snap` but for arbitrary channel */
+void tu_vertex_storage_snap_chan( tu_vertex_storage_t* t, char chan );
+
+/** pop last step from the storage object */
+void tu_vertex_storage_pop( tu_vertex_storage_t* t );
+
+/** output a :c:struct:`tu_vertex_storage_t` object to disk */
+void tu_vertex_storage_to_file( tu_vertex_storage_t* t, const char* fname );
+
+/** free a :c:struct:`tu_vertex_storage_t` object */
+void tu_vertex_storage_free( tu_vertex_storage_t* t );
 
