@@ -304,9 +304,11 @@ DIVERGE_UNSTABLE {
         tu_vertex_storage_init;
         tu_vertex_storage_init_fg;
         tu_vertex_storage_lsnap;
+        tu_vertex_storage_lsnap_all;
         tu_vertex_storage_lsnap_chan;
         tu_vertex_storage_pop;
         tu_vertex_storage_snap;
+        tu_vertex_storage_snap_all;
         tu_vertex_storage_snap_chan;
         tu_vertex_storage_to_file;
 };
