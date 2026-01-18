@@ -281,7 +281,14 @@ DIVERGE_UNSTABLE {
         transpose_conj_outofplace;
         transpose_inplace;
         transpose_outofplace;
-        tu_highsym_vertex_free;
-        tu_highsym_vertex_store;
-        tu_highsym_vertex_to_file;
+        tu_vertex_storage_free;
+        tu_vertex_storage_get;
+        tu_vertex_storage_init;
+        tu_vertex_storage_init_fg;
+        tu_vertex_storage_lsnap;
+        tu_vertex_storage_lsnap_chan;
+        tu_vertex_storage_pop;
+        tu_vertex_storage_snap;
+        tu_vertex_storage_snap_chan;
+        tu_vertex_storage_to_file;
 };

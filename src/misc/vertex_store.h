@@ -37,6 +37,8 @@ struct tu_vertex_storage_t {
 
     // private
     VECTOR_DECL( complex128_t, memory )
+    VECTOR_DECL( double, Lambda )
+    VECTOR_DECL( char, chans )
     int* qpts_ranks;
     diverge_flow_step_t* s;
 };
@@ -65,6 +67,12 @@ void tu_vertex_storage_snap( tu_vertex_storage_t* t );
 
 /** same as :c:func:`tu_vertex_storage_snap` but for arbitrary channel */
 void tu_vertex_storage_snap_chan( tu_vertex_storage_t* t, char chan );
+
+/** same as :c:func:`tu_vertex_storage_snap` but with scale information */
+void tu_vertex_storage_lsnap( tu_vertex_storage_t* t, double Lambda );
+
+/** same as :c:func:`tu_vertex_storage_snap_chan` but with scale information */
+void tu_vertex_storage_lsnap_chan( tu_vertex_storage_t* t, double Lambda, char chan );
 
 /** pop last step from the storage object */
 void tu_vertex_storage_pop( tu_vertex_storage_t* t );
