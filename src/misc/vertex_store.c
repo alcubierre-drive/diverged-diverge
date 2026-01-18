@@ -102,6 +102,15 @@ void tu_vertex_storage_snap( tu_vertex_storage_t* t ) {
 void tu_vertex_storage_snap_chan( tu_vertex_storage_t* t, char chan ) {
     tu_vertex_storage_lsnap_chan( t, qnan_gen(0), chan );
 }
+void tu_vertex_storage_snap_all( tu_vertex_storage_t* t ) {
+    tu_vertex_storage_lsnap_all( t, qnan_gen(0) );
+}
+void tu_vertex_storage_lsnap_all( tu_vertex_storage_t* t, double Lambda ) {
+    assert(t != NULL);
+    if (t->s->channel_selection[0]) tu_vertex_storage_lsnap_chan(t, Lambda, 'P');
+    if (t->s->channel_selection[1]) tu_vertex_storage_lsnap_chan(t, Lambda, 'C');
+    if (t->s->channel_selection[2]) tu_vertex_storage_lsnap_chan(t, Lambda, 'D');
+}
 
 complex128_t* tu_vertex_storage_get( tu_vertex_storage_t* t, index_t istep, index_t iq ) {
     if (diverge_mpi_comm_rank() != 0)
@@ -156,16 +165,15 @@ void tu_vertex_storage_to_file( tu_vertex_storage_t* t, const char* fname ) {
     header[iheader++] = displ;
     displ += (header[iheader++] = (strlen(version)+1));
 
+    header[124] = displ; // save file size
+
     // health check bit field
-    uindex_t checkmask = 0;
-    uint8_t one = 1;
-    uindex_t firstbit = checkmask | (one << 7);
-    if (!check_32bit_float())   checkmask |= firstbit >> 0;
-    if (!check_64bit_double())  checkmask |= firstbit >> 1;
-    if (!check_little_endian()) checkmask |= firstbit >> 2;
-    if (!check_8bit_char())     checkmask |= firstbit >> 3;
-    uindex_t* uheader = (uindex_t*)header;
-    uheader[iheader++] = checkmask;
+    uint8_t one = 1; uindex_t firstbit = 0; firstbit |= one << 7;
+    uindex_t* phealth = (uindex_t*)&header[iheader++];
+    if (!check_32bit_float())   *phealth |= firstbit >> 0;
+    if (!check_64bit_double())  *phealth |= firstbit >> 1;
+    if (!check_little_endian()) *phealth |= firstbit >> 2;
+    if (!check_8bit_char())     *phealth |= firstbit >> 3;
 
     FILE* f = fopen(fname, "wb");
     if (!f) {
