@@ -21,7 +21,7 @@ here provide functionality to store the vertices of *some* momentum points, such
 that features specific to a model can be tracked.
 
 In practice, if one has a :c:type:`diverge_flow_step_t` object all set up, one
-can do the following inside/before the flow loop:
+can do the following during the flow loop:
 
 .. sourcecode:: C
 
@@ -30,21 +30,24 @@ can do the following inside/before the flow loop:
    // index_t* qpts = ...;
    // index_t nqpts = ...;
 
-   // initialize the tu_highsym_vertex_t object
-   tu_highsym_vertex_t* qverts = tu_highsym_vertex_store( step, qpts,
-       nqpts, NULL );
+   // initialize the tu_vertex_storage_t object for the 'm'agnetic channel
+   tu_vertex_storage_t* mag = tu_vertex_storage_init( step, 'm', qpts, nqpts );
    do {
+       // here we store (magnetic) vertices
+       tu_vertex_storage_snap( mag );
        diverge_flow_step_euler( step, eu.Lambda, eu.dLambda );
        diverge_flow_step_vertmax( step, &vmax );
        diverge_flow_step_chanmax( step, cmax );
-       // here we store vertices
-       tu_highsym_vertex_store( step, qpts, nqpts, qverts );
    } while (diverge_euler_next( &eu, vmax ));
+   // and the last one
+   tu_vertex_storage_snap( mag );
 
-   // now save those vertices to file
-   tu_highsym_vertex_to_file( qverts, "highsym_vertices.qvx" );
+   // we can get a specific vertex (step #1, qpt #0)...
+   complex128_t* mvert = tu_vertex_storage_get( mag, 1, 0 );
+   // or save them to a file:
+   tu_vertex_storage_to_file( mag, "magnetic_vertices.dvg" );
 
-   // and do cleanup
-   tu_highsym_vertex_free( qverts );
+   // finally, we have to cleanup
+   tu_vertex_storage_free( mag );
 
 .. c:autodoc:: misc/vertex_store.h
