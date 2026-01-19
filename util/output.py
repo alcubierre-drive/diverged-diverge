@@ -7,7 +7,7 @@ DIVERGE_MODEL_MAGIC_NUMBER = ord('D') + ord('M')
 DIVERGE_POST_GRID_MAGIC_NUMBER = ord('P')
 DIVERGE_POST_PATCH_MAGIC_NUMBER = ord('V')
 DIVERGE_POST_TU_MAGIC_NUMBER = ord('T')
-DIVERGE_TU_VERTEX_STORE_MAGIC_NUMBER = 7310593875232388468
+DIVERGE_VERTEX_STORE_MAGIC_NUMBER = 8313495814289909110
 
 # return 1 if A>B, -1 if A<B, and 0 if A=B
 def version_compare( A, B ):
@@ -807,13 +807,12 @@ class diverge_post_tu:
         if self.chi0_ph.size > 0:
             self.chi0_ph = self.chi0_ph.reshape( susc_shape )
 
-class tu_vertex_store:
+class vertex_store:
     """
-    class to read tu_vertex_store files (.dvg, magic string =
-    "tu_vertex_storage_t") that are recorded during the flow via
-    :c:func:`tu_vertex_storage_snap` (and similar functions). The most useful
-    information in the vertex storage file is its member :py:attr:`~tu_vertex_store.verts`, i.e.,
-    the vertices themselves.
+    class to read vertex_store files (.dvg, magic string = "vertex_storage_t")
+    that are recorded during the flow via :c:func:`vertex_storage_snap` (and
+    similar functions). The most useful information in the vertex storage file
+    is its member :py:attr:`~vertex_store.verts`, i.e., the vertices themselves.
 
     :param fname: file name of a vertex file that should be read.
     """
@@ -829,8 +828,8 @@ class tu_vertex_store:
         self._f_header = numpy_fromfile(fname, dtype=np.int64, count=128)
 
         def check_if_vstore():
-            vstore_str = self._f_header.view(dtype=np.byte)[:19].view(dtype='S19')[0]
-            return vstore_str == b"tu_vertex_storage_t"
+            vstore_str = self._f_header.view(dtype=np.byte)[:16].view(dtype='S16')[0]
+            return vstore_str == b"vertex_storage_t"
 
         def check_numerical_repr():
             checkmask = np.unpackbits(self._f_header[127:].view( dtype=np.uint8 ))
@@ -849,7 +848,7 @@ class tu_vertex_store:
 
         self.valid = check_numerical_repr()
 
-        #: channel (PCDpcdhm)
+        #: channel
         self.chan = chr(self._head(3))
         #: n_orbff × n_spin × n_spin
         self.linsz = self._head(4)
@@ -861,18 +860,18 @@ class tu_vertex_store:
         self._f_bytes = numpy_fromfile(fname, dtype=np.byte)
 
         #: qpt data structure
-        self.tu_vertex_storage_qpt_t = np.dtype(dict(
+        self.vertex_storage_qpt_t = np.dtype(dict(
             names=('qpt', 'name'),
             formats=('i8', 'S24')
         ))
-        #: stored qpts
-        self.qpts = self._displ_count( 7 ).view(dtype=self.tu_vertex_storage_qpt_t)
-        #: stored vertices
+        #: stored qpts (n_qpts,)
+        self.qpts = self._displ_count( 7 ).view(dtype=self.vertex_storage_qpt_t)
+        #: stored vertices (n_steps,n_qpts,linsz,linsz)
         self.verts = self._displ_count( 9 ).view(dtype=np.complex128).reshape(
                 (self.n_steps, self.n_qpts, self.linsz, self.linsz))
-        #: stored Lambdas
+        #: stored Lambdas (n_steps,)
         self.Lambda = self._displ_count( 11 ).view(dtype=np.float64)
-        #: stored channels for each iter
+        #: stored channels for each iter (n_steps,)
         self.chans = self._displ_count( 13 ).view(dtype='S1')
 
         #: diverge tag version (serves as file format version)
@@ -898,8 +897,8 @@ def read( fname ):
         return diverge_post_grid( fname )
     elif magic == DIVERGE_POST_TU_MAGIC_NUMBER:
         return diverge_post_tu( fname )
-    elif magic == DIVERGE_TU_VERTEX_STORE_MAGIC_NUMBER:
-        return tu_vertex_store( fname )
+    elif magic == DIVERGE_VERTEX_STORE_MAGIC_NUMBER:
+        return vertex_store( fname )
     else:
         print(f"magic number {magic} ('{chr(magic)}') unknown")
         return None
