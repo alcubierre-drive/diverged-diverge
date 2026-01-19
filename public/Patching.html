@@ -82,6 +82,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#c.diverge_patching_autofine"><code class="docutils literal notranslate"><span class="pre">diverge_patching_autofine()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.diverge_patching_symmetrize_refinement"><code class="docutils literal notranslate"><span class="pre">diverge_patching_symmetrize_refinement()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.diverge_patching_free"><code class="docutils literal notranslate"><span class="pre">diverge_patching_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vertex-interface">Vertex interface</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="Symmetries.html">Symmetries</a></li>
@@ -270,6 +271,32 @@ typically not needed, but for advanced patching calculations it may be
 advantageous.</p>
 </dd></dl>
 
+<section id="vertex-interface">
+<h2>Vertex interface<a class="headerlink" href="#vertex-interface" title="Link to this heading"></a></h2>
+<p>As channel specific vertices in npatch are inherently different from TUFRG
+and grid FRG, we expose the interface in src/npatch/vertex.h to the user
+through the function pair <a class="reference internal" href="#c.diverge_patching_vertex" title="diverge_patching_vertex"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_patching_vertex()</span></code></a>,
+<a class="reference internal" href="#c.diverge_patching_vertex_free" title="diverge_patching_vertex_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_patching_vertex_free()</span></code></a>.</p>
+<dl class="c type">
+<dt class="sig sig-object c" id="c.npatch_qvert_mat_t">
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">npatch_qvert_mat_t</span></span></span><a class="headerlink" href="#c.npatch_qvert_mat_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_patching.h#L106"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>see src/npatch/vertex.h for explanation of the structure</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_patching_vertex">
+<a class="reference internal" href="#c.npatch_qvert_mat_t" title="npatch_qvert_mat_t"><span class="n"><span class="pre">npatch_qvert_mat_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_vertex</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><span class="n"><span class="pre">diverge_flow_step_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">s</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="n"><span class="pre">chan</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">nvq</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_vertex" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_patching.h#L113"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>obtain npatch vertex in q space (channel specific). The result is an array of
+length <code class="docutils literal notranslate"><span class="pre">*nqv</span></code>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_patching_vertex_free">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_patching_vertex_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.npatch_qvert_mat_t" title="npatch_qvert_mat_t"><span class="n"><span class="pre">npatch_qvert_mat_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">vq</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nvq</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_patching_vertex_free" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_patching.h#L118"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>free npatch vertex in q space, an array of length <code class="docutils literal notranslate"><span class="pre">nvq</span></code>.</p>
+</dd></dl>
+
+</section>
 <p>In summary, calling of the above functions in the model would look like:</p>
 <div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="n">index_t</span><span class="w"> </span><span class="o">*</span><span class="n">patches</span><span class="p">,</span><span class="w"> </span><span class="n">npatches</span><span class="p">;</span>
 <span class="n">diverge_patching_find_fs_pts_C</span><span class="p">(</span><span class="w"> </span><span class="n">mod</span><span class="p">,</span><span class="w"> </span><span class="n">E</span><span class="p">,</span><span class="w"> </span><span class="n">nb</span><span class="p">,</span><span class="w"> </span><span class="n">np_ibz</span><span class="p">,</span><span class="w"> </span><span class="n">np_ibz</span><span class="o">*</span><span class="mi">10</span><span class="p">,</span>
