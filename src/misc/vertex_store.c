@@ -35,7 +35,7 @@ vertex_storage_t* vertex_storage_init_fg( diverge_flow_step_t* s, char chan,
     } else if (tp == diverge_grid) {
         grid_vertex_t* grid_V = s->mod->internals->grid_vertex;
         t->linsz = kdim(s->mod->nk) * POW2(s->mod->n_orb*s->mod->n_spin);
-        if (toupper(chan) != 'P' || toupper(chan) != 'C' || toupper(chan) != 'D') {
+        if (toupper(chan) != 'P' && toupper(chan) != 'C' && toupper(chan) != 'D') {
             mpi_wrn_printf("for grid vertex chan must be one of 'PCDpcd'. default 'D'.\n");
             t->chan = chan = 'D';
         }
