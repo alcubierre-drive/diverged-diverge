@@ -49,10 +49,8 @@ vertex_storage_t* vertex_storage_init_fg( diverge_flow_step_t* s, char chan,
     // find which rank each qpt is on
     t->qpts_ranks = calloc( t->n_qpts, sizeof*t->qpts_ranks );
     const int rank = diverge_mpi_comm_rank();
-    for (index_t iq=0; iq<t->n_qpts; ++iq) {
-        index_t qq = t->qpts[iq].qpt;
-        t->qpts_ranks[iq] = (q_1 > qq && q_0 <= qq) ? rank : -1;
-    }
+    for (index_t iq=0; iq<t->n_qpts; ++iq)
+        t->qpts_ranks[iq] = (q_1 > t->qpts[iq].qpt && q_0 <= t->qpts[iq].qpt) ? rank : -1;
     diverge_mpi_allreduce_int_max_inplace( t->qpts_ranks, t->n_qpts );
 
     for (index_t iq=0; iq<t->n_qpts; ++iq) {
