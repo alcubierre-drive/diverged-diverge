@@ -94,6 +94,30 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
  */
 void diverge_patching_free( mom_patching_t* patching );
 
+/**
+ * Vertex interface
+ * ----------------
+ *
+ * As channel specific vertices in npatch are inherently different from TUFRG
+ * and grid FRG, we expose the interface in src/npatch/vertex.h to the user
+ * through the function pair :c:func:`diverge_patching_vertex`,
+ * :c:func:`diverge_patching_vertex_free`.
+ */
+
+/** see src/npatch/vertex.h for explanation of the structure */
+typedef struct npatch_qvert_mat_t npatch_qvert_mat_t;
+
+// forward declare
+typedef struct diverge_flow_step_t diverge_flow_step_t;
+
+/**
+ * obtain npatch vertex in q space (channel specific). The result is an array of
+ * length ``*nqv``.
+ */
+npatch_qvert_mat_t* diverge_patching_vertex( diverge_flow_step_t* s, char chan, index_t* nvq );
+
+/** free npatch vertex in q space, an array of length ``nvq``. */
+void diverge_patching_vertex_free( npatch_qvert_mat_t* vq, index_t nvq );
 
 #ifdef __cplusplus
 }
