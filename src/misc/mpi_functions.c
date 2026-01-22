@@ -9,13 +9,10 @@ static MPI_Comm diverge_mpi_comm = NULL;
 
 index_t* diverge_distribute( index_t sz, index_t nranks ) {
     index_t* howmany = calloc( 2*nranks, sizeof(index_t) );
-    for (index_t s=0; s<sz; ++s)
-        howmany[s%nranks]++;
-
+    for (index_t r=0; r<nranks; ++r) howmany[r] = sz/nranks;
+    for (index_t r=0; r<sz%nranks; ++r) howmany[r]++;
     index_t* offsets = howmany + nranks;
-    for (int r=1; r<nranks; ++r)
-        offsets[r] = offsets[r-1] + howmany[r-1];
-
+    for (int r=1; r<nranks; ++r) offsets[r] = offsets[r-1] + howmany[r-1];
     return howmany;
 }
 
