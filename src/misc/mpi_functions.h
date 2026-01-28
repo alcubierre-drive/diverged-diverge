@@ -13,6 +13,7 @@
  */
 typedef void* MPI_Comm;
 #define MPI_IN_PLACE NULL
+#define MPI_COMM_NULL NULL
 #endif // USE_MPI
 
 #ifdef __cplusplus

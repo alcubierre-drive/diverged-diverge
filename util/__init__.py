@@ -671,6 +671,9 @@ if not _libs["divERGe"] is None:
     hartree_fock_step = _libs["divERGe"].get("diverge_hartree_fock_step", "cdecl")
     hartree_fock_step.argtypes = [c_voidp, c_double]
     hartree_fock_step.restype = None
+    hartree_fock_normalize_sigma = _libs["divERGe"].get("diverge_hartree_fock_normalize_sigma", "cdecl")
+    hartree_fock_normalize_sigma.argtypes = [c_voidp]
+    hartree_fock_normalize_sigma.restype = None
     hartree_fock_get_sigma = _libs["divERGe"].get("diverge_hartree_fock_get_sigma", "cdecl")
     hartree_fock_get_sigma.argtypes = [c_voidp]
     hartree_fock_get_sigma.restype = c_voidp

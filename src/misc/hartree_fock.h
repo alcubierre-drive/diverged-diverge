@@ -44,6 +44,9 @@ diverge_flow_step_t* diverge_hartree_fock_get_flow_step( diverge_hartree_fock_t*
  */
 void diverge_hartree_fock_step( diverge_hartree_fock_t* h, double T );
 
+/** move the constant part (:math:`\mu`) from the selfenergy to the dispersion */
+void diverge_hartree_fock_normalize_sigma( diverge_hartree_fock_t* h );
+
 /**
  * return the current self-energy buffer. Can be used to e.g. set a seed or
  * output of the final self-energy.
