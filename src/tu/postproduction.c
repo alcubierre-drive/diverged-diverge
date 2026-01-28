@@ -465,7 +465,7 @@ static void calc_susc( tu_postproduction_t* p ) {
         tu_vertex_product(suscff, p->vertex->pp_bubble_int,p->vertex->projection_helper,
                 p->vertex->product_helper, POW2(p->vertex->n_spin)*p->vertex->n_orbff,
                 p->vertex->my_nk, 1.0, false, NULL);
-        tu_vertex_reco(p->vertex, 'P', p->suscPp_ff, suscff);
+        diverge_tu_vertex_reco(p->vertex, 'P', p->suscPp_ff, suscff);
         if (p->called_suscep_full) {
             p->suscPp = calloc(size,sizeof(complex128_t));
             _susc_o14k(p->model,p->suscPp_ff,p->suscPp);
@@ -480,7 +480,7 @@ static void calc_susc( tu_postproduction_t* p ) {
         tu_vertex_product(suscff, p->vertex->ph_bubble_int,p->vertex->projection_helper,
                 p->vertex->product_helper, POW2(p->vertex->n_spin)*p->vertex->n_orbff,
                 p->vertex->my_nk, 1.0, false, NULL);
-        tu_vertex_reco(p->vertex, 'C', p->suscMa_ff, suscff);
+        diverge_tu_vertex_reco(p->vertex, 'C', p->suscMa_ff, suscff);
         if (p->called_suscep_full) {
             p->suscMa = calloc(size,sizeof(complex128_t));
             _susc_o14k(p->model,p->suscMa_ff,p->suscMa);
@@ -504,7 +504,7 @@ static void calc_susc( tu_postproduction_t* p ) {
         tu_vertex_product(suscff, p->vertex->ph_bubble_int,p->vertex->projection_helper,
                 p->vertex->product_helper, POW2(p->vertex->n_spin)*p->vertex->n_orbff,
                 p->vertex->my_nk, 1.0, false, NULL);
-        tu_vertex_reco(p->vertex, 'D', p->suscCh_ff, suscff);
+        diverge_tu_vertex_reco(p->vertex, 'D', p->suscCh_ff, suscff);
         if (p->called_suscep_full) {
             p->suscCh = calloc(size,sizeof(complex128_t));
             _susc_o14k(p->model,p->suscCh_ff,p->suscCh);
@@ -907,23 +907,23 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         index_t vsize = POW2(linsize)*p->vertex->nk*sizeof(complex128_t);
         complex128_t* helper = (complex128_t*)malloc(vsize);
         if(p->vertex->P_flow) {
-            tu_vertex_reco(p->vertex, 'P', helper, NULL);
+            diverge_tu_vertex_reco(p->vertex, 'P', helper, NULL);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(p->vertex->C_flow) {
-            tu_vertex_reco(p->vertex, 'C', helper, NULL);
+            diverge_tu_vertex_reco(p->vertex, 'C', helper, NULL);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(p->vertex->D_flow) {
-            tu_vertex_reco(p->vertex, 'D', helper, NULL);
+            diverge_tu_vertex_reco(p->vertex, 'D', helper, NULL);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(p->vertex->P_flow) {
-            tu_vertex_reco(p->vertex, 'P', helper, p->vertex->pp_bubble_int);
+            diverge_tu_vertex_reco(p->vertex, 'P', helper, p->vertex->pp_bubble_int);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(p->vertex->C_flow || p->vertex->D_flow) {
-            tu_vertex_reco(p->vertex, 'C', helper, p->vertex->ph_bubble_int);
+            diverge_tu_vertex_reco(p->vertex, 'C', helper, p->vertex->ph_bubble_int);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         free(helper);

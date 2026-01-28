@@ -483,7 +483,7 @@ void tu_vertex_project_fullV( const tu_vertex_t* V, const diverge_model_t* model
     index_t no = V->n_orb*V->n_spin;
     // unproject P
     if (V->P_flow) {
-        tu_vertex_reco( V, 'P', buffer, NULL );
+        diverge_tu_vertex_reco( V, 'P', buffer, NULL );
         #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for (index_t s1=0; s1<V->n_spin; ++s1)
         for (index_t s2=0; s2<V->n_spin; ++s2)
@@ -516,7 +516,7 @@ void tu_vertex_project_fullV( const tu_vertex_t* V, const diverge_model_t* model
     }
     // unproject C
     if (V->C_flow) {
-        tu_vertex_reco( V, 'C', buffer, NULL );
+        diverge_tu_vertex_reco( V, 'C', buffer, NULL );
         #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for (index_t s1=0; s1<V->n_spin; ++s1)
         for (index_t s2=0; s2<V->n_spin; ++s2)
@@ -549,7 +549,7 @@ void tu_vertex_project_fullV( const tu_vertex_t* V, const diverge_model_t* model
     }
     // unproject D
     if (V->D_flow) {
-        tu_vertex_reco( V, 'D', buffer, NULL );
+        diverge_tu_vertex_reco( V, 'D', buffer, NULL );
         #pragma omp parallel for collapse(8) schedule(dynamic) num_threads(diverge_omp_num_threads())
         for (index_t s1=0; s1<V->n_spin; ++s1)
         for (index_t s2=0; s2<V->n_spin; ++s2)

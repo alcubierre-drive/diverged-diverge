@@ -7,7 +7,7 @@ diverge_model_t* s2xs2_hubbard( int nk, int nkf, double ffcut, double U );
 int main( int argc, char** argv ) {
 
     int nk = 24, nkf = 1;
-    double ffcut = 0.01;
+    double ffcut = 0.1;
 
     double nu = 0.5;
     double U = 3.0;
@@ -15,7 +15,7 @@ int main( int argc, char** argv ) {
 
     double amp = 1e-5;
     index_t maxiter = 200;
-    double mindiff = 1e-8;
+    double mindiff = 1e-10;
     double alpha = 0.7;
 
     diverge_init( &argc, &argv );
@@ -41,6 +41,7 @@ int main( int argc, char** argv ) {
     // self-consistency loop
     for (int it=0; it<maxiter; ++it) {
         diverge_hartree_fock_step( h, T );
+        diverge_hartree_fock_normalize_sigma( h );
 
         // linear mixing
         for (index_t i=0; i<nk_nb2; ++i)
@@ -58,7 +59,7 @@ int main( int argc, char** argv ) {
         // output
         mpi_printf( "%i %.5e %.5e\n", it, err, smax );
 
-        if (err < mindiff) break;
+        if (err < mindiff && it > 10) break;
     }
 
     // attach the self-energy to the model
@@ -70,6 +71,7 @@ int main( int argc, char** argv ) {
     diverge_model_output_conf_t oc = diverge_model_output_conf_defaults;
     oc.npath = -1;
     oc.kf_ibz_path = 1;
+    oc.E = oc.U = oc.H = 1;
     diverge_model_to_file_finegrained( m, __FILE__ "_mod.dvg", &oc );
 
     // and free resources

@@ -347,7 +347,7 @@ double tu_vertex_infinity_norm( const tu_vertex_t* V ) {
     return max;
 }
 
-void tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* restrict buf,
+void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* restrict buf,
         const complex128_t* restrict existing_r_exp, index_t nr, complex128_t* restrict buf_q/*=NULL*/ ) {
     const char channel = chan;
     bool was_null = false;
@@ -483,7 +483,7 @@ void tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* 
     if (was_null) free(buf_q);
 }
 
-void tu_vertex_reco( const tu_vertex_t* V, char chan, complex128_t* buf_q,
+void diverge_tu_vertex_reco( const tu_vertex_t* V, char chan, complex128_t* buf_q,
         const complex128_t* inp/*=NULL*/ ) {
     const char channel = chan;
     const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));

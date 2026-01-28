@@ -18,8 +18,9 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* model, tu_projection_t* proj, tu_p
 void tu_vertex_free( tu_vertex_t* V );
 tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O );
 
-void tu_vertex_reco( const tu_vertex_t* V, char chan, complex128_t* buf, const complex128_t* inp/*=NULL*/ );
-void tu_vertex_reco_ft( const tu_vertex_t* V, char chan, complex128_t* buf,
+// these functions are renamed such that we can export them
+void diverge_tu_vertex_reco( const tu_vertex_t* V, char chan, complex128_t* buf, const complex128_t* inp/*=NULL*/ );
+void diverge_tu_vertex_reco_ft( const tu_vertex_t* V, char chan, complex128_t* buf,
         const complex128_t* existing_r_exp, index_t nr, complex128_t* bufMPI/*=NULL*/ );
 
 void tu_vertex_add(tu_vertex_t* result, const tu_vertex_t* inp, const double factor);
