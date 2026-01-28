@@ -153,24 +153,24 @@ CT_TEST_NAME(honeycomb_standard, "honeycomb") {
     double maxdiff = 0.0;
     CT_CHECK( test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10 );
 
-    tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
 
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
 
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
@@ -220,23 +220,23 @@ CT_TEST(rashba) {
     }
     CT_CHECK(maxdiff < 1e-8);
     maxdiff = 0.0;
-    tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
 
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
@@ -278,24 +278,24 @@ CT_TEST(hubbard) {
         Lambda += dLambda;
     }
     // check P,C,D bubble_helper
-    tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
     double maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
@@ -336,24 +336,24 @@ CT_TEST_NAME( hubbard_ref, "hubbard,refined" ) {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
     double maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
@@ -395,24 +395,24 @@ CT_TEST_NAME( honeycomb_ref, "honeycomb,refined" ) {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
     double maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
@@ -454,24 +454,24 @@ CT_TEST_NAME( rashba_refined, "rashba,refined" ) {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
     double maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
@@ -511,24 +511,24 @@ CT_TEST_NAME( tri_ref, "triangular_pxpy,refined" ) {
     CT_CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
     CT_CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
     // check P,C,D bubble_helper
-    tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
     double maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
@@ -568,24 +568,24 @@ CT_TEST_NAME( triangular_rashba, "triangular,rashba" ) {
     CT_CHECK(test_symm_4_pnt( mod1, step1->tu_vertex ) < 1e-10);
     CT_CHECK(test_symm_4_pnt( mod1, step2->tu_vertex ) < 1e-10);
     // check P,C,D bubble_helper
-    tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
     double maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
@@ -629,24 +629,24 @@ CT_TEST_NAME( triangular_pppm_refined, "triangular_pppm,refined" ) {
     test_symm_4_pnt( mod1, step1->tu_vertex );
     test_symm_4_pnt( mod1, step2->tu_vertex );
     // check P,C,D bubble_helper
-    tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'P', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'P', reco_vert2, NULL);
     double maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'C', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'C', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);
         maxdiff = d>maxdiff ? d : maxdiff;
     }
     CT_CHECK(maxdiff < 1e-8);
-    tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
-    tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
+    diverge_tu_vertex_reco(step1->tu_vertex, 'D', reco_vert1, NULL);
+    diverge_tu_vertex_reco(step2->tu_vertex, 'D', reco_vert2, NULL);
     maxdiff = 0.0;
     for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
         double d = cabs(reco_vert2[i]-reco_vert1[i]);

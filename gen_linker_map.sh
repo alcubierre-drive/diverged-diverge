@@ -34,7 +34,9 @@ echo "local:
 exported_unstable_symbols=( $(ctags -o- --kinds-C=p ${misc_included_files[@]} |\
     grep -v "^!" | grep -v VECTOR  | awk '{print $1}' |\
     grep -v "_dos_sort_doubles_$" |\
-    grep -v "_dos_sort_doubles_indirect_$") )
+    grep -v "_dos_sort_doubles_indirect_$") \
+    diverge_tu_vertex_reco
+)
 
 echo "DIVERGE_UNSTABLE {" >> $OUTFILE
 echo "    global:" >> $OUTFILE

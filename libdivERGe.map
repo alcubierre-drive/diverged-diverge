@@ -296,4 +296,5 @@ DIVERGE_UNSTABLE {
         vertex_storage_snap_all;
         vertex_storage_snap_chan;
         vertex_storage_to_file;
+        diverge_tu_vertex_reco;
 };
