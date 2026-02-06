@@ -82,8 +82,6 @@ diverge_model_t* gen_honeycomb_lat_hub( index_t nkx, index_t nky, index_t lx,
     return model;
 }
 
-
-
 diverge_model_t* gen_honeycomb_lat_hub_sym( index_t nkx, index_t nky,
         index_t nkxf, index_t nkyf,
         double t, double tp, double U, double mu) {

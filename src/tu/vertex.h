@@ -22,6 +22,9 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O );
 void diverge_tu_vertex_reco( const tu_vertex_t* V, char chan, complex128_t* buf, const complex128_t* inp/*=NULL*/ );
 void diverge_tu_vertex_reco_ft( const tu_vertex_t* V, char chan, complex128_t* buf,
         const complex128_t* existing_r_exp, index_t nr, complex128_t* bufMPI/*=NULL*/ );
+// holds the same buffer on all ranks after completion. q is in BZ, not IBZ!
+void diverge_tu_vertex_reco_at_q( const tu_vertex_t* V, char chan, complex128_t* buf,
+        index_t q, const complex128_t* inp/*=NULL*/ );
 
 void tu_vertex_add(tu_vertex_t* result, const tu_vertex_t* inp, const double factor);
 void tu_vertex_set(tu_vertex_t* f, const tu_vertex_t* initial,const tu_vertex_t* inp, const double factor);
