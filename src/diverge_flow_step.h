@@ -77,9 +77,10 @@ void diverge_flow_step_loopmax( diverge_flow_step_t* st, double loopmax[2] );
 void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
 /**
  * outputs the maximum channel singular value given a channel in ``chan``. If
- * ``piter != 0``, calculate the leading eigenvalue using power iteration,
- * otherwise use :c:func:`batched_svd`. For how the channels are defined, see
- * :c:func:`diverge_flow_step_vertex`.
+ * ``piter > 0``, calculate the leading eigenvalue using power iteration, if
+ * ``piter < 0``, use Gerschgorin's circle theorem for the (approximate) leading
+ * eigenvalue. Otherwise use :c:func:`batched_svd`. For how the channels are
+ * defined, see :c:func:`diverge_flow_step_vertex`.
  */
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter );
 

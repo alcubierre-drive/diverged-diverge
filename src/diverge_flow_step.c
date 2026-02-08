@@ -638,7 +638,7 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
     diverge_flow_step_vertex_t v = diverge_flow_step_vertex( st, chan );
     index_t nq = (v.q_1 - v.q_0);
     index_t linsz = v.backend == 'T' ? v.n_orbff * POW2(v.n_spin) : POW2(v.n_orbff*v.n_spin) * v.nk;
-    if (piter) {
+    if (piter > 0) {
         complex128_t* aux = calloc( 3*linsz, sizeof*aux );
         double tol = 1.e-6;
         index_t niter = 1000;
@@ -652,6 +652,25 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         double maxval_red = maxval;
         diverge_mpi_allreduce_double_max( &maxval, &maxval_red, 1 );
         return MAX(maxval, maxval_red);
+    } else if (piter < 0) {
+        double Vmax = 0.0;
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:Vmax) collapse(2)
+        for (index_t q=0; q<nq; ++q)
+        for (index_t l=0; l<linsz; ++l) {
+            // Gerschgorin approximant: diagonal element is the disc's center
+            // and the sum of all other elements' absolute value the radius
+            complex128_t C_l = v.ary[IDX3(q,l,l, linsz,linsz)];
+            double R_l = 0.0;
+            for (index_t m=0; m<linsz; ++m)
+                if (m != l) R_l += cabs(v.ary[IDX3(q,l,m, linsz,linsz)]);
+            // worst case: extend into the direction of the center (which should
+            // be real anyways)
+            double Vmax_l = cabs(cexp(I*carg(C_l))*R_l + C_l);
+            Vmax = MAX(Vmax, Vmax_l);
+        }
+        double Vmax_red = Vmax;
+        diverge_mpi_allreduce_double_max( &Vmax, &Vmax_red, 1 );
+        return MAX(Vmax, Vmax_red);
     } else {
         double* singular_values = calloc( nq * linsz, sizeof* singular_values );
         batched_svd( NULL, -1, v.ary, NULL, NULL, singular_values, linsz, nq );
