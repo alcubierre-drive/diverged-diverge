@@ -36,7 +36,7 @@ exported_unstable_symbols=( $(ctags -o- --kinds-C=p ${misc_included_files[@]} |\
     grep -v "_dos_sort_doubles_$" |\
     grep -v "_dos_sort_doubles_indirect_$") \
     diverge_tu_vertex_reco
-    diverge_tu_vertex_reco_at_q
+    diverge_tu_vertex_reco_ft
 )
 
 echo "DIVERGE_UNSTABLE {" >> $OUTFILE
