@@ -1,19 +1,8 @@
+#include "rpa.h"
 #include "vertex.h"
 #include "vertex_details.h"
-#include "../diverge_flow_step.h"
-#include "../diverge_flow_step_internal.h"
 #include "../misc/hashtable.h"
-
-static inline complex128_t ff( const double* k, const double* r ) {
-    return cexp(-I*(k[0]*r[0]+k[1]*r[1]+k[2]*r[2]));
-}
-static inline void fill_Rvec_from_vec(const diverge_model_t* model, index_t* R, double* Rvec) {
-    for (index_t i=0; i<model->n_tu_ff; ++i)
-    for (index_t dim=0; dim<3; ++dim)
-        Rvec[3*i+dim] = R[3*i+0] * model->lattice[0][dim]
-                      + R[3*i+1] * model->lattice[1][dim]
-                      + R[3*i+2] * model->lattice[2][dim];
-}
+#include "../diverge_model.h"
 
 void diverge_tu_sc_vertex( tu_vertex_t* V, tu_projection_t* P, char chan,
         const index_t* kidx, index_t n_kidx, const index_t* nk, complex128_t* out ) {
@@ -66,6 +55,7 @@ void diverge_tu_sc_vertex( tu_vertex_t* V, tu_projection_t* P, char chan,
     const index_t legdim = POW2(V->n_orb*V->n_spin) * n_kidx;
     const index_t *mi_to_ofrom = V->tu_data->mi_to_ofrom,
                   *mi_to_oto = V->tu_data->mi_to_oto;
+    ZERO_OUT( out, POW2(legdim) );
 
     #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t ik=0; ik<n_kidx; ++ik)
@@ -106,4 +96,33 @@ void diverge_tu_sc_vertex( tu_vertex_t* V, tu_projection_t* P, char chan,
     hashtable_free( ktab );
 }
 
+void diverge_tu_sc_greens_step( const diverge_model_t* m, const index_t* kidx,
+        index_t n_kidx, double Lambda, double dLambda, complex128_t* out ) {
 
+    complex128_t cLambda = I*Lambda;
+    gf_complex_t* gbuf = m->internals->greens;
+    (*m->gfill)(m, cLambda, gbuf);
+    const index_t NK = kdim(m->nk);
+    const double prefac = dLambda/(2.*M_PI);
+
+    index_t legdim = POW2(m->n_orb*m->n_spin);
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t ik=0; ik<n_kidx; ++ik) {
+        index_t kk = kidx[ik];
+        index_t mk = k1m2(0,kk,m->nk);
+        for (index_t s1=0; s1<m->n_spin; ++s1)
+        for (index_t o1=0; o1<m->n_orb;  ++o1)
+        for (index_t s2=0; s2<m->n_spin; ++s2)
+        for (index_t o2=0; o2<m->n_orb;  ++o2)
+        for (index_t s3=0; s3<m->n_spin; ++s3)
+        for (index_t o3=0; o3<m->n_orb;  ++o3)
+        for (index_t s4=0; s4<m->n_spin; ++s4)
+        for (index_t o4=0; o4<m->n_orb;  ++o4) {
+            index_t left  = IDX4(s1,o1,s2,o2, m->n_orb,m->n_spin,m->n_orb),
+                    right = IDX4(s3,o3,s4,o4, m->n_orb,m->n_spin,m->n_orb);
+            out[IDX3(ik,left,right, legdim,legdim)] += prefac * (
+                gbuf[IDX3(0,kk,left,NK,legdim)] * gbuf[IDX3(1,mk,right,NK,legdim)] +
+                gbuf[IDX3(1,mk,left,NK,legdim)] * gbuf[IDX3(0,kk,right,NK,legdim)] );
+        }
+    }
+}
