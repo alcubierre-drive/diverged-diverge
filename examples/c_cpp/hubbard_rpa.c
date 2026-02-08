@@ -86,6 +86,11 @@ int main( int argc, char** argv ) {
     fwrite(U, sizeof*U, nval*n_kidx, out);
     fwrite(V, sizeof*V, nval*n_kidx, out);
     fclose(out);
+    free(Sx);
+    free(S);
+    free(U);
+    free(V);
+    free(V_p);
 
     diverge_flow_step_free(f);
     diverge_model_free(m);
