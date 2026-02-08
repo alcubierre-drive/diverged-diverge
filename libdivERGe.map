@@ -237,6 +237,8 @@ DIVERGE_UNSTABLE {
         diverge_dos_use_gpu;
         diverge_energy_fill_gaps;
         diverge_filling_to_energy;
+        diverge_flow_step_sc_greens;
+        diverge_flow_step_sc_vertex;
         diverge_fnan_gen;
         diverge_fnan_get;
         diverge_fnan_isnan;

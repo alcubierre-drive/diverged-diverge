@@ -55,3 +55,6 @@
 // hartree fock
 #include "misc/hartree_fock.h"
 
+// rpa
+#include "tu/rpa.h"
+
