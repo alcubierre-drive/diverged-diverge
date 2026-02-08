@@ -76,6 +76,9 @@ diverge_euler_t diverge_euler_defaults_CPP( void );
  */
 bool diverge_euler_next( diverge_euler_t* de, double Vmax );
 
+/** returns the anticipated number of steps for the settings ``eu`` */
+index_t diverge_euler_nsteps_anticip( diverge_euler_t eu );
+
 #if !defined(__cplusplus) && !defined(CTYPESGEN)
 /**
  * defaults struct accessible only in C, because C++ does not allow named
