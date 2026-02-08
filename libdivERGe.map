@@ -10,6 +10,7 @@ DIVERGE_0.9 {
         diverge_embed;
         diverge_euler_defaults_CPP;
         diverge_euler_next;
+        diverge_euler_nsteps_anticip;
         diverge_fftw_num_threads;
         diverge_finalize;
         diverge_flow_step_chanmax;

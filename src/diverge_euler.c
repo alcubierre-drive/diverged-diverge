@@ -37,3 +37,9 @@ bool diverge_euler_next( diverge_euler_t* de, double Vmax ) {
 diverge_euler_t diverge_euler_defaults_CPP( void ) {
     return diverge_euler_defaults;
 }
+
+index_t diverge_euler_nsteps_anticip( diverge_euler_t eu ) {
+    index_t nsteps = 0;
+    do { nsteps++; } while (diverge_euler_next(&eu, 0.0));
+    return nsteps;
+}
