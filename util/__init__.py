@@ -1052,6 +1052,10 @@ if not _libs["divERGe"] is None:
     euler_next.argtypes = [POINTER(euler_t), c_double]
     euler_next.restype = c_bool
 
+    euler_nsteps_anticip = _libs["divERGe"].get("diverge_euler_nsteps_anticip", "cdecl")
+    euler_nsteps_anticip.argtypes = [euler_t]
+    euler_nsteps_anticip.restype = index_t
+
     # post processing
     class struct_postprocess_conf_t(Structure):
         pass
