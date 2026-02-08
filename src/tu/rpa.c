@@ -1,11 +1,27 @@
 #include "rpa.h"
 #include "vertex.h"
 #include "vertex_details.h"
+#include "../diverge_flow_step.h"
+#include "../diverge_flow_step_internal.h"
 #include "../misc/hashtable.h"
 #include "../diverge_model.h"
 
-void diverge_tu_sc_vertex( tu_vertex_t* V, tu_projection_t* P, char chan,
-        const index_t* kidx, index_t n_kidx, const index_t* nk, complex128_t* out ) {
+void diverge_flow_step_sc_vertex( diverge_flow_step_t* s, char chan, const index_t* kidx,
+        index_t n_kidx, complex128_t* out) {
+
+    diverge_flow_type tp = diverge_flow_step_type(s);
+    if (tp != diverge_tu) {
+        mpi_err_printf( "sc vertex only possible with TUFRG\n" );
+        return;
+    }
+    if (kdim(s->mod->nkf) != 1) {
+        mpi_err_printf( "sc vertex only possible with nkf=1\n" );
+        return;
+    }
+
+    const index_t* nk = s->mod->nk;
+    tu_vertex_t* V = s->tu_vertex;
+    tu_projection_t* P = s->tu_proj;
 
     int full_vtx = islower(chan);
     chan = toupper(chan);
@@ -96,9 +112,14 @@ void diverge_tu_sc_vertex( tu_vertex_t* V, tu_projection_t* P, char chan,
     hashtable_free( ktab );
 }
 
-void diverge_tu_sc_greens_step( const diverge_model_t* m, const index_t* kidx,
+void diverge_flow_step_sc_greens( diverge_flow_step_t* s, const index_t* kidx,
         index_t n_kidx, double Lambda, double dLambda, complex128_t* out ) {
+    if (kdim(s->mod->nkf) != 1) {
+        mpi_err_printf( "sc greens only possible with nkf=1\n" );
+        return;
+    }
 
+    diverge_model_t* m = s->mod;
     complex128_t cLambda = I*Lambda;
     gf_complex_t* gbuf = m->internals->greens;
     (*m->gfill)(m, cLambda, gbuf);
