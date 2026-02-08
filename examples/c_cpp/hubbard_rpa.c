@@ -9,7 +9,7 @@ int main( int argc, char** argv ) {
     diverge_model_t* m = diverge_model_init();
 
     strcpy(m->name, __FILE__ );
-    m->nk[0] = m->nk[1] = 32;
+    m->nk[0] = m->nk[1] = 128;
     m->nkf[0] = m->nkf[1] = 1;
     m->lattice[0][0] = m->lattice[1][1] = m->lattice[2][2] = 1.0;
     m->n_orb = m->SU2 = m->n_spin = 1;
@@ -45,52 +45,59 @@ int main( int argc, char** argv ) {
 
     // just use the full kmesh, we're kinda lazy. Actually we should try to find
     // the FS using the patching infrastructure...
-    index_t n_kidx = kdim(m->nk);
-    index_t* kidx = calloc(n_kidx, sizeof*kidx);
-    for (index_t ik=0; ik<n_kidx; ++ik) kidx[ik] = ik;
-    complex128_t* chi_pp = calloc(n_kidx, sizeof*chi_pp);
+    VECTOR_INIT(index_t, kidx);
+    const index_t _nk = kdim(m->nk);
+    const double* E = diverge_model_internals_get_E(m);
+    for (index_t k=0; k<_nk; ++k)
+        if (fabs(E[k]) < 1.e-1) VECTOR_PUSH_BACK(kidx, k);
+    mpi_usr_printf( "using %li kpts\n", kidx_sz );
 
+    complex128_t* chi_pp = calloc(kidx_sz, sizeof*chi_pp);
     do {
         diverge_flow_step_euler( f, eu.Lambda, eu.dLambda );
         diverge_flow_step_vertmax( f, &vmax );
         // integrate chi_pp
-        diverge_flow_step_sc_greens( f, kidx, n_kidx, eu.Lambda, eu.dLambda, chi_pp );
+        diverge_flow_step_sc_greens( f, kidx, kidx_sz, eu.Lambda, eu.dLambda, chi_pp );
         mpi_printf( "%.5e %.5e\n", eu.Lambda, vmax );
     } while (diverge_euler_next(&eu, vmax));
 
     // get the vertex
-    complex128_t* V_p = calloc(POW2(n_kidx), sizeof*V_p);
-    diverge_flow_step_sc_vertex( f, 'c', kidx, n_kidx, V_p );
-    for (index_t ik1=0; ik1<n_kidx; ++ik1)
-    for (index_t ik2=0; ik2<n_kidx; ++ik2) {
+    complex128_t* V_p = calloc(POW2(kidx_sz), sizeof*V_p);
+    mpi_usr_printf( "get vertex\n" );
+    diverge_flow_step_sc_vertex( f, 'c', kidx, kidx_sz, V_p );
+    mpi_usr_printf( "mult chi_pp\n" );
+    for (index_t ik1=0; ik1<kidx_sz; ++ik1)
+    for (index_t ik2=0; ik2<kidx_sz; ++ik2) {
         // now negative eigenvalues should be attractive!
-        V_p[IDX2(ik1,ik2,n_kidx)] *= -0.5*chi_pp[ik2];
+        V_p[IDX2(ik1,ik2,kidx_sz)] *= -0.5*chi_pp[ik2];
     }
-    free( kidx );
     free( chi_pp );
 
     // and eigensolve+sort it
-    complex128_t* U = calloc(POW2(n_kidx), sizeof*U);
-    complex128_t* V = calloc(POW2(n_kidx), sizeof*V);
-    double* S = calloc(n_kidx, sizeof*S);
-    single_svd( V_p, U, V, S, -n_kidx ); // dispatch to non-hermitian eigen
-    double* Sx = calloc(n_kidx, sizeof*Sx);
-    memcpy( Sx, S, sizeof*Sx*n_kidx );
-    transpose_inplace(U, n_kidx);
-    single_eigen_sort(U, Sx, n_kidx, 'N');
-    transpose_inplace(V, n_kidx);
-    single_eigen_sort(V, S, n_kidx, 'N');
-    int nval = 10;
+    mpi_usr_printf( "eigen…\n" );
+    complex128_t* U = calloc(POW2(kidx_sz), sizeof*U);
+    complex128_t* V = calloc(POW2(kidx_sz), sizeof*V);
+    double* S = calloc(kidx_sz, sizeof*S);
+    single_svd( V_p, U, V, S, -kidx_sz ); // dispatch to non-hermitian eigen
+    double* Sx = calloc(kidx_sz, sizeof*Sx);
+    memcpy( Sx, S, sizeof*Sx*kidx_sz );
+    transpose_inplace(U, kidx_sz);
+    single_eigen_sort(U, Sx, kidx_sz, 'N');
+    transpose_inplace(V, kidx_sz);
+    single_eigen_sort(V, S, kidx_sz, 'N');
+    index_t nval = 10;
     FILE* out = fopen(__FILE__ ".bin", "wb");
+    fwrite(kidx, sizeof*kidx, kidx_sz, out);
     fwrite(S, sizeof*S, nval, out);
-    fwrite(U, sizeof*U, nval*n_kidx, out);
-    fwrite(V, sizeof*V, nval*n_kidx, out);
+    fwrite(U, sizeof*U, nval*kidx_sz, out);
+    fwrite(V, sizeof*V, nval*kidx_sz, out);
     fclose(out);
     free(Sx);
     free(S);
     free(U);
     free(V);
     free(V_p);
+    free(kidx);
 
     diverge_flow_step_free(f);
     diverge_model_free(m);
