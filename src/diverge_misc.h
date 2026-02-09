@@ -26,6 +26,7 @@
 #include "misc/eigen.h"
 #include "misc/gemm.h"
 #include "misc/invert.h"
+#include "misc/arnoldi.h"
 
 // Some low dimensional linear algebra in C, implement with putting
 // 'LINALG_IMPLEMENT' in your source file. If you want decompositions, use

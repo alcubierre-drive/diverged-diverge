@@ -16,6 +16,10 @@ void diverge_flow_step_sc_vertex( diverge_flow_step_t* s, char chan, const index
 void diverge_flow_step_sc_greens( diverge_flow_step_t* s, const index_t* kidx, index_t n_kidx, double Lambda,
         double dLambda, complex128_t* out/*(n_kidx, n_spin,n_orb,n_spin,n_orb, n_spin,n_orb,n_spin,n_orb)*/ );
 
+// perform the vertex × greens·greens product in-place (V_pp)
+void diverge_flow_step_sc_greens_apply( diverge_flow_step_t* s,
+        const index_t n_kidx, const complex128_t* Chi_pp, complex128_t* V_pp );
+
 /*
 
 diverge_model_t* m = ...;
@@ -45,10 +49,21 @@ do {
 complex128_t* V_sc = calloc( POW2(n_kidx*POW2(m->n_orb*m->n_spin)), sizeof*V_sc );
 diverge_flow_step_sc_vertex( s, 'c', kidx, n_kidx, V_sc );
 
-// and do something with it!
+// multiply V with chi
+diverge_flow_step_sc_greens_apply( s, n_kidx, chi_pp, V_sc );
 
+// and do something with it (e.g. iterative eigensolve)
+int nev = 10, ncv = 100, maxit = 100;
+double tol = 1.e-5;
+transpose_inplace( V_sc, n_kidx*POW2(m->n_orb*m->n_spin) );
+complex128_t* V = calloc( nev*n_kidx*POW2(m->n_orb*m->n_spin), sizeof *V );
+complex128_t* E = calloc( nev, sizeof *E );
+arnoldi_eigen_dense("SR", n_kidx*POW2(m->n_orb*m->n_spin), nev, ncv, V_sc, E,
+                    V, tol, maxit);
 free( chi_pp );
 free( V_sc );
+
+// now we can save V, E; and inspect!
 
 */
 

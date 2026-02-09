@@ -4,6 +4,7 @@
 #include "../diverge_flow_step.h"
 #include "../diverge_flow_step_internal.h"
 #include "../misc/hashtable.h"
+#include "../misc/gemm.h"
 #include "../diverge_model.h"
 
 void diverge_flow_step_sc_vertex( diverge_flow_step_t* s, char chan, const index_t* kidx,
@@ -126,24 +127,46 @@ void diverge_flow_step_sc_greens( diverge_flow_step_t* s, const index_t* kidx,
     const index_t NK = kdim(m->nk);
     const double prefac = dLambda/(2.*M_PI);
 
-    index_t legdim = POW2(m->n_orb*m->n_spin);
+    const index_t nso = m->n_orb*m->n_spin;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t ik=0; ik<n_kidx; ++ik) {
         index_t kk = kidx[ik];
         index_t mk = k1m2(0,kk,m->nk);
-        for (index_t s1=0; s1<m->n_spin; ++s1)
-        for (index_t o1=0; o1<m->n_orb;  ++o1)
-        for (index_t s2=0; s2<m->n_spin; ++s2)
-        for (index_t o2=0; o2<m->n_orb;  ++o2)
-        for (index_t s3=0; s3<m->n_spin; ++s3)
-        for (index_t o3=0; o3<m->n_orb;  ++o3)
-        for (index_t s4=0; s4<m->n_spin; ++s4)
-        for (index_t o4=0; o4<m->n_orb;  ++o4) {
-            index_t left  = IDX4(s1,o1,s2,o2, m->n_orb,m->n_spin,m->n_orb),
-                    right = IDX4(s3,o3,s4,o4, m->n_orb,m->n_spin,m->n_orb);
-            out[IDX3(ik,left,right, legdim,legdim)] += prefac * (
-                gbuf[IDX3(0,kk,left,NK,legdim)] * gbuf[IDX3(1,mk,right,NK,legdim)] +
-                gbuf[IDX3(1,mk,left,NK,legdim)] * gbuf[IDX3(0,kk,right,NK,legdim)] );
+        for (index_t so1=0; so1<nso; ++so1)
+        for (index_t so2=0; so2<nso; ++so2)
+        for (index_t so3=0; so3<nso; ++so3)
+        for (index_t so4=0; so4<nso; ++so4)
+            out[IDX5(ik,so1,so2,so3,so4, nso,nso,nso,nso)] += prefac * (
+                gbuf[IDX4(0,kk,so1,so3, NK,nso,nso)] * gbuf[IDX4(1,mk,so2,so4, NK,nso,nso)] +
+                gbuf[IDX4(1,mk,so3,so1, NK,nso,nso)] * gbuf[IDX4(0,kk,so4,so2, NK,nso,nso)] );
+    }
+}
+
+void diverge_flow_step_sc_greens_apply( diverge_flow_step_t* s,
+        const index_t n_kidx, const complex128_t* Chi_pp, complex128_t* V_pp ) {
+    diverge_model_t* m = s->mod;
+    const index_t nso2 = POW2(m->n_orb*m->n_spin);
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
+    {
+        complex128_t* buf1 = calloc(POW2(nso2), sizeof*buf1);
+        complex128_t* buf2 = calloc(POW2(nso2), sizeof*buf2);
+        #pragma omp for collapse(2)
+        for (index_t k1=0; k1<n_kidx; ++k1)
+        for (index_t k2=0; k2<n_kidx; ++k2) {
+            ZERO_OUT( buf1, POW2(nso2) );
+            ZERO_OUT( buf2, POW2(nso2) );
+            // copy V_pp[k1,k2] for all orbs to buf1
+            for (index_t so12=0; so12<nso2; ++so12)
+            for (index_t so34=0; so34<nso2; ++so34)
+                buf1[IDX2(so12,so34, nso2)] = V_pp[IDX4(k1,so12,k2,so34, nso2,n_kidx,nso2)];
+            // perform the GEMM
+            single_gemm_serial( buf1, Chi_pp + k2*POW2(nso2), buf2, nso2, nso2, nso2, -0.5, 0.0 );
+            // copy buf2 for all orbs to V_pp[k1,k2]
+            for (index_t so12=0; so12<nso2; ++so12)
+            for (index_t so34=0; so34<nso2; ++so34)
+                V_pp[IDX4(k1,so12,k2,so34, nso2,n_kidx,nso2)] = buf2[IDX2(so12,so34, nso2)];
         }
+        free(buf1);
+        free(buf2);
     }
 }

@@ -208,6 +208,8 @@ local:
 };
 DIVERGE_UNSTABLE {
     global:
+        arnoldi_eigen;
+        arnoldi_eigen_dense;
         batched_eigen_get_nchunks;
         batched_eigen_r;
         batched_eigen_r_get_eigen3_mode;
@@ -238,6 +240,7 @@ DIVERGE_UNSTABLE {
         diverge_energy_fill_gaps;
         diverge_filling_to_energy;
         diverge_flow_step_sc_greens;
+        diverge_flow_step_sc_greens_apply;
         diverge_flow_step_sc_vertex;
         diverge_fnan_gen;
         diverge_fnan_get;
