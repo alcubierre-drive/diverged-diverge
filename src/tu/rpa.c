@@ -5,11 +5,17 @@
 #include "vertex_details.h"
 #include "../diverge_flow_step.h"
 #include "../diverge_flow_step_internal.h"
-#include "../misc/hashtable.h"
 #include "../misc/arnoldi.h"
 #include "../misc/eigen.h"
 #include "../misc/gemm.h"
 #include "../diverge_model.h"
+
+#define vhash_key_t index_t
+#define vhash_val_t index_t
+#define vhash_key_empty -1
+#define vhash_val_empty -1
+#include "../misc/vhashtable.h"
+VHASH_IMPLEMENT(rpahash)
 
 tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_kidx ) {
     diverge_flow_type tp = diverge_flow_step_type(s);
@@ -142,9 +148,9 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
         q_len = V->symm->my_nk_in_bz;
     }
 
-    hashtable_t* ktab = hashtable_init( 8*t->n_kidx, 8 );
+    rpahashtable_t* ktab = rpahashtable_init( 64*t->n_kidx, 8 );
     for (index_t ik=0; ik<t->n_kidx; ++ik)
-        hashtable_insert_safe(ktab, t->kidx[ik], (void*)(ik+1));
+        rpahashtable_insert_safe(ktab, t->kidx[ik], ik);
 
     complex128_t* Vbuf_reco = calloc(POW2(V->n_orbff*POW2(V->n_spin)) * q_len, sizeof*Vbuf_reco);
     diverge_tu_vertex_reco( V, chan, Vbuf_reco, Vbuf );
@@ -160,7 +166,7 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
         index_t kk = t->kidx[ik],
                 qq = q_off+iq;
         index_t kp = (chan == 'C') ? k1m2(qq,kk, nk) : k1p2(qq,kk, nk);
-        index_t ikp = (index_t)hashtable_find(ktab, kp)-1;
+        index_t ikp = rpahashtable_find(ktab, kp);
         if (ikp != -1) {
             for (index_t m1=0; m1<V->n_orbff; ++m1)
             for (index_t s1=0; s1<V->n_spin; ++s1)
@@ -190,7 +196,7 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
 
     diverge_mpi_allreduce_complex_sum_inplace(t->V_pp, POW2(legdim));
     free( Vbuf_reco );
-    hashtable_free( ktab );
+    rpahashtable_free( ktab );
 }
 
 static void tu_rpa_post_apply_greens( tu_rpa_t* t ) {
