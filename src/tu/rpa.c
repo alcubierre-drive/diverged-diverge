@@ -142,9 +142,9 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
         q_len = V->symm->my_nk_in_bz;
     }
 
-    hashtable_t* ktab = hashtable_init_fg( 8*t->n_kidx, 8, -1 );
+    hashtable_t* ktab = hashtable_init( 8*t->n_kidx, 8 );
     for (index_t ik=0; ik<t->n_kidx; ++ik)
-        hashtable_insert_safe(ktab, t->kidx[ik], (void*)ik);
+        hashtable_insert_safe(ktab, t->kidx[ik], (void*)(ik+1));
 
     complex128_t* Vbuf_reco = calloc(POW2(V->n_orbff*POW2(V->n_spin)) * q_len, sizeof*Vbuf_reco);
     diverge_tu_vertex_reco( V, chan, Vbuf_reco, Vbuf );
@@ -160,8 +160,8 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
         index_t kk = t->kidx[ik],
                 qq = q_off+iq;
         index_t kp = (chan == 'C') ? k1m2(qq,kk, nk) : k1p2(qq,kk, nk);
-        index_t ikp = (index_t)hashtable_find(ktab, kp);
-        if (ikp >= 0) {
+        index_t ikp = (index_t)hashtable_find(ktab, kp)-1;
+        if (ikp != -1) {
             for (index_t m1=0; m1<V->n_orbff; ++m1)
             for (index_t s1=0; s1<V->n_spin; ++s1)
             for (index_t s2=0; s2<V->n_spin; ++s2)
