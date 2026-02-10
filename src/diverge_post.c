@@ -121,7 +121,7 @@ static void tu_pp( diverge_flow_step_t* st,
     tc.save_self = pc->tu_selfenergy;
     tc.save_full = pc->tu_channels;
     tc.save_symmetries = pc->tu_symmetry_maps;
-    tu_postproduction( st->tu_vertex, tu_stepper_internal_vertex(st->tu_step), st->tu_proj, st->mod, &tc, file );
+    tu_postproduction( st->tu_vertex, tu_stepper_internal_vertex(st->tu_step), st->tu_proj, st->tu_rpa, st->mod, &tc, file );
 }
 
 diverge_postprocess_conf_t diverge_postprocess_conf_defaults_CPP( void ) {

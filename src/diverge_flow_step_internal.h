@@ -13,6 +13,7 @@
 #include "tu/projection.h"
 #include "tu/propagator.h"
 #include "tu/flow_stepper.h"
+#include "tu/rpa.h"
 
 #include "npatch/loop.h"
 #include "npatch/flow_step.h"
@@ -47,6 +48,7 @@ struct diverge_flow_step_t {
     tu_prop_t* tu_loop;
     tu_vertex_t* tu_vertex;
     tu_stepper_t* tu_step;
+    tu_rpa_t* tu_rpa;
 
     double vertmax;
     double loopmax[2];

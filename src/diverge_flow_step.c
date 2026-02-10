@@ -153,6 +153,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
             tu_projection_free( st->tu_proj );
             tu_stepper_free( st->tu_step );
             tu_prop_free( st->tu_loop );
+            if (st->tu_rpa) tu_rpa_free( st->tu_rpa );
             break;
         default:
         case diverge_flow_type_invalid:
@@ -250,6 +251,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             return;
         case diverge_tu:
             tu_stepper_euler( st->tu_step, st->tu_vertex, Lambda, dLambda, chanmax );
+            if (st->tu_rpa) tu_rpa_step( st->tu_rpa, Lambda, dLambda );
 
             st->chanmax[0] = chanmax[0];
             st->chanmax[1] = chanmax[1];
@@ -682,4 +684,9 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         diverge_mpi_allreduce_double_max( &smax, &smax_red, 1 );
         return MAX(smax, smax_red);
     }
+}
+
+void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, const index_t* kidx,
+        index_t n_kidx ) {
+    s->tu_rpa = tu_rpa_init( s, kidx, n_kidx );
 }

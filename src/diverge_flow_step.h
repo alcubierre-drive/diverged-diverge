@@ -235,6 +235,14 @@ const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st );
 index_t diverge_flow_step_n_ibz( const diverge_flow_step_t* st );
 
 /**
+ * perform rpa for the q=0 SC channel (only possible without refinement) with
+ * TUFRG vertex; only use the k indices given in this function; useful to
+ * constrain mesh to ~Fermi surface.
+ */
+void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, const index_t* kidx,
+        index_t n_kidx );
+
+/**
  * Filling
  * =======
  *

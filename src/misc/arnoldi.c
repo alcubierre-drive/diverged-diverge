@@ -152,13 +152,18 @@ cleanup:
     return info;
 }
 
-static void dense_matvec( int n, const complex128_t* x, complex128_t* y, void* userdata ) {
+void arnoldi_dense_matvec( int n, const complex128_t* x, complex128_t* y, void* userdata ) {
     const complex128_t* A = userdata;
     single_gemm_serial( A, x, y, n, n, 1, 1.0, 0.0 );
+}
+
+void arnoldi_dense_matvec_par( int n, const complex128_t* x, complex128_t* y, void* userdata ) {
+    const complex128_t* A = userdata;
+    single_gemm( A, x, y, 1, n, n, 1.0, 0.0 );
 }
 
 int arnoldi_eigen_dense( char* which, int n, int nev, int ncv,
         const complex128_t* Aij, complex128_t* eigvals, complex128_t* eigvecs,
         double tol, int maxit ) {
-    return arnoldi_eigen( which, n, nev, ncv, &dense_matvec, (void*)Aij, eigvals, eigvecs, tol, maxit );
+    return arnoldi_eigen( which, n, nev, ncv, &arnoldi_dense_matvec_par, (void*)Aij, eigvals, eigvecs, tol, maxit );
 }

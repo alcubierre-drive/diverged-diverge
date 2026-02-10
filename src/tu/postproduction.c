@@ -91,7 +91,7 @@ struct tu_postproduction_t {
 };
 
 void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
-        tu_projection_t* proj, const diverge_model_t* model,
+        tu_projection_t* proj, tu_rpa_t* rpa, const diverge_model_t* model,
         const tu_postproduction_conf_t* c, const char* filename ) {
     tu_postproduction_t p = {
         .c = c ? *c : tu_postproduction_conf_defaults,
