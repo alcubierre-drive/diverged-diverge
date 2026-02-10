@@ -17,6 +17,26 @@
 #include "../misc/vhashtable.h"
 VHASH_IMPLEMENT(rpahash)
 
+static char tu_rpa_post_which_ev[16] = "SR";
+static char tu_rpa_post_sorting = 'N';
+void tu_rpa_post_set_which_ev( char sort ) {
+    switch (sort) {
+        case 'P':
+            tu_rpa_post_sorting = 'P';
+            strcpy( tu_rpa_post_which_ev, "LR" );
+            break;
+        case 'N':
+            tu_rpa_post_sorting = 'N';
+            strcpy( tu_rpa_post_which_ev, "SR" );
+            break;
+        case 'M':
+            tu_rpa_post_sorting = 'M';
+            strcpy( tu_rpa_post_which_ev, "LM" );
+            break;
+        default: break;
+    }
+}
+
 tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_kidx ) {
     diverge_flow_type tp = diverge_flow_step_type(s);
     if (tp != diverge_tu && tp != diverge_tu_phonons) {
@@ -78,7 +98,7 @@ void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter,
     t->nev = nev;
     t->vecs = calloc(nev*t->legdim, sizeof*t->vecs);
     t->vals = calloc(MAX(t->legdim,2*nev), sizeof*t->vals);
-    if (!arnoldi_eigen_dense( "SR", t->legdim, nev, ncv, t->V_pp,
+    if (!arnoldi_eigen_dense( tu_rpa_post_which_ev, t->legdim, nev, ncv, t->V_pp,
                 (complex128_t*)t->vals, t->vecs, tol, maxiter )) {
         for (int i=0; i<nev; ++i) t->vals[i] = t->vals[2*i]; // copy real part
         for (int i=nev; i<t->legdim; ++i) t->vals[i] = 0.0; // set everything else to zero
@@ -90,7 +110,7 @@ void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter,
         transpose_inplace( t->vecs, t->legdim );
         free( buf );
     }
-    single_eigen_sort_part( t->vecs, t->vals, t->legdim, 'N', t->nev );
+    single_eigen_sort_part( t->vecs, t->vals, t->legdim, tu_rpa_post_sorting, t->nev );
 
     free( t->V_pp );   t->V_pp   = NULL;
     free( t->chi_pp ); t->chi_pp = NULL;

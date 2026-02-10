@@ -849,6 +849,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_ncv);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_maxiter);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_tol);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_sorting);
     assert(i <= 256);
 
     index_t my_nk_off = p->vertex->my_nk_off;
