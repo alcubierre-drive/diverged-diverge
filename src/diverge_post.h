@@ -155,6 +155,11 @@ struct diverge_postprocess_conf_t {
      * (only enabled when library is compiled with ``-DUSE_ARPACK_EIGENSOLVER``)
      */
     double tu_rpa_tol;
+    /**
+     * eigenvalue sorting and selection: most 'N'egative, most 'P'ositive, or
+     * largest 'M'agnitude (cf. :c:func:`single_eigen_sort`)
+     */
+    char tu_rpa_sorting;
 
     // DEVELOPERS
     //
@@ -205,6 +210,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_rpa_ncv = 100,
     .tu_rpa_maxiter = 100,
     .tu_rpa_tol = 1.e-6,
+    .tu_rpa_sorting = 'N',
 };
 #endif
 

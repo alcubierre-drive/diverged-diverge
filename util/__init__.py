@@ -1102,6 +1102,7 @@ if not _libs["divERGe"] is None:
         'tu_rpa_ncv',
         'tu_rpa_maxiter',
         'tu_rpa_tol',
+        'tu_rpa_sorting',
     ]
     struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
@@ -1142,6 +1143,7 @@ if not _libs["divERGe"] is None:
         ('tu_rpa_ncv', c_int),
         ('tu_rpa_maxiter', c_int),
         ('tu_rpa_tol', c_double),
+        ('tu_rpa_sorting', c_char),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 
