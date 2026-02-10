@@ -161,7 +161,7 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
                 qq = q_off+iq;
         index_t kp = (chan == 'C') ? k1m2(qq,kk, nk) : k1p2(qq,kk, nk);
         index_t ikp = (index_t)hashtable_find(ktab, kp);
-        if (ikp != -1) {
+        if (ikp >= 0) {
             for (index_t m1=0; m1<V->n_orbff; ++m1)
             for (index_t s1=0; s1<V->n_spin; ++s1)
             for (index_t s2=0; s2<V->n_spin; ++s2)
