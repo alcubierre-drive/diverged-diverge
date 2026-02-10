@@ -125,7 +125,7 @@ void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
 
     // perform
     if (p.rpa) tu_rpa_post( p.rpa, p.c.rpa_chans, p.c.rpa_nev, p.c.rpa_ncv,
-            p.c.rpa_maxiter, p.c.rpa_tol ); // TODO rpa not saved
+            p.c.rpa_maxiter, p.c.rpa_tol );
     if (!p.c.skip_channel_calc) save_channel_leading_ev(&p);
     if (p.c.lingaps) lingap_ff(&p);
     if (p.c.susc_ff || p.c.susc_full) calc_susc(&p);
@@ -791,6 +791,17 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         header[i] = POW2(linsize) * tu_data->nkibz;
     ++i;
 
+    // RPA
+    header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
+    if (p->rpa) header[i] = p->rpa->nev;
+    ++i;
+    header[i] = header[i-2] + header[i-1]*sizeof(double); ++i;
+    if (p->rpa) header[i] = (index_t)p->rpa->nev * (index_t)p->rpa->legdim;
+    ++i;
+    header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
+    if (p->rpa) header[i] = p->rpa->n_kidx;
+    ++i;
+
     assert(i < 125);
     // this flag is to indicate our header is actually 256 long. Only supported after v0.8
     header[125] = ~(header[125]);
@@ -831,6 +842,12 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_lingap_solver_mode);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_susceptibilities_bare);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_channel_calc_project);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_which_solver_mode_hermiticity_limit);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_chans);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_nev);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_ncv);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_maxiter);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_tol);
     assert(i <= 256);
 
     index_t my_nk_off = p->vertex->my_nk_off;
@@ -956,6 +973,14 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     if (p->c.bare_susceptibilities && (p->vertex->C_flow || p->vertex->D_flow))
         new_off = diverge_mpi_write_byte_to_file(file, p->vertex->ph_bubble_int,
                 new_off+my_nk_off*scdlin, my_nk*scdlin);
+    if (p->rpa) {
+        new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->vals,
+                new_off, sizeof*p->rpa->vals * p->rpa->nev);
+        new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->vecs,
+                new_off, sizeof*p->rpa->vecs * p->rpa->nev * p->rpa->legdim);
+        new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->kidx,
+                new_off, sizeof*p->rpa->kidx * p->rpa->n_kidx);
+    }
 
     if (new_off != header[127])
         mpi_wrn_printf( "offset of file (%li) dosn't match size (%li)\n", new_off, header[127] );
