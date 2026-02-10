@@ -70,7 +70,7 @@
 
 \begin{document}
 \begin{tikzpicture}[x=5.90552in, y=5.90552in, >={Latex[round]}]
-  \clip (0,-0.1) rectangle (1,1.0);
+  \clip (0,-0.2) rectangle (1,1.0);
   \tikzmath{
     coordinate \coordA;
     coordinate \coordB;
@@ -80,7 +80,7 @@
     real \toplimitEastX;
     real \EastNum;
     \toplimitEast = 58./64.;
-    \EastNum = 64.;
+    \EastNum = 68.;
   }
   \node[anchor=north east] at (0.99,0.99) {\begin{minipage}{3in}%
     \begin{flushright}%
@@ -97,7 +97,7 @@
 
   \begin{scope}[shift={(0.41,0.01)}, yscale=0.98, xscale=0.06]
     \colorizeBox{0}{1}{ForangeRed!30!white}
-    
+
     \colorizeBox{5}{6}{Fblue!20!white}
     \colorizeBox{7}{9}{Fblue!20!white}
     \colorizeBox{10}{22}{Fblue!20!white}
@@ -122,12 +122,13 @@
     \EcolorizeBox{105}{107}{ForangeRed!30!white}
     \EcolorizeBox{107}{109}{Faqua!30!white}
     \EcolorizeBox{109}{111}{Fblue!30!white}
-    \EcolorizeBox{111}{115}{Faqua!30!white}
-    \EcolorizeBox{115}{122}{gray!30!white}
-    \EcolorizeBox{122}{123}{youngBlue}
-    \EcolorizeBox{123}{125}{ForangeRed!30!white}
+    \EcolorizeBox{111}{121}{Faqua!30!white}
+    \EcolorizeBox{121}{126}{gray!30!white}
+    \EcolorizeBox{126}{127}{youngBlue}
+    \EcolorizeBox{127}{129}{ForangeRed!30!white}
 
-    \foreach \idx in {0,1,...,47} {
+    % \foreach \idx in {0,1,...,47} {
+    \foreach \idx in {0,1,...,55} {
       \tikzmath{
         \dbuf = 1./64.;
         \ibuf = \idx+66;
@@ -136,18 +137,13 @@
       }
       \draw (\coordA) -- node[midway, below, yshift=0.27em] (Ecell\ibuf) {\scriptsize\ibuf} (\coordB);
     }
-    \draw (0,\toplimitEast-48.0/64.0) -- (1.0,\toplimitEast-48.0/64.0);
-    
-    \node[] (q0) at (0.5,\toplimitEast-49.0/64.0) {.};
-    \node[] (q1) at (0.5,\toplimitEast-50.0/64.0) {.};
-    \node[] (q2) at (0.5,\toplimitEast-51.0/64.0) {.};
-    
+    \draw (0,\toplimitEast-54.0/64.0) -- (1.0,\toplimitEast-54.0/64.0);
     \foreach \idx in {0,1,...,5} {
       \tikzmath{
         \dbuf = 1./64.;
         \ibuf = \idx+122;
-        \coordA = (0,\toplimitEast-52/64.0-\idx/64.0);
-        \coordB = (1,\toplimitEast-52/64.0-\idx/64.0);
+        \coordA = (0,\toplimitEast-56/64.0-\idx/64.0);
+        \coordB = (1,\toplimitEast-56/64.0-\idx/64.0);
       }
       \draw (\coordA) -- node[midway, below, yshift=0.27em] (Ecell\ibuf) {\scriptsize\ibuf} (\coordB);
     }
@@ -156,7 +152,7 @@
     \draw[Fblue, ultra thick] (0,\toplimitEastX) -- (0,\dbuf) -- (1,\dbuf) -- (1,\toplimitEastX);
     \draw[Fblue, ->, thick] (0.5,\toplimitEastX+0.05) -- (0.5,\toplimitEastX);
   \end{scope}
-  
+
   \begin{scope}[anchor=east]
     \bracketOne{0}{magic number (\texttt{'T'==84})}
     \draw (cell1.west) -- ++(-0.3,0.0) node {\tp{n\_orb}};
@@ -168,7 +164,7 @@
     \draw (cell7.west) -- ++(-0.3,0.0) node {\nipp{n\_orbff}};
     \draw (cell8.west) -- ++(-0.05,0.0) node {\nipp{n\_bonds}};
     \draw (cell9.west) -- ++(-0.3,0.0) node {\tp{n\_sym}};
-    
+
     \bracketTwo{10}{11}{\nip{mi\_to\_ofrom}}
     \bracketTwo{12}{13}{\nip{mi\_to\_oto}}
     \bracketTwo{14}{15}{\nip{mi\_to\_R}}
@@ -178,55 +174,55 @@
 
 
     \bracketTwo{22}{23}{\ipd{P\_len}}
-    \bracketTwo{24}{25}{\ipd{off\_P}}
+    \bracketTwo{24}{25}{\ipd{P\_off}}
     \bracketTwo{26}{27}{\ipd{P\_type}}
     \bracketTwo{28}{29}{\ipd{P\_val}}
     \bracketTwo{30}{31}{\ipd{P\_vec}}
-    
+
     \bracketTwo{32}{33}{\ipd{C\_len}}
-    \bracketTwo{34}{35}{\ipd{off\_C}}
+    \bracketTwo{34}{35}{\ipd{C\_off}}
     \bracketTwo{36}{37}{\ipd{C\_type}}
     \bracketTwo{38}{39}{\ipd{C\_val}}
     \bracketTwo{40}{41}{\ipd{C\_vec}}
-    
+
     \bracketTwo{42}{43}{\ipd{D\_len}}
-    \bracketTwo{44}{45}{\ipd{off\_D}}
+    \bracketTwo{44}{45}{\ipd{D\_off}}
     \bracketTwo{46}{47}{\ipd{D\_type}}
     \bracketTwo{48}{49}{\ipd{D\_val}}
     \bracketTwo{50}{51}{\ipd{D\_vec}}
-    
-   
+
+
     \bracketTwo{52}{53}{\oop{Sgap\_sc}}
     \bracketTwo{54}{55}{\oop{Ugap\_sc}}
     \bracketTwo{56}{57}{\oop{Vgap\_sc}}
-    
+
     \bracketTwo{58}{59}{\oop{Sgap\_mag}}
     \bracketTwo{60}{61}{\oop{Ugap\_mag}}
     \bracketTwo{62}{63}{\oop{Vgap\_mag}}
-    
+
     \bracketTwo{64}{65}{\oop{Sgap\_charge}}
     \EbracketTwo{66}{67}{\oop{Ugap\_charge}}
     \EbracketTwo{68}{69}{\oop{Vgap\_charge}}
-    
-    
+
+
     \EbracketTwo{70}{71}{\oop{suscPp}}
     \EbracketTwo{72}{73}{\oop{suscMa}}
     \EbracketTwo{74}{75}{\oop{suscCh}}
-    
+
     \EbracketTwo{76}{77}{\oop{suscPp\_ff}}
     \EbracketTwo{78}{79}{\oop{suscMa\_ff}}
     \EbracketTwo{80}{81}{\oop{suscCh\_ff}}
-    
-    \EbracketTwo{82}{84}{\oop{self\_energy}}
-    
-    
+
+    \EbracketTwo{82}{83}{\oop{self\_energy}}
+
+
     \EbracketTwo{84}{85}{\oop{P\_ch}}
     \EbracketTwo{86}{87}{\oop{C\_ch}}
     \EbracketTwo{88}{89}{\oop{D\_ch}}
     \EbracketTwo{90}{91}{\oop{pp\_bubble}}
     \EbracketTwo{92}{93}{\oop{ph\_bubble}}
-    
-    
+
+
     \EbracketTwo{94}{95}{\oop{mi\_map\_len}}
     \EbracketTwo{96}{97}{\oop{mi\_map\_off}}
     \EbracketTwo{98}{99}{\oop{mi\_map\_idx}}
@@ -237,6 +233,9 @@
     \EbracketTwo{108}{109}{\nip{mi\_to\_ffidx} (v0.6)}
     \EbracketTwo{110}{111}{\oop{bare $\chi_\mathrm{PP}^0$} (v0.8)}
     \EbracketTwo{112}{113}{\oop{bare $\chi_\mathrm{PH}^0$} (v0.8)}
+    \EbracketTwo{114}{115}{\oop{rpa\_vals} (v0.9)}
+    \EbracketTwo{116}{117}{\oop{rpa\_vecs} (v0.9)}
+    \EbracketTwo{118}{119}{\oop{rpa\_kidx} (v0.9)}
 
     \draw (Ecell126.east) -- ++(0.2,0.0) node[anchor=west] {magic number (\texttt{'T'==84})};
     \EbracketOne{127}{total filesize}

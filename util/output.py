@@ -807,6 +807,15 @@ class diverge_post_tu:
         if self.chi0_ph.size > 0:
             self.chi0_ph = self.chi0_ph.reshape( susc_shape )
 
+        #: rpa attachment (enabled for version>0.9); eigenvalues
+        self.rpa_vals = get_array_header( iL, np.float64 )
+        #: rpa attachment (enabled for version>0.9); eigenvectors
+        self.rpa_vecs = get_array_header( iL, np.complex128 )
+        if self.rpa_vals.size > 0 and self.rpa_vecs.size > 0:
+            self.rpa_vecs = self.rpa_vecs.reshape((self.rpa_vals.size, -1, n_spin,n_orb,n_spin,n_orb))
+        #: rpa attachment (enabled for version>0.9); k indices
+        self.rpa_kidx = get_array_header( iL, np.int64 )
+
 class vertex_store:
     """
     class to read vertex_store files (.dvg, magic string = "vertex_storage_t")

@@ -392,6 +392,8 @@
 </li>
       <li><a href="Initialization.html#c.diverge_finalize">diverge_finalize (C function)</a>
 </li>
+      <li><a href="Flow%20Step%20Object.html#c.diverge_flow_step_attach_rpa">diverge_flow_step_attach_rpa (C function)</a>
+</li>
       <li><a href="Flow%20Step%20Object.html#c.diverge_flow_step_chanmax">diverge_flow_step_chanmax (C function)</a>
 </li>
       <li><a href="Flow%20Step%20Object.html#c.diverge_flow_step_dlambda">diverge_flow_step_dlambda (C function)</a>
@@ -612,12 +614,12 @@
 </li>
       <li><a href="Internals.html#c.diverge_model_internals_get_U">diverge_model_internals_get_U (C function)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Internals.html#c.diverge_model_internals_grid">diverge_model_internals_grid (C function)</a>
 </li>
       <li><a href="Internals.html#c.diverge_model_internals_patch">diverge_model_internals_patch (C function)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Internals.html#c.diverge_model_internals_reset">diverge_model_internals_reset (C function)</a>
 </li>
       <li><a href="Internals.html#c.diverge_model_internals_tu">diverge_model_internals_tu (C function)</a>
@@ -835,6 +837,16 @@
       <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_n_decomp_values">diverge_postprocess_conf_t.tu_n_decomp_values (C member)</a>
 </li>
       <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_n_singular_values">diverge_postprocess_conf_t.tu_n_singular_values (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_chans">diverge_postprocess_conf_t.tu_rpa_chans (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_maxiter">diverge_postprocess_conf_t.tu_rpa_maxiter (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_ncv">diverge_postprocess_conf_t.tu_rpa_ncv (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_nev">diverge_postprocess_conf_t.tu_rpa_nev (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_tol">diverge_postprocess_conf_t.tu_rpa_tol (C member)</a>
 </li>
       <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_selfenergy">diverge_postprocess_conf_t.tu_selfenergy (C member)</a>
 </li>
@@ -1413,6 +1425,12 @@
 </li>
       <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_model.rlattice">rlattice (diverge.output.diverge_model attribute)</a>
 </li>
+      <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.rpa_kidx">rpa_kidx (diverge.output.diverge_post_tu attribute)</a>
+</li>
+      <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.rpa_vals">rpa_vals (diverge.output.diverge_post_tu attribute)</a>
+</li>
+      <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.rpa_vecs">rpa_vecs (diverge.output.diverge_post_tu attribute)</a>
+</li>
       <li><a href="Model.html#c.rs_hopping_t">rs_hopping_t (C struct)</a>
 
       <ul>
@@ -1427,12 +1445,12 @@
 </li>
       <li><a href="Model.html#c.rs_hopping_t.s1">rs_hopping_t.s1 (C member)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Model.html#c.rs_hopping_t.s2">rs_hopping_t.s2 (C member)</a>
 </li>
       <li><a href="Model.html#c.rs_hopping_t.t">rs_hopping_t.t (C member)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Supercells.html#c.rs_hopping_to_fractcell">rs_hopping_to_fractcell (C function)</a>
 </li>
       <li><a href="Supercells.html#c.rs_hopping_to_fractcell_mat">rs_hopping_to_fractcell_mat (C function)</a>
