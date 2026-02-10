@@ -806,7 +806,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     // this flag is to indicate our header is actually 256 long. Only supported after v0.8
     header[125] = ~(header[125]);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
-    header[127] = header[i-1]*sizeof(complex128_t)+header[i-2];
+    header[127] = header[i-1]*sizeof(index_t)+header[i-2];
 
     i = 128;
     header[i++] = sizeof(diverge_postprocess_conf_t);
