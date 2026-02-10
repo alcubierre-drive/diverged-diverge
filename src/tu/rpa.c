@@ -154,6 +154,10 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
     } else {
         Vbuf = (chan == 'C') ? V->Cch : V->Dch;
     }
+    if (Vbuf == NULL) {
+        mpi_wrn_printf( "channel %c not found, ignoring\n", chan );
+        return;
+    }
 
     index_t q_off = V->my_nk_off,
             q_len = V->my_nk;
