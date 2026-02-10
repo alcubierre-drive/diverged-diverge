@@ -995,6 +995,10 @@ if not _libs["divERGe"] is None:
     flow_step_n_ibz.argtypes = [POINTER(flow_step_t)]
     flow_step_n_ibz.restype = index_t
 
+    flow_step_attach_rpa = _libs["divERGe"].get("diverge_flow_step_attach_rpa")
+    flow_step_attach_rpa.argtypes = [POINTER(flow_step_t), c_voidp, index_t]
+    flow_step_attach_rpa.restype = None
+
     flow_step_refill = _libs["divERGe"].get("diverge_flow_step_refill")
     flow_step_refill.argtypes = [POINTER(flow_step_t), c_double, c_void_p]
     flow_step_refill.restype = None
@@ -1093,6 +1097,11 @@ if not _libs["divERGe"] is None:
         'tu_susceptibilities_bare',
         'tu_channel_calc_project',
         'tu_which_solver_mode_hermiticity_limit',
+        'tu_rpa_chans',
+        'tu_rpa_nev',
+        'tu_rpa_ncv',
+        'tu_rpa_maxiter',
+        'tu_rpa_tol',
     ]
     struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
@@ -1128,6 +1137,11 @@ if not _libs["divERGe"] is None:
         ('tu_susceptibilities_bare', c_bool),
         ('tu_channel_calc_project', c_int),
         ('tu_which_solver_mode_hermiticity_limit', c_double),
+        ('tu_rpa_chans', c_char * int(8)),
+        ('tu_rpa_nev', c_int),
+        ('tu_rpa_ncv', c_int),
+        ('tu_rpa_maxiter', c_int),
+        ('tu_rpa_tol', c_double),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 

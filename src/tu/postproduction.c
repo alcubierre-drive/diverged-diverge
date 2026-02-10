@@ -13,6 +13,7 @@ LINALG_IMPLEMENT
 #include "../misc/eigen.h"
 #include "../misc/gemm.h"
 #include "../diverge_post.h"
+#include "rpa.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -87,6 +88,7 @@ struct tu_postproduction_t {
     tu_vertex_t* vertex;
     tu_vertex_t* internal_vertex;
     tu_projection_t* proj;
+    tu_rpa_t* rpa;
     const diverge_model_t* model;
 };
 
@@ -98,6 +100,7 @@ void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
         .vertex = vertex,
         .internal_vertex = internal_vertex,
         .proj = proj,
+        .rpa = rpa,
         .model = model,
     };
     if (!p.c.skip_channel_calc) {
@@ -121,6 +124,8 @@ void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
     }
 
     // perform
+    if (p.rpa) tu_rpa_post( p.rpa, p.c.rpa_chans, p.c.rpa_nev, p.c.rpa_ncv,
+            p.c.rpa_maxiter, p.c.rpa_tol ); // TODO rpa not saved
     if (!p.c.skip_channel_calc) save_channel_leading_ev(&p);
     if (p.c.lingaps) lingap_ff(&p);
     if (p.c.susc_ff || p.c.susc_full) calc_susc(&p);

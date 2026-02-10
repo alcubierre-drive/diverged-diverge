@@ -13,6 +13,7 @@ DIVERGE_0.9 {
         diverge_euler_nsteps_anticip;
         diverge_fftw_num_threads;
         diverge_finalize;
+        diverge_flow_step_attach_rpa;
         diverge_flow_step_chanmax;
         diverge_flow_step_dlambda;
         diverge_flow_step_eigchan;
@@ -208,6 +209,8 @@ local:
 };
 DIVERGE_UNSTABLE {
     global:
+        arnoldi_dense_matvec;
+        arnoldi_dense_matvec_par;
         arnoldi_eigen;
         arnoldi_eigen_dense;
         batched_eigen_get_nchunks;
@@ -239,9 +242,6 @@ DIVERGE_UNSTABLE {
         diverge_dos_use_gpu;
         diverge_energy_fill_gaps;
         diverge_filling_to_energy;
-        diverge_flow_step_sc_greens;
-        diverge_flow_step_sc_greens_apply;
-        diverge_flow_step_sc_vertex;
         diverge_fnan_gen;
         diverge_fnan_get;
         diverge_fnan_isnan;

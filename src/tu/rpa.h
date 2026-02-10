@@ -28,7 +28,7 @@ struct tu_rpa_t {
 
 tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_kidx );
 void tu_rpa_step( tu_rpa_t* t, double Lambda, double dLambda );
-void tu_rpa_post( tu_rpa_t* t, char chan, int nev, int ncv, int maxiter, double tol );
+void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter, double tol );
 void tu_rpa_free( tu_rpa_t* t );
 
 #ifdef __cplusplus

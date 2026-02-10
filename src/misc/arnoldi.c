@@ -93,7 +93,7 @@ static inline void arpack_message( void ) {
 #endif // USE_ARPACK_EIGENSOLVER
 
 int arnoldi_eigen( char* which, int n, int nev, int ncv,
-        arpack_matvec matvec, void* userdata, complex128_t* eigvals,
+        arnoldi_matvec_t matvec, void* userdata, complex128_t* eigvals,
         complex128_t* eigvecs, double tol, int maxit ) {
     arpack_message();
     int ido = 0;

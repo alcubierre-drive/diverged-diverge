@@ -121,7 +121,19 @@ static void tu_pp( diverge_flow_step_t* st,
     tc.save_self = pc->tu_selfenergy;
     tc.save_full = pc->tu_channels;
     tc.save_symmetries = pc->tu_symmetry_maps;
-    tu_postproduction( st->tu_vertex, tu_stepper_internal_vertex(st->tu_step), st->tu_proj, st->tu_rpa, st->mod, &tc, file );
+    // RPA attachment
+    memcpy( tc.rpa_chans, pc->tu_rpa_chans, sizeof(pc->tu_rpa_chans) );
+    tc.rpa_nev     = pc->tu_rpa_nev;
+    tc.rpa_ncv     = pc->tu_rpa_ncv;
+    tc.rpa_maxiter = pc->tu_rpa_maxiter;
+    tc.rpa_tol     = pc->tu_rpa_tol;
+
+    // DEVELOPERS
+    //
+    // For a new backend, you may choose to add postprocessing flags here and
+    // their defaults below
+    tu_postproduction( st->tu_vertex, tu_stepper_internal_vertex(st->tu_step),
+            st->tu_proj, st->tu_rpa, st->mod, &tc, file );
 }
 
 diverge_postprocess_conf_t diverge_postprocess_conf_defaults_CPP( void ) {

@@ -1,3 +1,5 @@
+/* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "rpa.h"
 #include "vertex.h"
 #include "vertex_details.h"
@@ -59,8 +61,10 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan );
 // applies t->chi_pp to t->V_pp (rhs)
 static void tu_rpa_post_apply_greens( tu_rpa_t* t );
 
-void tu_rpa_post( tu_rpa_t* t, char chan, int nev, int ncv, int maxiter, double tol ) {
-    tu_rpa_post_vert( t, chan );
+void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter, double tol ) {
+    mpi_log_printf( "RPA postprocessing (TU) with channels %s\n", chans );
+    for (const char* c=chans; *c; c++)
+        tu_rpa_post_vert( t, *c );
     tu_rpa_post_apply_greens( t );
     t->legdim = POW2(t->m->n_orb*t->m->n_spin)*t->n_kidx;
     transpose_inplace( t->V_pp, t->legdim );
@@ -148,7 +152,7 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
     const index_t legdim = POW2(V->n_orb*V->n_spin) * t->n_kidx;
     const index_t *mi_to_ofrom = V->tu_data->mi_to_ofrom,
                   *mi_to_oto = V->tu_data->mi_to_oto;
-    t->V_pp = calloc( POW2(legdim), sizeof*t->V_pp );
+    if (!t->V_pp) t->V_pp = calloc( POW2(legdim), sizeof*t->V_pp );
 
     #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t ik=0; ik<t->n_kidx; ++ik)

@@ -36,6 +36,12 @@ typedef struct {
     bool save_self;
     bool save_full;
     bool save_symmetries;
+
+    char rpa_chans[8];
+    int rpa_nev;
+    int rpa_ncv;
+    int rpa_maxiter;
+    double rpa_tol;
 } tu_postproduction_conf_t;
 #ifndef __cplusplus
 static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
@@ -56,6 +62,11 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .save_self = false,
     .save_full = false,
     .save_symmetries = false,
+    .rpa_chans = "CD",
+    .rpa_nev = 10,
+    .rpa_ncv = 100,
+    .rpa_maxiter = 100,
+    .rpa_tol = 1.e-6,
 };
 #endif // __cplusplus
 
