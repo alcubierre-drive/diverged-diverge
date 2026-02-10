@@ -14,6 +14,7 @@ extern "C" {
 
 typedef struct tu_vertex_t tu_vertex_t;
 typedef struct tu_projection_t tu_projection_t;
+typedef struct tu_rpa_t tu_rpa_t;
 typedef struct diverge_model_t diverge_model_t;
 
 typedef struct {
@@ -35,6 +36,12 @@ typedef struct {
     bool save_self;
     bool save_full;
     bool save_symmetries;
+
+    char rpa_chans[8];
+    int rpa_nev;
+    int rpa_ncv;
+    int rpa_maxiter;
+    double rpa_tol;
 } tu_postproduction_conf_t;
 #ifndef __cplusplus
 static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
@@ -55,11 +62,16 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .save_self = false,
     .save_full = false,
     .save_symmetries = false,
+    .rpa_chans = "CD",
+    .rpa_nev = 10,
+    .rpa_ncv = 100,
+    .rpa_maxiter = 100,
+    .rpa_tol = 1.e-6,
 };
 #endif // __cplusplus
 
 void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
-        tu_projection_t* proj, const diverge_model_t* model,
+        tu_projection_t* proj, tu_rpa_t* rpa, const diverge_model_t* model,
         const tu_postproduction_conf_t* c, const char* filename );
 
 #ifdef __cplusplus

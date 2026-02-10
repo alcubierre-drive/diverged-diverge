@@ -125,6 +125,37 @@ struct diverge_postprocess_conf_t {
      */
     double  tu_which_solver_mode_hermiticity_limit;
 
+
+    /**
+     * select channels for vertices that are projected to the P channel at q=0
+     * and then considered for diagonalization in linearized gap of RPA
+     * attachment. must be particle-hole channels; naming follows
+     * :c:func:`diverge_flow_step_vertex`.
+     */
+    char tu_rpa_chans[8];
+    /**
+     * number of eigenvalues to calculate in RPA attachment. Unless
+     * ``-DUSE_ARPACK_EIGENSOLVER`` is used at compile time (and the library is
+     * linked to arpack) the postprocessing falls back to a lapack eigensolver
+     * that goes for *all* eigenvalues; and is very slow.
+     */
+    int tu_rpa_nev;
+    /**
+     * size of Krylov space for eigensolver in RPA attachment
+     * (only enabled when library is compiled with ``-DUSE_ARPACK_EIGENSOLVER``)
+     */
+    int tu_rpa_ncv;
+    /**
+     * number of Kryolv iterations for eigensolver in RPA attachment
+     * (only enabled when library is compiled with ``-DUSE_ARPACK_EIGENSOLVER``)
+     */
+    int tu_rpa_maxiter;
+    /**
+     * tolerance of eigensolver in RPA attachment
+     * (only enabled when library is compiled with ``-DUSE_ARPACK_EIGENSOLVER``)
+     */
+    double tu_rpa_tol;
+
     // DEVELOPERS
     //
     // For a new backend, you may choose to add postprocessing flags here and
@@ -169,6 +200,11 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_susceptibilities_bare = false,
     .tu_channel_calc_project = 0,
     .tu_which_solver_mode_hermiticity_limit = 1.e-11,
+    .tu_rpa_chans = "CD",
+    .tu_rpa_nev = 10,
+    .tu_rpa_ncv = 100,
+    .tu_rpa_maxiter = 100,
+    .tu_rpa_tol = 1.e-6,
 };
 #endif
 

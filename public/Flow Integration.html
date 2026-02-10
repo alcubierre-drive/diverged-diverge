@@ -58,6 +58,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#c.diverge_euler_t"><code class="docutils literal notranslate"><span class="pre">diverge_euler_t</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.diverge_euler_defaults_CPP"><code class="docutils literal notranslate"><span class="pre">diverge_euler_defaults_CPP()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.diverge_euler_next"><code class="docutils literal notranslate"><span class="pre">diverge_euler_next()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.diverge_euler_nsteps_anticip"><code class="docutils literal notranslate"><span class="pre">diverge_euler_nsteps_anticip()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.diverge_euler_defaults"><code class="docutils literal notranslate"><span class="pre">diverge_euler_defaults</span></code></a></li>
 </ul>
 </li>
@@ -218,9 +219,15 @@ related routines. example usage:</p>
 </div>
 </dd></dl>
 
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_euler_nsteps_anticip">
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_nsteps_anticip</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">eu</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_euler_nsteps_anticip" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_euler.h#L78"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>returns the anticipated number of steps for the settings <code class="docutils literal notranslate"><span class="pre">eu</span></code></p>
+</dd></dl>
+
 <dl class="c var">
 <dt class="sig sig-object c" id="c.diverge_euler_defaults">
-<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_defaults</span></span></span><a class="headerlink" href="#c.diverge_euler_defaults" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_euler.h#L80"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.diverge_euler_t" title="diverge_euler_t"><span class="n"><span class="pre">diverge_euler_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_euler_defaults</span></span></span><a class="headerlink" href="#c.diverge_euler_defaults" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/diverge_euler.h#L83"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>defaults struct accessible only in C, because C++ does not allow named
 member initialization. Look the values up in the source (linked on the
 right).</p>

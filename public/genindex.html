@@ -358,6 +358,8 @@
 </li>
       <li><a href="Flow%20Integration.html#c.diverge_euler_next">diverge_euler_next (C function)</a>
 </li>
+      <li><a href="Flow%20Integration.html#c.diverge_euler_nsteps_anticip">diverge_euler_nsteps_anticip (C function)</a>
+</li>
       <li><a href="Flow%20Integration.html#c.diverge_euler_t">diverge_euler_t (C struct)</a>
 </li>
       <li><a href="Flow%20Integration.html#c.diverge_euler_t.consider_maxvert_iter_start">diverge_euler_t.consider_maxvert_iter_start (C member)</a>
@@ -389,6 +391,8 @@
       <li><a href="Advanced%20Features.html#c.diverge_filling_to_energy">diverge_filling_to_energy (C function)</a>
 </li>
       <li><a href="Initialization.html#c.diverge_finalize">diverge_finalize (C function)</a>
+</li>
+      <li><a href="Flow%20Step%20Object.html#c.diverge_flow_step_attach_rpa">diverge_flow_step_attach_rpa (C function)</a>
 </li>
       <li><a href="Flow%20Step%20Object.html#c.diverge_flow_step_chanmax">diverge_flow_step_chanmax (C function)</a>
 </li>
@@ -642,10 +646,10 @@
 </li>
       <li><a href="Output.html#c.diverge_model_output_conf_t.kf_ibz_path">diverge_model_output_conf_t.kf_ibz_path (C member)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Output.html#c.diverge_model_output_conf_t.npath">diverge_model_output_conf_t.npath (C member)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Output.html#c.diverge_model_output_conf_t.U">diverge_model_output_conf_t.U (C member)</a>
 </li>
       <li><a href="Output.html#c.diverge_model_output_set_npath">diverge_model_output_set_npath (C function)</a>
@@ -863,6 +867,16 @@
       <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_n_decomp_values">diverge_postprocess_conf_t.tu_n_decomp_values (C member)</a>
 </li>
       <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_n_singular_values">diverge_postprocess_conf_t.tu_n_singular_values (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_chans">diverge_postprocess_conf_t.tu_rpa_chans (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_maxiter">diverge_postprocess_conf_t.tu_rpa_maxiter (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_ncv">diverge_postprocess_conf_t.tu_rpa_ncv (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_nev">diverge_postprocess_conf_t.tu_rpa_nev (C member)</a>
+</li>
+      <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_rpa_tol">diverge_postprocess_conf_t.tu_rpa_tol (C member)</a>
 </li>
       <li><a href="Postprocessing%20and%20Output.html#c.diverge_postprocess_conf_t.tu_selfenergy">diverge_postprocess_conf_t.tu_selfenergy (C member)</a>
 </li>
@@ -1507,6 +1521,12 @@
 </li>
       <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_model.rlattice">rlattice (diverge.output.diverge_model attribute)</a>
 </li>
+      <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.rpa_kidx">rpa_kidx (diverge.output.diverge_post_tu attribute)</a>
+</li>
+      <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.rpa_vals">rpa_vals (diverge.output.diverge_post_tu attribute)</a>
+</li>
+      <li><a href="Simulation%20Output%20Module%20Spec.html#diverge.output.diverge_post_tu.rpa_vecs">rpa_vecs (diverge.output.diverge_post_tu attribute)</a>
+</li>
       <li><a href="Model.html#c.rs_hopping_t">rs_hopping_t (C struct)</a>
 
       <ul>
@@ -1517,12 +1537,12 @@
 </li>
       <li><a href="Model.html#c.rs_hopping_t.o2">rs_hopping_t.o2 (C member)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Model.html#c.rs_hopping_t.R">rs_hopping_t.R (C member)</a>
 </li>
       <li><a href="Model.html#c.rs_hopping_t.s1">rs_hopping_t.s1 (C member)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Model.html#c.rs_hopping_t.s2">rs_hopping_t.s2 (C member)</a>
 </li>
       <li><a href="Model.html#c.rs_hopping_t.t">rs_hopping_t.t (C member)</a>
