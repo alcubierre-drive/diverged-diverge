@@ -27,6 +27,10 @@ typedef struct diverge_postprocess_conf_t diverge_postprocess_conf_t;
  *   used with the grid backend
  *  ``tu_``
  *   used with the tu backend
+ *
+ * .. note::
+ *    TUFRG channels are diagonalized in transposed form (cf.
+ *    :c:member:`diverge_postprocess_conf_t.tu_which_solver_mode`)
  */
 struct diverge_postprocess_conf_t {
     /** include the channelized matrices in the save */
@@ -75,6 +79,14 @@ struct diverge_postprocess_conf_t {
      * eigen), 'B'(atched SVD). For 'a'(utomatic), one can use
      * :c:member:`tu_which_solver_mode_hermiticity_limit` to set a "zero" value
      * for hermiticity detection.
+     *
+     * .. note::
+     *      The diagonalization happens in Channel-native memory order
+     *      (e.g. ``(q,43,21)`` for the P Channel written in C ordering). As a
+     *      consequence, the eigenvectors are (21) rather than (34) what you
+     *      might expect. Effectively this means you get the eigenvectors of the
+     *      *transposed* channel, not the *true* channel. For chiral systems,
+     *      this makes a difference…
      */
     char    tu_which_solver_mode;
     /** if true, the eigenvectors of each channel are not calculated. useful for RPA calculations */
