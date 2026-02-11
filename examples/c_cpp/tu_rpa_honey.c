@@ -76,7 +76,6 @@ int main(int argc, char** argv) {
     } while (diverge_euler_next( &eu, maxvert ));
 
     diverge_postprocess_conf_t pc = diverge_postprocess_conf_defaults;
-    strcpy(pc.tu_rpa_chans, "C");
     diverge_postprocess_and_write_fg( s, __FILE__ ".out.dvg", &pc );
 
     diverge_flow_step_free( s );
