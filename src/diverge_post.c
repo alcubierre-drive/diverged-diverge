@@ -76,9 +76,12 @@ static void grid_pp( diverge_flow_step_t* st,
     grid_postproc_susc( pp, st->Lambda, 'D' );
 
     mpi_vrb_printf( "linearized gaps\n" );
-    grid_postproc_lingap( pp, st->Lambda, 'P', pc->grid_lingap_vertex_file_P );
-    if (st->mod->SU2 > 0) grid_postproc_lingap( pp, st->Lambda, 'C', pc->grid_lingap_vertex_file_C );
-    grid_postproc_lingap( pp, st->Lambda, 'D', pc->grid_lingap_vertex_file_D );
+    grid_postproc_lingap( pp, st->Lambda, 'P', pc->grid_lingap_vertex_file_P,
+            pc->grid_lingap_vertex_loop_file_P );
+    if (st->mod->SU2 > 0) grid_postproc_lingap( pp, st->Lambda, 'C', pc->grid_lingap_vertex_file_C,
+            pc->grid_lingap_vertex_loop_file_C );
+    grid_postproc_lingap( pp, st->Lambda, 'D', pc->grid_lingap_vertex_file_D,
+            pc->grid_lingap_vertex_loop_file_D );
 
     mpi_vrb_printf( "communicating results\n" );
     grid_postproc_communicate( pp );

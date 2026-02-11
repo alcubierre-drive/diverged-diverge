@@ -146,7 +146,7 @@ double diverge_flow_step_dlambda( diverge_flow_step_t* st );
  * constrain mesh to roughly the Fermi surface and get faster eigensolution and
  * reasonable memory footprint in postprocessing.
  */
-void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, const index_t* kidx,
+void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, index_t* kidx,
         index_t n_kidx );
 
 /** free the resources attached to a :c:func:`diverge_flow_step_t`. */

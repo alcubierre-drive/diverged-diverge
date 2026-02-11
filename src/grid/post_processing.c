@@ -25,10 +25,11 @@ typedef struct {
     bool is_q_zero;
 } grid_lingap_t;
 static grid_lingap_t* grid_lingap_init( grid_vertex_t* V, grid_loop_t* L,
-        double T, char chan, uindex_t n, bool use_loop, const char* vertex_file );
+        double T, char chan, uindex_t n, bool use_loop, const char* vertex_file,
+        const char* vertex_loop_file );
 static void grid_lingap_free( grid_lingap_t* l );
 static void grid_lingap_calc( grid_lingap_t* l, double T, char chan, bool use_loop,
-        const char* vertex_file );
+        const char* vertex_file, const char* vertex_loop_file );
 static double* grid_lingap_pack_data( grid_lingap_t* l, index_t* count_doubles );
 
 struct grid_postproc_t {
@@ -84,11 +85,13 @@ void grid_postproc_set_loop_usage( grid_postproc_t* p, bool loop ) {
     p->use_loop = loop;
 }
 
-void grid_postproc_lingap( grid_postproc_t* p, double T, char chan, const char* vertex_file ) {
+void grid_postproc_lingap( grid_postproc_t* p, double T, char chan,
+        const char* vertex_file, const char* vertex_loop_file ) {
     grid_lingap_t** l = chan == 'P' ? &p->lgap_P :
                         chan == 'C' ? &p->lgap_C :
                         /*chan=='D'*/ &p->lgap_D;
-    *l = grid_lingap_init( p->V, p->L, T, chan, p->num_singular_values, p->use_loop, vertex_file );
+    *l = grid_lingap_init( p->V, p->L, T, chan, p->num_singular_values,
+            p->use_loop, vertex_file, vertex_loop_file );
 }
 
 void grid_postproc_susc( grid_postproc_t* p, double T, char chan ) {
@@ -256,7 +259,8 @@ void grid_postproc_print_header( const index_t* header ) {
 }
 
 static grid_lingap_t* grid_lingap_init( grid_vertex_t* V, grid_loop_t* L,
-        double T, char chan, uindex_t n, bool use_loop, const char* vertex_file ) {
+        double T, char chan, uindex_t n, bool use_loop, const char* vertex_file,
+        const char* vertex_loop_file ) {
     grid_lingap_t* l = calloc(1, sizeof*l);
     l->V = V;
     l->L = L;
@@ -274,7 +278,7 @@ static grid_lingap_t* grid_lingap_init( grid_vertex_t* V, grid_loop_t* L,
         l->eigen_values = calloc(l->nk*POW2(l->nb),sizeof(double));
     }
 
-    grid_lingap_calc( l, T, chan, use_loop, vertex_file );
+    grid_lingap_calc( l, T, chan, use_loop, vertex_file, vertex_loop_file );
     return l;
 }
 
@@ -288,7 +292,7 @@ static void grid_lingap_free( grid_lingap_t* l ) {
 }
 
 static void grid_lingap_calc( grid_lingap_t* l, double T, char chan, bool use_loop,
-        const char* vertex_file ) {
+        const char* vertex_file, const char* vertex_loop_file ) {
 
     complex128_t* loop = use_loop ? chan == 'P' ? grid_loop_calc( l->L, 'P', T ) :
                                                   grid_loop_calc( l->L, 'C', T ) :
@@ -329,8 +333,19 @@ static void grid_lingap_calc( grid_lingap_t* l, double T, char chan, bool use_lo
     for (uindex_t v=0; v<l->num_singular_values; ++v)
         l->eigen_vectors[v*N+i] = U_[IDX2(v,i,N)];
 
-    if (loop)
+    if (loop) {
         batched_gemm_vertex_loop( l->V->vertex_buffers[1], loop, l->qsize, l->nk, l->nb );
+        if (vertex_loop_file && strcmp(vertex_loop_file,"")) {
+            FILE* v = fopen( vertex_loop_file, "w" );
+            mpi_log_printf( "writing MF q=0 '%c' vertex×loop to file\n", chan )
+            if (!v) {
+                mpi_err_printf( "could not open file %s\n", vertex_loop_file );
+            } else {
+                fwrite( l->V->vertex_buffers[1], sizeof(complex128_t), POW2(N), v );
+                fclose( v );
+            }
+        }
+    }
     single_svd( v, U_, V_, l->singular_values, N );
     for (index_t i=0; i<N; ++i)
     for (uindex_t v=0; v<l->num_singular_values; ++v) {

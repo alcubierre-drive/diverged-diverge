@@ -21,7 +21,8 @@ grid_postproc_t* grid_postproc_init( grid_vertex_t* V, grid_loop_t* L );
 void grid_postproc_free( grid_postproc_t* p );
 
 void grid_postproc_susc( grid_postproc_t* p, double T, char chan );
-void grid_postproc_lingap( grid_postproc_t* p, double T, char chan, const char* vertex_file );
+void grid_postproc_lingap( grid_postproc_t* p, double T, char chan,
+        const char* vertex_file, const char* vertex_loop_file );
 
 void grid_postproc_set_num_singular_values( grid_postproc_t* p, uindex_t n );
 void grid_postproc_set_loop_usage( grid_postproc_t* p, bool loop );
