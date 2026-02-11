@@ -54,6 +54,12 @@ struct diverge_postprocess_conf_t {
     char    grid_lingap_vertex_file_C[MAX_NAME_LENGTH];
     /** output the q=0 linearized gap vertex of the D channel to the file (if != "") */
     char    grid_lingap_vertex_file_D[MAX_NAME_LENGTH];
+    /** output the q=0 linearized gap and loop vertex of the P channel to the file (if != "") */
+    char    grid_lingap_vertex_loop_file_P[MAX_NAME_LENGTH];
+    /** output the q=0 linearized gap and loop vertex of the C channel to the file (if != "") */
+    char    grid_lingap_vertex_loop_file_C[MAX_NAME_LENGTH];
+    /** output the q=0 linearized gap and loop vertex of the D channel to the file (if != "") */
+    char    grid_lingap_vertex_loop_file_D[MAX_NAME_LENGTH];
     /** number of singular values to save for the lineraized gap solutions */
     int     grid_n_singular_values;
     /** include the loop in the linearized gap solution */
@@ -183,6 +189,9 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .grid_lingap_vertex_file_P = {'\0'},
     .grid_lingap_vertex_file_C = {'\0'},
     .grid_lingap_vertex_file_D = {'\0'},
+    .grid_lingap_vertex_loop_file_P = {'\0'},
+    .grid_lingap_vertex_loop_file_C = {'\0'},
+    .grid_lingap_vertex_loop_file_D = {'\0'},
     .grid_n_singular_values = 20,
     .grid_use_loop = true,
     .grid_vertex_file = {'\0'},

@@ -686,7 +686,14 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
     }
 }
 
-void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, const index_t* kidx,
-        index_t n_kidx ) {
+void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, index_t* kidx, index_t n_kidx ) {
+    int free_kidx = 0;
+    if (!kidx || n_kidx < 0) {
+        free_kidx = 1;
+        n_kidx = kdim(s->mod->nk);
+        kidx = calloc(n_kidx, sizeof*kidx);
+        for (index_t k=0; k<n_kidx; ++k) kidx[k] = k;
+    }
     s->tu_rpa = tu_rpa_init( s, kidx, n_kidx );
+    if (free_kidx) free( kidx );
 }
