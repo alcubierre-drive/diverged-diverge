@@ -1,15 +1,28 @@
 /* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#include "../misc/linalg.h"
+LINALG_IMPLEMENT
+
 #include "rpa.h"
 #include "vertex.h"
 #include "vertex_details.h"
 #include "../diverge_flow_step.h"
 #include "../diverge_flow_step_internal.h"
-#include "../misc/hashtable.h"
 #include "../misc/arnoldi.h"
 #include "../misc/eigen.h"
 #include "../misc/gemm.h"
 #include "../diverge_model.h"
+
+static inline claV3d_t claV3ll_M3d_vecmat( const claV3ll_t vec_, const claM3d_t mat ) {
+    return claM3d_vecmat( (claV3d_t){{vec_.v[0],vec_.v[1],vec_.v[2]}}, mat );
+}
+
+#define vhash_key_t index_t
+#define vhash_val_t index_t
+#define vhash_key_empty -1
+#define vhash_val_empty -1
+#include "../misc/vhashtable.h"
+VHASH_IMPLEMENT(rpahash)
 
 static char tu_rpa_post_which_ev[16] = "SR";
 static char tu_rpa_post_sorting = 'N';
@@ -166,9 +179,9 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
         q_len = V->symm->my_nk_in_bz;
     }
 
-    hashtable_t* ktab = hashtable_init( 8*t->n_kidx, 8 );
+    rpahashtable_t* ktab = rpahashtable_init( 64*t->n_kidx, 8 );
     for (index_t ik=0; ik<t->n_kidx; ++ik)
-        hashtable_insert_safe(ktab, t->kidx[ik], (void*)(ik+1));
+        rpahashtable_insert_safe(ktab, t->kidx[ik], ik);
 
     complex128_t* Vbuf_reco = calloc(POW2(V->n_orbff*POW2(V->n_spin)) * q_len, sizeof*Vbuf_reco);
     diverge_tu_vertex_reco( V, chan, Vbuf_reco, Vbuf );
@@ -176,6 +189,9 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
     const index_t legdim = POW2(V->n_orb*V->n_spin) * t->n_kidx;
     const index_t *mi_to_ofrom = V->tu_data->mi_to_ofrom,
                   *mi_to_oto = V->tu_data->mi_to_oto;
+    const claV3ll_t* mi_to_R = (const claV3ll_t*)V->tu_data->mi_to_R;
+    const claM3d_t lattice = claM3d_map(t->m->lattice[0]);
+    const claV3d_t* kmesh = (const claV3d_t*)t->m->internals->kmesh;
     if (!t->V_pp) t->V_pp = calloc( POW2(legdim), sizeof*t->V_pp );
 
     #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
@@ -184,7 +200,7 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
         index_t kk = t->kidx[ik],
                 qq = q_off+iq;
         index_t kp = (chan == 'C') ? k1m2(qq,kk, nk) : k1p2(qq,kk, nk);
-        index_t ikp = (index_t)(hashtable_find(ktab, kp))-1;
+        index_t ikp = rpahashtable_find(ktab, kp);
         if (ikp != -1) {
             for (index_t m1=0; m1<V->n_orbff; ++m1)
             for (index_t s1=0; s1<V->n_spin; ++s1)
@@ -193,14 +209,21 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
             for (index_t s3=0; s3<V->n_spin; ++s3)
             for (index_t s4=0; s4<V->n_spin; ++s4) {
                 if (chan == 'C') { // (1,4,3,2)
+                    const claV3d_t R1 = claV3ll_M3d_vecmat( mi_to_R[m1], lattice ),
+                                   R2 = claV3ll_M3d_vecmat( mi_to_R[m2], lattice );
+                    const double R12_dot_kkp = claV3d_dot( R1, kmesh[kk] ) -
+                                               claV3d_dot( R2, kmesh[kp] );
+                    const double ff_fac_[2] = { cos(R12_dot_kkp), sin(R12_dot_kkp) };
+                    const complex128_t* ff_fac = (const complex128_t*)ff_fac_;
                     index_t o1 = mi_to_ofrom[m1], o4 = mi_to_oto[m1],
                             o3 = mi_to_ofrom[m2], o2 = mi_to_oto[m2];
                     index_t left  = IDX5(ik, s1,o1,s2,o2, V->n_spin,V->n_orb,V->n_spin,V->n_orb),
                             right = IDX5(ikp,s3,o3,s4,o4, V->n_spin,V->n_orb,V->n_spin,V->n_orb);
                     t->V_pp[IDX2(left, right, legdim)] += Vbuf_reco[IDX7(s4,s3,m2,s2,s1,m1,iq,
-                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, q_len)];
+                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, q_len)] * (*ff_fac);
                 }
                 if (chan == 'D') { // (1,3,4,2)
+                    continue; // TODO this is broken and turned off for now
                     index_t o1 = mi_to_ofrom[m1], o3 = mi_to_oto[m1],
                             o4 = mi_to_ofrom[m2], o2 = mi_to_oto[m2];
                     index_t left  = IDX5(ik, s1,o1,s2,o2, V->n_spin,V->n_orb,V->n_spin,V->n_orb),
@@ -214,7 +237,7 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
 
     diverge_mpi_allreduce_complex_sum_inplace(t->V_pp, POW2(legdim));
     free( Vbuf_reco );
-    hashtable_free( ktab );
+    rpahashtable_free( ktab );
 }
 
 static void tu_rpa_post_apply_greens( tu_rpa_t* t ) {
