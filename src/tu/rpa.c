@@ -132,6 +132,11 @@ void tu_rpa_free( tu_rpa_t* t ) {
     free( t );
 }
 
+static inline complex128_t cexp_ikr( const double kr ) {
+    const double res[] = {cos(kr), sin(kr)};
+    return *(complex128_t*)res;
+}
+
 static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
     const index_t* nk = t->m->nk;
     tu_vertex_t* V = t->s->tu_vertex;
@@ -197,10 +202,10 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
     #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t ik=0; ik<t->n_kidx; ++ik)
     for (index_t iq=0; iq<q_len; ++iq) {
-        index_t kk = t->kidx[ik],
-                qq = q_off+iq;
-        index_t kp = (chan == 'C') ? k1m2(qq,kk, nk) : k1p2(qq,kk, nk);
-        index_t ikp = rpahashtable_find(ktab, kp);
+        const index_t kk = t->kidx[ik],
+                      qq = q_off+iq;
+        const index_t kp = (chan == 'C') ? k1m2(qq,kk, nk) : k1p2(qq,kk, nk);
+        const index_t ikp = rpahashtable_find(ktab, kp);
         if (ikp != -1) {
             for (index_t m1=0; m1<V->n_orbff; ++m1)
             for (index_t s1=0; s1<V->n_spin; ++s1)
@@ -208,28 +213,25 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
             for (index_t m2=0; m2<V->n_orbff; ++m2)
             for (index_t s3=0; s3<V->n_spin; ++s3)
             for (index_t s4=0; s4<V->n_spin; ++s4) {
+                const claV3d_t R1 = claV3ll_M3d_vecmat( mi_to_R[m1], lattice ),
+                               R2 = claV3ll_M3d_vecmat( mi_to_R[m2], lattice );
                 if (chan == 'C') { // (1,4,3,2)
-                    const claV3d_t R1 = claV3ll_M3d_vecmat( mi_to_R[m1], lattice ),
-                                   R2 = claV3ll_M3d_vecmat( mi_to_R[m2], lattice );
-                    const double R12_dot_kkp = claV3d_dot( R1, kmesh[kk] ) -
-                                               claV3d_dot( R2, kmesh[kp] );
-                    const double ff_fac_[2] = { cos(R12_dot_kkp), sin(R12_dot_kkp) };
-                    const complex128_t* ff_fac = (const complex128_t*)ff_fac_;
-                    index_t o1 = mi_to_ofrom[m1], o4 = mi_to_oto[m1],
-                            o3 = mi_to_ofrom[m2], o2 = mi_to_oto[m2];
-                    index_t left  = IDX5(ik, s1,o1,s2,o2, V->n_spin,V->n_orb,V->n_spin,V->n_orb),
-                            right = IDX5(ikp,s3,o3,s4,o4, V->n_spin,V->n_orb,V->n_spin,V->n_orb);
+                    const complex128_t ff_fac = cexp_ikr(claV3d_dot(R1,kmesh[kk])-claV3d_dot(R2,kmesh[kp]));
+                    const index_t o1 = mi_to_ofrom[m1], o4 = mi_to_oto[m1],
+                                  o3 = mi_to_ofrom[m2], o2 = mi_to_oto[m2];
+                    const index_t left  = IDX5(ik, s1,o1,s2,o2, V->n_spin,V->n_orb,V->n_spin,V->n_orb),
+                                  right = IDX5(ikp,s3,o3,s4,o4, V->n_spin,V->n_orb,V->n_spin,V->n_orb);
                     t->V_pp[IDX2(left, right, legdim)] += Vbuf_reco[IDX7(s4,s3,m2,s2,s1,m1,iq,
-                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, q_len)] * (*ff_fac);
+                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, q_len)] * ff_fac;
                 }
                 if (chan == 'D') { // (1,3,4,2)
-                    continue; // TODO this is broken and turned off for now
-                    index_t o1 = mi_to_ofrom[m1], o3 = mi_to_oto[m1],
-                            o4 = mi_to_ofrom[m2], o2 = mi_to_oto[m2];
-                    index_t left  = IDX5(ik, s1,o1,s2,o2, V->n_spin,V->n_orb,V->n_spin,V->n_orb),
-                            right = IDX5(ikp,s3,o3,s4,o4, V->n_spin,V->n_orb,V->n_spin,V->n_orb);
+                    const complex128_t ff_fac = cexp_ikr(claV3d_dot(R1,kmesh[kp])+claV3d_dot(R2,kmesh[kk]));
+                    const index_t o1 = mi_to_ofrom[m1], o3 = mi_to_oto[m1],
+                                  o4 = mi_to_ofrom[m2], o2 = mi_to_oto[m2];
+                    const index_t left  = IDX5(ikp,s1,o1,s2,o2, V->n_spin,V->n_orb,V->n_spin,V->n_orb),
+                                  right = IDX5(ik, s3,o3,s4,o4, V->n_spin,V->n_orb,V->n_spin,V->n_orb);
                     t->V_pp[IDX2(left, right, legdim)] += Vbuf_reco[IDX7(s4,s3,m2,s2,s1,m1,iq,
-                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, q_len)];
+                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, q_len)] * ff_fac;
                 }
             }
         }
