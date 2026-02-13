@@ -26,6 +26,12 @@ struct diverge_hartree_fock_t {
     diverge_flow_step_t* step;
 };
 
+static int hf_normalize = 1;
+int diverge_hartree_fock_normalize_configure( int normalize ) {
+    XORSWAP(hf_normalize, normalize);
+    return normalize;
+}
+
 diverge_flow_step_t* diverge_hartree_fock_get_flow_step( diverge_hartree_fock_t* h ) {
     return h->step;
 }
@@ -152,6 +158,7 @@ void diverge_hartree_fock_step( diverge_hartree_fock_t* m, double T ) {
     // of two cancels due to the two GFs)
     diverge_flow_step_euler( m->step, T, -M_PI );
     for (index_t i=0; i<nk_nb2; ++i) m->flow_step_sigma[i] -= m->internal_sigma[i];
+    if (hf_normalize) diverge_hartree_fock_normalize_sigma( m );
 }
 
 void diverge_hartree_fock_normalize_sigma( diverge_hartree_fock_t* m ) {

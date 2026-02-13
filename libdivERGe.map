@@ -253,6 +253,7 @@ DIVERGE_UNSTABLE {
         diverge_hartree_fock_get_sigma;
         diverge_hartree_fock_get_sigma_prev;
         diverge_hartree_fock_init;
+        diverge_hartree_fock_normalize_configure;
         diverge_hartree_fock_normalize_sigma;
         diverge_hartree_fock_step;
         diverge_largemat_gf;

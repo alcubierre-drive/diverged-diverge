@@ -28,6 +28,19 @@ typedef struct diverge_hartree_fock_t diverge_hartree_fock_t;
  */
 diverge_hartree_fock_t* diverge_hartree_fock_init( diverge_model_t* model, double nu, const char* chans );
 
+/**
+ * change default behavior of always calling
+ * :c:func:`diverge_hartree_fock_normalize_sigma` within
+ * :c:func:`diverge_hartree_fock_step` to run slightly faster and be compatible
+ * with previous versions. returns previous setting.
+ *
+ * .. note::
+ *   The default behavior is now changed to always normalize; you'd have to
+ *   explicitly turn it off *before* performing the first
+ *   :c:func:`diverge_hartree_fock_step`.
+ */
+int diverge_hartree_fock_normalize_configure( int normalize );
+
 /** return the flow step backend of a HF calculation, s.t. one can access the vertices etc */
 diverge_flow_step_t* diverge_hartree_fock_get_flow_step( diverge_hartree_fock_t* h );
 
