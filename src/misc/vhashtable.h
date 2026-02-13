@@ -62,7 +62,7 @@ static inline PREFIX##table_t* PREFIX##table_init( index_t width, index_t depth 
 } \
  \
 static inline void PREFIX##table_increase_depth( PREFIX##table_t* t, index_t depth ) { \
-    printf( "PREFIX##table increase depth (%li->%li)\n", t->depth, depth ); \
+    printf( #PREFIX "table increase depth (%li->%li)\n", t->depth, depth ); \
     t->tab = realloc( t->tab, sizeof*t->tab * t->width * depth ); \
     for (; t->depth<depth; ++(t->depth)) \
     for (index_t i=0; i<t->width; ++i) \
