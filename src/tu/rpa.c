@@ -66,7 +66,14 @@ tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_ki
     return t;
 }
 
+#define TICK \
+double tick = t->tim_enabled ? diverge_mpi_wtime() : 0.0;
+#define TOCK(WHICH) \
+double tock = t->tim_enabled ? diverge_mpi_wtime() : 0.0; \
+t->WHICH += tock - tick;
+
 void tu_rpa_step( tu_rpa_t* t, double Lambda, double dLambda ) {
+    TICK
     diverge_model_t* m = t->m;
     complex128_t cLambda = I*Lambda;
     gf_complex_t* gbuf = m->internals->greens;
@@ -87,6 +94,7 @@ void tu_rpa_step( tu_rpa_t* t, double Lambda, double dLambda ) {
                 gbuf[IDX4(0,kk,so1,so3, NK,nso,nso)] * gbuf[IDX4(1,mk,so2,so4, NK,nso,nso)] +
                 gbuf[IDX4(1,mk,so3,so1, NK,nso,nso)] * gbuf[IDX4(0,kk,so4,so2, NK,nso,nso)] );
     }
+    TOCK(tim_step)
 }
 
 // allocates and fills t->V_pp given chan following flow_step naming
@@ -95,6 +103,7 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan );
 static void tu_rpa_post_apply_greens( tu_rpa_t* t );
 
 void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter, double tol ) {
+    TICK
     mpi_log_printf( "RPA postprocessing (TU) with channels %s\n", chans );
     for (const char* c=chans; *c; c++)
         tu_rpa_post_vert( t, *c );
@@ -121,6 +130,10 @@ void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter,
 
     free( t->V_pp );   t->V_pp   = NULL;
     free( t->chi_pp ); t->chi_pp = NULL;
+
+    TOCK(tim_post)
+    if (t->tim_step >= 0) mpi_tim_printf("%.2fs for rpa stepper\n", t->tim_post );
+    if (t->tim_post >= 0) mpi_tim_printf("%.2fs for rpa postproc\n", t->tim_post );
 }
 
 void tu_rpa_free( tu_rpa_t* t ) {

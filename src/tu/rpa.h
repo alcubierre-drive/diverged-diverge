@@ -24,6 +24,10 @@ struct tu_rpa_t {
     int nev;
     complex128_t* vecs;
     int legdim;
+
+    int tim_enabled;
+    double tim_step;
+    double tim_post;
 };
 
 tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_kidx );
