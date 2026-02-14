@@ -24,6 +24,9 @@ struct tu_rpa_t {
     int nev;
     complex128_t* vecs;
     int legdim;
+
+    int time_enabled;
+    double time_step, time_post_vert, time_post_eigen, time_post_apply_greens;
 };
 
 tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_kidx );

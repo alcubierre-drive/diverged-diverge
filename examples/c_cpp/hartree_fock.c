@@ -41,7 +41,6 @@ int main( int argc, char** argv ) {
     // self-consistency loop
     for (int it=0; it<maxiter; ++it) {
         diverge_hartree_fock_step( h, T );
-        diverge_hartree_fock_normalize_sigma( h );
 
         // linear mixing
         for (index_t i=0; i<nk_nb2; ++i)

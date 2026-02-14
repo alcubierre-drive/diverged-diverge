@@ -63,10 +63,20 @@ tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_ki
     memcpy( t->kidx, kidx, sizeof*t->kidx * n_kidx );
 
     t->chi_pp = calloc( t->n_kidx * POW4(m->n_orb*m->n_spin), sizeof*t->chi_pp );
+    t->time_enabled = 1; // XXX this has to be configuratble
     return t;
 }
 
+#define TICK \
+double tick = t->time_enabled ? diverge_mpi_wtime() : 0.0; \
+double tock;
+#define TOCK(WHICH) \
+tock = t->time_enabled ? diverge_mpi_wtime() : 0.0; \
+t->WHICH += tock - tick; \
+tick = tock;
+
 void tu_rpa_step( tu_rpa_t* t, double Lambda, double dLambda ) {
+    TICK
     diverge_model_t* m = t->m;
     complex128_t cLambda = I*Lambda;
     gf_complex_t* gbuf = m->internals->greens;
@@ -87,6 +97,7 @@ void tu_rpa_step( tu_rpa_t* t, double Lambda, double dLambda ) {
                 gbuf[IDX4(0,kk,so1,so3, NK,nso,nso)] * gbuf[IDX4(1,mk,so2,so4, NK,nso,nso)] +
                 gbuf[IDX4(1,mk,so3,so1, NK,nso,nso)] * gbuf[IDX4(0,kk,so4,so2, NK,nso,nso)] );
     }
+    TOCK(time_step)
 }
 
 // allocates and fills t->V_pp given chan following flow_step naming
@@ -95,18 +106,20 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan );
 static void tu_rpa_post_apply_greens( tu_rpa_t* t );
 
 void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter, double tol ) {
+    TICK
     mpi_log_printf( "RPA postprocessing (TU) with channels %s\n", chans );
     for (const char* c=chans; *c; c++)
         tu_rpa_post_vert( t, *c );
+    TOCK(time_post_vert)
     tu_rpa_post_apply_greens( t );
+    TOCK(time_post_apply_greens)
     t->legdim = POW2(t->m->n_orb*t->m->n_spin)*t->n_kidx;
-    transpose_inplace( t->V_pp, t->legdim );
 
     t->nev = nev;
     t->vecs = calloc(nev*t->legdim, sizeof*t->vecs);
     t->vals = calloc(MAX(t->legdim,2*nev), sizeof*t->vals);
-    if (!arnoldi_eigen_dense( tu_rpa_post_which_ev, t->legdim, nev, ncv, t->V_pp,
-                (complex128_t*)t->vals, t->vecs, tol, maxiter )) {
+    if (!arnoldi_eigen_dense_T( tu_rpa_post_which_ev, t->legdim, nev, ncv,
+                t->V_pp, (complex128_t*)t->vals, t->vecs, tol, maxiter )) {
         for (int i=0; i<nev; ++i) t->vals[i] = t->vals[2*i]; // copy real part
         for (int i=nev; i<t->legdim; ++i) t->vals[i] = 0.0; // set everything else to zero
     } else { // could not do arnoldi, fall back to dense eigen
@@ -121,6 +134,15 @@ void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter,
 
     free( t->V_pp );   t->V_pp   = NULL;
     free( t->chi_pp ); t->chi_pp = NULL;
+
+    TOCK(time_post_eigen)
+#define TPRINT(WHICH) \
+    if (t->time_##WHICH >= 0) \
+        mpi_tim_printf("%5.2fs for rpa " #WHICH "\n", t->time_##WHICH );
+    TPRINT(step)
+    TPRINT(post_vert)
+    TPRINT(post_apply_greens)
+    TPRINT(post_eigen)
 }
 
 void tu_rpa_free( tu_rpa_t* t ) {

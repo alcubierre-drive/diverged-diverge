@@ -276,8 +276,13 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             st->loopmax[1] = chanmax[4];
 
             ttt = tu_stepper_timings(st->tu_step, &idx);
-            VECTOR_RESIZE( st->timings, idx );
-            memcpy( st->timings, ttt, sizeof(diverge_timing_t)*idx );
+            VECTOR_RESERVE( st->timings, idx+1 );
+            memcpy( st->timings, ttt, sizeof*st->timings * (st->timings_sz=idx) );
+            if (st->tu_rpa) { VECTOR_PUSH_BACK( st->timings, (diverge_timing_t){
+                    .t=st->tu_rpa->time_step,
+                    .nam="tu_rpa_step",
+            }); }
+
             st->niter = tu_stepper_num_calls( st->tu_step );
             return;
         default:
