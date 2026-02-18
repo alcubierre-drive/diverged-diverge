@@ -211,10 +211,11 @@ local:
 };
 DIVERGE_UNSTABLE {
     global:
-        arnoldi_dense_matvec;
         arnoldi_dense_matvec_par;
+        arnoldi_dense_vecmat_par;
         arnoldi_eigen;
         arnoldi_eigen_dense;
+        arnoldi_eigen_dense_T;
         batched_eigen_get_nchunks;
         batched_eigen_r;
         batched_eigen_r_get_eigen3_mode;
