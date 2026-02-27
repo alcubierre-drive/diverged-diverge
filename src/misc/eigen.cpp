@@ -25,7 +25,26 @@ void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N 
     if (H != NULL)
         if (U != H)
             memcpy( U, H, sizeof(complex128_t)*N*N );
-    LAPACKE_zheevd( LAPACK_ROW_MAJOR, 'V', 'U', N, (lapack_complex_double*)U, N, E );
+
+    #ifdef DIVERGE_USE_ZHEEVD
+
+    int info = LAPACKE_zheevd( LAPACK_ROW_MAJOR, 'V', 'U', N, (lapack_complex_double*)U, N, E );
+    lapack_int m = N;
+
+    #else
+
+    lapack_int m = -1;
+    lapack_int* isuppz = (lapack_int*)malloc(2*N*sizeof*isuppz);
+    int info = LAPACKE_zheevr( LAPACK_ROW_MAJOR, 'V', 'A', 'U', N,
+            (lapack_complex_double*)U, N, 0.0, 0.0, 0, 0, -1.0, &m, E,
+            (lapack_complex_double*)U, N, isuppz );
+    free( isuppz );
+
+    #endif
+
+    if (m != N || info != 0) {
+        mpi_err_printf( "problem in zheevd/zheevr (%i)\n", info );
+    }
 }
 
 void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double* E, index_t N ) {
