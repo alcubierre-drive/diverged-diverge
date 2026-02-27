@@ -25,7 +25,7 @@ void single_eigen( const complex128_t* H, complex128_t* U, double* E, index_t N 
     if (H != NULL)
         if (U != H)
             memcpy( U, H, sizeof(complex128_t)*N*N );
-    LAPACKE_zheev( LAPACK_ROW_MAJOR, 'V', 'U', N, (lapack_complex_double*)U, N, E );
+    LAPACKE_zheevd( LAPACK_ROW_MAJOR, 'V', 'U', N, (lapack_complex_double*)U, N, E );
 }
 
 void single_svd( const complex128_t* H, complex128_t* U, complex128_t* V, double* E, index_t N ) {
