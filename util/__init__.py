@@ -2,6 +2,15 @@ from diverge.helpers import *
 from diverge.helpers import String, ReturnString, _libs
 from ctypes import *
 
+try:
+    MAX_N_ORBS
+except NameError:
+    MAX_N_ORBS = 32768
+try:
+    MAX_ORBS_PER_SITE
+except NameError:
+    MAX_ORBS_PER_SITE = 20
+
 def info():
     r"""
     print information on the shared library
@@ -255,7 +264,6 @@ if not _libs["divERGe"] is None:
     orb_g_2 = 22
     orb_g_3 = 23
     orb_g_4 = 24
-    MAX_ORBS_PER_SITE = 20
     class struct_sym_op_t(Structure):
         pass
     sym_op_t = struct_sym_op_t
@@ -496,10 +504,10 @@ if not _libs["divERGe"] is None:
         ('nkf', index_t * int(3)),
         ('patching', POINTER(struct_mom_patching_t)),
         ('n_ibz_path', index_t),
-        ('ibz_path', (c_double * int(3)) * int(32768)),
+        ('ibz_path', (c_double * int(3)) * int(MAX_N_ORBS)),
         ('n_orb', index_t),
         ('lattice', (c_double * int(3)) * int(3)),
-        ('positions', (c_double * int(3)) * int(32768)),
+        ('positions', (c_double * int(3)) * int(MAX_N_ORBS)),
         ('n_sym', index_t),
         ('orb_symmetries', c_voidp),
         ('rs_symmetries', ((c_double * int(3)) * int(3)) * int(256)),
