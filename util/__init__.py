@@ -8,15 +8,6 @@ MAX_N_SYM         = int(os.getenv("DIVERGE_MAX_N_SYM",       "256"))
 MAX_NAME_LENGTH   = int(os.getenv("DIVERGE_MAX_NAME_LENGTH","1024"))
 MAX_ORBS_PER_SITE = int(os.getenv("DIVERGE_MAX_ORBS_PER_SITE","20"))
 
-try:
-    MAX_N_ORBS
-except NameError:
-    MAX_N_ORBS = 32768
-try:
-    MAX_ORBS_PER_SITE
-except NameError:
-    MAX_ORBS_PER_SITE = 20
-
 def info():
     r"""
     print information on the shared library
