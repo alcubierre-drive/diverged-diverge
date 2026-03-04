@@ -50,6 +50,10 @@ struct tu_data_phonons_t {
     complex128_t* g_ob_qO_refined; // (n_refine, n_spin,n_spin,n_orbff, nO)
     complex128_t *gbuf_ref, *gbuf_ref_zero; // (n_refined, nO)
     double gbuf_ref_last_Lambda, gbuf_ref_zero_last_Lambda;
+
+    diverge_phonon_vertex_generator_t V;
+    diverge_flow_step_t* V_step;
+    void* V_ctx;
 };
 
 static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, index_t* n_ref );
@@ -62,6 +66,7 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
         bool ignore_imag_freq, bool enable_refinement ) {
     tu_data_phonons_t* t = calloc(1, sizeof*t);
+    t->V = NULL;
     t->pmod = ph;
     memcpy( t->nk, t->pmod->nk, sizeof t->nk );
     memcpy( t->nkf, t->pmod->nkf, sizeof t->nkf );
@@ -111,6 +116,13 @@ double tu_data_phonons_change_regulator( double reg ) {
         PHONON_FREQ_REGULATOR = reg;
         return old;
     }
+}
+
+void tu_data_phonons_set_vertex_generator( tu_data_phonons_t* t,
+        diverge_phonon_vertex_generator_t V, diverge_flow_step_t* step, void* ctx ) {
+    t->V = V;
+    t->V_step = step;
+    t->V_ctx = ctx;
 }
 
 static inline complex128_t gf_gp_plus_gm( const double E, const bool E_imag,
@@ -387,29 +399,33 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
     }
 
     if (calc) {
-        const complex128_t *g_ph_buf = t->g_ob_qO,
-                           *prop_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq, false );
         index_t kk_gamma = -1;
-        #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(3)
-        for (index_t kk=0; kk<my_nk; ++kk)
-        for (index_t l=0; l<linsz; ++l)
-        for (index_t r=0; r<linsz; ++r) {
-            if (t->enable_refinement && (t->idx_ibz_in_fullmesh[t->my_nk_off+kk] == 0)) {
-                // we found the gamma point and *dont* add the vertex to it!
-                // instead we save its index (only happens for one thread at a
-                // time)
-                #pragma omp atomic write
-                kk_gamma = kk;
-                continue;
+        if (t->V == NULL) {
+            const complex128_t *g_ph_buf = t->g_ob_qO,
+                               *prop_buf = tu_data_phonons_gfill( t, Lambda, t->ignore_imag_freq, false );
+            #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(3)
+            for (index_t kk=0; kk<my_nk; ++kk)
+            for (index_t l=0; l<linsz; ++l)
+            for (index_t r=0; r<linsz; ++r) {
+                if (t->enable_refinement && (t->idx_ibz_in_fullmesh[t->my_nk_off+kk] == 0)) {
+                    // we found the gamma point and *dont* add the vertex to it!
+                    // instead we save its index (only happens for one thread at a
+                    // time)
+                    #pragma omp atomic write
+                    kk_gamma = kk;
+                    continue;
+                }
+                complex128_t tmp = 0.0;
+                for (index_t b=0; b<nO; ++b) {
+                    complex128_t gl = conj(g_ph_buf[IDX3(kk,l,b, linsz,nO)]);
+                    complex128_t gr = g_ph_buf[IDX3(kk,r,b, linsz,nO)];
+                    complex128_t prop = prop_buf[IDX2(kk,b, nO)];
+                    tmp += gl * prop * gr;
+                }
+                buf[IDX3(kk,l,r, linsz,linsz)] += tmp;
             }
-            complex128_t tmp = 0.0;
-            for (index_t b=0; b<nO; ++b) {
-                complex128_t gl = conj(g_ph_buf[IDX3(kk,l,b, linsz,nO)]);
-                complex128_t gr = g_ph_buf[IDX3(kk,r,b, linsz,nO)];
-                complex128_t prop = prop_buf[IDX2(kk,b, nO)];
-                tmp += gl * prop * gr;
-            }
-            buf[IDX3(kk,l,r, linsz,linsz)] += tmp;
+        } else {
+            (*t->V)( t->V_step, Lambda, buf, t->V_ctx );
         }
 
         // now we take that saved index for the gamma point and perform the

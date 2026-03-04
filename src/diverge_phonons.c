@@ -257,3 +257,10 @@ refinement_t* diverge_phonons_get_refine( diverge_model_t* m, index_t* n_refine 
     if (!p) return NULL;
     return tu_data_phonons_get_refine( p, n_refine );
 }
+
+void diverge_phonons_set_vertex_generator( diverge_model_t* m,
+        diverge_phonon_vertex_generator_t V, diverge_flow_step_t* step, void* ctx ) {
+    tu_data_phonons_t* p = m->internals->tu_data_phonons;
+    if (!p) return;
+    tu_data_phonons_set_vertex_generator( p, V, step, ctx );
+}

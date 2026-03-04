@@ -12,6 +12,7 @@ extern "C" {
 // forward declaration
 typedef struct rs_hopping_t rs_hopping_t;
 typedef struct diverge_model_t diverge_model_t;
+typedef struct diverge_flow_step_t diverge_flow_step_t;
 
 /**
  * electron-phonon vertex structure in real space. Some member types are chosen
@@ -217,6 +218,23 @@ int diverge_phonons_asr_vertex_set_sorted_mode( int sorted );
  *      introspection.
  */
 double diverge_phonons_enable_refinement( diverge_model_t* el, int enable_refinement, double eps_mesh );
+
+/**
+ * typedef for custom electron-phonon vertex generation. TUFRG details have to
+ * be either put into ctx or obtained from step. should generate the
+ * Lambda-retarded vertex on this rank's IBZ wedge into buf
+ * (n_ibz,n_orbff,n_orbff).
+ */
+typedef void (*diverge_phonon_vertex_generator_t)( diverge_flow_step_t* step,
+        double Lambda, complex128_t* buf, void* ctx );
+
+/**
+ * allow for custom electron-phonon vertex generation (only for non-refined
+ * vertices!). reset to default by passing NULL for V (+the other variables if
+ * you wish).
+ */
+void diverge_phonons_set_vertex_generator( diverge_model_t* el,
+        diverge_phonon_vertex_generator_t V, diverge_flow_step_t* step, void* ctx );
 
 #ifdef __cplusplus
 }
