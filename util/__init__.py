@@ -3,11 +3,6 @@ from diverge.helpers import String, ReturnString, _libs
 from ctypes import *
 import os
 
-MAX_N_ORBS        = int(os.getenv("DIVERGE_MAX_N_ORBS",    "32768"))
-MAX_N_SYM         = int(os.getenv("DIVERGE_MAX_N_SYM",       "256"))
-MAX_NAME_LENGTH   = int(os.getenv("DIVERGE_MAX_NAME_LENGTH","1024"))
-MAX_ORBS_PER_SITE = int(os.getenv("DIVERGE_MAX_ORBS_PER_SITE","20"))
-
 def info():
     r"""
     print information on the shared library
@@ -24,13 +19,49 @@ def info():
 
 if not _libs["divERGe"] is None:
 
+    class struct_constants_t(Structure):
+        pass
+    struct_constants_t.__slots__ = [
+        '_MAX_N_ORBS',
+        '_USE_GF_FLOATS',
+        '_MAX_NAME_LENGTH',
+        '_MAX_N_SYM',
+        '_MAX_ORBS_PER_SITE',
+        '_DIVERGE_EPS_MESH',
+    ]
+    struct_constants_t._fields_ = [
+        ('_MAX_N_ORBS', c_int64),
+        ('_USE_GF_FLOATS', c_int64),
+        ('_MAX_NAME_LENGTH', c_int64),
+        ('_MAX_N_SYM', c_int64),
+        ('_MAX_ORBS_PER_SITE', c_int64),
+        ('_DIVERGE_EPS_MESH', c_double),
+    ]
+    constants_t = struct_constants_t
+    constants = _libs["divERGe"].get("diverge_constants", "cdecl")
+    constants.argtypes = []
+    constants.restype = constants_t
+    _CONSTANTS_ = constants()
+    MAX_N_ORBS = _CONSTANTS_._MAX_N_ORBS
+    USE_GF_FLOATS = _CONSTANTS_._USE_GF_FLOATS
+    MAX_NAME_LENGTH = _CONSTANTS_._MAX_NAME_LENGTH
+    MAX_N_SYM = _CONSTANTS_._MAX_N_SYM
+    MAX_ORBS_PER_SITE = _CONSTANTS_._MAX_ORBS_PER_SITE
+    DIVERGE_EPS_MESH = _CONSTANTS_._DIVERGE_EPS_MESH
+
     class struct_complex128_t(Structure):
         pass
     struct_complex128_t.__slots__ = [ 'x', 'y', ]
     struct_complex128_t._fields_ = [ ('x', c_double), ('y', c_double), ]
     complex128_t = struct_complex128_t
 
-    gf_complex_t = complex128_t
+    class struct_complex64_t(Structure):
+        pass
+    struct_complex64_t.__slots__ = [ 'x', 'y', ]
+    struct_complex64_t._fields_ = [ ('x', c_float), ('y', c_float), ]
+    complex64_t = struct_complex64_t
+
+    gf_complex_t = complex64_t if USE_GF_FLOATS else complex128_t
     index_t = c_int64
 
     class struct_lattice_t(Structure):
