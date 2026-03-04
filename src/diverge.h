@@ -51,3 +51,4 @@
 #include "diverge_run_tests.h"
 
 #include "diverge_hack.h"
+#include "diverge_constants.h"
