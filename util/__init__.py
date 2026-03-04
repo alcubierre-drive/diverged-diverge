@@ -428,7 +428,6 @@ if not _libs["divERGe"] is None:
         ('g', complex128_t),
     ]
 
-
     struct_mom_patching_t.__slots__ = [
         'n_patches',
         'patches',
@@ -1624,6 +1623,13 @@ if not _libs["divERGe"] is None:
     tu_formfactor_t = struct_tu_formfactor_t
     flow_step_t = struct_flow_step_t
     euler_t = struct_euler_t
+
+    phonon_vertex_generator_t = CFUNCTYPE(UNCHECKED(None), POINTER(flow_step_t), c_double,
+                                          POINTER(complex128_t), c_voidp)
+    phonons_set_vertex_generator = _libs["divERGe"].get("diverge_phonons_set_vertex_generator", "cdecl")
+    phonons_set_vertex_generator.argtypes = [POINTER(model_t), phonon_vertex_generator_t,
+                                             POINTER(flow_step_t), c_voidp]
+    phonons_set_vertex_generator.restype = None
 
     import numpy as np
     zeros = np.zeros

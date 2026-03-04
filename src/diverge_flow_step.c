@@ -641,7 +641,7 @@ index_t* diverge_flow_step_tuffidx_to_mi( const diverge_flow_step_t* st ) {
 }
 
 const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st ) {
-    if (st->type != diverge_tu) return NULL;
+    if (st->type != diverge_tu && st->type != diverge_tu_phonons) return NULL;
     tu_data_t* td = st->intls->tu_data;
     if (!td) return NULL;
     if (!td->symm) return NULL;
