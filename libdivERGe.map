@@ -8,6 +8,7 @@ DIVERGE_0.9 {
         diverge_compilation_status_numbers;
         diverge_compilation_status_version;
         diverge_constants;
+        diverge_constants_print;
         diverge_distribute;
         diverge_embed;
         diverge_euler_defaults_CPP;

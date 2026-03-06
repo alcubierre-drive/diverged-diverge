@@ -18,6 +18,7 @@ typedef struct {
 } diverge_constants_t;
 
 diverge_constants_t diverge_constants( void );
+void diverge_constants_print( void );
 
 #ifdef __cplusplus
 }
