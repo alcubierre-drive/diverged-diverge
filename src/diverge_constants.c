@@ -11,3 +11,13 @@ diverge_constants_t diverge_constants( void ) {
         ._DIVERGE_EPS_MESH = DIVERGE_EPS_MESH,
     };
 }
+
+void diverge_constants_print( void ) {
+    diverge_constants_t c = diverge_constants();
+    printf( "-DMAX_N_ORBS=%li ", c._MAX_N_ORBS );
+    printf( "-%cUSE_GF_FLOATS ", c._USE_GF_FLOATS ? 'D' : 'U' );
+    printf( "-DMAX_NAME_LENGTH=%li ", c._MAX_NAME_LENGTH );
+    printf( "-DMAX_N_SYM=%li ", c._MAX_N_SYM );
+    printf( "-DMAX_ORBS_PER_SITE=%li ", c._MAX_ORBS_PER_SITE );
+    printf( "-DDIVERGE_EPS_MESH=%.5e\n", c._DIVERGE_EPS_MESH );
+}
