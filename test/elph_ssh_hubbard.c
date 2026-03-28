@@ -112,5 +112,78 @@ CT_TEST_NAME(hubbard_SSH_model_nonSU2, "hubbard-ssh,non-SU2") {
     VECTOR_FREE(PCD_max);
 }
 
+CT_TEST_NAME(hubbard_SSH_model_self, "hubbard-ssh,SU2,self") {
+    diverge_model_t* m = hubbard_ssh_model(1, 12);
+    double nu = diverge_model_get_filling(m, NULL, -1);
+    diverge_flow_step_t* st = diverge_flow_step_init_any(m, "PCDS");
+    diverge_euler_t eu = diverge_euler_defaults_CPP();
+    double cmax[3], vmax;
+    VECTOR_INIT(double, PCD_max);
+    int ll = mpi_loglevel_get(); mpi_loglevel_set(4);
+    do {
+        diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
+        diverge_flow_step_refill( st, nu, NULL );
+        diverge_flow_step_chanmax( st, cmax );
+        diverge_flow_step_vertmax( st, &vmax );
+        double Pmax = diverge_flow_step_eigchan( st, 'p', 0 ),
+               Cmax = diverge_flow_step_eigchan( st, 'm', 0 ),
+               Dmax = diverge_flow_step_eigchan( st, 'h', 0 );
+        VECTOR_PUSH_BACK(PCD_max, Pmax);
+        VECTOR_PUSH_BACK(PCD_max, Cmax);
+        VECTOR_PUSH_BACK(PCD_max, Dmax);
+        mpi_log_printf("%s: %5.2f  %5.2f %5.2f %5.2f…", m->name, eu.Lambda, Pmax, Cmax, Dmax);
+        if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+    } while (diverge_euler_next(&eu, vmax));
+    mpi_loglevel_set(ll);
+    if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n" ), fflush(stderr);
+
+    diverge_flow_step_free( st );
+    diverge_model_free( m );
+
+    for (index_t i=0; i<PCD_max_sz/3; ++i) {
+        double PC = fabs(PCD_max[IDX2(i,0,3)] - PCD_max[IDX2(i,1,3)]),
+               PD = fabs(PCD_max[IDX2(i,0,3)] - PCD_max[IDX2(i,2,3)]);
+        CT_CHECK( PC < 1e-4 );
+        CT_CHECK( PD < 1e-4 );
+    }
+    VECTOR_FREE(PCD_max);
+}
+
+CT_TEST_NAME(hubbard_SSH_model_nonSU2_self, "hubbard-ssh,non-SU2,self") {
+    diverge_model_t* m = hubbard_ssh_model(0, 8);
+    double nu = diverge_model_get_filling(m, NULL, -1);
+    diverge_flow_step_t* st = diverge_flow_step_init_any(m, "PCDS");
+    diverge_euler_t eu = diverge_euler_defaults_CPP();
+    double cmax[3], vmax;
+    VECTOR_INIT(double, PCD_max);
+    int ll = mpi_loglevel_get(); mpi_loglevel_set(4);
+    do {
+        diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
+        diverge_flow_step_refill( st, nu, NULL );
+        diverge_flow_step_chanmax( st, cmax );
+        diverge_flow_step_vertmax( st, &vmax );
+        double Pmax = diverge_flow_step_eigchan( st, 'p', 0 ),
+               Cmax = diverge_flow_step_eigchan( st, 'c', 0 ),
+               Dmax = diverge_flow_step_eigchan( st, 'd', 0 );
+        VECTOR_PUSH_BACK(PCD_max, 0.5*Pmax);
+        VECTOR_PUSH_BACK(PCD_max, Cmax);
+        VECTOR_PUSH_BACK(PCD_max, Dmax);
+        mpi_log_printf("%s: %5.2f  %5.2f %5.2f %5.2f…", m->name, eu.Lambda, Pmax, Cmax, Dmax);
+        if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+    } while (diverge_euler_next(&eu, vmax));
+    mpi_loglevel_set(ll);
+    if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n" ), fflush(stderr);
+
+    diverge_flow_step_free( st );
+    diverge_model_free( m );
+
+    for (index_t i=0; i<PCD_max_sz/3; ++i) {
+        double PC = fabs(PCD_max[IDX2(i,0,3)] - PCD_max[IDX2(i,1,3)]),
+               PD = fabs(PCD_max[IDX2(i,0,3)] - PCD_max[IDX2(i,2,3)]);
+        CT_CHECK( PC < 1e-4 );
+        CT_CHECK( PD < 1e-4 );
+    }
+    VECTOR_FREE(PCD_max);
+}
 
 #endif

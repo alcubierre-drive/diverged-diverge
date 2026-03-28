@@ -195,7 +195,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
     }
     if (s->channel_selection[3]) {
         TICK_TOCK( s->w_time_self, tu_selfenergy_flow( s->self, s->internal_vertex->self_en,
-                    inout->Pch, inout->Cch, inout->Dch, s->coarseGF, 1. ) );
+                    inout->Pch, inout->Cch, inout->Dch, s->coarseGF, 1., lambda ) );
     }
 
     TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(inout, s->internal_vertex, dlambda) );

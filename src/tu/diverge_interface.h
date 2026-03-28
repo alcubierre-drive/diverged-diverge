@@ -84,6 +84,10 @@ struct tu_data_t {
     VECTOR_DECL( index_t, lmap_r )
     VECTOR_DECL( index_t, lmap_off )
     VECTOR_DECL( index_t, lmap_len )
+
+    // only used to grab the phonons; or see if they are active. Do not modify
+    // yourself (only in diverge_model_internals_tu_phonons)
+    tu_data_phonons_t* phonons_reference;
 };
 
 // tu info struct contains all relevant informations for the TU code

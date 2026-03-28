@@ -6,6 +6,7 @@ LINALG_IMPLEMENT
 
 #include "selfenergy.h"
 #include "vertex.h"
+#include "phonons.h"
 #include "vertex_details.h"
 
 static void apply_circ_cutoff( complex128_t* rs_ary/*(ostride,nk[0],nk[1],nk[2],istride)*/,
@@ -72,17 +73,17 @@ static void generate_fftw_plans( tu_selfenergy_t* s );
 
 // different flows to dispatch to
 static void selfenergy_flow_rs( tu_selfenergy_t* s, complex128_t* self_en,
-        const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
-        const complex128_t* GF, double prefac_sub );
+        const complex128_t* P_in, complex128_t* C_in, complex128_t* D_in,
+        const complex128_t* GF, double prefac_sub, double lambda );
 static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
-        const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
-        const complex128_t* GF, double prefac_sub );
+        const complex128_t* P_in, complex128_t* C_in, complex128_t* D_in,
+        const complex128_t* GF, double prefac_sub, double lambda );
 static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
-        const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
-        const complex128_t* GF, double prefac_sub );
+        const complex128_t* P_in, complex128_t* C_in, complex128_t* D_in,
+        const complex128_t* GF, double prefac_sub, double lambda );
 static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
-        const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
-        const complex128_t* GF, double prefac_sub );
+        const complex128_t* P_in, complex128_t* C_in, complex128_t* D_in,
+        const complex128_t* GF, double prefac_sub, double lambda );
 
 // calculates buf[i] = a*Reco(inp)[i] + b*buf[i]
 static inline void reco( const char channel, tu_selfenergy_t* s, complex128_t* buf,
@@ -198,17 +199,17 @@ void tu_selfenergy_free( tu_selfenergy_t* s ) {
 
 // only a dispatcher
 void tu_selfenergy_flow( tu_selfenergy_t* s, complex128_t* self_en,
-        const complex128_t* P_in, const complex128_t* C_in,
-        const complex128_t* D_in, const complex128_t* GF,
-        const double prefac_sub ) {
+        const complex128_t* P_in, complex128_t* C_in,
+        complex128_t* D_in, const complex128_t* GF,
+        const double prefac_sub, const double lambda ) {
     if (s->nk == 1 && !s->SU2) {
-        selfenergy_flow_rs( s, self_en, P_in, C_in, D_in, GF, prefac_sub);
+        selfenergy_flow_rs( s, self_en, P_in, C_in, D_in, GF, prefac_sub, lambda );
     } else if(s->nk == 1 && s->SU2) {
-        selfenergy_flow_rs_SU2( s, self_en, P_in, C_in, D_in, GF, prefac_sub );
+        selfenergy_flow_rs_SU2( s, self_en, P_in, C_in, D_in, GF, prefac_sub, lambda );
     } else if(s->nk != 1 && !s->SU2) {
-        selfenergy_flow_mom( s, self_en, P_in, C_in, D_in, GF, prefac_sub );
+        selfenergy_flow_mom( s, self_en, P_in, C_in, D_in, GF, prefac_sub, lambda );
     } else {
-        selfenergy_flow_mom_SU2( s, self_en, P_in, C_in, D_in, GF, prefac_sub );
+        selfenergy_flow_mom_SU2( s, self_en, P_in, C_in, D_in, GF, prefac_sub, lambda );
     }
 }
 
@@ -448,8 +449,12 @@ void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) 
 }
 
 static void selfenergy_flow_rs( tu_selfenergy_t* s, complex128_t* self_en,
-        const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
-        const complex128_t* GF, double pref_subst ) {
+        const complex128_t* P_in, complex128_t* C_in, complex128_t* D_in,
+        const complex128_t* GF, double pref_subst, double lambda ) {
+    tu_data_phonons_t* phonons = s->tu_data->phonons_reference;
+    // TODO: The non-SU2 one might be wrong (it kinda breaks crossing, but on the other hand not really...
+    if (phonons && D_in && s->D_flow) tu_data_phonons_gen_vert( phonons, 0.0, D_in, 1.0 );
+    if (phonons && C_in && s->C_flow) tu_data_phonons_gen_vert( phonons, lambda, C_in, -1.0 );
     // selfenergy flow equation
     const index_t blocksize_self = POW2(s->n_orb*s->n_spin);
     const double prefac = pref_subst/(2.0*M_PI);
@@ -541,11 +546,14 @@ static void selfenergy_flow_rs( tu_selfenergy_t* s, complex128_t* self_en,
             self_en[o1+s->n_orb*(s1+s->n_spin*(o3+s->n_orb*(s3)))] -=prefac*tmp;
         }
     }
+    if (phonons && D_in && s->D_flow) tu_data_phonons_gen_vert( phonons, 0.0, D_in, -1.0 );
+    if (phonons && C_in && s->C_flow) tu_data_phonons_gen_vert( phonons, lambda, C_in, 1.0 );
 }
 
 static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
-        const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
-        const complex128_t* GF, double pref_subst ) {
+        const complex128_t* P_in, complex128_t* C_in, complex128_t* D_in,
+        const complex128_t* GF, double pref_subst, double lambda ) {
+    tu_data_phonons_t* phonons = s->tu_data->phonons_reference;
     // selfenergy flow equation
     const index_t blocksize_self = POW2(s->n_orb*s->n_spin);
     const double prefac = pref_subst/(2.0*M_PI);
@@ -553,6 +561,8 @@ static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
     ZERO_OUT( self_en, blocksize_self );
 
     if (s->D_flow) {
+        // Hartree D
+        if (phonons) tu_data_phonons_gen_vert( phonons, 0.0, D_in, 1.0 );
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t o1=0; o1<s->n_orb; ++o1)
         for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
@@ -565,6 +575,9 @@ static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
             }
             self_en[o1+s->n_orb*o3] = -4.0*prefac*tmp;
         }
+        if (phonons) tu_data_phonons_gen_vert( phonons, 0.0, D_in, -1.0 );
+        // Fock D
+        if (phonons) tu_data_phonons_gen_vert( phonons, lambda, D_in, 1.0 );
         #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
         for (index_t o3=0; o3<s->n_orb; ++o3)
         for (index_t o1=0; o1<s->n_orb; ++o1) {
@@ -579,6 +592,7 @@ static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
             }
             self_en[o1+s->n_orb*o3] -= prefac*2.0*tmp;
         }
+        if (phonons) tu_data_phonons_gen_vert( phonons, lambda, D_in, -1.0 );
     }
     if (s->C_flow && C_in) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
@@ -644,8 +658,12 @@ static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
 }
 
 static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
-        const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
-        const complex128_t* GF, double pref_subst ) {
+        const complex128_t* P_in, complex128_t* C_in, complex128_t* D_in,
+        const complex128_t* GF, double pref_subst, double lambda ) {
+    tu_data_phonons_t* phonons = s->tu_data->phonons_reference;
+    // TODO: The non-SU2 one might be wrong (it kinda breaks crossing, but on the other hand not really...
+    if (phonons && D_in && s->D_flow) tu_data_phonons_gen_vert( phonons, 0.0, D_in, 1.0 );
+    if (phonons && C_in && s->C_flow) tu_data_phonons_gen_vert( phonons, lambda, C_in, -1.0 );
     // selfenergy flow equation
     const index_t blocksize_self = POW2(s->n_orb*s->n_spin)*s->nktot;
     ZERO_OUT( self_en, blocksize_self );
@@ -805,6 +823,8 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
             self_en[ridx+s->nk*(o1+s->n_orb*(s1+s->n_spin*(o3+s->n_orb*s3)))] -= tmp;
         }
     }
+    if (phonons && D_in && s->D_flow) tu_data_phonons_gen_vert( phonons, 0.0, D_in, -1.0 );
+    if (phonons && C_in && s->C_flow) tu_data_phonons_gen_vert( phonons, lambda, C_in, 1.0 );
 
     apply_circ_cutoff( self_en, s->model->nk, 1, POW2(s->n_orb*s->n_spin), s );
 
@@ -832,17 +852,16 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
 }
 
 static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
-        const complex128_t* P_in, const complex128_t* C_in, const complex128_t* D_in,
-        const complex128_t* GF, double pref_subst ) {
+        const complex128_t* P_in, complex128_t* C_in, complex128_t* D_in,
+        const complex128_t* GF, double pref_subst, double lambda ) {
+    tu_data_phonons_t* phonons = s->tu_data->phonons_reference;
     // selfenergy flow equation
     const index_t blocksize_self = s->nktot*POW2(s->n_spin*s->n_orb);
     //set all elements to zero
     ZERO_OUT( self_en, blocksize_self );
     ZERO_OUT( s->ff_helper, blocksize_self );
-
-
-    // D-channel -> real part as D is freq. independent => same for all frequencies
-    // again catch the zero frequency independently
+    // Hartree D/Fock C
+    if (phonons && D_in && s->D_flow) tu_data_phonons_gen_vert( phonons, 0.0, D_in, 1.0 );
     ZERO_OUT( s->interpol_helper, s->n_orbff*POW2(s->n_spin) );
     if(diverge_mpi_comm_rank() == 0) {
         if (s->D_flow || s->C_flow ) {
@@ -894,7 +913,10 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         if (s->C_flow || s->D_flow)
             FFTW_EXECUTE_DFT(s->ifft_self_oop,s->ff_helper,self_en);
     }
+    if (phonons && D_in && s->D_flow) tu_data_phonons_gen_vert( phonons, 0.0, D_in, -1.0 );
 
+    // Fock D/Hartree C
+    if (phonons && D_in && s->D_flow) tu_data_phonons_gen_vert( phonons, lambda, D_in, 1.0 );
     if (s->C_flow && C_in)
         reco('C',s,s->reco_helper,C_in,1.0,0.0);
 
@@ -905,6 +927,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
             reco('D',s,s->reco_helper,D_in,-0.5,1.0);
         }
     }
+    if (phonons && D_in && s->D_flow) tu_data_phonons_gen_vert( phonons, lambda, D_in, -1.0 );
 
     if (s->C_flow || s->D_flow) {
         memcpy(s->greensfkt_helper,GF, sizeof(*s->greensfkt_helper)*POW2(s->n_spin*s->n_orb)*s->nk);

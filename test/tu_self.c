@@ -101,11 +101,11 @@ CT_TEST_NAME(real_vs_k_SU2,"self,real:mom,SU2") {
     tu_prop_GF_for_self(PropMix, gfmix);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
-                    VertOrb->Dch, PropOrb->gf_buf, 1.0);
+                    VertOrb->Dch, PropOrb->gf_buf, 1.0, Lambda);
     tu_selfenergy_flow(selfMom, VertMom->self_en, VertMom->Pch, VertMom->Cch,
-                    VertMom->Dch, PropMom->gf_buf, 1.0);
+                    VertMom->Dch, PropMom->gf_buf, 1.0, Lambda);
     tu_selfenergy_flow(selfMix, VertMix->self_en, VertMix->Pch, VertMix->Cch,
-                    VertMix->Dch, gfmix, 1.0);
+                    VertMix->Dch, gfmix, 1.0, Lambda);
     CT_CHECK(cabs(trace_cd(PropMom->gf_buf,PropMom->n_orb,PropMom->nk)
                   -trace_cd(PropMix->gf_buf,PropMix->n_orb,PropMix->nk)) < 1e-8);
     free(gfmix);
@@ -175,10 +175,10 @@ CT_TEST_NAME(honey,"self,honey") {
                   -trace_batch_lin(gfmix2,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nk)) < 1e-8);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
-                    VertOrb->Dch, gfmix2, 1.0);
+                    VertOrb->Dch, gfmix2, 1.0, Lambda);
 
     tu_selfenergy_flow(selfMix, VertMix->self_en, VertMix->Pch, VertMix->Cch,
-                    VertMix->Dch, gfmix, 1.0);
+                    VertMix->Dch, gfmix, 1.0, Lambda);
     free(gfmix);
     free(gfmix2);
 
@@ -233,10 +233,10 @@ CT_TEST_NAME(honey_sym,"self,honeycomb,sym") {
                   -trace_batch_lin(gfmix2,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nk)) < 1e-8);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
-                    VertOrb->Dch, gfmix2, 1.0);
+                    VertOrb->Dch, gfmix2, 1.0, Lambda);
 
     tu_selfenergy_flow(selfMix, VertMix->self_en, VertMix->Pch, VertMix->Cch,
-                    VertMix->Dch, gfmix, 1.0);
+                    VertMix->Dch, gfmix, 1.0, Lambda);
     free(gfmix);
     free(gfmix2);
 
@@ -301,10 +301,10 @@ CT_TEST_NAME(honey_rashba,"self,honeycomb,rashba") {
                   -trace_batch_lin(gfmix2,PropOrb->n_orb*VertOrb->n_spin,PropOrb->nk)) < 1e-8);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
-                    VertOrb->Dch, gfmix2, 1.0);
+                    VertOrb->Dch, gfmix2, 1.0, Lambda);
 
     tu_selfenergy_flow(selfMix, VertMix->self_en, VertMix->Pch, VertMix->Cch,
-                    VertMix->Dch, gfmix, 1.0);
+                    VertMix->Dch, gfmix, 1.0, Lambda);
     free(gfmix);
     free(gfmix2);
 
@@ -358,9 +358,9 @@ CT_TEST_NAME(honey_rash_ref,"self,rashba,refined") {
                   -trace_cd(orb->internals->greens,orb->n_orb*orb->n_spin,PropOrb->nktot)) < 1e-8);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
-                    VertOrb->Dch, gfmix2, 1.0);
+                    VertOrb->Dch, gfmix2, 1.0, Lambda);
     tu_selfenergy_flow(selfMix, VertMix->self_en, VertMix->Pch, VertMix->Cch,
-                    VertMix->Dch, gfmix, 1.0);
+                    VertMix->Dch, gfmix, 1.0, Lambda);
 
     free(gfmix);
     free(gfmix2);
@@ -416,9 +416,9 @@ CT_TEST_NAME(hub_refined,"self,refined") {
     tu_prop_GF_for_self(PropOrb, gf3);
 
     tu_selfenergy_flow(selfOrb, VertOrb->self_en, VertOrb->Pch, VertOrb->Cch,
-                    VertOrb->Dch, gfmix2, 1.0);
+                    VertOrb->Dch, gfmix2, 1.0, Lambda);
     tu_selfenergy_flow(selfMix, VertMix->self_en, VertMix->Pch, VertMix->Cch,
-                    VertMix->Dch, gfmix, 1.0);
+                    VertMix->Dch, gfmix, 1.0, Lambda);
 
     fftw_execute_dft(tu_selfenergy_get_ifft_self_ip(selfOrb), (fftw_complex*)gfmix2, (fftw_complex*)gfmix2);
     tu_selfenergy_fft_interpolate(selfOrb, gfmix2);
