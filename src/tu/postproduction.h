@@ -33,7 +33,7 @@ typedef struct {
     bool susc_ff;
     bool susc_full;
     bool lingap_atscale;
-    bool save_self;
+    int save_self;
     bool save_full;
     bool save_symmetries;
 
@@ -42,6 +42,9 @@ typedef struct {
     int rpa_ncv;
     int rpa_maxiter;
     double rpa_tol;
+
+    float self_rs_dist;
+    float self_rs_mval;
 } tu_postproduction_conf_t;
 #ifndef __cplusplus
 static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
@@ -59,7 +62,7 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .susc_ff = false,
     .susc_full = false,
     .lingap_atscale = false,
-    .save_self = false,
+    .save_self = 0,
     .save_full = false,
     .save_symmetries = false,
     .rpa_chans = "CD",
@@ -67,6 +70,8 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .rpa_ncv = 100,
     .rpa_maxiter = 100,
     .rpa_tol = 1.e-6,
+    .self_rs_dist = 4.01,
+    .self_rs_mval = 1.e-4,
 };
 #endif // __cplusplus
 

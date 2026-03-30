@@ -12,6 +12,7 @@ LINALG_IMPLEMENT
 #include "../misc/batched_gemms.h"
 #include "../misc/eigen.h"
 #include "../misc/gemm.h"
+#include "../misc/ham2hop.h"
 #include "../diverge_post.h"
 #include "rpa.h"
 
@@ -34,6 +35,10 @@ static void _susc_o14k(const diverge_model_t* model, const complex128_t* inp, co
 static inline void fill_Rvec_from_vec( const diverge_model_t* model, const claV3i_t* Rptr, double* Rvec );
 static void construct_multiindex_maps( tu_postproduction_t* p );
 
+static const index_t rs_hopping_dtype[] = { offsetof(rs_hopping_t, R),
+    offsetof(rs_hopping_t, o1), offsetof(rs_hopping_t, o2),
+    offsetof(rs_hopping_t, s1), offsetof(rs_hopping_t, s2),
+    offsetof(rs_hopping_t, t), sizeof(rs_hopping_t), };
 
 struct tu_postproduction_t {
     tu_postproduction_conf_t c;
@@ -622,8 +627,17 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     const index_t n_orb = p->model->n_orb;
 
     index_t size_self = 0;
-    if (p->vertex->use_self && p->c.save_self)
-        size_self = POW2(n_orb*p->vertex->n_spin)*p->vertex->nk*p->vertex->nkf;
+    rs_hopping_t* hop_self = NULL;
+    if (p->vertex->use_self) {
+        if (p->c.save_self > 0) {
+            size_self = POW2(n_orb*p->vertex->n_spin)*p->vertex->nk*p->vertex->nkf;
+        } else if (p->c.save_self < 0) {
+            double latnorm2 = POW2(p->model->lattice[0][0]) +
+                POW2(p->model->lattice[0][1]) + POW2(p->model->lattice[0][2]);
+            hop_self = diverge_model_ham2hop_fg( p->model, p->c.self_rs_mval,
+                    sqrt(latnorm2) * p->c.self_rs_dist, &size_self, p->vertex->self_en );
+        }
+    }
 
     mpi_vrb_printf_all( "rank %d: try opening file %s\n", my_rank, filename );
     void* file = diverge_mpi_open_file(filename);
@@ -721,7 +735,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[i] = p->tu_suscD_ff,++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
     header[i] = size_self,++i;
-    header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+    header[i] = header[i-2] + header[i-1]*(hop_self ? sizeof(rs_hopping_t) : sizeof(complex128_t)), ++i;
     if (p->c.save_full && !tu_data->tu_selfenergy_flow) {
         header[i] = p->vertex->P_flow ? POW2(linsize)*p->vertex->nk: 0,++i;
         header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
@@ -802,6 +816,10 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     if (p->rpa) header[i] = p->rpa->n_kidx;
     ++i;
 
+    header[i] = hop_self ? 1 : 0; ++i;
+    header[i] = header[i-3] + header[i-2]*sizeof(index_t); ++i;
+    header[i] = sizeof(rs_hopping_dtype)/sizeof(rs_hopping_dtype[0]); ++i;
+
     assert(i < 125);
     // this flag is to indicate our header is actually 256 long. Only supported after v0.8
     header[125] = ~(header[125]);
@@ -849,6 +867,8 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_maxiter);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_tol);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_sorting);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_selfenergy_rs_dist);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_selfenergy_rs_mval);
     assert(i <= 256);
 
     index_t my_nk_off = p->vertex->my_nk_off;
@@ -920,10 +940,13 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
                             new_off,scdou*p->tu_suscD_ff);
     }
 
-    if (p->vertex->use_self && p->c.save_self) {
+    if (p->vertex->use_self && p->c.save_self > 0) {
         new_off = diverge_mpi_write_byte_to_file_master(file, p->vertex->self_en,
                         new_off,scdou*size_self);
-
+    } else if (p->vertex->use_self && p->c.save_self < 0) {
+        new_off = diverge_mpi_write_byte_to_file_master(file, hop_self,
+                new_off, sizeof(rs_hopping_t)*size_self);
+        free(hop_self);
     }
     if (p->c.save_full && !tu_data->tu_selfenergy_flow) {
         index_t vsize = POW2(linsize)*p->vertex->nk*sizeof(complex128_t);
@@ -982,6 +1005,9 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->kidx,
                 new_off, sizeof*p->rpa->kidx * p->rpa->n_kidx);
     }
+
+    new_off = diverge_mpi_write_byte_to_file_master(file, rs_hopping_dtype,
+            new_off, sizeof(rs_hopping_dtype));
 
     if (new_off != header[127])
         mpi_wrn_printf( "offset of file (%li) dosn't match size (%li)\n", new_off, header[127] );

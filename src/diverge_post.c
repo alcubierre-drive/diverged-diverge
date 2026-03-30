@@ -131,6 +131,8 @@ static void tu_pp( diverge_flow_step_t* st,
     tc.rpa_maxiter = pc->tu_rpa_maxiter;
     tc.rpa_tol     = pc->tu_rpa_tol;
     tu_rpa_post_set_which_ev( pc->tu_rpa_sorting );
+    tc.self_rs_dist = pc->tu_selfenergy_rs_dist;
+    tc.self_rs_mval = pc->tu_selfenergy_rs_mval;
 
     // DEVELOPERS
     //
