@@ -264,6 +264,7 @@ DIVERGE_UNSTABLE {
         diverge_model_dos;
         diverge_model_ham2hop;
         diverge_model_ham2hop_fg;
+        diverge_model_ham2hop_swap_orbs;
         diverge_model_ldos;
         diverge_model_unique_distances;
         diverge_model_unique_distances_length;
