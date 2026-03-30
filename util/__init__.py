@@ -678,6 +678,13 @@ if not _libs["divERGe"] is None:
     supercell_configure.argtypes = [supercell_configure_t]
     supercell_configure.restype = supercell_configure_t
 
+    model_ham2hop = _libs["divERGe"].get("diverge_model_ham2hop", "cdecl")
+    model_ham2hop.argtypes = [POINTER(model_t), c_double, c_voidp]
+    model_ham2hop.restypes = c_voidp
+    model_ham2hop_fg = _libs["divERGe"].get("diverge_model_ham2hop_fg", "cdecl")
+    model_ham2hop_fg.argtypes = [POINTER(model_t), c_double, c_voidp, c_voidp]
+    model_ham2hop_fg.restypes = c_voidp
+
     linspace = _libs["divERGe"].get("diverge_linspace", "cdecl")
     linspace.argtypes = [c_double, c_double, index_t]
     linspace.restype = c_voidp
