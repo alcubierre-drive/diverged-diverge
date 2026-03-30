@@ -355,6 +355,14 @@ of the input Bloch Hamiltonian (obtained via lattice Fourier transform).</p>
 </dl>
 </dd></dl>
 
+<dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_model_ham2hop_fg">
+<a class="reference internal" href="Model.html#c.rs_hopping_t" title="rs_hopping_t"><span class="n"><span class="pre">rs_hopping_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_ham2hop_fg</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">hoplim</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">n_hop</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">H0</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_ham2hop_fg" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/ham2hop.h#L33"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>same as <a class="reference internal" href="#c.diverge_model_ham2hop" title="diverge_model_ham2hop"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_ham2hop()</span></code></a>, but with explicit control over the
+buffer which is used for the Hamiltonian. Very useful to, e.g., extract the
+selfenergy in efficient representation at the end of the flow.</p>
+</dd></dl>
+
 </section>
 <section id="hamiltonians-at-specific-momentum-points">
 <h2>Hamiltonians at Specific Momentum Points<a class="headerlink" href="#hamiltonians-at-specific-momentum-points" title="Link to this heading"></a></h2>
