@@ -9,5 +9,9 @@ void ldos_kernel_gpu( const double* E, index_t nE, const complex128_t* U, index_
     (void)E; (void)nE; (void)U; (void)nos; (void)omega; (void)n_omega; (void)eta; (void)window; (void)ldos;
     mpi_err_printf( "CUDA NOT COMPILED IN\n" );
 }
+void ldos_kernel_gpu_setsort( int gpusort ) {
+    (void)gpusort;
+    mpi_err_printf( "CUDA NOT COMPILED IN\n" );
+}
 
 #endif // USE_CUDA
