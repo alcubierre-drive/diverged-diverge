@@ -1280,6 +1280,8 @@ if not _libs["divERGe"] is None:
         'tu_rpa_maxiter',
         'tu_rpa_tol',
         'tu_rpa_sorting',
+        'tu_selfenergy_rs_dist',
+        'tu_selfenergy_rs_mval',
     ]
     struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
@@ -1309,7 +1311,7 @@ if not _libs["divERGe"] is None:
         ('tu_lingap', c_bool),
         ('tu_susceptibilities_full', c_bool),
         ('tu_susceptibilities_ff', c_bool),
-        ('tu_selfenergy', c_bool),
+        ('tu_selfenergy', c_int),
         ('tu_channels', c_bool),
         ('tu_symmetry_maps', c_bool),
         ('tu_n_decomp_values', index_t),
@@ -1324,6 +1326,8 @@ if not _libs["divERGe"] is None:
         ('tu_rpa_maxiter', c_int),
         ('tu_rpa_tol', c_double),
         ('tu_rpa_sorting', c_char),
+        ('tu_selfenergy_rs_dist', c_float),
+        ('tu_selfenergy_rs_mval', c_float),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 
