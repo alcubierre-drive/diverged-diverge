@@ -5,6 +5,15 @@
 #include <omp.h>
 #include "shared_mem.h"
 
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#include <thrust/sequence.h>
+#include <thrust/sort.h>
+#include <thrust/copy.h>
+static void _gpu_sort_doubles_indirect_( const double* vals, index_t* idxs, index_t N );
+static int USE_GPU_ARGSORT = 0;
+void ldos_kernel_gpu_setsort( int gpusort ) { USE_GPU_ARGSORT = gpusort; }
+
 __host__ __device__
 static inline index_t find_bin_irreg( const double* vals, index_t n_vals, double test ) {
     if (test >= vals[n_vals-1]) return n_vals-1;
@@ -145,9 +154,13 @@ void ldos_kernel_gpu( const double* E_, index_t nE, const complex128_t* U_, inde
     // GPU sorting doesn't really work...
     index_t* E_sort = (index_t*)shared_calloc( nE, sizeof*E_sort );
     if (shared_exclusive_enter( E_sort ) == 1) {
-        #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (index_t i=0; i<nE; ++i) E_sort[i] = i;
-        _dos_sort_doubles_indirect_( E_sort, nE, E_ );
+        if (USE_GPU_ARGSORT) {
+            _gpu_sort_doubles_indirect_( E_, E_sort, nE );
+        } else {
+            #pragma omp parallel for num_threads(diverge_omp_num_threads())
+            for (index_t i=0; i<nE; ++i) E_sort[i] = i;
+            _dos_sort_doubles_indirect_( E_sort, nE, E_ );
+        }
     }
     shared_exclusive_wait( E_sort );
 
@@ -232,3 +245,11 @@ void ldos_kernel_gpu( const double* E_, index_t nE, const complex128_t* U_, inde
     shared_free( E );
 }
 
+static void _gpu_sort_doubles_indirect_( const double* vals, index_t* idxs, index_t N ) {
+    thrust::device_vector<double> d_values(vals, vals + N);
+    thrust::device_vector<index_t> d_indices(N);
+    thrust::sequence(d_indices.begin(), d_indices.end());
+    thrust::sort_by_key(d_values.begin(), d_values.end(), d_indices.begin());
+    thrust::host_vector<index_t> h_indices = d_indices;
+    memcpy( idxs, h_indices.data(), sizeof*idxs * N );
+}

@@ -11,6 +11,9 @@
 #include "misc/kmeans_lloyd.h"
 #include "misc/batched_eigen.h"
 #include "misc/shared_mem.h"
+#include "misc/qnan.h"
+#include "misc/dos.cu.h"
+
 #include "tu/propagator_cpu_mpi.h"
 #include "tu/propagator_cpu_mpi_fft.h"
 
@@ -195,6 +198,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("batched_eigen_cpu_nthreads") {
         batched_eigen_set_nthreads(atoi(val));
+    }
+    CHECKKEY("ldos_kernel_gpu_setsort") {
+        ldos_kernel_gpu_setsort(atoi(val));
     }
 
     if (key_) {
