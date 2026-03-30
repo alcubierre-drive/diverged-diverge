@@ -649,7 +649,7 @@ if not _libs["divERGe"] is None:
     model_ham2hop.argtypes = [POINTER(model_t), c_double, c_voidp]
     model_ham2hop.restypes = c_voidp
     model_ham2hop_fg = _libs["divERGe"].get("diverge_model_ham2hop_fg", "cdecl")
-    model_ham2hop_fg.argtypes = [POINTER(model_t), c_double, c_voidp, c_voidp]
+    model_ham2hop_fg.argtypes = [POINTER(model_t), c_double, c_double, c_voidp, c_voidp]
     model_ham2hop_fg.restypes = c_voidp
     model_ham2hop_swap_orbs = _libs["divERGe"].get("diverge_model_ham2hop_swap_orbs", "cdecl")
     model_ham2hop_swap_orbs.argtypes = []
