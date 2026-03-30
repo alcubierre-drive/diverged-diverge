@@ -619,10 +619,13 @@ class diverge_post_tu:
         n_orbff = self.n_orbff
 
         _f_bytes = numpy_fromfile(fname, dtype=np.byte)
-        def get_array( offset_bytes, count, dtype ):
-            return _f_bytes[offset_bytes:offset_bytes + count*dtype().itemsize].view( dtype=dtype )
-        def get_array_header( iL, dtype ):
-            res = get_array( d_header[iL[0]], d_header[iL[0]+1], dtype )
+        def get_array( offset_bytes, count, dtype, call=True ):
+            if call:
+                return _f_bytes[offset_bytes:offset_bytes + count*dtype().itemsize].view( dtype=dtype )
+            else:
+                return _f_bytes[offset_bytes:offset_bytes + count*dtype.itemsize].view( dtype=dtype )
+        def get_array_header( iL, dtype, call=True ):
+            res = get_array( d_header[iL[0]], d_header[iL[0]+1], dtype, call=call )
             iL[0] = iL[0] + 2
             return res
 
@@ -739,10 +742,21 @@ class diverge_post_tu:
         if(d_header[iL[0]-1] > 0):
             self.Dsusc_ff = self.Dsusc_ff.reshape(susc_shape)
 
-        #: Self-energy at the critical scale ([n_orb*n_spin]**2,nktot)
-        self.selfenergy = get_array_header( iL, np.complex128 )
-        if(d_header[iL[0]-1] > 0):
-            self.selfenergy = self.selfenergy.reshape(self.nktot,n_spin,n_orb,n_spin,n_orb)
+        if d_header[120]:
+            xL = [121]
+            offsets_size = get_array_header(xL, np.int64)
+            self.rs_hopping_t = np.dtype(dict(
+                names=['R', 'o1', 'o2', 's1', 's2', 't'],
+                formats=['3i8', 'i8', 'i8', 'i8', 'i8', 'c16'],
+                offsets=offsets_size[:-1],
+                itemsize=offsets_size[-1]
+            ))
+            self.selfenergy = get_array_header( iL, self.rs_hopping_t, call=False )
+        else:
+            #: Self-energy at the critical scale; either in real space or in k space ([n_orb*n_spin]**2,nktot)
+            self.selfenergy = get_array_header( iL, np.complex128 )
+            if (d_header[iL[0]-1] > 0):
+                self.selfenergy = self.selfenergy.reshape(self.nktot,n_spin,n_orb,n_spin,n_orb)
 
         #: P channel on full PZ
         self.Pchannel = get_array_header( iL, np.complex128 )

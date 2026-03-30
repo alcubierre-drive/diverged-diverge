@@ -103,8 +103,13 @@ struct diverge_postprocess_conf_t {
     bool    tu_susceptibilities_full;
     /** calculate the susceptibilities from tufrg in formfactor space */
     bool    tu_susceptibilities_ff;
-    /** store the selfenergy if it was included in the calculation */
-    bool    tu_selfenergy;
+    /**
+     * store the selfenergy if it was included in the calculation. Iff < 0,
+     * transform the selfenergy to real space hopping parameters using
+     * :c:func:`diverge_model_ham2hop_fg` (see :c:member:`tu_selfenergy_rs_dist`
+     * and :c:member:`tu_selfenergy_rs_mval`).
+     */
+    int     tu_selfenergy;
     /** store the vertices in the formfactor basis (*requires a lot of memory*) */
     bool    tu_channels;
     /** store the symmetry transfromations for the left multiindex (works for eigenvectors) */
@@ -179,6 +184,11 @@ struct diverge_postprocess_conf_t {
      */
     char tu_rpa_sorting;
 
+    /** maximal distance for (real space) selfenergy storage; in units of first lattice vector. */
+    float tu_selfenergy_rs_dist;
+    /** minimal value for (real space) selfenergy storage; in units of energy. */
+    float tu_selfenergy_rs_mval;
+
     // DEVELOPERS
     //
     // For a new backend, you may choose to add postprocessing flags here and
@@ -217,7 +227,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_lingap = true,
     .tu_susceptibilities_full = false,
     .tu_susceptibilities_ff = false,
-    .tu_selfenergy = false,
+    .tu_selfenergy = 0,
     .tu_channels = false,
     .tu_symmetry_maps = false,
     .tu_n_decomp_values = 0,
@@ -232,6 +242,9 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_rpa_maxiter = 100,
     .tu_rpa_tol = 1.e-6,
     .tu_rpa_sorting = 'N',
+
+    .tu_selfenergy_rs_dist = 4.01,
+    .tu_selfenergy_rs_mval = 1.e-4,
 };
 #endif
 
