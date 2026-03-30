@@ -250,6 +250,5 @@ static void _gpu_sort_doubles_indirect_( const double* vals, index_t* idxs, inde
     thrust::device_vector<index_t> d_indices(N);
     thrust::sequence(d_indices.begin(), d_indices.end());
     thrust::sort_by_key(d_values.begin(), d_values.end(), d_indices.begin());
-    thrust::host_vector<index_t> h_indices = d_indices;
-    memcpy( idxs, h_indices.data(), sizeof*idxs * N );
+    thrust::copy(d_indices.begin(), d_indices.end(), idxs);
 }
