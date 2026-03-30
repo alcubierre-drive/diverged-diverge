@@ -6,8 +6,13 @@
 #include "mpi_functions.h"
 #include <fftw3.h>
 
-rs_hopping_t* diverge_model_ham2hop( const diverge_model_t* model, double hoplim,
-        index_t* n_hop_ ) {
+rs_hopping_t* diverge_model_ham2hop( const diverge_model_t* m, double hoplim,
+        index_t* n_hop ) {
+    return diverge_model_ham2hop_fg( m, hoplim, n_hop, m->internals->ham );
+}
+
+rs_hopping_t* diverge_model_ham2hop_fg( const diverge_model_t* model, double hoplim,
+        index_t* n_hop_, const complex128_t* H0 ) {
 
     index_t nr[3] = {0};
     index_t nk_tot = 1;
@@ -18,8 +23,6 @@ rs_hopping_t* diverge_model_ham2hop( const diverge_model_t* model, double hoplim
     const index_t n_orb = model->n_orb;
     const index_t n_spin = model->n_spin;
     const index_t n_kpts = kdimtot(model->nk, model->nkf);
-
-    const complex128_t* H0 = model->internals->ham;
 
     index_t buf_sz = sizeof(complex128_t)*n_kpts*POW2(n_orb*n_spin);
     fftw_complex* fftw_buf = fftw_malloc(buf_sz);
