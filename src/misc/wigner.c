@@ -547,13 +547,17 @@ static int ndegen_irvec_read( FILE* f, claV3i_t* irvec, int nrr, int* ndegen, in
     nam = 0; \
     { \
         int tmp = 0; \
-        fread( &tmp, sizeof(int), 1, f ); \
+        if (fread( &tmp, sizeof(int), 1, f ) != 1) { \
+            mpi_err_printf( "cannot read int " #nam " from file\n" ); \
+        } \
         mpi_vrb_printf( "read " #nam " = %i\n", tmp ); \
         nam = tmp; \
     }
 #define READ_INT_ARY( nam, sz ) \
     nam = calloc( sz, sizeof(int) ); \
-    fread( nam, sizeof(int), sz, f ); \
+    if (fread( nam, sizeof(int), sz, f ) != (size_t)sz) { \
+        mpi_err_printf( "cannot read int ary " #nam " from file\n" ); \
+    } \
     mpi_vrb_printf( "read " #nam " (%li)\n", sz );
 static qe_wigner_t* epw_wigner_read( const char* fname ) {
     FILE* f = fopen(fname, "rb");
@@ -628,7 +632,9 @@ static complex128_t* epmatwp_read( const char* fname, const qe_wigner_t* w ) {
         return NULL;
     }
     complex128_t* epw = calloc(POW2(n_el)*n_ph*w->nrr_k*w->nrr_g, sizeof*epw);
-    fread( epw, sizeof*epw, POW2(n_el)*n_ph*w->nrr_k*w->nrr_g, f );
+    index_t nread = fread( epw, sizeof*epw, POW2(n_el)*n_ph*w->nrr_k*w->nrr_g, f );
+    if (nread != POW2(n_el)*n_ph*w->nrr_k*w->nrr_g)
+        mpi_err_printf( "cannot read epw\n" );
     fclose( f );
 
     for (index_t irg=0; irg<w->nrr_g; ++irg)
