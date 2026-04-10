@@ -695,6 +695,9 @@ if not _libs["divERGe"] is None:
     hartree_fock_get_sigma_prev = _libs["divERGe"].get("diverge_hartree_fock_get_sigma_prev", "cdecl")
     hartree_fock_get_sigma_prev.argtypes = [c_voidp]
     hartree_fock_get_sigma_prev.restype = c_voidp
+    hartree_fock_get_E_tot = _libs["divERGe"].get("diverge_hartree_fock_get_E_tot", "cdecl")
+    hartree_fock_get_E_tot.argtypes = [c_voidp]
+    hartree_fock_get_E_tot.restype = c_double
     hartree_fock_free = _libs["divERGe"].get("diverge_hartree_fock_free", "cdecl")
     hartree_fock_free.argtypes = [c_voidp]
     hartree_fock_free.restype = None
