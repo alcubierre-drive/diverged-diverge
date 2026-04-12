@@ -149,24 +149,18 @@ static void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* 
     memcpy( dest + nk_nb2, dest, sizeof*dest * nk_nb2 );
 
     // compute total energy Tr[(H - 1/2*S)*rho]
-    double e_band_local = 0.0;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:e_band_local)
-    for (index_t i=0; i<m->nk*m->nb; ++i) {e_band_local += dbuf[i] * m->E[i];}
-    double E_band = e_band_local / (double)m->nk;
+    double e_band = 0.0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:e_band)
+    for (index_t i=0; i<m->nk*m->nb; ++i)
+        e_band += dbuf[i] * m->E[i];
 
-    double e_dc_local = 0.0;
-    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads()) reduction(+:e_dc_local)
-    for (index_t k=0; k<m->nk; ++k) {
-        for (index_t o=0; o<m->nb; ++o) {
-            for (index_t p=0; p<m->nb; ++p) {
-                complex128_t rho = dest[IDX3(k,o,p, m->nb,m->nb)];
-                complex128_t sig = m->flow_step_sigma[IDX3(k,p,o, m->nb,m->nb)];
-                e_dc_local += creal(rho * sig);
-            }
-        }
-    }
-    double E_dc = 0.5 * e_dc_local / (double)m->nk;
-    m->E_tot = E_band - E_dc;
+    double e_dc = 0.0;
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads()) reduction(+:e_dc)
+    for (index_t k=0; k<m->nk; ++k)
+    for (index_t o=0; o<m->nb; ++o)
+    for (index_t p=0; p<m->nb; ++p)
+        e_dc += creal(/*rho*/dest[IDX3(k,o,p, m->nb,m->nb)] * m->flow_step_sigma[IDX3(k,p,o, m->nb,m->nb)]);
+    m->E_tot = (e_band - 0.5 * e_dc) / (double)m->nk;
 }
 
 static greensfunc_op_t hf_data_gfill( const diverge_model_t* m, complex128_t Lambda, gf_complex_t* buf ) {

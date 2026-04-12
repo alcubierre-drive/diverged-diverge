@@ -75,7 +75,8 @@ complex128_t* diverge_hartree_fock_get_sigma_prev( diverge_hartree_fock_t* h );
 
 /**
  * return the total energy of the state evaluated during the previous step. Does
- * probably not work together with diverge_hartree_fock_normalize_sigma (untested).
+ * probably not work together with the normalization in
+ * :c:func:`diverge_hartree_fock_normalize_sigma` (untested).
  */
 double diverge_hartree_fock_get_E_tot( diverge_hartree_fock_t* h );
 

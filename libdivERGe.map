@@ -254,6 +254,7 @@ DIVERGE_UNSTABLE {
         diverge_fnanf_get;
         diverge_fnanf_isnan;
         diverge_hartree_fock_free;
+        diverge_hartree_fock_get_E_tot;
         diverge_hartree_fock_get_flow_step;
         diverge_hartree_fock_get_sigma;
         diverge_hartree_fock_get_sigma_prev;
