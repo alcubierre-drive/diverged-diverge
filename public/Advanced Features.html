@@ -637,8 +637,16 @@ mixing schemes or assessing convergence.</p>
 </dd></dl>
 
 <dl class="c function">
+<dt class="sig sig-object c" id="c.diverge_hartree_fock_get_E_tot">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_get_E_tot</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_get_E_tot" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hartree_fock.h#L76"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>return the total energy of the state evaluated during the previous step. Does
+probably not work together with the normalization in
+<a class="reference internal" href="#c.diverge_hartree_fock_normalize_sigma" title="diverge_hartree_fock_normalize_sigma"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_hartree_fock_normalize_sigma()</span></code></a> (untested).</p>
+</dd></dl>
+
+<dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_hartree_fock_free">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_free" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hartree_fock.h#L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_hartree_fock_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><span class="n"><span class="pre">diverge_hartree_fock_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">h</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_hartree_fock_free" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/hartree_fock.h#L82"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>free the <a class="reference internal" href="#c.diverge_hartree_fock_t" title="diverge_hartree_fock_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_hartree_fock_t</span></code></a> handle.</p>
 </dd></dl>
 
