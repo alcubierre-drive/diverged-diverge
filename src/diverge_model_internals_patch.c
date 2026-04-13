@@ -10,9 +10,9 @@
 #include "misc/mpi_functions.h"
 
 int autofine_ngroups = 40;
-double autofine_alpha = 0.1;
-double autofine_beta = 2.0;
-double autofine_gamma = 0.5;
+double autofine_alpha = 0.5;
+double autofine_beta = 1.0;
+double autofine_gamma = 0.7;
 
 static void patch_vertex_destructor( void* vvert ) {
     npatch_vertex_t* vert = (npatch_vertex_t*)vvert;
