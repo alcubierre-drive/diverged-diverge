@@ -82,8 +82,7 @@ index_t diverge_euler_nsteps_anticip( diverge_euler_t eu );
 #if !defined(__cplusplus) && !defined(CTYPESGEN)
 /**
  * defaults struct accessible only in C, because C++ does not allow named
- * member initialization. Look the values up in the source (linked on the
- * right).
+ * member initialization. Look the values up in the source (linked!).
  */
 static const diverge_euler_t diverge_euler_defaults = {
     .Lambda = 50.0,

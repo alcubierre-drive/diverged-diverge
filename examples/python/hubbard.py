@@ -6,18 +6,6 @@ import numpy as np
 
 USE_GRID = False
 
-# TODO(lk):
-# -talk about initialization and that it's necessary but uninteresting
-# -talk about diverge.view_array and diverge.alloc_array in greater detail
-# -explain the structure of hopping elements and vertex elements
-# -explain validation
-# -explain two-step procedure of internal initialization, with the example of
-#  patching
-# -OpenBLAS issue on machines with many threads. just document this or
-#  explicitly export OPENBLAS_NUM_THREADS here
-# -create an extremely dummed-down version that only takes the vertex, the
-#  hoppings, the lattice, and the kpoints and does an autoflow
-
 # initialization. takes the C-style argc, argv as arguments, which can be safely
 # ignored (i.e. set to None) in most cases.
 diverge.init(None, None)
@@ -136,7 +124,7 @@ if diverge.model_validate( model ):
     # in case we are mpi rank 0.
     diverge.print("invalid model")
 
-# and initialize internal structures
+# and initialize common internal structures
 diverge.model_internals_common( model )
 
 if USE_GRID:
@@ -156,11 +144,9 @@ checksum = diverge.model_to_file_PY( model, "mod.dvg", kc=True )
 # initialize flow step
 step = diverge.flow_step_init( model, "grid" if USE_GRID else "patch", "PCD" )
 
-# some auxiliary variables and the custom euler stepper (eu)
+# some auxiliary variables and the logarithmic euler stepper (eu)
 maxs = dict(vert=np.zeros(1), loop=np.zeros(2), chan=np.zeros(3))
 eu = diverge.euler_defaults_CPP()
-eu.dLambda_fac_scale = 1.0
-eu.dLambda_fac = 0.1
 
 # and finally, an FRG flow!
 diverge.print( "Lambda dLambda Lp Lm dP dC dD V" )

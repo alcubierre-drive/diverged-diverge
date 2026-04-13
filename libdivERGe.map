@@ -1,4 +1,4 @@
-DIVERGE_0.9 {
+DIVERGE_0.10 {
     global:
         diverge_W90_apply_wsvec;
         diverge_channel_vertex_generator_default;

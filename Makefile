@@ -149,6 +149,8 @@ export DIVERGE_CP
 export DIVERGE_MKDIR
 export DIVERGE_RM
 dist: dist-src
+	@bash ./bump_version.sh
+	@bash ./gen_linker_map.sh
 	@bash ./build_release.sh
 	@cp build_release/diverge/divERGe .
 	@cp build_release/diverge/libdivERGe.so .
