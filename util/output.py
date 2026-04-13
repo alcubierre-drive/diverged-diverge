@@ -558,7 +558,7 @@ class diverge_post_grid:
         return UU[:,:,0] + 1j * UU[:,:,1], VV[:,:,0] + 1j * VV[:,:,1], S, EU, EV
 
 class diverge_post_tu:
-    '''
+    r'''
     class to read diverge postprocessing files for tu FRG
 
     Vertex diagonalisation: For each channel :math:`X \in \{P,C,D\}`, we include
