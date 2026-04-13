@@ -37,7 +37,7 @@ int main( int argc, char** argv ) {
     sigma[IDX4(0,0,0,0,2,2,2)] = -amp;
     sigma[IDX4(1,0,1,0,2,2,2)] = +amp;
 
-    mpi_printf( "# iter absdiff maxval\n" );
+    mpi_printf( "# iter absdiff maxval E_tot\n" );
     // self-consistency loop
     for (int it=0; it<maxiter; ++it) {
         diverge_hartree_fock_step( h, T );
@@ -56,7 +56,7 @@ int main( int argc, char** argv ) {
         err /= (double)nk_nb2;
 
         // output
-        mpi_printf( "%i %.5e %.5e\n", it, err, smax );
+        mpi_printf( "%i %.5e %.5e %.5e\n", it, err, smax, diverge_hartree_fock_get_E_tot(h) );
 
         if (err < mindiff && it > 10) break;
     }
