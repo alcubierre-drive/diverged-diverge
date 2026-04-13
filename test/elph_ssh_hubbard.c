@@ -63,9 +63,9 @@ CT_TEST_NAME(hubbard_SSH_model, "hubbard-ssh,SU2") {
         VECTOR_PUSH_BACK(PCD_max, Cmax);
         VECTOR_PUSH_BACK(PCD_max, Dmax);
         mpi_log_printf("%s: %5.2f  %5.2f %5.2f %5.2f…", m->name, eu.Lambda, Pmax, Cmax, Dmax);
-        if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+        if (mpi_loglevel_get() >= 3) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
     } while (diverge_euler_next(&eu, vmax));
-    if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n" ), fflush(stderr);
+    if (mpi_loglevel_get() >= 3) mpi_eprintf( "\n" ), fflush(stderr);
 
     diverge_flow_step_free( st );
     diverge_model_free( m );
@@ -96,9 +96,9 @@ CT_TEST_NAME(hubbard_SSH_model_nonSU2, "hubbard-ssh,non-SU2") {
         VECTOR_PUSH_BACK(PCD_max, Cmax);
         VECTOR_PUSH_BACK(PCD_max, Dmax);
         mpi_log_printf("%s: %5.2f  %5.2f %5.2f %5.2f…", m->name, eu.Lambda, Pmax, Cmax, Dmax);
-        if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+        if (mpi_loglevel_get() >= 3) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
     } while (diverge_euler_next(&eu, vmax));
-    if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n" ), fflush(stderr);
+    if (mpi_loglevel_get() >= 3) mpi_eprintf( "\n" ), fflush(stderr);
 
     diverge_flow_step_free( st );
     diverge_model_free( m );
@@ -119,7 +119,7 @@ CT_TEST_NAME(hubbard_SSH_model_self, "hubbard-ssh,SU2,self") {
     diverge_euler_t eu = diverge_euler_defaults_CPP();
     double cmax[3], vmax;
     VECTOR_INIT(double, PCD_max);
-    int ll = mpi_loglevel_get(); mpi_loglevel_set(4);
+    int ll = mpi_loglevel_get(); if (ll > 3) mpi_loglevel_set(3);
     do {
         diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
         diverge_flow_step_refill( st, nu, NULL );
@@ -132,10 +132,10 @@ CT_TEST_NAME(hubbard_SSH_model_self, "hubbard-ssh,SU2,self") {
         VECTOR_PUSH_BACK(PCD_max, Cmax);
         VECTOR_PUSH_BACK(PCD_max, Dmax);
         mpi_log_printf("%s: %5.2f  %5.2f %5.2f %5.2f…", m->name, eu.Lambda, Pmax, Cmax, Dmax);
-        if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+        if (mpi_loglevel_get() >= 3) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
     } while (diverge_euler_next(&eu, vmax));
     mpi_loglevel_set(ll);
-    if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n" ), fflush(stderr);
+    if (mpi_loglevel_get() >= 3) mpi_eprintf( "\n" ), fflush(stderr);
 
     diverge_flow_step_free( st );
     diverge_model_free( m );
@@ -156,7 +156,7 @@ CT_TEST_NAME(hubbard_SSH_model_nonSU2_self, "hubbard-ssh,non-SU2,self") {
     diverge_euler_t eu = diverge_euler_defaults_CPP();
     double cmax[3], vmax;
     VECTOR_INIT(double, PCD_max);
-    int ll = mpi_loglevel_get(); mpi_loglevel_set(4);
+    int ll = mpi_loglevel_get(); if (ll > 3) mpi_loglevel_set(3);
     do {
         diverge_flow_step_euler( st, eu.Lambda, eu.dLambda );
         diverge_flow_step_refill( st, nu, NULL );
@@ -169,10 +169,10 @@ CT_TEST_NAME(hubbard_SSH_model_nonSU2_self, "hubbard-ssh,non-SU2,self") {
         VECTOR_PUSH_BACK(PCD_max, Cmax);
         VECTOR_PUSH_BACK(PCD_max, Dmax);
         mpi_log_printf("%s: %5.2f  %5.2f %5.2f %5.2f…", m->name, eu.Lambda, Pmax, Cmax, Dmax);
-        if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+        if (mpi_loglevel_get() >= 3) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
     } while (diverge_euler_next(&eu, vmax));
     mpi_loglevel_set(ll);
-    if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n" ), fflush(stderr);
+    if (mpi_loglevel_get() >= 3) mpi_eprintf( "\n" ), fflush(stderr);
 
     diverge_flow_step_free( st );
     diverge_model_free( m );
