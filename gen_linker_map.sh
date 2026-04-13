@@ -1,9 +1,11 @@
 #!/bin/bash
 
-TAG_VERSION="$(git tag --list "v*.*" | tail -n1)"
+TAG_VERSION="$(git tag --list | tac | head -n-1 | sort -V | tail -n1)"
 VERSION=${TAG_VERSION:1}
 SYMBOLS=DIVERGE_$VERSION
 OUTFILE=libdivERGe.map
+
+echo $SYMBOLS
 
 included_files_self=( $(grep "^#" src/diverge.h | grep -o "[a-z,_,/,A-Z,0-9]*.h") )
 included_files=( ${included_files_self[@]/#/src/} )

@@ -25,7 +25,7 @@ must write all the FFI wrappers yourself.
 # [Documentation](https://frg.pages.rwth-aachen.de/diverge/)
 [https://frg.pages.rwth-aachen.de/diverge/](https://frg.pages.rwth-aachen.de/diverge/)
 
-# [Download CPU release](https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.9/divERGe.tar.gz)
+# [Download CPU release](https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.10/divERGe.tar.gz)
 Generic linux (amd64) builds (GLIBC>=2.17, this should be given almost anywhere
 to date) can be downloaded
 [here](https://git.rwth-aachen.de/frg/diverge/-/tree/master/public/releases). We
