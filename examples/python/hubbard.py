@@ -217,7 +217,7 @@ plt.plot( xvals, bands )
 plt.xticks( ticks, [r'$\Gamma$', r'$M$', r'$K$', r'$\Gamma$'] )
 plt.xlim( xvals[0], xvals[-1] )
 plt.ylabel( r'$\epsilon({\bf k})$' )
-plt.title( 'Bandstructure of the $t/t^\prime$-Hubbard model' )
+plt.title( r'Bandstructure of the $t/t^\prime$-Hubbard model' )
 
 # and plot the SC order parameter
 kmesh = model_result.kmesh
@@ -243,5 +243,5 @@ plt.colorbar( label=r'$\Delta({\bf k})$')
 plt.xlabel( r'$k_x$' )
 plt.ylabel( r'$k_y$' )
 plt.gca().set_aspect('equal')
-plt.title( 'SC gap of the $t/t^\prime$-Hubbard model' )
+plt.title( r'SC gap of the $t/t^\prime$-Hubbard model' )
 plt.show()
