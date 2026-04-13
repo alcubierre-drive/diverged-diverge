@@ -302,11 +302,6 @@ void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st, const c
 void diverge_postprocess_and_write_fg( diverge_flow_step_t* st, const char* file,
         const diverge_postprocess_conf_t* cfg );
 
-// TODO(LK) we might want to include the Metznerish Way of doing a channel
-// specific inverse BSE equation such that post-processing output doesn't depend
-// on the maximal stopping scale of the flow equations. Need to integrate up the
-// bubble though...
-
 #ifdef __cplusplus
 }
 #endif
