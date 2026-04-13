@@ -12,14 +12,12 @@ LINALG_IMPLEMENT
 #include "../misc/batched_gemms.h"
 #include "../misc/eigen.h"
 #include "../misc/gemm.h"
+#include "../misc/ham2hop.h"
 #include "../diverge_post.h"
+#include "rpa.h"
 
 #include <assert.h>
 #include <stddef.h>
-
-tu_postproduction_conf_t tu_postproduction_conf_defaults_CPP( void ) {
-    return tu_postproduction_conf_defaults;
-}
 
 typedef struct tu_postproduction_t tu_postproduction_t;
 
@@ -30,13 +28,17 @@ static void save_channel_leading_ev( tu_postproduction_t* p );
 static void to_file( tu_postproduction_t* p, const char* filename );
 
 // helper functions
-static bool check_hermicity( complex128_t* data, index_t linsize );
+static bool check_hermiticity( complex128_t* data, index_t linsize, double lim/*=1.e-11*/ );
 static void _save_channel_leading_ev( tu_postproduction_t* p, complex128_t* channel,
         complex128_t* vec, double* val, char* type, index_t* len, index_t* off );
 static void _susc_o14k(const diverge_model_t* model, const complex128_t* inp, complex128_t* susc);
 static inline void fill_Rvec_from_vec( const diverge_model_t* model, const claV3i_t* Rptr, double* Rvec );
 static void construct_multiindex_maps( tu_postproduction_t* p );
 
+static const index_t rs_hopping_dtype[] = { offsetof(rs_hopping_t, R),
+    offsetof(rs_hopping_t, o1), offsetof(rs_hopping_t, o2),
+    offsetof(rs_hopping_t, s1), offsetof(rs_hopping_t, s2),
+    offsetof(rs_hopping_t, t), sizeof(rs_hopping_t), };
 
 struct tu_postproduction_t {
     tu_postproduction_conf_t c;
@@ -91,17 +93,19 @@ struct tu_postproduction_t {
     tu_vertex_t* vertex;
     tu_vertex_t* internal_vertex;
     tu_projection_t* proj;
+    tu_rpa_t* rpa;
     const diverge_model_t* model;
 };
 
 void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
-        tu_projection_t* proj, const diverge_model_t* model,
+        tu_projection_t* proj, tu_rpa_t* rpa, const diverge_model_t* model,
         const tu_postproduction_conf_t* c, const char* filename ) {
     tu_postproduction_t p = {
         .c = c ? *c : tu_postproduction_conf_defaults,
         .vertex = vertex,
         .internal_vertex = internal_vertex,
         .proj = proj,
+        .rpa = rpa,
         .model = model,
     };
     if (!p.c.skip_channel_calc) {
@@ -125,6 +129,8 @@ void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
     }
 
     // perform
+    if (p.rpa) tu_rpa_post( p.rpa, p.c.rpa_chans, p.c.rpa_nev, p.c.rpa_ncv,
+            p.c.rpa_maxiter, p.c.rpa_tol );
     if (!p.c.skip_channel_calc) save_channel_leading_ev(&p);
     if (p.c.lingaps) lingap_ff(&p);
     if (p.c.susc_ff || p.c.susc_full) calc_susc(&p);
@@ -229,7 +235,7 @@ static void _save_channel_leading_ev( tu_postproduction_t* p, complex128_t* chan
             memcpy(_vec, vec+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
         } else {
             memcpy(_vec, channel+q*POW2(linsize), sizeof(complex128_t)*POW2(linsize));
-            bool hermitian = check_hermicity(_vec,linsize);
+            bool hermitian = check_hermiticity(_vec,linsize,p->c.algo_zero);
             if (p->c.algo == 'e' || (p->c.algo == 'a' && hermitian)) {
                 single_eigen( NULL, _vec, _val, linsize);
                 type[q] = 'e';
@@ -468,7 +474,7 @@ static void calc_susc( tu_postproduction_t* p ) {
         tu_vertex_product(suscff, p->vertex->pp_bubble_int,p->vertex->projection_helper,
                 p->vertex->product_helper, POW2(p->vertex->n_spin)*p->vertex->n_orbff,
                 p->vertex->my_nk, 1.0, false, NULL);
-        tu_vertex_reco(p->vertex, 'P', p->suscPp_ff, suscff);
+        diverge_tu_vertex_reco(p->vertex, 'P', p->suscPp_ff, suscff);
         if (p->called_suscep_full) {
             p->suscPp = calloc(size,sizeof(complex128_t));
             _susc_o14k(p->model,p->suscPp_ff,p->suscPp);
@@ -483,7 +489,7 @@ static void calc_susc( tu_postproduction_t* p ) {
         tu_vertex_product(suscff, p->vertex->ph_bubble_int,p->vertex->projection_helper,
                 p->vertex->product_helper, POW2(p->vertex->n_spin)*p->vertex->n_orbff,
                 p->vertex->my_nk, 1.0, false, NULL);
-        tu_vertex_reco(p->vertex, 'C', p->suscMa_ff, suscff);
+        diverge_tu_vertex_reco(p->vertex, 'C', p->suscMa_ff, suscff);
         if (p->called_suscep_full) {
             p->suscMa = calloc(size,sizeof(complex128_t));
             _susc_o14k(p->model,p->suscMa_ff,p->suscMa);
@@ -507,7 +513,7 @@ static void calc_susc( tu_postproduction_t* p ) {
         tu_vertex_product(suscff, p->vertex->ph_bubble_int,p->vertex->projection_helper,
                 p->vertex->product_helper, POW2(p->vertex->n_spin)*p->vertex->n_orbff,
                 p->vertex->my_nk, 1.0, false, NULL);
-        tu_vertex_reco(p->vertex, 'D', p->suscCh_ff, suscff);
+        diverge_tu_vertex_reco(p->vertex, 'D', p->suscCh_ff, suscff);
         if (p->called_suscep_full) {
             p->suscCh = calloc(size,sizeof(complex128_t));
             _susc_o14k(p->model,p->suscCh_ff,p->suscCh);
@@ -521,14 +527,14 @@ static void calc_susc( tu_postproduction_t* p ) {
     free(suscff);
 }
 
-static bool check_hermicity( complex128_t* data, index_t linsize ) {
+static bool check_hermiticity( complex128_t* data, index_t linsize, double lim/*=1.e-11*/ ) {
     double err_max = 0.;
     #pragma omp parallel for reduction(max:err_max) collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<linsize; ++i) for (index_t j=0; j<linsize; ++j) {
         double err = cabs(data[IDX2(i,j,linsize)] - conj(data[IDX2(j,i,linsize)]));
         err_max = MAX(err_max, err);
     }
-    return err_max < 1e-11;
+    return err_max < lim;
 }
 
 static inline claV3d_t claV3i_d( const claV3i_t in ) { return (claV3d_t){.v={in.v[0],in.v[1],in.v[2]}}; }
@@ -621,8 +627,17 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     const index_t n_orb = p->model->n_orb;
 
     index_t size_self = 0;
-    if (p->vertex->use_self && p->c.save_self)
-        size_self = POW2(n_orb*p->vertex->n_spin)*p->vertex->nk*p->vertex->nkf;
+    rs_hopping_t* hop_self = NULL;
+    if (p->vertex->use_self) {
+        if (p->c.save_self > 0) {
+            size_self = POW2(n_orb*p->vertex->n_spin)*p->vertex->nk*p->vertex->nkf;
+        } else if (p->c.save_self < 0) {
+            double latnorm2 = POW2(p->model->lattice[0][0]) +
+                POW2(p->model->lattice[0][1]) + POW2(p->model->lattice[0][2]);
+            hop_self = diverge_model_ham2hop_fg( p->model, p->c.self_rs_mval,
+                    sqrt(latnorm2) * p->c.self_rs_dist, &size_self, p->vertex->self_en );
+        }
+    }
 
     mpi_vrb_printf_all( "rank %d: try opening file %s\n", my_rank, filename );
     void* file = diverge_mpi_open_file(filename);
@@ -720,7 +735,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[i] = p->tu_suscD_ff,++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
     header[i] = size_self,++i;
-    header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
+    header[i] = header[i-2] + header[i-1]*(hop_self ? sizeof(rs_hopping_t) : sizeof(complex128_t)), ++i;
     if (p->c.save_full && !tu_data->tu_selfenergy_flow) {
         header[i] = p->vertex->P_flow ? POW2(linsize)*p->vertex->nk: 0,++i;
         header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
@@ -790,11 +805,26 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         header[i] = POW2(linsize) * tu_data->nkibz;
     ++i;
 
+    // RPA
+    header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
+    if (p->rpa) header[i] = p->rpa->nev;
+    ++i;
+    header[i] = header[i-2] + header[i-1]*sizeof(double); ++i;
+    if (p->rpa) header[i] = (index_t)p->rpa->nev * (index_t)p->rpa->legdim;
+    ++i;
+    header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
+    if (p->rpa) header[i] = p->rpa->n_kidx;
+    ++i;
+
+    header[i] = hop_self ? 1 : 0; ++i;
+    header[i] = header[i-3] + header[i-2]*sizeof(index_t); ++i;
+    header[i] = sizeof(rs_hopping_dtype)/sizeof(rs_hopping_dtype[0]); ++i;
+
     assert(i < 125);
     // this flag is to indicate our header is actually 256 long. Only supported after v0.8
     header[125] = ~(header[125]);
     header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
-    header[127] = header[i-1]*sizeof(complex128_t)+header[i-2];
+    header[127] = header[i-1]*sizeof(index_t)+header[i-2];
 
     i = 128;
     header[i++] = sizeof(diverge_postprocess_conf_t);
@@ -830,6 +860,15 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_lingap_solver_mode);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_susceptibilities_bare);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_channel_calc_project);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_which_solver_mode_hermiticity_limit);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_chans);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_nev);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_ncv);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_maxiter);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_tol);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_sorting);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_selfenergy_rs_dist);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_selfenergy_rs_mval);
     assert(i <= 256);
 
     index_t my_nk_off = p->vertex->my_nk_off;
@@ -901,32 +940,35 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
                             new_off,scdou*p->tu_suscD_ff);
     }
 
-    if (p->vertex->use_self && p->c.save_self) {
+    if (p->vertex->use_self && p->c.save_self > 0) {
         new_off = diverge_mpi_write_byte_to_file_master(file, p->vertex->self_en,
                         new_off,scdou*size_self);
-
+    } else if (p->vertex->use_self && p->c.save_self < 0) {
+        new_off = diverge_mpi_write_byte_to_file_master(file, hop_self,
+                new_off, sizeof(rs_hopping_t)*size_self);
+        free(hop_self);
     }
     if (p->c.save_full && !tu_data->tu_selfenergy_flow) {
         index_t vsize = POW2(linsize)*p->vertex->nk*sizeof(complex128_t);
         complex128_t* helper = (complex128_t*)malloc(vsize);
         if(p->vertex->P_flow) {
-            tu_vertex_reco(p->vertex, 'P', helper, NULL);
+            diverge_tu_vertex_reco(p->vertex, 'P', helper, NULL);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(p->vertex->C_flow) {
-            tu_vertex_reco(p->vertex, 'C', helper, NULL);
+            diverge_tu_vertex_reco(p->vertex, 'C', helper, NULL);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(p->vertex->D_flow) {
-            tu_vertex_reco(p->vertex, 'D', helper, NULL);
+            diverge_tu_vertex_reco(p->vertex, 'D', helper, NULL);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(p->vertex->P_flow) {
-            tu_vertex_reco(p->vertex, 'P', helper, p->vertex->pp_bubble_int);
+            diverge_tu_vertex_reco(p->vertex, 'P', helper, p->vertex->pp_bubble_int);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         if(p->vertex->C_flow || p->vertex->D_flow) {
-            tu_vertex_reco(p->vertex, 'C', helper, p->vertex->ph_bubble_int);
+            diverge_tu_vertex_reco(p->vertex, 'C', helper, p->vertex->ph_bubble_int);
             new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
         }
         free(helper);
@@ -955,6 +997,17 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     if (p->c.bare_susceptibilities && (p->vertex->C_flow || p->vertex->D_flow))
         new_off = diverge_mpi_write_byte_to_file(file, p->vertex->ph_bubble_int,
                 new_off+my_nk_off*scdlin, my_nk*scdlin);
+    if (p->rpa) {
+        new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->vals,
+                new_off, sizeof*p->rpa->vals * p->rpa->nev);
+        new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->vecs,
+                new_off, sizeof*p->rpa->vecs * p->rpa->nev * p->rpa->legdim);
+        new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->kidx,
+                new_off, sizeof*p->rpa->kidx * p->rpa->n_kidx);
+    }
+
+    new_off = diverge_mpi_write_byte_to_file_master(file, rs_hopping_dtype,
+            new_off, sizeof(rs_hopping_dtype));
 
     if (new_off != header[127])
         mpi_wrn_printf( "offset of file (%li) dosn't match size (%li)\n", new_off, header[127] );

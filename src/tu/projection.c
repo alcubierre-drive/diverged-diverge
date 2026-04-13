@@ -622,6 +622,19 @@ static inline void apply_permutation_in_place( claV2ll_t* vec, const index_t* p,
     free(done);
 }
 
+static inline void apply_permutation( claV2ll_t* vec, const index_t* p, index_t p_sz ) {
+    claV2ll_t* new_vec = malloc(p_sz * sizeof*new_vec);
+    for (index_t i=0; i<p_sz; ++i) new_vec[i] = vec[p[i]];
+    memcpy( vec, new_vec, sizeof*vec * p_sz );
+    free( new_vec );
+}
+
+#ifdef DIVERGE_TU_FAST_PERMUTE
+#define APPLY_PERMUTATION apply_permutation
+#else // DIVERGE_TU_FAST_PERMUTE
+#define APPLY_PERMUTATION apply_permutation_in_place
+#endif // DIVERGE_TU_FAST_PERMUTE
+
 typedef struct { const claV2ll_t* _fhelp; const index_t* _off; index_t k; } serisort_fhelp_t;
 static inline int serisort_fhelp_comp( index_t i, index_t j, const serisort_fhelp_t* h ) {
     const claV2ll_t fi = h->_fhelp[i+h->_off[h->k]],
@@ -638,11 +651,11 @@ static vec_claV2ll_t sort_and_filter( vec_claV2ll_t* to, vec_claV2ll_t* from_hel
     #pragma omp parallel num_threads(MIN(diverge_omp_num_threads(),3))
     {
         #pragma omp single nowait
-        apply_permutation_in_place( to->v, p, to->v_sz );
+        APPLY_PERMUTATION( to->v, p, to->v_sz );
         #pragma omp single nowait
-        apply_permutation_in_place( from_help->v, p, to->v_sz );
+        APPLY_PERMUTATION( from_help->v, p, to->v_sz );
         #pragma omp single nowait
-        apply_permutation_in_place( rvec_help->v, p, to->v_sz );
+        APPLY_PERMUTATION( rvec_help->v, p, to->v_sz );
     }
     free( p );
 
@@ -652,7 +665,7 @@ static vec_claV2ll_t sort_and_filter( vec_claV2ll_t* to, vec_claV2ll_t* from_hel
     memcpy( to_padded.v, to->v, msize*sizeof(claV2ll_t) );
     claV2ll_t lr = to->v[0];
 
-    VECTOR_RESIZE( to->v, 0 );
+    to->v_sz = 0;
     index_t len = 0;
     for (index_t i=0; i<msize; ++i) {
         if (claV2ll_equal(to_padded.v[i], lr)) {

@@ -34,7 +34,7 @@ hashtable_t* hashtable_init( index_t width, index_t depth ) {
 }
 
 static void hashtable_increase_depth( hashtable_t* t, index_t depth ) {
-    printf( "increase depth\n" );
+    printf( "hashtable increase depth (%li->%li)\n", t->depth, depth );
     t->tab = realloc( t->tab, sizeof*t->tab * t->width * depth );
     for (; t->depth<depth; ++(t->depth))
     for (index_t i=0; i<t->width; ++i)

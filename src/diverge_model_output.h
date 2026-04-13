@@ -178,11 +178,11 @@ typedef struct diverge_model_output_conf_t {
      * have :c:member:`diverge_model_t.n_ibz_path` > 0.
      */
     int kf_ibz_path;
-    /** Hamiltonian on fine mesh */
+    /** Hamiltonian on fine mesh as array (k, orb, orb) */
     int H;
-    /** Orbital to band matrices on fine mesh */
+    /** Orbital to band matrices on fine mesh, ordered as (k, band, orb) */
     int U;
-    /** energies on fine mesh */
+    /** energies on fine mesh; ordered as (k, band) */
     int E;
     /**
      * *integer*. use this as the number of points on the IBZ path (cf.
@@ -191,13 +191,15 @@ typedef struct diverge_model_output_conf_t {
      * :c:func:`diverge_model_output_set_npath`. possible nonzero values: -1
      * (use eigenvalues on mesh), >=1 (explicitly calculate H from hoppings),
      * <-1 (explcitly calculate H from hoppings in batched manner with this many
-     * pts).
+     * pts). If ``INT_MIN`` skip the band structure output.
      */
     int npath;
     /**
      * if (:c:member:`diverge_model_output_conf_t.npath` == -1 &&
      * :c:member:`diverge_model_t.n_ibz_path` > 0 && common internals are set),
-     * output the absolute value of the orbital to band matrices
+     * output the absolute value of the orbital to band matrices; ordering is
+     * (k, orbital, band), which stands in contrast to the internal ordering of
+     * orbital-band matrices (cf. :c:func:`diverge_model_internals_get_U`)!
      */
     int fatbands;
 } diverge_model_output_conf_t;

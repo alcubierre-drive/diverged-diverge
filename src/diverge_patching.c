@@ -18,6 +18,10 @@ LINALG_IMPLEMENT
 #define SKIP_CLAV2D_T
 #include "misc/kmeans_lloyd.h"
 
+#include "diverge_flow_step.h"
+#include "diverge_flow_step_internal.h"
+#include "npatch/vertex.h"
+
 // convenience functions to re-normalize and mpi-distribute the patching struct
 static void diverge_patching_weights_equalize( mom_patching_t* patch );
 static void diverge_patching_mpi_equalize( mom_patching_t* patch );
@@ -960,3 +964,12 @@ static minmax_t minmax_element( const double* ary, index_t num ) {
     return result;
 }
 
+npatch_qvert_mat_t* diverge_patching_vertex( diverge_flow_step_t* s, char chan, index_t* nvq ) {
+    if (!s || diverge_flow_step_type(s) != diverge_patch || !nvq) return NULL;
+    return npatch_qvert_mat_from_vertex( s->mod->internals->patch_vertex,
+            s->patch_loop, toupper(chan), islower(chan), 0/*dont sort*/, nvq,
+            nvq/*dont sort*/ );
+}
+void diverge_patching_vertex_free( npatch_qvert_mat_t* vq, index_t nvq ) {
+    if (vq) npatch_qvert_mat_free(vq, nvq);
+}

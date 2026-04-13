@@ -11,6 +11,9 @@
 #include "misc/kmeans_lloyd.h"
 #include "misc/batched_eigen.h"
 #include "misc/shared_mem.h"
+#include "misc/qnan.h"
+#include "misc/dos.cu.h"
+
 #include "tu/propagator_cpu_mpi.h"
 #include "tu/propagator_cpu_mpi_fft.h"
 
@@ -173,6 +176,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         if (atoi(val) == -1)
             INTERNALS->use_batched_svd_algo_in_common = -1;
     }
+    CHECKKEY("model_internals_only_mesh") {
+        INTERNALS->common_internals_mesh_only = 1;
+    }
     CHECKKEY("fftw_mpi_plan_patience") {
         // either set with 'G' (GX) to address fftw_mpi_plan_patience (for
         // GPU/MPI) or without (X) to address
@@ -192,6 +198,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("batched_eigen_cpu_nthreads") {
         batched_eigen_set_nthreads(atoi(val));
+    }
+    CHECKKEY("ldos_kernel_gpu_setsort") {
+        ldos_kernel_gpu_setsort(atoi(val));
     }
 
     if (key_) {

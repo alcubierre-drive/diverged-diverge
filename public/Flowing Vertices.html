@@ -8,15 +8,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flowing Vertices &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=049aceee"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -53,7 +53,23 @@
 <li class="toctree-l2"><a class="reference internal" href="Model.html">Model</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="Flow.html">Flow</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="Flow%20Step%20Object.html">Flow Step Object</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Flowing Vertices</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Flowing Vertices</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_qpt_t"><code class="docutils literal notranslate"><span class="pre">vertex_storage_qpt_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_t"><code class="docutils literal notranslate"><span class="pre">vertex_storage_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_init"><code class="docutils literal notranslate"><span class="pre">vertex_storage_init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_init_fg"><code class="docutils literal notranslate"><span class="pre">vertex_storage_init_fg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_get"><code class="docutils literal notranslate"><span class="pre">vertex_storage_get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_snap"><code class="docutils literal notranslate"><span class="pre">vertex_storage_snap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_snap_chan"><code class="docutils literal notranslate"><span class="pre">vertex_storage_snap_chan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_lsnap"><code class="docutils literal notranslate"><span class="pre">vertex_storage_lsnap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_lsnap_chan"><code class="docutils literal notranslate"><span class="pre">vertex_storage_lsnap_chan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_snap_all"><code class="docutils literal notranslate"><span class="pre">vertex_storage_snap_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_lsnap_all"><code class="docutils literal notranslate"><span class="pre">vertex_storage_lsnap_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_pop"><code class="docutils literal notranslate"><span class="pre">vertex_storage_pop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_to_file"><code class="docutils literal notranslate"><span class="pre">vertex_storage_to_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.vertex_storage_free"><code class="docutils literal notranslate"><span class="pre">vertex_storage_free()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="Flow%20Integration.html">Flow Integration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Postprocessing%20and%20Output.html">Postprocessing and Output</a></li>
 </ul>
@@ -111,131 +127,223 @@ instability.</p>
 here provide functionality to store the vertices of <em>some</em> momentum points, such
 that features specific to a model can be tracked.</p>
 <p>In practice, if one has a <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a> object all set up, one
-can do the following inside/before the flow loop:</p>
+can do the following during the flow loop:</p>
 <div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="c1">// these are a prerequisite</span>
 <span class="c1">// diverge_flow_step_t* step = ...;</span>
 <span class="c1">// index_t* qpts = ...;</span>
 <span class="c1">// index_t nqpts = ...;</span>
 
-<span class="c1">// initialize the tu_highsym_vertex_t object</span>
-<span class="n">tu_highsym_vertex_t</span><span class="o">*</span><span class="w"> </span><span class="n">qverts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tu_highsym_vertex_store</span><span class="p">(</span><span class="w"> </span><span class="n">step</span><span class="p">,</span><span class="w"> </span><span class="n">qpts</span><span class="p">,</span>
-<span class="w">    </span><span class="n">nqpts</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="c1">// initialize the tu_vertex_storage_t object for the &#39;m&#39;agnetic channel</span>
+<span class="n">tu_vertex_storage_t</span><span class="o">*</span><span class="w"> </span><span class="n">mag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tu_vertex_storage_init</span><span class="p">(</span><span class="w"> </span><span class="n">step</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;m&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">qpts</span><span class="p">,</span><span class="w"> </span><span class="n">nqpts</span><span class="w"> </span><span class="p">);</span>
 <span class="k">do</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// here we store (magnetic) vertices</span>
+<span class="w">    </span><span class="n">tu_vertex_storage_snap</span><span class="p">(</span><span class="w"> </span><span class="n">mag</span><span class="w"> </span><span class="p">);</span>
 <span class="w">    </span><span class="n">diverge_flow_step_euler</span><span class="p">(</span><span class="w"> </span><span class="n">step</span><span class="p">,</span><span class="w"> </span><span class="n">eu</span><span class="p">.</span><span class="n">Lambda</span><span class="p">,</span><span class="w"> </span><span class="n">eu</span><span class="p">.</span><span class="n">dLambda</span><span class="w"> </span><span class="p">);</span>
 <span class="w">    </span><span class="n">diverge_flow_step_vertmax</span><span class="p">(</span><span class="w"> </span><span class="n">step</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">vmax</span><span class="w"> </span><span class="p">);</span>
 <span class="w">    </span><span class="n">diverge_flow_step_chanmax</span><span class="p">(</span><span class="w"> </span><span class="n">step</span><span class="p">,</span><span class="w"> </span><span class="n">cmax</span><span class="w"> </span><span class="p">);</span>
-<span class="w">    </span><span class="c1">// here we store vertices</span>
-<span class="w">    </span><span class="n">tu_highsym_vertex_store</span><span class="p">(</span><span class="w"> </span><span class="n">step</span><span class="p">,</span><span class="w"> </span><span class="n">qpts</span><span class="p">,</span><span class="w"> </span><span class="n">nqpts</span><span class="p">,</span><span class="w"> </span><span class="n">qverts</span><span class="w"> </span><span class="p">);</span>
 <span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">diverge_euler_next</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">eu</span><span class="p">,</span><span class="w"> </span><span class="n">vmax</span><span class="w"> </span><span class="p">));</span>
+<span class="c1">// and the last one</span>
+<span class="n">tu_vertex_storage_snap</span><span class="p">(</span><span class="w"> </span><span class="n">mag</span><span class="w"> </span><span class="p">);</span>
 
-<span class="c1">// now save those vertices to file</span>
-<span class="n">tu_highsym_vertex_to_file</span><span class="p">(</span><span class="w"> </span><span class="n">qverts</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;highsym_vertices.qvx&quot;</span><span class="w"> </span><span class="p">);</span>
+<span class="c1">// we can get a specific vertex (step #1, qpt #0)...</span>
+<span class="n">complex128_t</span><span class="o">*</span><span class="w"> </span><span class="n">mvert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tu_vertex_storage_get</span><span class="p">(</span><span class="w"> </span><span class="n">mag</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">);</span>
+<span class="c1">// or save them to a file:</span>
+<span class="n">tu_vertex_storage_to_file</span><span class="p">(</span><span class="w"> </span><span class="n">mag</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;magnetic_vertices.dvg&quot;</span><span class="w"> </span><span class="p">);</span>
 
-<span class="c1">// and do cleanup</span>
-<span class="n">tu_highsym_vertex_free</span><span class="p">(</span><span class="w"> </span><span class="n">qverts</span><span class="w"> </span><span class="p">);</span>
+<span class="c1">// finally, we have to cleanup</span>
+<span class="n">tu_vertex_storage_free</span><span class="p">(</span><span class="w"> </span><span class="n">mag</span><span class="w"> </span><span class="p">);</span>
 </pre></div>
 </div>
 <dl class="c struct">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_t">
-<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_highsym_vertex_t</span></span></span><a class="headerlink" href="#c.tu_highsym_vertex_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L10"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>utility struct to allow saving of TUFRG vertices at each flow step.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>this functionality is restricted to TUFRG and in its current
-implementation only works when all channels are included in the
-simulation.</p>
-</div>
+<dt class="sig sig-object c" id="c.vertex_storage_qpt_t">
+<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_qpt_t</span></span></span><a class="headerlink" href="#c.vertex_storage_qpt_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L10"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>utility struct to save qpoint and ints name</p>
 <dl class="c member">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_t.nsteps">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nsteps</span></span></span><a class="headerlink" href="#c.tu_highsym_vertex_t.nsteps" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L18"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>number of steps that have a saved vertex</p>
+<dt class="sig sig-object c" id="c.vertex_storage_qpt_t.qpt">
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">qpt</span></span></span><a class="headerlink" href="#c.vertex_storage_qpt_t.qpt" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L12"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>qpt index (wrt ibz, cf. <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_ibz" title="diverge_flow_step_ibz"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_ibz()</span></code></a>)</p>
 </dd></dl>
 
 <dl class="c member">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_t.stepsz">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">stepsz</span></span></span><a class="headerlink" href="#c.tu_highsym_vertex_t.stepsz" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L20"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>number of <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">complex128_t</span></code></a> elements in a single step</p>
+<dt class="sig sig-object c" id="c.vertex_storage_qpt_t.name">
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">name</span></span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">24</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.vertex_storage_qpt_t.name" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L14"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>and a name that you can set if you’d like to</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.vertex_storage_t">
+<span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_t</span></span></span><a class="headerlink" href="#c.vertex_storage_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L19"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>utility struct to allow saving of TUFRG and grid FRG vertices at each flow
+step. npatch not supported, as the selection of qpts for npatch vertices is
+nontrivial (see src/npatch/vertex.h). For npatch, we instead refer the user
+to <a class="reference internal" href="Patching.html#c.diverge_patching_vertex" title="diverge_patching_vertex"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_patching_vertex()</span></code></a>.</p>
+<dl class="c member">
+<dt class="sig sig-object c" id="c.vertex_storage_t.chan">
+<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">chan</span></span></span><a class="headerlink" href="#c.vertex_storage_t.chan" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L26"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>channel info, follows <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_vertex" title="diverge_flow_step_vertex"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_vertex()</span></code></a>. Channel may be
+inaccurate in case <a class="reference internal" href="#c.vertex_storage_snap_chan" title="vertex_storage_snap_chan"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_snap_chan()</span></code></a> has been used.</p>
 </dd></dl>
 
 <dl class="c member">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_t.nqpts">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nqpts</span></span></span><a class="headerlink" href="#c.tu_highsym_vertex_t.nqpts" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>number of momentum points to save the vertices on</p>
+<dt class="sig sig-object c" id="c.vertex_storage_t.n_steps">
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">n_steps</span></span></span><a class="headerlink" href="#c.vertex_storage_t.n_steps" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L31"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>number of times <a class="reference internal" href="#c.vertex_storage_snap" title="vertex_storage_snap"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_snap()</span></code></a> has been called on this object for storage</p>
 </dd></dl>
 
 <dl class="c member">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_t.n_orbff_P">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">n_orbff_P</span></span></span><a class="headerlink" href="#c.tu_highsym_vertex_t.n_orbff_P" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L26"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>number of orbitals/formfactors <em>and spins</em> (i.e. the linear dimension,
-this is strictly speaking <em>not</em> <code class="docutils literal notranslate"><span class="pre">n_orbff</span></code>) in each channel</p>
+<dt class="sig sig-object c" id="c.vertex_storage_t.n_qpts">
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">n_qpts</span></span></span><a class="headerlink" href="#c.vertex_storage_t.n_qpts" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L34"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>number of momentum points</p>
 </dd></dl>
 
 <dl class="c member">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_t.qpts">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">qpts</span></span></span><a class="headerlink" href="#c.tu_highsym_vertex_t.qpts" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L32"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>array of which momentum transfer indices are actually saved. only used
-for output via <a class="reference internal" href="#c.tu_highsym_vertex_to_file" title="tu_highsym_vertex_to_file"><code class="xref c c-func docutils literal notranslate"><span class="pre">tu_highsym_vertex_to_file()</span></code></a>, must be set manually</p>
+<dt class="sig sig-object c" id="c.vertex_storage_t.qpts">
+<a class="reference internal" href="#c.vertex_storage_qpt_t" title="vertex_storage_qpt_t"><span class="n"><span class="pre">vertex_storage_qpt_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">qpts</span></span></span><a class="headerlink" href="#c.vertex_storage_t.qpts" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L36"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>and actual momentum points</p>
 </dd></dl>
 
 <dl class="c member">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_t.qpts_descr_nams">
-<span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">qpts_descr_nams</span></span></span><a class="headerlink" href="#c.tu_highsym_vertex_t.qpts_descr_nams" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L37"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>description of the qpts, names of the high-symmetry points. only used for
-output via <a class="reference internal" href="#c.tu_highsym_vertex_to_file" title="tu_highsym_vertex_to_file"><code class="xref c c-func docutils literal notranslate"><span class="pre">tu_highsym_vertex_to_file()</span></code></a></p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_t.qpts_descr_lens">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">qpts_descr_lens</span></span></span><a class="headerlink" href="#c.tu_highsym_vertex_t.qpts_descr_lens" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L42"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>description of the qpts, number of symmetry-equivalent points per name;
-also only used for output via <a class="reference internal" href="#c.tu_highsym_vertex_to_file" title="tu_highsym_vertex_to_file"><code class="xref c c-func docutils literal notranslate"><span class="pre">tu_highsym_vertex_to_file()</span></code></a></p>
-</dd></dl>
-
-<dl class="c member">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_t.n_qpts_descr">
-<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">n_qpts_descr</span></span></span><a class="headerlink" href="#c.tu_highsym_vertex_t.n_qpts_descr" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>description of the qpts, number of high-symmetry names (only used for
-output via <a class="reference internal" href="#c.tu_highsym_vertex_to_file" title="tu_highsym_vertex_to_file"><code class="xref c c-func docutils literal notranslate"><span class="pre">tu_highsym_vertex_to_file()</span></code></a>)</p>
+<dt class="sig sig-object c" id="c.vertex_storage_t.linsz">
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">linsz</span></span></span><a class="headerlink" href="#c.vertex_storage_t.linsz" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>linear dimension of vertex (n_orbff,n_spin,n_spin)</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="c function">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_store">
-<a class="reference internal" href="#c.tu_highsym_vertex_t" title="tu_highsym_vertex_t"><span class="n"><span class="pre">tu_highsym_vertex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">tu_highsym_vertex_store</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><span class="n"><span class="pre">diverge_flow_step_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">step</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">qpts</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nqpts</span></span>, <a class="reference internal" href="#c.tu_highsym_vertex_t" title="tu_highsym_vertex_t"><span class="n"><span class="pre">tu_highsym_vertex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">vert</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.tu_highsym_vertex_store" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L59"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>store the channels of the current flow step into <code class="docutils literal notranslate"><span class="pre">vert</span></code>. if <code class="docutils literal notranslate"><span class="pre">vert</span> <span class="pre">==</span>
-<span class="pre">NULL</span></code>, initialize a new <a class="reference internal" href="#c.tu_highsym_vertex_t" title="tu_highsym_vertex_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">tu_highsym_vertex_t</span></code></a> object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>step</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><span class="n">diverge_flow_step_t</span></a><span class="p">*</span></span></span>) – flow step object (must be TUFRG!)</p></li>
-<li><p><strong>qpts</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – indices of the coarse k-mesh to save the vertex on. In
-case MPI and/or symmetries are used, these indices
-refer to the reduced mesh</p></li>
-<li><p><strong>nqpts</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – length of the <code class="docutils literal notranslate"><span class="pre">qpts</span></code> array.</p></li>
-<li><p><strong>vert</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="#c.tu_highsym_vertex_t" title="tu_highsym_vertex_t"><span class="n">tu_highsym_vertex_t</span></a><span class="p">*</span></span></span>) – object to work on. If NULL, a new object is
-initialized and returned (similar behavior
-to the realloc library function).</p></li>
-</ul>
+<dt class="sig sig-object c" id="c.vertex_storage_init">
+<a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_init</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><span class="n"><span class="pre">diverge_flow_step_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">s</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="n"><span class="pre">chan</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">qpts</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_qpts</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_init" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L51"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>initialize the vertex storage for a specific channel (following channel
+nomenclature of <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_vertex" title="diverge_flow_step_vertex"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_vertex()</span></code></a>). For control over the
+qpts’ names use either the alternative constructor
+<a class="reference internal" href="#c.vertex_storage_init_fg" title="vertex_storage_init_fg"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_init_fg()</span></code></a> or access (and change) the names via
+<a class="reference internal" href="#c.vertex_storage_t.qpts" title="vertex_storage_t.qpts"><code class="xref c c-member docutils literal notranslate"><span class="pre">vertex_storage_t.qpts</span></code></a>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_init_fg">
+<a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_init_fg</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><span class="n"><span class="pre">diverge_flow_step_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">s</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="n"><span class="pre">chan</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.vertex_storage_qpt_t" title="vertex_storage_qpt_t"><span class="n"><span class="pre">vertex_storage_qpt_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">qpts</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">n_qpts</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_init_fg" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L61"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>initialize the vertex storage for a specific channel, but with named qpts
+(following channel nomenclature of <a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_vertex" title="diverge_flow_step_vertex"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_flow_step_vertex()</span></code></a>).
+otherwise equivalent to <a class="reference internal" href="#c.vertex_storage_init" title="vertex_storage_init"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_init()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_get">
+<a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_get</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">istep</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">iq</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_get" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L69"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>get the stored array at qpt index <code class="docutils literal notranslate"><span class="pre">iq</span></code> and snap index <code class="docutils literal notranslate"><span class="pre">istep</span></code> on rank 0,
+all other ranks return NULL.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_snap">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_snap</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_snap" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>add one more vertex to the storage object (which keeps a reference of
+<a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a> around that was given in the constructor
+<a class="reference internal" href="#c.vertex_storage_init" title="vertex_storage_init"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_init()</span></code></a> in order to obtain the vertices).</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_snap_chan">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_snap_chan</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="n"><span class="pre">chan</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_snap_chan" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L80"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>same as <a class="reference internal" href="#c.vertex_storage_snap" title="vertex_storage_snap"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_snap()</span></code></a> but for arbitrary channel</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_lsnap">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_lsnap</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">Lambda</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_lsnap" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L82"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>same as <a class="reference internal" href="#c.vertex_storage_snap" title="vertex_storage_snap"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_snap()</span></code></a> but with scale information</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_lsnap_chan">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_lsnap_chan</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">Lambda</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="n"><span class="pre">chan</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_lsnap_chan" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L84"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>same as <a class="reference internal" href="#c.vertex_storage_snap_chan" title="vertex_storage_snap_chan"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_snap_chan()</span></code></a> but with scale information</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_snap_all">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_snap_all</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_snap_all" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L87"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>convenience wrapper around <a class="reference internal" href="#c.vertex_storage_snap_chan" title="vertex_storage_snap_chan"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_snap_chan()</span></code></a> that
+iterates over <em>all</em> channels that are included in the
+<a class="reference internal" href="Flow%20Step%20Object.html#c.diverge_flow_step_t" title="diverge_flow_step_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">diverge_flow_step_t</span></code></a></p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_lsnap_all">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_lsnap_all</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">Lambda</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_lsnap_all" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L92"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>same as <a class="reference internal" href="#c.vertex_storage_snap_all" title="vertex_storage_snap_all"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_snap_all()</span></code></a> but with scale information</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_pop">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_pop</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_pop" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L95"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>pop last step from the storage object. does not release memory; operates lazily.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.vertex_storage_to_file">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_to_file</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fname</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_to_file" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L99"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>output a <a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">vertex_storage_t</span></code></a> object to a file <code class="docutils literal notranslate"><span class="pre">fname</span></code>. This
+file can be read using the <code class="docutils literal notranslate"><span class="pre">diverge.output</span></code> python library
+(<a class="reference internal" href="Simulation%20Output%20Module%20Spec.html#diverge.output.read" title="diverge.output.read"><code class="xref py py-meth docutils literal notranslate"><span class="pre">diverge.output.read()</span></code></a> returns
+<a class="reference internal" href="Simulation%20Output%20Module%20Spec.html#diverge.output.vertex_store" title="diverge.output.vertex_store"><code class="xref py py-class docutils literal notranslate"><span class="pre">diverge.output.vertex_store</span></code></a>). The output includes all channel
+and scale information.</p>
+<p>file format specification info: <code class="docutils literal notranslate"><span class="pre">header</span></code> is 128 elements of type
+<a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">index_t</span></code></a> (64 bit signed integers)</p>
+<p>all displacement/length information is in bytes.</p>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">header[0-2]</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>“vertex_storage_t” as byte array (including trailing
+zero byte), i.e., the three numbers
+(8313495814289909110,8385532525878079348,0) when
+interpreted as index_t</p>
+</dd>
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">header[124]</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>file size (in bytes)</p>
+</dd>
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">header[125-126]</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>file format version string [displ, size].</p>
+</dd>
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">header[127]</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>health check bit field (should be all zero!)</p>
+</dd>
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">header[3]</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">chan</span></code></p>
+</dd>
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">header[4]</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">linsz</span></code></p>
+</dd>
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">header[5]</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">n_steps</span></code></p>
+</dd>
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">header[6]</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">n_qpts</span></code></p>
+</dd>
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">header[7-8]</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>[displ, size] for <code class="docutils literal notranslate"><span class="pre">qpts</span></code> shape: (n_qpts,)</p>
+</dd>
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">header[9-10]</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>[displ, size] for <code class="docutils literal notranslate"><span class="pre">verts</span></code> shape:
+(n_steps,n_qpts,linsz,linsz)</p>
+</dd>
+<dt class="field-odd"><code class="docutils literal notranslate"><span class="pre">header[11-12]</span></code><span class="colon">:</span></dt>
+<dd class="field-odd"><p>[displ, size] for <code class="docutils literal notranslate"><span class="pre">Lambda</span></code> shape: (n_steps,)</p>
+</dd>
+<dt class="field-even"><code class="docutils literal notranslate"><span class="pre">header[13-14]</span></code><span class="colon">:</span></dt>
+<dd class="field-even"><p>[displ, size] for <code class="docutils literal notranslate"><span class="pre">chans</span></code> shape: (n_steps,)</p>
 </dd>
 </dl>
+</div></blockquote>
 </dd></dl>
 
 <dl class="c function">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_to_file">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_highsym_vertex_to_file</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.tu_highsym_vertex_t" title="tu_highsym_vertex_t"><span class="n"><span class="pre">tu_highsym_vertex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">vert</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fname</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.tu_highsym_vertex_to_file" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>save the contents of a <a class="reference internal" href="#c.tu_highsym_vertex_t" title="tu_highsym_vertex_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">tu_highsym_vertex_t</span></code></a> to disk. As of now,
-the file format is not fixed. It works along the lines of the other file
-formats encountered in the divERGe world:</p>
-<p>A header of 128 64-bit (signed) integers describes the file type, and the
-contents, which are appended to this header. For a description, see the
-source file (src/misc/vertex_store.c)</p>
-</dd></dl>
-
-<dl class="c function">
-<dt class="sig sig-object c" id="c.tu_highsym_vertex_free">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tu_highsym_vertex_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.tu_highsym_vertex_t" title="tu_highsym_vertex_t"><span class="n"><span class="pre">tu_highsym_vertex_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">vert</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.tu_highsym_vertex_free" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/misc/vertex_store.h#L85"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>free a <a class="reference internal" href="#c.tu_highsym_vertex_t" title="tu_highsym_vertex_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">tu_highsym_vertex_t</span></code></a> object</p>
+<dt class="sig sig-object c" id="c.vertex_storage_free">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_free" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/vertex_store.h#L129"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>free a <a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">vertex_storage_t</span></code></a> object</p>
 </dd></dl>
 
 </section>

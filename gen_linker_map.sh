@@ -12,7 +12,7 @@ misc_included_files_self=( $(grep "^#" src/diverge_misc.h | grep -o "[a-z,_,/,A-
 misc_included_files=( ${misc_included_files_self[@]/#/src/} )
 
 exported_symbols=( $(ctags -o- --kinds-C=p ${included_files[@]} |\
-    grep -v "^!" | awk '{print $1}' |\
+    grep -v "^!" | grep -v VECTOR | awk '{print $1}' |\
     grep -v "shared_malloc_init$" |\
     grep -v "shared_malloc_finalize$") )
 
@@ -32,9 +32,12 @@ echo "local:
 };" >> $OUTFILE
 
 exported_unstable_symbols=( $(ctags -o- --kinds-C=p ${misc_included_files[@]} |\
-    grep -v "^!" | awk '{print $1}' |\
+    grep -v "^!" | grep -v VECTOR  | awk '{print $1}' |\
     grep -v "_dos_sort_doubles_$" |\
-    grep -v "_dos_sort_doubles_indirect_$") )
+    grep -v "_dos_sort_doubles_indirect_$") \
+    diverge_tu_vertex_reco
+    diverge_tu_vertex_reco_ft
+)
 
 echo "DIVERGE_UNSTABLE {" >> $OUTFILE
 echo "    global:" >> $OUTFILE

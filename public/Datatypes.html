@@ -8,14 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Datatypes &amp; Common Macros &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=049aceee"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -49,13 +49,46 @@
 <li class="toctree-l1 current"><a class="reference internal" href="C%20Interface.html">C Interface</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="Initialization.html">Initialization &amp; Miscellaneous Functions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.MPI_Comm"><code class="docutils literal notranslate"><span class="pre">MPI_Comm</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_init"><code class="docutils literal notranslate"><span class="pre">diverge_init()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_finalize"><code class="docutils literal notranslate"><span class="pre">diverge_finalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_embed"><code class="docutils literal notranslate"><span class="pre">diverge_embed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_reset"><code class="docutils literal notranslate"><span class="pre">diverge_reset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_exit"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_exit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_wtime"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_wtime()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_get_comm"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_get_comm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_mpi_distribute"><code class="docutils literal notranslate"><span class="pre">diverge_mpi_distribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Initialization.html#c.diverge_distribute"><code class="docutils literal notranslate"><span class="pre">diverge_distribute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="Initialization.html#actual-mpi-functions">Actual MPI Functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Initialization.html#other-miscellaneous-parallel-functions">Other miscellaneous (parallel) functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Allocators.html">Allocators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="License.html">License</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Status.html">Status</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Logging.html">Logging</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Datatypes &amp; Common Macros</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Datatypes &amp; Common Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.complex128_t"><code class="docutils literal notranslate"><span class="pre">complex128_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.complex64_t"><code class="docutils literal notranslate"><span class="pre">complex64_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.gf_complex_t"><code class="docutils literal notranslate"><span class="pre">gf_complex_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.index_t"><code class="docutils literal notranslate"><span class="pre">index_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.uindex_t"><code class="docutils literal notranslate"><span class="pre">uindex_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.POW2"><code class="docutils literal notranslate"><span class="pre">POW2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.POW3"><code class="docutils literal notranslate"><span class="pre">POW3()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.POW4"><code class="docutils literal notranslate"><span class="pre">POW4()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.IDX2"><code class="docutils literal notranslate"><span class="pre">IDX2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.IDX3"><code class="docutils literal notranslate"><span class="pre">IDX3()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.IDX4"><code class="docutils literal notranslate"><span class="pre">IDX4()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.IDX5"><code class="docutils literal notranslate"><span class="pre">IDX5()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.IDX6"><code class="docutils literal notranslate"><span class="pre">IDX6()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.IDX7"><code class="docutils literal notranslate"><span class="pre">IDX7()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.IDX8"><code class="docutils literal notranslate"><span class="pre">IDX8()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.MAX"><code class="docutils literal notranslate"><span class="pre">MAX()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.MIN"><code class="docutils literal notranslate"><span class="pre">MIN()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XORSWAP_UNSAFE"><code class="docutils literal notranslate"><span class="pre">XORSWAP_UNSAFE()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XORSWAP"><code class="docutils literal notranslate"><span class="pre">XORSWAP()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.XORSWAP_PTR"><code class="docutils literal notranslate"><span class="pre">XORSWAP_PTR()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.ZERO_OUT"><code class="docutils literal notranslate"><span class="pre">ZERO_OUT()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="Shared%20Memory.html">Shared Memory</a></li>
 <li class="toctree-l3"><a class="reference internal" href="IEEE%20754%20Quiet%20NaN.html">IEEE 754 Quiet NaN</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Bit%20Arrays.html">Bit Arrays</a></li>
@@ -105,129 +138,129 @@
 <h1>Datatypes &amp; Common Macros<a class="headerlink" href="#datatypes-common-macros" title="Link to this heading"></a></h1>
 <dl class="c type">
 <dt class="sig sig-object c" id="c.complex128_t">
-<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">complex128_t</span></span></span><a class="headerlink" href="#c.complex128_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L37"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">complex128_t</span></span></span><a class="headerlink" href="#c.complex128_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L37"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>128bit complex number (two 64bit floating point numbers)</p>
 </dd></dl>
 
 <dl class="c type">
 <dt class="sig sig-object c" id="c.complex64_t">
-<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">complex64_t</span></span></span><a class="headerlink" href="#c.complex64_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">complex64_t</span></span></span><a class="headerlink" href="#c.complex64_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>64bit complex number (two 32bit floating point numbers)</p>
 </dd></dl>
 
 <dl class="c type">
 <dt class="sig sig-object c" id="c.gf_complex_t">
-<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">gf_complex_t</span></span></span><a class="headerlink" href="#c.gf_complex_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L57"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">gf_complex_t</span></span></span><a class="headerlink" href="#c.gf_complex_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L57"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Green’s function complex type. uses <a class="reference internal" href="#c.complex128_t" title="complex128_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">complex128_t</span></code></a> if USE_GF_FLOATS
 is not defined. Otherwise, <a class="reference internal" href="#c.complex64_t" title="complex64_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">complex64_t</span></code></a> is used</p>
 </dd></dl>
 
 <dl class="c type">
 <dt class="sig sig-object c" id="c.index_t">
-<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">index_t</span></span></span><a class="headerlink" href="#c.index_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L90"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">index_t</span></span></span><a class="headerlink" href="#c.index_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L90"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>64bit signed integer</p>
 </dd></dl>
 
 <dl class="c type">
 <dt class="sig sig-object c" id="c.uindex_t">
-<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">uindex_t</span></span></span><a class="headerlink" href="#c.uindex_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L92"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">uindex_t</span></span></span><a class="headerlink" href="#c.uindex_t" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L92"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>64bit unsigned integer</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.POW2">
-<span class="sig-name descname"><span class="n"><span class="pre">POW2</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.POW2" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L95"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">POW2</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.POW2" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L95"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>simple power of 2 as macro</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.POW3">
-<span class="sig-name descname"><span class="n"><span class="pre">POW3</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.POW3" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L97"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">POW3</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.POW3" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L97"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>simple power of 3 as macro</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.POW4">
-<span class="sig-name descname"><span class="n"><span class="pre">POW4</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.POW4" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L99"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">POW4</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.POW4" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L99"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>simple power of 4 as macro</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.IDX2">
-<span class="sig-name descname"><span class="n"><span class="pre">IDX2</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">nj</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX2" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L102"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">IDX2</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">nj</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX2" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L102"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>rank-2 tensor index in C-style ordering</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.IDX3">
-<span class="sig-name descname"><span class="n"><span class="pre">IDX3</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX3" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L105"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">IDX3</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX3" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L105"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>rank-3 tensor index in C-style ordering</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.IDX4">
-<span class="sig-name descname"><span class="n"><span class="pre">IDX4</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX4" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L108"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">IDX4</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX4" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L108"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>rank-4 tensor index in C-style ordering</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.IDX5">
-<span class="sig-name descname"><span class="n"><span class="pre">IDX5</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">m</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span>, <span class="n"><span class="pre">nm</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX5" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L111"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">IDX5</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">m</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span>, <span class="n"><span class="pre">nm</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX5" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L111"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>rank-5 tensor index in C-style ordering</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.IDX6">
-<span class="sig-name descname"><span class="n"><span class="pre">IDX6</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">m</span></span>, <span class="n"><span class="pre">n</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span>, <span class="n"><span class="pre">nm</span></span>, <span class="n"><span class="pre">nn</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX6" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L114"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">IDX6</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">m</span></span>, <span class="n"><span class="pre">n</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span>, <span class="n"><span class="pre">nm</span></span>, <span class="n"><span class="pre">nn</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX6" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L114"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>rank-6 tensor index in C-style ordering</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.IDX7">
-<span class="sig-name descname"><span class="n"><span class="pre">IDX7</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">m</span></span>, <span class="n"><span class="pre">n</span></span>, <span class="n"><span class="pre">o</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span>, <span class="n"><span class="pre">nm</span></span>, <span class="n"><span class="pre">nn</span></span>, <span class="n"><span class="pre">no</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX7" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L117"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">IDX7</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">m</span></span>, <span class="n"><span class="pre">n</span></span>, <span class="n"><span class="pre">o</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span>, <span class="n"><span class="pre">nm</span></span>, <span class="n"><span class="pre">nn</span></span>, <span class="n"><span class="pre">no</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX7" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L117"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>rank-7 tensor index in C-style ordering</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.IDX8">
-<span class="sig-name descname"><span class="n"><span class="pre">IDX8</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">m</span></span>, <span class="n"><span class="pre">n</span></span>, <span class="n"><span class="pre">o</span></span>, <span class="n"><span class="pre">p</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span>, <span class="n"><span class="pre">nm</span></span>, <span class="n"><span class="pre">nn</span></span>, <span class="n"><span class="pre">no</span></span>, <span class="n"><span class="pre">np</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX8" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L120"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">IDX8</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">i</span></span>, <span class="n"><span class="pre">j</span></span>, <span class="n"><span class="pre">k</span></span>, <span class="n"><span class="pre">l</span></span>, <span class="n"><span class="pre">m</span></span>, <span class="n"><span class="pre">n</span></span>, <span class="n"><span class="pre">o</span></span>, <span class="n"><span class="pre">p</span></span>, <span class="n"><span class="pre">nj</span></span>, <span class="n"><span class="pre">nk</span></span>, <span class="n"><span class="pre">nl</span></span>, <span class="n"><span class="pre">nm</span></span>, <span class="n"><span class="pre">nn</span></span>, <span class="n"><span class="pre">no</span></span>, <span class="n"><span class="pre">np</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IDX8" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L120"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>rank-8 tensor index in C-style ordering</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.MAX">
-<span class="sig-name descname"><span class="n"><span class="pre">MAX</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span>, <span class="n"><span class="pre">y</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.MAX" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L124"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">MAX</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span>, <span class="n"><span class="pre">y</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.MAX" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L124"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>maximum element</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.MIN">
-<span class="sig-name descname"><span class="n"><span class="pre">MIN</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span>, <span class="n"><span class="pre">y</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.MIN" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L126"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">MIN</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">x</span></span>, <span class="n"><span class="pre">y</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.MIN" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L126"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>minimum element</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.XORSWAP_UNSAFE">
-<span class="sig-name descname"><span class="n"><span class="pre">XORSWAP_UNSAFE</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XORSWAP_UNSAFE" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L129"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">XORSWAP_UNSAFE</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XORSWAP_UNSAFE" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L129"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>swap operands using the XOR-swap algorithm, fails if applied on the same element.</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.XORSWAP">
-<span class="sig-name descname"><span class="n"><span class="pre">XORSWAP</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XORSWAP" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L131"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">XORSWAP</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XORSWAP" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L131"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>swap operands using the XOR-swap algorithm, but first check if their addresses are equal.</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.XORSWAP_PTR">
-<span class="sig-name descname"><span class="n"><span class="pre">XORSWAP_PTR</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XORSWAP_PTR" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L138"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">XORSWAP_PTR</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.XORSWAP_PTR" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L138"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>swap operands using the XOR-swap algorithm, but for pointers (C doesn’t
 allow <code class="docutils literal notranslate"><span class="pre">ptr1</span> <span class="pre">^=</span> <span class="pre">ptr2</span></code>, that’s why we need a second macro)</p>
 </dd></dl>
 
 <dl class="c macro">
 <dt class="sig sig-object c" id="c.ZERO_OUT">
-<span class="sig-name descname"><span class="n"><span class="pre">ZERO_OUT</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ptr</span></span>, <span class="n"><span class="pre">sz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.ZERO_OUT" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/master/src/diverge_common.h#L144"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="n"><span class="pre">ZERO_OUT</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ptr</span></span>, <span class="n"><span class="pre">sz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.ZERO_OUT" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_common.h#L144"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>zero out an array of arbitrary POD type (pointed to by <code class="docutils literal notranslate"><span class="pre">ptr</span></code>) with <code class="docutils literal notranslate"><span class="pre">sz</span></code>
 elements by calling <code class="docutils literal notranslate"><span class="pre">memset</span></code></p>
 </dd></dl>

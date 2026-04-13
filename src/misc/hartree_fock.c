@@ -16,7 +16,7 @@ struct diverge_hartree_fock_t {
 
     double* E;
     complex128_t* U;
-    const complex128_t* H;
+    complex128_t* H;
 
     complex128_t* flow_step_sigma;
     complex128_t* internal_sigma;
@@ -24,7 +24,18 @@ struct diverge_hartree_fock_t {
     void* buf;
 
     diverge_flow_step_t* step;
+    double E_tot; 
 };
+
+static int hf_normalize = 1;
+int diverge_hartree_fock_normalize_configure( int normalize ) {
+    XORSWAP(hf_normalize, normalize);
+    return normalize;
+}
+
+diverge_flow_step_t* diverge_hartree_fock_get_flow_step( diverge_hartree_fock_t* h ) {
+    return h->step;
+}
 
 static inline double fermi( double E, double T ) { return 1./(exp(E/T) + 1.); }
 static inline double fermi_zero( double E ) { return E <= 0.0 ? 1.0 : 0.0; }
@@ -80,7 +91,7 @@ void diverge_hartree_fock_free( diverge_hartree_fock_t* m ) {
     free( m );
 }
 
-void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* dest, complex128_t Lambda ) {
+static void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* dest, complex128_t Lambda ) {
     const index_t nk_nb2 = m->nk * POW2(m->nb);
     complex128_t* cbuf = m->buf;
     double* dbuf = m->buf;
@@ -134,6 +145,20 @@ void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* dest, c
 
     // and copy it over to the -Lambda GF (TODO: not needed?!)
     memcpy( dest + nk_nb2, dest, sizeof*dest * nk_nb2 );
+
+    // compute total energy Tr[(H - 1/2*S)*rho]
+    double e_band = 0.0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:e_band)
+    for (index_t i=0; i<m->nk*m->nb; ++i)
+        e_band += dbuf[i] * m->E[i];
+
+    double e_dc = 0.0;
+    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads()) reduction(+:e_dc)
+    for (index_t k=0; k<m->nk; ++k)
+    for (index_t o=0; o<m->nb; ++o)
+    for (index_t p=0; p<m->nb; ++p)
+        e_dc += creal(/*rho*/dest[IDX3(k,o,p, m->nb,m->nb)] * m->flow_step_sigma[IDX3(k,p,o, m->nb,m->nb)]);
+    m->E_tot = (e_band - 0.5 * e_dc) / (double)m->nk;
 }
 
 static greensfunc_op_t hf_data_gfill( const diverge_model_t* m, complex128_t Lambda, gf_complex_t* buf ) {
@@ -148,6 +173,21 @@ void diverge_hartree_fock_step( diverge_hartree_fock_t* m, double T ) {
     // of two cancels due to the two GFs)
     diverge_flow_step_euler( m->step, T, -M_PI );
     for (index_t i=0; i<nk_nb2; ++i) m->flow_step_sigma[i] -= m->internal_sigma[i];
+    if (hf_normalize) diverge_hartree_fock_normalize_sigma( m );
+}
+
+void diverge_hartree_fock_normalize_sigma( diverge_hartree_fock_t* m ) {
+    double mu = 0.0;
+    complex128_t *S = m->flow_step_sigma, *H = m->H;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2) reduction(+:mu)
+    for (index_t k=0; k<m->nk; ++k)
+    for (index_t o=0; o<m->nb; ++o) mu += creal(S[IDX3(k,o,o, m->nb,m->nb)]) / (double)(m->nk * m->nb);
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2)
+    for (index_t k=0; k<m->nk; ++k)
+    for (index_t o=0; o<m->nb; ++o) S[IDX3(k,o,o, m->nb,m->nb)] -= mu;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2)
+    for (index_t k=0; k<m->nk; ++k)
+    for (index_t o=0; o<m->nb; ++o) H[IDX3(k,o,o, m->nb,m->nb)] += mu;
 }
 
 complex128_t* diverge_hartree_fock_get_sigma( diverge_hartree_fock_t* h ) {
@@ -156,4 +196,8 @@ complex128_t* diverge_hartree_fock_get_sigma( diverge_hartree_fock_t* h ) {
 
 complex128_t* diverge_hartree_fock_get_sigma_prev( diverge_hartree_fock_t* h ) {
     return h->internal_sigma;
+}
+
+double diverge_hartree_fock_get_E_tot( diverge_hartree_fock_t* m ) {
+    return m->E_tot;
 }

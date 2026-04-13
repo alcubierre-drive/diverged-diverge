@@ -117,18 +117,14 @@ struct rs_hopping_t {
     complex128_t t;
 };
 
-// TODO(LK): We need to comment on the fact that for the -1 components, either
-// the C or D channel objects can be set, but not both. This is necessitated
-// through our wish to keep notation consistent between SU(2) and non-SU(2)
-// vertex initialization and enforcing exchange symmetries
-// TODO(LK): As a consequence, one should also think about what actually happens
-// to the P channel. @JP: Have we thought this through?
 /**
  * Single vertex element in real space. Distance is measured in the same manner
  * as for hopping parameters (:c:struct:`rs_hopping_t`). In case the model is
  * non-:math:`SU(2)` but still spin-1/2, i.e., has two spin indices, setting
  * ``s1 = -1`` allows to auto-generate all :math:`SU(2)`-symmetry related
- * components. Useful for models where :math:`SU(2)` is broken in the kinetic
+ * components. Note that in this case, you must not double-count the
+ * interactions, i.e., still initialize, e.g., the Hubbard-U in only one of the
+ * channels. Useful for models where :math:`SU(2)` is broken in the kinetic
  * sector.
  */
 struct rs_vertex_t {
@@ -425,6 +421,12 @@ struct diverge_model_t {
 };
 
 /**
+ * set FFTW planner flags for the Hamiltonian generator (useful if the
+ * generator is called many times).
+ */
+void diverge_hamilton_generator_set_fftw_options( int flags );
+
+/**
  * The standard :c:type:`hamiltonian_generator_t` used by
  * :c:func:`diverge_model_internals_common`. It takes the hopping elements
  * :c:member:`diverge_model_t.hop` and Fourier transforms them to momentum
@@ -460,9 +462,19 @@ int diverge_channel_vertex_generator_default(diverge_model_t* model, char channe
 diverge_model_t* diverge_model_init(void);
 /**
  * clean up a :c:struct:`diverge_model_t` instance and all the attached arrays. Usage
- * **required**.
+ * **required**, see :c:func:`diverge_model_free_set_options` for possible
+ * non-standard settings.
  */
 void diverge_model_free(diverge_model_t* model);
+/**
+ * set options in the model cleanup :c:func:`diverge_model_free`. For the
+ * members :c:member:`diverge_model_t.hop`, :c:member:`diverge_model_t.vert`, or
+ * :c:member:`diverge_model_t.orb_symmetries`, the ``free()`` function is
+ * usually called, assuming allocation via ``malloc()`` (and friends). For stack
+ * allocated data, one can set to skip this call to ``free()``.
+ */
+void diverge_model_free_set_options(diverge_model_t* model, int ignore_hop,
+        int ignore_vert, int ignore_orb_symmetries);
 
 /**
  * return special NaN that allows to skip segments in the IBZ path. The

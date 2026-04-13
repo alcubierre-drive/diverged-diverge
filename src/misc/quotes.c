@@ -19,6 +19,8 @@ static const char quotes[][1024] = {
     "                                                 -- Ken Thompson\n",
     "If you want to go somewhere, goto is the best way to get there.\n"
     "                                                 -- Ken Thompson\n",
+    "I just don't know what to do with myself.\n"
+    "                                            -- The White Stripes\n",
 };
 
 const char* random_quote( void ) {

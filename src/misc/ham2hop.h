@@ -27,7 +27,23 @@ typedef struct rs_hopping_t rs_hopping_t;
  * :returns: :c:type:`rs_hopping_t` array that contains the real-space version
  *      of the input Bloch Hamiltonian (obtained via lattice Fourier transform).
  */
-rs_hopping_t* diverge_model_ham2hop( const diverge_model_t* m, double hoplim, index_t* n_hop );
+rs_hopping_t* diverge_model_ham2hop( const diverge_model_t* m, double hoplim,
+        index_t* n_hop );
+
+/**
+ * same as :c:func:`diverge_model_ham2hop`, but with explicit control over the
+ * buffer which is used for the Hamiltonian (H0) and distance limitation
+ * (distlim; set negative to ignore). Very useful to, e.g., extract the
+ * selfenergy in efficient representation at the end of the flow.
+ */
+rs_hopping_t* diverge_model_ham2hop_fg( const diverge_model_t* m, double hoplim,
+        double distlim, index_t* n_hop, const complex128_t* H0 );
+
+/**
+ * not thread-safe, swap orbital convention. return whether swapping in future
+ * calls to :c:func:`diverge_model_ham2hop`.
+ */
+int diverge_model_ham2hop_swap_orbs( void );
 
 #ifdef __cplusplus
 }

@@ -14,7 +14,7 @@
 #include <assert.h>
 
 diverge_model_t* diverge_model_init(void) {
-    diverge_model_t* result = (diverge_model_t*)calloc(1,sizeof(diverge_model_t));
+    diverge_model_t* result = calloc(1,sizeof*result);
     result->hfill = &diverge_hamilton_generator_default;
     result->gfill = &diverge_greensfunc_generator_default;
     result->gproj = NULL;
@@ -23,7 +23,7 @@ diverge_model_t* diverge_model_init(void) {
     result->n_vert_chan[0] = -1;
     result->n_spin = 1;
     result->SU2 = 1;
-    result->internals = (internals_t*)calloc(1,sizeof(internals_t));
+    result->internals = calloc(1,sizeof*result->internals);
     result->internals->has_common_internals = 0;
     result->internals->tu_symcheck_mpi = environ_tu_symcheck_mpi();
     result->internals->symcheck_mpi = environ_symcheck_mpi();
@@ -31,31 +31,38 @@ diverge_model_t* diverge_model_init(void) {
     return result;
 }
 
-void diverge_model_free(diverge_model_t* model) {
+void diverge_model_free_set_options(diverge_model_t* model, int ignore_hop,
+        int ignore_vert, int ignore_orb_symmetries) {
+    model->internals->ignore_hop_free = ignore_hop;
+    model->internals->ignore_vert_free = ignore_vert;
+    model->internals->ignore_orb_symmetries_free = ignore_orb_symmetries;
+}
 
+void diverge_model_free(diverge_model_t* model) {
     dependency_tree_remove_model(model);
 
     if (model->patching) {
         diverge_patching_free(model->patching);
         model->patching = NULL;
     }
-    if (model->internals)
-        diverge_model_internals_reset(model);
-    free(model->internals);
     free(model->tu_ff);
-    free(model->orb_symmetries);
 
-    if (model->data_destructor)
-        (*model->data_destructor)(model->data);
-    else if (model->nbytes_data > 0)
-        free(model->data);
-    else if (model->data)
-        mpi_log_printf( "data ptr set but not free'd (nbytes_data == 0)\n" );
+    if (model->data_destructor) (*model->data_destructor)(model->data);
+    else if (model->nbytes_data > 0) free(model->data);
+    else if (model->data) mpi_log_printf( "data ptr set but not free'd (nbytes_data == 0)\n" );
 
-    free(model->hop);
-    free(model->vert);
+    if (!model->internals->ignore_orb_symmetries_free) free(model->orb_symmetries);
+    if (!model->internals->ignore_hop_free) free(model->hop);
+    if (!model->internals->ignore_vert_free) free(model->vert);
 
+    if (model->internals) diverge_model_internals_reset(model);
+    free(model->internals);
     free(model);
+}
+
+static int diverge_hamilton_generator_add_planning_flag = FFTW_ESTIMATE;
+void diverge_hamilton_generator_set_fftw_options( int flags ) {
+    diverge_hamilton_generator_add_planning_flag = flags;
 }
 
 void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* buf) {
@@ -79,7 +86,7 @@ void diverge_hamilton_generator_add(const diverge_model_t* model, complex128_t* 
     dims[0].os = n_kz*n_ky*stride_fft, dims[1].os = n_kz*stride_fft, dims[2].os = stride_fft;
     fftw_iodim64 howmany;
     howmany.n = stride_fft, howmany.is = 1, howmany.os = 1;
-    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, FFTW_ESTIMATE);
+    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, -1, diverge_hamilton_generator_add_planning_flag);
 
     memset((void*)fftw_cbuf, 0, buf_sz);
 
@@ -229,8 +236,8 @@ int diverge_channel_vertex_generator_default(diverge_model_t* model, char channe
 }
 
 double diverge_model_ibz_path_skip_segment( void ) {
-    uint32_t number = 0;
-    memcpy( &number, "skip", sizeof(uint32_t) );
+    uint64_t number = 0;
+    memcpy( &number, "skip", MIN(sizeof(uint64_t),sizeof("skip")) );
     return qnan_gen( number );
 }
 

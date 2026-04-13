@@ -7,7 +7,7 @@ diverge_model_t* s2xs2_hubbard( int nk, int nkf, double ffcut, double U );
 int main( int argc, char** argv ) {
 
     int nk = 24, nkf = 1;
-    double ffcut = 0.01;
+    double ffcut = 0.1;
 
     double nu = 0.5;
     double U = 3.0;
@@ -15,7 +15,7 @@ int main( int argc, char** argv ) {
 
     double amp = 1e-5;
     index_t maxiter = 200;
-    double mindiff = 1e-8;
+    double mindiff = 1e-10;
     double alpha = 0.7;
 
     diverge_init( &argc, &argv );
@@ -37,7 +37,7 @@ int main( int argc, char** argv ) {
     sigma[IDX4(0,0,0,0,2,2,2)] = -amp;
     sigma[IDX4(1,0,1,0,2,2,2)] = +amp;
 
-    mpi_printf( "# iter absdiff maxval\n" );
+    mpi_printf( "# iter absdiff maxval E_tot\n" );
     // self-consistency loop
     for (int it=0; it<maxiter; ++it) {
         diverge_hartree_fock_step( h, T );
@@ -56,9 +56,9 @@ int main( int argc, char** argv ) {
         err /= (double)nk_nb2;
 
         // output
-        mpi_printf( "%i %.5e %.5e\n", it, err, smax );
+        mpi_printf( "%i %.5e %.5e %.5e\n", it, err, smax, diverge_hartree_fock_get_E_tot(h) );
 
-        if (err < mindiff) break;
+        if (err < mindiff && it > 10) break;
     }
 
     // attach the self-energy to the model
@@ -70,6 +70,7 @@ int main( int argc, char** argv ) {
     diverge_model_output_conf_t oc = diverge_model_output_conf_defaults;
     oc.npath = -1;
     oc.kf_ibz_path = 1;
+    oc.E = oc.U = oc.H = 1;
     diverge_model_to_file_finegrained( m, __FILE__ "_mod.dvg", &oc );
 
     // and free resources

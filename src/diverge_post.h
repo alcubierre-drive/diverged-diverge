@@ -27,6 +27,10 @@ typedef struct diverge_postprocess_conf_t diverge_postprocess_conf_t;
  *   used with the grid backend
  *  ``tu_``
  *   used with the tu backend
+ *
+ * .. note::
+ *    TUFRG channels are diagonalized in transposed form (cf.
+ *    :c:member:`diverge_postprocess_conf_t.tu_which_solver_mode`)
  */
 struct diverge_postprocess_conf_t {
     /** include the channelized matrices in the save */
@@ -54,6 +58,12 @@ struct diverge_postprocess_conf_t {
     char    grid_lingap_vertex_file_C[MAX_NAME_LENGTH];
     /** output the q=0 linearized gap vertex of the D channel to the file (if != "") */
     char    grid_lingap_vertex_file_D[MAX_NAME_LENGTH];
+    /** output the q=0 linearized gap and loop vertex of the P channel to the file (if != "") */
+    char    grid_lingap_vertex_loop_file_P[MAX_NAME_LENGTH];
+    /** output the q=0 linearized gap and loop vertex of the C channel to the file (if != "") */
+    char    grid_lingap_vertex_loop_file_C[MAX_NAME_LENGTH];
+    /** output the q=0 linearized gap and loop vertex of the D channel to the file (if != "") */
+    char    grid_lingap_vertex_loop_file_D[MAX_NAME_LENGTH];
     /** number of singular values to save for the lineraized gap solutions */
     int     grid_n_singular_values;
     /** include the loop in the linearized gap solution */
@@ -66,7 +76,17 @@ struct diverge_postprocess_conf_t {
     /**
      * choose how to handle non hermitian entries of the channel
      * diagonalization. options: 'a'(utomatic), 's'(vd), 'e'(igen), 'b'(atched
-     * eigen), 'B'(atched SVD)
+     * eigen), 'B'(atched SVD). For 'a'(utomatic), one can use
+     * :c:member:`tu_which_solver_mode_hermiticity_limit` to set a "zero" value
+     * for hermiticity detection.
+     *
+     * .. note::
+     *      The diagonalization happens in Channel-native memory order
+     *      (e.g. ``(q,43,21)`` for the P Channel written in C ordering). As a
+     *      consequence, the eigenvectors are (21) rather than (34) what you
+     *      might expect. Effectively this means you get the eigenvectors of the
+     *      *transposed* channel, not the *true* channel. For chiral systems,
+     *      this makes a difference…
      */
     char    tu_which_solver_mode;
     /** if true, the eigenvectors of each channel are not calculated. useful for RPA calculations */
@@ -83,8 +103,13 @@ struct diverge_postprocess_conf_t {
     bool    tu_susceptibilities_full;
     /** calculate the susceptibilities from tufrg in formfactor space */
     bool    tu_susceptibilities_ff;
-    /** store the selfenergy if it was included in the calculation */
-    bool    tu_selfenergy;
+    /**
+     * store the selfenergy if it was included in the calculation. Iff < 0,
+     * transform the selfenergy to real space hopping parameters using
+     * :c:func:`diverge_model_ham2hop_fg` (see :c:member:`tu_selfenergy_rs_dist`
+     * and :c:member:`tu_selfenergy_rs_mval`).
+     */
+    int     tu_selfenergy;
     /** store the vertices in the formfactor basis (*requires a lot of memory*) */
     bool    tu_channels;
     /** store the symmetry transfromations for the left multiindex (works for eigenvectors) */
@@ -115,6 +140,54 @@ struct diverge_postprocess_conf_t {
      * flag has an effect only when :c:member:`tu_skip_channel_calc` is false.
      */
     int     tu_channel_calc_project;
+    /**
+     * limit up to which to consider a matrix "hermitian" when the solver mode
+     * in :c:member:`tu_which_solver_mode` is 'a'. limit is applied to the
+     * maximum entry of the difference of the matrix and its hermitian
+     * conjugate.
+     */
+    double  tu_which_solver_mode_hermiticity_limit;
+
+
+    /**
+     * select channels for vertices that are projected to the P channel at q=0
+     * and then considered for diagonalization in linearized gap of RPA
+     * attachment. must be particle-hole channels; naming follows
+     * :c:func:`diverge_flow_step_vertex`.
+     */
+    char tu_rpa_chans[8];
+    /**
+     * number of eigenvalues to calculate in RPA attachment. Unless
+     * ``-DUSE_ARPACK_EIGENSOLVER`` is used at compile time (and the library is
+     * linked to arpack) the postprocessing falls back to a lapack eigensolver
+     * that goes for *all* eigenvalues; and is very slow.
+     */
+    int tu_rpa_nev;
+    /**
+     * size of Krylov space for eigensolver in RPA attachment
+     * (only enabled when library is compiled with ``-DUSE_ARPACK_EIGENSOLVER``)
+     */
+    int tu_rpa_ncv;
+    /**
+     * number of Kryolv iterations for eigensolver in RPA attachment
+     * (only enabled when library is compiled with ``-DUSE_ARPACK_EIGENSOLVER``)
+     */
+    int tu_rpa_maxiter;
+    /**
+     * tolerance of eigensolver in RPA attachment
+     * (only enabled when library is compiled with ``-DUSE_ARPACK_EIGENSOLVER``)
+     */
+    double tu_rpa_tol;
+    /**
+     * eigenvalue sorting and selection: most 'N'egative, most 'P'ositive, or
+     * largest 'M'agnitude (cf. :c:func:`single_eigen_sort`)
+     */
+    char tu_rpa_sorting;
+
+    /** maximal distance for (real space) selfenergy storage; in units of first lattice vector. */
+    float tu_selfenergy_rs_dist;
+    /** minimal value for (real space) selfenergy storage; in units of energy. */
+    float tu_selfenergy_rs_mval;
 
     // DEVELOPERS
     //
@@ -138,6 +211,9 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .grid_lingap_vertex_file_P = {'\0'},
     .grid_lingap_vertex_file_C = {'\0'},
     .grid_lingap_vertex_file_D = {'\0'},
+    .grid_lingap_vertex_loop_file_P = {'\0'},
+    .grid_lingap_vertex_loop_file_C = {'\0'},
+    .grid_lingap_vertex_loop_file_D = {'\0'},
     .grid_n_singular_values = 20,
     .grid_use_loop = true,
     .grid_vertex_file = {'\0'},
@@ -151,7 +227,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_lingap = true,
     .tu_susceptibilities_full = false,
     .tu_susceptibilities_ff = false,
-    .tu_selfenergy = false,
+    .tu_selfenergy = 0,
     .tu_channels = false,
     .tu_symmetry_maps = false,
     .tu_n_decomp_values = 0,
@@ -159,6 +235,16 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_lingap_solver_mode = "sss",
     .tu_susceptibilities_bare = false,
     .tu_channel_calc_project = 0,
+    .tu_which_solver_mode_hermiticity_limit = 1.e-11,
+    .tu_rpa_chans = "CD",
+    .tu_rpa_nev = 10,
+    .tu_rpa_ncv = 100,
+    .tu_rpa_maxiter = 100,
+    .tu_rpa_tol = 1.e-6,
+    .tu_rpa_sorting = 'N',
+
+    .tu_selfenergy_rs_dist = 4.01,
+    .tu_selfenergy_rs_mval = 1.e-4,
 };
 #endif
 
@@ -215,11 +301,6 @@ void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st, const c
 /** alias for :c:func:`diverge_postprocess_and_write_finegrained` */
 void diverge_postprocess_and_write_fg( diverge_flow_step_t* st, const char* file,
         const diverge_postprocess_conf_t* cfg );
-
-// TODO(LK) we might want to include the Metznerish Way of doing a channel
-// specific inverse BSE equation such that post-processing output doesn't depend
-// on the maximal stopping scale of the flow equations. Need to integrate up the
-// bubble though...
 
 #ifdef __cplusplus
 }

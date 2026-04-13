@@ -14,12 +14,14 @@ extern "C" {
 
 typedef struct tu_vertex_t tu_vertex_t;
 typedef struct tu_projection_t tu_projection_t;
+typedef struct tu_rpa_t tu_rpa_t;
 typedef struct diverge_model_t diverge_model_t;
 
 typedef struct {
     bool skip_channel_calc;
     index_t tu_n_singular_values;
     char algo;
+    double algo_zero;
     double cutoff;
     bool cutoff_rel;
     index_t tu_n_decomp_values;
@@ -31,15 +33,25 @@ typedef struct {
     bool susc_ff;
     bool susc_full;
     bool lingap_atscale;
-    bool save_self;
+    int save_self;
     bool save_full;
     bool save_symmetries;
+
+    char rpa_chans[8];
+    int rpa_nev;
+    int rpa_ncv;
+    int rpa_maxiter;
+    double rpa_tol;
+
+    float self_rs_dist;
+    float self_rs_mval;
 } tu_postproduction_conf_t;
 #ifndef __cplusplus
 static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .skip_channel_calc = false,
     .tu_n_singular_values = 1,
     .algo = 'a',
+    .algo_zero = 1.e-11,
     .cutoff = 25.,
     .cutoff_rel = false,
     .tu_n_decomp_values = 0,
@@ -50,15 +62,21 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .susc_ff = false,
     .susc_full = false,
     .lingap_atscale = false,
-    .save_self = false,
+    .save_self = 0,
     .save_full = false,
     .save_symmetries = false,
+    .rpa_chans = "CD",
+    .rpa_nev = 10,
+    .rpa_ncv = 100,
+    .rpa_maxiter = 100,
+    .rpa_tol = 1.e-6,
+    .self_rs_dist = 4.01,
+    .self_rs_mval = 1.e-4,
 };
 #endif // __cplusplus
-tu_postproduction_conf_t tu_postproduction_conf_defaults_CPP( void );
 
 void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
-        tu_projection_t* proj, const diverge_model_t* model,
+        tu_projection_t* proj, tu_rpa_t* rpa, const diverge_model_t* model,
         const tu_postproduction_conf_t* c, const char* filename );
 
 #ifdef __cplusplus

@@ -6,18 +6,6 @@ import numpy as np
 
 USE_GRID = False
 
-# TODO(lk):
-# -talk about initialization and that it's necessary but uninteresting
-# -talk about diverge.view_array and diverge.alloc_array in greater detail
-# -explain the structure of hopping elements and vertex elements
-# -explain validation
-# -explain two-step procedure of internal initialization, with the example of
-#  patching
-# -OpenBLAS issue on machines with many threads. just document this or
-#  explicitly export OPENBLAS_NUM_THREADS here
-# -create an extremely dummed-down version that only takes the vertex, the
-#  hoppings, the lattice, and the kpoints and does an autoflow
-
 # initialization. takes the C-style argc, argv as arguments, which can be safely
 # ignored (i.e. set to None) in most cases.
 diverge.init(None, None)
@@ -136,7 +124,7 @@ if diverge.model_validate( model ):
     # in case we are mpi rank 0.
     diverge.print("invalid model")
 
-# and initialize internal structures
+# and initialize common internal structures
 diverge.model_internals_common( model )
 
 if USE_GRID:
@@ -147,7 +135,7 @@ else:
     diverge.model_internals_patch( model, 6 )
 
 # now write the model output
-checksum = diverge.model_to_file( model, "mod.dvg" )
+checksum = diverge.model_to_file_PY( model, "mod.dvg", kc=True )
 
 ################################################################################
 ######################### FLOW STEPPER AND FLOW ################################
@@ -156,11 +144,9 @@ checksum = diverge.model_to_file( model, "mod.dvg" )
 # initialize flow step
 step = diverge.flow_step_init( model, "grid" if USE_GRID else "patch", "PCD" )
 
-# some auxiliary variables and the custom euler stepper (eu)
+# some auxiliary variables and the logarithmic euler stepper (eu)
 maxs = dict(vert=np.zeros(1), loop=np.zeros(2), chan=np.zeros(3))
 eu = diverge.euler_defaults_CPP()
-eu.dLambda_fac_scale = 1.0
-eu.dLambda_fac = 0.1
 
 # and finally, an FRG flow!
 diverge.print( "Lambda dLambda Lp Lm dP dC dD V" )
@@ -196,9 +182,9 @@ if myrank != 0:
     exit(0)
 
 # read the output files
-import diverge.output as rd
-model_result = rd.read( "mod.dvg" )
-post_result = rd.read( "out.dvg" )
+import diverge.output as do
+model_result = do.read( "mod.dvg" )
+post_result = do.read( "out.dvg" )
 
 import matplotlib.pyplot as plt
 
@@ -210,12 +196,14 @@ import matplotlib.pyplot as plt
 # case, the shape of the bandstructure array therefore is (901, 4): 300 + 300 +
 # 300 + 1 points with 1 band and 3 momentum coordinates each
 plt.figure( figsize=(4,3), layout="constrained" )
-xvals = np.concatenate( [[0], np.cumsum(np.sqrt((np.diff(model_result.bandstructure[:,1:],axis=0)**2).sum(axis=1)))] )
-plt.plot( xvals, model_result.bandstructure[:,0] )
-plt.xticks( [xvals[0], xvals[300], xvals[600], xvals[900]], [r'$\Gamma$', r'$M$', r'$K$', r'$\Gamma$'] )
+xvals = do.bandstructure_xvals(model_result)
+bands = do.bandstructure_bands(model_result)
+ticks = do.bandstructure_ticks(model_result)
+plt.plot( xvals, bands )
+plt.xticks( ticks, [r'$\Gamma$', r'$M$', r'$K$', r'$\Gamma$'] )
 plt.xlim( xvals[0], xvals[-1] )
 plt.ylabel( r'$\epsilon({\bf k})$' )
-plt.title( 'Bandstructure of the $t/t^\prime$-Hubbard model' )
+plt.title( r'Bandstructure of the $t/t^\prime$-Hubbard model' )
 
 # and plot the SC order parameter
 kmesh = model_result.kmesh
@@ -241,5 +229,5 @@ plt.colorbar( label=r'$\Delta({\bf k})$')
 plt.xlabel( r'$k_x$' )
 plt.ylabel( r'$k_y$' )
 plt.gca().set_aspect('equal')
-plt.title( 'SC gap of the $t/t^\prime$-Hubbard model' )
+plt.title( r'SC gap of the $t/t^\prime$-Hubbard model' )
 plt.show()

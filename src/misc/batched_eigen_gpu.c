@@ -50,16 +50,16 @@ void* batched_eigen_gpu( void* data ) {
     CUDA_CHECK( cudaMallocManaged( (void**)&work, sizeof(cuDoubleComplex)*lwork, cudaMemAttachGlobal ) );
     int *pinfo;
     CUDA_CHECK( cudaMallocManaged( (void**)&pinfo, sizeof(int)*N_per_run, cudaMemAttachGlobal ) );
-    CUDA_CHECK( cudaMemPrefetchAsync( E, sizeof(double)*cfg->n*N_per_run, cfg->device, stream ) );
-    CUDA_CHECK( cudaMemPrefetchAsync( pinfo, sizeof(int)*N_per_run, cfg->device, stream ) );
-    CUDA_CHECK( cudaMemPrefetchAsync( work, sizeof(cuDoubleComplex)*lwork, cfg->device, stream ) );
+    CUDA_CHECK( cudaMemPrefetchAsync_( E, sizeof(double)*cfg->n*N_per_run, cfg->device, stream ) );
+    CUDA_CHECK( cudaMemPrefetchAsync_( pinfo, sizeof(int)*N_per_run, cfg->device, stream ) );
+    CUDA_CHECK( cudaMemPrefetchAsync_( work, sizeof(cuDoubleComplex)*lwork, cfg->device, stream ) );
     CUDA_CHECK( cudaStreamSynchronize( stream ) );
 
     for (int run=0; run<N_runs; ++run) {
         int N_this_run = (run+1)*N_per_run < cfg->N ? N_per_run : (cfg->N - run*N_per_run);
         if (N_this_run > 0) {
             transpose_outofplace_batched( H, cfg->H+N_per_run*run*cfg->n*cfg->n, N_this_run, cfg->n );
-            CUDA_CHECK( cudaMemPrefetchAsync( H, sizeof(cuDoubleComplex)*cfg->n*cfg->n*N_this_run, cfg->device, stream ) );
+            CUDA_CHECK( cudaMemPrefetchAsync_( H, sizeof(cuDoubleComplex)*cfg->n*cfg->n*N_this_run, cfg->device, stream ) );
             CUSOLVER_CHECK( cusolverDnZheevjBatched( handle,
                     CUSOLVER_EIG_MODE_VECTOR, CUBLAS_FILL_MODE_UPPER, cfg->n,
                     H, cfg->n, E, work, lwork, pinfo, info, N_this_run ) );

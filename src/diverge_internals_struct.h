@@ -3,6 +3,7 @@
 #pragma once
 
 #include "diverge_common.h"
+#include "diverge_momentum_gen.h"
 #include <ctype.h>
 
 #ifdef __cplusplus
@@ -15,6 +16,7 @@ struct internals_t {
     // common internals
     double* kmesh;
     double* kfmesh;
+    diverge_lattice_t rlattice;
     complex128_t* ham;
     complex128_t* U;
     double* E;
@@ -28,8 +30,13 @@ struct internals_t {
     index_t has_common_internals;
     double mu;
 
+    int ignore_orb_symmetries_free;
+    int ignore_hop_free;
+    int ignore_vert_free;
+
     bool ignore_eigensolver_in_common;
     int use_batched_svd_algo_in_common;
+    int common_internals_mesh_only;
 
     // for the flow step to automatically detect the method.
     // DEVELOPERS must set this in their diverge_model_internals_BACKEND to the

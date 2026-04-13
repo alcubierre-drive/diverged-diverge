@@ -66,15 +66,21 @@ diverge_flow_step_t* diverge_flow_step_init_any( diverge_model_t* mod, const cha
 
 /** outputs the maximum vertex element in ``vertmax`` */
 void diverge_flow_step_vertmax( diverge_flow_step_t* st, double vertmax[1] );
+/**
+ * same as :c:func:`diverge_flow_step_vertmax` but with return value. Ignores
+ * argument in case it's set to NULL
+ */
+double diverge_flow_step_vertmax_r( diverge_flow_step_t* st, double* vertmax );
 /** outputs the maximum loop elements in ``loopmax`` */
 void diverge_flow_step_loopmax( diverge_flow_step_t* st, double loopmax[2] );
 /** outputs the maximum channel vertex elements in ``chanmax`` */
 void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
 /**
  * outputs the maximum channel singular value given a channel in ``chan``. If
- * ``piter != 0``, calculate the leading eigenvalue using power iteration,
- * otherwise use :c:func:`batched_svd`. For how the channels are defined, see
- * :c:func:`diverge_flow_step_vertex`.
+ * ``piter > 0``, calculate the leading eigenvalue using power iteration, if
+ * ``piter < 0``, use Gerschgorin's circle theorem for the (approximate) leading
+ * eigenvalue. Otherwise use :c:func:`batched_svd`. For how the channels are
+ * defined, see :c:func:`diverge_flow_step_vertex`.
  */
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter );
 
@@ -133,6 +139,15 @@ char** diverge_flow_step_timing_descr_vec( diverge_flow_step_t* st );
 double diverge_flow_step_lambda( diverge_flow_step_t* st );
 /** get the current :math:`d_\Lambda` */
 double diverge_flow_step_dlambda( diverge_flow_step_t* st );
+
+/**
+ * perform rpa for the q=0 SC channel (only possible without refinement) with
+ * TUFRG vertex; only use the k indices given in this function; useful to
+ * constrain mesh to roughly the Fermi surface and get faster eigensolution and
+ * reasonable memory footprint in postprocessing.
+ */
+void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, index_t* kidx,
+        index_t n_kidx );
 
 /** free the resources attached to a :c:func:`diverge_flow_step_t`. */
 void diverge_flow_step_free( diverge_flow_step_t* st );
@@ -195,6 +210,38 @@ typedef struct {
  *             grid case, the indices Oi are actually (oi, si).
  */
 diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, char chan );
+
+/**
+ * returns formfactor mapping from vertex convention to model convention (for
+ * the TU backend). returns NULL if TU is not selected as backend. returned
+ * array must not be freed manually. shape: (n_orbff,). Allocated memory extends
+ * one spot further than n_orbff, and last element is set to -1. That way you
+ * can obtain the array's length without any other function call.
+ */
+const index_t* diverge_flow_step_mi_to_tuffidx( const diverge_flow_step_t* st );
+
+/**
+ * returns inverse mapping to :c:func:`diverge_flow_step_mi_to_tuffidx`.
+ * Returned array must be free'd by the user. shape: (n_orbff,). Allocated
+ * memory extends one spot further than n_orbff, and last element is set to -1.
+ * That way you can obtain the array's length without any other function call.
+ */
+index_t* diverge_flow_step_tuffidx_to_mi( const diverge_flow_step_t* st );
+
+/**
+ * returns ibz mapping for the TU vertex (not MPI distributed, the offset given
+ * by :c:func:`diverge_flow_step_vertex` must be applied to get the rank-local
+ * result). returns NULL if TU is not selected as backend. returned array must
+ * not be freed manually. shape: (n_ibz,).
+ */
+const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st );
+
+/**
+ * returns size of ibz for the TU vertex (not MPI distributed, use
+ * :c:func:`diverge_flow_step_vertex` for MPI distribution information), 0 if TU
+ * is not selected as backend.
+ */
+index_t diverge_flow_step_n_ibz( const diverge_flow_step_t* st );
 
 /**
  * Filling

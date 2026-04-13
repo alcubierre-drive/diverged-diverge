@@ -1,6 +1,7 @@
 from diverge.helpers import *
 from diverge.helpers import String, ReturnString, _libs
 from ctypes import *
+import os
 
 def info():
     r"""
@@ -18,19 +19,56 @@ def info():
 
 if not _libs["divERGe"] is None:
 
+    class struct_constants_t(Structure):
+        pass
+    struct_constants_t.__slots__ = [
+        '_MAX_N_ORBS',
+        '_USE_GF_FLOATS',
+        '_MAX_NAME_LENGTH',
+        '_MAX_N_SYM',
+        '_MAX_ORBS_PER_SITE',
+        '_DIVERGE_EPS_MESH',
+    ]
+    struct_constants_t._fields_ = [
+        ('_MAX_N_ORBS', c_int64),
+        ('_USE_GF_FLOATS', c_int64),
+        ('_MAX_NAME_LENGTH', c_int64),
+        ('_MAX_N_SYM', c_int64),
+        ('_MAX_ORBS_PER_SITE', c_int64),
+        ('_DIVERGE_EPS_MESH', c_double),
+    ]
+    constants_t = struct_constants_t
+    constants = _libs["divERGe"].get("diverge_constants", "cdecl")
+    constants.argtypes = []
+    constants.restype = constants_t
+    _CONSTANTS_ = constants()
+    MAX_N_ORBS = _CONSTANTS_._MAX_N_ORBS
+    USE_GF_FLOATS = _CONSTANTS_._USE_GF_FLOATS
+    MAX_NAME_LENGTH = _CONSTANTS_._MAX_NAME_LENGTH
+    MAX_N_SYM = _CONSTANTS_._MAX_N_SYM
+    MAX_ORBS_PER_SITE = _CONSTANTS_._MAX_ORBS_PER_SITE
+    DIVERGE_EPS_MESH = _CONSTANTS_._DIVERGE_EPS_MESH
+
     class struct_complex128_t(Structure):
         pass
-    struct_complex128_t.__slots__ = [
-        'x',
-        'y',
-    ]
-    struct_complex128_t._fields_ = [
-        ('x', c_double),
-        ('y', c_double),
-    ]
+    struct_complex128_t.__slots__ = [ 'x', 'y', ]
+    struct_complex128_t._fields_ = [ ('x', c_double), ('y', c_double), ]
     complex128_t = struct_complex128_t
-    gf_complex_t = complex128_t
+
+    class struct_complex64_t(Structure):
+        pass
+    struct_complex64_t.__slots__ = [ 'x', 'y', ]
+    struct_complex64_t._fields_ = [ ('x', c_float), ('y', c_float), ]
+    complex64_t = struct_complex64_t
+
+    gf_complex_t = complex64_t if USE_GF_FLOATS else complex128_t
     index_t = c_int64
+
+    class struct_lattice_t(Structure):
+        pass
+    struct_lattice_t.__slots__ = [ 'v', ]
+    struct_lattice_t._fields_ = [ ('v', c_double*int(9)), ]
+    lattice_t = struct_lattice_t
 
     # MPI functions
     init_ = _libs["divERGe"].get("diverge_init", "cdecl")
@@ -66,6 +104,10 @@ if not _libs["divERGe"] is None:
     mpi_distribute = _libs["divERGe"].get("diverge_mpi_distribute", "cdecl")
     mpi_distribute.argtypes = [index_t]
     mpi_distribute.restype = POINTER(index_t)
+
+    distribute = _libs["divERGe"].get("diverge_distribute", "cdecl")
+    distribute.argtypes = [index_t, index_t]
+    distribute.restype = POINTER(index_t)
 
     mpi_barrier = _libs["divERGe"].get("diverge_mpi_barrier", "cdecl")
     mpi_barrier.argtypes = []
@@ -250,7 +292,6 @@ if not _libs["divERGe"] is None:
     orb_g_2 = 22
     orb_g_3 = 23
     orb_g_4 = 24
-    MAX_ORBS_PER_SITE = 20
     class struct_sym_op_t(Structure):
         pass
     sym_op_t = struct_sym_op_t
@@ -456,18 +497,18 @@ if not _libs["divERGe"] is None:
         'internals',
     ]
     struct_model_t._fields_ = [
-        ('name', c_char * int(1024)),
+        ('name', c_char * int(MAX_NAME_LENGTH)),
         ('nk', index_t * int(3)),
         ('nkf', index_t * int(3)),
         ('patching', POINTER(struct_mom_patching_t)),
         ('n_ibz_path', index_t),
-        ('ibz_path', (c_double * int(3)) * int(32768)),
+        ('ibz_path', (c_double * int(3)) * int(MAX_N_ORBS)),
         ('n_orb', index_t),
         ('lattice', (c_double * int(3)) * int(3)),
-        ('positions', (c_double * int(3)) * int(32768)),
+        ('positions', (c_double * int(3)) * int(MAX_N_ORBS)),
         ('n_sym', index_t),
         ('orb_symmetries', c_voidp),
-        ('rs_symmetries', ((c_double * int(3)) * int(3)) * int(256)),
+        ('rs_symmetries', ((c_double * int(3)) * int(3)) * int(MAX_N_SYM)),
         ('n_hop', index_t),
         ('hop', c_voidp),
         ('hfill', hamiltonian_generator_t),
@@ -500,6 +541,10 @@ if not _libs["divERGe"] is None:
     diverge_greensfunc_generator_default = _libs["divERGe"].get("diverge_greensfunc_generator_default", "cdecl")
     diverge_greensfunc_generator_default.argtypes = [POINTER(model_t), complex128_t, POINTER(gf_complex_t)]
     diverge_greensfunc_generator_default.restype = greensfunc_op_t
+
+    hamilton_generator_set_fftw_options = _libs["divERGe"].get("diverge_hamilton_generator_set_fftw_options", "cdecl")
+    hamilton_generator_set_fftw_options.argtypes = [c_int]
+    hamilton_generator_set_fftw_options.restype = None
 
     diverge_channel_vertex_generator_default = _libs["divERGe"].get("diverge_channel_vertex_generator_default", "cdecl")
     diverge_channel_vertex_generator_default.argtypes = [POINTER(model_t), c_char, POINTER(complex128_t)]
@@ -582,6 +627,34 @@ if not _libs["divERGe"] is None:
     supercell_set_sign.argtypes = [c_double]
     supercell_set_sign.restype = None
 
+    supercell_swap_hop = _libs["divERGe"].get("diverge_supercell_swap_hop", "cdecl")
+    supercell_swap_hop.argtypes = []
+    supercell_swap_hop.restype = c_int
+
+    class supercell_configure_t(Structure):
+        pass
+    supercell_configure_t.__slots__ = [
+        'sign',
+        'swap',
+    ]
+    supercell_configure_t._fields_ = [
+        ('sign', c_float),
+        ('swap', c_int),
+    ]
+    supercell_configure = _libs["divERGe"].get("diverge_supercell_configure", "cdecl")
+    supercell_configure.argtypes = [supercell_configure_t]
+    supercell_configure.restype = supercell_configure_t
+
+    model_ham2hop = _libs["divERGe"].get("diverge_model_ham2hop", "cdecl")
+    model_ham2hop.argtypes = [POINTER(model_t), c_double, c_voidp]
+    model_ham2hop.restypes = c_voidp
+    model_ham2hop_fg = _libs["divERGe"].get("diverge_model_ham2hop_fg", "cdecl")
+    model_ham2hop_fg.argtypes = [POINTER(model_t), c_double, c_double, c_voidp, c_voidp]
+    model_ham2hop_fg.restypes = c_voidp
+    model_ham2hop_swap_orbs = _libs["divERGe"].get("diverge_model_ham2hop_swap_orbs", "cdecl")
+    model_ham2hop_swap_orbs.argtypes = []
+    model_ham2hop_swap_orbs.restype = c_int
+
     linspace = _libs["divERGe"].get("diverge_linspace", "cdecl")
     linspace.argtypes = [c_double, c_double, index_t]
     linspace.restype = c_voidp
@@ -607,15 +680,24 @@ if not _libs["divERGe"] is None:
     hartree_fock_init = _libs["divERGe"].get("diverge_hartree_fock_init", "cdecl")
     hartree_fock_init.argtypes = [POINTER(model_t), c_double, String]
     hartree_fock_init.restype = c_voidp
+    hartree_fock_normalize_configure = _libs["divERGe"].get("diverge_hartree_fock_normalize_configure", "cdecl")
+    hartree_fock_normalize_configure.argtypes = [c_int]
+    hartree_fock_normalize_configure.restype = c_int
     hartree_fock_step = _libs["divERGe"].get("diverge_hartree_fock_step", "cdecl")
     hartree_fock_step.argtypes = [c_voidp, c_double]
     hartree_fock_step.restype = None
+    hartree_fock_normalize_sigma = _libs["divERGe"].get("diverge_hartree_fock_normalize_sigma", "cdecl")
+    hartree_fock_normalize_sigma.argtypes = [c_voidp]
+    hartree_fock_normalize_sigma.restype = None
     hartree_fock_get_sigma = _libs["divERGe"].get("diverge_hartree_fock_get_sigma", "cdecl")
     hartree_fock_get_sigma.argtypes = [c_voidp]
     hartree_fock_get_sigma.restype = c_voidp
     hartree_fock_get_sigma_prev = _libs["divERGe"].get("diverge_hartree_fock_get_sigma_prev", "cdecl")
     hartree_fock_get_sigma_prev.argtypes = [c_voidp]
     hartree_fock_get_sigma_prev.restype = c_voidp
+    hartree_fock_get_E_tot = _libs["divERGe"].get("diverge_hartree_fock_get_E_tot", "cdecl")
+    hartree_fock_get_E_tot.argtypes = [c_voidp]
+    hartree_fock_get_E_tot.restype = c_double
     hartree_fock_free = _libs["divERGe"].get("diverge_hartree_fock_free", "cdecl")
     hartree_fock_free.argtypes = [c_voidp]
     hartree_fock_free.restype = None
@@ -700,9 +782,17 @@ if not _libs["divERGe"] is None:
     kmesh_to_bands_crs.argtypes = [POINTER(model_t), POINTER(POINTER(index_t)), POINTER(index_t)]
     kmesh_to_bands_crs.restype = POINTER(index_t)
 
+    kmesh_to_bands_set_zero = _libs["divERGe"].get("diverge_kmesh_to_bands_set_zero", "cdecl")
+    kmesh_to_bands_set_zero.argtypes = [c_double]
+    kmesh_to_bands_set_zero.restype = c_double
+
     model_free = _libs["divERGe"].get("diverge_model_free", "cdecl")
     model_free.argtypes = [POINTER(model_t)]
     model_free.restype = None
+
+    model_free_set_options = _libs["divERGe"].get("diverge_model_free_set_options", "cdecl")
+    model_free_set_options.argtypes = [POINTER(model_t), c_int, c_int, c_int]
+    model_free_set_options.restype = None
 
     # Memory allocation routines
     mem_alloc_rs_hopping_t = _libs["divERGe"].get("diverge_mem_alloc_rs_hopping_t", "cdecl")
@@ -809,6 +899,10 @@ if not _libs["divERGe"] is None:
     model_internals_get_dim.argtypes = [POINTER(model_t)]
     model_internals_get_dim.restype = index_t
 
+    model_internals_get_rlattice = _libs["divERGe"].get("diverge_model_internals_get_rlattice", "cdecl")
+    model_internals_get_rlattice.argtypes = [POINTER(model_t)]
+    model_internals_get_rlattice.restype = lattice_t
+
     # Filling
     model_get_filling = _libs["divERGe"].get("diverge_model_get_filling", "cdecl")
     model_get_filling.argtypes = [POINTER(model_t), POINTER(c_double), index_t]
@@ -849,6 +943,10 @@ if not _libs["divERGe"] is None:
     flow_step_vertmax = _libs["divERGe"].get("diverge_flow_step_vertmax", "cdecl")
     flow_step_vertmax.argtypes = [POINTER(flow_step_t), c_voidp]
     flow_step_vertmax.restype = None
+
+    flow_step_vertmax_r = _libs["divERGe"].get("diverge_flow_step_vertmax_r", "cdecl")
+    flow_step_vertmax_r.argtypes = [POINTER(flow_step_t), c_voidp]
+    flow_step_vertmax_r.restype = c_double
 
     flow_step_loopmax = _libs["divERGe"].get("diverge_flow_step_loopmax", "cdecl")
     flow_step_loopmax.argtypes = [POINTER(flow_step_t), c_voidp]
@@ -933,6 +1031,26 @@ if not _libs["divERGe"] is None:
     flow_step_vertex.argtypes = [POINTER(flow_step_t), c_char]
     flow_step_vertex.restype = struct_flow_step_vertex_t
 
+    flow_step_mi_to_tuffidx = _libs["divERGe"].get("diverge_flow_step_mi_to_tuffidx")
+    flow_step_mi_to_tuffidx.argtypes = [POINTER(flow_step_t)]
+    flow_step_mi_to_tuffidx.restype = POINTER(index_t)
+
+    flow_step_tuffidx_to_mi = _libs["divERGe"].get("diverge_flow_step_tuffidx_to_mi")
+    flow_step_tuffidx_to_mi.argtypes = [POINTER(flow_step_t)]
+    flow_step_tuffidx_to_mi.restype = POINTER(index_t)
+
+    flow_step_ibz = _libs["divERGe"].get("diverge_flow_step_ibz")
+    flow_step_ibz.argtypes = [POINTER(flow_step_t)]
+    flow_step_ibz.restype = POINTER(index_t)
+
+    flow_step_n_ibz = _libs["divERGe"].get("diverge_flow_step_n_ibz")
+    flow_step_n_ibz.argtypes = [POINTER(flow_step_t)]
+    flow_step_n_ibz.restype = index_t
+
+    flow_step_attach_rpa = _libs["divERGe"].get("diverge_flow_step_attach_rpa")
+    flow_step_attach_rpa.argtypes = [POINTER(flow_step_t), c_voidp, index_t]
+    flow_step_attach_rpa.restype = None
+
     flow_step_refill = _libs["divERGe"].get("diverge_flow_step_refill")
     flow_step_refill.argtypes = [POINTER(flow_step_t), c_double, c_void_p]
     flow_step_refill.restype = None
@@ -943,6 +1061,11 @@ if not _libs["divERGe"] is None:
     flow_step_get_filling_Hself = _libs["divERGe"].get("diverge_flow_step_get_filling_Hself")
     flow_step_get_filling_Hself.argtypes = [POINTER(flow_step_t), c_void_p]
     flow_step_get_filling_Hself.restype = c_double
+
+    # this function is here in order to have the flow_step_t defined...
+    hartree_fock_get_flow_step = _libs["divERGe"].get("diverge_hartree_fock_get_flow_step", "cdecl")
+    hartree_fock_get_flow_step.argtypes = [c_voidp]
+    hartree_fock_get_flow_step.restype = POINTER(flow_step_t)
 
     # Euler integrator
     class struct_euler_t(Structure):
@@ -985,6 +1108,10 @@ if not _libs["divERGe"] is None:
     euler_next.argtypes = [POINTER(euler_t), c_double]
     euler_next.restype = c_bool
 
+    euler_nsteps_anticip = _libs["divERGe"].get("diverge_euler_nsteps_anticip", "cdecl")
+    euler_nsteps_anticip.argtypes = [euler_t]
+    euler_nsteps_anticip.restype = index_t
+
     # post processing
     class struct_postprocess_conf_t(Structure):
         pass
@@ -1001,6 +1128,9 @@ if not _libs["divERGe"] is None:
         'grid_lingap_vertex_file_P',
         'grid_lingap_vertex_file_C',
         'grid_lingap_vertex_file_D',
+        'grid_lingap_vertex_loop_file_P',
+        'grid_lingap_vertex_loop_file_C',
+        'grid_lingap_vertex_loop_file_D',
         'grid_n_singular_values',
         'grid_use_loop',
         'grid_vertex_file',
@@ -1021,6 +1151,15 @@ if not _libs["divERGe"] is None:
         'tu_lingap_solver_mode',
         'tu_susceptibilities_bare',
         'tu_channel_calc_project',
+        'tu_which_solver_mode_hermiticity_limit',
+        'tu_rpa_chans',
+        'tu_rpa_nev',
+        'tu_rpa_ncv',
+        'tu_rpa_maxiter',
+        'tu_rpa_tol',
+        'tu_rpa_sorting',
+        'tu_selfenergy_rs_dist',
+        'tu_selfenergy_rs_mval',
     ]
     struct_postprocess_conf_t._fields_ = [
         ('patch_q_matrices', c_bool),
@@ -1035,6 +1174,9 @@ if not _libs["divERGe"] is None:
         ('grid_lingap_vertex_file_P', c_char * int(1024)),
         ('grid_lingap_vertex_file_C', c_char * int(1024)),
         ('grid_lingap_vertex_file_D', c_char * int(1024)),
+        ('grid_lingap_vertex_loop_file_P', c_char * int(1024)),
+        ('grid_lingap_vertex_loop_file_C', c_char * int(1024)),
+        ('grid_lingap_vertex_loop_file_D', c_char * int(1024)),
         ('grid_n_singular_values', c_int),
         ('grid_use_loop', c_bool),
         ('grid_vertex_file', c_char * int(1024)),
@@ -1047,7 +1189,7 @@ if not _libs["divERGe"] is None:
         ('tu_lingap', c_bool),
         ('tu_susceptibilities_full', c_bool),
         ('tu_susceptibilities_ff', c_bool),
-        ('tu_selfenergy', c_bool),
+        ('tu_selfenergy', c_int),
         ('tu_channels', c_bool),
         ('tu_symmetry_maps', c_bool),
         ('tu_n_decomp_values', index_t),
@@ -1055,6 +1197,15 @@ if not _libs["divERGe"] is None:
         ('tu_lingap_solver_mode', c_char * int(4)),
         ('tu_susceptibilities_bare', c_bool),
         ('tu_channel_calc_project', c_int),
+        ('tu_which_solver_mode_hermiticity_limit', c_double),
+        ('tu_rpa_chans', c_char * int(8)),
+        ('tu_rpa_nev', c_int),
+        ('tu_rpa_ncv', c_int),
+        ('tu_rpa_maxiter', c_int),
+        ('tu_rpa_tol', c_double),
+        ('tu_rpa_sorting', c_char),
+        ('tu_selfenergy_rs_dist', c_float),
+        ('tu_selfenergy_rs_mval', c_float),
     ]
     postprocess_conf_t = struct_postprocess_conf_t
 
@@ -1174,7 +1325,7 @@ if not _libs["divERGe"] is None:
     # Momentum generator
     model_generate_meshes = _libs["divERGe"].get("diverge_model_generate_meshes", "cdecl")
     model_generate_meshes.argtypes = [POINTER(c_double), POINTER(c_double), index_t * int(3), index_t * int(3), (c_double * int(3)) * int(3)]
-    model_generate_meshes.restype = None
+    model_generate_meshes.restype = lattice_t
 
     model_generate_mom_basis = _libs["divERGe"].get("diverge_model_generate_mom_basis", "cdecl")
     model_generate_mom_basis.argtypes = [c_void_p, c_void_p]
@@ -1235,6 +1386,32 @@ if not _libs["divERGe"] is None:
     generate_symm_maps_set_precision = _libs["divERGe"].get("diverge_generate_symm_maps_set_precision", "cdecl")
     generate_symm_maps_set_precision.argtypes = [c_double, c_double, c_double, c_double, c_double, c_double]
     generate_symm_maps_set_precision.restype = None
+
+    # get/set new interface
+    class generate_symm_maps_precision_t(Structure):
+        pass
+    generate_symm_maps_precision_t.__slots__ = [
+        'ASSERT_POSITION_BEYOND',
+        'ORBITAL_OVERLAP',
+        'POS_EQUAL',
+        'MIN_ORBITAL_WEIGHT',
+        'BOND_EQUAL',
+        'MATRIX_ZERO',
+    ]
+    generate_symm_maps_precision_t._fields_ = [
+        ('ASSERT_POSITION_BEYOND', c_double),
+        ('ORBITAL_OVERLAP', c_double),
+        ('POS_EQUAL', c_double),
+        ('MIN_ORBITAL_WEIGHT', c_double),
+        ('BOND_EQUAL', c_double),
+        ('MATRIX_ZERO', c_double),
+    ]
+    generate_symm_maps_precision_set = _libs["divERGe"].get("diverge_generate_symm_maps_precision_set", "cdecl")
+    generate_symm_maps_precision_set.argtypes = [generate_symm_maps_precision_t]
+    generate_symm_maps_precision_set.restype = None
+    generate_symm_maps_precision_get = _libs["divERGe"].get("diverge_generate_symm_maps_precision_get", "cdecl")
+    generate_symm_maps_precision_get.argtypes = []
+    generate_symm_maps_precision_get.restype = generate_symm_maps_precision_t
 
     symmetrize_2pt_coarse = _libs["divERGe"].get("diverge_symmetrize_2pt_coarse", "cdecl")
     symmetrize_2pt_coarse.argtypes = [POINTER(model_t), POINTER(complex128_t), POINTER(complex128_t)]
@@ -1321,6 +1498,44 @@ if not _libs["divERGe"] is None:
     shared_malloc_barrier = _libs['divERGe'].get('shared_malloc_barrier', 'cdecl')
     shared_malloc_barrier.argtypes = []
     shared_malloc_barrier.restype = None
+
+    # qnan
+    qnan_gen = _libs["divERGe"].get("diverge_qnan_gen", "cdecl")
+    qnan_gen.argtypes = [ c_uint64 ]
+    qnan_gen.restype = c_double
+    qnan_get = _libs["divERGe"].get("diverge_qnan_get", "cdecl")
+    qnan_get.argtypes = [ c_double ]
+    qnan_get.restype = c_uint64
+    qnan_isnan = _libs["divERGe"].get("diverge_qnan_isnan", "cdecl")
+    qnan_isnan.argtypes = [ c_double ]
+    qnan_isnan.restype = c_int
+    fnan_gen = _libs["divERGe"].get("diverge_fnan_gen", "cdecl")
+    fnan_gen.argtypes = [ c_double ]
+    fnan_gen.restype = c_double
+    fnan_get = _libs["divERGe"].get("diverge_fnan_get", "cdecl")
+    fnan_get.argtypes = [ c_double ]
+    fnan_get.restype = c_double
+    fnan_isnan = _libs["divERGe"].get("diverge_fnan_isnan", "cdecl")
+    fnan_isnan.argtypes = [ c_double ]
+    fnan_isnan.restype = c_int
+    qnanf_gen = _libs["divERGe"].get("diverge_qnanf_gen", "cdecl")
+    qnanf_gen.argtypes = [ c_uint32 ]
+    qnanf_gen.restype = c_float
+    qnanf_get = _libs["divERGe"].get("diverge_qnanf_get", "cdecl")
+    qnanf_get.argtypes = [ c_float ]
+    qnanf_get.restype = c_uint32
+    qnanf_isnan = _libs["divERGe"].get("diverge_qnanf_isnan", "cdecl")
+    qnanf_isnan.argtypes = [ c_float ]
+    qnanf_isnan.restype = c_int
+    fnanf_gen = _libs["divERGe"].get("diverge_fnanf_gen", "cdecl")
+    fnanf_gen.argtypes = [ c_float ]
+    fnanf_gen.restype = c_float
+    fnanf_get = _libs["divERGe"].get("diverge_fnanf_get", "cdecl")
+    fnanf_get.argtypes = [ c_float ]
+    fnanf_get.restype = c_float
+    fnanf_isnan = _libs["divERGe"].get("diverge_fnanf_isnan", "cdecl")
+    fnanf_isnan.argtypes = [ c_float ]
+    fnanf_isnan.restype = c_int
 
     # redo the typedefs
     rs_hopping_t = struct_rs_hopping_t

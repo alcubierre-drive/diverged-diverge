@@ -17,7 +17,7 @@
 
 #pragma once
 
-// batched linear algebra
+// (batched) linear algebra
 #include "misc/batched_eigen.h"
 #include "misc/batched_svd.h"
 #include "misc/batched_gemms.h"
@@ -25,6 +25,8 @@
 #include "misc/batched_zgemd.h"
 #include "misc/eigen.h"
 #include "misc/gemm.h"
+#include "misc/invert.h"
+#include "misc/arnoldi.h"
 
 // Some low dimensional linear algebra in C, implement with putting
 // 'LINALG_IMPLEMENT' in your source file. If you want decompositions, use
@@ -46,6 +48,7 @@
 #include "misc/ham2hop.h"
 #include "misc/bitary.h"
 #include "misc/qnan.h"
+#include "misc/diverge_qnan.h"
 
 // density of states
 #include "misc/dos.h"

@@ -7,6 +7,7 @@ DIVERGE_MODEL_MAGIC_NUMBER = ord('D') + ord('M')
 DIVERGE_POST_GRID_MAGIC_NUMBER = ord('P')
 DIVERGE_POST_PATCH_MAGIC_NUMBER = ord('V')
 DIVERGE_POST_TU_MAGIC_NUMBER = ord('T')
+DIVERGE_VERTEX_STORE_MAGIC_NUMBER = 8313495814289909110
 
 # return 1 if A>B, -1 if A<B, and 0 if A=B
 def version_compare( A, B ):
@@ -43,9 +44,31 @@ def version_compare( A, B ):
         print("version cannot be determined (A:'%s',B:'%s'), treat as dev" % (A,B))
         return 1
 
+DIVERGE_OUTPUT_USE_MEMMAP = False
+
+# this is to swap out numpy_fromfile
+def _numpy_memmap( fname, **kwargs ):
+    memmap_kwargs = dict(offset=0, dtype=np.uint8, mode='r')
+    try: memmap_kwargs['offset'] = kwargs.pop('offset')
+    except: pass
+    try: memmap_kwargs['shape'] = (kwargs.pop('count'),)
+    except: pass
+    try: memmap_kwargs['dtype'] = kwargs.pop('dtype')
+    except: pass
+    return np.memmap( fname, **memmap_kwargs )
+
 # this is due to some weird numpy version checking for the contents of a buffer
-def numpy_fromfile( fname, **kwargs ):
+def _numpy_fromfile( fname, **kwargs ):
     return np.frombuffer( open(fname, "rb").read(), **kwargs )
+
+def numpy_fromfile( *args, **kwargs ):
+    global DIVERGE_OUTPUT_USE_MEMMAP
+    if DIVERGE_OUTPUT_USE_MEMMAP:
+        if DIVERGE_OUTPUT_USE_MEMMAP > 0:
+            print( "diverge.output: using memmap instead of frombuffer" )
+        return _numpy_memmap( *args, **kwargs )
+    else:
+        return _numpy_fromfile( *args, **kwargs )
 
 def qmatrices( data, displ, count, nq ):
     data_d = data[displ:displ+count]
@@ -535,7 +558,7 @@ class diverge_post_grid:
         return UU[:,:,0] + 1j * UU[:,:,1], VV[:,:,0] + 1j * VV[:,:,1], S, EU, EV
 
 class diverge_post_tu:
-    '''
+    r'''
     class to read diverge postprocessing files for tu FRG
 
     Vertex diagonalisation: For each channel :math:`X \in \{P,C,D\}`, we include
@@ -596,10 +619,13 @@ class diverge_post_tu:
         n_orbff = self.n_orbff
 
         _f_bytes = numpy_fromfile(fname, dtype=np.byte)
-        def get_array( offset_bytes, count, dtype ):
-            return _f_bytes[offset_bytes:offset_bytes + count*dtype().itemsize].view( dtype=dtype )
-        def get_array_header( iL, dtype ):
-            res = get_array( d_header[iL[0]], d_header[iL[0]+1], dtype )
+        def get_array( offset_bytes, count, dtype, call=True ):
+            if call:
+                return _f_bytes[offset_bytes:offset_bytes + count*dtype().itemsize].view( dtype=dtype )
+            else:
+                return _f_bytes[offset_bytes:offset_bytes + count*dtype.itemsize].view( dtype=dtype )
+        def get_array_header( iL, dtype, call=True ):
+            res = get_array( d_header[iL[0]], d_header[iL[0]+1], dtype, call=call )
             iL[0] = iL[0] + 2
             return res
 
@@ -716,10 +742,21 @@ class diverge_post_tu:
         if(d_header[iL[0]-1] > 0):
             self.Dsusc_ff = self.Dsusc_ff.reshape(susc_shape)
 
-        #: Self-energy at the critical scale ([n_orb*n_spin]**2,nktot)
-        self.selfenergy = get_array_header( iL, np.complex128 )
-        if(d_header[iL[0]-1] > 0):
-            self.selfenergy = self.selfenergy.reshape(self.nktot,n_spin,n_orb,n_spin,n_orb)
+        if d_header[120]:
+            xL = [121]
+            offsets_size = get_array_header(xL, np.int64)
+            self.rs_hopping_t = np.dtype(dict(
+                names=['R', 'o1', 'o2', 's1', 's2', 't'],
+                formats=['3i8', 'i8', 'i8', 'i8', 'i8', 'c16'],
+                offsets=offsets_size[:-1],
+                itemsize=offsets_size[-1]
+            ))
+            self.selfenergy = get_array_header( iL, self.rs_hopping_t, call=False )
+        else:
+            #: Self-energy at the critical scale; either in real space or in k space ([n_orb*n_spin]**2,nktot)
+            self.selfenergy = get_array_header( iL, np.complex128 )
+            if (d_header[iL[0]-1] > 0):
+                self.selfenergy = self.selfenergy.reshape(self.nktot,n_spin,n_orb,n_spin,n_orb)
 
         #: P channel on full PZ
         self.Pchannel = get_array_header( iL, np.complex128 )
@@ -784,6 +821,85 @@ class diverge_post_tu:
         if self.chi0_ph.size > 0:
             self.chi0_ph = self.chi0_ph.reshape( susc_shape )
 
+        #: rpa attachment (enabled for version>0.9); eigenvalues
+        self.rpa_vals = get_array_header( iL, np.float64 )
+        #: rpa attachment (enabled for version>0.9); eigenvectors
+        self.rpa_vecs = get_array_header( iL, np.complex128 )
+        if self.rpa_vals.size > 0 and self.rpa_vecs.size > 0:
+            self.rpa_vecs = self.rpa_vecs.reshape((self.rpa_vals.size, -1, n_spin,n_orb,n_spin,n_orb))
+        #: rpa attachment (enabled for version>0.9); k indices
+        self.rpa_kidx = get_array_header( iL, np.int64 )
+
+class vertex_store:
+    """
+    class to read vertex_store files (.dvg, magic string = "vertex_storage_t")
+    that are recorded during the flow via :c:func:`vertex_storage_snap` (and
+    similar functions). The most useful information in the vertex storage file
+    is its member :py:attr:`~vertex_store.verts`, i.e., the vertices themselves.
+
+    :param fname: file name of a vertex file that should be read.
+    """
+
+    def _displ_count( self, i_d ):
+        return self._f_bytes[self._f_header[i_d]:self._f_header[i_d]+self._f_header[i_d+1]]
+    def _head( self, i ):
+        return self._f_header[i]
+    def _head_displ_count( self, d, c ):
+        return self._f_header[d:d+c]
+
+    def __init__(self, fname):
+        self._f_header = numpy_fromfile(fname, dtype=np.int64, count=128)
+
+        def check_if_vstore():
+            vstore_str = self._f_header.view(dtype=np.byte)[:16].view(dtype='S16')[0]
+            return vstore_str == b"vertex_storage_t"
+
+        def check_numerical_repr():
+            checkmask = np.unpackbits(self._f_header[127:].view( dtype=np.uint8 ))
+            if checkmask.sum() == 0:
+                return True
+            else:
+                error_bits = np.where(checkmask)[0]
+                print( "found errors in bits", error_bits, "(see misc/vertex_store.c)" )
+                return False
+
+        if not check_if_vstore():
+            self.valid = False
+            return
+        else:
+            self.valid = True
+
+        self.valid = check_numerical_repr()
+
+        #: channel
+        self.chan = chr(self._head(3))
+        #: n_orbff × n_spin × n_spin
+        self.linsz = self._head(4)
+        #: number of saved steps
+        self.n_steps = self._head(5)
+        #: number of saved qpts
+        self.n_qpts = self._head(6)
+
+        self._f_bytes = numpy_fromfile(fname, dtype=np.byte)
+
+        #: qpt data structure
+        self.vertex_storage_qpt_t = np.dtype(dict(
+            names=('qpt', 'name'),
+            formats=('i8', 'S24')
+        ))
+        #: stored qpts (n_qpts,)
+        self.qpts = self._displ_count( 7 ).view(dtype=self.vertex_storage_qpt_t)
+        #: stored vertices (n_steps,n_qpts,linsz,linsz)
+        self.verts = self._displ_count( 9 ).view(dtype=np.complex128).reshape(
+                (self.n_steps, self.n_qpts, self.linsz, self.linsz))
+        #: stored Lambdas (n_steps,)
+        self.Lambda = self._displ_count( 11 ).view(dtype=np.float64)
+        #: stored channels for each iter (n_steps,)
+        self.chans = self._displ_count( 13 ).view(dtype='S1')
+
+        #: diverge tag version (serves as file format version)
+        self.version = self._displ_count( 125 ).tobytes().decode()
+
 def read( fname ):
     r"""
     function to read model files as well as post processing files. returns the
@@ -804,6 +920,8 @@ def read( fname ):
         return diverge_post_grid( fname )
     elif magic == DIVERGE_POST_TU_MAGIC_NUMBER:
         return diverge_post_tu( fname )
+    elif magic == DIVERGE_VERTEX_STORE_MAGIC_NUMBER:
+        return vertex_store( fname )
     else:
         print(f"magic number {magic} ('{chr(magic)}') unknown")
         return None
@@ -821,7 +939,10 @@ def bandstructure_kpts( model ):
     return the momentum points (nk,3) from the band structure obtained from a
     :class:`diverge_model`. Useful for plotting and post-processing.
     """
-    return model.bandstructure[:,-3:]
+    if model.npath == -2**31 and model.kf_ibz_path is not None:
+        return model.kf_ibz_path[2]
+    else:
+        return model.bandstructure[:,-3:]
 
 def bandstructure_xvals( model ):
     r"""
@@ -845,7 +966,7 @@ def bandstructure_xvals( model ):
     """
     K = bandstructure_kpts(model)
     vals = np.concatenate( [[0], np.sqrt((np.diff(K,axis=0)**2).sum(axis=1))] )
-    if model.npath == -1 and not model.kf_ibz_path is None:
+    if (model.npath == -1 or model.npath == -2**31) and not model.kf_ibz_path is None:
         n_per_segment = model.kf_ibz_path[0]
         offsets = np.cumsum( n_per_segment )
         offset_zero = offsets[n_per_segment == 0]
@@ -879,7 +1000,7 @@ def bandstructure_ticks( model ):
 
     elif model.npath >= 1:
         ticks += list( x[ np.arange(n_ibz_path) * model.npath ] )
-    elif model.npath == -1:
+    elif model.npath == -1 or model.npath == -2**31:
         if not model.kf_ibz_path is None:
             n_per_segment = model.kf_ibz_path[0]
             ticks += list( x[np.concatenate( [[0], np.cumsum( n_per_segment ) - 1] )] )

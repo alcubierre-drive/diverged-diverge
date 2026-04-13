@@ -5,18 +5,13 @@
 
 #include <assert.h>
 
-static MPI_Comm diverge_mpi_comm = NULL;
+static MPI_Comm diverge_mpi_comm = MPI_COMM_NULL;
 
-index_t* diverge_distribute( index_t sz, index_t nranks ) {
-    index_t* howmany = (index_t*)calloc( 2*nranks, sizeof(index_t) );
-    for (index_t s=0; s<sz; ++s)
-        howmany[s%nranks]++;
-
-    index_t* offsets = howmany + nranks;
-    for (int r=1; r<nranks; ++r)
-        offsets[r] = offsets[r-1] + howmany[r-1];
-
-    return howmany;
+index_t* diverge_distribute( index_t sz, index_t bins ) {
+    index_t* counts = calloc(2*bins, sizeof*counts);
+    for (index_t r=0; r<bins; ++r) counts[r] = sz/bins + (r<(sz%bins) ? 1 : 0);
+    for (index_t r=1; r<bins; ++r) counts[bins+r] = counts[bins+r-1] + counts[r-1];
+    return counts;
 }
 
 index_t* diverge_mpi_distribute( index_t sz ) {
@@ -28,9 +23,9 @@ index_t* diverge_mpi_distribute( index_t sz ) {
 static int diverge_owns_mpi_context = 0;
 
 #define MPICHK() { \
-    if ( diverge_mpi_comm == NULL ) { \
+    if ( diverge_mpi_comm == MPI_COMM_NULL ) { \
         mpi_err_printf( "MPI context is not initialized. either call diverge_init() or diverge_embed()\n" ); \
-        assert( diverge_mpi_comm != NULL ); \
+        assert( diverge_mpi_comm != MPI_COMM_NULL ); \
     } \
 }
 
@@ -68,7 +63,7 @@ void diverge_finalize( void ) {
         return;
     }
     diverge_owns_mpi_context = 0;
-    diverge_mpi_comm = NULL;
+    diverge_mpi_comm = MPI_COMM_NULL;
     MPI_Finalize();
 }
 
@@ -84,7 +79,7 @@ void diverge_reset( void ) {
         return;
     }
     diverge_owns_mpi_context = 0;
-    diverge_mpi_comm = NULL;
+    diverge_mpi_comm = MPI_COMM_NULL;
 }
 
 double diverge_mpi_wtime( void ) {
@@ -129,6 +124,11 @@ void diverge_mpi_allreduce_double_max( const void* sendbuf, void* recvbuf, int n
 void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int num ) {
     MPICHK();
     MPI_Allreduce( sendbuf, recvbuf, num, MPI_DOUBLE, MPI_SUM, diverge_mpi_comm );
+}
+
+void diverge_mpi_allreduce_double_sum_inplace( void* sendrecvbuf, int num ) {
+    MPICHK();
+    MPI_Allreduce( MPI_IN_PLACE, sendrecvbuf, num, MPI_DOUBLE, MPI_SUM, diverge_mpi_comm );
 }
 
 void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int num ){
@@ -397,6 +397,9 @@ void diverge_mpi_allreduce_double_max( const void* sendbuf, void* recvbuf, int n
 }
 void diverge_mpi_allreduce_double_sum( const void* sendbuf, void* recvbuf, int num ) {
     (void)sendbuf; (void)recvbuf; (void)num;
+}
+void diverge_mpi_allreduce_double_sum_inplace( void* sendrecvbuf, int num ) {
+    (void)sendrecvbuf; (void)num;
 }
 void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int num ){
     (void)sendbuf; (void)recvbuf; (void)num;

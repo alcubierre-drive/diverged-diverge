@@ -12,4 +12,5 @@ functions when compiling with GPU support.
 .. c:autodoc:: misc/batched_zgemd.h
 .. c:autodoc:: misc/eigen.h
 .. c:autodoc:: misc/gemm.h
+.. c:autodoc:: misc/invert.h
 .. c:autodoc:: misc/linalg.h

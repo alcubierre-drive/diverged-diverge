@@ -13,6 +13,19 @@
 
 #ifdef USE_CUDA
 
+#if CUDART_VERSION >= 13000
+static inline struct cudaMemLocation cudaMemPrefetchAsyncMemLocationDevice_( int dev ) {
+    struct cudaMemLocation loc;
+    loc.id = dev;
+    loc.type = cudaMemLocationTypeDevice;
+    return loc;
+}
+#define cudaMemPrefetchAsync_( array, nbytes, device, stream ) \
+    cudaMemPrefetchAsync( (array), (nbytes), cudaMemPrefetchAsyncMemLocationDevice_(device), 0, (stream) )
+#else
+#define cudaMemPrefetchAsync_ cudaMemPrefetchAsync
+#endif
+
 #define ERROR_RAISE( status, info ) { \
     mpi_err_printf( "CUDA: %s\n", info ); \
     if (_GPU_ABORT_ON_ERR) \

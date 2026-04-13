@@ -1,0 +1,129 @@
+#define CT_SUITE_NAME tu_prop_grid
+#include "../ctest.h"
+
+#ifndef DIVERGE_SKIP_TESTS
+
+#include "../../src/diverge_model.h"
+#include "../../src/diverge_flow_step.h"
+#include "../../src/diverge_flow_step_internal.h"
+#include "../../src/diverge_model_internals.h"
+#include "../models/all.h"
+#include "../../src/tu/propagator.h"
+#include "../../src/grid/loops.h"
+#include "../../src/tu/vertex.h"
+#include "../../src/tu/projection.h"
+#include "../helper_functions.h"
+#include "../../src/misc/mergesort.h"
+
+void unproject_loop(complex128_t* buf,complex128_t* loop,const diverge_model_t* model) {
+    tu_data_t* tu_data = (tu_data_t*)(model -> internals-> tu_data);
+    index_t* mi_to_ofrom=tu_data->mi_to_ofrom;
+    index_t* mi_to_oto=tu_data->mi_to_oto;
+    index_t* mi_to_R=tu_data->mi_to_R;
+    double* Rvec = (double*)calloc(model->n_tu_ff*3,sizeof(double));
+    fill_Rvec_from_vec(model, mi_to_R,Rvec);
+    index_t nk = tu_data->nk;
+    index_t my_nk = tu_data->my_nk;
+    index_t my_nk_off = tu_data->my_nk_off;
+    index_t n_orbff = tu_data->n_orbff;
+    index_t n_spin = model->n_spin;
+    index_t n_orb = model->n_orb;
+    index_t nb = n_orb*n_spin;
+    double* kmesh = model->internals->kmesh;
+    memset((void*)buf,0,POW4(nb)*POW2(nk)*sizeof(complex128_t));
+    for(index_t q = 0; q < my_nk; ++q)
+    for(index_t k = 0; k < nk; ++k)
+    for(index_t s1 = 0; s1 < n_spin; ++s1)
+    for(index_t s2 = 0; s2 < n_spin; ++s2)
+    for(index_t s3 = 0; s3 < n_spin; ++s3)
+    for(index_t s4 = 0; s4 < n_spin; ++s4)
+    for(index_t m1 = 0; m1 < n_orbff; ++m1)
+    for(index_t m2 = 0; m2 < n_orbff; ++m2){
+        index_t o1 = mi_to_ofrom[m1];
+        index_t o2 = mi_to_oto[m1];
+        index_t o3 = mi_to_ofrom[m2];
+        index_t o4 = mi_to_oto[m2];
+        index_t bid = o4+n_orb*(s4+n_spin*(o3+n_orb*(s3+n_spin*(o2+n_orb*(
+                                s2+n_spin*(o1+n_orb*s1))))));
+
+        buf[bid+POW4(n_spin*n_orb)*(k+nk*(q+my_nk_off))] += loop[m1 + n_orbff*(s1+n_spin*(
+                    s2+n_spin*(m2+n_orbff*(s3+n_spin*(s4+n_spin*q)))))]*
+                    conj(ff(kmesh+3*k,Rvec+3*m1))*ff(kmesh+3*k,Rvec+3*m2)/(double)nk;
+    }
+    diverge_mpi_allreduce_complex_sum_inplace(buf, POW4(nb)*POW2(nk));
+    free(Rvec);
+}
+
+#undef MERGESORT_COMP
+#define MERGESORT_COMP(x,y) (cabs(x)-cabs(y))
+MERGESORT_IMPL(mergesort_cmplx, complex128_t)
+
+CT_TEST_NAME(tu_prop_loop_vs_grid, "tu_prop,grid") {
+    diverge_model_t* mod_tu = KWARGS(gen_honeycomb_lat_hub, .nkx=6, .nky=6);
+    diverge_model_internals_tu(mod_tu, 12.0);
+    diverge_model_t* mod_grid = KWARGS(gen_honeycomb_lat_hub, .nkx=6, .nky=6);
+    diverge_model_internals_grid(mod_grid);
+    tu_data_t* tu_data = (tu_data_t*)(mod_tu -> internals-> tu_data);
+    index_t nk = tu_data->nk;
+    index_t n_orbff = tu_data->n_orbff;
+    index_t n_spin = mod_tu->n_spin;
+    index_t n_orb = mod_tu->n_orb;
+    index_t nb = n_orb*n_spin;
+
+    index_t fsize = POW4(nb)*POW2(nk);
+    index_t tusize = POW2(n_spin*n_spin*n_orbff)*nk;
+
+    complex128_t* Ltu = (complex128_t*)calloc(tusize,sizeof(complex128_t));
+    complex128_t* Lgrid;
+    complex128_t* Lreco = (complex128_t*)calloc(fsize,sizeof(complex128_t));
+    complex128_t* Lrecog = (complex128_t*)calloc(fsize,sizeof(complex128_t));
+
+    tu_prop_t* tu_loop = tu_prop_init(mod_tu);
+    tu_projection_t* ProjMom = tu_projection_init(mod_tu);
+    tu_vertex_t* VertMom = tu_vertex_init(mod_tu, ProjMom, tu_loop, 1,1,1,0);
+
+    grid_loop_t* grid_loop = grid_loop_init(mod_grid);
+    tu_prop_GF_zero_T( tu_loop, I128*0.1, NULL );
+    tu_prop_ph_loop( tu_loop, Ltu, NULL );
+    Lgrid = grid_loop_calc( grid_loop, 'C', 0.1 );
+    memset((void*)Lrecog,0,fsize*sizeof(complex128_t));
+    memcpy(Lrecog + grid_loop->qstart*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop->qsize*nk*sizeof(complex128_t));
+    diverge_mpi_allreduce_complex_sum_inplace(Lrecog, fsize);
+    unproject_loop(Lreco,Ltu,mod_tu);
+    CT_CHECK(check_hermicity(Ltu, n_spin*n_spin*n_orbff,nk));
+
+    mergesort_cmplx(Lrecog, fsize, diverge_omp_num_threads(), 0);
+    mergesort_cmplx(Lreco, fsize, diverge_omp_num_threads(), 0);
+
+    for(index_t i = 0; i < fsize;++i) {
+        CT_CHECK(fabs(cabs(Lrecog[i])-cabs(Lreco[i])) < 1e-10);
+    }
+
+
+    tu_prop_pp_loop( tu_loop, Ltu, NULL );
+    Lgrid = grid_loop_calc( grid_loop, 'P', 0.1 );
+    memset((void*)Lrecog,0,fsize*sizeof(complex128_t));
+    memcpy(Lrecog + grid_loop->qstart*POW4(nb)*nk,Lgrid,POW4(nb)*grid_loop->qsize*nk*sizeof(complex128_t));
+    diverge_mpi_allreduce_complex_sum_inplace(Lrecog, fsize);
+    unproject_loop(Lreco,Ltu,mod_tu);
+    CT_CHECK(check_hermicity(Ltu, n_spin*n_spin*n_orbff,nk));
+
+    mergesort_cmplx(Lrecog, fsize, diverge_omp_num_threads(), 0);
+    mergesort_cmplx(Lreco, fsize, diverge_omp_num_threads(), 0);
+
+    for(index_t i = 0; i < fsize;++i) {
+        CT_CHECK(fabs(cabs(Lrecog[i])-cabs(Lreco[i])) < 1e-10);
+    }
+
+    free(grid_loop);
+    free(Ltu);
+    free(Lrecog);
+    free(Lreco);
+    tu_vertex_free(VertMom);
+    tu_prop_free(tu_loop);
+    tu_projection_free(ProjMom);
+    diverge_model_free(mod_tu);
+    diverge_model_free(mod_grid);
+}
+
+#endif // DIVERGE_SKIP_TESTS

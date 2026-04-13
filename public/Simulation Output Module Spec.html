@@ -8,15 +8,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simulation Output Python Module Spec &mdash; divERGe 0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=049aceee"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -202,6 +202,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#diverge.output.diverge_post_tu.nktot"><code class="docutils literal notranslate"><span class="pre">diverge_post_tu.nktot</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#diverge.output.diverge_post_tu.phloop"><code class="docutils literal notranslate"><span class="pre">diverge_post_tu.phloop</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#diverge.output.diverge_post_tu.pploop"><code class="docutils literal notranslate"><span class="pre">diverge_post_tu.pploop</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.diverge_post_tu.rpa_kidx"><code class="docutils literal notranslate"><span class="pre">diverge_post_tu.rpa_kidx</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.diverge_post_tu.rpa_vals"><code class="docutils literal notranslate"><span class="pre">diverge_post_tu.rpa_vals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.diverge_post_tu.rpa_vecs"><code class="docutils literal notranslate"><span class="pre">diverge_post_tu.rpa_vecs</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#diverge.output.diverge_post_tu.selfenergy"><code class="docutils literal notranslate"><span class="pre">diverge_post_tu.selfenergy</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#diverge.output.diverge_post_tu.symm_o2m_Cpref"><code class="docutils literal notranslate"><span class="pre">diverge_post_tu.symm_o2m_Cpref</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#diverge.output.diverge_post_tu.symm_o2m_Ppref"><code class="docutils literal notranslate"><span class="pre">diverge_post_tu.symm_o2m_Ppref</span></code></a></li>
@@ -214,6 +217,19 @@
 <li class="toctree-l3"><a class="reference internal" href="#diverge.output.ibz_path_ticks"><code class="docutils literal notranslate"><span class="pre">ibz_path_ticks()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.output.ibz_path_vals"><code class="docutils literal notranslate"><span class="pre">ibz_path_vals()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diverge.output.read"><code class="docutils literal notranslate"><span class="pre">read()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#diverge.output.vertex_store"><code class="docutils literal notranslate"><span class="pre">vertex_store</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.Lambda"><code class="docutils literal notranslate"><span class="pre">vertex_store.Lambda</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.chan"><code class="docutils literal notranslate"><span class="pre">vertex_store.chan</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.chans"><code class="docutils literal notranslate"><span class="pre">vertex_store.chans</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.linsz"><code class="docutils literal notranslate"><span class="pre">vertex_store.linsz</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.n_qpts"><code class="docutils literal notranslate"><span class="pre">vertex_store.n_qpts</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.n_steps"><code class="docutils literal notranslate"><span class="pre">vertex_store.n_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.qpts"><code class="docutils literal notranslate"><span class="pre">vertex_store.qpts</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.version"><code class="docutils literal notranslate"><span class="pre">vertex_store.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.vertex_storage_qpt_t"><code class="docutils literal notranslate"><span class="pre">vertex_store.vertex_storage_qpt_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diverge.output.vertex_store.verts"><code class="docutils literal notranslate"><span class="pre">vertex_store.verts</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -293,7 +309,7 @@ conjuction with <a class="reference internal" href="#diverge.output.bandstructur
 
 <dl class="py class">
 <dt class="sig sig-object py" id="diverge.output.diverge_model">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_model" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_model" title="Link to this definition"></a></dt>
 <dd><p>class to read diverge model files (.dvg, “magic number” = 145)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -565,7 +581,7 @@ present without TU internals</em>.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="diverge.output.diverge_post_grid">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_grid" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_grid" title="Link to this definition"></a></dt>
 <dd><p>class to read diverge postprocessing files for grid FRG</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="diverge.output.diverge_post_grid.C_mf_EU">
@@ -721,7 +737,7 @@ present without TU internals</em>.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="diverge.output.diverge_post_patch">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_patch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_patch" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_patch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_patch" title="Link to this definition"></a></dt>
 <dd><p>class to read diverge postprocessing files for <span class="math notranslate nohighlight">\(N\)</span>-patch FRG</p>
 <p>vertices and loops may be None if not explicitly asked for in the
 postprocessing routines. They all are of shape (np, np, np, nb, nb, nb, nb),
@@ -871,7 +887,7 @@ with shape: (len(k_kp_descr), nb, nb, len(k_kp_descr), nb, nb).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="diverge.output.diverge_post_tu">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_tu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_tu" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">diverge_post_tu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.diverge_post_tu" title="Link to this definition"></a></dt>
 <dd><p>class to read diverge postprocessing files for tu FRG</p>
 <p>Vertex diagonalisation: For each channel <span class="math notranslate nohighlight">\(X \in \{P,C,D\}\)</span>, we include</p>
 <blockquote>
@@ -1242,9 +1258,27 @@ of the flow as Xchannel. The loops pploop and phloop can be saved as well.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.diverge_post_tu.rpa_kidx">
+<span class="sig-name descname"><span class="pre">rpa_kidx</span></span><a class="headerlink" href="#diverge.output.diverge_post_tu.rpa_kidx" title="Link to this definition"></a></dt>
+<dd><p>rpa attachment (enabled for version&gt;0.9); k indices</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.diverge_post_tu.rpa_vals">
+<span class="sig-name descname"><span class="pre">rpa_vals</span></span><a class="headerlink" href="#diverge.output.diverge_post_tu.rpa_vals" title="Link to this definition"></a></dt>
+<dd><p>rpa attachment (enabled for version&gt;0.9); eigenvalues</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.diverge_post_tu.rpa_vecs">
+<span class="sig-name descname"><span class="pre">rpa_vecs</span></span><a class="headerlink" href="#diverge.output.diverge_post_tu.rpa_vecs" title="Link to this definition"></a></dt>
+<dd><p>rpa attachment (enabled for version&gt;0.9); eigenvectors</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="diverge.output.diverge_post_tu.selfenergy">
 <span class="sig-name descname"><span class="pre">selfenergy</span></span><a class="headerlink" href="#diverge.output.diverge_post_tu.selfenergy" title="Link to this definition"></a></dt>
-<dd><p>Self-energy at the critical scale ([n_orb*n_spin]**2,nktot)</p>
+<dd><p>Self-energy at the critical scale; either in real space or in k space ([n_orb*n_spin]**2,nktot)</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1314,6 +1348,80 @@ discerning the different file types by their “magic numbers”.</p>
 <dd class="field-odd"><p><strong>fname</strong> – file name to read from (typically <code class="docutils literal notranslate"><span class="pre">`XXX.dvg`</span></code>)</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="diverge.output.vertex_store">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">diverge.output.</span></span><span class="sig-name descname"><span class="pre">vertex_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#diverge.output.vertex_store" title="Link to this definition"></a></dt>
+<dd><p>class to read vertex_store files (.dvg, magic string = “vertex_storage_t”)
+that are recorded during the flow via <a class="reference internal" href="Flowing%20Vertices.html#c.vertex_storage_snap" title="vertex_storage_snap"><code class="xref c c-func docutils literal notranslate"><span class="pre">vertex_storage_snap()</span></code></a> (and
+similar functions). The most useful information in the vertex storage file
+is its member <a class="reference internal" href="#diverge.output.vertex_store.verts" title="diverge.output.vertex_store.verts"><code class="xref py py-attr docutils literal notranslate"><span class="pre">verts</span></code></a>, i.e., the vertices themselves.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> – file name of a vertex file that should be read.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.Lambda">
+<span class="sig-name descname"><span class="pre">Lambda</span></span><a class="headerlink" href="#diverge.output.vertex_store.Lambda" title="Link to this definition"></a></dt>
+<dd><p>stored Lambdas (n_steps,)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.chan">
+<span class="sig-name descname"><span class="pre">chan</span></span><a class="headerlink" href="#diverge.output.vertex_store.chan" title="Link to this definition"></a></dt>
+<dd><p>channel</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.chans">
+<span class="sig-name descname"><span class="pre">chans</span></span><a class="headerlink" href="#diverge.output.vertex_store.chans" title="Link to this definition"></a></dt>
+<dd><p>stored channels for each iter (n_steps,)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.linsz">
+<span class="sig-name descname"><span class="pre">linsz</span></span><a class="headerlink" href="#diverge.output.vertex_store.linsz" title="Link to this definition"></a></dt>
+<dd><p>n_orbff × n_spin × n_spin</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.n_qpts">
+<span class="sig-name descname"><span class="pre">n_qpts</span></span><a class="headerlink" href="#diverge.output.vertex_store.n_qpts" title="Link to this definition"></a></dt>
+<dd><p>number of saved qpts</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.n_steps">
+<span class="sig-name descname"><span class="pre">n_steps</span></span><a class="headerlink" href="#diverge.output.vertex_store.n_steps" title="Link to this definition"></a></dt>
+<dd><p>number of saved steps</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.qpts">
+<span class="sig-name descname"><span class="pre">qpts</span></span><a class="headerlink" href="#diverge.output.vertex_store.qpts" title="Link to this definition"></a></dt>
+<dd><p>stored qpts (n_qpts,)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.version">
+<span class="sig-name descname"><span class="pre">version</span></span><a class="headerlink" href="#diverge.output.vertex_store.version" title="Link to this definition"></a></dt>
+<dd><p>diverge tag version (serves as file format version)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.vertex_storage_qpt_t">
+<span class="sig-name descname"><span class="pre">vertex_storage_qpt_t</span></span><a class="headerlink" href="#diverge.output.vertex_store.vertex_storage_qpt_t" title="Link to this definition"></a></dt>
+<dd><p>qpt data structure</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="diverge.output.vertex_store.verts">
+<span class="sig-name descname"><span class="pre">verts</span></span><a class="headerlink" href="#diverge.output.vertex_store.verts" title="Link to this definition"></a></dt>
+<dd><p>stored vertices (n_steps,n_qpts,linsz,linsz)</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>

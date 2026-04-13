@@ -9,6 +9,19 @@ static int grid_vertex_find_send_trafo( const grid_vertex_t* v, const char* name
 static int grid_vertex_find_recv_trafo( const grid_vertex_t* v, const char* name );
 static void grid_vertex_gather_chan_in_v1( grid_vertex_t* v, char chan );
 
+GEN_MAPS_IMPL( D_to_P, index_gymnastics_D_to_P, index_gymnastics_P_to_D )
+GEN_MAPS_IMPL( P_to_D, index_gymnastics_P_to_D, index_gymnastics_D_to_P )
+GEN_MAPS_IMPL( D_to_C, index_gymnastics_D_to_C, index_gymnastics_C_to_D )
+GEN_MAPS_IMPL( C_to_D, index_gymnastics_C_to_D, index_gymnastics_D_to_C )
+GEN_MAPS_IMPL( D_swap_3_and_4, index_gymnastics_D_swap_3_and_4, index_gymnastics_D_swap_3_and_4 )
+GEN_MAPS_IMPL( D_swap_1_and_2, index_gymnastics_D_swap_1_and_2, index_gymnastics_D_swap_1_and_2 )
+GEN_MAPS_IMPL( D_to_V, index_gymnastics_D_to_V, index_gymnastics_V_to_D )
+GEN_MAPS_IMPL( V_to_D, index_gymnastics_V_to_D, index_gymnastics_D_to_V )
+GEN_MAPS_IMPL( C_to_V, index_gymnastics_C_to_V, index_gymnastics_V_to_C )
+GEN_MAPS_IMPL( V_to_C, index_gymnastics_V_to_C, index_gymnastics_C_to_V )
+GEN_MAPS_IMPL( P_to_V, index_gymnastics_P_to_V, index_gymnastics_V_to_P )
+GEN_MAPS_IMPL( V_to_P, index_gymnastics_V_to_P, index_gymnastics_P_to_V )
+
 grid_vertex_t* grid_vertex_init( index_t nk, index_t nb, index_t* k1m2, index_t* k1p2, bool SU2 ) {
     grid_vertex_t* v = calloc(1, sizeof*v);
     v->SU2 = SU2;
@@ -67,47 +80,42 @@ grid_vertex_t* grid_vertex_init( index_t nk, index_t nb, index_t* k1m2, index_t*
 
 static void grid_vertex_gen_index_maps( grid_vertex_t* v ) {
     double tick = diverge_mpi_wtime();
-    gen_maps( v->send_recv_maps[0], v->send_recv_displs[0], v->send_recv_counts[0],
-              v->send_recv_maps[1], v->send_recv_displs[1], v->send_recv_counts[1],
-              v->dist, v->nk, v->nb, v->k1m2, v->k1p2, index_gymnastics_D_to_P,
-              index_gymnastics_P_to_D );
+    gen_maps_D_to_P( v->send_recv_maps[0], v->send_recv_displs[0], v->send_recv_counts[0],
+                     v->send_recv_maps[1], v->send_recv_displs[1], v->send_recv_counts[1],
+                     v->dist, v->nk, v->nb, v->k1m2, v->k1p2 );
     strcpy( v->send_recv_descr[0], "D_to_P_send" );
     strcpy( v->send_recv_descr[1], "D_to_P_recv" );
     mpi_tim_printf( "gen_D_to_P_index_map() took %5.2fs\n", diverge_mpi_wtime()-tick );
 
     tick = diverge_mpi_wtime();
-    gen_maps( v->send_recv_maps[2], v->send_recv_displs[2], v->send_recv_counts[2],
-              v->send_recv_maps[3], v->send_recv_displs[3], v->send_recv_counts[3],
-              v->dist, v->nk, v->nb, v->k1m2, v->k1p2, index_gymnastics_P_to_D,
-              index_gymnastics_D_to_P );
+    gen_maps_P_to_D( v->send_recv_maps[2], v->send_recv_displs[2], v->send_recv_counts[2],
+                     v->send_recv_maps[3], v->send_recv_displs[3], v->send_recv_counts[3],
+                     v->dist, v->nk, v->nb, v->k1m2, v->k1p2 );
     strcpy( v->send_recv_descr[2], "P_to_D_send" );
     strcpy( v->send_recv_descr[3], "P_to_D_recv" );
     mpi_tim_printf( "gen_P_to_D_index_map() took %5.2fs\n", diverge_mpi_wtime()-tick );
 
     if (v->SU2) {
         tick = diverge_mpi_wtime();
-        gen_maps( v->send_recv_maps[4], v->send_recv_displs[4], v->send_recv_counts[4],
-                  v->send_recv_maps[5], v->send_recv_displs[5], v->send_recv_counts[5],
-                  v->dist, v->nk, v->nb, v->k1m2, v->k1p2, index_gymnastics_D_to_C,
-                  index_gymnastics_C_to_D );
+        gen_maps_D_to_C( v->send_recv_maps[4], v->send_recv_displs[4], v->send_recv_counts[4],
+                         v->send_recv_maps[5], v->send_recv_displs[5], v->send_recv_counts[5],
+                         v->dist, v->nk, v->nb, v->k1m2, v->k1p2 );
         strcpy( v->send_recv_descr[4], "D_to_C_send" );
         strcpy( v->send_recv_descr[5], "D_to_C_recv" );
         mpi_tim_printf( "gen_D_to_C_index_map() took %5.2fs\n", diverge_mpi_wtime()-tick );
 
         tick = diverge_mpi_wtime();
-        gen_maps( v->send_recv_maps[6], v->send_recv_displs[6], v->send_recv_counts[6],
-                  v->send_recv_maps[7], v->send_recv_displs[7], v->send_recv_counts[7],
-                  v->dist, v->nk, v->nb, v->k1m2, v->k1p2, index_gymnastics_C_to_D,
-                  index_gymnastics_D_to_C );
+        gen_maps_C_to_D( v->send_recv_maps[6], v->send_recv_displs[6], v->send_recv_counts[6],
+                         v->send_recv_maps[7], v->send_recv_displs[7], v->send_recv_counts[7],
+                         v->dist, v->nk, v->nb, v->k1m2, v->k1p2 );
         strcpy( v->send_recv_descr[6], "C_to_D_send" );
         strcpy( v->send_recv_descr[7], "C_to_D_recv" );
         mpi_tim_printf( "gen_C_to_D_index_map() took %5.2fs\n", diverge_mpi_wtime()-tick );
     } else {
         tick = diverge_mpi_wtime();
-        gen_maps( v->send_recv_maps[4], v->send_recv_displs[4], v->send_recv_counts[4],
-                  v->send_recv_maps[5], v->send_recv_displs[5], v->send_recv_counts[5],
-                  v->dist, v->nk, v->nb, v->k1m2, v->k1p2, index_gymnastics_D_swap_3_and_4,
-                  index_gymnastics_D_swap_3_and_4 );
+        gen_maps_D_swap_3_and_4( v->send_recv_maps[4], v->send_recv_displs[4], v->send_recv_counts[4],
+                                 v->send_recv_maps[5], v->send_recv_displs[5], v->send_recv_counts[5],
+                                 v->dist, v->nk, v->nb, v->k1m2, v->k1p2 );
         strcpy( v->send_recv_descr[4], "D_swap_3_and_4_send" );
         strcpy( v->send_recv_descr[5], "D_swap_3_and_4_recv" );
         strcpy( v->send_recv_descr[6], "None" );
@@ -249,9 +257,9 @@ static int grid_vertex_find_recv_trafo( const grid_vertex_t* v, const char* name
 
 void grid_vertex_overwrite_transform( grid_vertex_t* v, int send, int recv, const char* new_name ) {
 #define MAPGEN( name, name_inv ) (!strcmp(#name, new_name)) \
-    gen_maps( v->send_recv_maps[send], v->send_recv_displs[send], v->send_recv_counts[send], \
-              v->send_recv_maps[recv], v->send_recv_displs[recv], v->send_recv_counts[recv], \
-              v->dist, v->nk, v->nb, v->k1m2, v->k1p2, index_gymnastics_##name, index_gymnastics_##name_inv )
+    gen_maps_##name( v->send_recv_maps[send], v->send_recv_displs[send], v->send_recv_counts[send], \
+                     v->send_recv_maps[recv], v->send_recv_displs[recv], v->send_recv_counts[recv], \
+                     v->dist, v->nk, v->nb, v->k1m2, v->k1p2 )
     if      MAPGEN( D_to_P, P_to_D );
     else if MAPGEN( P_to_D, D_to_P );
     else if MAPGEN( D_to_C, C_to_D );

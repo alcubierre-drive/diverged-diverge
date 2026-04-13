@@ -11,6 +11,7 @@ LINALG_IMPLEMENT
 #include "../diverge_model_internals.h"
 #include "../misc/mergesort.h"
 #include "../misc/btree.h"
+#include "../misc/hashtable.h"
 #include <assert.h>
 
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
@@ -36,6 +37,11 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_greedy;
     #endif
     info->propagator_extra_cpu_timings = false;
+    #ifdef DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE
+    info->unique_orbff_hashtable_impl = 1;
+    #else
+    info->unique_orbff_hashtable_impl = 0;
+    #endif
     model->internals->tu_data = (void*)info;
     model->internals->tu_data_destructor = tu_data_destructor;
 
@@ -131,8 +137,8 @@ void init_bond_descriptor(diverge_model_t* model) {
     index_t n_tu_ff = model->n_tu_ff;
     tu_formfactor_t* tu_ff = model->tu_ff;
     tu_data_t* tu_data = (tu_data_t*)model->internals->tu_data;
-    tu_data->bond_sizes = (index_t*)calloc(model->n_orb, sizeof(index_t));
-    tu_data->bond_offsets = (index_t*)calloc(model->n_orb, sizeof(index_t));
+    tu_data->bond_sizes = calloc(model->n_orb, sizeof *tu_data->bond_sizes);
+    tu_data->bond_offsets = calloc(model->n_orb, sizeof *tu_data->bond_offsets);
     for(index_t i = 0; i < n_tu_ff; ++i)
         tu_data->bond_sizes[tu_ff[i].ofrom] += 1;
 
@@ -141,35 +147,33 @@ void init_bond_descriptor(diverge_model_t* model) {
 
     for (index_t i=0; i<model->n_orb; ++i) // find max bond size
         tu_data->n_bonds = MAX(tu_data->n_bonds, tu_data->bond_sizes[i]);
-    tu_data->ob_to_orbff = (index_t*)calloc(model->n_orb * tu_data->n_bonds, sizeof(index_t));
+    tu_data->ob_to_orbff = calloc(model->n_orb * tu_data->n_bonds, sizeof *tu_data->ob_to_orbff);
     tu_data->n_orbff = n_tu_ff;
-    tu_data->mi_to_ofrom = (index_t*)calloc(n_tu_ff,sizeof(index_t));
-    tu_data->mi_to_oto = (index_t*)calloc(n_tu_ff,sizeof(index_t));
-    tu_data->mi_to_R = (index_t*)calloc(3*n_tu_ff,sizeof(index_t));
-    tu_data->mi_to_ffidx = (index_t*)calloc(n_tu_ff,sizeof(index_t));
-    tu_data->mi_to_tuffidx = (index_t*)calloc(n_tu_ff,sizeof(index_t));
+    tu_data->mi_to_ofrom = calloc(n_tu_ff,sizeof *tu_data->mi_to_ofrom);
+    tu_data->mi_to_oto = calloc(n_tu_ff,sizeof *tu_data->mi_to_oto);
+    tu_data->mi_to_R = calloc(3*n_tu_ff,sizeof *tu_data->mi_to_R);
+    tu_data->mi_to_ffidx = calloc(n_tu_ff,sizeof *tu_data->mi_to_ffidx);
+    tu_data->mi_to_tuffidx = calloc(n_tu_ff+1,sizeof *tu_data->mi_to_tuffidx);
+    tu_data->mi_to_tuffidx[n_tu_ff] = -1; /* alloc one more in order to set last element to -1 */
     index_t idx = 0;
-    for(index_t b = 0; b < tu_data->n_bonds; ++b)
-    for(index_t o = 0; o < model->n_orb; ++o){
-        if(b < tu_data->bond_sizes[o]) {
+    for (index_t b=0; b<tu_data->n_bonds; ++b)
+    for (index_t o=0; o<model->n_orb; ++o) {
+        if (b < tu_data->bond_sizes[o]) {
             tu_data->ob_to_orbff[b + tu_data->n_bonds * o] = idx;
             tu_data->mi_to_ofrom[idx] = tu_ff[b+tu_data->bond_offsets[o]].ofrom;
             tu_data->mi_to_oto[idx]   = tu_ff[b+tu_data->bond_offsets[o]].oto;
             tu_data->mi_to_ffidx[idx] = tu_ff[b+tu_data->bond_offsets[o]].ffidx;
             tu_data->mi_to_tuffidx[idx] =     b+tu_data->bond_offsets[o];
-            tu_data->mi_to_R[3*idx]   = map_to_fine(tu_ff[b+tu_data->bond_offsets[o]].R[0],
-                                                        model->nk[0]);
-            tu_data->mi_to_R[3*idx+1] = map_to_fine(tu_ff[b+tu_data->bond_offsets[o]].R[1],
-                                                        model->nk[1]);
-            tu_data->mi_to_R[3*idx+2] = map_to_fine(tu_ff[b+tu_data->bond_offsets[o]].R[2],
-                                                        model->nk[2]);
+            tu_data->mi_to_R[3*idx+0] = map_to_fine(tu_ff[b+tu_data->bond_offsets[o]].R[0], model->nk[0]);
+            tu_data->mi_to_R[3*idx+1] = map_to_fine(tu_ff[b+tu_data->bond_offsets[o]].R[1], model->nk[1]);
+            tu_data->mi_to_R[3*idx+2] = map_to_fine(tu_ff[b+tu_data->bond_offsets[o]].R[2], model->nk[2]);
             idx +=1;
-        }else{
+        } else {
             tu_data->ob_to_orbff[b + tu_data->n_bonds * o] = -1;
         }
     }
 
-    for(index_t o = 0; o < model->n_orb; ++o)
+    for (index_t o=0; o<model->n_orb; ++o)
         assert(tu_data->mi_to_ofrom[o] == tu_data->mi_to_oto[o]);
     assert(n_tu_ff == idx);
 }
@@ -192,19 +196,19 @@ static inline int contains_claV4d_t( const claV4d_t* ary, index_t sz, claV4d_t t
 void init_ff_struct(const double max_dist, diverge_model_t* model) {
     bool iobi_setup = false;
     if (qnan_isnan(max_dist) && model->n_tu_ff == 0) {
-        uint32_t payload = qnan_get(max_dist);
-        mpi_vrb_printf( "found NAN for max_dist, read payload '%u'\n", payload );
+        uint64_t payload = qnan_get(max_dist);
+        mpi_vrb_printf( "found NAN for max_dist, read payload '%lu'\n", payload );
         if (payload == IOBI_FORMFACTOR_MAGIC_NUMBER) {
             mpi_log_printf( "dispatching to IOBI FRG\n" );
             iobi_setup = true;
         } else {
-            mpi_err_printf( "invalid payload '%u', anyways doing IOBI\n", payload );
+            mpi_err_printf( "invalid payload '%lu', anyways doing IOBI\n", payload );
             // we could do different special cases here
             iobi_setup = true;
         }
         if (iobi_setup) {
             model->n_tu_ff = model->n_orb;
-            model->tu_ff = (tu_formfactor_t*) calloc(model->n_tu_ff, sizeof(tu_formfactor_t));
+            model->tu_ff = calloc(model->n_tu_ff, sizeof *model->tu_ff);
             for (index_t f=0; f<model->n_tu_ff; ++f)
                 model->tu_ff[f].ofrom = model->tu_ff[f].oto = f;
         }
@@ -278,7 +282,7 @@ void init_ff_struct(const double max_dist, diverge_model_t* model) {
     }
 
     model->n_tu_ff = real_ff_sz;
-    model->tu_ff = calloc(real_ff_sz,sizeof(tu_formfactor_t));
+    model->tu_ff = calloc(real_ff_sz, sizeof *model->tu_ff);
     tu_formfactor_t* tu_ff = model->tu_ff;
     for (index_t i=0; i<model->n_tu_ff; ++i) {
         tu_ff[i].ofrom = orbcomb[2*i+0];
@@ -354,7 +358,7 @@ static void fill_unique_ff(diverge_model_t* model){
     tu_data_t* tu_data = (tu_data_t*)(model->internals->tu_data);
     // create array storing the info of all unique formfactor combinations in R
     index_t nff = tu_data->existing_ff_sz;
-    tu_data->ff_idx_to_unique_ff_elem = calloc(POW2(nff),sizeof(index_t));
+    tu_data->ff_idx_to_unique_ff_elem = calloc(POW2(nff), sizeof *tu_data->ff_idx_to_unique_ff_elem);
 
     for (index_t ff1=0; ff1<nff; ++ff1)
     for (index_t ff3=0; ff3<nff; ++ff3) {
@@ -443,7 +447,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     if (!tu_data->use_reduced_loop || tu_data->nktot==1) {
         mpi_log_printf("deactivate reduced TU loop algorithm\n");
         tu_data->use_reduced_loop = false;
-        tu_data->ff_idx_to_unique_ff_elem = calloc(1,sizeof(index_t));
+        tu_data->ff_idx_to_unique_ff_elem = calloc(1, sizeof *tu_data->ff_idx_to_unique_ff_elem);
         return;
     }
 
@@ -460,31 +464,52 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
         return ;
     }
     mpi_vrb_printf("%d unique orbff pairs, gen maps…\n", num_unique_pairs);
-    VECTOR_INIT( vec_claV2ll_t, _lmap );
+    VECTOR_INIT_CAP( vec_claV2ll_t, _lmap, MAX(tu_data->n_orbff,1024) );
     index_t nff = tu_data->existing_ff_sz;
     // iterate over all unique pair combinations
-    xbtree_t* index_to_reduced = xbtree_init( MAX(tu_data->n_orbff,1024) );
-    index_t curr_idx = 0;
-    for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
-    for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
-        index_t fidx1 = mi_to_ffidx[m1];
-        index_t fidx3 = mi_to_ffidx[m3];
-        index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
-                          mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
-                          n_orb,n_orb,n_orb,n_orb);
-        btree_t* found = xbtree_find( index_to_reduced, trial );
-        if (!found) {
-            btree_t* node = xbtree_insert( index_to_reduced, trial );
-            node->val = curr_idx++;
-
-            claV2ll_t l = {{m1,m3}};
-            vec_claV2ll_t b = {0};
-            VECTOR_PUSH_BACK( b.v, l );
-            VECTOR_PUSH_BACK( _lmap, b );
-        } else {
-            claV2ll_t l = {{m1,m3}};
-            VECTOR_PUSH_BACK( _lmap[found->val].v, l );
+    if (tu_data->unique_orbff_hashtable_impl) {
+        hashtable_t* index_to_reduced = hashtable_init( MAX(tu_data->n_orbff*4096,1024), 4 );
+        index_t curr_idx = 1;
+        for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
+        for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
+            index_t fidx1 = mi_to_ffidx[m1];
+            index_t fidx3 = mi_to_ffidx[m3];
+            index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
+                              mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
+                              n_orb,n_orb,n_orb,n_orb);
+            index_t found = (index_t)hashtable_find( index_to_reduced, trial );
+            if (!found) {
+                hashtable_insert( index_to_reduced, trial, (void*)(curr_idx++) );
+                vec_claV2ll_t b = {0};
+                VECTOR_PUSH_BACK( b.v, (claV2ll_t){{m1,m3}} );
+                VECTOR_PUSH_BACK( _lmap, b );
+            } else {
+                VECTOR_PUSH_BACK( _lmap[found-1].v, (claV2ll_t){{m1,m3}} );
+            }
         }
+        hashtable_free( index_to_reduced );
+    } else {
+        xbtree_t* index_to_reduced = xbtree_init( MAX(tu_data->n_orbff,1024) );
+        index_t curr_idx = 0;
+        for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
+        for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
+            index_t fidx1 = mi_to_ffidx[m1];
+            index_t fidx3 = mi_to_ffidx[m3];
+            index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
+                              mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
+                              n_orb,n_orb,n_orb,n_orb);
+            btree_t* found = xbtree_find( index_to_reduced, trial );
+            if (!found) {
+                btree_t* node = xbtree_insert( index_to_reduced, trial );
+                node->val = curr_idx++;
+                vec_claV2ll_t b = {0};
+                VECTOR_PUSH_BACK( b.v, (claV2ll_t){{m1,m3}} );
+                VECTOR_PUSH_BACK( _lmap, b );
+            } else {
+                VECTOR_PUSH_BACK( _lmap[found->val].v, (claV2ll_t){{m1,m3}} );
+            }
+        }
+        xbtree_free( index_to_reduced );
     }
 
     VECTOR_RESIZE( tu_data->unique_mi_l, _lmap_sz );
@@ -513,7 +538,6 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
 
     for (index_t i=0; i<_lmap_sz; ++i) VECTOR_FREE( _lmap[i].v );
     VECTOR_FREE( _lmap );
-    xbtree_free( index_to_reduced );
 }
 
 void init_MPI_dist(diverge_model_t* model) {

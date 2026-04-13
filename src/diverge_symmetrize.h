@@ -37,6 +37,34 @@ void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
         double BOND_EQUAL, double MATRIX_ZERO );
 
 /**
+ * structure to gather the arguments/return values of
+ * :c:func:`diverge_generate_symm_maps_precision_get` and
+ * :c:func:`diverge_generate_symm_maps_precision_set`
+ */
+typedef struct {
+    /** beyond unit cell mapping of a position, ~0 */
+    double ASSERT_POSITION_BEYOND;
+    /** minimal orbital overlap that is considered nonzero, ~0 */
+    double ORBITAL_OVERLAP;
+    /** find whether orbitals have the same position, ~0 */
+    double POS_EQUAL;
+    /** minimal orbital weight that is considered one, ~1 */
+    double MIN_ORBITAL_WEIGHT;
+    /** find whether bonds are the same, ~0 (tu_symmstruct) */
+    double BOND_EQUAL;
+    /** when is a matrix actually zero?, ~0 (tu_symmstruct) */
+    double MATRIX_ZERO;
+} diverge_generate_symm_maps_precision_t;
+
+/** get the current symmetry map precision settings */
+diverge_generate_symm_maps_precision_t diverge_generate_symm_maps_precision_get( void );
+/**
+ * same as :c:func:`diverge_generate_symm_maps_set_precision`, but using the
+ * structure :c:struct:`diverge_generate_symm_maps_precision_t`
+ */
+void diverge_generate_symm_maps_precision_set( diverge_generate_symm_maps_precision_t p );
+
+/**
  * symmetrizes coarse mesh 2pt function stored in buf. returns maximum
  * difference between symmetrized and un-symmetrized buffer
  *

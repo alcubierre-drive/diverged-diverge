@@ -37,6 +37,23 @@ void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
     SET_TO( MATRIX_ZERO );
 }
 
+diverge_generate_symm_maps_precision_t diverge_generate_symm_maps_precision_get( void ) {
+    return (diverge_generate_symm_maps_precision_t){
+        .ASSERT_POSITION_BEYOND = SYMNORM_ASSERT_POSITION_BEYOND,
+        .ORBITAL_OVERLAP = SYMNORM_ORBITAL_OVERLAP,
+        .POS_EQUAL = SYMNORM_POS_EQUAL,
+        .MIN_ORBITAL_WEIGHT = SYMNORM_MIN_ORBITAL_WEIGHT,
+        .BOND_EQUAL = SYMNORM_TU_BOND_MAX,
+        .MATRIX_ZERO = SYMNORM_MATRIX_ZERO,
+    };
+}
+
+void diverge_generate_symm_maps_precision_set( diverge_generate_symm_maps_precision_t p ) {
+    diverge_generate_symm_maps_set_precision( p.ASSERT_POSITION_BEYOND,
+            p.ORBITAL_OVERLAP, p.POS_EQUAL, p.MIN_ORBITAL_WEIGHT, p.BOND_EQUAL,
+            p.MATRIX_ZERO );
+}
+
 static inline bool map_back_to_BZ(claV3d_t* k_point, index_t* idx, const diverge_model_t* model, bool fine) {
     index_t nk[3]; memcpy( nk, model->nk, sizeof(nk) );
     if (fine) { for (int d=0; d<3; ++d) nk[d] *= model->nkf[d]; }
@@ -61,6 +78,39 @@ static void syms_serialize( const diverge_model_t* model, char** ptr, uindex_t* 
 static internals_t* syms_deserialize( const diverge_model_t* model, char* ptr );
 // checks whether two internals_t objects are equal in their symmetry parts
 static int syms_equal( const diverge_model_t* model, const internals_t* ii_B );
+
+static index_t check_orbital_equivalence( diverge_model_t* m ) {
+    const int periodic_iter[3] = {m->internals->periodic_direction[0]?3:0,
+                                  m->internals->periodic_direction[1]?3:0,
+                                  m->internals->periodic_direction[2]?3:0};
+    const claM3d_t lat = claM3d_map(m->lattice[0]);
+
+    // iterate over all orbs and find whether some are at equivalent positions
+    index_t eqpos = 0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:eqpos)
+    for (index_t o=0; o<m->n_orb; ++o) {
+        claV3d_t vo = claV3d_map(m->positions[o]);
+        for (index_t op=0; op<m->n_orb; ++op) {
+            claV3d_t vop = claV3d_map(m->positions[o]);
+            double dist = claV3d_norm(claV3d_sub(vo,vop));
+            if (dist > SYMNORM_POS_EQUAL) {
+                for (int x=-periodic_iter[0]; x<=periodic_iter[0]; ++x)
+                for (int y=-periodic_iter[0]; y<=periodic_iter[0]; ++y)
+                for (int z=-periodic_iter[0]; z<=periodic_iter[0]; ++z) {
+                    claV3d_t L = claM3d_vecmat( (claV3d_t){{x,y,z}}, lat );
+                    double Ldist = claV3d_norm(claV3d_sub(vo, claV3d_add(L, vop)));
+                    dist = MIN(dist, Ldist);
+                }
+                if (dist < SYMNORM_POS_EQUAL) {
+                    eqpos++;
+                    break;
+                }
+            }
+        }
+    }
+
+    return eqpos;
+}
 
 void diverge_generate_symm_maps( diverge_model_t* model ) {
     if (model->internals->symm_orb_off &&
@@ -143,8 +193,9 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     claV3d_t UC2 = claV3d_map(model->lattice[1]);
     claV3d_t UC3 = claV3d_map(model->lattice[2]);
 
-    // TODO the symmetrizer fails if multiple orbitals are on the same position,
-    // but the position is shifted by a lattice vector (i.e. +A1/2 and -A1/2)
+    index_t eqpos = check_orbital_equivalence( model );
+    if (eqpos)
+        mpi_err_printf( "%li orbitals share *periodic* position, but not *absolute*\n", eqpos );
 
     #ifndef ASAN_COMPILATION
     _Pragma("omp parallel for collapse(2) num_threads(diverge_omp_num_threads())")

@@ -33,7 +33,7 @@ void diverge_postprocess_and_write( diverge_flow_step_t* st, const char* file ) 
 void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st,
         const char* file, const diverge_postprocess_conf_t* pc ) {
     mpi_log_printf( "writing postprocessing file %s\n", file );
-    diverge_postprocess_conf_t pc_def = diverge_postprocess_conf_defaults_CPP();
+    diverge_postprocess_conf_t pc_def = diverge_postprocess_conf_defaults;
     if (pc == NULL) pc = &pc_def;
 
     switch (st->type) {
@@ -75,9 +75,12 @@ static void grid_pp( diverge_flow_step_t* st,
     grid_postproc_susc( pp, st->Lambda, 'D' );
 
     mpi_vrb_printf( "linearized gaps\n" );
-    grid_postproc_lingap( pp, st->Lambda, 'P', pc->grid_lingap_vertex_file_P );
-    if (st->mod->SU2 > 0) grid_postproc_lingap( pp, st->Lambda, 'C', pc->grid_lingap_vertex_file_C );
-    grid_postproc_lingap( pp, st->Lambda, 'D', pc->grid_lingap_vertex_file_D );
+    grid_postproc_lingap( pp, st->Lambda, 'P', pc->grid_lingap_vertex_file_P,
+            pc->grid_lingap_vertex_loop_file_P );
+    if (st->mod->SU2 > 0) grid_postproc_lingap( pp, st->Lambda, 'C', pc->grid_lingap_vertex_file_C,
+            pc->grid_lingap_vertex_loop_file_C );
+    grid_postproc_lingap( pp, st->Lambda, 'D', pc->grid_lingap_vertex_file_D,
+            pc->grid_lingap_vertex_loop_file_D );
 
     mpi_vrb_printf( "communicating results\n" );
     grid_postproc_communicate( pp );
@@ -103,10 +106,11 @@ static void patch_pp( diverge_flow_step_t* st,
 
 static void tu_pp( diverge_flow_step_t* st,
         const diverge_postprocess_conf_t* pc, const char* file ) {
-    tu_postproduction_conf_t tc = tu_postproduction_conf_defaults_CPP();
+    tu_postproduction_conf_t tc = tu_postproduction_conf_defaults;
     tc.skip_channel_calc = pc->tu_skip_channel_calc;
     tc.tu_n_singular_values = pc->tu_n_singular_values;
     tc.algo = pc->tu_which_solver_mode;
+    tc.algo_zero = pc->tu_which_solver_mode_hermiticity_limit;
     tc.cutoff = pc->tu_storing_threshold;
     tc.cutoff_rel = pc->tu_storing_relative;
     tc.tu_n_decomp_values = pc->tu_n_decomp_values;
@@ -120,7 +124,22 @@ static void tu_pp( diverge_flow_step_t* st,
     tc.save_self = pc->tu_selfenergy;
     tc.save_full = pc->tu_channels;
     tc.save_symmetries = pc->tu_symmetry_maps;
-    tu_postproduction( st->tu_vertex, tu_stepper_internal_vertex(st->tu_step), st->tu_proj, st->mod, &tc, file );
+    // RPA attachment
+    memcpy( tc.rpa_chans, pc->tu_rpa_chans, sizeof(pc->tu_rpa_chans) );
+    tc.rpa_nev     = pc->tu_rpa_nev;
+    tc.rpa_ncv     = pc->tu_rpa_ncv;
+    tc.rpa_maxiter = pc->tu_rpa_maxiter;
+    tc.rpa_tol     = pc->tu_rpa_tol;
+    tu_rpa_post_set_which_ev( pc->tu_rpa_sorting );
+    tc.self_rs_dist = pc->tu_selfenergy_rs_dist;
+    tc.self_rs_mval = pc->tu_selfenergy_rs_mval;
+
+    // DEVELOPERS
+    //
+    // For a new backend, you may choose to add postprocessing flags here and
+    // their defaults below
+    tu_postproduction( st->tu_vertex, tu_stepper_internal_vertex(st->tu_step),
+            st->tu_proj, st->tu_rpa, st->mod, &tc, file );
 }
 
 diverge_postprocess_conf_t diverge_postprocess_conf_defaults_CPP( void ) {

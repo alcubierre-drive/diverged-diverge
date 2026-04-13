@@ -153,6 +153,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
             tu_projection_free( st->tu_proj );
             tu_stepper_free( st->tu_step );
             tu_prop_free( st->tu_loop );
+            if (st->tu_rpa) tu_rpa_free( st->tu_rpa );
             break;
         default:
         case diverge_flow_type_invalid:
@@ -250,6 +251,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             return;
         case diverge_tu:
             tu_stepper_euler( st->tu_step, st->tu_vertex, Lambda, dLambda, chanmax );
+            if (st->tu_rpa) tu_rpa_step( st->tu_rpa, Lambda, dLambda );
 
             st->chanmax[0] = chanmax[0];
             st->chanmax[1] = chanmax[1];
@@ -259,8 +261,13 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             st->loopmax[1] = chanmax[4];
 
             ttt = tu_stepper_timings(st->tu_step, &idx);
-            VECTOR_RESIZE( st->timings, idx );
-            memcpy( st->timings, ttt, sizeof(diverge_timing_t)*idx );
+            VECTOR_RESERVE( st->timings, idx+1 );
+            memcpy( st->timings, ttt, sizeof*st->timings * (st->timings_sz=idx) );
+            if (st->tu_rpa) { VECTOR_PUSH_BACK( st->timings, (diverge_timing_t){
+                    .t=st->tu_rpa->time_step,
+                    .nam="tu_rpa_step",
+            }); }
+
             st->niter = tu_stepper_num_calls( st->tu_step );
             return;
         default:
@@ -297,6 +304,12 @@ char** diverge_flow_step_timing_descr_vec( diverge_flow_step_t* st ) {
     for (index_t i=0; i<st->timings_sz; ++i)
         if (i < 511) strncpy( dvg_timings_descr[i], st->timings[i].nam, 63 );
     return (char**)dvg_timings_descr;
+}
+
+double diverge_flow_step_vertmax_r( diverge_flow_step_t* st, double* vertmax ) {
+    double vmax = 0; diverge_flow_step_vertmax( st, &vmax );
+    if (vertmax) *vertmax = vmax;
+    return vmax;
 }
 
 void diverge_flow_step_vertmax( diverge_flow_step_t* st, double vertmax[1] ) {
@@ -590,11 +603,49 @@ void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* fe
     if(st->tu_vertex->C_to_D) mpi_vrb_printf("C to D feedback active\n");
 }
 
+const index_t* diverge_flow_step_mi_to_tuffidx( const diverge_flow_step_t* st ) {
+    if (st->type != diverge_tu)
+        return NULL;
+    tu_data_t* td = st->intls->tu_data;
+    if (!td)
+        return NULL;
+    return td->mi_to_tuffidx;
+}
+
+index_t* diverge_flow_step_tuffidx_to_mi( const diverge_flow_step_t* st ) {
+    const index_t* to = diverge_flow_step_mi_to_tuffidx( st );
+    if (!to) return NULL;
+    tu_data_t* td = st->intls->tu_data;
+    index_t* from = calloc(td->n_orbff + 1, sizeof*from);
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<td->n_orbff; ++i) {
+        for (index_t j=0; j<td->n_orbff; ++j) if (to[j] == i) from[i] = j;
+    }
+    from[td->n_orbff] = -1;
+    return from;
+}
+
+const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st ) {
+    if (st->type != diverge_tu) return NULL;
+    tu_data_t* td = st->intls->tu_data;
+    if (!td) return NULL;
+    if (!td->symm) return NULL;
+    return td->symm->idx_ibz_in_fullmesh;
+}
+
+index_t diverge_flow_step_n_ibz( const diverge_flow_step_t* st ) {
+    if (diverge_flow_step_ibz( st )) {
+        tu_data_t* td = st->intls->tu_data;
+        return td->nkibz;
+    }
+    return 0;
+}
+
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter ) {
     diverge_flow_step_vertex_t v = diverge_flow_step_vertex( st, chan );
     index_t nq = (v.q_1 - v.q_0);
     index_t linsz = v.backend == 'T' ? v.n_orbff * POW2(v.n_spin) : POW2(v.n_orbff*v.n_spin) * v.nk;
-    if (piter) {
+    if (piter > 0) {
         complex128_t* aux = calloc( 3*linsz, sizeof*aux );
         double tol = 1.e-6;
         index_t niter = 1000;
@@ -608,6 +659,25 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         double maxval_red = maxval;
         diverge_mpi_allreduce_double_max( &maxval, &maxval_red, 1 );
         return MAX(maxval, maxval_red);
+    } else if (piter < 0) {
+        double Vmax = 0.0;
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:Vmax) collapse(2)
+        for (index_t q=0; q<nq; ++q)
+        for (index_t l=0; l<linsz; ++l) {
+            // Gerschgorin approximant: diagonal element is the disc's center
+            // and the sum of all other elements' absolute value the radius
+            complex128_t C_l = v.ary[IDX3(q,l,l, linsz,linsz)];
+            double R_l = 0.0;
+            for (index_t m=0; m<linsz; ++m)
+                if (m != l) R_l += cabs(v.ary[IDX3(q,l,m, linsz,linsz)]);
+            // worst case: extend into the direction of the center (which should
+            // be real anyways)
+            double Vmax_l = cabs(cexp(I*carg(C_l))*R_l + C_l);
+            Vmax = MAX(Vmax, Vmax_l);
+        }
+        double Vmax_red = Vmax;
+        diverge_mpi_allreduce_double_max( &Vmax, &Vmax_red, 1 );
+        return MAX(Vmax, Vmax_red);
     } else {
         double* singular_values = calloc( nq * linsz, sizeof* singular_values );
         batched_svd( NULL, -1, v.ary, NULL, NULL, singular_values, linsz, nq );
@@ -619,4 +689,16 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         diverge_mpi_allreduce_double_max( &smax, &smax_red, 1 );
         return MAX(smax, smax_red);
     }
+}
+
+void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, index_t* kidx, index_t n_kidx ) {
+    int free_kidx = 0;
+    if (!kidx || n_kidx < 0) {
+        free_kidx = 1;
+        n_kidx = kdim(s->mod->nk);
+        kidx = calloc(n_kidx, sizeof*kidx);
+        for (index_t k=0; k<n_kidx; ++k) kidx[k] = k;
+    }
+    s->tu_rpa = tu_rpa_init( s, kidx, n_kidx );
+    if (free_kidx) free( kidx );
 }
