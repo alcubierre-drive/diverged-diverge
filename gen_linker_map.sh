@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TAG_VERSION="$(git tag --sort=-taggerdate | head -n1)"
+TAG_VERSION="$(git tag --list | sort -V | tail -n1)"
 VERSION=${TAG_VERSION:1}
 SYMBOLS=DIVERGE_$VERSION
 OUTFILE=libdivERGe.map

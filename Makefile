@@ -67,7 +67,7 @@ HEADERS := $(shell find src/ -name '*.h') \
 -include Makefile.inc
 -include Makefile.local
 
-DEFINE_VERSION ?= -DTAG_VERSION=\"$(shell git tag --sort=-taggerdate | head -n1)\" \
+DEFINE_VERSION ?= -DTAG_VERSION=\"$(shell git tag --list | sort -V | tail -n1)\" \
 		  -DGIT_VERSION=\"$(shell git rev-parse --short HEAD)$(shell (git diff --quiet && git diff --cached --exit-code --quiet) || echo ':dirty')\" \
 		  -DGIT_VERSION_BRANCH=\"$(shell git rev-parse --abbrev-ref HEAD)\"
 
