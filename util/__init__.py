@@ -869,6 +869,10 @@ if not _libs["divERGe"] is None:
     model_internals_patch.argtypes = [POINTER(model_t), index_t]
     model_internals_patch.restype = None
 
+    model_internals_patch_fg = _libs["divERGe"].get("diverge_model_internals_patch_fg", "cdecl")
+    model_internals_patch_fg.argtypes = [POINTER(model_t), index_t, index_t, index_t, c_voidp, index_t]
+    model_internals_patch_fg.restype = None
+
     model_internals_reset = _libs["divERGe"].get("diverge_model_internals_reset", "cdecl")
     model_internals_reset.argtypes = [POINTER(model_t)]
     model_internals_reset.restype = None

@@ -27,6 +27,9 @@ void dkm_set_use_random_seed( int use ) {
         random_seed = RANDOM_SEED;
     }
 }
+void dkm_set_seed( index_t seed ) {
+    memcpy( &random_seed, &seed, sizeof(random_seed) );
+}
 
 static inline double dist2(claV2d_t a, claV2d_t b) { return claV2d_norm2(claV2d_sub(a, b)); }
 static index_t closest_mean(claV2d_t pt, const claV2d_t* means, index_t k) {

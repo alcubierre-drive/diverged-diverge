@@ -10,6 +10,7 @@ extern "C" {
 
 int dkm_use_random_seed( void );
 void dkm_set_use_random_seed( int use );
+void dkm_set_seed( index_t seed );
 
 #ifndef SKIP_CLAV2D_T
 typedef struct { double v[2]; } claV2d_t;

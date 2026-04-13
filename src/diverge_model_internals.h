@@ -65,6 +65,28 @@ void diverge_model_internals_grid( diverge_model_t* model );
 void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz );
 
 /**
+ * same as :c:func:`diverge_model_internals_patch`, but with more control over
+ * the automatic refinement/patch finding options as in
+ * :c:func:`diverge_patching_find_fs_pts` and
+ * :c:func:`diverge_patching_autofine`.
+ *
+ * :param diverge_model_t* model: model instance
+ * :param index_t np_ibz: number of patches in the IBZ
+ * :param index_t np_ibz_search: number of sorted energies to consider as
+ *      patches. if <0 use default: MAX(100,np_ibz)
+ * :param index_t ngroups: number of groups for the autofine function, if <0 use
+ *      default: 40
+ * :param double[3] alpha_beta_gamma: the parameters alpha, beta, gamma for
+ *      autofine, if NULL use default: (0.5, 1.0, 0.7)
+ * :param kmeans_seed: the random generator seed used in kmeans_lloyd for
+ *      grouping. If ==-1 use default, if ==-2 use time(), else use this number
+ *      as seed.
+ */
+void diverge_model_internals_patch_fg( diverge_model_t* model, index_t np_ibz,
+        index_t np_ibz_search, index_t ngroups, const double* alpha_beta_gamma,
+        index_t kmeans_seed );
+
+/**
  * Prepare the TU part of the :c:type:`internals_t` struct.
  *
  * :param diverge_model_t model: model instance

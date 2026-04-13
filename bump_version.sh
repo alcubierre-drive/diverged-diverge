@@ -2,7 +2,7 @@
 
 # XXX: Do not invoke separately. Use `make dist`.
 
-TAG_VERSION="$(git tag --sort=-taggerdate | head -n1)"
+TAG_VERSION="$(git tag --list | sort -V | tail -n1)"
 
 echo $TAG_VERSION
 

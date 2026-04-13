@@ -93,6 +93,7 @@ DIVERGE_0.10 {
         diverge_model_internals_get_rlattice;
         diverge_model_internals_grid;
         diverge_model_internals_patch;
+        diverge_model_internals_patch_fg;
         diverge_model_internals_reset;
         diverge_model_internals_tu;
         diverge_model_internals_tu_phonons;

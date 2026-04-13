@@ -49,7 +49,7 @@ cp -r test/ build_release/diverge
 cp libdivERGe.map build_release/diverge
 cp -r examples/ build_release/diverge
 cp -r util/ build_release/diverge
-TAG_VERSION="$(git tag --sort=-taggerdate | head -n1)"
+TAG_VERSION="$(git tag --list | sort -V | tail -n1)"
 echo 'DEFINE_VERSION := -DTAG_VERSION=\"'${TAG_VERSION}'\"' > build_release/diverge/Makefile.local
 docker run -t -i --rm -v `pwd`/build_release:/io \
     ghcr.io/phusion/holy-build-box/hbb-64 \

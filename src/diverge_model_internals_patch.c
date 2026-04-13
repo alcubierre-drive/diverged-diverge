@@ -8,11 +8,7 @@
 #include "diverge_patching_helpers.h"
 #include "diverge_patching.h"
 #include "misc/mpi_functions.h"
-
-int autofine_ngroups = 40;
-double autofine_alpha = 0.5;
-double autofine_beta = 1.0;
-double autofine_gamma = 0.7;
+#include "misc/kmeans_lloyd.h"
 
 static void patch_vertex_destructor( void* vvert ) {
     npatch_vertex_t* vert = (npatch_vertex_t*)vvert;
@@ -24,6 +20,12 @@ static void add_to_npatch_vert_from_qbuf( complex128_t* vbuf,
     index_t np, index_t no, index_t ns, const index_t nk[3], char chan );
 
 void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
+    diverge_model_internals_patch_fg( model, np_ibz, -1, -1, NULL, -1 );
+}
+
+void diverge_model_internals_patch_fg( diverge_model_t* model, index_t np_ibz,
+        index_t np_ibz_search, index_t ngroups, const double* alpha_beta_gamma,
+        index_t kmeans_seed ) {
     if (!model->internals->has_common_internals) {
         mpi_err_printf("model needs common internals before patch internals!\n");
         diverge_model_internals_common(model);
@@ -58,20 +60,30 @@ void diverge_model_internals_patch( diverge_model_t* model, index_t np_ibz ) {
     model->internals->patch_loop_gpu_weights = NULL;
 
     if (model->patching == NULL) {
+        // defaults
+        const index_t np_ibz_search_default = MAX(100,np_ibz);
+        const index_t autofine_ng = 40;
+        const double autofine_abc[] = {0.5, 1.0, 0.7};
+        if (kmeans_seed == -2) dkm_set_use_random_seed(1);
+        else if (kmeans_seed != -1) dkm_set_seed(kmeans_seed);
+
         mpi_vrb_printf("continuing with autopatch and np_ibz = %li\n", np_ibz);
         index_t *pts, npts;
-        diverge_patching_find_fs_pts_C( model, NULL, model->n_orb * model->n_spin, np_ibz, np_ibz > 100 ? np_ibz : 100, &pts, &npts );
+        diverge_patching_find_fs_pts_C( model, NULL, model->n_orb * model->n_spin, np_ibz,
+                np_ibz_search < 0 ? np_ibz_search_default : np_ibz_search, &pts, &npts );
         mom_patching_t* patch = diverge_patching_from_indices( model, pts, npts );
         free(pts);
+
+        const double* af_abc = alpha_beta_gamma ? alpha_beta_gamma : autofine_abc;
         diverge_patching_autofine( model, patch, NULL, model->n_orb * model->n_spin,
-                autofine_ngroups, autofine_alpha, autofine_beta, autofine_gamma );
+                ngroups < 0 ? autofine_ng : ngroups, af_abc[0], af_abc[1], af_abc[2] );
         diverge_patching_symmetrize_refinement( model, patch );
         model->patching = patch;
     } else {
         mpi_vrb_printf("discarding np_ibz parameter in patch internals\n");
     }
 
-    double kbasis[3][3];
+    double kbasis[3][3] = {0};
     diverge_model_generate_mom_basis(model->lattice[0], kbasis[0]);
 
     memcpy( &model->internals->patch_g1, &(kbasis[0]), sizeof(double)*2 );

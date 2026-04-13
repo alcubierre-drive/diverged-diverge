@@ -154,21 +154,6 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("npatch_average_factor") {
         npatch_average_factor = atof(val);
     }
-    CHECKKEY("autofine_ngroups") {
-        autofine_ngroups = atoi(val);
-    }
-    CHECKKEY("autofine_alpha") {
-        autofine_alpha = atof(val);
-    }
-    CHECKKEY("autofine_beta") {
-        autofine_beta = atof(val);
-    }
-    CHECKKEY("autofine_gamma") {
-        autofine_gamma = atof(val);
-    }
-    CHECKKEY("dkm_random_seed") {
-        dkm_set_use_random_seed( atoi(val) );
-    }
     CHECKKEY("model_free_hamiltonian") {
         shared_free(INTERNALS->ham);
         INTERNALS->ham = NULL;
