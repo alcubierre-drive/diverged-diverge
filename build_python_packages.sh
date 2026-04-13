@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# XXX: This script has to be executed *after* `make dist`. The setup.py file has
+# to be modified to match the tagged version (and minor versions built thereon).
+
 if [ "$1" = "clean" ]
 then
     rm -rf build diverge_flow.egg-info dist

@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# XXX: Do not invoke separately. Use `make dist`.
+
 set -e
 set -x
 

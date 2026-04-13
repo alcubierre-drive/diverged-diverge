@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# XXX: Do not invoke separately. Use `make dist`.
+
 TAG_VERSION="$(git tag --list | tac | head -n-1 | sort -V | tail -n1)"
 
 echo $TAG_VERSION
