@@ -12,7 +12,7 @@
 
 int diverge_run_tests(int argc, char** argv ) {
     #ifndef DIVERGE_SKIP_TESTS
-        if (!environ_loglevel_set()) mpi_loglevel_set(5);
+        if (!environ_loglevel_set()) mpi_loglevel_set(mpi_loglevel_all);
         #ifdef CT_SKIP_INITIALIZERS
             ct__register__all();
         #endif

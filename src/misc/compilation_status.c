@@ -64,7 +64,8 @@ int diverge_compilation_status_numbers( void ) {
     bool number_representation = check_64bit_double() &&
                                  check_32bit_float() &&
                                  check_little_endian() &&
-                                 check_8bit_char();
+                                 check_8bit_char() &&
+                                 check_enum_int();
     return number_representation;
 }
 

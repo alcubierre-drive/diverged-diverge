@@ -9,7 +9,7 @@
 // XXX this is a divERGe "quirk". More of a feature, though.
 #include "../src/misc/mpi_log.h"
 #ifndef DIVERGE_CTEST_LOGLEVEL
-#define DIVERGE_CTEST_LOGLEVEL 0
+#define DIVERGE_CTEST_LOGLEVEL mpi_loglevel_err
 #endif//DIVERGE_CTEST_LOGLEVEL
 #define CT_PRINTF( ... ) mpi_lll_printf(DIVERGE_CTEST_LOGLEVEL, __VA_ARGS__)
 

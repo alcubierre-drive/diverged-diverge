@@ -12,6 +12,7 @@ bool check_64bit_double( void );
 bool check_32bit_float( void );
 bool check_little_endian( void );
 bool check_8bit_char( void );
+bool check_enum_int( void );
 
 #ifdef __cplusplus
 }

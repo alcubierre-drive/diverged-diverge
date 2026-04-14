@@ -17,7 +17,7 @@
 #endif
 // #define DIVERGE_LOG_COLORLESS
 
-static int h_diverge_mpi_loglevel = 4;
+static mpi_loglevel_t h_diverge_mpi_loglevel = mpi_loglevel_log;
 static int h_diverge_log_colors = 1;
 static mpi_log_control_t h_diverge_log_ctl = mpi_log_control_standard;
 
@@ -220,11 +220,11 @@ static const char* h_log_color( const char* descr ) {
     return h_log_color_return;
 }
 
-void mpi_loglevel_set( int loglevel ) {
+void mpi_loglevel_set( mpi_loglevel_t loglevel ) {
     h_diverge_mpi_loglevel = loglevel;
 }
 
-int mpi_loglevel_get( void ) {
+mpi_loglevel_t mpi_loglevel_get( void ) {
     return h_diverge_mpi_loglevel;
 }
 
@@ -236,7 +236,7 @@ int mpi_log_get_colors( void ) {
     return h_diverge_log_colors;
 }
 
-void mpi_lll_printf( int loglevel, const char* fmt, ... ) {
+void mpi_lll_printf( mpi_loglevel_t loglevel, const char* fmt, ... ) {
     if (h_diverge_mpi_loglevel < loglevel) return;
     va_list ap;
     va_start(ap, fmt);
@@ -244,7 +244,7 @@ void mpi_lll_printf( int loglevel, const char* fmt, ... ) {
     va_end(ap);
 }
 
-void mpi_dbg_printf( const char* logname_, int loglevel, const char* fname,
+void mpi_dbg_printf( const char* logname_, mpi_loglevel_t loglevel, const char* fname,
         int line, const char* fmt, ... ) {
 
     if (h_diverge_mpi_loglevel < loglevel) return;
@@ -373,7 +373,7 @@ static void mpi_dbg_vsprintf( char* buf, const char* logname_, const char* fname
     vsprintf( buf+strlen(buf), fmt, ap );
 }
 
-void mpi_dbg_printf_all( const char* logname, int loglevel, const char* fname, int line, const char* fmt, ... ) {
+void mpi_dbg_printf_all( const char* logname, mpi_loglevel_t loglevel, const char* fname, int line, const char* fmt, ... ) {
     va_list ap;
     va_start( ap, fmt );
     char buf[2048];

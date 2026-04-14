@@ -1,6 +1,7 @@
 /* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "number_repr_checks.h"
+#include "mpi_log.h"
 #include <stdint.h>
 #include <limits.h>
 
@@ -22,4 +23,8 @@ bool check_little_endian( void ) {
 
 bool check_8bit_char( void ) {
     return CHAR_BIT == 8;
+}
+
+bool check_enum_int( void ) {
+    return sizeof(mpi_loglevel_t) == sizeof(int);
 }
