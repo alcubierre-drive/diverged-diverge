@@ -163,12 +163,12 @@ static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
     for (int i=0; i<BHK_NUM; ++i) {
         if (Lambda < 0) break;
         mpi_log_printf("%s: %.5e…", mod->name, Lambda);
-        if (mpi_loglevel_get() >= 4) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+        if (mpi_loglevel_get() >= mpi_loglevel_log) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
         diverge_flow_step_euler( step, Lambda, dLambda );
 
         Lambda += dLambda;
     }
-    if (mpi_loglevel_get() >= 4) mpi_eprintf("\n"), fflush(stderr);
+    if (mpi_loglevel_get() >= mpi_loglevel_log) mpi_eprintf("\n"), fflush(stderr);
 
     index_t fsize = POW4(mod->n_orb*mod->n_spin)*POW3(kdim(mod->nk));
     complex128_t* vertex = (complex128_t*)calloc(fsize,sizeof(complex128_t));

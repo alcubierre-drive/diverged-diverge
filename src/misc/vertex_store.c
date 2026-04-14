@@ -187,6 +187,7 @@ void vertex_storage_to_file( vertex_storage_t* t, const char* fname ) {
     if (!check_64bit_double())  *phealth |= firstbit >> 1;
     if (!check_little_endian()) *phealth |= firstbit >> 2;
     if (!check_8bit_char())     *phealth |= firstbit >> 3;
+    if (!check_enum_int())      *phealth |= firstbit >> 4;
 
     FILE* f = fopen(fname, "wb");
     if (!f) {
