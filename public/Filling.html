@@ -16,6 +16,7 @@
       <script src="_static/documentation_options.js?v=049aceee"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -166,7 +167,12 @@
 <li><p><strong>E</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span><span class="p">*</span></span></span>) – energy array. if (E == NULL) the internal energy array is used <em>and modified</em>.
 Otherwise E is <em>used and modified</em>.</p></li>
 <li><p><strong>nb</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – number of bands. if (E == NULL) the internal number of bands is used</p></li>
-<li><p><strong>nu</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – filling value between 0 (all bands empty) and 1 (all bands full)</p></li>
+<li><p><strong>nu</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span></span></span>) – filling value between 0 (all bands empty) and 1 (all bands
+full). If <code class="docutils literal notranslate"><span class="pre">fnan_isnan(nu)</span></code> use relative filling <code class="docutils literal notranslate"><span class="pre">nu_fac</span>
+<span class="pre">=</span> <span class="pre">fnan_get(nu)</span></code> wrt the current filling, i.e.,
+<span class="math notranslate nohighlight">\(\nu_\mathrm{new} = \nu_\mathrm{fac} * \nu\)</span>. This is
+useful to bypass a call to
+<a class="reference internal" href="#c.diverge_model_get_filling" title="diverge_model_get_filling"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_model_get_filling()</span></code></a></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -177,7 +183,7 @@ Otherwise E is <em>used and modified</em>.</p></li>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.diverge_model_set_chempot">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_set_chempot</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">mu</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_set_chempot" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_filling.h#L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">diverge_model_set_chempot</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">model</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">nb</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n"><span class="pre">mu</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.diverge_model_set_chempot" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/diverge_filling.h#L48"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>set the chemical potential</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
