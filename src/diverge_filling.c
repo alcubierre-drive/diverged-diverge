@@ -5,6 +5,7 @@
 #include "misc/mpi_functions.h"
 #include "misc/shared_mem.h"
 #include "misc/mergesort.h"
+#include "misc/qnan.h"
 
 double diverge_model_get_filling( diverge_model_t* model, const double* E, index_t nb ) {
     index_t nk = kdimtot(model->nk, model->nkf);
@@ -53,6 +54,15 @@ double diverge_model_set_filling( diverge_model_t* model, double* E, index_t nb,
     double* E_cpy = (double*)malloc(sizeof(double)*nk*nb);
     memcpy( E_cpy, E, sizeof(double)*nk*nb );
     dblsort( E_cpy, nk*nb, diverge_omp_num_threads(), 0 );
+
+    if (fnan_isnan(nu)) {
+        double nu_fac = fnan_get(nu);
+        index_t kb = 0;
+        for (; kb<nk*nb; ++kb) if (E_cpy[kb] > 0) break;
+        nu = (double)kb / (double)(nk*nb);
+        mpi_log_printf( "nu = %.3f×%.3f = %.3f\n", nu, nu_fac, nu*nu_fac );
+        nu *= nu_fac;
+    }
 
     double idx_frac = nu * (double)(nk*nb) - 0.5;
     index_t idx_0 = (index_t)idx_frac;

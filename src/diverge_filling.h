@@ -34,7 +34,12 @@ double diverge_model_get_filling( diverge_model_t* model, const double* E, index
  * :param double* E: energy array. if (E == NULL) the internal energy array is used *and modified*.
  *                   Otherwise E is *used and modified*.
  * :param index_t nb: number of bands. if (E == NULL) the internal number of bands is used
- * :param double nu: filling value between 0 (all bands empty) and 1 (all bands full)
+ * :param double nu: filling value between 0 (all bands empty) and 1 (all bands
+ *                   full). If ``fnan_isnan(nu)`` use relative filling ``nu_fac
+ *                   = fnan_get(nu)`` wrt the current filling, i.e.,
+ *                   :math:`\nu_\mathrm{new} = \nu_\mathrm{fac} * \nu`. This is
+ *                   useful to bypass a call to
+ *                   :c:func:`diverge_model_get_filling`
  *
  * :returns: the chemical potential used to set the desired filling value
  */
