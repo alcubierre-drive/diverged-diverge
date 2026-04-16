@@ -537,6 +537,7 @@ CT_TEST_NAME(allchan,"self,BHK") {
     diverge_euler_t eu = diverge_euler_defaults;
     eu.maxiter = 100;
     double vmax=0, pmax=0, cmax=0, dmax=0;
+    int ll = mpi_loglevel_get(); if (ll >= mpi_loglevel_log) mpi_loglevel_set(mpi_loglevel_log);
     do {
         diverge_flow_step_euler( step, eu.Lambda, eu.dLambda );
         diverge_flow_step_refill( step, 0.5, NULL );
@@ -548,6 +549,7 @@ CT_TEST_NAME(allchan,"self,BHK") {
         if (mpi_loglevel_get() >= mpi_loglevel_log) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
     } while (diverge_euler_next(&eu, vmax));
     if (mpi_loglevel_get() >= mpi_loglevel_log) mpi_eprintf("\n"), fflush(stderr);
+    mpi_loglevel_set(ll);
 
     index_t reference_eu_niter  = 47;
     double  reference_eu_Lambda = 3.69828641210761033253e-01,
