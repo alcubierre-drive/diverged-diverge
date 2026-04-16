@@ -21,10 +21,10 @@ int generate_reduced_loop_maps_disabled = 0;
 
 #if   defined(DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE)
 unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_hashtable;
-#elif defined(DIVERGE_UNIQUE_ORBFF_FIND_MERGESORT)
-unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_mergesort;
-#else // DIVERGE_UNIQUE_ORBFF_FIND
+#elif defined(DIVERGE_UNIQUE_ORBFF_FIND_BTREE)
 unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_btree;
+#else // DIVERGE_UNIQUE_ORBFF_FIND
+unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_mergesort;
 #endif // DIVERGE_UNIQUE_ORBFF_FIND
 
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {

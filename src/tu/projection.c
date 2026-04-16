@@ -518,11 +518,11 @@ static inline void index_to_reduced_iterate( vtree_node_t* node, void* ctx ) {
 #define MERGESORT_COMP(x,y) ((x)-(y))
 MERGESORT_IMPL( mergesort_index_t, index_t )
 
-#ifdef DIVERGE_TU_PROJ_TO_R_HASHTABLE
-static int EXISTING_R_HASHTABLE_IMPL = 1;
-#else // DIVERGE_TU_PROJ_TO_R_HASHTABLE
+#ifdef DIVERGE_TU_PROJ_TO_R_VTREE
 static int EXISTING_R_HASHTABLE_IMPL = 0;
-#endif // DIVERGE_TU_PROJ_TO_R_HASHTABLE
+#else // DIVERGE_TU_PROJ_TO_R_VTREE
+static int EXISTING_R_HASHTABLE_IMPL = 1;
+#endif // DIVERGE_TU_PROJ_TO_R_VTREE
 void tu_projection_configure_implementation( int hashtable ) { EXISTING_R_HASHTABLE_IMPL = hashtable; }
 
 static void init_to_mom_map_existing_r( tu_projection_t* p ) {
@@ -696,11 +696,8 @@ static inline void apply_permutation( claV2ll_t* vec, const index_t* p, index_t 
     free( new_vec );
 }
 
-#ifdef DIVERGE_TU_FAST_PERMUTE
-#define APPLY_PERMUTATION apply_permutation
-#else // DIVERGE_TU_FAST_PERMUTE
-#define APPLY_PERMUTATION apply_permutation_in_place
-#endif // DIVERGE_TU_FAST_PERMUTE
+static int APPLY_PERMUTATION_IN_PLACE = 0;
+void tu_projection_configure_permutation( int inplace ) { APPLY_PERMUTATION_IN_PLACE = inplace; }
 
 typedef struct { const claV2ll_t* _fhelp; const index_t* _off; index_t k; } serisort_fhelp_t;
 static inline int serisort_fhelp_comp( index_t i, index_t j, const serisort_fhelp_t* h ) {
@@ -715,14 +712,16 @@ SERISORT_IMPL_R( serisort_fhelp, index_t )
 static vec_claV2ll_t sort_and_filter( vec_claV2ll_t* to, vec_claV2ll_t* from_help, vec_index_t* from,
         vec_claV2ll_t* rvec_help, vec_index_t* rvec, vec_index_t* count, vec_index_t* displ ) {
     index_t* p = sort_permutation( to->v, to->v_sz );
+    void (*const permute)(claV2ll_t*, const index_t*, index_t) =
+        APPLY_PERMUTATION_IN_PLACE ? &apply_permutation_in_place : &apply_permutation;
     #pragma omp parallel num_threads(MIN(diverge_omp_num_threads(),3))
     {
         #pragma omp single nowait
-        APPLY_PERMUTATION( to->v, p, to->v_sz );
+        (*permute)( to->v, p, to->v_sz );
         #pragma omp single nowait
-        APPLY_PERMUTATION( from_help->v, p, to->v_sz );
+        (*permute)( from_help->v, p, to->v_sz );
         #pragma omp single nowait
-        APPLY_PERMUTATION( rvec_help->v, p, to->v_sz );
+        (*permute)( rvec_help->v, p, to->v_sz );
     }
     free( p );
 
