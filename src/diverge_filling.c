@@ -8,6 +8,7 @@
 #include "misc/qnan.h"
 
 double diverge_model_get_filling( diverge_model_t* model, const double* E, index_t nb ) {
+    if (!model->internals->has_common_internals) mpi_err_printf( "common internals required\n" );
     index_t nk = kdimtot(model->nk, model->nkf);
     if (E == NULL) {
         nb = model->n_orb * model->n_spin;
@@ -21,6 +22,7 @@ double diverge_model_get_filling( diverge_model_t* model, const double* E, index
 }
 
 void diverge_model_set_chempot( diverge_model_t* model, double* E, index_t nb, double mu ) {
+    if (!model->internals->has_common_internals) mpi_err_printf( "common internals required\n" );
     index_t nk = kdimtot(model->nk, model->nkf);
     if (E == NULL) {
         nb = model->n_orb * model->n_spin;
@@ -46,6 +48,7 @@ static inline int compare_dbl( const void* a_, const void* b_ ) {
 
 MERGESORT_IMPL(dblsort, double)
 double diverge_model_set_filling( diverge_model_t* model, double* E, index_t nb, double nu ) {
+    if (!model->internals->has_common_internals) mpi_err_printf( "common internals required\n" );
     index_t nk = kdimtot(model->nk, model->nkf);
     if (E == NULL) {
         nb = model->n_orb * model->n_spin;
