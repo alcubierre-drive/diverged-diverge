@@ -16,6 +16,7 @@
 #include "../src/tu/selfenergy.h"
 #include "../src/diverge_model_internals.h"
 #include "../src/misc/compilation_status.h"
+#include "../src/diverge_euler.h"
 #include "helper_functions.h"
 #include "models/all.h"
 
@@ -525,6 +526,42 @@ CT_TEST_NAME(dchan,"self,D_channel") {
     }
     diverge_flow_step_free(step);
     diverge_model_free(mom);
+}
+
+CT_TEST_NAME(allchan,"self,BHK") {
+    diverge_model_t* mod = KWARGS(gen_square_lat_hub, .nkx=12, .nky=12, .U=5);
+    strcpy(mod->name, "square_lat_hub,self");
+    diverge_model_internals_tu(mod, 1.1);
+
+    diverge_flow_step_t* step = diverge_flow_step_init(mod, "TU", "PCDS");
+    diverge_euler_t eu = diverge_euler_defaults;
+    eu.maxiter = 100;
+    double vmax=0, pmax=0, cmax=0, dmax=0;
+    do {
+        diverge_flow_step_euler( step, eu.Lambda, eu.dLambda );
+        diverge_flow_step_refill( step, 0.5, NULL );
+        pmax = diverge_flow_step_eigchan( step, 'p', 0 ),
+        cmax = diverge_flow_step_eigchan( step, 'm', 0 ),
+        dmax = diverge_flow_step_eigchan( step, 'h', 0 );
+        vmax = MAX(MAX(pmax, cmax),dmax);
+        mpi_log_printf("%s: %2li %.5e %.5e %.5e %.5e…", mod->name, eu.niter, eu.Lambda, pmax, cmax, dmax);
+        if (mpi_loglevel_get() >= /*mpi_loglevel_log*/3) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+    } while (diverge_euler_next(&eu, vmax));
+    if (mpi_loglevel_get() >= /*mpi_loglevel_log*/3) mpi_eprintf("\n"), fflush(stderr);
+
+    index_t reference_eu_niter  = 47;
+    double  reference_eu_Lambda = 3.69828641210761033253e-01,
+            reference_pmax      = 6.77453224292163191933e+00,
+            reference_cmax      = 5.23555244728047455283e+01,
+            reference_dmax      = 6.77029392883375003009e+00;
+    CT_CHECK(      reference_eu_niter == eu.niter);
+    CT_CHECK( fabs(reference_eu_Lambda - eu.Lambda) < 1.e-5 );
+    CT_CHECK( fabs(reference_pmax      - pmax)      < 1.e-4 );
+    CT_CHECK( fabs(reference_cmax      - cmax)      < 1.e-4 );
+    CT_CHECK( fabs(reference_dmax      - dmax)      < 1.e-4 );
+
+    diverge_flow_step_free(step);
+    diverge_model_free(mod);
 }
 
 #endif // DIVERGE_SKIP_TESTS
