@@ -195,19 +195,43 @@ void tu_prop_free( tu_prop_t* t ) {
 
     if (t->coarsify) greensfunc_coarse_free(t->coarsify);
 
+    // backup pointers for MPI/self
+    if (t->gf_buf_backup)      free(t->gf_buf_backup);
+    if (t->gf_buf_backup_cfrg) free(t->gf_buf_backup_cfrg);
+
     free( t );
 }
 
 void tu_prop_GF_zero_T( tu_prop_t* t, complex128_t lambda, complex128_t* self_energy ) {
     GF_zero_T_any( t, t->model->gfill, lambda, self_energy, t->gf_buf );
+    // mpi_new algorithm overwrites gf_buf, but we need that for coarsify
+    if (t->which_fft_greens == tu_fft_algorithm_mpi_new && self_energy != NULL) {
+        if (!t->gf_buf_backup) {
+            t->gf_buf_backup_sz = t->nktot * POW2(t->n_orb*t->n_spin) * 2;
+            t->gf_buf_backup = calloc(t->gf_buf_backup_sz, sizeof*t->gf_buf_backup);
+        }
+        memcpy( t->gf_buf_backup, t->gf_buf, sizeof*t->gf_buf_backup*t->gf_buf_backup_sz );
+    }
     GF_zero_T_FFT_any( t, t->GF_fft_plus, t->GF_fft_conj_plus, t->gf_buf );
     if (t->cFRG_loop) {
         GF_zero_T_any( t, t->model->gproj, lambda, self_energy, t->gf_buf_cfrg );
+        // mpi_new algorithm overwrites gf_buf, but we need that for coarsify
+        if (t->which_fft_greens == tu_fft_algorithm_mpi_new && self_energy != NULL) {
+            if (!t->gf_buf_backup_cfrg) {
+                t->gf_buf_backup_sz = t->nktot * POW2(t->n_orb*t->n_spin) * 2;
+                t->gf_buf_backup_cfrg = calloc(t->gf_buf_backup_sz, sizeof*t->gf_buf_backup_cfrg);
+            }
+            memcpy( t->gf_buf_backup_cfrg, t->gf_buf_cfrg, sizeof*t->gf_buf_backup_cfrg*t->gf_buf_backup_sz );
+        }
         GF_zero_T_FFT_any( t, t->cFRG_GF_fft_plus, t->cFRG_GF_fft_conj_plus, t->gf_buf_cfrg );
     }
 }
 
 void tu_prop_GF_for_self( tu_prop_t* t, complex128_t* coarseGF ) {
+    // if the backup pointers are present, activate them
+    if (t->gf_buf_backup)      XORSWAP_PTR(t->gf_buf_backup,      t->gf_buf);
+    if (t->gf_buf_backup_cfrg) XORSWAP_PTR(t->gf_buf_backup_cfrg, t->gf_buf_cfrg);
+
     // we here write the buffer into a *transposed* form, because the TUFRG
     // backend for self-energies expects the o1/o2 index order the other way
     // round.
@@ -221,21 +245,24 @@ void tu_prop_GF_for_self( tu_prop_t* t, complex128_t* coarseGF ) {
             #pragma omp parallel for num_threads(diverge_omp_num_threads())
             for (index_t i=0; i<nk*POW2(nb); ++i) coarseGF[i] -= coarseGF_cFRG[i];
         }
-        return;
-    }
-
-    #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
-    for (index_t b=0; b<nb; ++b)
-    for (index_t o=0; o<nb; ++o)
-    for (index_t k=0; k<nk; ++k)
-        coarseGF[k+nk*(b+nb*o)] = t->gf_buf[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
-    if (t->cFRG_loop) {
+    } else {
         #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
         for (index_t b=0; b<nb; ++b)
         for (index_t o=0; o<nb; ++o)
         for (index_t k=0; k<nk; ++k)
-            coarseGF[k+nk*(b+nb*o)] -= t->gf_buf_cfrg[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
+            coarseGF[k+nk*(b+nb*o)] = t->gf_buf[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
+        if (t->cFRG_loop) {
+            #pragma omp parallel for collapse(3) schedule(static) num_threads(diverge_omp_num_threads())
+            for (index_t b=0; b<nb; ++b)
+            for (index_t o=0; o<nb; ++o)
+            for (index_t k=0; k<nk; ++k)
+                coarseGF[k+nk*(b+nb*o)] -= t->gf_buf_cfrg[o+nb*b+nb2*kidxc2f(k,t->model->nk,t->model->nkf)];
+        }
     }
+
+    // deactivate the backup pointers
+    if (t->gf_buf_backup)      XORSWAP_PTR(t->gf_buf_backup,      t->gf_buf);
+    if (t->gf_buf_backup_cfrg) XORSWAP_PTR(t->gf_buf_backup_cfrg, t->gf_buf_cfrg);
 }
 
 void tu_prop_set_extra_timings( tu_prop_t* t, bool enabled ) { t->extra_timings_enabled = enabled; }

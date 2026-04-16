@@ -90,6 +90,9 @@ struct tu_prop_t {
     complex128_t* cFRG_GF_fft_plus;
     complex128_t* cFRG_GF_fft_conj_plus;
 
+    gf_complex_t *gf_buf_backup, *gf_buf_backup_cfrg;
+    index_t gf_buf_backup_sz;
+
     // GPU MPI algorithm (very memory intensive)
     bool has_memory_resized;
     int32_t tasks_prop[32];
