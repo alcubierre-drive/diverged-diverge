@@ -545,9 +545,9 @@ CT_TEST_NAME(allchan,"self,BHK") {
         dmax = diverge_flow_step_eigchan( step, 'h', 0 );
         vmax = MAX(MAX(pmax, cmax),dmax);
         mpi_log_printf("%s: %2li %.5e %.5e %.5e %.5e…", mod->name, eu.niter, eu.Lambda, pmax, cmax, dmax);
-        if (mpi_loglevel_get() >= /*mpi_loglevel_log*/3) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+        if (mpi_loglevel_get() >= mpi_loglevel_log) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
     } while (diverge_euler_next(&eu, vmax));
-    if (mpi_loglevel_get() >= /*mpi_loglevel_log*/3) mpi_eprintf("\n"), fflush(stderr);
+    if (mpi_loglevel_get() >= mpi_loglevel_log) mpi_eprintf("\n"), fflush(stderr);
 
     index_t reference_eu_niter  = 47;
     double  reference_eu_Lambda = 3.69828641210761033253e-01,
