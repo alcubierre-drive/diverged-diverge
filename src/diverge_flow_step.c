@@ -10,6 +10,7 @@
 #include "diverge_filling.h"
 #include "diverge_model_internals.h"
 #include "misc/dependency_tree.h"
+#include "misc/shared_mem.h"
 
 #include "tu/vertex_details.h"
 
@@ -465,9 +466,12 @@ void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspac
     // only continue if no error
     if (mu != DBL_MAX) {
         // and readjust the energies accordingly
-        #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (index_t kb=0; kb<nk*nb; ++kb)
-            E[kb] -= mu;
+        if (shared_exclusive_enter(E) == 1) {
+            #pragma omp parallel for num_threads(diverge_omp_num_threads())
+            for (index_t kb=0; kb<nk*nb; ++kb)
+                E[kb] -= mu;
+        }
+        shared_exclusive_wait(E);
     }
 
     // and free it
