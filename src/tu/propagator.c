@@ -209,6 +209,7 @@ void tu_prop_GF_zero_T( tu_prop_t* t, complex128_t lambda, complex128_t* self_en
         if (!t->gf_buf_backup) {
             t->gf_buf_backup_sz = t->nktot * POW2(t->n_orb*t->n_spin) * 2;
             t->gf_buf_backup = calloc(t->gf_buf_backup_sz, sizeof*t->gf_buf_backup);
+            mpi_vrb_printf( "allocating backup GF ptr (%p)\n", t->gf_buf_backup );
         }
         memcpy( t->gf_buf_backup, t->gf_buf, sizeof*t->gf_buf_backup*t->gf_buf_backup_sz );
     }
@@ -220,6 +221,7 @@ void tu_prop_GF_zero_T( tu_prop_t* t, complex128_t lambda, complex128_t* self_en
             if (!t->gf_buf_backup_cfrg) {
                 t->gf_buf_backup_sz = t->nktot * POW2(t->n_orb*t->n_spin) * 2;
                 t->gf_buf_backup_cfrg = calloc(t->gf_buf_backup_sz, sizeof*t->gf_buf_backup_cfrg);
+                mpi_vrb_printf( "allocating backup GF_cfrg ptr (%p)\n", t->gf_buf_backup_cfrg );
             }
             memcpy( t->gf_buf_backup_cfrg, t->gf_buf_cfrg, sizeof*t->gf_buf_backup_cfrg*t->gf_buf_backup_sz );
         }
