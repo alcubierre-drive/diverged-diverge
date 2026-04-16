@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
    name='diverge-flow',
-   version='v0.10.1',
+   version='v0.10.2',
    description='divERGe implements various ERG examples',
    long_description_content_type = 'text/markdown',
    packages=['diverge'],
