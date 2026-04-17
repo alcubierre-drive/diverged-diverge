@@ -41,7 +41,7 @@ divERGe
 *.dvg
 input.xml
 *.tmp
-*.so
+/libdivERGe.so
 
 nd_doc
 static/
