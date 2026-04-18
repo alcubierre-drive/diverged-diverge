@@ -151,35 +151,45 @@ static inline void ct_test_append( const char* name, void(*run)(void), int hidde
         CT_PRINTF( "too many tests (%u) in suite %s, redefine CT_SUITE_MAX_FUNCS\n",
                  ct_suite.ntests+1, CT_EXPAND_AND_STRINGIFY(CT_SUITE_NAME) );
 }
+
+#define CT_CONCAT_INNER(X,Y) X##Y
+#define CT_CONCAT(X,Y) CT_CONCAT_INNER(X,Y)
+#define CT_CONCAT_INNER_U(X,Y) X##_##Y
+#define CT_CONCAT_U(X,Y) CT_CONCAT_INNER_U(X,Y)
+#define CT_TEST_NAMEGEN(name) \
+    CT_CONCAT(ct__test__, CT_CONCAT_U(CT_SUITE_NAME, name))
+#define CT_TEST_REGISTER_NAMEGEN(name) \
+    CT_CONCAT(ct__register__test__, CT_CONCAT_U(CT_SUITE_NAME, name))
+
 // this is the standard macro to define test functions
 #define CT_TEST( name ) \
-    static void ct__test__##name( void ); \
-    INITIALIZER( ct__register__test__##name ) { \
-        ct_test_append( #name, ct__test__##name, 0 ); \
+    static void CT_TEST_NAMEGEN(name)( void ); \
+    INITIALIZER( CT_TEST_REGISTER_NAMEGEN(name) ) { \
+        ct_test_append( #name, CT_TEST_NAMEGEN(name), 0 ); \
     } \
-    static void ct__test__##name( void )
+    static void CT_TEST_NAMEGEN(name)( void )
 // and this is another one where the name can be different from the function
 // name
 #define CT_TEST_NAME( fname, tname ) \
-    static void ct__test__##fname ( void ); \
-    INITIALIZER( ct__register__test__##fname ) { \
-        ct_test_append( tname, ct__test__##fname, 0 ); \
+    static void CT_TEST_NAMEGEN(fname) ( void ); \
+    INITIALIZER( CT_TEST_REGISTER_NAMEGEN(fname) ) { \
+        ct_test_append( tname, CT_TEST_NAMEGEN(fname), 0 ); \
     } \
-    static void ct__test__##fname ( void )
+    static void CT_TEST_NAMEGEN(fname) ( void )
 // this one is for hidden tests
 #define CT_TEST_HIDDEN( name ) \
-    static void ct__test__##name( void ); \
-    INITIALIZER( ct__register__test__##name ) { \
-        ct_test_append( #name, ct__test__##name, 1 ); \
+    static void CT_TEST_NAMEGEN(name)( void ); \
+    INITIALIZER( CT_TEST_REGISTER_NAMEGEN(name) ) { \
+        ct_test_append( #name, CT_TEST_NAMEGEN(name), 1 ); \
     } \
-    static void ct__test__##name( void )
+    static void CT_TEST_NAMEGEN(name)( void )
 // this one too
 #define CT_TEST_NAME_HIDDEN( fname, tname ) \
-    static void ct__test__##fname ( void ); \
-    INITIALIZER( ct__register__test__##fname ) { \
-        ct_test_append( tname, ct__test__##fname, 1 ); \
+    static void CT_TEST_NAMEGEN(fname) ( void ); \
+    INITIALIZER( CT_TEST_REGISTER_NAMEGEN(fname) ) { \
+        ct_test_append( tname, CT_TEST_NAMEGEN(fname), 1 ); \
     } \
-    static void ct__test__##fname ( void )
+    static void CT_TEST_NAMEGEN(fname) ( void )
 
 // we "need" colors
 static const char ct_color_red[] = "\x1b[31;1m",
