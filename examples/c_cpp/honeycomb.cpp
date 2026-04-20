@@ -12,7 +12,7 @@ const index_t np = 4;
 int main(int argc, char** argv) {
     // init
     diverge_init( &argc, &argv );
-    mpi_loglevel_set( 5 );
+    mpi_loglevel_set( mpi_loglevel_vrb );
     diverge_compilation_status();
     diverge_model_t* m = diverge_model_init();
 
