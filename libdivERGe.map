@@ -214,6 +214,7 @@ local:
 };
 DIVERGE_UNSTABLE {
     global:
+        arnoldi_dense_matvec;
         arnoldi_dense_matvec_par;
         arnoldi_dense_vecmat_par;
         arnoldi_eigen;
