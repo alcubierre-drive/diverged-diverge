@@ -11,6 +11,7 @@
 #include "diverge_model_internals.h"
 #include "misc/dependency_tree.h"
 #include "misc/shared_mem.h"
+#include "misc/arnoldi.h"
 
 #include "tu/vertex_details.h"
 
@@ -21,6 +22,7 @@
 #include "npatch/loop.h"
 
 #include <float.h>
+#include <limits.h>
 
 static void diverge_flow_step_select_channels( diverge_flow_step_t* st, const char* chans_ );
 
@@ -663,6 +665,22 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         double maxval_red = maxval;
         diverge_mpi_allreduce_double_max( &maxval, &maxval_red, 1 );
         return MAX(maxval, maxval_red);
+    } else if (piter == INT_MIN) {
+        double Vmax = 0.0;
+        for (index_t q=0; q<nq; ++q) {
+            int ncv = 10;
+            complex128_t eigvals[ncv];
+            complex128_t eigvecs[ncv*linsz];
+            memset( eigvals, 0, sizeof(eigvals) );
+            memset( eigvecs, 0, sizeof(eigvecs) );
+            char* which = "LM";
+            arnoldi_eigen_dense( which, linsz, 1, ncv, v.ary+q*POW2(linsz), eigvals, eigvecs, 1.e-6, 100 );
+            for (int i=0; i<ncv; ++i)
+                Vmax = MAX(Vmax, cabs(eigvals[i]));
+        }
+        double Vmax_red = Vmax;
+        diverge_mpi_allreduce_double_max( &Vmax, &Vmax_red, 1 );
+        return MAX(Vmax, Vmax_red);
     } else if (piter < 0) {
         double Vmax = 0.0;
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:Vmax) collapse(2)

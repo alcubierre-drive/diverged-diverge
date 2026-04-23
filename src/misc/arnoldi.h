@@ -29,6 +29,9 @@ int arnoldi_eigen_dense_T( char* which, int n, int nev, int ncv,
         const complex128_t* Aij, complex128_t* eigvals, complex128_t* eigvecs,
         double tol, int maxit );
 
+// serial version, to use together with arnoldi_eigen
+void arnoldi_dense_matvec( int n, const complex128_t* x, complex128_t* y, void* userdata );
+
 #ifdef __cplusplus
 }
 #endif
