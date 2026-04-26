@@ -652,6 +652,8 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
     index_t nq = (v.q_1 - v.q_0);
     index_t linsz = v.backend == 'T' ? v.n_orbff * POW2(v.n_spin) : POW2(v.n_orbff*v.n_spin) * v.nk;
     if (piter > 0) {
+piter_LABEL:
+{}
         complex128_t* aux = calloc( 3*linsz, sizeof*aux );
         double tol = 1.e-6;
         index_t niter = 1000;
@@ -666,6 +668,8 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         diverge_mpi_allreduce_double_max( &maxval, &maxval_red, 1 );
         return MAX(maxval, maxval_red);
     } else if (piter == INT_MIN) {
+if (linsz < 10)
+goto piter_LABEL; // small hack
         double Vmax = 0.0;
         for (index_t q=0; q<nq; ++q) {
             int ncv = 10;
