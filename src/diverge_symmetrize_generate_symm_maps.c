@@ -37,6 +37,11 @@ void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
     SET_TO( MATRIX_ZERO );
 }
 
+void diverge_generate_symm_maps_set_precision_global( double factor ) {
+    diverge_generate_symm_maps_set_precision( factor, factor, factor, 1.-factor,
+            factor, factor );
+}
+
 diverge_generate_symm_maps_precision_t diverge_generate_symm_maps_precision_get( void ) {
     return (diverge_generate_symm_maps_precision_t){
         .ASSERT_POSITION_BEYOND = SYMNORM_ASSERT_POSITION_BEYOND,

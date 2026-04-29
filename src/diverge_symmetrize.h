@@ -37,6 +37,13 @@ void diverge_generate_symm_maps_set_precision( double ASSERT_POSITION_BEYOND,
         double BOND_EQUAL, double MATRIX_ZERO );
 
 /**
+ * sets the global precision, i.e., all values listed in
+ * :c:func:`diverge_generate_symm_maps_set_precision` to either 1-factor or
+ * 0+factor.
+ */
+void diverge_generate_symm_maps_set_precision_global( double factor );
+
+/**
  * structure to gather the arguments/return values of
  * :c:func:`diverge_generate_symm_maps_precision_get` and
  * :c:func:`diverge_generate_symm_maps_precision_set`
