@@ -41,7 +41,7 @@ typedef struct diverge_flow_step_t diverge_flow_step_t;
  */
 typedef struct ph_vertex_t {
     /**
-     * mode selection for the phononic 'transfer' vector. If ``mode == '0'`` use
+     * mode selection for the phononic 'transfer' vector. If ``mode == '\0'`` use
      * the lattice vector FFT (:c:member:`RA`). Otherwise the phonon is situated
      * at the floating point position :c:member:`RA_pos` (in crystal
      * coordinates; the real position is :math:`R_A^\mathrm{pos} \cdot L` with

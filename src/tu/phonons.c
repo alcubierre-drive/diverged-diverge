@@ -7,6 +7,7 @@ LINALG_IMPLEMENT
 #include "../misc/gemm.h"
 #include "../misc/bitary.h"
 #include "../misc/qnan.h"
+#include "../misc/dv_vector.h"
 #include <assert.h>
 #include <fftw3.h>
 
@@ -44,7 +45,7 @@ struct tu_data_phonons_t {
     const index_t* idx_ibz_in_fullmesh;
 
     int enable_refinement;
-    refinement_t* refine;
+    refinement_t* refine; // dv_vec_free(), not normal free!
     index_t n_refine;
 
     complex128_t* g_ob_qO_refined; // (n_refine, n_spin,n_spin,n_orbff, nO)
@@ -56,7 +57,7 @@ struct tu_data_phonons_t {
     void* V_ctx;
 };
 
-static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, index_t* n_ref );
+static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t );
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin, const bool SU2 );
@@ -85,7 +86,8 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
 
     t->enable_refinement = enable_refinement;
     if (enable_refinement) {
-        t->refine = tu_data_phonons_generate_refinement( t, &t->n_refine );
+        t->refine = tu_data_phonons_generate_refinement(t);
+        t->n_refine = dv_vec_sz(t->refine);
         mpi_log_printf( "automatic Gamma refinement found %li points per coarse point\n", t->n_refine );
     }
 
@@ -94,7 +96,7 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
 }
 
 void tu_data_phonons_free( tu_data_phonons_t* t ) {
-    free(t->refine);
+    dv_vec_free(t->refine);
     free(t->gbuf);
     free(t->gbuf_zero);
     free(t->gbuf_ref);
@@ -190,28 +192,28 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin, const bool SU2 ) {
     // unique formfactors
     ph_vertex_sort( t->vtx, t->n_vtx, diverge_omp_num_threads(), 0 );
-    VECTOR_INIT( ph_vertex_t, formfacs );
-    VECTOR_INIT( index_t, formfacs_displ );
+    ph_vertex_t* formfacs = NULL;
+    index_t* formfacs_displ = NULL;
     ph_vertex_t formfac = { .o1=-1, .s1=-1, .o2=-1, .s2=-1, .OA=-1 };
     for (index_t i=0; i<t->n_vtx; ++i)
     if (!formfac_equal(&formfac, t->vtx+i)) {
-        VECTOR_PUSH_BACK( formfacs, (formfac=t->vtx[i]) );
-        VECTOR_PUSH_BACK( formfacs_displ, i );
+        dv_vec_push( formfacs, (formfac=t->vtx[i]) );
+        dv_vec_push( formfacs_displ, i );
     }
-    VECTOR_SHRINK_TO_FIT( formfacs );
-    VECTOR_SHRINK_TO_FIT( formfacs_displ );
-    index_t* formfacs_count = calloc(formfacs_sz, sizeof*formfacs_count);
-    if (formfacs_sz > 0) {
-        for (index_t i=0; i<formfacs_sz-1; ++i)
+    dv_vec_shrink( formfacs );
+    dv_vec_shrink( formfacs_displ );
+    index_t* formfacs_count = calloc(dv_vec_sz(formfacs), sizeof*formfacs_count);
+    if (dv_vec_sz(formfacs) > 0) {
+        for (index_t i=0; i<dv_vec_sz(formfacs)-1; ++i)
             formfacs_count[i] = formfacs_displ[i+1] - formfacs_displ[i];
-        formfacs_count[formfacs_sz-1] = t->n_vtx - formfacs_displ[formfacs_sz-1];
+        formfacs_count[dv_vec_sz(formfacs)-1] = t->n_vtx - formfacs_displ[dv_vec_sz(formfacs)-1];
     }
 
     // find how many modes need FFT treatment. the rest requires hand-made FT.
     index_t n_FFT = 0;
-    for (; n_FFT<formfacs_sz; n_FFT++) if (formfacs[n_FFT].mode) break;
+    for (; n_FFT<dv_vec_sz(formfacs); n_FFT++) if (formfacs[n_FFT].mode) break;
 
-    mpi_log_printf( "PH: found %li unique FFT formfacs, and %li non-FFT ones\n", n_FFT, formfacs_sz-n_FFT );
+    mpi_log_printf( "PH: found %li unique FFT formfacs, and %li non-FFT ones\n", n_FFT, dv_vec_sz(formfacs)-n_FFT );
 
     // perform the FFT
     const index_t nk = kdim(t->nk);
@@ -222,10 +224,10 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 
     // allocate space for not just the FFT but also the FT. Then perform the
     // FFT on that part of the array that needs an FFT.
-    fftw_complex* fftw_buf = fftw_malloc(sizeof*fftw_buf * nk*formfacs_sz);
+    fftw_complex* fftw_buf = fftw_malloc(sizeof*fftw_buf * nk*dv_vec_sz(formfacs));
     complex128_t* fftw_cbuf = (complex128_t*)fftw_buf;
     fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, fftw_buf, fftw_buf, DIVERGE_PH_FFT_SIGN, FFTW_ESTIMATE);
-    ZERO_OUT(fftw_buf, nk*formfacs_sz);
+    ZERO_OUT(fftw_buf, nk*dv_vec_sz(formfacs));
 
     double tick, t_fft, t_ft, t_ref;
     tick = diverge_mpi_wtime();
@@ -251,7 +253,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t kk=0; kk<nk; ++kk) {
         claV3d_t qvec = claV3d_map(t->pmod->internals->kmesh + 3*kk);
-        for (index_t ff=n_FFT; ff<formfacs_sz; ++ff)
+        for (index_t ff=n_FFT; ff<dv_vec_sz(formfacs); ++ff)
         for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
             index_t f = formfacs_displ[ff] + cc;
             claV3d_t RA_pos = {{t->vtx[f].RA_pos[0], t->vtx[f].RA_pos[1], t->vtx[f].RA_pos[2]}};
@@ -267,10 +269,10 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     t->n_spin = n_spin;
     t->n_orbff = d->n_orbff;
 
-    index_t* ph_vertex_to_mi_map = calloc(formfacs_sz, sizeof*ph_vertex_to_mi_map);
+    index_t* ph_vertex_to_mi_map = calloc(dv_vec_sz(formfacs), sizeof*ph_vertex_to_mi_map);
     int n_not_found = 0;
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_not_found)
-    for (index_t f=0; f<formfacs_sz; ++f) {
+    for (index_t f=0; f<dv_vec_sz(formfacs); ++f) {
         // find tu_ff index
         index_t mapped_tu = find_tu_ff( tu_ff, n_tu_ff, formfacs[f], t->nk );
         index_t mapped_mi = -1;
@@ -306,7 +308,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             transpose_outofplace( Ubuf, U+POW2(t->nO)*qf, t->nO );
             ZERO_OUT( ffbuf, linsz*t->nO );
             claV3d_t qvec = claV3d_map(t->pmod->internals->kfmesh + 3*qf);
-            for (index_t ff=0; ff<formfacs_sz; ++ff)
+            for (index_t ff=0; ff<dv_vec_sz(formfacs); ++ff)
             for (index_t cc=0; cc<formfacs_count[ff]; ++cc) {
                 const index_t f = formfacs_displ[ff] + cc;
                 const index_t mi = ph_vertex_to_mi_map[ff];
@@ -337,7 +339,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     mpi_tim_printf( "PH: FFT @ %.2fs, FT @ %.2f, REF @ %.2fs\n", t_fft, t_ft, t_ref );
 
     free( formfacs_count );
-    VECTOR_FREE( formfacs_displ );
+    dv_vec_free( formfacs_displ );
 
     // write out the objects to g_ob_qO, but in phonon band space
     t->g_ob_qO = calloc(t->my_nk * linsz * t->nO, sizeof*t->g_ob_qO);
@@ -351,7 +353,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
         transpose_outofplace( Ubuf, U+POW2(t->nO)*kidxc2f(q,t->nk,t->nkf), t->nO );
         ZERO_OUT( ffbuf, linsz * t->nO );
-        for (index_t f=0; f<formfacs_sz; ++f) {
+        for (index_t f=0; f<dv_vec_sz(formfacs); ++f) {
             const index_t mi = ph_vertex_to_mi_map[f];
             if (mi != -1) {
                 const index_t s1s2_ff[] = {formfacs[f].s1, formfacs[f].s2};
@@ -381,7 +383,7 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
 
     free( ph_vertex_to_mi_map );
     fftw_free(fftw_buf);
-    VECTOR_FREE( formfacs );
+    dv_vec_free( formfacs );
 }
 
 void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
@@ -488,7 +490,7 @@ SERISORT_IMPL( serisort_star_norm, star_norm_t )
 #define MERGESORT_COMP(x, y) ((x).kf_idx-(y).kf_idx)
 MERGESORT_IMPL( mergesort_refinement, refinement_t )
 
-static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, index_t* n_ref ) {
+static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t ) {
     diverge_model_t* m = t->pmod;
     const index_t nkkf = kdimtot(m->nk, m->nkf);
     const claM3d_t G = claM3d_map(m->internals->rlattice.v[0]);
@@ -514,23 +516,25 @@ static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, 
         n_star *= 2*dk[d]+1;
     }
     index_t star_zero = -1;
-    VECTOR_INIT_CAP( claV3d_t, star, n_star );
+    claV3d_t* star = NULL;
+    dv_vec_init_cap(star, n_star);
     for (index_t dkx=-dk[0]; dkx<=dk[0]; ++dkx)
     for (index_t dky=-dk[1]; dky<=dk[1]; ++dky)
     for (index_t dkz=-dk[2]; dkz<=dk[2]; ++dkz) {
         claV3d_t dk_vec = {{dkx, dky, dkz}};
         for (int d=0; d<3; ++d) dk_vec.v[d] /= (double)m->nk[d];
-        if (dkx==0 && dky==0 && dkz==0) star_zero = star_sz;
-        VECTOR_PUSH_BACK( star, claM3d_vecmat(dk_vec, G) );
+        if (dkx==0 && dky==0 && dkz==0) star_zero = dv_vec_sz(star);
+        dv_vec_push( star, claM3d_vecmat(dk_vec, G) );
     }
 
-    VECTOR_INIT_CAP( refinement_t, result, 0 );
+    refinement_t* result = NULL;
     double refinement_total_weight = 0.0;
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
     star_norm_t* star_norms = calloc( n_star, sizeof*star_norms );
     star_norm_t* tmp = calloc( n_star, sizeof*tmp );
-    VECTOR_INIT( refinement_t, t_refinement );
+    refinement_t* t_refinement = NULL;
+    dv_vec_init(t_refinement);
 
     #pragma omp for
     for (index_t k=0; k<nkkf; ++k) {
@@ -553,32 +557,31 @@ static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t, 
         }
         if (!close_to_zero) continue;
 
-        VECTOR_PUSH_BACK( t_refinement, (refinement_t){.kf_idx=k, .weight=1./(double)n_closest} );
+        dv_vec_push( t_refinement, (refinement_t){.kf_idx=k, .weight=1./(double)n_closest} );
     }
-    VECTOR_SHRINK_TO_FIT( t_refinement );
+    dv_vec_shrink( t_refinement );
     free( tmp );
     free( star_norms );
 
     #pragma omp critical
     {
-        for (index_t r=0; r<t_refinement_sz; ++r) {
-            VECTOR_PUSH_BACK( result, t_refinement[r] );
+        for (index_t r=0; r<dv_vec_sz(t_refinement); ++r) {
+            dv_vec_push( result, t_refinement[r] );
             refinement_total_weight += t_refinement[r].weight;
         }
     }
 
-    VECTOR_FREE( t_refinement );
+    dv_vec_free( t_refinement );
     } // pragma omp parallel
 
-    VECTOR_FREE( star );
+    dv_vec_free( star );
 
-    for (index_t r=0; r<result_sz; ++r)
+    for (index_t r=0; r<dv_vec_sz(result); ++r)
         result[r].weight /= refinement_total_weight;
-    VECTOR_SHRINK_TO_FIT( result );
-    *n_ref = result_sz;
+    dv_vec_shrink(result);
 
     // consistent behaviour across MPI ranks
-    mergesort_refinement( result, result_sz, diverge_omp_num_threads(), 0 );
+    mergesort_refinement(result, dv_vec_sz(result), diverge_omp_num_threads(), 0);
     return result;
 }
 
