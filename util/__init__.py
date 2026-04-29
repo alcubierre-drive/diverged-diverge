@@ -1516,6 +1516,10 @@ if not _libs["divERGe"] is None:
     generate_symm_maps_set_precision.argtypes = [c_double, c_double, c_double, c_double, c_double, c_double]
     generate_symm_maps_set_precision.restype = None
 
+    generate_symm_maps_set_precision_global = _libs["divERGe"].get("diverge_generate_symm_maps_set_precision_global", "cdecl")
+    generate_symm_maps_set_precision_global.argtypes = [c_double]
+    generate_symm_maps_set_precision_global.restype = None
+
     # get/set new interface
     class generate_symm_maps_precision_t(Structure):
         pass
