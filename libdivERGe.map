@@ -53,6 +53,7 @@ DIVERGE_0.10 {
         diverge_generate_symm_maps_precision_get;
         diverge_generate_symm_maps_precision_set;
         diverge_generate_symm_maps_set_precision;
+        diverge_generate_symm_maps_set_precision_global;
         diverge_generate_symm_trafo;
         diverge_greensfunc_generator_default;
         diverge_hamilton_generator_add;
