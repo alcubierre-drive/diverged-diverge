@@ -964,6 +964,8 @@ if not _libs["divERGe"] is None:
     flow_step_eigchan.argtypes = [POINTER(flow_step_t), c_char, c_int]
     flow_step_eigchan.restype = c_double
 
+    FLOW_STEP_EIGCHAN_PITER_ARPACK = (-c_uint(-1).value)//2
+
     flow_step_euler = _libs["divERGe"].get("diverge_flow_step_euler", "cdecl")
     flow_step_euler.argtypes = [POINTER(flow_step_t), c_double, c_double]
     flow_step_euler.restype = None
