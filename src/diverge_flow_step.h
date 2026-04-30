@@ -80,9 +80,15 @@ void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
  * ``piter > 0``, calculate the leading eigenvalue using power iteration, if
  * ``piter < 0``, use Gerschgorin's circle theorem for the (approximate) leading
  * eigenvalue. Otherwise use :c:func:`batched_svd`. For how the channels are
- * defined, see :c:func:`diverge_flow_step_vertex`.
+ * defined, see :c:func:`diverge_flow_step_vertex`. If you want to use ARPACK
+ * (and have it compiled in!), you can pass
+ * ``DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK`` for ``piter``
  */
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter );
+
+#ifndef DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK
+#define DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK INT_MIN
+#endif
 
 /** Do an euler step starting at :math:`\Lambda` ending at :math:`\Lambda+d_\Lambda` */
 void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLambda );
