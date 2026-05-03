@@ -113,6 +113,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("tu_generate_reduced_loop_maps_disabled") {
         generate_reduced_loop_maps_disabled = atoi(val);
     }
+    CHECKKEY("tu_channelize") {
+        TU_INTERNALS->tu_channelize = val[0];
+    }
     CHECKKEY("npatch_gpu_workshare") {
         INTERNALS->patch_gpu_workshare = atof(val);
     }

@@ -63,6 +63,7 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     #endif
 
     info->selfenergy_circular_cutoff = false;
+    info->tu_channelize = -1;
 
     init_ff_struct(max_dist, model);
     if (!generate_reduced_loop_maps_disabled)

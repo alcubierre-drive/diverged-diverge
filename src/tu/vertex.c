@@ -79,28 +79,48 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
         if (!(V->P_flow && V->C_flow && V->D_flow)) {
             mpi_wrn_printf("not all channels (P:%i,C:%i,D:%i): ensure correct formfactors\n",
                     V->P_flow, V->C_flow, V->D_flow);
-            bool dummy1, dummy2;
-            if (V->D_flow) {
-                dummy1 = V->C_flow; dummy2 = V->P_flow;
-                V->C_flow = V->P_flow = true;
-                mpi_vrb_printf("Interactions only in D\n");
-                D_projection(V->Dch, V, proj);
-                if (V->C_flow) ZERO_OUT(V->Cch, V->full_vert_size);
-                if (V->P_flow) ZERO_OUT(V->Pch, V->full_vert_size);
-                V->C_flow = dummy1; V->P_flow = dummy2;
-            } else if (V->C_flow) {
-                dummy1 = V->D_flow; dummy2 = V->P_flow;
-                V->P_flow = V->D_flow = true;
-                mpi_vrb_printf("Interactions only in C\n");
-                C_projection(V->Cch, V, proj);
-                if (V->P_flow) ZERO_OUT(V->Pch, V->full_vert_size);
-                V->D_flow = dummy1; V->P_flow = dummy2;
+            char channelize = V->tu_data->tu_channelize;
+            if (channelize) {
+                bool dummy1, dummy2;
+                switch (channelize) {
+                    case 'P':
+                        mpi_vrb_printf("channelizing forcibly in P\n");
+                        goto channelize_P; break;
+                    case 'C':
+                        mpi_vrb_printf("channelizing forcibly in C\n");
+                        goto channelize_C; break;
+                    case 'D':
+                        mpi_vrb_printf("channelizing forcibly in D\n");
+                        goto channelize_D; break;
+                    default: break;
+                }
+                if (V->D_flow) {
+channelize_D:
+                    dummy1 = V->C_flow; dummy2 = V->P_flow;
+                    V->C_flow = V->P_flow = true;
+                    mpi_vrb_printf("Interactions only in D\n");
+                    D_projection(V->Dch, V, proj);
+                    if (V->C_flow) ZERO_OUT(V->Cch, V->full_vert_size);
+                    if (V->P_flow) ZERO_OUT(V->Pch, V->full_vert_size);
+                    V->C_flow = dummy1; V->P_flow = dummy2;
+                } else if (V->C_flow) {
+channelize_C:
+                    dummy1 = V->D_flow; dummy2 = V->P_flow;
+                    V->P_flow = V->D_flow = true;
+                    mpi_vrb_printf("Interactions only in C\n");
+                    C_projection(V->Cch, V, proj);
+                    if (V->P_flow) ZERO_OUT(V->Pch, V->full_vert_size);
+                    V->D_flow = dummy1; V->P_flow = dummy2;
+                } else {
+channelize_P:
+                    dummy1 = V->D_flow; dummy2 = V->C_flow;
+                    V->C_flow = V->D_flow = true;
+                    mpi_vrb_printf("Interactions only in P\n");
+                    P_projection(V->Pch, V, proj);
+                    V->D_flow = dummy1; V->C_flow = dummy2;
+                }
             } else {
-                dummy1 = V->D_flow; dummy2 = V->C_flow;
-                V->C_flow = V->D_flow = true;
-                mpi_vrb_printf("Interactions only in P\n");
-                P_projection(V->Pch, V, proj);
-                V->D_flow = dummy1; V->C_flow = dummy2;
+                mpi_wrn_printf( "not channelized---full vertex captured?\n" );
             }
         }
     }
