@@ -56,6 +56,8 @@ struct tu_data_t {
     bool tu_gf_skip_selfenergy; // do not add \Sigma to G^{-1}
     bool GF_fft_coarsify;
     bool selfenergy_circular_cutoff;
+    char tu_channelize; // project interactions to single channel if not all
+                        // channels included, see src/tu/vertex.c
 
     index_t mpi_fft_chunksize;
     tu_fft_algorithm_t which_fft_simple,
