@@ -25,7 +25,7 @@ typedef struct {
     double cutoff;
     bool cutoff_rel;
     index_t tu_n_decomp_values;
-    bool bare_susceptibilities;
+    int bare_susceptibilities;
     int channel_calc_project;
     char tu_lingap_solver_mode[4];
 
@@ -55,7 +55,7 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .cutoff = 25.,
     .cutoff_rel = false,
     .tu_n_decomp_values = 0,
-    .bare_susceptibilities = false,
+    .bare_susceptibilities = 0,
     .channel_calc_project = false,
     .tu_lingap_solver_mode = "sss",
     .lingaps = true,

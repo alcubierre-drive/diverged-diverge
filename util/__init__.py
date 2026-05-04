@@ -1201,7 +1201,7 @@ if not _libs["divERGe"] is None:
         ('tu_n_decomp_values', index_t),
         ('tu_lingap_atscale', c_bool),
         ('tu_lingap_solver_mode', c_char * int(4)),
-        ('tu_susceptibilities_bare', c_bool),
+        ('tu_susceptibilities_bare', c_int),
         ('tu_channel_calc_project', c_int),
         ('tu_which_solver_mode_hermiticity_limit', c_double),
         ('tu_rpa_chans', c_char * int(8)),

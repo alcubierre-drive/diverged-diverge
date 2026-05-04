@@ -1,6 +1,7 @@
 /* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "gemm.h"
+#include "bitary.h"
 
 #ifdef USE_MKL
 #include <mkl.h>
@@ -15,11 +16,11 @@ void single_gemm( const complex128_t* A, const complex128_t* B, complex128_t* C,
                 B, LDA, A, LDB, &beta, C, LDC );
 }
 
-// TODO(LK) needs testing
-void single_gemm_adjoint( const complex128_t* A, const complex128_t* B, complex128_t* C,
-        index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta) {
-    cblas_zgemm( CblasRowMajor, CblasNoTrans, CblasConjTrans, N, M, K, &alpha,
-                A, K, B, K, &beta, C, M );
+void single_gemm_adjoint( const complex128_t* A, const complex128_t* B,
+        complex128_t* C, index_t M, index_t N, index_t K, complex128_t alpha,
+        complex128_t beta) {
+    cblas_zgemm( CblasRowMajor, CblasNoTrans, CblasConjTrans, N, M, K, &alpha, A, K,
+            B, K, &beta, C, M );
 }
 
 void single_square_gemm( const complex128_t* A, int AconjTrans,
@@ -36,6 +37,36 @@ void transpose_inplace( complex128_t* A, index_t N ) {
         A[IDX2(i,j,N)] = A[IDX2(j,i,N)];
         A[IDX2(j,i,N)] = tmp;
     }
+}
+
+void transpose_inplace_rect_any( void* vdata, index_t data_sz, index_t rows, index_t cols ) {
+    unsigned char* data = vdata;
+    index_t size = rows * cols;
+    index_t visited_count = 0;
+    cbyte_t* visited = bitary_alloc(size);
+
+    for (index_t start=0; visited_count<size; ++start) {
+        if (bitary_get(visited,start)) continue;
+
+        index_t current = start;
+        unsigned char tmp[data_sz];
+        memcpy( tmp, data + data_sz*current, data_sz );
+
+        do {
+            index_t next = (current % cols) * rows + (current / cols);
+            unsigned char swap[data_sz];
+            memcpy( swap, data + data_sz*next, data_sz );
+            memcpy( data + data_sz*next, tmp, data_sz );
+
+            bitary_set(visited, current);
+            visited_count++;
+
+            current = next;
+            memcpy( tmp, swap, data_sz );
+        } while (current != start);
+    }
+
+    free(visited);
 }
 
 void transpose_outofplace( complex128_t* B, const complex128_t* A, index_t N ) {
