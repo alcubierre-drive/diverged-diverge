@@ -348,11 +348,7 @@ double diverge_flow_step_dlambda( diverge_flow_step_t* st ) {
 }
 
 diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, char chan ) {
-    diverge_flow_step_vertex_t result;
-    result.ary = NULL;
-    result.q_0 = result.q_1 = result.nk = result.n_orbff = result.n_spin = 0;
-    result.backend = 'I';
-    result.channel = chan;
+    diverge_flow_step_vertex_t result = { .backend = 'I', .channel = chan };
 
     diverge_model_t* mod = st->mod;
     internals_t* intls = st->intls;
@@ -406,9 +402,30 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                 toupper(chan) != 'C' &&
                 toupper(chan) != 'D' &&
                 toupper(chan) != 'S' &&
-                chan != 'm' && chan != 'h') {
+                chan != 'm' && chan != 'h' &&
+                toupper(chan) != 'X' &&
+                toupper(chan) != 'L' &&
+                toupper(chan) != 'K') {
                 mpi_wrn_printf("for TUFRG vertex chan must be one of 'PCDSpcdsmh'. default: 'D'.\n");
                 result.channel = chan = 'D';
+            }
+
+            if (toupper(chan) == 'X' || toupper(chan) == 'L' || toupper(chan) == 'K') {
+                if (!isupper(chan)) {
+                    ((toupper(chan-8) == 'P') ? P_projection :
+                     (toupper(chan-8) == 'C') ? C_projection :
+                    /*toupper(chan-8) == 'D'*/  D_projection )( tu_V->projection_helper, tu_V, tu_Proj );
+                }
+                mpi_vrb_printf( "recombining TUFRG vertex to channel '%c'\n", chan-8 );
+                result.ary = calloc( tu_V->nk*POW2(tu_V->n_orbff * POW2(tu_V->n_spin)),
+                        sizeof*result.ary );
+                diverge_tu_vertex_reco( tu_V, toupper(chan-8), result.ary,
+                        (!isupper(chan))?tu_V->projection_helper:NULL );
+                result.nk = tu_V->nk;
+                result.n_orbff = tu_V->n_orbff;
+                result.n_spin = tu_V->n_spin;
+                result.backend = 't';
+                break;
             }
 
             if (toupper(chan) != 'S') {
