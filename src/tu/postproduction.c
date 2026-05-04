@@ -1002,7 +1002,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         } else {
             complex128_t* buf = calloc(chi0_nk * POW2(linsize), sizeof*buf);
             diverge_tu_vertex_reco(p->vertex, 'P', buf, p->vertex->pp_bubble_int);
-            transpose_inplace_rect_any(buf, sizeof*buf, chi0_nk, POW2(linsize));
+            transpose_inplace_rect_any(buf, sizeof*buf, POW2(linsize), chi0_nk);
             new_off = diverge_mpi_write_byte_to_file_master(file, buf, new_off, chi0_nk*POW2(linsize)*sizeof*buf);
             free(buf);
         }
@@ -1014,7 +1014,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         } else {
             complex128_t* buf = calloc(chi0_nk * POW2(linsize), sizeof*buf);
             diverge_tu_vertex_reco(p->vertex, 'D', buf, p->vertex->ph_bubble_int);
-            transpose_inplace_rect_any(buf, sizeof*buf, chi0_nk, POW2(linsize));
+            transpose_inplace_rect_any(buf, sizeof*buf, POW2(linsize), chi0_nk);
             new_off = diverge_mpi_write_byte_to_file_master(file, buf, new_off, chi0_nk*POW2(linsize)*sizeof*buf);
             free(buf);
         }
