@@ -131,9 +131,10 @@ struct diverge_postprocess_conf_t {
     char    tu_lingap_solver_mode[4];
     /**
      * output the (flowing) bare susceptibilities, i.e., the integrated loop
-     * derivative. May result in large files.
+     * derivative. May result in large files. Iff < 0, reconstruct the full ones
+     * instead of outputting reduced ones (iff > 0).
      */
-    bool    tu_susceptibilities_bare;
+    int     tu_susceptibilities_bare;
     /**
      * project the full vertex into the respective diagrammatic channel (if > 0)
      * for diagonalization, or to physical channels (if < 0). Note that this
@@ -233,7 +234,7 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_n_decomp_values = 0,
     .tu_lingap_atscale = false,
     .tu_lingap_solver_mode = "sss",
-    .tu_susceptibilities_bare = false,
+    .tu_susceptibilities_bare = 0,
     .tu_channel_calc_project = 0,
     .tu_which_solver_mode_hermiticity_limit = 1.e-11,
     .tu_rpa_chans = "CD",

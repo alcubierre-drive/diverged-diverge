@@ -797,13 +797,16 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[i] = header[i-2] + header[i-1]*sizeof(index_t); ++i;
     header[i] = p->vertex->n_orbff; ++i;
 
+    const int chi0_reco = p->c.bare_susceptibilities < 0;
+    const index_t chi0_nk = chi0_reco ? tu_data->nk : tu_data->nkibz;
+
     header[i] = header[i-2] + header[i-1]*sizeof(index_t); ++i;
     if (p->vertex->P_flow && p->c.bare_susceptibilities)
-        header[i] = POW2(linsize) * tu_data->nkibz;
+        header[i] = POW2(linsize) * chi0_nk;
     ++i;
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
     if ((p->vertex->C_flow || p->vertex->D_flow) && p->c.bare_susceptibilities)
-        header[i] = POW2(linsize) * tu_data->nkibz;
+        header[i] = POW2(linsize) * chi0_nk;
     ++i;
 
     // RPA
@@ -992,12 +995,30 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_tuffidx, new_off, sindex*p->vertex->n_orbff);
 
     index_t scdlin = POW2(linsize) * sizeof(complex128_t);
-    if (p->c.bare_susceptibilities && p->vertex->P_flow)
-        new_off = diverge_mpi_write_byte_to_file(file, p->vertex->pp_bubble_int,
-                new_off+my_nk_off*scdlin, my_nk*scdlin);
-    if (p->c.bare_susceptibilities && (p->vertex->C_flow || p->vertex->D_flow))
-        new_off = diverge_mpi_write_byte_to_file(file, p->vertex->ph_bubble_int,
-                new_off+my_nk_off*scdlin, my_nk*scdlin);
+    if (p->c.bare_susceptibilities && p->vertex->P_flow) {
+        if (!chi0_reco) {
+            new_off = diverge_mpi_write_byte_to_file(file, p->vertex->pp_bubble_int,
+                    new_off+my_nk_off*scdlin, my_nk*scdlin);
+        } else {
+            complex128_t* buf = calloc(chi0_nk * POW2(linsize), sizeof*buf);
+            diverge_tu_vertex_reco(p->vertex, 'P', buf, p->vertex->pp_bubble_int);
+            transpose_inplace_rect_any(buf, sizeof*buf, chi0_nk, POW2(linsize));
+            new_off = diverge_mpi_write_byte_to_file_master(file, buf, new_off, chi0_nk*POW2(linsize)*sizeof*buf);
+            free(buf);
+        }
+    }
+    if (p->c.bare_susceptibilities && (p->vertex->C_flow || p->vertex->D_flow)) {
+        if (!chi0_reco) {
+            new_off = diverge_mpi_write_byte_to_file(file, p->vertex->ph_bubble_int,
+                    new_off+my_nk_off*scdlin, my_nk*scdlin);
+        } else {
+            complex128_t* buf = calloc(chi0_nk * POW2(linsize), sizeof*buf);
+            diverge_tu_vertex_reco(p->vertex, 'D', buf, p->vertex->ph_bubble_int);
+            transpose_inplace_rect_any(buf, sizeof*buf, chi0_nk, POW2(linsize));
+            new_off = diverge_mpi_write_byte_to_file_master(file, buf, new_off, chi0_nk*POW2(linsize)*sizeof*buf);
+            free(buf);
+        }
+    }
     if (p->rpa) {
         new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->vals,
                 new_off, sizeof*p->rpa->vals * p->rpa->nev);
