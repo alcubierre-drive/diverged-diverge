@@ -204,6 +204,14 @@ typedef struct {
  *         the self-energy on the fine mesh (if used). Then, n_orbff contains
  *         the number of orbitals and nk the number of total (refined * coarse)
  *         kpts.
+ *
+ *         .. note :: (> v0.10)
+ *          one can also pass 'X','K','L' ('x','k','l'), which amounts to
+ *          returning a newly allocated buffer (user's responsibility to free)
+ *          in :c:member:`diverge_flow_step_vertex_t.ary` and recombining the
+ *          symmetry-reduced vertex to the full BZ on all ranks. This goes along
+ *          with a reordering of indices from (q,f,g) to (f,g,q). Be aware. The
+ *          channels map as ``chan-8``.
  * :grid FRG: chan can be 'P', 'C', 'D', or 'V', both upper and lower case. In
  *            general, lower case references the differential vertex and upper
  *            case the full vertex. The three channels are returned in
