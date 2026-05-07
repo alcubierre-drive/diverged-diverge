@@ -828,6 +828,10 @@ if not _libs["divERGe"] is None:
     model_internals_common.argtypes = [POINTER(model_t)]
     model_internals_common.restype = None
 
+    model_internals_common_set_symmbound = _libs["divERGe"].get("diverge_model_internals_common_set_symmbound", "cdecl")
+    model_internals_common_set_symmbound.argtypes = [c_double]
+    model_internals_common_set_symmbound.restype = c_double
+
     model_internals_grid = _libs["divERGe"].get("diverge_model_internals_grid", "cdecl")
     model_internals_grid.argtypes = [POINTER(model_t)]
     model_internals_grid.restype = None

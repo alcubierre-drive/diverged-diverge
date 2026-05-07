@@ -108,6 +108,9 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist );
  */
 double diverge_max_dist_iobi( void );
 
+/** change bound that triggers warning upon symmetrization. return prev val. */
+double diverge_model_internals_common_set_symmbound( double bound );
+
 /**
  * Reset all internal structures of the model and free their resources. Does not
  * reset the patching. Usage is discouraged.

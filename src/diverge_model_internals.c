@@ -15,6 +15,13 @@
 #include <stdarg.h>
 #include <limits.h>
 
+static double SYMMETRIZE_HAMILTONIAN_ERROR = DIVERGE_EPS_MESH;
+double diverge_model_internals_common_set_symmbound( double bound ) {
+    double old_bound = SYMMETRIZE_HAMILTONIAN_ERROR;
+    SYMMETRIZE_HAMILTONIAN_ERROR = bound;
+    return old_bound;
+}
+
 double diverge_max_dist_iobi( void ) {
     return qnan_gen( IOBI_FORMFACTOR_MAGIC_NUMBER );
 }
@@ -179,7 +186,8 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         memcpy( intls->greens, intls->ham, sizeof(complex128_t)*nktot*nb*nb );
         // symm
         double err = diverge_symmetrize_2pt_fine( model, (complex128_t*)intls->greens, NULL );
-        if (err > DIVERGE_EPS_MESH) mpi_wrn_printf("resymmetrize hamiltonian->large error: %.5e\n", err);
+        if (err > SYMMETRIZE_HAMILTONIAN_ERROR)
+            mpi_wrn_printf("resymmetrize hamiltonian->large error: %.5e\n", err);
         // copyout
         if (shared_exclusive_enter( intls->ham ))
             memcpy( intls->ham, intls->greens, sizeof(complex128_t) * nktot*nb*nb );
