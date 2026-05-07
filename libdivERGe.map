@@ -84,6 +84,7 @@ DIVERGE_0.10 {
         diverge_model_init;
         diverge_model_internals_any;
         diverge_model_internals_common;
+        diverge_model_internals_common_set_symmbound;
         diverge_model_internals_get_E;
         diverge_model_internals_get_H;
         diverge_model_internals_get_U;
