@@ -18,6 +18,7 @@ struct tu_rpa_t {
     index_t* kidx;
     index_t n_kidx;
     complex128_t* chi_pp;
+    double chi_pp_Lambda_factor; // configurable after init
     complex128_t* V_pp;
 
     double* vals;
@@ -25,7 +26,7 @@ struct tu_rpa_t {
     complex128_t* vecs;
     int legdim;
 
-    int time_enabled;
+    int time_enabled; // configurable after init
     double time_step, time_post_vert, time_post_eigen, time_post_apply_greens;
 };
 
