@@ -33,20 +33,35 @@ void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... 
     mpi_log_printf("internals mode: %s\n", mode);
     va_list ap;
     va_start(ap, mode);
+
+    index_t np = 0;
+    double ffdist = 0;
+    typedef rs_hopping_t* rs_hopping_t_ptr;
+    rs_hopping_t_ptr phop = NULL;
+    index_t nphop = 0;
+    typedef ph_vertex_t* ph_vertex_t_ptr;
+    ph_vertex_t_ptr pvert = NULL;
+    index_t npvert = 0;
+
     switch (t) {
         case diverge_grid:
             diverge_model_internals_grid( model );
             break;
         case diverge_patch:
-            diverge_model_internals_patch( model, va_arg(ap, index_t) );
+            np = va_arg(ap, index_t);
+            diverge_model_internals_patch( model, np );
             break;
         case diverge_tu:
-            diverge_model_internals_tu( model, va_arg(ap, double) );
+            ffdist = va_arg(ap, double);
+            diverge_model_internals_tu( model, ffdist );
             break;
         case diverge_tu_phonons:
-            diverge_model_internals_tu_phonons( model, va_arg(ap, double),
-                    va_arg(ap, rs_hopping_t*), va_arg(ap, index_t),
-                    va_arg(ap, ph_vertex_t*), va_arg(ap, index_t) );
+            ffdist = va_arg(ap, double);
+            phop = va_arg(ap, rs_hopping_t_ptr);
+            nphop = va_arg(ap, index_t);
+            pvert = va_arg(ap, ph_vertex_t_ptr);
+            npvert = va_arg(ap, index_t);
+            diverge_model_internals_tu_phonons( model, ffdist, phop, nphop, pvert, npvert );
             break;
         case diverge_flow_type_invalid:
         default:
