@@ -63,7 +63,8 @@ tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_ki
     memcpy( t->kidx, kidx, sizeof*t->kidx * n_kidx );
 
     t->chi_pp = calloc( t->n_kidx * POW4(m->n_orb*m->n_spin), sizeof*t->chi_pp );
-    t->time_enabled = 1; // XXX this has to be configuratble
+    t->time_enabled = 1;
+    t->chi_pp_Lambda_factor = 1.0;
     return t;
 }
 
@@ -80,7 +81,7 @@ void tu_rpa_step( tu_rpa_t* t, double Lambda, double dLambda ) {
     diverge_model_t* m = t->m;
     complex128_t cLambda = I*Lambda;
     gf_complex_t* gbuf = m->internals->greens;
-    (*m->gfill)(m, cLambda, gbuf);
+    (*m->gfill)(m, cLambda*t->chi_pp_Lambda_factor, gbuf);
     const index_t NK = kdim(m->nk);
     const double prefac = dLambda/(2.*M_PI);
 
@@ -137,7 +138,7 @@ void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter,
 
     TOCK(time_post_eigen)
 #define TPRINT(WHICH) \
-    if (t->time_##WHICH >= 0) \
+    if (t->time_##WHICH > 0.0) \
         mpi_tim_printf("%5.2fs for rpa " #WHICH "\n", t->time_##WHICH );
     TPRINT(step)
     TPRINT(post_vert)
@@ -199,18 +200,11 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
         return;
     }
 
-    index_t q_off = V->my_nk_off,
-            q_len = V->my_nk;
-    if (V->symm->use_symmetries) {
-        q_off = V->symm->my_nk_in_bz_off;
-        q_len = V->symm->my_nk_in_bz;
-    }
-
     rpahashtable_t* ktab = rpahashtable_init( 64*t->n_kidx, 8 );
     for (index_t ik=0; ik<t->n_kidx; ++ik)
         rpahashtable_insert_safe(ktab, t->kidx[ik], ik);
 
-    complex128_t* Vbuf_reco = calloc(POW2(V->n_orbff*POW2(V->n_spin)) * q_len, sizeof*Vbuf_reco);
+    complex128_t* Vbuf_reco = calloc(POW2(V->n_orbff*POW2(V->n_spin))*V->nk, sizeof*Vbuf_reco);
     diverge_tu_vertex_reco( V, chan, Vbuf_reco, Vbuf );
 
     const index_t legdim = POW2(V->n_orb*V->n_spin) * t->n_kidx;
@@ -223,9 +217,8 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
 
     #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
     for (index_t ik=0; ik<t->n_kidx; ++ik)
-    for (index_t iq=0; iq<q_len; ++iq) {
-        const index_t kk = t->kidx[ik],
-                      qq = q_off+iq;
+    for (index_t qq=0; qq<V->nk; ++qq) {
+        const index_t kk = t->kidx[ik];
         const index_t kp = (chan == 'C') ? k1m2(qq,kk, nk) : k1p2(qq,kk, nk);
         const index_t ikp = rpahashtable_find(ktab, kp);
         if (ikp != -1) {
@@ -243,8 +236,8 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
                                   o3 = mi_to_ofrom[m2], o2 = mi_to_oto[m2];
                     const index_t left  = IDX5(ik, s1,o1,s2,o2, V->n_spin,V->n_orb,V->n_spin,V->n_orb),
                                   right = IDX5(ikp,s3,o3,s4,o4, V->n_spin,V->n_orb,V->n_spin,V->n_orb);
-                    t->V_pp[IDX2(left, right, legdim)] += Vbuf_reco[IDX7(s4,s3,m2,s2,s1,m1,iq,
-                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, q_len)] * ff_fac;
+                    t->V_pp[IDX2(left, right, legdim)] += Vbuf_reco[IDX7(s4,s3,m2,s2,s1,m1,qq,
+                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, V->nk)] * ff_fac;
                 }
                 if (chan == 'D') { // (1,3,4,2)
                     const complex128_t ff_fac = cexp_ikr(claV3d_dot(R1,kmesh[kp])+claV3d_dot(R2,kmesh[kk]));
@@ -252,14 +245,13 @@ static void tu_rpa_post_vert( tu_rpa_t* t, char chan ) {
                                   o4 = mi_to_ofrom[m2], o2 = mi_to_oto[m2];
                     const index_t left  = IDX5(ikp,s1,o1,s2,o2, V->n_spin,V->n_orb,V->n_spin,V->n_orb),
                                   right = IDX5(ik, s3,o3,s4,o4, V->n_spin,V->n_orb,V->n_spin,V->n_orb);
-                    t->V_pp[IDX2(left, right, legdim)] += Vbuf_reco[IDX7(s4,s3,m2,s2,s1,m1,iq,
-                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, q_len)] * ff_fac;
+                    t->V_pp[IDX2(left, right, legdim)] += Vbuf_reco[IDX7(s4,s3,m2,s2,s1,m1,qq,
+                            V->n_spin,V->n_orbff, V->n_spin,V->n_spin,V->n_orbff, V->nk)] * ff_fac;
                 }
             }
         }
     }
 
-    diverge_mpi_allreduce_complex_sum_inplace(t->V_pp, POW2(legdim));
     free( Vbuf_reco );
     rpahashtable_free( ktab );
 }
