@@ -658,38 +658,49 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
             for(index_t s4 = 0; s4< (s->n_spin); ++s4)
             for(index_t o4 = 0; o4<s->n_orb;++o4)
             for(index_t b4 = 0; b4<s->bond_sizes[o4];++b4){
+                const index_t bo4 = s->bond_offsets[o4]+b4;
+                const index_t oto4 = s->tu_ff[bo4].oto;
+                const index_t ffidx4 = s->tu_ff[bo4].ffidx;
                 complex128_t tmp2 = 0.0;
                 for(index_t k = 0; k<s->nk;++k)
                 {
-                    tmp2 += s->ffkmesh[k+s->nk*s->tu_ff[s->bond_offsets[o4]+b4].ffidx]*
-                        ((GF[k+s->nk*(o4+s->n_orb*(s4+s->n_spin
-                                *(s->tu_ff[s->bond_offsets[o4]+b4].oto + s->n_orb*(s2))))]) +
-                        conj(GF[k+s->nk*(s->tu_ff[s->bond_offsets[o4]+b4].oto + s->n_orb
-                                *(s2+s->n_spin*(o4+s->n_orb*(s4))))]));
+                    tmp2 += s->ffkmesh[IDX2(ffidx4, k, s->nk)]
+                        *(GF[IDX5(s2, oto4, s4, o4, k, s->n_orb, s->n_spin, s->n_orb, s->nk)]
+                        + conj(GF[IDX5(s4, o4, s2, oto4, k, s->n_orb, s->n_spin, s->n_orb, s->nk)]));
                 }
-                s->interpol_helper[s->bond_offsets[o4]+b4+s->n_orbff*(s4+s->n_spin*s2)] += tmp2;
+                s->interpol_helper[IDX3(s2, s4, bo4, s->n_spin, s->n_orbff)] += tmp2;
             }
 
-            #pragma omp parallel for collapse(4) num_threads(diverge_omp_num_threads())
-            for(index_t q = 0; q<s->nk;++q)
+            // Inner sum over (s2,s4,o4,b4) is independent of q. Compute it
+            // into a register-resident scalar and apply the q-dependent
+            // ffkmesh factor in the same outer iteration -- no temp buffer.
+            #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
             for(index_t o1 = 0; o1<s->n_orb;++o1)
             for(index_t s1 = 0; s1< s->n_spin; ++s1)
-            for(index_t s3 = 0; s3< s->n_spin; ++s3)
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1){
-                complex128_t tmp = 0.0;
-                for(index_t s2 = 0; s2< (s->n_spin); ++s2)
-                for(index_t s4 = 0; s4< (s->n_spin); ++s4)
-                for(index_t o4 = 0; o4<s->n_orb;++o4)
-                for(index_t b4 = 0; b4<s->bond_sizes[o4];++b4){
-                    tmp += s->interpol_helper[s->bond_offsets[o4]+b4+s->n_orbff*(s4+s->n_spin*s2)]
-                        *D_in[s->ob_to_orbff[b1+s->n_bonds*o1]
-                                +s->n_orbff*(s1+s->n_spin*(s3
-                                    +s->n_spin*(s->ob_to_orbff[b4+s->n_bonds*o4]
-                                        +s->n_orbff*(s4+s->n_spin*(s2)))))];
+            for(index_t s3 = 0; s3< s->n_spin; ++s3) {
+                for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1) {
+                    const index_t mi1 = s->ob_to_orbff[b1+s->n_bonds*o1];
+                    complex128_t tmp = 0.0;
+                    for(index_t s2 = 0; s2< (s->n_spin); ++s2)
+                    for(index_t s4 = 0; s4< (s->n_spin); ++s4)
+                    for(index_t o4 = 0; o4<s->n_orb;++o4)
+                    for(index_t b4 = 0; b4<s->bond_sizes[o4];++b4) {
+                        const index_t bo4 = s->bond_offsets[o4]+b4;
+                        const index_t mi4 = s->ob_to_orbff[b4+s->n_bonds*o4];
+                        tmp += s->interpol_helper[IDX3(s2, s4, bo4, s->n_spin, s->n_orbff)]
+                            * D_in[IDX6(s2, s4, mi4, s3, s1, mi1,
+                                        s->n_spin, s->n_orbff, s->n_spin, s->n_spin, s->n_orbff)];
+                    }
+                    const index_t bo1 = s->bond_offsets[o1]+b1;
+                    const index_t oto1 = s->tu_ff[bo1].oto;
+                    const index_t ffidx1 = s->tu_ff[bo1].ffidx;
+                    for(index_t q = 0; q<s->nk;++q) {
+                        s->ff_helper[IDX5(s3, oto1, s1, o1, q, s->n_orb, s->n_spin, s->n_orb, s->nk)]
+                            -= conj(s->ffkmesh[IDX2(ffidx1, q, s->nk)]) * tmp;
+                    }
                 }
-                s->ff_helper[q+s->nk*(o1+s->n_orb*(s1+s->n_spin*(s->tu_ff[s->bond_offsets[o1]+b1].oto+s->n_orb*s3)))]
-                        -= conj(s->ffkmesh[q+s->nk*s->tu_ff[s->bond_offsets[o1]+b1].ffidx])*tmp;
             }
+
             FFTW_EXECUTE_DFT(s->ifft_self_oop,s->ff_helper,self_en);
         }
     }
@@ -710,43 +721,46 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         FFTW_EXECUTE_DFT(s->ifft_vert_ip,s->reco_helper,s->reco_helper);
         FFTW_EXECUTE_DFT(s->fft_self_ip,s->greensfkt_helper,s->greensfkt_helper);
 
-        #pragma omp parallel for collapse(7) num_threads(diverge_omp_num_threads())
-        for(index_t z = 0; z < s->model->nk[2]; ++z)
-        for(index_t y = 0; y < s->model->nk[1]; ++y)
-        for(index_t x = 0; x < s->model->nk[0]; ++x)
+        // Parallelize over (o3, s3, s1, o1) so each thread owns a unique
+        // self_en slice (no race). Spatial loops (x, y, z) are absolute
+        // innermost with z fastest, giving stride-1 access in self_en[..,ridx]
+        // and the rb1b3-indexed arrays.
+        #pragma omp parallel for collapse(4) num_threads(diverge_omp_num_threads())
         for(index_t o3 = 0; o3<s->n_orb;++o3)
         for(index_t s3 = 0; s3< s->n_spin; ++s3)
         for(index_t s1 = 0; s1< s->n_spin; ++s1)
-        for(index_t o1 = 0; o1<s->n_orb;++o1){
-            index_t ridx = z + s->model->nk[2]*(y+s->model->nk[1]*x);
-            complex128_t tmp = 0.0;
-            for(index_t b3 = 0; b3<s->bond_sizes[o3];++b3)
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1){
-                index_t rb1b3 = rpb1mb3(s->model->nk,x,y,z,s->tu_ff[s->bond_offsets[o1]+b1].R,
-                                                        s->tu_ff[s->bond_offsets[o3]+b3].R);
-                for(index_t s4 = 0; s4< s->n_spin; ++s4)
-                for(index_t s2 = 0; s2< s->n_spin; ++s2)
-                {
-                    const index_t idx_GFP_p = rb1b3+s->nk*(s->tu_ff[s->bond_offsets[o3]+b3].oto+s->n_orb*
-                            (s4+s->n_spin*(s->tu_ff[s->bond_offsets[o1]+b1].oto + s->n_orb*(s2))));
-
-                    const index_t idx_GFP_m = rb1b3+s->nk*(s->tu_ff[s->bond_offsets[o1]+b1].oto+s->n_orb*
-                            (s2+s->n_spin*(s->tu_ff[s->bond_offsets[o3]+b3].oto + s->n_orb*(s4))));
-
-                    const index_t mi1 =  s->ob_to_orbff[b1+s->n_bonds*o1];
-                    const index_t mi2 =  s->ob_to_orbff[b3+s->n_bonds*o3];
-
-                    const complex128_t idx_P_p = s->interpol_helper[IDX5(s3+s->n_spin*s4,mi2,s1+s->n_spin*s2,
-                                                            mi1,rb1b3,s->n_orbff,POW2(s->n_spin),s->n_orbff,s->nk)];
-
-                    const complex128_t idx_P_m = s->reco_helper[IDX5(s1+s->n_spin*s2,mi1,s3+s->n_spin*s4,
-                                                            mi2,rb1b3,s->n_orbff,POW2(s->n_spin),s->n_orbff,s->nk)];
-
-                    tmp += (s->ff_helper[idx_GFP_p]*idx_P_p
-                            +(s->greensfkt_helper[idx_GFP_m]*idx_P_m));
-                }
+        for(index_t o1 = 0; o1<s->n_orb;++o1)
+        for(index_t b3 = 0; b3<s->bond_sizes[o3];++b3)
+        for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1) {
+            const index_t bo1 = s->bond_offsets[o1]+b1;
+            const index_t bo3 = s->bond_offsets[o3]+b3;
+            const index_t oto1 = s->tu_ff[bo1].oto;
+            const index_t oto3 = s->tu_ff[bo3].oto;
+            const index_t mi1 = s->ob_to_orbff[b1+s->n_bonds*o1];
+            const index_t mi2 = s->ob_to_orbff[b3+s->n_bonds*o3];
+            const index_t* R1 = s->tu_ff[bo1].R;
+            const index_t* R3 = s->tu_ff[bo3].R;
+            for(index_t s4 = 0; s4< s->n_spin; ++s4)
+            for(index_t s2 = 0; s2< s->n_spin; ++s2)
+            for(index_t x = 0; x < s->model->nk[0]; ++x)
+            for(index_t y = 0; y < s->model->nk[1]; ++y)
+            for(index_t z = 0; z < s->model->nk[2]; ++z) {
+                const index_t ridx  = IDX3(x, y, z, s->model->nk[1], s->model->nk[2]);
+                const index_t rb1b3 = rpb1mb3(s->model->nk, x, y, z, R1, R3);
+                const index_t idx_GFP_p = IDX5(s2, oto1, s4, oto3, rb1b3,
+                                               s->n_orb, s->n_spin, s->n_orb, s->nk);
+                const index_t idx_GFP_m = IDX5(s4, oto3, s2, oto1, rb1b3,
+                                               s->n_orb, s->n_spin, s->n_orb, s->nk);
+                const complex128_t idx_P_p = s->interpol_helper[IDX5(s3+s->n_spin*s4, mi2,
+                                                            s1+s->n_spin*s2, mi1, rb1b3,
+                                                            s->n_orbff, POW2(s->n_spin), s->n_orbff, s->nk)];
+                const complex128_t idx_P_m = s->reco_helper[IDX5(s1+s->n_spin*s2, mi1,
+                                                            s3+s->n_spin*s4, mi2, rb1b3,
+                                                            s->n_orbff, POW2(s->n_spin), s->n_orbff, s->nk)];
+                self_en[IDX5(s3, o3, s1, o1, ridx, s->n_orb, s->n_spin, s->n_orb, s->nk)]
+                    -= s->ff_helper[idx_GFP_p]*idx_P_p
+                     + s->greensfkt_helper[idx_GFP_m]*idx_P_m;
             }
-            self_en[ridx+s->nk*(o1+s->n_orb*(s1+s->n_spin*(o3+s->n_orb*s3)))] -= (tmp);
         }
     }
 
@@ -767,42 +781,45 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         FFTW_EXECUTE_DFT(s->ifft_vert_ip,s->reco_helper,s->reco_helper);
         FFTW_EXECUTE_DFT(s->ifft_self_ip,s->greensfkt_helper,s->greensfkt_helper);
 
-        // P and C channel have a similar form -> compress into one
-        #pragma omp parallel for collapse(7) num_threads(diverge_omp_num_threads())
-        for(index_t z = 0; z < s->model->nk[2]; ++z)
-        for(index_t y = 0; y < s->model->nk[1]; ++y)
-        for(index_t x = 0; x < s->model->nk[0]; ++x)
+        // P and C channel have a similar form -> compress into one.
+        // Same restructure as the P block: parallel over (o3, s3, s1, o1)
+        // (race-free self_en slices), spatial loops innermost with z fastest.
+        #pragma omp parallel for collapse(4) num_threads(diverge_omp_num_threads())
         for(index_t o3 = 0; o3<s->n_orb;++o3)
         for(index_t s3 = 0; s3< s->n_spin; ++s3)
         for(index_t s1 = 0; s1< s->n_spin; ++s1)
-        for(index_t o1 = 0; o1<s->n_orb;++o1){
-            index_t ridx = z + s->model->nk[2]*(y+s->model->nk[1]*x);
-            complex128_t tmp = 0.0;
-            for(index_t b3 = 0; b3<s->bond_sizes[o3];++b3)
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1)
+        for(index_t o1 = 0; o1<s->n_orb;++o1)
+        for(index_t b3 = 0; b3<s->bond_sizes[o3];++b3)
+        for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1) {
+            const index_t bo1 = s->bond_offsets[o1]+b1;
+            const index_t bo3 = s->bond_offsets[o3]+b3;
+            const index_t oto1 = s->tu_ff[bo1].oto;
+            const index_t oto3 = s->tu_ff[bo3].oto;
+            const index_t mi1 = s->ob_to_orbff[b1+s->n_bonds*o1];
+            const index_t mi2 = s->ob_to_orbff[b3+s->n_bonds*o3];
+            const index_t* R1 = s->tu_ff[bo1].R;
+            const index_t* R3 = s->tu_ff[bo3].R;
             for(index_t s4 = 0; s4< s->n_spin; ++s4)
             for(index_t s2 = 0; s2< s->n_spin; ++s2)
-            {
-                index_t rb1b3 = rpb1mb3(s->model->nk,x,y,z,s->tu_ff[s->bond_offsets[o1]+b1].R,
-                                                        s->tu_ff[s->bond_offsets[o3]+b3].R);
-                const index_t idx_GFC_m = rb1b3+s->nk*(s->tu_ff[s->bond_offsets[o1]+b1].oto+s->n_orb*
-                        (s4+s->n_spin*(s->tu_ff[s->bond_offsets[o3]+b3].oto + s->n_orb*s2)));
-
-                const index_t idx_GFC_p = rb1b3+s->nk*(s->tu_ff[s->bond_offsets[o3]+b3].oto+s->n_orb*
-                        (s2+s->n_spin*(s->tu_ff[s->bond_offsets[o1]+b1].oto + s->n_orb*s4)));
-
-                const index_t mi1 =  s->ob_to_orbff[b1+s->n_bonds*o1];
-                const index_t mi2 =  s->ob_to_orbff[b3+s->n_bonds*o3];
-                const complex128_t idx_C_p = s->interpol_helper[IDX5(s3+s->n_spin*s4,mi2,s1+s->n_spin*s2,
-                                                        mi1,rb1b3, s->n_orbff,POW2(s->n_spin),s->n_orbff,s->nk)];
-
-                const complex128_t idx_C_m = s->reco_helper[IDX5(s1+s->n_spin*s2,mi1,s3+s->n_spin*s4,mi2,rb1b3,
-                                                                                s->n_orbff,POW2(s->n_spin),s->n_orbff,s->nk)];
-
-                tmp+= s->greensfkt_helper[idx_GFC_p]*idx_C_p
-                        +s->ff_helper[idx_GFC_m]*idx_C_m;
+            for(index_t x = 0; x < s->model->nk[0]; ++x)
+            for(index_t y = 0; y < s->model->nk[1]; ++y)
+            for(index_t z = 0; z < s->model->nk[2]; ++z) {
+                const index_t ridx  = IDX3(x, y, z, s->model->nk[1], s->model->nk[2]);
+                const index_t rb1b3 = rpb1mb3(s->model->nk, x, y, z, R1, R3);
+                const index_t idx_GFC_m = IDX5(s2, oto3, s4, oto1, rb1b3,
+                                               s->n_orb, s->n_spin, s->n_orb, s->nk);
+                const index_t idx_GFC_p = IDX5(s4, oto1, s2, oto3, rb1b3,
+                                               s->n_orb, s->n_spin, s->n_orb, s->nk);
+                const complex128_t idx_C_p = s->interpol_helper[IDX5(s3+s->n_spin*s4, mi2,
+                                                            s1+s->n_spin*s2, mi1, rb1b3,
+                                                            s->n_orbff, POW2(s->n_spin), s->n_orbff, s->nk)];
+                const complex128_t idx_C_m = s->reco_helper[IDX5(s1+s->n_spin*s2, mi1,
+                                                            s3+s->n_spin*s4, mi2, rb1b3,
+                                                            s->n_orbff, POW2(s->n_spin), s->n_orbff, s->nk)];
+                self_en[IDX5(s3, o3, s1, o1, ridx, s->n_orb, s->n_spin, s->n_orb, s->nk)]
+                    -= s->greensfkt_helper[idx_GFC_p]*idx_C_p
+                     + s->ff_helper[idx_GFC_m]*idx_C_m;
             }
-            self_en[ridx+s->nk*(o1+s->n_orb*(s1+s->n_spin*(o3+s->n_orb*s3)))] -= tmp;
         }
     }
 
