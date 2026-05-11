@@ -204,9 +204,9 @@ void tu_selfenergy_flow( tu_selfenergy_t* s, complex128_t* self_en,
         const double prefac_sub, const double lambda ) {
     if (s->nk == 1 && !s->SU2) {
         selfenergy_flow_rs( s, self_en, P_in, C_in, D_in, GF, prefac_sub, lambda );
-    } else if(s->nk == 1 && s->SU2) {
-        selfenergy_flow_rs_SU2( s, self_en, P_in, C_in, D_in, GF, prefac_sub, lambda );
-    } else if(s->nk != 1 && !s->SU2) {
+    } else if (s->nk == 1 && s->SU2) {
+        selfenergy_flow_rs_SU2( s, self_en, P_in, C_in, D_in, GF, prefac_sub, lambda  );
+    } else if (s->nk != 1 && !s->SU2) {
         selfenergy_flow_mom( s, self_en, P_in, C_in, D_in, GF, prefac_sub, lambda );
     } else {
         selfenergy_flow_mom_SU2( s, self_en, P_in, C_in, D_in, GF, prefac_sub, lambda );
@@ -494,10 +494,10 @@ static void selfenergy_flow_rs( tu_selfenergy_t* s, complex128_t* self_en,
         for (index_t s1=0; s1<s->n_spin; ++s1)
         for (index_t o1=0; o1<s->n_orb; ++o1) {
             complex128_t tmp = 0.0;
-            for (index_t s4 = 0; s4<s->n_spin; ++s4)
-            for (index_t s2 = 0; s2<s->n_spin; ++s2)
-            for (index_t b3 = 0; b3<s->bond_sizes[o3]; ++b3)
-            for (index_t b1 = 0; b1<s->bond_sizes[o1]; ++b1) {
+            for (index_t s4=0; s4<s->n_spin; ++s4)
+            for (index_t s2=0; s2<s->n_spin; ++s2)
+            for (index_t b3=0; b3<s->bond_sizes[o3]; ++b3)
+            for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
                 // +
                 const index_t idxGF_P_p = s->tu_ff[s->bond_offsets[o3]+b3].oto + s->n_orb
                             *(s4+s->n_spin*(s->tu_ff[s->bond_offsets[o1]+b1].oto + s->n_orb*s2));
@@ -596,12 +596,12 @@ static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
     }
     if (s->C_flow && C_in) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for(index_t o1 = 0; o1<s->n_orb;++o1)
-        for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1) {
+        for (index_t o1=0; o1<s->n_orb; ++o1)
+        for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
             const index_t o3 = s->tu_ff[s->bond_offsets[o1]+b1].oto;
             complex128_t tmp = 0.0;
-            for(index_t o4 = 0; o4<s->n_orb;++o4)
-            for(index_t b4 = 0; b4<s->bond_sizes[o4];++b4) {
+            for (index_t o4=0; o4<s->n_orb; ++o4)
+            for (index_t b4=0; b4<s->bond_sizes[o4]; ++b4) {
                 tmp -= creal(GF[o4+s->n_orb*s->tu_ff[s->bond_offsets[o4]+b4].oto]*
                      C_in[s->ob_to_orbff[b1+s->n_bonds*o1]+s->n_orbff*s->ob_to_orbff[b4+s->n_bonds*o4]]);
 
@@ -609,11 +609,11 @@ static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
             self_en[o1+s->n_orb*o3] -= 2.0*(prefac*tmp);
         }
         #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
-        for(index_t o3 = 0; o3<s->n_orb;++o3)
-        for(index_t o1 = 0; o1<s->n_orb;++o1){
+        for (index_t o3=0; o3<s->n_orb; ++o3)
+        for (index_t o1=0; o1<s->n_orb; ++o1) {
             complex128_t tmp = 0.0;
-            for(index_t b3 = 0; b3<s->bond_sizes[o3];++b3)
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1){
+            for (index_t b3=0; b3<s->bond_sizes[o3]; ++b3)
+            for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
 
                 const index_t idx_GF = s->tu_ff[s->bond_offsets[o1]+b1].oto
                                     +s->n_orb*s->tu_ff[s->bond_offsets[o3]+b3].oto;
@@ -625,28 +625,27 @@ static void selfenergy_flow_rs_SU2( tu_selfenergy_t* s, complex128_t* self_en,
             self_en[o1+s->n_orb*o3] -= prefac*2.0*(tmp);
         }
     }
-    if(s->P_flow) {
+    if (s->P_flow) {
         #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
-        for(index_t o3 = 0; o3<s->n_orb;++o3)
-        for(index_t o1 = 0; o1<s->n_orb;++o1){
+        for (index_t o3=0; o3<s->n_orb; ++o3)
+        for (index_t o1=0; o1<s->n_orb; ++o1) {
             complex128_t tmp = 0.0;
-            for(index_t b3 = 0; b3<s->bond_sizes[o3];++b3)
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1){
+            for (index_t b3=0; b3<s->bond_sizes[o3]; ++b3)
+            for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
 
                 const index_t idx_GF = s->tu_ff[s->bond_offsets[o1]+b1].oto
                                     +s->n_orb*s->tu_ff[s->bond_offsets[o3]+b3].oto;
                 const index_t idx_P = s->ob_to_orbff[b1+s->n_bonds*o1]+s->n_orbff*s->ob_to_orbff[b3+s->n_bonds*o3];
 
-                tmp+= creal(GF[idx_GF]*
-                        (2.0*P_in[idx_P]));
+                tmp += creal(GF[idx_GF] * 2.0*P_in[idx_P]);
             }
             self_en[o1+s->n_orb*o3] -= prefac*2.0*(tmp);
         }
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for(index_t o1 = 0; o1<s->n_orb;++o1)
-        for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1){
-            for(index_t o4 = 0; o4<s->n_orb;++o4)
-            for(index_t b4 = 0; b4<s->bond_sizes[o4];++b4){
+        for (index_t o1=0; o1<s->n_orb; ++o1)
+        for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
+            for (index_t o4=0; o4<s->n_orb; ++o4)
+            for (index_t b4=0; b4<s->bond_sizes[o4]; ++b4) {
                 const index_t o3 = s->tu_ff[s->bond_offsets[o4]+b4].oto;
                 self_en[o1+s->n_orb*o3] += 2.0*prefac
                                 *creal(GF[s->tu_ff[s->bond_offsets[o1]+b1].oto+s->n_orb*o4]
@@ -724,10 +723,10 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         FFTW_EXECUTE_DFT(s->fft_self_oop,s->greensfkt_helper,s->ff_helper);
 
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t i = 0; i < POW2(s->n_orbff)*POW4(s->n_spin)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_orbff)*POW4(s->n_spin)*s->nk; ++i)
             s->reco_helper[i] = conj(s->reco_helper[i]);
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             s->greensfkt_helper[i] = conj(s->greensfkt_helper[i]);
 
         FFTW_EXECUTE_DFT(s->ifft_vert_ip,s->reco_helper,s->reco_helper);
@@ -777,10 +776,10 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         FFTW_EXECUTE_DFT(s->ifft_self_oop,s->greensfkt_helper,s->ff_helper);
 
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t i = 0; i < POW2(s->n_orbff)*POW4(s->n_spin)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_orbff)*POW4(s->n_spin)*s->nk; ++i)
             s->reco_helper[i] = conj(s->reco_helper[i]);
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             s->greensfkt_helper[i] = conj(s->greensfkt_helper[i]);
 
         FFTW_EXECUTE_DFT(s->ifft_vert_ip,s->reco_helper,s->reco_helper);
@@ -831,7 +830,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
     diverge_mpi_allreduce_complex_sum_inplace(self_en, selfsize);
     if (s->nk != s->nktot) {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
-        for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
         transpose(self_en,s->ff_helper, s->nk, s->n_orb*s->n_spin);
@@ -841,7 +840,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
         tu_selfenergy_fft_interpolate(s,self_en);
     } else {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
-        for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
 
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
@@ -859,18 +858,17 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
     //set all elements to zero
     ZERO_OUT( self_en, blocksize_self );
     ZERO_OUT( s->ff_helper, blocksize_self );
+    ZERO_OUT( s->interpol_helper, s->n_orbff*POW2(s->n_spin) );
     // Hartree D/Fock C
     if (phonons && D_in && s->D_flow) tu_data_phonons_gen_vert( phonons, 0.0, D_in, 1.0 );
 
-    ZERO_OUT( s->interpol_helper, s->n_orbff*POW2(s->n_spin) );
-    if(diverge_mpi_comm_rank() == 0) {
+    if (diverge_mpi_comm_rank() == 0) {
         if (s->D_flow || s->C_flow ) {
             #pragma omp parallel for schedule(dynamic) num_threads(diverge_omp_num_threads())
-            for(index_t o4 = 0; o4<s->n_orb;++o4)
-            for(index_t b4 = 0; b4<s->bond_sizes[o4];++b4)
-            {
+            for (index_t o4=0; o4<s->n_orb; ++o4)
+            for (index_t b4=0; b4<s->bond_sizes[o4]; ++b4) {
                 complex128_t tmp = 0.0;
-                for(index_t k = 0; k<s->nk;++k){
+                for (index_t k=0; k<s->nk; ++k) {
                     const complex128_t GF_prefac = (GF[k+s->nk*(o4+s->n_orb*s->tu_ff[s->bond_offsets[o4]+b4].oto)])
                                             +conj(GF[k+s->nk*(s->tu_ff[s->bond_offsets[o4]+b4].oto+s->n_orb*o4)]);
                     tmp += GF_prefac*s->ffkmesh[k+s->nk*s->tu_ff[s->bond_offsets[o4]+b4].ffidx];
@@ -880,12 +878,12 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         }
         if (s->D_flow) {
             #pragma omp parallel for collapse(2) schedule(dynamic) num_threads(diverge_omp_num_threads())
-            for(index_t q = 0; q<s->nk;++q)
-            for(index_t o1 = 0; o1<s->n_orb;++o1)
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1){
+            for (index_t q=0; q<s->nk; ++q)
+            for (index_t o1=0; o1<s->n_orb; ++o1)
+            for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
                 complex128_t tmp = 0.0;
-                for(index_t o4 = 0; o4<s->n_orb;++o4)
-                for(index_t b4 = 0; b4<s->bond_sizes[o4];++b4){
+                for (index_t o4=0; o4<s->n_orb; ++o4)
+                for (index_t b4=0; b4<s->bond_sizes[o4]; ++b4) {
                     const index_t mi1 = s->ob_to_orbff[b1+s->n_bonds*o1];
                     const index_t mi2 = s->ob_to_orbff[b4+s->n_bonds*o4];
                     tmp += s->interpol_helper[s->bond_offsets[o4]+b4] * 2.0 * D_in[mi1+s->n_orbff*(mi2)];
@@ -896,12 +894,12 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         }
         if (s->C_flow && C_in) {
             #pragma omp parallel for collapse(2) schedule(dynamic) num_threads(diverge_omp_num_threads())
-            for(index_t q = 0; q<s->nk;++q)
-            for(index_t o1 = 0; o1<s->n_orb;++o1)
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1){
+            for (index_t q=0; q<s->nk; ++q)
+            for (index_t o1=0; o1<s->n_orb; ++o1)
+            for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
                 complex128_t tmp = 0.0;
-                for(index_t o4 = 0; o4<s->n_orb;++o4)
-                for(index_t b4 = 0; b4<s->bond_sizes[o4];++b4){
+                for (index_t o4=0; o4<s->n_orb; ++o4)
+                for (index_t b4=0; b4<s->bond_sizes[o4]; ++b4) {
                     const index_t mi1 = s->ob_to_orbff[b1+s->n_bonds*o1];
                     const index_t mi2 = s->ob_to_orbff[b4+s->n_bonds*o4];
                     tmp -= s->interpol_helper[s->bond_offsets[o4]+b4] * C_in[mi1+s->n_orbff*(mi2)];
@@ -934,26 +932,26 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         FFTW_EXECUTE_DFT(s->ifft_vert_oop,s->reco_helper,s->interpol_helper);
         FFTW_EXECUTE_DFT(s->ifft_self_oop,s->greensfkt_helper,s->ff_helper);
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t i = 0; i < POW2(s->n_orbff)*POW4(s->n_spin)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_orbff)*POW4(s->n_spin)*s->nk; ++i)
             s->reco_helper[i] = conj(s->reco_helper[i]);
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             s->greensfkt_helper[i] = conj(s->greensfkt_helper[i]);
         FFTW_EXECUTE_DFT(s->ifft_vert_ip,s->reco_helper,s->reco_helper);
         FFTW_EXECUTE_DFT(s->ifft_self_ip,s->greensfkt_helper,s->greensfkt_helper);
 
         // P and C have similar form -> compress into one
         #pragma omp parallel for collapse(5) schedule(dynamic) num_threads(diverge_omp_num_threads())
-        for(index_t z = 0; z < s->model->nk[2]; ++z)
-        for(index_t y = 0; y < s->model->nk[1]; ++y)
-        for(index_t x = 0; x < s->model->nk[0]; ++x)
-        for(index_t o3 = 0; o3<s->n_orb;++o3)
-        for(index_t o1 = 0; o1<s->n_orb;++o1) {
+        for (index_t z=0; z<s->model->nk[2]; ++z)
+        for (index_t y=0; y<s->model->nk[1]; ++y)
+        for (index_t x=0; x<s->model->nk[0]; ++x)
+        for (index_t o3=0; o3<s->n_orb; ++o3)
+        for (index_t o1=0; o1<s->n_orb; ++o1) {
             complex128_t tmp = 0.0;
             index_t ridx = z + s->model->nk[2]*(y+s->model->nk[1]*x);
 
-            for(index_t b3 = 0; b3<s->bond_sizes[o3];++b3)
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1) {
+            for (index_t b3=0; b3<s->bond_sizes[o3]; ++b3)
+            for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
                 index_t rb1b3 = rpb1mb3(s->model->nk,x,y,z,s->tu_ff[s->bond_offsets[o1]+b1].R,
                                                                 s->tu_ff[s->bond_offsets[o3]+b3].R);
                 const index_t mi1 =  s->ob_to_orbff[b1+s->n_bonds*o1];
@@ -981,25 +979,25 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         FFTW_EXECUTE_DFT(s->fft_self_oop,s->greensfkt_helper,s->ff_helper);
 
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t i = 0; i < POW2(s->n_orbff)*POW4(s->n_spin)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_orbff)*POW4(s->n_spin)*s->nk; ++i)
             s->reco_helper[i] = conj(s->reco_helper[i]);
         #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-        for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             s->greensfkt_helper[i] = conj(s->greensfkt_helper[i]);
         FFTW_EXECUTE_DFT(s->ifft_vert_ip,s->reco_helper,s->reco_helper);
         FFTW_EXECUTE_DFT(s->fft_self_ip,s->greensfkt_helper,s->greensfkt_helper);
 
         #pragma omp parallel for collapse(5) schedule(dynamic) num_threads(diverge_omp_num_threads())
-        for(index_t z = 0; z < s->model->nk[2]; ++z)
-        for(index_t y = 0; y < s->model->nk[1]; ++y)
-        for(index_t x = 0; x < s->model->nk[0]; ++x)
-        for(index_t o3 = 0; o3<s->n_orb;++o3)
-        for(index_t o1 = 0; o1<s->n_orb;++o1) {
+        for (index_t z=0; z<s->model->nk[2]; ++z)
+        for (index_t y=0; y<s->model->nk[1]; ++y)
+        for (index_t x=0; x<s->model->nk[0]; ++x)
+        for (index_t o3=0; o3<s->n_orb; ++o3)
+        for (index_t o1=0; o1<s->n_orb; ++o1) {
             complex128_t tmp = 0.0;
             index_t ridx = z + s->model->nk[2]*(y+s->model->nk[1]*x);
 
-            for(index_t b3 = 0; b3<s->bond_sizes[o3];++b3)
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1){
+            for (index_t b3=0; b3<s->bond_sizes[o3]; ++b3)
+            for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
                 index_t rb1b3 = rpb1mb3(s->model->nk,x,y,z,s->tu_ff[s->bond_offsets[o1]+b1].R,
                                                                 s->tu_ff[s->bond_offsets[o3]+b3].R);
                 // + Lambda
@@ -1018,15 +1016,15 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
             self_en[ridx+s->nk*(o1+s->n_orb*o3)] -= (tmp)*2.0;
         }
         #pragma omp parallel for collapse(4) schedule(dynamic) num_threads(diverge_omp_num_threads())
-        for(index_t z = 0; z < s->model->nk[2]; ++z)
-        for(index_t y = 0; y < s->model->nk[1]; ++y)
-        for(index_t x = 0; x < s->model->nk[0]; ++x)
-        for(index_t o1 = 0; o1<s->n_orb;++o1)
-        for(index_t o4 = 0; o4<s->n_orb;++o4)
-        for(index_t b4 = 0; b4<s->bond_sizes[o4];++b4) {
+        for (index_t z=0; z<s->model->nk[2]; ++z)
+        for (index_t y=0; y<s->model->nk[1]; ++y)
+        for (index_t x=0; x<s->model->nk[0]; ++x)
+        for (index_t o1=0; o1<s->n_orb; ++o1)
+        for (index_t o4=0; o4<s->n_orb; ++o4)
+        for (index_t b4=0; b4<s->bond_sizes[o4]; ++b4) {
             complex128_t tmp = 0.0;
             index_t ridx = z + s->model->nk[2]*(y+s->model->nk[1]*x);
-            for(index_t b1 = 0; b1<s->bond_sizes[o1];++b1) {
+            for (index_t b1=0; b1<s->bond_sizes[o1]; ++b1) {
                 const index_t mi1 =  s->ob_to_orbff[b1+s->n_bonds*o1];
                 const index_t mi2 =  s->ob_to_orbff[b4+s->n_bonds*o4];
                 index_t gfrb1b3 = rpb1pb3(s->model->nk,x,y,z,s->tu_ff[s->bond_offsets[o1]+b1].R,
@@ -1054,7 +1052,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
 
     if (s->nk != s->nktot) {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
-        for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
         transpose(self_en,s->ff_helper, s->nk, s->n_orb*s->n_spin);
@@ -1064,7 +1062,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
         tu_selfenergy_fft_interpolate(s,self_en);
     } else {
         const double prefac = pref_subst/(2.0*M_PI*(double)s->nk*(double)s->nk);
-        for(index_t i = 0; i < POW2(s->n_spin*s->n_orb)*s->nk; ++i)
+        for (index_t i=0; i<POW2(s->n_spin*s->n_orb)*s->nk; ++i)
             self_en[i] *= prefac;
         FFTW_EXECUTE_DFT(s->fft_fullself_ip,self_en,self_en);
     }
