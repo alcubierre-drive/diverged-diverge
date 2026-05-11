@@ -4,6 +4,7 @@
 #include "mergesort.h"
 #include "hartree_fock.h"
 #include "batched_eigen.h"
+#include "batched_zgemd.h"
 #include "../diverge_model.h"
 #include "../diverge_flow_step.h"
 #include "../diverge_internals_struct.h"
@@ -134,16 +135,8 @@ static void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* 
     for (index_t i=0; i<m->nk*m->nb; ++i)
         dbuf[i] = cabs(Lambda)==0.0 ? fermi_zero(m->E[i]) : fermi(m->E[i], cabs(Lambda));
 
-    // calculate the 'orbital space' Fermi function (code from default gfill)
-    #pragma omp parallel for collapse(3) num_threads(diverge_omp_num_threads())
-    for (index_t k=0; k<m->nk; ++k)
-    for (index_t o=0; o<m->nb; ++o)
-    for (index_t p=0; p<m->nb; ++p) {
-        complex128_t tmp = 0.0;
-        for (index_t b=0; b<m->nb; ++b)
-            tmp += m->U[IDX3(k,b,o,m->nb,m->nb)] * conj(m->U[IDX3(k,b,p,m->nb,m->nb)]) * dbuf[IDX2(k,b,m->nb)];
-        dest[IDX3(k,o,p, m->nb,m->nb)] = tmp;
-    }
+    // calculate the 'orbital space' Fermi function
+    batched_zgemd_r( dest, m->U, dbuf, 1.0, 0.0, m->nb, m->nk );
 
     // and copy it over to the -Lambda GF (TODO: not needed?!)
     memcpy( dest + nk_nb2, dest, sizeof*dest * nk_nb2 );

@@ -566,4 +566,62 @@ CT_TEST_NAME(allchan,"self,BHK") {
     diverge_model_free(mod);
 }
 
+CT_TEST_NAME(allchan_nonSU2,"self,BHK,non-SU2") {
+    diverge_model_t* m1 = KWARGS(gen_square_lat_hub, .nkx=12, .nky=12, .U=5);
+    strcpy(m1->name, "sq_hub_SU2");
+
+    diverge_model_t* m2 = KWARGS(gen_square_lat_hub, .nkx=12, .nky=12, .U=5);
+    // nonSU2-ify model m2
+    diverge_model_internals_reset(m2);
+    m2->hop = realloc(m2->hop, sizeof*m2->hop * m2->n_hop * 2);
+    m2->n_spin = 2;
+    m2->SU2 = 0;
+    for (index_t i=0; i<m2->n_hop; ++i) {
+        memcpy(&m2->hop[m2->n_hop+i], &m2->hop[i], sizeof(rs_hopping_t));
+        m2->hop[m2->n_hop+i].s1 = m2->hop[m2->n_hop+i].s2 = 1;
+    }
+    m2->n_hop *= 2;
+    for (rs_vertex_t* v=m2->vert; v!=m2->vert+m2->n_vert; ++v) v->s1 = -1;
+    diverge_model_internals_common(m2);
+    strcpy(m2->name, "sq_hub_nonSU2");
+
+    diverge_model_internals_tu(m1, 1.1);
+    diverge_model_internals_tu(m2, 1.1);
+
+    diverge_flow_step_t* s1 = diverge_flow_step_init_any(m1, "PCDS");
+    diverge_flow_step_t* s2 = diverge_flow_step_init_any(m2, "PCDS");
+    diverge_euler_t eu = diverge_euler_defaults;
+    eu.maxiter = 100;
+    double vmax1=0, pmax1=0, cmax1=0, dmax1=0;
+    double vmax2=0, pmax2=0, cmax2=0, dmax2=0;
+    int ll = mpi_loglevel_get(); if (ll >= mpi_loglevel_log) mpi_loglevel_set(mpi_loglevel_log);
+    do {
+        diverge_flow_step_euler( s1, eu.Lambda, eu.dLambda );
+        diverge_flow_step_refill( s1, 0.5, NULL );
+        pmax1 = diverge_flow_step_eigchan( s1, 'p', 0 ),
+        cmax1 = diverge_flow_step_eigchan( s1, 'm', 0 ),
+        dmax1 = diverge_flow_step_eigchan( s1, 'h', 0 );
+        vmax1 = MAX(MAX(pmax1, cmax1),dmax1);
+
+        diverge_flow_step_euler( s2, eu.Lambda, eu.dLambda );
+        diverge_flow_step_refill( s2, 0.5, NULL );
+        pmax2 = diverge_flow_step_eigchan( s2, 'p', 0 ),
+        cmax2 = diverge_flow_step_eigchan( s2, 'c', 0 ),
+        dmax2 = diverge_flow_step_eigchan( s2, 'd', 0 );
+        vmax2 = MAX(MAX(pmax2, cmax2),dmax2);
+
+        mpi_log_printf("%s: %2li %.5e %.5e %.5e…", m1->name, eu.niter, eu.Lambda, vmax1, vmax2);
+        if (mpi_loglevel_get() >= mpi_loglevel_log) mpi_eprintf( "\n%c[1A", 27 ), fflush(stderr);
+    } while (diverge_euler_next(&eu, vmax1));
+    if (mpi_loglevel_get() >= mpi_loglevel_log) mpi_eprintf("\n"), fflush(stderr);
+    mpi_loglevel_set(ll);
+
+    CT_CHECK( fabs(vmax1-vmax2) < 1.e-8 );
+
+    diverge_flow_step_free(s1);
+    diverge_flow_step_free(s2);
+    diverge_model_free(m1);
+    diverge_model_free(m2);
+}
+
 #endif // DIVERGE_SKIP_TESTS
