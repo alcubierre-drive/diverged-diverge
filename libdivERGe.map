@@ -279,6 +279,7 @@ DIVERGE_UNSTABLE {
         diverge_phonons_apply_asr;
         diverge_phonons_apply_sgnsqrt;
         diverge_phonons_asr;
+        diverge_phonons_asr_n_orb;
         diverge_phonons_asr_vertex;
         diverge_phonons_asr_vertex_set_sorted_mode;
         diverge_phonons_change_regulator;

@@ -898,6 +898,10 @@ if not _libs["divERGe"] is None:
     phonons_asr.argtypes = [c_voidp, c_voidp]
     phonons_asr.restype = c_voidp
 
+    phonons_asr_n_orb = _libs["divERGe"].get("diverge_phonons_asr_n_orb", "cdecl")
+    phonons_asr_n_orb.argtypes = [c_voidp, c_voidp, index_t]
+    phonons_asr_n_orb.restype = c_voidp
+
     phonons_apply_asr = _libs["divERGe"].get("diverge_phonons_apply_asr", "cdecl")
     phonons_apply_asr.argtypes = [POINTER(model_t)]
     phonons_apply_asr.restype = None
