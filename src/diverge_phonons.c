@@ -16,16 +16,22 @@
 #include <assert.h>
 
 rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop ) {
-    mpi_log_printf( "ASR (hoppings) with phonon orb index -> (site, xyz)\n" );
     index_t n_hop = *n_ph_hop;
-
     index_t n_orb = 0;
     for (index_t i=0; i<n_hop; ++i) {
         index_t om = MAX(ph_hop[i].o1, ph_hop[i].o2);
         n_orb = MAX(n_orb, om);
     }
-    n_orb = (n_orb+1)/3;
-    mpi_vrb_printf( "found (%li,3) orbitals\n", n_orb );
+    n_orb = (n_orb+1);
+    mpi_vrb_printf( "found %li=(%li,3) orbitals\n", n_orb, n_orb/3 );
+    return diverge_phonons_asr_n_orb( ph_hop, n_ph_hop, n_orb );
+}
+
+rs_hopping_t* diverge_phonons_asr_n_orb( rs_hopping_t* ph_hop, index_t* n_ph_hop,
+        index_t n_orb ) {
+    mpi_log_printf( "ASR (hoppings) with phonon orb index -> (site, xyz)\n" );
+    index_t n_hop = *n_ph_hop;
+    n_orb /= 3;
 
     complex128_t* self_forces = calloc(n_orb*9, sizeof*self_forces);
     for (index_t i=0; i<n_hop; ++i) {
@@ -51,7 +57,7 @@ rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop ) {
 }
 
 void diverge_phonons_apply_asr( diverge_model_t* m ) {
-    m->hop = diverge_phonons_asr( m->hop, &m->n_hop );
+    m->hop = diverge_phonons_asr_n_orb( m->hop, &m->n_hop, m->n_orb );
 }
 
 void* diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {

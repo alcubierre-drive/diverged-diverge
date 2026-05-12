@@ -97,16 +97,28 @@ typedef struct ph_vertex_t {
  *      hoppings on return.
  *
  * :returns rs_hopping_t*: hopping parameter array, reallocated.
+ *
+ * .. note:: You might want to use :c:func:`diverge_phonons_asr_n_orb` if your
+ *           system is two dimensional, beacuse then the number of orbital
+ *           detection could be broken.
  */
 rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop );
 
 /**
- * same as :c:func:`diverge_phonons_asr` except that it reallocates m->hop and
- * sets m->n_hop, i.e.:
+ * same as :c:func:`diverge_phonons_asr`, but without automatic detection of the
+ * maximum number of orbitals. Especially useful if you have, e.g., a two
+ * dimensional system.
+ */
+rs_hopping_t* diverge_phonons_asr_n_orb( rs_hopping_t* ph_hop, index_t* n_ph_hop,
+        index_t n_orb );
+
+/**
+ * same as :c:func:`diverge_phonons_asr_n_orb` except that it reallocates m->hop
+ * and sets m->n_hop, i.e.:
  *
  * .. sourcecode:: C
  *
- *  m->hop = diverge_phonons_asr( m->hop, &m->n_hop );
+ *  m->hop = diverge_phonons_asr_n_orb( m->hop, &m->n_hop, m->n_orb );
  */
 void diverge_phonons_apply_asr( diverge_model_t* m );
 
