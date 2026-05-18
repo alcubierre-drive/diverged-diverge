@@ -931,6 +931,10 @@ if not _libs["divERGe"] is None:
     phonons_asr_vertex.argtypes = [c_voidp, c_voidp]
     phonons_asr_vertex.restype = c_voidp
 
+    phonons_asr_vertex_n_orb = _libs["divERGe"].get("diverge_phonons_asr_vertex_n_orb", "cdecl")
+    phonons_asr_vertex_n_orb.argtypes = [c_voidp, c_voidp, index_t]
+    phonons_asr_vertex_n_orb.restype = c_voidp
+
     phonons_asr_vertex_set_sorted_mode = _libs["divERGe"].get("diverge_phonons_asr_vertex_set_sorted_mode", "cdecl")
     phonons_asr_vertex_set_sorted_mode.argtypes = [c_int]
     phonons_asr_vertex_set_sorted_mode.restype = c_int

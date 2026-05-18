@@ -134,9 +134,13 @@ static inline void vtx_push( vtree_node_t* node, void* ctx ) {
 }
 
 static int DIVERGE_PHONONS_ASR_VERTEX_USE_COUNT_DISPL_SORTED = 0;
-static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t* n_vtx );
+static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb );
 
 ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx ) {
+    return diverge_phonons_asr_vertex_n_orb( vtx, n_vtx, -1 );
+}
+
+ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb ) {
     mpi_log_printf( "ASR (vertices) with phonon orb index -> (site, xyz)\n" );
 
     index_t n_vert_nontriv = 0;
@@ -147,17 +151,22 @@ ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx ) {
         mpi_wrn_printf( "found %li non-FFT elph components (.mode!=0), ASR maybe broken\n", n_vert_nontriv );
 
     if (DIVERGE_PHONONS_ASR_VERTEX_USE_COUNT_DISPL_SORTED)
-        return diverge_phonons_asr_vertex_sorted( vtx, n_vtx );
+        return diverge_phonons_asr_vertex_sorted( vtx, n_vtx, n_orb );
     xvtree_t* x = xvtree_init(MIN(1024, *n_vtx));
 
-    index_t n_orb = 0;
+    int find_orbs = (n_orb <= -1);
+    if (find_orbs) n_orb = 0;
     for (index_t v=0; v<*n_vtx; ++v) {
         vtree_node_t* nd = xvtree_find_or_insert(x, ph_vertex_to_asr(vtx[v]));
         nd->val += vtx[v].g;
-        n_orb = MAX(n_orb, vtx[v].OA);
+        if (find_orbs) n_orb = MAX(n_orb, vtx[v].OA);
     }
-    n_orb = (n_orb+1)/3;
-    mpi_vrb_printf( "found (%li,3) orbitals\n", n_orb );
+    if (find_orbs) {
+        n_orb = (n_orb+1)/3;
+        mpi_vrb_printf( "found (%li,3) orbitals\n", n_orb );
+    } else {
+        n_orb /= 3;
+    }
 
     index_t n_add = xvtree_size( x ); // # vertices to add (w/o orbitals!)
 
@@ -186,19 +195,21 @@ static inline int ph_vertex_cmp( const ph_vertex_t A, const ph_vertex_t B ) {
 #define MERGESORT_COMP ph_vertex_cmp
 MERGESORT_IMPL( ph_vertex_sort, ph_vertex_t )
 
-static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t* n_vtx ) {
+static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb ) {
     // sort vertices according to the comparison function ph_vertex_cmp
     ph_vertex_sort( vtx, *n_vtx, diverge_omp_num_threads(), 0 );
+
+    int find_orbs = (n_orb <= -1);
 
     // count unique "formfactors" and the number of orbitals
     VECTOR_INIT( ph_vertex_t, asr_ff );
     VECTOR_INIT( index_t, asr_ff_displ );
     VECTOR_INIT( index_t, asr_ff_count );
-    index_t n_orb = 0;
+    if (find_orbs) n_orb = 0;
     {
         ph_vertex_t* prev_ff = NULL;
         for (index_t v=0; v<*n_vtx; ++v) {
-            n_orb = MAX(n_orb, vtx[v].OA);
+            if (find_orbs) n_orb = MAX(n_orb, vtx[v].OA);
             if (!prev_ff) {
                 prev_ff = vtx + v;
                 VECTOR_PUSH_BACK( asr_ff, *prev_ff );
@@ -212,8 +223,12 @@ static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t
             }
         }
     }
-    n_orb = (n_orb + 1)/3;
-    mpi_vrb_printf( "found (%li,3) orbitals\n", n_orb );
+    if (find_orbs) {
+        n_orb = (n_orb + 1)/3;
+        mpi_vrb_printf( "found (%li,3) orbitals\n", n_orb );
+    } else {
+        n_orb /= 3;
+    }
 
     VECTOR_SHRINK_TO_FIT( asr_ff )
     VECTOR_PUSH_BACK( asr_ff_displ, *n_vtx ); // in order to easily count :)

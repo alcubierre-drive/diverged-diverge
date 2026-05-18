@@ -206,6 +206,13 @@ double diverge_phonons_change_regulator( double eta );
 ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx );
 
 /**
+ * same as :c:func:`diverge_phonons_asr_vertex` but with explicit control over
+ * the number of 'orbitals' (cf. :c:func:`diverge_phonons_asr`,
+ * :c:func:`diverge_phonons_asr_n_orb`)
+ */
+ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb );
+
+/**
  * change implementation behavior of :c:func:`diverge_phonons_asr_vertex` to an
  * implementation that sorts all vertex elements and then looks at
  * displacements/counts of unequal 'formfactor' components in order to sum them

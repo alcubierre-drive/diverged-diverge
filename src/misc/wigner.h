@@ -29,6 +29,11 @@ typedef struct ph_vertex_t ph_vertex_t;
  * used in conjunction with :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES`.
  */
 #define DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED 0x4
+/**
+ * bit-or this constant with the other ones to use the wigner data's #orbitals
+ * instead of automatic detection
+ */
+#define DIVERGE_WIGNER_CONFIG_APPLY_ASR_NO_ORBDETECT 0x8
 
 /**
  * configuration for reading wigner(.fmt) files. defaults in
