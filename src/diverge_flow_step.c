@@ -443,9 +443,11 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                     C_projection(tu_V->projection_helper, tu_V, tu_Proj);
                     for (index_t i=0; i<tu_V->full_vert_size; ++i) tu_V->projection_helper[i] *= -1.0;
                     if (chan == 'h') {
+                        if (!tu_V->C_flow) ZERO_OUT(tu_V->projection_helper, tu_V->full_vert_size);
                         complex128_t* helper = calloc(tu_V->full_vert_size, sizeof*helper);
                         D_projection(helper, tu_V, tu_Proj);
-                        for (index_t i=0; i<tu_V->full_vert_size; ++i) tu_V->projection_helper[i] += 2.0*helper[i];
+                        const double factor = tu_V->C_flow ? 2.0 : 1.0;
+                        for (index_t i=0; i<tu_V->full_vert_size; ++i) tu_V->projection_helper[i] += factor*helper[i];
                         free( helper );
                     }
                 }
