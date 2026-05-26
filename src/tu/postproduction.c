@@ -198,7 +198,8 @@ static void save_channel_leading_ev( tu_postproduction_t* p ) {
             }
             complex128_t* helper = calloc(p->vertex->full_vert_size,sizeof(complex128_t));
             D_projection(helper, p->vertex, p->proj);
-            for (index_t i=0; i<V_sz; ++i) Vbuf[i] += 2.*helper[i];
+            const double factor = p->vertex->C_flow ? 2.0 : 1.0;
+            for (index_t i=0; i<V_sz; ++i) Vbuf[i] += factor*helper[i];
             free( helper );
         }
         _save_channel_leading_ev(p, Vbuf ? Vbuf : p->vertex->Dch, p->Dvec, p->Dval, p->Dtype, p->lenD, p->offD);
