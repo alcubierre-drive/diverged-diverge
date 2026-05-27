@@ -3,6 +3,7 @@
 #include "diverge_hack.h"
 #include "diverge_model.h"
 #include "diverge_internals_struct.h"
+#include "diverge_flow_step_internal.h"
 
 #include "tu/diverge_interface.h"
 #include "npatch/vertex.h"
@@ -189,6 +190,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("ldos_kernel_gpu_setsort") {
         ldos_kernel_gpu_setsort(atoi(val));
+    }
+    CHECKKEY("flow_step_eigchan_shut_up") {
+        diverge_flow_step_eigchan_shut_up = atoi(val);
     }
 
     if (key_) {
