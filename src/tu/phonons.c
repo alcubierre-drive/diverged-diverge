@@ -458,6 +458,12 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
 diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t ) { return t->pmod; }
 complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t ) { return t->g_ob_qO; }
 
+void tu_data_phonons_get_g_dim( tu_data_phonons_t* t, index_t g_dim[3] ) {
+    g_dim[0] = t->my_nk;
+    g_dim[1] = POW2(t->n_spin)*t->n_orbff;
+    g_dim[2] = t->nO;
+}
+
 static inline double periodic_norm( claV3d_t k, claM3d_t G, const index_t shift[3] ) {
     double norm = claV3d_norm(k);
     for (index_t sx=-shift[0]; sx<=shift[0]; ++sx)

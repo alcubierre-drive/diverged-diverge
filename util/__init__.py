@@ -914,6 +914,10 @@ if not _libs["divERGe"] is None:
     phonons_get_g.argtypes = [POINTER(model_t), c_int]
     phonons_get_g.restype = c_voidp
 
+    phonons_get_g_dim = _libs["divERGe"].get("diverge_phonons_get_g_dim", "cdecl")
+    phonons_get_g_dim.argtypes = [POINTER(model_t), c_voidp]
+    phonons_get_g_dim.restype = None
+
     class refinement_t(Structure):
         pass
     refinement_t.__slots__ = [ 'kf_idx', 'weight' ]

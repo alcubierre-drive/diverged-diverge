@@ -29,6 +29,7 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
         complex128_t* out, double fac );
 diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t );
 complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t );
+void tu_data_phonons_get_g_dim( tu_data_phonons_t* t, index_t g_dim[3] );
 
 // we expose an interface to the refined g
 complex128_t* tu_data_phonons_get_g_ref( tu_data_phonons_t* t );

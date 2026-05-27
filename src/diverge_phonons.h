@@ -150,6 +150,12 @@ void* diverge_phonons_get_ifrq( diverge_model_t* m );
  */
 complex128_t* diverge_phonons_get_g( diverge_model_t* m, int refined );
 
+/**
+ * use in conjunction with :c:func:`diverge_phonons_get_g` (with refined=0) to
+ * obtain dimensions of EPC without looking at flow_step object.
+ */
+void diverge_phonons_get_g_dim( diverge_model_t* m, index_t g_dim[3] );
+
 /** refinement structure, simple tuple of (kf_index, weight). */
 typedef struct {
     /** index of the refined point in the fine mesh */
