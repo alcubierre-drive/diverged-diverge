@@ -61,6 +61,8 @@ struct diverge_flow_step_t {
     VECTOR_DECL( diverge_timing_t, timings )
 };
 
+extern int diverge_flow_step_eigchan_shut_up;
+
 #ifdef __cplusplus
 }
 #endif

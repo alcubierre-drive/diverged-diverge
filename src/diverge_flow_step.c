@@ -681,6 +681,8 @@ index_t diverge_flow_step_n_ibz( const diverge_flow_step_t* st ) {
     return 0;
 }
 
+int diverge_flow_step_eigchan_shut_up = 0;
+
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter ) {
     diverge_flow_step_vertex_t v = diverge_flow_step_vertex( st, chan );
     index_t nq = (v.q_1 - v.q_0);
@@ -689,7 +691,9 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
 
         if (0) {
             piter_LABEL:
-            mpi_wrn_printf( "linsz too small (%li), using power iteration\n", linsz );
+            {}
+            if (!diverge_flow_step_eigchan_shut_up)
+                mpi_wrn_printf( "linsz too small (%li), using power iteration\n", linsz );
         }
 
         complex128_t* aux = calloc( 3*linsz, sizeof*aux );
