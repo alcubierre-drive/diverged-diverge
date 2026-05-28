@@ -197,6 +197,13 @@ typedef uint64_t uindex_t;
 #define VECTOR_INIT( type, ary ) VECTOR_INIT_CAP( type, ary, VECTOR_DEFAULT_CAP )
 #endif
 
+#ifndef VECTOR_INIT_FROM_ARY
+#define VECTOR_INIT_FROM_ARY( type, vec, ary, sz ) \
+    VECTOR_DECL( type, vec ); \
+    vec = (ary); \
+    vec##_sz = vec##_cap = (sz);
+#endif
+
 #ifndef VECTOR_PUSH_BACK
 #define VECTOR_PUSH_BACK( ary, ... ) { \
     if (ary##_sz >= ary##_cap) { \
