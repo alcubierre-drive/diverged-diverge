@@ -174,8 +174,11 @@ void diverge_model_internals_reset( diverge_model_t* model );
 double*       diverge_model_internals_get_E(      const diverge_model_t* model );
 /**
  * returns the internally generated orbital to band transform (nk*nkf, nb, nb).
- * Note that this array is ordered as (k, band, orb); contrary to what you might
- * expect from pure C ordered eigensolvers; reason being CUDA.
+ *
+ * .. caution:: This array is ordered as (k, band, orb); contrary to what you
+ *              might expect from pure C ordered eigensolvers; reason being
+ *              CUDA's default batched-in-C but everything-else-in-fortran
+ *              ordering.
  *
  * :c:func:`diverge_model_internals_common` must have been called, otherwise
  * NULL is returned.
