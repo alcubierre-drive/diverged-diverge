@@ -163,6 +163,7 @@ DIVERGE_0.10 {
         diverge_postprocess_and_write_fg;
         diverge_postprocess_and_write_finegrained;
         diverge_postprocess_conf_defaults_CPP;
+        diverge_postprocess_conf_tu_storing_threshold_qrelative;
         diverge_qgt;
         diverge_qgt_tensor;
         diverge_read_W90;

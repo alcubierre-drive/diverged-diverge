@@ -91,7 +91,16 @@ struct diverge_postprocess_conf_t {
     char    tu_which_solver_mode;
     /** if true, the eigenvectors of each channel are not calculated. useful for RPA calculations */
     bool    tu_skip_channel_calc;
-    /** sets a theshold above which all eigen/singular vectors will be stored (magnitude) */
+    /**
+     * sets a theshold above which all eigen/singular vectors will be stored
+     * (magnitude). If the return value of the function
+     * :c:func:`diverge_postprocess_conf_tu_storing_threshold_qrelative` (an
+     * :ref:`IEEE 754 Quiet NaN` with a suitable payload) is used, the relative
+     * storing threshold (which is the input to the function
+     * :c:func:`diverge_postprocess_conf_tu_storing_threshold_qrelative`) is
+     * taken over all q points of the channels, which can be very useful if a
+     * lot of data points are taken for, e.g., a phase diagram scan.
+     */
     double  tu_storing_threshold;
     /** use a relative storing threshold instead of the aboslute one */
     bool    tu_storing_relative;
@@ -251,6 +260,14 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
 
 /** return default values in C, C++, and Python */
 diverge_postprocess_conf_t diverge_postprocess_conf_defaults_CPP( void );
+
+/**
+ * return a :ref:`IEEE 754 Quiet NaN` with the payload ``threshold`` to use as
+ * parameter in :c:member:`diverge_postprocess_conf_t.tu_storing_threshold` and
+ * force relative operation across all q points of each channel. Essentially a
+ * wrapper around :c:func:`diverge_fnan_gen` (or :c:func:`fnan_gen`).
+ */
+double diverge_postprocess_conf_tu_storing_threshold_qrelative( double threshold );
 
 /**
  * Post-processing and output to disk as .dvg file. Those files can be read by

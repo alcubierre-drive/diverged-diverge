@@ -8,6 +8,7 @@
 #include "grid/post_processing.h"
 #include "tu/vertex.h"
 #include "tu/postproduction.h"
+#include "misc/qnan.h"
 
 static void grid_pp( diverge_flow_step_t* st,
         const diverge_postprocess_conf_t* pc, const char* file );
@@ -144,4 +145,8 @@ static void tu_pp( diverge_flow_step_t* st,
 
 diverge_postprocess_conf_t diverge_postprocess_conf_defaults_CPP( void ) {
     return diverge_postprocess_conf_defaults;
+}
+
+double diverge_postprocess_conf_tu_storing_threshold_qrelative( double threshold ) {
+    return fnan_gen(threshold);
 }
