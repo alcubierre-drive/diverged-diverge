@@ -138,6 +138,13 @@
              
   <section id="supercells">
 <span id="id1"></span><h1>Supercells<a class="headerlink" href="#supercells" title="Link to this heading"></a></h1>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>The default sign convention of supercell mappings is <em>not</em> in line
+with divERGe’s standard sign convention. Use the function
+<a class="reference internal" href="#c.diverge_supercell_set_sign" title="diverge_supercell_set_sign"><code class="xref c c-func docutils literal notranslate"><span class="pre">diverge_supercell_set_sign()</span></code></a> with parameter <code class="docutils literal notranslate"><span class="pre">-1.0</span></code> to take care of
+this before calling any of the supercell routines.</p>
+</div>
 <dl class="c function">
 <dt class="sig sig-object c" id="c.rs_hopping_to_supercell">
 <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rs_hopping_to_supercell</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="Model.html#c.diverge_model_t" title="diverge_model_t"><span class="n"><span class="pre">diverge_model_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">m</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">nr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.rs_hopping_to_supercell" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/supercells.h#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
