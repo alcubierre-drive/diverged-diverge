@@ -233,7 +233,6 @@ static void _save_channel_leading_ev_q_relative( tu_postproduction_t* p, complex
     memcpy(_vec, channel, sizeof(complex128_t)*POW2(linsize)*nq);
     // batched algorithm trivial to employ here
     if (p->c.algo == 'b' || p->c.algo == 'B') {
-        mpi_usr_printf("IN BATCHED ALGO\n");
         if (p->c.algo == 'b')
             batched_eigen_r( NULL, -2, _vec, val, linsize, nq );
         else
@@ -252,7 +251,6 @@ static void _save_channel_leading_ev_q_relative( tu_postproduction_t* p, complex
                 .vec=_vec+IDX3(q,i,0, linsize,linsize),
             };
     } else {
-        mpi_usr_printf("IN SERIAL ALGO\n");
         for (index_t q=0; q<nq; ++q) {
             eigen_t* eig = eigs + q*linsize;
             complex128_t* vtx = _vec + q*POW2(linsize);
