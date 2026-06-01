@@ -317,6 +317,7 @@ static void _save_channel_leading_ev( tu_postproduction_t* p, complex128_t* chan
         complex128_t* vec, double* val, char* type, index_t* len, index_t* off ) {
 
     if (fnan_isnan(p->c.cutoff)) {
+        mpi_vrb_printf("saving leading eigenpairs with q-relative thresh %.8e\n", fnan_get(p->c.cutoff));
         _save_channel_leading_ev_q_relative(p, channel, vec, val, type, len, off, fnan_get(p->c.cutoff));
         return;
     }
