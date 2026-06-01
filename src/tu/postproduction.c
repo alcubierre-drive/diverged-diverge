@@ -3,6 +3,7 @@
 #define LINALG_NO_LAPACKE
 #include "../misc/linalg.h"
 LINALG_IMPLEMENT
+#include "../misc/qnan.h"
 
 #include "postproduction.h"
 #include "vertex_details.h"
@@ -207,8 +208,121 @@ static void save_channel_leading_ev( tu_postproduction_t* p ) {
     }
 }
 
+typedef struct {
+    index_t q;
+    double val;
+    char type;
+    complex128_t* vec;
+} eigen_t;
+#include "../misc/mergesort.h"
+#undef MERGESORT_COMP
+#define MERGESORT_COMP(x,y) ((fabs(y.val) - fabs(x.val)))
+MERGESORT_IMPL(eigen_sort, eigen_t)
+#undef MERGESORT_COMP
+#define MERGESORT_COMP(x,y) ((x.q - y.q))
+MERGESORT_IMPL(eigen_sort_q, eigen_t)
+
+static void _save_channel_leading_ev_q_relative( tu_postproduction_t* p, complex128_t* channel,
+        complex128_t* vec, double* val, char* type, index_t* len, index_t* off, double qcut ) {
+    const index_t linsize = p->vertex->n_orbff*POW2(p->vertex->n_spin),
+                  nq = p->vertex->my_nk;
+    eigen_t* eigs = calloc(nq * linsize, sizeof*eigs);
+
+    // we borrow some memory
+    complex128_t* _vec = p->vertex->product_helper;
+    memcpy(_vec, channel, sizeof(complex128_t)*POW2(linsize)*nq);
+    // batched algorithm trivial to employ here
+    if (p->c.algo == 'b' || p->c.algo == 'B') {
+        mpi_usr_printf("IN BATCHED ALGO\n");
+        if (p->c.algo == 'b')
+            batched_eigen_r( NULL, -2, _vec, val, linsize, nq );
+        else
+            #ifdef TU_POST_USE_BATCHED_SVD_U
+            batched_svd( NULL, -1, _vec, _vec, NULL, val, linsize, nq );
+            #else
+            batched_svd( NULL, -1, _vec, NULL, _vec, val, linsize, nq );
+            #endif
+        #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+        for (index_t q=0; q<nq; ++q)
+        for (index_t i=0; i<linsize; ++i)
+            eigs[IDX2(q,i,linsize)] = (eigen_t){
+                .q=q,
+                .val=val[IDX2(q,i,linsize)],
+                .type=p->c.algo,
+                .vec=_vec+IDX3(q,i,0, linsize,linsize),
+            };
+    } else {
+        mpi_usr_printf("IN SERIAL ALGO\n");
+        for (index_t q=0; q<nq; ++q) {
+            eigen_t* eig = eigs + q*linsize;
+            complex128_t* vtx = _vec + q*POW2(linsize);
+
+            bool hermitian = check_hermiticity(vtx,linsize,p->c.algo_zero);
+            char typ = 0;
+            if (p->c.algo == 'e' || (p->c.algo == 'a' && hermitian)) {
+                single_eigen(NULL, vtx, val, linsize);
+                typ = 'e';
+            } else if (p->c.algo == 's' || (p->c.algo == 'a' && !hermitian)) {
+                single_svd(NULL, vtx, p->vertex->bubble_helper, val, linsize);
+                typ = 's';
+            }
+            // above the matrices are C order, we must transpose that…
+            transpose_inplace(vtx, linsize);
+
+            // and then save the result into eig
+            for (index_t i=0; i<linsize; ++i) {
+                eig[i].q = q;
+                eig[i].val = val[i];
+                eig[i].type = typ;
+                eig[i].vec = vtx + i*linsize;
+            }
+        }
+    }
+
+    // sort by magnitude over q
+    eigen_sort(eigs, nq*linsize, diverge_omp_num_threads(), -1);
+    // put maximum into all ranks
+    double eigmax_tmp = nq*linsize > 0 ? fabs(eigs[0].val) : 0;
+    double eigmax = eigmax_tmp;
+    diverge_mpi_allreduce_double_max( &eigmax_tmp, &eigmax, 1 );
+    // find the number that will be saved
+    index_t ql_cut = 0;
+    for (index_t ql=0; ql<nq*linsize; ++ql) {
+        if (fabs(eigs[ql].val) <= eigmax*qcut) {
+            ql_cut = ql;
+            break;
+        }
+    }
+    // sort by q for len/off and output
+    eigen_sort_q(eigs, ql_cut, diverge_omp_num_threads(), -1);
+
+    // then fill len/off
+    ZERO_OUT(len, nq);
+    ZERO_OUT(off, nq);
+    for (index_t ql=0; ql<ql_cut; ++ql)
+        len[eigs[ql].q]++;
+    for (index_t q=1; q<nq; ++q)
+        off[q] = off[q-1] + len[q-1];
+
+    // and finally val/vec/type
+    for (index_t q=0; q<nq; ++q)
+    for (index_t l=0; l<len[q]; ++l) {
+        index_t ql = off[q] + l;
+        val[ql] = eigs[ql].val;
+        type[ql] = eigs[ql].type;
+        memcpy(vec+ql*linsize, eigs[ql].vec, sizeof(complex128_t) * linsize);
+    }
+
+    free(eigs);
+}
+
 static void _save_channel_leading_ev( tu_postproduction_t* p, complex128_t* channel,
         complex128_t* vec, double* val, char* type, index_t* len, index_t* off ) {
+
+    if (fnan_isnan(p->c.cutoff)) {
+        _save_channel_leading_ev_q_relative(p, channel, vec, val, type, len, off, fnan_get(p->c.cutoff));
+        return;
+    }
 
     index_t linsize = p->vertex->n_orbff*POW2(p->vertex->n_spin);
     double* _val = malloc(linsize*sizeof(double));

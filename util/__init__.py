@@ -1360,6 +1360,11 @@ if not _libs["divERGe"] is None:
     postprocess_conf_defaults_CPP.argtypes = []
     postprocess_conf_defaults_CPP.restype = postprocess_conf_t
 
+    postprocess_conf_tu_storing_threshold_qrelative = _libs["divERGe"].get(
+            "diverge_postprocess_conf_tu_storing_threshold_qrelative", "cdecl")
+    postprocess_conf_tu_storing_threshold_qrelative.argtypes = [c_double]
+    postprocess_conf_tu_storing_threshold_qrelative.restype = c_double
+
     postprocess_and_write = _libs["divERGe"].get("diverge_postprocess_and_write", "cdecl")
     postprocess_and_write.argtypes = [POINTER(flow_step_t), String]
     postprocess_and_write.restype = None
