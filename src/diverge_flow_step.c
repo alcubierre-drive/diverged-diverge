@@ -688,7 +688,6 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
     index_t nq = (v.q_1 - v.q_0);
     index_t linsz = v.backend == 'T' ? v.n_orbff * POW2(v.n_spin) : POW2(v.n_orbff*v.n_spin) * v.nk;
     if (piter > 0) {
-
         if (0) {
             piter_LABEL:
             {}
@@ -696,19 +695,40 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
                 mpi_wrn_printf( "linsz too small (%li), using power iteration\n", linsz );
         }
 
-        complex128_t* aux = calloc( 3*linsz, sizeof*aux );
-        double tol = 1.e-6;
-        index_t niter = 1000;
-        double maxval = 0.0;
+        double* tol_ary = calloc(nq, sizeof*tol_ary);
+        index_t* maxiter_ary = calloc(nq, sizeof*maxiter_ary);
+        complex128_t* eigen = calloc(nq, sizeof*eigen);
+
+        const index_t maxiter = 1000;
+        const double tol = 1.e-6;
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t q=0; q<nq; ++q) {
-            complex128_t eval = power_iteration( v.ary + q*POW2(linsz), aux, linsz,
-                    aux+linsz, &niter, &tol, NULL );
-            maxval = MAX(maxval, cabs(eval));
+            maxiter_ary[q] = maxiter;
+            tol_ary[q] = tol;
         }
-        free( aux );
-        double maxval_red = maxval;
-        diverge_mpi_allreduce_double_max( &maxval, &maxval_red, 1 );
-        return MAX(maxval, maxval_red);
+
+        power_iteration_batched( v.ary, NULL, eigen, linsz, nq, maxiter_ary, tol_ary, NULL );
+
+        index_t nq_not_converged = 0;
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:nq_not_converged)
+        for (index_t q=0; q<nq; ++q) if (maxiter_ary[q] == maxiter || tol_ary[q] > tol) nq_not_converged++;
+        diverge_mpi_allreduce_index_sum_inplace(&nq_not_converged, 1);
+        if (nq_not_converged != 0 && !diverge_flow_step_eigchan_shut_up)
+            mpi_wrn_printf( "%li qpts not converged in power iteration\n", nq_not_converged );
+
+        double maxval = 0.0;
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:maxval)
+        for (index_t q=0; q<nq; ++q) {
+            double nrm2 = creal(eigen[q] * conj(eigen[q]));
+            maxval = MAX(maxval, nrm2);
+        }
+        diverge_mpi_allreduce_double_max_inplace(&maxval, 1);
+
+        free( tol_ary );
+        free( maxiter_ary );
+        free( eigen );
+
+        return sqrt(maxval);
     } else if (piter == DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK) {
 
         if (linsz < 10) goto piter_LABEL;
