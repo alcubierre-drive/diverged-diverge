@@ -101,6 +101,8 @@
 <li class="toctree-l4"><a class="reference internal" href="#c.single_eigen_sort_part"><code class="docutils literal notranslate"><span class="pre">single_eigen_sort_part()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.single_eigen_sort_N"><code class="docutils literal notranslate"><span class="pre">single_eigen_sort_N()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.power_iteration"><code class="docutils literal notranslate"><span class="pre">power_iteration()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.power_iteration_batched"><code class="docutils literal notranslate"><span class="pre">power_iteration_batched()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.power_iteration_batched_cfg_seed"><code class="docutils literal notranslate"><span class="pre">power_iteration_batched_cfg_seed()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.single_gemm"><code class="docutils literal notranslate"><span class="pre">single_gemm()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.single_gemm_serial"><code class="docutils literal notranslate"><span class="pre">single_gemm_serial()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.single_gemm_adjoint"><code class="docutils literal notranslate"><span class="pre">single_gemm_adjoint()</span></code></a></li>
@@ -445,6 +447,43 @@ size <code class="docutils literal notranslate"><span class="pre">2*N</span></co
 number of iterations. If <code class="docutils literal notranslate"><span class="pre">tol</span> <span class="pre">!=</span> <span class="pre">NULL</span></code>, use the value pointed to as minimum
 tolerance. If <code class="docutils literal notranslate"><span class="pre">seed</span> <span class="pre">!=</span> <span class="pre">NULL</span></code>, use these <em>four</em> integers as seed to
 construct the random vector. The last integer <em>must be odd</em>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.power_iteration_batched">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">power_iteration_batched</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">A_batched</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">U_batched</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">E_batched</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">N</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">num</span></span>, <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n"><span class="pre">index_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">maxiter</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">tol</span></span>, <a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n"><span class="pre">complex128_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">aux</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.power_iteration_batched" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/eigen.h#L65"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>power iteration for a batch of matrices, parallelized over the batch index,
+hence useful for many rather smallish matrices (where BLAS calls are not
+pereferable).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A_batched</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n">complex128_t</span></a><span class="p">*</span></span></span>) – the matrices that should be analyzed with power iteration, C-shape
+<code class="docutils literal notranslate"><span class="pre">(num,N,N)</span></code></p></li>
+<li><p><strong>U_batched</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n">complex128_t</span></a><span class="p">*</span></span></span>) – eigenvectors as output, C-shape <code class="docutils literal notranslate"><span class="pre">(num,N)</span></code>. May be NULL, which results
+in the function allocating/freeing some memory.</p></li>
+<li><p><strong>E_batched</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n">complex128_t</span></a><span class="p">*</span></span></span>) – eigenvalues as output, C-shape <code class="docutils literal notranslate"><span class="pre">(num,)</span></code>. Must not be NULL.</p></li>
+<li><p><strong>N</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – linear size of a single matrix</p></li>
+<li><p><strong>num</strong> (<span><span class="c-expr sig sig-inline c"><span class="k">const</span><span class="w"> </span><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a></span></span>) – batch size, i.e., number of matrices in a row.</p></li>
+<li><p><strong>maxiter</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><span class="n">index_t</span></a><span class="p">*</span></span></span>) – number of iterations to perform for each batch index, C-shape
+<code class="docutils literal notranslate"><span class="pre">(num,)</span></code>. May be NULL, in which case memory is allocated/freed and the
+default number of iterations is used.</p></li>
+<li><p><strong>tol</strong> (<span><span class="c-expr sig sig-inline c"><span class="kt">double</span><span class="p">*</span></span></span>) – relative tolerance to achieve for each batch index, C-shape <code class="docutils literal notranslate"><span class="pre">(num,)</span></code>.
+May be NULL, in which case memory is allocated/freed and the default
+tolerance is used.</p></li>
+<li><p><strong>aux</strong> (<span><span class="c-expr sig sig-inline c"><a class="reference internal" href="Datatypes.html#c.complex128_t" title="complex128_t"><span class="n">complex128_t</span></a><span class="p">*</span></span></span>) – auxiliary memory which can be passed to have the function only perform
+the absolutely necessary allocations. Minimum size <code class="docutils literal notranslate"><span class="pre">(n_threads,2,N)</span></code>,
+while <code class="docutils literal notranslate"><span class="pre">n_threads</span> <span class="pre">&lt;=</span> <span class="pre">num</span></code>. May be NULL, which results in the function
+taking care of the auxiliary buffer itself.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.power_iteration_batched_cfg_seed">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">power_iteration_batched_cfg_seed</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n"><span class="pre">seed</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.power_iteration_batched_cfg_seed" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev/src/misc/eigen.h#L99"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>configure random seed for batched power iteration</p>
 </dd></dl>
 
 <dl class="c function">

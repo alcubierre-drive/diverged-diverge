@@ -62,6 +62,44 @@ index_t single_eigen_sort_N( complex128_t* U, double* E, index_t N, char which, 
 complex128_t power_iteration( const complex128_t* A, complex128_t* v, index_t N,
         complex128_t* aux, index_t* niter, double* tol, const int* iseed );
 
+/**
+ * power iteration for a batch of matrices, parallelized over the batch index,
+ * hence useful for many rather smallish matrices (where BLAS calls are not
+ * pereferable).
+ *
+ * :param const complex128_t* A_batched:
+ *      the matrices that should be analyzed with power iteration, C-shape
+ *      ``(num,N,N)``
+ * :param complex128_t* U_batched:
+ *      eigenvectors as output, C-shape ``(num,N)``. May be NULL, which results
+ *      in the function allocating/freeing some memory.
+ * :param complex128_t* E_batched:
+ *      eigenvalues as output, C-shape ``(num,)``. Must not be NULL.
+ * :param const index_t N:
+ *      linear size of a single matrix
+ * :param const index_t num:
+ *      batch size, i.e., number of matrices in a row.
+ * :param index_t* maxiter:
+ *      number of iterations to perform for each batch index, C-shape
+ *      ``(num,)``. May be NULL, in which case memory is allocated/freed and the
+ *      default number of iterations is used.
+ * :param double* tol:
+ *      relative tolerance to achieve for each batch index, C-shape ``(num,)``.
+ *      May be NULL, in which case memory is allocated/freed and the default
+ *      tolerance is used.
+ * :param complex128_t* aux:
+ *      auxiliary memory which can be passed to have the function only perform
+ *      the absolutely necessary allocations. Minimum size ``(n_threads,2,N)``,
+ *      while ``n_threads <= num``. May be NULL, which results in the function
+ *      taking care of the auxiliary buffer itself.
+ */
+void power_iteration_batched( const complex128_t* A_batched, complex128_t* U_batched,
+        complex128_t* E_batched, const index_t N, const index_t num, index_t* maxiter,
+        double* tol, complex128_t* aux );
+
+/** configure random seed for batched power iteration */
+void power_iteration_batched_cfg_seed( uint64_t seed );
+
 #ifdef __cplusplus
 }
 #endif

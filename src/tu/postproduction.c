@@ -279,9 +279,8 @@ static void _save_channel_leading_ev_q_relative( tu_postproduction_t* p, complex
     // sort by magnitude over q
     eigen_sort(eigs, nq*linsize, diverge_omp_num_threads(), -1);
     // put maximum into all ranks
-    double eigmax_tmp = nq*linsize > 0 ? fabs(eigs[0].val) : 0;
-    double eigmax = eigmax_tmp;
-    diverge_mpi_allreduce_double_max( &eigmax_tmp, &eigmax, 1 );
+    double eigmax = nq*linsize > 0 ? fabs(eigs[0].val) : 0;
+    diverge_mpi_allreduce_double_max_inplace( &eigmax, 1 );
     // find the number that will be saved
     index_t ql_cut = 0;
     for (index_t ql=0; ql<nq*linsize; ++ql) {

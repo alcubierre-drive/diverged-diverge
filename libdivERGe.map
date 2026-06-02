@@ -121,8 +121,10 @@ DIVERGE_0.10 {
         diverge_mpi_allreduce_complex_sum;
         diverge_mpi_allreduce_complex_sum_inplace;
         diverge_mpi_allreduce_double_max;
+        diverge_mpi_allreduce_double_max_inplace;
         diverge_mpi_allreduce_double_sum;
         diverge_mpi_allreduce_double_sum_inplace;
+        diverge_mpi_allreduce_index_sum_inplace;
         diverge_mpi_allreduce_int_max_inplace;
         diverge_mpi_alltoall_index;
         diverge_mpi_alltoallv_bytes;
@@ -283,6 +285,8 @@ DIVERGE_UNSTABLE {
         diverge_qnanf_isnan;
         matrix_invert;
         power_iteration;
+        power_iteration_batched;
+        power_iteration_batched_cfg_seed;
         single_eigen;
         single_eigen_sort;
         single_eigen_sort_N;
