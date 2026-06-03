@@ -5,6 +5,7 @@
 #include "loop.h"
 #include "../misc/version.h"
 #include "../misc/mpi_functions.h"
+#include "../misc/zstd_file.h"
 
 #define VERTEX_FILE_MAGIC_NUMBER 'V'
 
@@ -12,7 +13,7 @@ int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_outpu
 
     if (diverge_mpi_comm_rank() != 0) return 0;
 
-    FILE* f = fopen(fname, "w");
+    zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
     if (!f) {
         mpi_err_printf("could not open file %s. aborting\n", fname );
         return 1;
@@ -101,28 +102,28 @@ int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_outpu
     header[125] = header[i-1] + header[i-2];
     header[126] = version_sz;
 
-    fwrite(header, sizeof(header), 1, f);
+    zstd_fwrite(header, sizeof(header), 1, f);
 
     if (ocfg->V)
-        fwrite(v->V, sizeof(complex128_t), v->size, f);
+        zstd_fwrite(v->V, sizeof(complex128_t), v->size, f);
     if (ocfg->Lp)
-        fwrite(l->Lp, sizeof(complex128_t), v->size, f);
+        zstd_fwrite(l->Lp, sizeof(complex128_t), v->size, f);
     if (ocfg->Lm)
-        fwrite(l->Lm, sizeof(complex128_t), v->size, f);
+        zstd_fwrite(l->Lm, sizeof(complex128_t), v->size, f);
     if (ocfg->dV)
-        fwrite(v->dV, sizeof(complex128_t), v->size, f);
+        zstd_fwrite(v->dV, sizeof(complex128_t), v->size, f);
 
     for (int c=0; c<3; ++c) {
         if (qmat_mem[c] != NULL) {
-            fwrite(qmat_mem[c], sizeof(uindex_t), qmat_mem_sz[c], f);
+            zstd_fwrite(qmat_mem[c], sizeof(uindex_t), qmat_mem_sz[c], f);
             free(qmat_mem[c]);
         }
     }
 
-    fwrite( version_mem, sizeof(double), version_sz, f );
+    zstd_fwrite( version_mem, sizeof(double), version_sz, f );
     free( version_mem );
 
-    fclose(f);
+    zstd_fclose(f);
     return 0;
 }
 

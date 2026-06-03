@@ -59,7 +59,12 @@ def _numpy_memmap( fname, **kwargs ):
 
 # this is due to some weird numpy version checking for the contents of a buffer
 def _numpy_fromfile( fname, **kwargs ):
-    return np.frombuffer( open(fname, "rb").read(), **kwargs )
+    if np.abs(np.fromfile(fname, dtype=np.uint8, count=4) - \
+            [0x28, 0xb5, 0x2f, 0xfd]).sum() == 0: # zstd compressed file
+        import compression.zstd as zstd
+        return np.frombuffer(zstd.ZstdFile(fname, "rb").read(), **kwargs)
+    else:
+        return np.frombuffer( open(fname, "rb").read(), **kwargs )
 
 def numpy_fromfile( *args, **kwargs ):
     global DIVERGE_OUTPUT_USE_MEMMAP

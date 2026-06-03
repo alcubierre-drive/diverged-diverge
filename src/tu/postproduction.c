@@ -992,76 +992,66 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     index_t schar = sizeof(char);
     index_t sdou = sizeof(double);
     index_t scdou = sizeof(complex128_t);
-    index_t new_off = 0;
 
-    new_off = diverge_mpi_write_byte_to_file_master(file, header, new_off, sizeof(header));
-    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_ofrom, new_off, p->vertex->n_orbff*sindex);
-    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_oto, new_off, p->vertex->n_orbff*sindex);
-    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_R, new_off, 3*p->vertex->n_orbff*sindex);
-    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->bond_sizes, new_off, p->vertex->n_orb*sindex);
-    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->bond_offsets, new_off, p->vertex->n_orb*sindex);
+    diverge_mpi_write_byte_to_file_master(file, header, sizeof(header));
+    diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_ofrom, p->vertex->n_orbff*sindex);
+    diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_oto, p->vertex->n_orbff*sindex);
+    diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_R, 3*p->vertex->n_orbff*sindex);
+    diverge_mpi_write_byte_to_file_master(file, tu_data->bond_sizes, p->vertex->n_orb*sindex);
+    diverge_mpi_write_byte_to_file_master(file, tu_data->bond_offsets, p->vertex->n_orb*sindex);
 
-    new_off = diverge_mpi_write_byte_to_file_master(file, symm->idx_ibz_in_fullmesh, new_off, tu_data->nkibz*sindex);
+    diverge_mpi_write_byte_to_file_master(file, symm->idx_ibz_in_fullmesh, tu_data->nkibz*sindex);
     // P p->vertex write
     if (!p->c.skip_channel_calc) {
-        new_off = diverge_mpi_write_byte_to_file(file, p->lenP, new_off + my_nk_off*sindex, my_nk*sindex);
-        new_off = diverge_mpi_write_byte_to_file(file, p->offP, new_off + my_nk_off*sindex, my_nk*sindex);
-        new_off = diverge_mpi_write_byte_to_file(file, p->Ptype, new_off + my_nk_off*schar, my_nk*schar);
-        new_off = diverge_mpi_write_byte_to_file(file, p->Pval, new_off + p->offP[0]*sdou, my_cop*sdou);
-        new_off = diverge_mpi_write_byte_to_file(file, p->Pvec, new_off + p->offP[0]*linsize*scdou, my_cop*linsize*scdou);
+        diverge_mpi_write_byte_to_file(file, p->lenP,  my_nk_off*sindex, my_nk*sindex);
+        diverge_mpi_write_byte_to_file(file, p->offP,  my_nk_off*sindex, my_nk*sindex);
+        diverge_mpi_write_byte_to_file(file, p->Ptype, my_nk_off*schar, my_nk*schar);
+        diverge_mpi_write_byte_to_file(file, p->Pval,  p->offP[0]*sdou, my_cop*sdou);
+        diverge_mpi_write_byte_to_file(file, p->Pvec,  p->offP[0]*linsize*scdou, my_cop*linsize*scdou);
 
         // C p->vertex write
-        new_off = diverge_mpi_write_byte_to_file(file, p->lenC, new_off + my_nk_off*sindex, my_nk*sindex);
-        new_off = diverge_mpi_write_byte_to_file(file, p->offC, new_off + my_nk_off*sindex, my_nk*sindex);
-        new_off = diverge_mpi_write_byte_to_file(file, p->Ctype, new_off + my_nk_off*schar, my_nk*schar);
-        new_off = diverge_mpi_write_byte_to_file(file, p->Cval, new_off + p->offC[0]*sdou, my_coc*sdou);
-        new_off = diverge_mpi_write_byte_to_file(file, p->Cvec, new_off + p->offC[0]*linsize*scdou, my_coc*linsize*scdou);
+        diverge_mpi_write_byte_to_file(file, p->lenC,  my_nk_off*sindex, my_nk*sindex);
+        diverge_mpi_write_byte_to_file(file, p->offC,  my_nk_off*sindex, my_nk*sindex);
+        diverge_mpi_write_byte_to_file(file, p->Ctype, my_nk_off*schar, my_nk*schar);
+        diverge_mpi_write_byte_to_file(file, p->Cval,  p->offC[0]*sdou, my_coc*sdou);
+        diverge_mpi_write_byte_to_file(file, p->Cvec,  p->offC[0]*linsize*scdou, my_coc*linsize*scdou);
 
         // D p->vertex write
-        new_off = diverge_mpi_write_byte_to_file(file, p->lenD, new_off + my_nk_off*sindex, my_nk*sindex);
-        new_off = diverge_mpi_write_byte_to_file(file, p->offD, new_off + my_nk_off*sindex, my_nk*sindex);
-        new_off = diverge_mpi_write_byte_to_file(file, p->Dtype, new_off + my_nk_off*schar, my_nk*schar);
-        new_off = diverge_mpi_write_byte_to_file(file, p->Dval, new_off + p->offD[0]*sdou, my_cod*sdou);
-        new_off = diverge_mpi_write_byte_to_file(file, p->Dvec, new_off + p->offD[0]*linsize*scdou, my_cod*linsize*scdou);
+        diverge_mpi_write_byte_to_file(file, p->lenD,  my_nk_off*sindex, my_nk*sindex);
+        diverge_mpi_write_byte_to_file(file, p->offD,  my_nk_off*sindex, my_nk*sindex);
+        diverge_mpi_write_byte_to_file(file, p->Dtype, my_nk_off*schar, my_nk*schar);
+        diverge_mpi_write_byte_to_file(file, p->Dval,  p->offD[0]*sdou, my_cod*sdou);
+        diverge_mpi_write_byte_to_file(file, p->Dvec,  p->offD[0]*linsize*scdou, my_cod*linsize*scdou);
     }
     if (p->called_lingap) {
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->Sgap_sc, new_off, sdou*p->tu_n_singular_valuesP);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->Ugap_sc, new_off, scdou*p->tu_n_singular_valuesP*linsize);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->Vgap_sc, new_off, scdou*p->tu_n_singular_valuesP*linsize);
+        diverge_mpi_write_byte_to_file_master(file, p->Sgap_sc, sdou*p->tu_n_singular_valuesP);
+        diverge_mpi_write_byte_to_file_master(file, p->Ugap_sc, scdou*p->tu_n_singular_valuesP*linsize);
+        diverge_mpi_write_byte_to_file_master(file, p->Vgap_sc, scdou*p->tu_n_singular_valuesP*linsize);
 
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->Sgap_mag, new_off, sdou*p->tu_n_singular_valuesC);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->Ugap_mag, new_off, scdou*p->tu_n_singular_valuesC*linsize);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->Vgap_mag, new_off, scdou*p->tu_n_singular_valuesC*linsize);
+        diverge_mpi_write_byte_to_file_master(file, p->Sgap_mag, sdou*p->tu_n_singular_valuesC);
+        diverge_mpi_write_byte_to_file_master(file, p->Ugap_mag, scdou*p->tu_n_singular_valuesC*linsize);
+        diverge_mpi_write_byte_to_file_master(file, p->Vgap_mag, scdou*p->tu_n_singular_valuesC*linsize);
 
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->Sgap_charge, new_off, sdou*p->tu_n_singular_valuesD);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->Ugap_charge, new_off, scdou*p->tu_n_singular_valuesD*linsize);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->Vgap_charge, new_off, scdou*p->tu_n_singular_valuesD*linsize);
+        diverge_mpi_write_byte_to_file_master(file, p->Sgap_charge, sdou*p->tu_n_singular_valuesD);
+        diverge_mpi_write_byte_to_file_master(file, p->Ugap_charge, scdou*p->tu_n_singular_valuesD*linsize);
+        diverge_mpi_write_byte_to_file_master(file, p->Vgap_charge, scdou*p->tu_n_singular_valuesD*linsize);
     }
 
     if (p->called_suscep_full) {
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->suscPp,
-                            new_off,scdou*p->tu_suscP);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->suscMa,
-                            new_off,scdou*p->tu_suscC);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->suscCh,
-                            new_off,scdou*p->tu_suscD);
-
+        diverge_mpi_write_byte_to_file_master(file, p->suscPp, scdou*p->tu_suscP);
+        diverge_mpi_write_byte_to_file_master(file, p->suscMa, scdou*p->tu_suscC);
+        diverge_mpi_write_byte_to_file_master(file, p->suscCh, scdou*p->tu_suscD);
     }
     if (p->called_suscep_ff) {
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->suscPp_ff,
-                            new_off,scdou*p->tu_suscP_ff);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->suscMa_ff,
-                            new_off,scdou*p->tu_suscC_ff);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->suscCh_ff,
-                            new_off,scdou*p->tu_suscD_ff);
+        diverge_mpi_write_byte_to_file_master(file, p->suscPp_ff, scdou*p->tu_suscP_ff);
+        diverge_mpi_write_byte_to_file_master(file, p->suscMa_ff, scdou*p->tu_suscC_ff);
+        diverge_mpi_write_byte_to_file_master(file, p->suscCh_ff, scdou*p->tu_suscD_ff);
     }
 
     if (p->vertex->use_self && p->c.save_self > 0) {
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->vertex->self_en,
-                        new_off,scdou*size_self);
+        diverge_mpi_write_byte_to_file_master(file, p->vertex->self_en, scdou*size_self);
     } else if (p->vertex->use_self && p->c.save_self < 0) {
-        new_off = diverge_mpi_write_byte_to_file_master(file, hop_self,
-                new_off, sizeof(rs_hopping_t)*size_self);
+        diverge_mpi_write_byte_to_file_master(file, hop_self, sizeof(rs_hopping_t)*size_self);
         free(hop_self);
     }
     if (p->c.save_full && !tu_data->tu_selfenergy_flow) {
@@ -1069,82 +1059,73 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         complex128_t* helper = (complex128_t*)malloc(vsize);
         if(p->vertex->P_flow) {
             diverge_tu_vertex_reco(p->vertex, 'P', helper, NULL);
-            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+            diverge_mpi_write_byte_to_file_master(file, helper, vsize);
         }
         if(p->vertex->C_flow) {
             diverge_tu_vertex_reco(p->vertex, 'C', helper, NULL);
-            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+            diverge_mpi_write_byte_to_file_master(file, helper, vsize);
         }
         if(p->vertex->D_flow) {
             diverge_tu_vertex_reco(p->vertex, 'D', helper, NULL);
-            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+            diverge_mpi_write_byte_to_file_master(file, helper, vsize);
         }
         if(p->vertex->P_flow) {
             diverge_tu_vertex_reco(p->vertex, 'P', helper, p->vertex->pp_bubble_int);
-            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+            diverge_mpi_write_byte_to_file_master(file, helper, vsize);
         }
         if(p->vertex->C_flow || p->vertex->D_flow) {
             diverge_tu_vertex_reco(p->vertex, 'C', helper, p->vertex->ph_bubble_int);
-            new_off = diverge_mpi_write_byte_to_file_master(file, helper, new_off,vsize);
+            diverge_mpi_write_byte_to_file_master(file, helper, vsize);
         }
         free(helper);
     }
     if (p->c.save_symmetries && symm->use_symmetries) {
         mpi_log_printf("saving symm!\n");
-        new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_len, new_off,sindex*symm->mi_cnt);
-        new_off = diverge_mpi_write_byte_to_file_master(file, symm->mi_map_off, new_off,sindex*symm->mi_cnt);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->mi_map_idx, new_off,sindex*p->mi_map_idx_sz);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->mi_map_pref_in_in, new_off,scdou*p->mi_map_pref_in_in_sz);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->mi_map_pref_in_out, new_off,scdou*p->mi_map_pref_in_out_sz);
+        diverge_mpi_write_byte_to_file_master(file, symm->mi_map_len, sindex*symm->mi_cnt);
+        diverge_mpi_write_byte_to_file_master(file, symm->mi_map_off, sindex*symm->mi_cnt);
+        diverge_mpi_write_byte_to_file_master(file, p->mi_map_idx, sindex*p->mi_map_idx_sz);
+        diverge_mpi_write_byte_to_file_master(file, p->mi_map_pref_in_in, scdou*p->mi_map_pref_in_in_sz);
+        diverge_mpi_write_byte_to_file_master(file, p->mi_map_pref_in_out, scdou*p->mi_map_pref_in_out_sz);
     }
 
-    new_off = diverge_mpi_write_byte_to_file_master(file, version, new_off, strlen(version));
+    diverge_mpi_write_byte_to_file_master(file, version, strlen(version));
 
     if (p->c.save_symmetries && symm->use_symmetries) {
-        new_off = diverge_mpi_write_byte_to_file_master(file, symm->kmaps_to, new_off, symm->nk * sindex);
+        diverge_mpi_write_byte_to_file_master(file, symm->kmaps_to, symm->nk * sindex);
     }
 
-    new_off = diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_tuffidx, new_off, sindex*p->vertex->n_orbff);
+    diverge_mpi_write_byte_to_file_master(file, tu_data->mi_to_tuffidx, sindex*p->vertex->n_orbff);
 
     index_t scdlin = POW2(linsize) * sizeof(complex128_t);
     if (p->c.bare_susceptibilities && p->vertex->P_flow) {
         if (!chi0_reco) {
-            new_off = diverge_mpi_write_byte_to_file(file, p->vertex->pp_bubble_int,
-                    new_off+my_nk_off*scdlin, my_nk*scdlin);
+            diverge_mpi_write_byte_to_file(file, p->vertex->pp_bubble_int, my_nk_off*scdlin, my_nk*scdlin);
         } else {
             complex128_t* buf = calloc(chi0_nk * POW2(linsize), sizeof*buf);
             diverge_tu_vertex_reco(p->vertex, 'P', buf, p->vertex->pp_bubble_int);
             transpose_inplace_rect_any(buf, sizeof*buf, POW2(linsize), chi0_nk);
-            new_off = diverge_mpi_write_byte_to_file_master(file, buf, new_off, chi0_nk*POW2(linsize)*sizeof*buf);
+            diverge_mpi_write_byte_to_file_master(file, buf, chi0_nk*POW2(linsize)*sizeof*buf);
             free(buf);
         }
     }
     if (p->c.bare_susceptibilities && (p->vertex->C_flow || p->vertex->D_flow)) {
         if (!chi0_reco) {
-            new_off = diverge_mpi_write_byte_to_file(file, p->vertex->ph_bubble_int,
-                    new_off+my_nk_off*scdlin, my_nk*scdlin);
+            diverge_mpi_write_byte_to_file(file, p->vertex->ph_bubble_int, my_nk_off*scdlin, my_nk*scdlin);
         } else {
             complex128_t* buf = calloc(chi0_nk * POW2(linsize), sizeof*buf);
             diverge_tu_vertex_reco(p->vertex, 'D', buf, p->vertex->ph_bubble_int);
             transpose_inplace_rect_any(buf, sizeof*buf, POW2(linsize), chi0_nk);
-            new_off = diverge_mpi_write_byte_to_file_master(file, buf, new_off, chi0_nk*POW2(linsize)*sizeof*buf);
+            diverge_mpi_write_byte_to_file_master(file, buf, chi0_nk*POW2(linsize)*sizeof*buf);
             free(buf);
         }
     }
     if (p->rpa) {
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->vals,
-                new_off, sizeof*p->rpa->vals * p->rpa->nev);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->vecs,
-                new_off, sizeof*p->rpa->vecs * p->rpa->nev * p->rpa->legdim);
-        new_off = diverge_mpi_write_byte_to_file_master(file, p->rpa->kidx,
-                new_off, sizeof*p->rpa->kidx * p->rpa->n_kidx);
+        diverge_mpi_write_byte_to_file_master(file, p->rpa->vals, sizeof*p->rpa->vals * p->rpa->nev);
+        diverge_mpi_write_byte_to_file_master(file, p->rpa->vecs, sizeof*p->rpa->vecs * p->rpa->nev * p->rpa->legdim);
+        diverge_mpi_write_byte_to_file_master(file, p->rpa->kidx, sizeof*p->rpa->kidx * p->rpa->n_kidx);
     }
 
-    new_off = diverge_mpi_write_byte_to_file_master(file, rs_hopping_dtype,
-            new_off, sizeof(rs_hopping_dtype));
-
-    if (new_off != header[127])
-        mpi_wrn_printf( "offset of file (%li) dosn't match size (%li)\n", new_off, header[127] );
+    diverge_mpi_write_byte_to_file_master(file, rs_hopping_dtype, sizeof(rs_hopping_dtype));
 
     diverge_mpi_close_file(file);
 }

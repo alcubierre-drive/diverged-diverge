@@ -4,6 +4,7 @@
 #include "init_internal_libs.h"
 
 #include <assert.h>
+#include "zstd_file.h"
 
 static MPI_Comm diverge_mpi_comm = MPI_COMM_NULL;
 
@@ -213,70 +214,95 @@ void diverge_mpi_gatherv_cdoub( const void* send, int count, void* recv, int* co
     MPI_Gatherv( send, count, MPI_DOUBLE_COMPLEX, recv, counts, displs, MPI_DOUBLE_COMPLEX, root, diverge_mpi_comm );
 }
 
+#include "mergesort.h"
+static inline int indirect_int_comp(int i, int j, const int* ary) { return ary[i] - ary[j]; }
+#undef MERGESORT_COMP_R
+#define MERGESORT_COMP_R(x,y,ctx) indirect_int_comp(x,y,ctx)
+MERGESORT_IMPL_R(indirect_int_sort, int)
+
 void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int displ, int count ) {
     MPICHK();
-    MPI_File fh;
-    if (MPI_File_open( diverge_mpi_comm, fname, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fh ) != MPI_SUCCESS) {
-        mpi_err_printf("could not open file %s. aborting.\n", fname );
-        return;
+    int rank = diverge_mpi_comm_rank(),
+        size = diverge_mpi_comm_size();
+    int* displs = rank ? NULL : calloc(size, sizeof*displs);
+    int* counts = rank ? NULL : calloc(size, sizeof*counts);
+    MPI_Gather( &displ, 1, MPI_INT, displs, 1, MPI_INT, 0, diverge_mpi_comm );
+    MPI_Gather( &count, 1, MPI_INT, counts, 1, MPI_INT, 0, diverge_mpi_comm );
+    if (rank == 0) {
+        int* ranks = calloc(size, sizeof*ranks);
+        for (int i=0; i<size; ++i) ranks[i] = i;
+        indirect_int_sort_r(ranks, size, displs, 0, 0);
+        complex128_t* buf = NULL;
+        zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+        for (int r=0; r<size; ++r) {
+            buf = realloc(buf, sizeof*buf * counts[ranks[r]]);
+            if (ranks[r] != rank) {
+                MPI_Status result;
+                MPI_Recv(buf, counts[ranks[r]], MPI_DOUBLE_COMPLEX, ranks[r],
+                        ranks[r], diverge_mpi_comm, &result);
+            } else {
+                memcpy(buf, data, sizeof*buf * count);
+            }
+            zstd_fwrite(buf, sizeof*buf, counts[ranks[r]], f);
+        }
+        zstd_fclose(f);
+        free(buf);
+        free(ranks);
+    } else {
+        MPI_Send(data, count, MPI_DOUBLE_COMPLEX, 0, rank, diverge_mpi_comm);
     }
-    MPI_File_set_view( fh, displ*sizeof(complex128_t), MPI_DOUBLE_COMPLEX, MPI_DOUBLE_COMPLEX, "native", MPI_INFO_NULL );
-    MPI_File_write_at( fh, 0, data, count, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE );
-    MPI_File_close( &fh );
+    free(displs);
+    free(counts);
 }
 
-index_t diverge_mpi_write_byte_to_file( void* file, const void* data, index_t displ, index_t count ) {
-    if (file == NULL) {
-        mpi_err_printf("got NULL as file argument. returning 0.\n");
-        return 0;
-    }
+void diverge_mpi_write_byte_to_file(void* file, const void* data, index_t displ, index_t count) {
     MPICHK();
-    MPI_File* fh = (MPI_File*)file;
-    MPI_File_set_view( *fh, displ, MPI_BYTE, MPI_BYTE, "native", MPI_INFO_NULL );
-    MPI_File_write_at( *fh, 0, data, count, MPI_BYTE, MPI_STATUS_IGNORE );
-    index_t end_data = displ + count;
-    MPI_Allreduce( MPI_IN_PLACE, &end_data, 1, MPI_INT64_T, MPI_MAX, diverge_mpi_comm );
-    return end_data;
+    int rank = diverge_mpi_comm_rank(),
+        size = diverge_mpi_comm_size();
+    int* displs = rank ? NULL : calloc(size, sizeof*displs);
+    int* counts = rank ? NULL : calloc(size, sizeof*counts);
+    MPI_Gather( &displ, 1, MPI_INT, displs, 1, MPI_INT, 0, diverge_mpi_comm );
+    MPI_Gather( &count, 1, MPI_INT, counts, 1, MPI_INT, 0, diverge_mpi_comm );
+    if (rank == 0) {
+        int* ranks = calloc(size, sizeof*ranks);
+        for (int i=0; i<size; ++i) ranks[i] = i;
+        indirect_int_sort_r(ranks, size, displs, 0, 0);
+        char* buf = NULL;
+        for (int r=0; r<size; ++r) {
+            buf = realloc(buf, counts[ranks[r]]);
+            if (ranks[r] != rank) {
+                MPI_Status result;
+                MPI_Recv(buf, counts[ranks[r]], MPI_BYTE, ranks[r], ranks[r], diverge_mpi_comm, &result);
+            } else {
+                memcpy(buf, data, sizeof*buf * count);
+            }
+            zstd_fwrite(buf, sizeof*buf, counts[ranks[r]], file);
+        }
+        free(buf);
+        free(ranks);
+    } else {
+        MPI_Send(data, count, MPI_BYTE, 0, rank, diverge_mpi_comm);
+    }
+    free(displs);
+    free(counts);
 }
 
-
-index_t diverge_mpi_write_byte_to_file_master( void* file, const void* data, index_t displ, index_t count) {
-    if (file == NULL) {
-        mpi_err_printf("got NULL as file argument. returning 0.\n");
-        return 0;
-    }
+void diverge_mpi_write_byte_to_file_master(void* file, const void* data, index_t count) {
     MPICHK();
-    index_t end_data = -1;
-
-    MPI_File* fh = (MPI_File*)file;
-    // this is a collective call
-    MPI_File_set_view( *fh, displ, MPI_BYTE, MPI_BYTE, "native", MPI_INFO_NULL );
-
-    if (diverge_mpi_comm_rank() == 0) {
-        MPI_File_write_at( *fh, 0, data, count, MPI_BYTE, MPI_STATUS_IGNORE );
-        end_data = displ + count;
-    }
-    MPI_Bcast( &end_data, sizeof(index_t), MPI_BYTE, 0, diverge_mpi_comm );
-    return end_data;
+    if (diverge_mpi_comm_rank() == 0) zstd_fwrite(data, 1, count, file);
 }
 
 void* diverge_mpi_open_file(const char* fname) {
     MPICHK();
-    MPI_File* fh = malloc(sizeof(MPI_File));
-    if (MPI_File_open( diverge_mpi_comm, fname, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, fh ) != MPI_SUCCESS) {
-        mpi_err_printf("could not open file %s. returning NULL.\n", fname );
+    if (diverge_mpi_comm_rank() == 0)
+        return zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+    else
         return NULL;
-    }
-    return (void*)fh;
 }
+
 void diverge_mpi_close_file(void* file) {
     MPICHK();
-    if (file == NULL) {
-        mpi_err_printf("got NULL as file argument. returning.\n");
-        return;
-    }
-    MPI_File_close( (MPI_File*)file );
-    free( file );
+    if (file) zstd_fclose(file);
 }
 
 void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count ) {
@@ -484,30 +510,28 @@ void diverge_mpi_gatherv_cdoub( const void* send, int count, void* recv, int* co
 }
 
 void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int displ, int count ) {
-    FILE* f = fopen(fname,"w");
+    zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
     if (!f) {
         mpi_err_printf("could not open file %s. aborting\n", fname );
         return;
     }
-    fwrite( (const char*)data+sizeof(complex128_t)*displ, sizeof(complex128_t), count, f );
-    fclose(f);
+    zstd_fwrite( (const char*)data+sizeof(complex128_t)*displ, sizeof(complex128_t), count, f );
+    zstd_fclose(f);
 }
 
-
-index_t diverge_mpi_write_byte_to_file( void* file, const void* data, index_t displ, index_t count){
+void diverge_mpi_write_byte_to_file( void* file, const void* data, index_t displ, index_t count){
     if (file == NULL) {
         mpi_err_printf("got NULL as file argument. returning 0.\n");
         return 0;
     }
-    fwrite( (const char*)data, 1, count, (FILE*)file );
-    return displ+count;
+    zstd_fwrite( (const char*)data, 1, count, (zstd_file_t*)file );
 }
-index_t diverge_mpi_write_byte_to_file_master( void* file, const void* data, index_t displ, index_t count) {
-    return diverge_mpi_write_byte_to_file(file, data, displ, count);
+void diverge_mpi_write_byte_to_file_master( void* file, const void* data, index_t count) {
+    diverge_mpi_write_byte_to_file(file, data, displ, count);
 }
 
 void* diverge_mpi_open_file(const char* fname) {
-    FILE* f = fopen(fname,"w");
+    zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
     if (!f) {
         mpi_err_printf("could not open file %s. returning NULL.\n", fname );
         return NULL;
@@ -519,7 +543,7 @@ void diverge_mpi_close_file(void* file) {
         mpi_err_printf("got NULL as file argument. returning.\n");
         return;
     }
-    fclose((FILE*)file);
+    zstd_fclose((zstd_file_t*)file);
 }
 
 void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count ) {

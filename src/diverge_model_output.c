@@ -13,6 +13,7 @@
 #include "misc/batched_eigen.h"
 #include "misc/md5.h"
 #include "misc/version.h"
+#include "misc/zstd_file.h"
 
 #include "diverge_momentum_gen.h"
 
@@ -424,12 +425,12 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         lmd5sum = strlen(md5sum);
 
         // write to file
-        FILE* f = fopen(fname, "wb");
+        zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
         if (!f) {
             mpi_err_printf( "could not open file %s. no output.\n", fname );
         } else {
-            fwrite(buf, sizeof(char), ibuf[125]+ibuf[126], f);
-            fclose(f);
+            zstd_fwrite(buf, sizeof(char), ibuf[125]+ibuf[126], f);
+            zstd_fclose(f);
         }
 
         // and free the buffer
