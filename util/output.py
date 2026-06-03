@@ -45,9 +45,11 @@ def version_compare( A, B ):
         return 1
 
 DIVERGE_OUTPUT_USE_MEMMAP = False
+_ZSTD_MAGIC_NUMBER_ = (0x28, 0xb5, 0x2f, 0xfd)
 
 # this is to swap out numpy_fromfile
 def _numpy_memmap( fname, **kwargs ):
+    kwargs_copy = kwargs.copy()
     memmap_kwargs = dict(offset=0, dtype=np.uint8, mode='r')
     try: memmap_kwargs['offset'] = kwargs.pop('offset')
     except: pass
@@ -55,12 +57,22 @@ def _numpy_memmap( fname, **kwargs ):
     except: pass
     try: memmap_kwargs['dtype'] = kwargs.pop('dtype')
     except: pass
-    return np.memmap( fname, **memmap_kwargs )
+    mapping = np.memmap( fname, **memmap_kwargs )
+    mapping_u8 = mapping.view(dtype=np.uint8)
+
+    try_compression = mapping_u8.size >= 4
+    if try_compression:
+        try_compression = (np.abs(mapping_u8[:4] - _ZSTD_MAGIC_NUMBER_).sum() == 0)
+    if try_compression:
+        del mapping
+        return _numpy_fromfile( fname, **kwargs_copy )
+    else:
+        return mapping
 
 # this is due to some weird numpy version checking for the contents of a buffer
 def _numpy_fromfile( fname, **kwargs ):
     if np.abs(np.fromfile(fname, dtype=np.uint8, count=4) - \
-            [0x28, 0xb5, 0x2f, 0xfd]).sum() == 0: # zstd compressed file
+            _ZSTD_MAGIC_NUMBER_).sum() == 0: # zstd compressed file
         import compression.zstd as zstd
         return np.frombuffer(zstd.ZstdFile(fname, "rb").read(), **kwargs)
     else:
