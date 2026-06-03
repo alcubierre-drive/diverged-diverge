@@ -22,13 +22,17 @@ typedef struct diverge_model_t diverge_model_t;
  * output a :c:struct:`diverge_model_t` to a ``.dvg`` file that can be read
  * using the ``diverge.output`` python library (see :ref:`Simulation Output`).
  * more control can be obtained using
- * :c:func:`diverge_model_to_file_finegrained` using the configuration structure
+ * :c:func:`diverge_model_to_file_finegrained` with the configuration structure
  * :c:struct:`diverge_model_output_conf_t`. The defaults for this struct are
  * given in :c:var:`diverge_model_output_conf_defaults` (only accessible from C
  * due to class/struct ditochtomy in C++), or
  * :c:func:`diverge_model_output_conf_defaults_CPP`. functions return a checksum
  * of the model as a string (must not be free'd as it is statically owned by
  * libdivERGe)
+ *
+ * .. hint:: if -DUSE_COMPRESSED_OUTPUT is enabled at compile time, the model
+ *           output file will be zstd compressed. The :ref:`Simulation Output`
+ *           library handles this automatically via zstd's magic number.
  *
  * file format specification info graphic (text below)
  *

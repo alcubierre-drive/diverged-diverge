@@ -520,14 +520,15 @@ void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int d
 }
 
 void diverge_mpi_write_byte_to_file( void* file, const void* data, index_t displ, index_t count){
-    if (file == NULL) {
+    (void)displ;
+    if (!file) {
         mpi_err_printf("got NULL as file argument. returning 0.\n");
-        return 0;
+    } else {
+        zstd_fwrite( (const char*)data, 1, count, (zstd_file_t*)file );
     }
-    zstd_fwrite( (const char*)data, 1, count, (zstd_file_t*)file );
 }
 void diverge_mpi_write_byte_to_file_master( void* file, const void* data, index_t count) {
-    diverge_mpi_write_byte_to_file(file, data, displ, count);
+    diverge_mpi_write_byte_to_file(file, data, 0, count);
 }
 
 void* diverge_mpi_open_file(const char* fname) {
