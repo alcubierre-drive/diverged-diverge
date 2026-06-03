@@ -3,6 +3,8 @@
 #include "zstd_file.h"
 #include <stdio.h>
 
+int DIVERGE_OUTPUT_COMPRESSION_LEVEL = 3;
+
 #ifndef USE_COMPRESSED_OUTPUT
 
 zstd_file_t* zstd_fopen(const char *path, const char *mode, int compressionLevel) {

@@ -16,6 +16,7 @@
 #include "misc/shared_mem.h"
 #include "misc/qnan.h"
 #include "misc/dos.cu.h"
+#include "misc/zstd_file.h"
 
 #include "tu/phonons.h"
 #include "tu/propagator_cpu_mpi.h"
@@ -216,6 +217,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("flow_step_eigchan_shut_up") {
         diverge_flow_step_eigchan_shut_up = atoi(val);
+    }
+    CHECKKEY("output_compression_level") {
+        DIVERGE_OUTPUT_COMPRESSION_LEVEL = atoi(val);
     }
 
     if (key_) {
