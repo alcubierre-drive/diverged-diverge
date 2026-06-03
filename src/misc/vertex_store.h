@@ -103,6 +103,10 @@ void vertex_storage_pop( vertex_storage_t* t );
  * :py:class:`diverge.output.vertex_store`). The output includes all channel
  * and scale information.
  *
+ * .. hint:: if -DUSE_COMPRESSED_OUTPUT is enabled at compile time, the
+ *           vertex output file will be zstd compressed. The :ref:`Simulation
+ *           Output` library handles this automatically via zstd's magic number.
+ *
  * file format specification info: ``header`` is 128 elements of type
  * :c:type:`index_t` (64 bit signed integers)
  *

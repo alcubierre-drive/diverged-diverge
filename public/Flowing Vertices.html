@@ -291,6 +291,11 @@ file can be read using the <code class="docutils literal notranslate"><span clas
 (<a class="reference internal" href="Simulation%20Output%20Module%20Spec.html#diverge.output.read" title="diverge.output.read"><code class="xref py py-meth docutils literal notranslate"><span class="pre">diverge.output.read()</span></code></a> returns
 <a class="reference internal" href="Simulation%20Output%20Module%20Spec.html#diverge.output.vertex_store" title="diverge.output.vertex_store"><code class="xref py py-class docutils literal notranslate"><span class="pre">diverge.output.vertex_store</span></code></a>). The output includes all channel
 and scale information.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>if -DUSE_COMPRESSED_OUTPUT is enabled at compile time, the
+vertex output file will be zstd compressed. The <a class="reference internal" href="Simulation%20Output.html#simulation-output"><span class="std std-ref">Simulation Output</span></a> library handles this automatically via zstd’s magic number.</p>
+</div>
 <p>file format specification info: <code class="docutils literal notranslate"><span class="pre">header</span></code> is 128 elements of type
 <a class="reference internal" href="Datatypes.html#c.index_t" title="index_t"><code class="xref c c-type docutils literal notranslate"><span class="pre">index_t</span></code></a> (64 bit signed integers)</p>
 <p>all displacement/length information is in bytes.</p>
@@ -342,7 +347,7 @@ interpreted as index_t</p>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.vertex_storage_free">
-<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_free" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/vertex_store.h#L129"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vertex_storage_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><span class="n"><span class="pre">vertex_storage_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">t</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.vertex_storage_free" title="Link to this definition"></a><br /><a class="reference external" href="https://git.rwth-aachen.de/frg/diverge/-/blob/dev-C_phonons/src/misc/vertex_store.h#L133"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>free a <a class="reference internal" href="#c.vertex_storage_t" title="vertex_storage_t"><code class="xref c c-struct docutils literal notranslate"><span class="pre">vertex_storage_t</span></code></a> object</p>
 </dd></dl>
 

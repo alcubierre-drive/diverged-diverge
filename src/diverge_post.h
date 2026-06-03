@@ -281,6 +281,12 @@ double diverge_postprocess_conf_tu_storing_threshold_qrelative( double threshold
  * use :c:func:`diverge_postprocess_and_write_finegrained` or its pyhton wrapper
  * :func:`diverge.postprocess_and_write_PY`.
  *
+ * .. hint:: if -DUSE_COMPRESSED_OUTPUT is enabled at compile time, the
+ *           postprocessing output file *and all ancillary files* will be zstd
+ *           compressed. The :ref:`Simulation Output` library handles this
+ *           automatically via zstd's magic number for .dvg files, binaries have
+ *           to be checked manually!
+ *
  * Grid-FRG:
  *
  * .. image:: img/diverge_grid_output.png
