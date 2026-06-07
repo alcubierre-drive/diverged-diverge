@@ -62,6 +62,8 @@ struct diverge_flow_step_t {
 };
 
 extern int diverge_flow_step_eigchan_shut_up;
+extern index_t diverge_flow_step_eigchan_piter_maxiter;
+extern double diverge_flow_step_eigchan_piter_tol;
 
 #ifdef __cplusplus
 }
