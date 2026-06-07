@@ -680,6 +680,8 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
     diverge_flow_step_vertex_t v = diverge_flow_step_vertex( st, chan );
     index_t nq = (v.q_1 - v.q_0);
     index_t linsz = v.backend == 'T' ? v.n_orbff * POW2(v.n_spin) : POW2(v.n_orbff*v.n_spin) * v.nk;
+    double tick = diverge_mpi_wtime();
+    double result = 0.0;
     if (piter > 0) {
         if (0) {
             piter_LABEL:
@@ -722,7 +724,7 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         free( maxiter_ary );
         free( eigen );
 
-        return sqrt(maxval);
+        result = sqrt(maxval);
     } else if (piter == DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK) {
 
         if (linsz < 10) goto piter_LABEL;
@@ -739,9 +741,8 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
             for (int i=0; i<ncv; ++i)
                 Vmax = MAX(Vmax, cabs(eigvals[i]));
         }
-        double Vmax_red = Vmax;
-        diverge_mpi_allreduce_double_max( &Vmax, &Vmax_red, 1 );
-        return MAX(Vmax, Vmax_red);
+        diverge_mpi_allreduce_double_max_inplace(&Vmax, 1);
+        result = Vmax;
     } else if (piter < 0) {
         double Vmax = 0.0;
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:Vmax) collapse(2)
@@ -758,9 +759,8 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
             double Vmax_l = cabs(cexp(I*carg(C_l))*R_l + C_l);
             Vmax = MAX(Vmax, Vmax_l);
         }
-        double Vmax_red = Vmax;
-        diverge_mpi_allreduce_double_max( &Vmax, &Vmax_red, 1 );
-        return MAX(Vmax, Vmax_red);
+        diverge_mpi_allreduce_double_max_inplace(&Vmax, 1);
+        result = Vmax;
     } else {
         double* singular_values = calloc( nq * linsz, sizeof* singular_values );
         batched_svd( NULL, -1, v.ary, NULL, NULL, singular_values, linsz, nq );
@@ -768,10 +768,12 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:smax)
         for (index_t i=0; i<linsz*nq; ++i) smax = MAX(smax, singular_values[i]);
         free( singular_values );
-        double smax_red = smax;
-        diverge_mpi_allreduce_double_max( &smax, &smax_red, 1 );
-        return MAX(smax, smax_red);
+        diverge_mpi_allreduce_double_max_inplace(&smax, 1);
+        result = smax;
     }
+    double tock = diverge_mpi_wtime();
+    st->t_eigchan_diag += tock - tick;
+    return result;
 }
 
 void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, index_t* kidx, index_t n_kidx ) {

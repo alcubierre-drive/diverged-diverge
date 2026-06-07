@@ -59,6 +59,8 @@ struct diverge_flow_step_t {
 
     index_t niter;
     VECTOR_DECL( diverge_timing_t, timings )
+
+    double t_eigchan_diag;
 };
 
 extern int diverge_flow_step_eigchan_shut_up;
