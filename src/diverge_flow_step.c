@@ -681,7 +681,15 @@ index_t diverge_flow_step_n_ibz( const diverge_flow_step_t* st ) {
     return 0;
 }
 
+#ifndef DIVERGE_FLOW_STEP_EIGCHAN_PITER_MAXITER
+#define DIVERGE_FLOW_STEP_EIGCHAN_PITER_MAXITER 1000
+#endif
+#ifndef DIVERGE_FLOW_STEP_EIGCHAN_PITER_TOL
+#define DIVERGE_FLOW_STEP_EIGCHAN_PITER_TOL 1.e-6
+#endif
 int diverge_flow_step_eigchan_shut_up = 0;
+index_t diverge_flow_step_eigchan_piter_maxiter = DIVERGE_FLOW_STEP_EIGCHAN_PITER_MAXITER;
+double diverge_flow_step_eigchan_piter_tol = DIVERGE_FLOW_STEP_EIGCHAN_PITER_TOL;
 
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter ) {
     diverge_flow_step_vertex_t v = diverge_flow_step_vertex( st, chan );
@@ -699,19 +707,20 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         index_t* maxiter_ary = calloc(nq, sizeof*maxiter_ary);
         complex128_t* eigen = calloc(nq, sizeof*eigen);
 
-        const index_t maxiter = 1000;
-        const double tol = 1.e-6;
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t q=0; q<nq; ++q) {
-            maxiter_ary[q] = maxiter;
-            tol_ary[q] = tol;
+            maxiter_ary[q] = diverge_flow_step_eigchan_piter_maxiter;
+            tol_ary[q] = diverge_flow_step_eigchan_piter_tol;
         }
 
         power_iteration_batched( v.ary, NULL, eigen, linsz, nq, maxiter_ary, tol_ary, NULL );
 
         index_t nq_not_converged = 0;
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:nq_not_converged)
-        for (index_t q=0; q<nq; ++q) if (maxiter_ary[q] == maxiter || tol_ary[q] > tol) nq_not_converged++;
+        for (index_t q=0; q<nq; ++q)
+            if (maxiter_ary[q] == diverge_flow_step_eigchan_piter_maxiter ||
+                tol_ary[q] > diverge_flow_step_eigchan_piter_tol)
+                    nq_not_converged++;
         diverge_mpi_allreduce_index_sum_inplace(&nq_not_converged, 1);
         if (nq_not_converged != 0 && !diverge_flow_step_eigchan_shut_up)
             mpi_wrn_printf( "%li qpts not converged in power iteration\n", nq_not_converged );

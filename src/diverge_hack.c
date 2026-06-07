@@ -218,6 +218,12 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("flow_step_eigchan_shut_up") {
         diverge_flow_step_eigchan_shut_up = atoi(val);
     }
+    CHECKKEY("flow_step_eigchan_piter_maxiter") {
+        diverge_flow_step_eigchan_piter_maxiter = atoi(val);
+    }
+    CHECKKEY("flow_step_eigchan_piter_tol") {
+        diverge_flow_step_eigchan_piter_tol = atof(val);
+    }
     CHECKKEY("output_compression_level") {
         DIVERGE_OUTPUT_COMPRESSION_LEVEL = atoi(val);
     }
