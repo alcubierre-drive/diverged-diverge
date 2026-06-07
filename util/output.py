@@ -73,7 +73,10 @@ def _numpy_memmap( fname, **kwargs ):
 def _numpy_fromfile( fname, **kwargs ):
     if np.abs(np.fromfile(fname, dtype=np.uint8, count=4) - \
             _ZSTD_MAGIC_NUMBER_).sum() == 0: # zstd compressed file
-        import compression.zstd as zstd
+        try:
+            import compression.zstd as zstd
+        except ImportError:
+            import backports.zstd as zstd
         return np.frombuffer(zstd.ZstdFile(fname, "rb").read(), **kwargs)
     else:
         return np.frombuffer( open(fname, "rb").read(), **kwargs )

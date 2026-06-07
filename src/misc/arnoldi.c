@@ -33,6 +33,7 @@ extern void zneupd_(
     int *info
 );
 static inline void arpack_message( void ) {}
+int arnoldi_package_compiled_in( void ) { return 1; }
 #else // USE_ARPACK_EIGENSOLVER
 void znaupd_( int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
     complex128_t *resid, int *ncv, complex128_t *v, int *ldv, int *iparam,
@@ -90,6 +91,7 @@ void zneupd_( int *rvec, char *howmny, int *select, complex128_t *d,
 static inline void arpack_message( void ) {
     mpi_err_printf( "arpack not compiled in (-DUSE_ARPACK_EIGENSOLVER)\n" );
 }
+int arnoldi_package_compiled_in( void ) { return 0; }
 #endif // USE_ARPACK_EIGENSOLVER
 
 int arnoldi_eigen( char* which, int n, int nev, int ncv,
