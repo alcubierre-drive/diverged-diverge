@@ -277,6 +277,9 @@ static void _save_channel_leading_ev_q_relative( tu_postproduction_t* p, complex
         }
     }
 
+    // output type
+    for (index_t q=0; q<nq; ++q) type[q] = eigs[q*linsize].type;
+
     // sort by magnitude over q
     eigen_sort(eigs, nq*linsize, diverge_omp_num_threads(), -1);
     // put maximum into all ranks
@@ -301,12 +304,11 @@ static void _save_channel_leading_ev_q_relative( tu_postproduction_t* p, complex
     for (index_t q=1; q<nq; ++q)
         off[q] = off[q-1] + len[q-1];
 
-    // and finally val/vec/type
+    // and finally val/vec
     for (index_t q=0; q<nq; ++q)
     for (index_t l=0; l<len[q]; ++l) {
         index_t ql = off[q] + l;
         val[ql] = eigs[ql].val;
-        type[ql] = eigs[ql].type;
         memcpy(vec+ql*linsize, eigs[ql].vec, sizeof(complex128_t) * linsize);
     }
 
