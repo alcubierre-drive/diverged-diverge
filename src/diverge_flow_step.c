@@ -741,8 +741,15 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
 
         result = sqrt(maxval);
     } else if (piter == DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK) {
-
-        if (linsz < 10) goto piter_LABEL;
+        if (linsz < 10) {
+            goto piter_LABEL;
+        }
+        if (!arnoldi_package_compiled_in()) {
+            if (!diverge_flow_step_eigchan_shut_up) {
+                mpi_wrn_printf( "ARPACK not compiled in, using power iteration\n" );
+            }
+            goto piter_LABEL;
+        }
 
         double Vmax = 0.0;
         for (index_t q=0; q<nq; ++q) {

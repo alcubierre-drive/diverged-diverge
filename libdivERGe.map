@@ -225,6 +225,7 @@ DIVERGE_UNSTABLE {
         arnoldi_eigen;
         arnoldi_eigen_dense;
         arnoldi_eigen_dense_T;
+        arnoldi_package_compiled_in;
         batched_eigen_get_nchunks;
         batched_eigen_r;
         batched_eigen_r_get_eigen3_mode;
