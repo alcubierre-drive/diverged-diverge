@@ -10,13 +10,13 @@ steps:
       - pip install --break-system-packages --root-user-action ignore --editable . --config-settings editable_mode=strict
       - make doc
   deploy-docs:
-    image: apline/git
+    image: alpine/git
     environment:
       CB_TOKEN:
         from_secret: doctok
     commands:
-      - git config --global user.email "docuser@codeberg"
-      - git config --global user.name "Docuser Codeberg"
+      - git config --global user.email "sphinx-ci@codeberg.org"
+      - git config --global user.name "Sphinx CI (Codeberg)"
       - git clone -b pages https://$CB_TOKEN@codeberg.org/$CI_REPO.git $CI_REPO_NAME
       - cp -ar public/ $CI_REPO_NAME/
       - cd $CI_REPO_NAME
