@@ -5,7 +5,7 @@ steps:
   build-docs:
     image: alpine/git
     commands:
-      - apk add py3-pip gcc bash make build-base
+      - apk add py3-pip gcc bash make build-base clang
       - pip install --break-system-packages --root-user-action ignore hawkmoth clang sphinx-rtd-theme
       - pip install --break-system-packages --root-user-action ignore --editable . --config-settings editable_mode=strict
       - make doc
