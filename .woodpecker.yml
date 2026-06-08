@@ -1,0 +1,25 @@
+when:
+  branch: ${CI_REPO_DEFAULT_BRANCH}
+  event: [push, cron]
+steps:
+  build-docs:
+    image: alpine/git
+    commands:
+      - apk add py3-pip gcc bash make build-base clang clang-dev clang-libclang
+      - pip install --break-system-packages --root-user-action ignore hawkmoth clang sphinx-rtd-theme
+      - bash ./build_doc_lib.sh
+      - pip install --break-system-packages --root-user-action ignore --editable . --config-settings editable_mode=strict
+      - make doc
+  deploy-docs:
+    image: alpine/git
+    environment:
+      CB_TOKEN:
+        from_secret: doctok
+    commands:
+      - git config --global user.email "sphinx-ci@codeberg.org"
+      - git config --global user.name "Sphinx CI (Codeberg)"
+      - git clone -b pages https://$CB_TOKEN@codeberg.org/$CI_REPO.git $CI_REPO_NAME
+      - cp -ar public/ $CI_REPO_NAME/
+      - cd $CI_REPO_NAME
+      - git add .
+      - if ! git diff --cached --quiet; then git commit -m "Woodpecker CI ${CI_BUILD_CREATED}" && git push; fi

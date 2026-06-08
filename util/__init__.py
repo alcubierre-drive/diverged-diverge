@@ -811,8 +811,8 @@ if not _libs["divERGe"] is None:
     mem_alloc_complex128_t.argtypes = [index_t]
     mem_alloc_complex128_t.restype = POINTER(c_double)
 
-    mem_alloc = _libs["divERGe"].get("malloc", "cdecl")
-    mem_alloc.argtypes = [c_size_t]
+    mem_alloc = _libs["divERGe"].get("diverge_mem_alloc", "cdecl")
+    mem_alloc.argtypes = [index_t]
     mem_alloc.restype = c_voidp
 
     mem_free = _libs["divERGe"].get("diverge_mem_free", "cdecl")
