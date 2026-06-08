@@ -2,6 +2,7 @@
 #include "../src/misc/mpi_log.h"
 #include "../src/misc/mpi_functions.h"
 #include "../src/misc/mergesort.h"
+#include "../src/misc/mt19937.h"
 
 #ifndef DIVERGE_SKIP_TESTS
 
@@ -119,9 +120,36 @@ void fill_Rvec(const diverge_model_t* model, double* Rvec) {
         Rvec[3*i+dim] = tu_ff[i].R[0] * model->lattice[0][dim] + tu_ff[i].R[1] * model->lattice[1][dim]
                                                                + tu_ff[i].R[2] * model->lattice[2][dim];
 }
-double random_dbl( void ) {
-    return (double)rand()/(0.5*RAND_MAX)-1.0;
+
+static mt19937_64_t mt_rng = {0};
+static int mt_rng_has_init = 0;
+static uint64_t mt_rng_seed = 1234;
+
+static inline void mt_rng_init( void ) {
+    if (!mt_rng_has_init) {
+        mt_rng_has_init = 1;
+        mt_rng = mt64_init(mt_rng_seed);
+    }
 }
+
+void random_seed( uint64_t seed ) {
+    mt_rng_has_init = 0;
+    mt_rng_seed = seed;
+}
+
+double random_dbl( void ) {
+    #pragma omp critical
+    {
+        mt_rng_init();
+    }
+    double r;
+    #pragma omp critical
+    {
+        r = mt64_next_dbl(&mt_rng);
+    }
+    return 2.*r-1.;
+}
+
 complex128_t random_cmplx( void ) {
     return random_dbl() + I*random_dbl();
 }

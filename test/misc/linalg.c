@@ -254,4 +254,50 @@ CT_TEST_NAME( batched_svd, "batched,svd" ) {
     free(S);
 }
 
+CT_TEST_NAME( batched_piter, "batched,piter" ) {
+    complex128_t *A = gen_random_matrix_batch(N, num),
+                 *H = gen_random_matrix_batch(N, num);
+
+    // set H = A + A^\dagger; both A and H contain the matrix after this block
+    memcpy( H, A, sizeof*H * num * N*N );
+    for (index_t i=0; i<num; ++i) {
+        transpose_inplace(A+i*N*N, N);
+        for (index_t ij=0; ij<N*N; ++ij) H[IDX2(i,ij,N*N)] += conj(A[IDX2(i,ij,N*N)]);
+    }
+    memcpy( A, H, sizeof*A * num * N*N );
+
+    double* E1 = calloc(N*num, sizeof(double));
+    batched_eigen_r( NULL, -1, A, E1, N, num );
+
+    complex128_t* E2 = calloc(N*num, sizeof(complex128_t));
+    double TOL = 1.e-14;
+    index_t MAXITER = 40000;
+    double* tol = calloc(num, sizeof*tol);
+    index_t* maxiter = calloc(num, sizeof*maxiter);
+    for (index_t i=0; i<num; ++i) {
+        tol[i] = TOL;
+        maxiter[i] = MAXITER;
+    }
+    power_iteration_batched( H, NULL, E2, N, num, maxiter, tol, NULL );
+
+    free(H);
+    free(A);
+
+    for (index_t i=0; i<num; ++i) {
+        double maxval_eigen = 0.0;
+        for (index_t a=0; a<N; ++a)
+            maxval_eigen = MAX(maxval_eigen, fabs(E1[IDX2(i,a,N)]));
+        double maxval_piter = cabs(E2[i]);
+
+        CT_CHECK( fabs(maxval_piter - maxval_eigen) <= 1.e-7 * maxval_piter );
+        CT_CHECK( maxiter[i] < MAXITER );
+        CT_CHECK( tol[i] < TOL );
+    }
+
+    free(tol);
+    free(maxiter);
+    free(E1);
+    free(E2);
+}
+
 #endif // DIVERGE_SKIP_TESTS
