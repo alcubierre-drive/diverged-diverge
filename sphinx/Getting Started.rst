@@ -13,7 +13,7 @@ and some :ref:`Examples`. For more pre-built versions, see
 :release_tree:`releases <public/releases>`. If you wish to :ref:`compile
 yourself <Compilation>` to include various optimizations (MPI, CUDA, ...), you
 can do so by cloning the `git repository
-<https://git.rwth-aachen.de/frg/diverge.git>`_ and following the :ref:`build
+<https://codeberg.org/lennart_klebl/divERGe.git>`_ and following the :ref:`build
 instructions <Compilation>`. Moreover, environment variables can be used to
 change the number of threads for different components, see :ref:`Runtime
 Tuning`.

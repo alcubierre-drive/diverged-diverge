@@ -20,6 +20,9 @@ tu_formfactor_t* diverge_mem_alloc_tu_formfactor_t( index_t num );
 /** for python wrapper */
 double* diverge_mem_alloc_complex128_t( index_t num );
 
+/** for python wrapper */
+void* diverge_mem_alloc( index_t num );
+
 /** for python wrapper, should not be required */
 void diverge_mem_free( void* addr );
 

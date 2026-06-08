@@ -1,7 +1,5 @@
 <p align=center><img src="public/diverge.png" width="400"/></p>
 
-# CAUTION: WE RECENTLY DID SOME HOUSEKEEPING ON THE GIT REPO. YOU WILL NEED TO RECLONE; PULL IS IMPOSSIBLE
-
 # DivERGe implements various ERG examples
 DivERGe provides a versatile framework to set up (one,) two and three
 dimensional functional renormalization group (FRG/ERG) calculations under the
@@ -24,14 +22,14 @@ compilation is additionally required (and putting the correct
 in use by calling ```diverge.info()``` from python. For any other language, you
 must write all the FFI wrappers yourself.
 
-# [Documentation](https://frg.pages.rwth-aachen.de/diverge/)
-[https://frg.pages.rwth-aachen.de/diverge/](https://frg.pages.rwth-aachen.de/diverge/)
+# [Documentation](https://lennart_klebl.codeberg.page/divERGe/public/)
+[https://lennart_klebl.codeberg.page/divERGe/public/](https://lennart_klebl.codeberg.page/divERGe/public/)
 
-# [Download CPU release](https://git.rwth-aachen.de/frg/diverge/-/raw/master/public/releases/v0.10/divERGe.tar.gz)
+# [Download CPU release](https://codeberg.org/lennart_klebl/divERGe/raw/branch/master/public/releases/v0.10/divERGe.tar.gz)
 Generic linux (amd64) builds (GLIBC>=2.17, this should be given almost anywhere
 to date) can be downloaded
-[here](https://git.rwth-aachen.de/frg/diverge/-/tree/master/public/releases). We
-recommend building from source for an optimized version on the HPC
+[here](https://codeberg.org/lennart_klebl/divERGe/src/branch/master/public/releases).
+We recommend building from source for an optimized version on the HPC
 infrastructure to your availability.
 
 # Testing
