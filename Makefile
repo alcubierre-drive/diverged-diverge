@@ -168,6 +168,7 @@ dist-src: $(SRC_C) $(SRC_CPP) $(SRC_CU) $(HEADERS) Makefile make.local/ $(EXAMPL
 	$(DIVERGE_GZIP) -f divERGe_src.tar
 
 doc:
+	@bash ./build_doc_lib.sh
 	make -C sphinx html
 	@bash sphinx/publish.sh
 man:
