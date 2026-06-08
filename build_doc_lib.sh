@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# XXX: Do not invoke separately. Use `make doc`.
+# XXX: Do not invoke separately. Use `make doc` (or used by the CI).
 
 MAP_FILE="libdivERGe.map"
 SO_FILE="libdivERGe.so"
@@ -8,6 +8,11 @@ SO_FILE="libdivERGe.so"
 if [ ! -f "$MAP_FILE" ]; then
     echo "Error: File '$MAP_FILE' not found." >&2
     exit 1
+fi
+
+if [ -f "$SO_FILE" ]; then
+    echo "shared object exists, not building mock."
+    exit 0
 fi
 
 awk '
@@ -31,3 +36,4 @@ awk '
         }
     }
 ' "$MAP_FILE" | gcc -x c - -shared -o "$SO_FILE"
+
