@@ -1,6 +1,6 @@
 <p align=center><img src="public/diverge.png" width="400"/></p>
 
-# CAUTION: WE RECENTLY DID SOME HOUSEKEEPING ON THE GIT REPO. YOU WILL NEED TO RECLONE; PULL IS IMPOSSIBLE
+# THIS GITLAB INSTANCE IS GOING TO SHUT DOWN SOON. THE REPO HAS BEEN MOVED TO [CODEBERG](https://codeberg.org/lennart_klebl/divERGe)
 
 # DivERGe implements various ERG examples
 DivERGe provides a versatile framework to set up (one,) two and three
