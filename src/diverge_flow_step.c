@@ -24,6 +24,7 @@
 
 #include <float.h>
 #include <limits.h>
+#include <assert.h>
 
 static void diverge_flow_step_select_channels( diverge_flow_step_t* st, const char* chans_ );
 
@@ -613,41 +614,76 @@ void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* fe
         st->tu_vertex->C_to_P = st->tu_vertex->D_to_P = true;
         st->tu_vertex->P_to_C = st->tu_vertex->D_to_C = true;
         st->tu_vertex->C_to_D = st->tu_vertex->P_to_D = true;
+        mpi_vrb_printf( "ph->X feedback enabled (X ∈ {P,C,D})\n" );
+        st->tu_vertex->ph_to_P = st->tu_vertex->ph_to_C = st->tu_vertex->ph_to_D = true;
         return;
     }
-    int target_chan = 0;
-    st->tu_vertex->C_to_P = st->tu_vertex->D_to_P = false;
-    st->tu_vertex->P_to_C = st->tu_vertex->D_to_C = false;
-    st->tu_vertex->C_to_D = st->tu_vertex->P_to_D = false;
-    for (const char* c = feedback; *c; ++c) {
-        if (*c == '|') {
-            target_chan += 1;
-        } else {
-            switch (*c) {
-                case 'P':
-                    if (target_chan == 1) st->tu_vertex->P_to_C = true;
-                    if (target_chan == 2) st->tu_vertex->P_to_D = true;
+    if (!strncmp(feedback, "ph:", 3)) {
+        st->tu_vertex->ph_to_P = st->tu_vertex->ph_to_C = st->tu_vertex->ph_to_D = false;
+        feedback += 3;
+        int target_chan = 0;
+        for (const char* c = feedback; *c; ++c) {
+            bool yes = (*c == 'y' || *c == 'Y' || *c == '1' || *c == '+');
+            bool no  = (*c == 'n' || *c == 'N' || *c == '0' || *c == '-');
+            if (!yes && !no) {
+                mpi_wrn_printf( "cannot parse phonon channel #%i to y|n (%c)\n", target_chan, *c );
+                continue;
+            }
+            assert( no == !yes );
+            switch (target_chan) {
+                case 0:
+                    st->tu_vertex->ph_to_P = yes;
                     break;
-                case 'C':
-                    if (target_chan == 0) st->tu_vertex->C_to_P = true;
-                    if (target_chan == 2) st->tu_vertex->C_to_D = true;
+                case 1:
+                    st->tu_vertex->ph_to_C = yes;
                     break;
-                case 'D':
-                    if (target_chan == 0) st->tu_vertex->D_to_P = true;
-                    if (target_chan == 1) st->tu_vertex->D_to_C = true;
+                case 2:
+                    st->tu_vertex->ph_to_D = yes;
                     break;
                 default:
-                    mpi_wrn_printf( "unknown channel '%c' in feedback to channel #%i\n", *c, target_chan );
+                    mpi_wrn_printf( "too many channels (012->%i)\n", target_chan );
                     break;
             }
+            target_chan++;
         }
+        if (st->tu_vertex->ph_to_P) mpi_vrb_printf("ph->P feedback enabled\n");
+        if (st->tu_vertex->ph_to_C) mpi_vrb_printf("ph->C feedback enabled\n");
+        if (st->tu_vertex->ph_to_D) mpi_vrb_printf("ph->D feedback enabled\n");
+    } else {
+        int target_chan = 0;
+        st->tu_vertex->C_to_P = st->tu_vertex->D_to_P = false;
+        st->tu_vertex->P_to_C = st->tu_vertex->D_to_C = false;
+        st->tu_vertex->C_to_D = st->tu_vertex->P_to_D = false;
+        for (const char* c = feedback; *c; ++c) {
+            if (*c == '|') {
+                target_chan += 1;
+            } else {
+                switch (*c) {
+                    case 'P':
+                        if (target_chan == 1) st->tu_vertex->P_to_C = true;
+                        if (target_chan == 2) st->tu_vertex->P_to_D = true;
+                        break;
+                    case 'C':
+                        if (target_chan == 0) st->tu_vertex->C_to_P = true;
+                        if (target_chan == 2) st->tu_vertex->C_to_D = true;
+                        break;
+                    case 'D':
+                        if (target_chan == 0) st->tu_vertex->D_to_P = true;
+                        if (target_chan == 1) st->tu_vertex->D_to_C = true;
+                        break;
+                    default:
+                        mpi_wrn_printf( "unknown channel '%c' in feedback to channel #%i\n", *c, target_chan );
+                        break;
+                }
+            }
+        }
+        if (st->tu_vertex->C_to_P) mpi_vrb_printf("C->P feedback enabled\n");
+        if (st->tu_vertex->D_to_P) mpi_vrb_printf("D->P feedback enabled\n");
+        if (st->tu_vertex->P_to_C) mpi_vrb_printf("P->C feedback enabled\n");
+        if (st->tu_vertex->D_to_C) mpi_vrb_printf("D->C feedback enabled\n");
+        if (st->tu_vertex->P_to_D) mpi_vrb_printf("P->D feedback enabled\n");
+        if (st->tu_vertex->C_to_D) mpi_vrb_printf("C->D feedback enabled\n");
     }
-    if (st->tu_vertex->C_to_P) mpi_vrb_printf("C->P feedback enabled\n");
-    if (st->tu_vertex->D_to_P) mpi_vrb_printf("D->P feedback enabled\n");
-    if (st->tu_vertex->P_to_C) mpi_vrb_printf("P->C feedback enabled\n");
-    if (st->tu_vertex->D_to_C) mpi_vrb_printf("D->C feedback enabled\n");
-    if (st->tu_vertex->P_to_D) mpi_vrb_printf("P->D feedback enabled\n");
-    if (st->tu_vertex->C_to_D) mpi_vrb_printf("C->D feedback enabled\n");
 }
 
 const index_t* diverge_flow_step_mi_to_tuffidx( const diverge_flow_step_t* st ) {

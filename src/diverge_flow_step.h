@@ -49,11 +49,23 @@ diverge_flow_type diverge_flow_step_type( const diverge_flow_step_t* st );
 void diverge_flow_step_get_channels( const diverge_flow_step_t* st, int chans[4] );
 
 /**
- * Allows for a selective turning off of the feedback in between the channels,
- * before or at any point during the flow. The format of the Feedback char is
- * "C|D|CP" which means that in the P channel only the C channel, in the C
- * channel only the D channel and in the D channel both of the other channels
- * are included. The separators "|" are reqired!
+ * Allows to select feedback in between the diagrammatic channels; before or at
+ * any point during the flow. The format of the feedback string is ``"C|D|CP"``,
+ * which means that in the P channel (everything before the first
+ * ``|``-separator) only the C channel, in the C channel (everything in the
+ * middle section, i.e., between the two ``|``-separators) only the D channel
+ * and in the D channel (everything after the second ``|``-separator) both the C
+ * and the P channel are included. The separators are required; the channels
+ * within one field may be none, in which case no feedback is included into the
+ * corresponding channel.
+ *
+ * ``feedback`` may be NULL in which case the default behavior (all-to-all) is
+ * restored.
+ *
+ * The addition of phonon vertices to the channels can be controlled if
+ * ``feedback[:3] == "ph:"``. In this case the format is ``"ph:PCD"``, where
+ * ``'P', 'C', 'D'`` can be ``'y'`` or ``'n'`` to enable/disable the addition of
+ * phonon vertices to the corresponding channel.
  */
 void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* feedback );
 
