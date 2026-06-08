@@ -57,6 +57,7 @@ struct tu_vertex_t {
 
     // phonon stuff
     bool elph;
+    bool ph_to_P, ph_to_C, ph_to_D;
     tu_data_phonons_t* tu_ph;
 };
 

@@ -198,6 +198,9 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
     V->C_to_D = O->C_to_D;
 
     V->elph = O->elph;
+    V->ph_to_P = O->ph_to_P;
+    V->ph_to_C = O->ph_to_C;
+    V->ph_to_D = O->ph_to_D;
     V->tu_ph = O->tu_ph;
 
     V->bubble_helper = O->bubble_helper;
@@ -631,6 +634,6 @@ void tu_vertex_init_phonons( tu_vertex_t* V, tu_data_phonons_t* p ) {
         mpi_err_printf( "cannot use phonon flow without D (&C iff !SU2) channel\n" );
         return;
     }
-    V->elph = true;
+    V->elph = V->ph_to_P = V->ph_to_C = V->ph_to_D = true;
     V->tu_ph = p;
 }

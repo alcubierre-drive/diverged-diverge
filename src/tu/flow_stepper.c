@@ -72,13 +72,13 @@ void tu_stepper_free( tu_stepper_t* s ) {
     free( s );
 }
 
-void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, double dlambda, double maxs[6] ) {
+void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dlambda, double maxs[6] ) {
     double flow_step_tick = diverge_mpi_wtime();
     s->num_calls += 1;
     // create GF buffers here s.t. the buffers can be used in
     // loop->p?_loop *and* be overwritten
     if (s->channel_selection[3]) {
-        tu_prop_GF_zero_T(s->loop, lambda*I, inout->self_en);
+        tu_prop_GF_zero_T(s->loop, lambda*I, v->self_en);
         tu_prop_GF_for_self(s->loop, s->coarseGF);
     } else {
         tu_prop_GF_zero_T(s->loop, lambda*I, NULL);
@@ -86,67 +86,67 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
 
     s->w_time_GF += diverge_mpi_wtime()-flow_step_tick;
     if (!s->tu_selfenergy_flow) {
-        if (inout->SU2) {
+        if (v->SU2) {
             if (s->channel_selection[1] || s->channel_selection[2]) {
                 TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
                             s->internal_vertex->bubble_helper ) );
                 if (s->channel_selection[2] && s->channel_selection[1]) {
-                    if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Dch,  1.0 );
-                    TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->Dch, inout, s->proj) );
-                    if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Dch, -1.0 );
+                    if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch,  1.0 );
+                    TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->Dch, v, s->proj) );
+                    if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
                                 s->internal_vertex->Dch, s->internal_vertex->ph_bubble_int,
-                                inout->product_helper, s->prodsize,s->my_nk,s->norm[1],
+                                v->product_helper, s->prodsize,s->my_nk,s->norm[1],
                                 true, s->internal_vertex->GPU_gemm_buffer) );
 
-                    if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, 0.0, inout->Dch,  1.0 );
-                    TICK_TOCK( s->w_time_projection, D_projection(inout->projection_helper, inout, s->proj) );
-                    if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, 0.0, inout->Dch, -1.0 );
+                    if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, 0.0, v->Dch,  1.0 );
+                    TICK_TOCK( s->w_time_projection, D_projection(v->projection_helper, v, s->proj) );
+                    if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, 0.0, v->Dch, -1.0 );
 
                     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-                    for (index_t ii=0; ii<inout->full_vert_size; ++ii)
+                    for (index_t ii=0; ii<v->full_vert_size; ++ii)
                         s->internal_vertex->projection_helper[ii] -= 0.5*s->internal_vertex->Dch[ii];
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Dch,
                                 s->internal_vertex->projection_helper,
-                                s->internal_vertex->ph_bubble_int,inout->product_helper,
+                                s->internal_vertex->ph_bubble_int,v->product_helper,
                                 s->prodsize,s->my_nk,s->norm[2], true, s->internal_vertex->GPU_gemm_buffer) );
 
                     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
-                    for (index_t ii=0; ii<inout->full_vert_size; ++ii)
+                    for (index_t ii=0; ii<v->full_vert_size; ++ii)
                         s->internal_vertex->Dch[ii] += 0.5*s->internal_vertex->Cch[ii];
 
                 } else if (s->channel_selection[1]) {
-                    if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Dch,  1.0 );
+                    if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch,  1.0 );
                     TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->projection_helper,
-                                inout, s->proj) );
-                    if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Dch, -1.0 );
+                                v, s->proj) );
+                    if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
                                 s->internal_vertex->projection_helper,
-                                s->internal_vertex->ph_bubble_int,inout->product_helper,
+                                s->internal_vertex->ph_bubble_int,v->product_helper,
                                 s->prodsize,s->my_nk,s->norm[1], true, s->internal_vertex->GPU_gemm_buffer) );
                 } else {
-                    if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, 0.0, inout->Dch,  1.0 );
+                    if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, 0.0, v->Dch,  1.0 );
                     TICK_TOCK( s->w_time_projection, D_projection(s->internal_vertex->projection_helper,
-                                inout, s->proj) );
-                    if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, 0.0, inout->Dch, -1.0 );
+                                v, s->proj) );
+                    if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, 0.0, v->Dch, -1.0 );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Dch,
                                 s->internal_vertex->projection_helper,
-                                s->internal_vertex->ph_bubble_int,inout->product_helper,
+                                s->internal_vertex->ph_bubble_int,v->product_helper,
                                 s->prodsize,s->my_nk,s->norm[2], true, s->internal_vertex->GPU_gemm_buffer) );
                 }
             }
         } else {
             if (s->channel_selection[1]) {
-                if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Dch,  1.0 );
-                if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph,    0.0, inout->Cch, -1.0 );
+                if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch,  1.0 );
+                if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph,    0.0, v->Cch, -1.0 );
                 TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->projection_helper,
-                            inout, s->proj) );
-                if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Dch, -1.0 );
-                if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph,    0.0, inout->Cch,  1.0 );
+                            v, s->proj) );
+                if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
+                if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph,    0.0, v->Cch,  1.0 );
             }
 
             if (s->channel_selection[1] || s->channel_selection[2])
@@ -156,36 +156,36 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
             if (s->channel_selection[1])
                 TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
                             s->internal_vertex->projection_helper, s->internal_vertex->ph_bubble_int,
-                            inout->product_helper, s->prodsize,s->my_nk,s->norm[1], true,
+                            v->product_helper, s->prodsize,s->my_nk,s->norm[1], true,
                             s->internal_vertex->GPU_gemm_buffer) );
 
             if (s->channel_selection[2]) {
-                if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph,    0.0, inout->Dch,  1.0 );
-                if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Cch, -1.0 );
+                if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph,    0.0, v->Dch,  1.0 );
+                if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Cch, -1.0 );
                 TICK_TOCK( s->w_time_projection, D_projection(s->internal_vertex->projection_helper,
-                            inout, s->proj) );
-                if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph,    0.0, inout->Dch, -1.0 );
-                if (inout->elph) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Cch,  1.0 );
+                            v, s->proj) );
+                if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph,    0.0, v->Dch, -1.0 );
+                if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Cch,  1.0 );
             }
 
             if (s->channel_selection[2])
                 TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Dch,
                             s->internal_vertex->projection_helper, s->internal_vertex->ph_bubble_int,
-                            inout->product_helper, s->prodsize,s->my_nk,s->norm[2], true,
+                            v->product_helper, s->prodsize,s->my_nk,s->norm[2], true,
                             s->internal_vertex->GPU_gemm_buffer) );
         }
         if (s->channel_selection[0]) {
-            if (inout->elph)                tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Dch,  1.0 );
-            if (inout->elph && !inout->SU2) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Cch, -1.0 );
-            TICK_TOCK( s->w_time_projection, P_projection(inout->projection_helper, inout, s->proj) );
-            if (inout->elph)                tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Dch, -1.0 );
-            if (inout->elph && !inout->SU2) tu_data_phonons_gen_vert( inout->tu_ph, lambda, inout->Cch,  1.0 );
+            if (v->elph && v->ph_to_P)            tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch,  1.0 );
+            if (v->elph && v->ph_to_P && !v->SU2) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Cch, -1.0 );
+            TICK_TOCK( s->w_time_projection, P_projection(v->projection_helper, v, s->proj) );
+            if (v->elph && v->ph_to_P)            tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
+            if (v->elph && v->ph_to_P && !v->SU2) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Cch,  1.0 );
 
             TICK_TOCK( s->w_time_loop, tu_prop_pp_loop( s->loop, s->internal_vertex->pp_bubble_int,
                         s->internal_vertex->bubble_helper ) );
 
             TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Pch,
-                        inout->projection_helper, s->internal_vertex->pp_bubble_int,inout->product_helper,
+                        v->projection_helper, s->internal_vertex->pp_bubble_int,v->product_helper,
                         s->prodsize,s->my_nk,s->norm[0], true, s->internal_vertex->GPU_gemm_buffer) );
         }
     } else {
@@ -195,11 +195,11 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
     }
     if (s->channel_selection[3]) {
         TICK_TOCK( s->w_time_self, tu_selfenergy_flow( s->self, s->internal_vertex->self_en,
-                    inout->Pch, inout->Cch, inout->Dch, s->coarseGF, 1., lambda ) );
+                    v->Pch, v->Cch, v->Dch, s->coarseGF, 1., lambda ) );
     }
 
-    TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(inout, s->internal_vertex, dlambda) );
-    TICK_TOCK( s->w_time_add_find_max, tu_vertex_max(inout, maxs) );
+    TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(v, s->internal_vertex, dlambda) );
+    TICK_TOCK( s->w_time_add_find_max, tu_vertex_max(v, maxs) );
 
     s->w_time_full += diverge_mpi_wtime()-flow_step_tick;
 }
