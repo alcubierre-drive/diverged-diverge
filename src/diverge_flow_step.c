@@ -701,8 +701,6 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         if (0) {
             piter_LABEL:
             {}
-            if (!diverge_flow_step_eigchan_shut_up)
-                mpi_wrn_printf( "linsz too small (%li), using power iteration\n", linsz );
         }
 
         double* tol_ary = calloc(nq, sizeof*tol_ary);
@@ -742,6 +740,9 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
         result = sqrt(maxval);
     } else if (piter == DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK) {
         if (linsz < 10) {
+            if (!diverge_flow_step_eigchan_shut_up) {
+                mpi_wrn_printf( "linsz too small (%li), using power iteration\n", linsz );
+            }
             goto piter_LABEL;
         }
         if (!arnoldi_package_compiled_in()) {
