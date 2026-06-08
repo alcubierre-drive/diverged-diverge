@@ -21,9 +21,9 @@ bool check_abs_sorted_equal_d(double* data1, double* data2, index_t size);
 complex128_t ff( const double* k, const double* r );
 void fill_Rvec_from_vec(const diverge_model_t* model, index_t* R, double* Rvec);
 void fill_Rvec(const diverge_model_t* model, double* Rvec);
+void random_seed( uint64_t seed ); /* re-seed rng */
 double random_dbl( void ); /*uniform -1...1*/
 complex128_t random_cmplx( void ); /*uniform -1...1*/
-
 
 #ifdef __cplusplus
 }

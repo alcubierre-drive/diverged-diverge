@@ -10,7 +10,7 @@ diverge_model_t* gen_random(index_t nkx, index_t nky) {
     mod->n_spin = 2;
     mod->SU2 = false; // enforce exchange symmetry
 
-    srand(12345); // the seed is important for reproducibility
+    random_seed(12345); // the seed is important for reproducibility
 
     double lattice_norm = 0.0;
     for (int i=0; i<2; ++i)
