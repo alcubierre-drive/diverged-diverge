@@ -162,7 +162,7 @@ EXAMPLES := $(shell find examples/ -iname "*.cpp") \
 	$(shell find examples/ -iname "*.py") \
 	$(shell find examples/ -iname Makefile)
 UTIL := $(shell find util/ -iname "*.py") \
-	setup.py setup.cfg libdivERGe.map LICENSE.md README.md TODO.md
+	setup.py setup.cfg libdivERGe.map LICENSE.md README.md
 dist-src: $(SRC_C) $(SRC_CPP) $(SRC_CU) $(HEADERS) Makefile make.local/ $(EXAMPLES) $(UTIL)
 	$(DIVERGE_TAR) -c util/libdivERGe.so $^ -f divERGe_src.tar
 	$(DIVERGE_GZIP) -f divERGe_src.tar
