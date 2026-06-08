@@ -23,6 +23,8 @@ _branch = subprocess.check_output( ['bash', '-c', 'git rev-parse --abbrev-ref HE
 
 release = _tag.decode('utf8')[1:-1]
 branch = _branch.decode('utf8')[:-1]
+if branch == 'pages':
+    branch = 'master'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
