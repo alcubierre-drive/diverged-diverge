@@ -65,7 +65,7 @@ into the 'Makefile.local' (*this is an example, actual content will differ!*)
 Examples for Makefile.local
 ---------------------------
 The `make.local/ directory
-<https://git.rwth-aachen.de/frg/diverge/-/tree/master/make.local/>`_ of the git
+<https://codeberg.org/lennart_klebl/divERGe/src/branch/master/make.local/>`_ of the git
 repo contains various examples of how to compile divERGe on certain
 machines/configurations.
 
@@ -168,7 +168,7 @@ in your 'Makefile.local', put
 depending on your infrastructure, you might need to adjust ``CULIBS`` and
 ``INCLUDES`` to allow for finding the CUDA libraries and inclusion of the right
 headers. Examples are found in the `make.local/ directory
-<https://git.rwth-aachen.de/frg/diverge/-/tree/master/make.local/>`_ of the git
+<https://codeberg.org/lennart_klebl/divERGe/src/branch/master/make.local/>`_ of the git
 repo.
 
 .. _Compiling Tests:

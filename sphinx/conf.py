@@ -44,13 +44,12 @@ html_static_path = ['_static']
 
 # C doc config
 hawkmoth_root = os.path.abspath('../src')
-hawkmoth_source_uri = 'https://git.rwth-aachen.de/frg/diverge/-/blob/%s/src/{source}#L{line}' % branch
+hawkmoth_source_uri = 'https://codeberg.org/lennart_klebl/divERGe/src/branch/%s/src/{source}#L{line}' % branch
 
 # links
 extlinks = {
-        'release_version': ('https://git.rwth-aachen.de/frg/diverge/-/raw/' + branch + '/public/releases/v' + release + '/%s', None),
-        #'release_raw': ('https://git.rwth-aachen.de/frg/diverge/-/raw/' + branch + '/%s', None),
-        'release_tree': ('https://git.rwth-aachen.de/frg/diverge/-/tree/' + branch + '/%s', None)
+        'release_version': ('https://codeberg.org/lennart_klebl/divERGe/raw/branch/' + branch + '/public/releases/v' + release + '/%s', None),
+        'release_tree': ('https://codeberg.org/lennart_klebl/divERGe/src/branch/' + branch + '/%s', None),
 }
 extlinks_detect_hardcoded_links = True
 
