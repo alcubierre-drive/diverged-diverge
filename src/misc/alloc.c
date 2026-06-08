@@ -18,6 +18,10 @@ double* diverge_mem_alloc_complex128_t( index_t num ) {
     return calloc(num, sizeof(complex128_t));
 }
 
+void* diverge_mem_alloc( index_t num ) {
+    return malloc(num);
+}
+
 void diverge_mem_free( void* addr ) {
     free(addr);
 }
