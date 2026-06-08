@@ -1,0 +1,5 @@
+*.html
+_images/
+_static/
+objects.inv
+searchindex.js
