@@ -7,7 +7,7 @@ steps:
     commands:
       - apk add py3-pip gcc bash make build-base
       - pip install --break-system-packages --root-user-action ignore hawkmoth clang sphinx-rtd-theme
-      - pip install --editable . --config-settings editable_mode=strict
+      - pip install --break-system-packages --root-user-action ignore --editable . --config-settings editable_mode=strict
       - make doc
   deploy-docs:
     image: apline/git
