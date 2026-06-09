@@ -3,6 +3,7 @@
 
 #define CT_SUITE_NAME linalg_cla
 #include "../ctest.h"
+#include "../helper_functions.h"
 #include "../../src/diverge_common.h"
 #include "../../src/diverge_Eigen3.hpp"
 #include "linalg_cla_solvers.hpp"
@@ -23,18 +24,18 @@ typedef Eigen::Matrix<int64_t,2,1> Vec2ll;
 typedef Eigen::Matrix<int64_t,3,1> Vec3ll;
 typedef Eigen::Matrix<int64_t,4,1> Vec4ll;
 
-#define RANDOM_DATA_GEN_V2d Vec2d::Random()
-#define RANDOM_DATA_GEN_V3d Vec3d::Random()
-#define RANDOM_DATA_GEN_V4d Vec4d::Random()
-#define RANDOM_DATA_GEN_V2cd Vec2cd::Random()
-#define RANDOM_DATA_GEN_V3cd Vec3cd::Random()
-#define RANDOM_DATA_GEN_V4cd Vec4cd::Random()
-#define RANDOM_DATA_GEN_V2i Vec2i::Random().array().unaryExpr([](int x){return x%100;}).matrix()
-#define RANDOM_DATA_GEN_V3i Vec3i::Random().array().unaryExpr([](int x){return x%100;}).matrix()
-#define RANDOM_DATA_GEN_V4i Vec4i::Random().array().unaryExpr([](int x){return x%100;}).matrix()
-#define RANDOM_DATA_GEN_V2ll Vec2ll::Random().array().unaryExpr([](int64_t x)->int64_t{return x%100;}).matrix()
-#define RANDOM_DATA_GEN_V3ll Vec3ll::Random().array().unaryExpr([](int64_t x)->int64_t{return x%100;}).matrix()
-#define RANDOM_DATA_GEN_V4ll Vec4ll::Random().array().unaryExpr([](int64_t x)->int64_t{return x%100;}).matrix()
+static inline void random_vector_gen_d( double* ptr, int sz ) {
+    for (int i=0; i<sz; ++i) ptr[i] = random_dbl();
+}
+static inline void random_vector_gen_cd( complex128_t* ptr, int sz ) {
+    for (int i=0; i<sz; ++i) ptr[i] = random_cmplx();
+}
+static inline void random_vector_gen_i( int* ptr, int sz ) {
+    for (int i=0; i<sz; ++i) ptr[i] = 50-(int)(random_num()%100);
+}
+static inline void random_vector_gen_ll( int64_t* ptr, int sz ) {
+    for (int i=0; i<sz; ++i) ptr[i] = 50-(int64_t)(random_num()%100);
+}
 
 #ifndef SKIP_FANCY_PARENS
 #define PAREN_L ((row>1) ? (i==0) ? "⎛" : (i==row-1) ? "⎝" : "⎜" : "(")
@@ -110,11 +111,13 @@ static inline Vec##dim##dtype_short c##dim##dtype_short##Xeigen( test_claV##dim#
 } \
 \
 CT_TEST_NAME( claV##dim##dtype_short##_t, "cla,V" #dim #dtype_short ) { \
-    Vec##dim##dtype_short RANDOM_DATA = RANDOM_DATA_GEN_V##dim##dtype_short ; \
+    Vec##dim##dtype_short RANDOM_DATA; \
+    random_vector_gen_##dtype_short( RANDOM_DATA.data(), RANDOM_DATA.size() ); \
     test_claV##dim##dtype_short##_t C_RANDOM_DATA; \
     for (int i=0; i<dim; ++i) C_RANDOM_DATA.v[i] = RANDOM_DATA(i); \
  \
-    Vec##dim##dtype_short RANDOM_DATA2 = RANDOM_DATA_GEN_V##dim##dtype_short ; \
+    Vec##dim##dtype_short RANDOM_DATA2; \
+    random_vector_gen_##dtype_short( RANDOM_DATA2.data(), RANDOM_DATA2.size() ); \
     test_claV##dim##dtype_short##_t C_RANDOM_DATA2; \
     for (int i=0; i<dim; ++i) C_RANDOM_DATA2.v[i] = RANDOM_DATA2(i); \
  \
@@ -211,19 +214,6 @@ typedef Eigen::Matrix<int64_t,2,2,Eigen::RowMajor> CMat2ll;
 typedef Eigen::Matrix<int64_t,3,3,Eigen::RowMajor> CMat3ll;
 typedef Eigen::Matrix<int64_t,4,4,Eigen::RowMajor> CMat4ll;
 
-#define RANDOM_DATA_GEN_M2d CMat2d::Random()
-#define RANDOM_DATA_GEN_M3d CMat3d::Random()
-#define RANDOM_DATA_GEN_M4d CMat4d::Random()
-#define RANDOM_DATA_GEN_M2cd CMat2cd::Random()
-#define RANDOM_DATA_GEN_M3cd CMat3cd::Random()
-#define RANDOM_DATA_GEN_M4cd CMat4cd::Random()
-#define RANDOM_DATA_GEN_M2i CMat2i::Random().array().unaryExpr([](int x){return x%100;}).matrix()
-#define RANDOM_DATA_GEN_M3i CMat3i::Random().array().unaryExpr([](int x){return x%100;}).matrix()
-#define RANDOM_DATA_GEN_M4i CMat4i::Random().array().unaryExpr([](int x){return x%100;}).matrix()
-#define RANDOM_DATA_GEN_M2ll CMat2ll::Random().array().unaryExpr([](int64_t x)->int64_t{return x%100;}).matrix()
-#define RANDOM_DATA_GEN_M3ll CMat3ll::Random().array().unaryExpr([](int64_t x)->int64_t{return x%100;}).matrix()
-#define RANDOM_DATA_GEN_M4ll CMat4ll::Random().array().unaryExpr([](int64_t x)->int64_t{return x%100;}).matrix()
-
 #define MATRIX_TEST_CASE( dim, dtype_long, dtype_short ) \
 \
 static inline CMat##dim##dtype_short c##dim##dtype_short##Meigen( test_claM##dim##dtype_short##_t vec ) { \
@@ -231,7 +221,8 @@ static inline CMat##dim##dtype_short c##dim##dtype_short##Meigen( test_claM##dim
 } \
 \
 CT_TEST_NAME( claM##dim##dtype_short##_t, "cla,M" #dim #dtype_short ) { \
-    CMat##dim##dtype_short RANDOM_DATA = RANDOM_DATA_GEN_M##dim##dtype_short ; \
+    CMat##dim##dtype_short RANDOM_DATA; \
+    random_vector_gen_##dtype_short( RANDOM_DATA.data(), RANDOM_DATA.size() ); \
     test_claM##dim##dtype_short##_t C_RANDOM_DATA; \
     for (int i=0; i<dim*dim; ++i) ((dtype_long*)C_RANDOM_DATA.m[0])[i] = RANDOM_DATA.data()[i]; \
  \
@@ -239,7 +230,8 @@ CT_TEST_NAME( claM##dim##dtype_short##_t, "cla,M" #dim #dtype_short ) { \
     print_matrix_##dtype_short( matbuf1, C_RANDOM_DATA.m[0], dim, dim ); \
     mpi_vrb_printf( "C linalg matrix %s@%s, #1:\n%s", #dtype_long, #dim, matbuf1 ); \
  \
-    CMat##dim##dtype_short RANDOM_DATA2 = RANDOM_DATA_GEN_M##dim##dtype_short ; \
+    CMat##dim##dtype_short RANDOM_DATA2; \
+    random_vector_gen_##dtype_short( RANDOM_DATA2.data(), RANDOM_DATA2.size() ); \
     test_claM##dim##dtype_short##_t C_RANDOM_DATA2; \
     for (int i=0; i<dim*dim; ++i) ((dtype_long*)C_RANDOM_DATA2.m[0])[i] = RANDOM_DATA2.data()[i]; \
  \
@@ -247,7 +239,8 @@ CT_TEST_NAME( claM##dim##dtype_short##_t, "cla,M" #dim #dtype_short ) { \
     print_matrix_##dtype_short( matbuf2, C_RANDOM_DATA2.m[0], dim, dim ); \
     mpi_vrb_printf( "C linalg matrix %s@%s, #2:\n%s", #dtype_long, #dim, matbuf2 ); \
  \
-    Vec##dim##dtype_short RANDOM_DATA3 = RANDOM_DATA_GEN_V##dim##dtype_short ; \
+    Vec##dim##dtype_short RANDOM_DATA3; \
+    random_vector_gen_##dtype_short( RANDOM_DATA3.data(), RANDOM_DATA3.size() ); \
     test_claV##dim##dtype_short##_t C_RANDOM_DATA3; \
     for (int i=0; i<dim; ++i) C_RANDOM_DATA3.v[i] = RANDOM_DATA3(i); \
  \
@@ -341,7 +334,8 @@ MATRIX_TEST_CASE( 4, int64_t, ll )
 #define MATRIX_DECOMPOSITION_TEST_CASE( dim, dtype_long, dtype_short ) \
 \
 CT_TEST_NAME( claM##dim##dtype_short##_decomp, "cla,decompose,M" #dim #dtype_short ) { \
-    CMat##dim##dtype_short RANDOM_DATA0 = RANDOM_DATA_GEN_M##dim##dtype_short ; \
+    CMat##dim##dtype_short RANDOM_DATA0; \
+    random_vector_gen_##dtype_short( RANDOM_DATA0.data(), RANDOM_DATA0.size() ); \
     CMat##dim##dtype_short RANDOM_DATA = RANDOM_DATA0 + RANDOM_DATA0.adjoint(); \
     test_claM##dim##dtype_short##_t C_RANDOM_DATA; \
     for (int i=0; i<dim*dim; ++i) ((dtype_long*)C_RANDOM_DATA.m[0])[i] = RANDOM_DATA.data()[i]; \
@@ -350,7 +344,8 @@ CT_TEST_NAME( claM##dim##dtype_short##_decomp, "cla,decompose,M" #dim #dtype_sho
     print_matrix_##dtype_short( matbuf1, C_RANDOM_DATA.m[0], dim, dim ); \
     mpi_vrb_printf( "C decomp matrix %s@%s, #1:\n%s", #dtype_long, #dim, matbuf1 ); \
  \
-    CMat##dim##dtype_short RANDOM_DATA2 = RANDOM_DATA_GEN_M##dim##dtype_short ; \
+    CMat##dim##dtype_short RANDOM_DATA2; \
+    random_vector_gen_##dtype_short( RANDOM_DATA2.data(), RANDOM_DATA2.size() ); \
     test_claM##dim##dtype_short##_t C_RANDOM_DATA2; \
     for (int i=0; i<dim*dim; ++i) ((dtype_long*)C_RANDOM_DATA2.m[0])[i] = RANDOM_DATA2.data()[i]; \
  \

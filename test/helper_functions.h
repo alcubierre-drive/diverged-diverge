@@ -24,6 +24,7 @@ void fill_Rvec(const diverge_model_t* model, double* Rvec);
 void random_seed( uint64_t seed ); /* re-seed rng */
 double random_dbl( void ); /*uniform -1...1*/
 complex128_t random_cmplx( void ); /*uniform -1...1*/
+uint64_t random_num( void );
 
 #ifdef __cplusplus
 }

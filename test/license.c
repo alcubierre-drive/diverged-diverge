@@ -12,7 +12,7 @@ CT_TEST_HIDDEN(license) {
 }
 
 CT_TEST_HIDDEN(quote) {
-    const char* quot = random_quote();
+    const char* quot = diverge_random_quote();
     CT_CHECK( quot != NULL );
     mpi_printf( "%s\n", quot );
 }

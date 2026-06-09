@@ -139,15 +139,20 @@ void random_seed( uint64_t seed ) {
 
 double random_dbl( void ) {
     #pragma omp critical
-    {
-        mt_rng_init();
-    }
-    double r;
+    { mt_rng_init(); }
+    double r = 0;
     #pragma omp critical
-    {
-        r = mt64_next_dbl(&mt_rng);
-    }
+    { r = mt64_next_dbl(&mt_rng); }
     return 2.*r-1.;
+}
+
+uint64_t random_num( void ) {
+    #pragma omp critical
+    { mt_rng_init(); }
+    uint64_t r = 0;
+    #pragma omp critical
+    { r = mt64_next(&mt_rng); }
+    return r;
 }
 
 complex128_t random_cmplx( void ) {
