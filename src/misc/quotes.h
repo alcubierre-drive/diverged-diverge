@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-const char* random_quote( void );
+const char* diverge_random_quote( void );
 
 #ifdef __cplusplus
 }

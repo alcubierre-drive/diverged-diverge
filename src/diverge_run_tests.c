@@ -21,7 +21,7 @@ int diverge_run_tests(int argc, char** argv ) {
     #else // DIVERGE_SKIP_TESTS
         (void)argc; (void)argv;
         mpi_wrn_printf("Tests not compiled in. Here's a nice quote instead:\n%s",
-            random_quote());
+            diverge_random_quote());
         return 1;
     #endif // DIVERGE_SKIP_TESTS
 }
