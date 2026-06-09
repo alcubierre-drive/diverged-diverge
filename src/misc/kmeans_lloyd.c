@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <time.h>
+#include "mpi_functions.h"
 
 #define LINALG_NO_LAPACKE
 #include "linalg.h"
@@ -18,8 +19,8 @@ int dkm_use_random_seed( void ) {
 void dkm_set_use_random_seed( int use ) {
     helper_use_random_seed = use;
     if (helper_use_random_seed) {
-        srand(time(NULL));
-        random_seed = ((uint64_t)rand()) << 32 | (rand());
+        double val = diverge_mpi_wtime();
+        memcpy(&random_seed, &val, MIN(sizeof(val), sizeof(random_seed)));
         mpi_vrb_printf( "kmeans_lloyd using random seed %lu\n", random_seed );
     } else {
         random_seed = RANDOM_SEED;

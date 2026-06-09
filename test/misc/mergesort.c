@@ -6,6 +6,7 @@
 #include "../../src/diverge_common.h"
 #include "../../src/misc/mpi_functions.h"
 #include "../../src/misc/mergesort.h"
+#include "../helper_functions.h"
 
 typedef struct {
     index_t idx;
@@ -27,8 +28,8 @@ static testdata_t* gen_random_data( index_t size/*, index_t nidx=20*/ ) {
     index_t nidx = 10;
     testdata_t* data = calloc( size, sizeof*data );
     for (index_t i=0; i<size; ++i)
-        data[i].idx = rand()%nidx,
-        data[i].val = (double)rand()/(double)RAND_MAX,
+        data[i].idx = random_num()%nidx,
+        data[i].val = random_dbl(),
         data[i].ary_pos = i;
     return data;
 }
