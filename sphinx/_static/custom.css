@@ -1,0 +1,8 @@
+.wy-side-nav-search>a img.logo {
+    max-width: 150px;
+}
+
+html body .wy-table-responsive table td,
+html body .wy-table-responsive table th {
+    white-space: normal;
+}
