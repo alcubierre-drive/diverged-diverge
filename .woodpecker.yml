@@ -20,6 +20,7 @@ steps:
       - git config --global user.name "Sphinx CI (Codeberg)"
       - git clone -b pages https://$CB_TOKEN@codeberg.org/$CI_REPO.git $CI_REPO_NAME
       - cp -ar public/ $CI_REPO_NAME/
+      - rm $CI_REPO_NAME/public/.gitignore
       - cd $CI_REPO_NAME
       - git add .
       - if ! git diff --cached --quiet; then git commit -m "Woodpecker CI ${CI_BUILD_CREATED}" && git push; fi
