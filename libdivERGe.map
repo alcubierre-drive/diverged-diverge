@@ -312,7 +312,9 @@ DIVERGE_UNSTABLE {
         tu_formfactor_map_free;
         tu_formfactor_map_get;
         tu_formfactor_map_get_tu;
+        tu_formfactor_map_get_tu_inv;
         tu_formfactor_map_init;
+        tu_formfactor_periodicity;
         vertex_storage_free;
         vertex_storage_get;
         vertex_storage_init;
