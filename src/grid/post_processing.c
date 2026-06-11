@@ -137,7 +137,7 @@ const index_t* grid_postproc_to_file( grid_postproc_t* p, const char* fname ) {
     index_t* header = p->header; ZERO_OUT( header, 64 );
     int i=0;
 
-    header[i] = MAGIC_NUMBER_POST_PROCESSING; i++;
+    header[i] = DIVERGE_POST_MAGIC_NUMBER_GRID; i++;
     header[i] = p->nk; i++;
     header[i] = p->nb; i++;
     header[i] = p->nff; i++;
@@ -183,7 +183,7 @@ const index_t* grid_postproc_to_file( grid_postproc_t* p, const char* fname ) {
     header[61] = version_sz;
     total_size += header[61];
 
-    header[62] = MAGIC_NUMBER_POST_PROCESSING;
+    header[62] = DIVERGE_POST_MAGIC_NUMBER_GRID;
     header[63] = total_size;
 
     if (diverge_mpi_comm_rank() != 0) return header;

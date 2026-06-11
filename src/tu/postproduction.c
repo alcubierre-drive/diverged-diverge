@@ -756,7 +756,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
 
     mpi_vrb_printf_all( "rank %d: try opening file %s\n", my_rank, filename );
     void* file = diverge_mpi_open_file(filename);
-    header[i] = TU_MAGIC_NUMBER_POST_PROCESSING,++i;
+    header[i] = DIVERGE_POST_MAGIC_NUMBER_TU,++i;
     header[i] = p->vertex->n_orb, ++i;
     header[i] = p->vertex->n_spin, ++i;
     header[i] = p->vertex->nk, ++i;
@@ -941,7 +941,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     assert(i < 125);
     // this flag is to indicate our header is actually 256 long. Only supported after v0.8
     header[125] = ~(header[125]);
-    header[126] = TU_MAGIC_NUMBER_POST_PROCESSING;
+    header[126] = DIVERGE_POST_MAGIC_NUMBER_TU;
     header[127] = header[i-1]*sizeof(index_t)+header[i-2];
 
     i = 128;

@@ -126,7 +126,9 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
             break;
         case tu_fft_algorithm_greedy:
         default:
+            #ifndef USE_SERIAL_FFTW
             fftw_plan_with_nthreads(1);
+            #endif
             if (!t->buffer_ggm) {
                 t->buffer_ggm = calloc( diverge_omp_num_threads(), sizeof*t->buffer_ggm );
                 for (index_t i=0; i<diverge_omp_num_threads(); ++i)
@@ -147,7 +149,9 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
                     (fftw_complex*)t->buffer_ggm[0], dims, 1, t->nktot,
                     (fftw_complex*)t->buffer_ggp[0], dims, 1, t->nktot,
                     FFTW_FORWARD, FFTW_MEASURE );
+            #ifndef USE_SERIAL_FFTW
             fftw_plan_with_nthreads(fftwnthr);
+            #endif
             break;
     }
 }

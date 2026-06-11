@@ -66,6 +66,7 @@ typedef struct tu_projection_t tu_projection_t;
 
 tu_projection_t* tu_projection_init( const diverge_model_t* model );
 void tu_projection_free( tu_projection_t* p );
+void tu_projection_set_permutation_algorithm( int fast );
 
 #ifdef __cplusplus
 }

@@ -289,8 +289,6 @@ written (i.e., the variable can be either *defined* or *not*), or
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB=GB``          | set maximum size of chunk in GB for GPU batched eigensolver to GB                                 |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
-|``BATCHED_GEMMS_ZLACPY_LAPACKE``                  | if defined, use the zlacpy lapack function to copy vectors. may be faster on some systems.        |
-+--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS=VAL`` | compile all batched GEMMs where the matrix dimension is (much) smaller than the number of         |
 |                                                  | executions up to matrix size VAL explicitly. default: 4.                                          |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
@@ -309,6 +307,14 @@ written (i.e., the variable can be either *defined* or *not*), or
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_GRID_PARALLEL_BATCHED_GEMM``            | if defined, do the grid FRG batched GEMM in parallel                                              |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK=VAL``    | integer constant that defines how to select arpack backend in :c:func:`diverge_flow_step_eigchan` |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_FLOW_STEP_EIGCHAN_PITER_MAXITER=VAL``   | integer constant that sets the default number of maximum iterations in the power iteration        |
+|                                                  | backend of :c:func:`diverge_flow_step_eigchan`                                                    |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_FLOW_STEP_EIGCHAN_PITER_TOL=VAL``       | floating point constant that sets the default tolerance for power iteration backend of            |
+|                                                  | :c:func:`diverge_flow_step_eigchan`                                                               |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_LOG_COLORLESS``                         | if defined, do not use fancy colors in the log messages, but only bright white                    |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_LOG_GRAYSCALE``                         | if defined, use grayscale instead of fancy colors in the log messages. cleaner, more modern look  |
@@ -321,8 +327,6 @@ written (i.e., the variable can be either *defined* or *not*), or
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_MODEL_NBANDSTRUCTURE=VAL``              | change the default number of band structure points per segment to VAL                             |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
-|``DIVERGE_MODEL_USE_O2B_C_ORDER``                 | if defined, use C order in the orbital to band matrices for the npatch GPU kernels                |
-+--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_NO_ABORT_ON_GPU_ERROR``                 | if defined, diverge will not abort the program upon encountering a CUDA error.                    |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT``          | if defined, color escape sequences are not removed from the output even if it may be redirected   |
@@ -332,7 +336,41 @@ written (i.e., the variable can be either *defined* or *not*), or
 |                                                  | is compiled for a certain maximum number of threads that can be exceeded by modern cluster        |
 |                                                  | architectures.                                                                                    |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_USE_ZHEEVD``                            | use LAPACK's ``zheevd`` algorithm instead of the newer ``zheevr`` in :c:func:`single_eigen`       |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_SKIP_ZDOTC``                            | some MKL versions define ``cblas_zdotc``, others don't.                                           |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``BATCHED_SVD_THREAD_CNT_MAX=VAL``                | limit the number of threads in :c:func:`batched_svd`                                              |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_GETLINE_MAX=VAL``                       | set the maximum number of characters in a line parsed with the (internal) text_io.h parser        |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_SKIP_TESTS``                            | do not compile :c:func:`tests <diverge_run_tests>` into the library                               |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_QNAN_DISABLE_CLANG_OPTS``               | disable compiler optimizations for :ref:`IEEE 754 Quiet NaN`, may be needed for ``CC := clang``   |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_TU_FAST_PERMUTE``                       | enable fast permutation algorithm (out-of-place) for TU projection initialization by default      |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_TU_GF_COARSIFY_FFT``                    | set the coarsification of the Green's function to happen via FFTs (in the selfenergy kernel).     |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE``           | set the default algorithm for finding unique orbital/formfactor combinations to an O(1) one which |
+|                                                  | relies on a custom hashtable implementation (splitmix64)                                          |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``TU_POST_USE_BATCHED_SVD_U``                     | use the U-matrix of the SVD instead of the V-matrix for vertex diagonalization in TU post         |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``TU_PROJ_TIMING``                                | enable fine projection timing in TU                                                               |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``TU_VERTEX_RECO_GPU_ZGEMM``                      | use ``cublasXt_zgemm`` for the optimized TU vertex reco, only faster for large formfactor counts  |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``LDOS_KERNEL_GPU_DEV_MAXNOS=VAL``                | set the maximum number of bands considered in a single CUDA thread for the LDOS GPU kernels       |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``LDOS_KERNEL_GPU_DEV_NTHREADS=VAL``              | set the number of threads per block to use in the LDOS GPU kernels                                |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``CT_SKIP_INITIALIZERS``                          | the `ctest.h <https://github.com/alcubierre-drive/ctest>`_ library relies on the compiler's       |
+|                                                  | ability to add startup code to C functions (non-standard). This can be circumvented by defining   |
+|                                                  | the initializer skip. Note that most reasonable compilers (gcc, clang, ...) support initializer   |
+|                                                  | code, though.                                                                                     |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``CLOG_MISSING``                                  | provide a declaration of the ``math.h`` function ``clog`` that's missing on some platforms        |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``GIT_VERSION=VAL``                               | set the git version string to VAL                                                                 |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
@@ -343,7 +381,9 @@ written (i.e., the variable can be either *defined* or *not*), or
 |``LEAVE_EIGEN_BROKEN``                            | do not turn off Eigen optimizations. They are nice in general, but do not allow to operate on the |
 |                                                  | underlying memory transparently. Thus they are turned off by default.                             |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
-|``MAGIC_NUMBER_POST_PROCESSING=VAL``              | set the grid FRG post processing magic number to VAL                                              |
+|``DIVERGE_POST_MAGIC_NUMBER_GRID=VAL``            | set the grid FRG post processing magic number to VAL                                              |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_POST_MAGIC_NUMBER_NPATCH=VAL``          | set the npatch FRG post processing magic number to VAL                                            |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``MAX_NAME_LENGTH=VAL``                           | define the maximum length of the character array holding :c:member:`diverge_model_t.name`         |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
@@ -374,7 +414,18 @@ written (i.e., the variable can be either *defined* or *not*), or
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``TAG_VERSION=VAL``                               | set the git tag version string to VAL                                                             |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
-|``TU_MAGIC_NUMBER_POST_PROCESSING=VAL``           | set the TU backend post processing magic number (relevant for output) to VAL                      |
+|``DIVERGE_POST_MAGIC_NUMBER_TU=VAL``              | set the TU backend post processing magic number (relevant for output) to VAL                      |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``USE_ARPACK_EIGENSOLVER``                        | compile an ARPACK-based eigensolver that can be used for :c:func:`diverge_flow_step_eigchan`.     |
+|                                                  | Linkage to ``-larpack`` has to be ensured in ``Makefile.local``.                                  |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``USE_COMPRESSED_OUTPUT``                         | compress the output files using Zstandard. Linkage to ``-lzstd`` has to be ensured in             |
+|                                                  | ``Makefile.local``.                                                                               |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``USE_DYNAMIC_RECONSTRUCT_SCHEDULE``              | use ``omp parallel for schedule(dynamic)`` for the TU propagator reconstruction loop              |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``MERGESORT_DEFAULT_TASK_SIZE=VAL``               | in the parallel mergesort implementation shipped with divERGe set the default *serial* task size  |
+|                                                  | to ``VAL``.                                                                                       |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``USE_ALTERNATIVE_TIME``                          | use an alternative method of measuring time when compiling without MPI                            |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
@@ -413,9 +464,18 @@ written (i.e., the variable can be either *defined* or *not*), or
 |``SHARED_MEM_POSIX_IMPL``                         | use the POSIX functions ``shm_open`` and ``shm_unlink`` to create shared memory regions. In       |
 |                                                  | Linux, these are then typically located in ``/dev/shm/``.                                         |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``MEMFD_NOT_SUPPORTED``                           | use a syscall to ``SYS_memfd_create`` instead of the userspace API, required on old kernels       |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``USE_MPI_FFTW``                                  | use the MPI backend for FFTW in the TU propagator calculation. this usually comes with an         |
 |                                                  | enormeous speedup. Users are responsible for adding the corresponding linker flags to the         |
 |                                                  | Makefile.local.                                                                                   |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``PACK_MPI_MULTIPLIER=VAL``                       | set the MPI packing size to ``VAL`` in the tu mpi propagator kernels. default: 128. required      |
+|                                                  | because MPI is a 32bit API and some arrays exceed this limit.                                     |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``TU_GPU_MPI_ALLOC_PRINT``                        | be verbose in TU GPU/MPI kernels about memory allocations.                                        |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``CUDA_MEM_ALIGN=VAL``                            | algin host memory in TU propagator kernels to ``VAL`` bytes for fast CUDA transfer                |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``MPI_VERBOSE_ALLOCATION_PRINT``                  | be extra verbose on TU propagator allocations in the new CPU/MPI algorithms                       |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+

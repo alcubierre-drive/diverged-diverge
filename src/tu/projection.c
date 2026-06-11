@@ -630,10 +630,14 @@ static inline void apply_permutation( claV2ll_t* vec, const index_t* p, index_t 
 }
 
 #ifdef DIVERGE_TU_FAST_PERMUTE
-#define APPLY_PERMUTATION apply_permutation
+static void (*permutation_func)( claV2ll_t*, const index_t*, index_t ) = &apply_permutation;
 #else // DIVERGE_TU_FAST_PERMUTE
-#define APPLY_PERMUTATION apply_permutation_in_place
+static void (*permutation_func)( claV2ll_t*, const index_t*, index_t ) = &apply_permutation_in_place;
 #endif // DIVERGE_TU_FAST_PERMUTE
+
+void tu_projection_set_permutation_algorithm( int fast ) {
+    permutation_func = fast ? &apply_permutation : &apply_permutation_in_place;
+}
 
 typedef struct { const claV2ll_t* _fhelp; const index_t* _off; index_t k; } serisort_fhelp_t;
 static inline int serisort_fhelp_comp( index_t i, index_t j, const serisort_fhelp_t* h ) {
@@ -651,11 +655,11 @@ static vec_claV2ll_t sort_and_filter( vec_claV2ll_t* to, vec_claV2ll_t* from_hel
     #pragma omp parallel num_threads(MIN(diverge_omp_num_threads(),3))
     {
         #pragma omp single nowait
-        APPLY_PERMUTATION( to->v, p, to->v_sz );
+        (*permutation_func)( to->v, p, to->v_sz );
         #pragma omp single nowait
-        APPLY_PERMUTATION( from_help->v, p, to->v_sz );
+        (*permutation_func)( from_help->v, p, to->v_sz );
         #pragma omp single nowait
-        APPLY_PERMUTATION( rvec_help->v, p, to->v_sz );
+        (*permutation_func)( rvec_help->v, p, to->v_sz );
     }
     free( p );
 
