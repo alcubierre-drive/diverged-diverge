@@ -170,7 +170,6 @@ MERGESORT_IMPL( vertsort, rs_vertex_t )
 )
 MERGESORT_IMPL_R( vertsort, rs_vertex_t )
 
-
 static inline void sort_rs_vertex_elements(diverge_model_t* model) {
     if (model->n_vert_chan[0] != -1) return;
     vertsort_r( model->vert, model->n_vert, model->nk, diverge_omp_num_threads(), 0 );
@@ -178,12 +177,19 @@ static inline void sort_rs_vertex_elements(diverge_model_t* model) {
     char chans[] = "CDP";
     rs_vertex_t* vptr = model->vert;
     const rs_vertex_t* vptr_end = model->vert + model->n_vert;
+    index_t n_vert_chan_sum = 0;
     for (int i=0; i<3; ++i) {
         model->n_vert_chan[i] = 0;
         while (vptr != vptr_end && vptr->chan == chans[i]) {
             vptr++;
             model->n_vert_chan[i]++;
         }
+        n_vert_chan_sum += model->n_vert_chan[i];
+    }
+    if (n_vert_chan_sum != model->n_vert) {
+        mpi_log_printf( "remaining %li vertex elements (chan != P,C,D) not captured\n",
+                model->n_vert-n_vert_chan_sum );
+        mpi_log_printf( "by default model->vfill unless using TUFRG and chan==Z(->D-ff)\n" );
     }
 }
 

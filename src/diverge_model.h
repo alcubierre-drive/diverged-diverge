@@ -128,7 +128,24 @@ struct rs_hopping_t {
  * sector.
  */
 struct rs_vertex_t {
-    /** channel. can be 'P', 'C', or 'D'. */
+    /**
+     * channel. can be 'P', 'C', or 'D'.
+     *
+     * For TUFRG, the :c:type:`full_vertex_generator_t` is cumbersome to use. We
+     * therefore provide an additional way of setting formfactor-dependent
+     * vertices. All real-space vertices that have ``chan == 'Z'`` set are
+     * treated as D-channel vertices in TUFRG notation. This means that
+     * ``o1,o2`` are reinterpreted as formfactor indices ``f1,f2`` (in model
+     * order, *not in vertex order*), and that spin indices are treated
+     * explicitly. ``R`` still refers to the D-channel transfer vector, i.e.,
+     * real-space distance. This setting is only applied when the ``'Z'`` vertex
+     * elements are found at the end of the :c:member:`diverge_model_t.vert`
+     * array (after sorting), i.e., either leave the model with its default
+     * :c:type:`channel_vertex_generator_t` or explicitly set the number of
+     * vertices in the three trivial channels (via
+     * :c:member:`diverge_model_t.n_vert_chan`) when overwriting
+     * :c:member:`diverge_model_t.vfill`.
+     */
     char chan;
     /**
      * real space indices corresponding to the oriented distance of the real

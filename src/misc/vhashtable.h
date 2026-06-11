@@ -15,6 +15,10 @@ typedef void* void_ptr_t;
 #define vhash_val_empty NULL
 #endif
 
+#ifndef vhash_key_equal
+#define vhash_key_equal(A,B) ((A)==(B))
+#endif//vhash_key_equal
+
 #define VHASH_IMPLEMENT(PREFIX) \
  \
 typedef struct { \
@@ -78,7 +82,7 @@ static inline void PREFIX##table_insert( PREFIX##table_t* t, vhash_key_t key, vh
     index_t h = PREFIX##sp64_bytes((const uint8_t*)&key, sizeof(key)) % t->width; \
     index_t d = 0; \
     while (d < t->depth) { \
-        if (t->tab[IDX2(d,h,t->width)].key == vhash_key_empty) break; \
+        if (vhash_key_equal(t->tab[IDX2(d,h,t->width)].key, vhash_key_empty)) break; \
         d++; \
     } \
     if (d == t->depth) \
@@ -90,8 +94,8 @@ static inline void PREFIX##table_insert_safe( PREFIX##table_t* t, vhash_key_t ke
     index_t h = PREFIX##sp64_bytes((const uint8_t*)&key, sizeof(key)) % t->width; \
     index_t d = 0; \
     while (d < t->depth) { \
-        if (t->tab[IDX2(d,h,t->width)].key == vhash_key_empty || \
-            t->tab[IDX2(d,h,t->width)].key == key) break; \
+        if (vhash_key_equal(t->tab[IDX2(d,h,t->width)].key, vhash_key_empty) || \
+            vhash_key_equal(t->tab[IDX2(d,h,t->width)].key, key)) break; \
         d++; \
     } \
     if (d == t->depth) \
@@ -101,13 +105,13 @@ static inline void PREFIX##table_insert_safe( PREFIX##table_t* t, vhash_key_t ke
  \
 static inline void PREFIX##table_iterate( PREFIX##table_t* t, void (*func)(vhash_key_t, vhash_val_t, void*), void* ctx ) { \
     for (index_t i=0; i<t->width*t->depth; ++i) \
-        if (t->tab[i].key != vhash_key_empty) \
+        if (!vhash_key_equal(t->tab[i].key, vhash_key_empty)) \
             (*func)( t->tab[i].key, t->tab[i].val, ctx ); \
 } \
  \
 static inline void PREFIX##table_iterate_addr( PREFIX##table_t* t, void (*func)(vhash_key_t*, vhash_val_t*, void*), void* ctx ) { \
     for (index_t i=0; i<t->width*t->depth; ++i) \
-        if (t->tab[i].key != vhash_key_empty) \
+        if (!vhash_key_equal(t->tab[i].key, vhash_key_empty)) \
             (*func)( &t->tab[i].key, &t->tab[i].val, ctx ); \
 } \
  \
@@ -115,7 +119,7 @@ static inline vhash_val_t PREFIX##table_find( PREFIX##table_t* t, vhash_key_t ke
     index_t h = PREFIX##sp64_bytes((const uint8_t*)&key, sizeof(key)) % t->width; \
     for (index_t d=0; d<t->depth; ++d) { \
         PREFIX##map_t c = t->tab[IDX2(d,h,t->width)]; \
-        if (c.key == key) return c.val; \
+        if (vhash_key_equal(c.key, key)) return c.val; \
     } \
     return vhash_val_empty; \
 } \
@@ -124,7 +128,7 @@ static inline vhash_val_t PREFIX##table_pop( PREFIX##table_t* t, vhash_key_t key
     index_t h = PREFIX##sp64_bytes((const uint8_t*)&key, sizeof(key)) % t->width; \
     for (index_t d=0; d<t->depth; ++d) { \
         PREFIX##map_t* c = &t->tab[IDX2(d,h,t->width)]; \
-        if (c->key == key) { \
+        if (vhash_key_equal(c->key, key)) { \
             c->key = vhash_key_empty; \
             return c->val; \
         } \

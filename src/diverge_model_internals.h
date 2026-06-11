@@ -87,7 +87,9 @@ void diverge_model_internals_patch_fg( diverge_model_t* model, index_t np_ibz,
         index_t kmeans_seed );
 
 /**
- * Prepare the TU part of the :c:type:`internals_t` struct.
+ * Prepare the TU part of the :c:type:`internals_t` struct to autogenerate
+ * formfactors if requested (:c:member:`diverge_model_t.tu_ff`, mapping via
+ * :c:func:`tu_formfactor_map_get`)
  *
  * :param diverge_model_t model: model instance
  * :param double max_dist: distance up to which formfactors should be included.

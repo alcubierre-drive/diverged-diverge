@@ -20,3 +20,5 @@ using non-standard models* (custom Hamiltonians etc.):
 * :c:func:`diverge_model_internals_get_greens`
 
 .. c:autodoc:: diverge_model_internals.h
+
+.. c:autodoc:: misc/ffmap.h

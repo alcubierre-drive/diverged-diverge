@@ -60,6 +60,7 @@ struct tu_vertex_t {
 void tu_vertex_init_U_from_fullV( tu_vertex_t* V, diverge_model_t* model, tu_projection_t* proj );
 void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_prop_t* loop );
 void tu_vertex_init_U( tu_vertex_t* V, bool enforce_exchange );
+void tu_vertex_init_U_ff( tu_vertex_t* V, bool enforce_exchange );
 void tu_vertex_project_fullV( const tu_vertex_t* V, const diverge_model_t* mod_ptr, complex128_t* fullV );
 
 #ifdef __cplusplus
