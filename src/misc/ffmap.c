@@ -53,7 +53,24 @@ tu_formfactor_idx_t tu_formfactor_map_get_tu( tu_formfactor_map_t* tmap,
     return hash_formfac_table_find( &tmap->h, hash_formfac_from_tu_formfactor(t, tmap->m->nk) );
 }
 
+tu_formfactor_idx_t tu_formfactor_map_get_tu_inv( tu_formfactor_map_t* tmap,
+        tu_formfactor_t t ) {
+    hash_formfac_t hff = hash_formfac_from_tu_formfactor(t, tmap->m->nk);
+    for (int d=0; d<3; ++d) hff.R[d] *= -1;
+    XORSWAP(hff.ofrom, hff.oto);
+    return hash_formfac_table_find( &tmap->h, hff );
+}
+
 void tu_formfactor_map_free( tu_formfactor_map_t* tmap ) {
     hash_formfac_table_free( &tmap->h );
 }
 
+tu_formfactor_t* tu_formfactor_periodicity( diverge_model_t* m ) {
+    tu_formfactor_t* t = malloc(sizeof*t * m->n_tu_ff);
+    memcpy(t, m->tu_ff, sizeof*t * m->n_tu_ff);
+    for (index_t i=0; i<m->n_tu_ff; ++i)
+        for (int d=0; d<3; ++d)
+            if (t[i].R[d] > m->nk[d]/2)
+                t[i].R[d] -= m->nk[d];
+    return t;
+}

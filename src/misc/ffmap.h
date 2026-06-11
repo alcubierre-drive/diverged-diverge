@@ -44,8 +44,21 @@ tu_formfactor_idx_t tu_formfactor_map_get( tu_formfactor_map_t* tmap,
 tu_formfactor_idx_t tu_formfactor_map_get_tu( tu_formfactor_map_t* tmap,
         tu_formfactor_t t );
 
+/**
+ * return the inverted formfactor (which is nontrivial for TU formfactors, but
+ * trivial for Rxyz op ones due to the -nk padding in TU formfactors)
+ */
+tu_formfactor_idx_t tu_formfactor_map_get_tu_inv( tu_formfactor_map_t* tmap,
+        tu_formfactor_t t );
+
 /** clean up resources */
 void tu_formfactor_map_free( tu_formfactor_map_t* tmap );
+
+/**
+ * generate *real* formfactors (with minus signs) from *TU* formfactors. Must be
+ * freed by the user.
+ */
+tu_formfactor_t* tu_formfactor_periodicity( diverge_model_t* m );
 
 #ifdef __cplusplus
 }
