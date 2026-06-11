@@ -56,3 +56,5 @@
 // hartree fock
 #include "misc/hartree_fock.h"
 
+#include "misc/ffmap.h"
+

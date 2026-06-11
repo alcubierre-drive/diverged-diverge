@@ -76,6 +76,7 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
         tu_vertex_init_U_from_fullV( V, V->model, proj );
     } else {
         tu_vertex_init_U( V, V->model->internals->enforce_exchange );
+        tu_vertex_init_U_ff( V, V->model->internals->enforce_exchange );
         if (!(V->P_flow && V->C_flow && V->D_flow)) {
             mpi_wrn_printf("not all channels (P:%i,C:%i,D:%i): ensure correct formfactors\n",
                     V->P_flow, V->C_flow, V->D_flow);

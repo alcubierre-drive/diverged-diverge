@@ -330,6 +330,10 @@ DIVERGE_UNSTABLE {
         transpose_inplace;
         transpose_inplace_rect_any;
         transpose_outofplace;
+        tu_formfactor_map_free;
+        tu_formfactor_map_get;
+        tu_formfactor_map_get_tu;
+        tu_formfactor_map_init;
         vertex_storage_free;
         vertex_storage_get;
         vertex_storage_init;

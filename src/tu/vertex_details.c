@@ -1,5 +1,6 @@
 #include "vertex_details.h"
 #include "propagator_details.h"
+#include "../misc/mergesort.h"
 
 static inline complex128_t ff( const double* k, const double* r ) {
     return cexp( -I*(k[0]*r[0]+k[1]*r[1]+k[2]*r[2]) );
@@ -463,6 +464,91 @@ void tu_vertex_init_U( tu_vertex_t* V, bool enforce_exchange ) {
     }
     free(helper);
     free(helper_crossing);
+}
+
+#undef MERGESORT_COMP_R
+#define MERGESORT_COMP_R(x,y,ctx) index_comp_r(x,y,ctx)
+static inline index_t index_comp_r(index_t i, index_t j, const index_t* ctx) { return ctx[i]-ctx[j]; }
+MERGESORT_IMPL_R(mergesort_index, index_t)
+
+void tu_vertex_init_U_ff( tu_vertex_t* V, bool enforce_exchange ) {
+    diverge_model_t* m = V->model;
+    const index_t voff = m->n_vert_chan[0] + m->n_vert_chan[1] + m->n_vert_chan[2];
+    const index_t vcnt = m->n_vert - voff;
+    if (!vcnt) return;
+    mpi_vrb_printf( "generating formfactor space D-vertex from %li real-space elements\n", vcnt );
+    if (!V->D_flow) {
+        mpi_err_printf( "D channel required for non-PCD native vertices\n" );
+        return;
+    }
+    if (V->SU2) enforce_exchange = false;
+    if (!V->SU2 && enforce_exchange && !V->C_flow) {
+        enforce_exchange = false;
+        mpi_err_printf( "U_ff exchange requires C_flow, D_flow, and !SU2\n" );
+    }
+    const rs_vertex_t* zvert = m->vert + voff;
+
+    const index_t n_orbff = V->n_orbff,
+                  n_spin = V->n_spin,
+                  nk = V->nk,
+                  my_nk = V->my_nk,
+                  my_nk_off = V->my_nk_off,
+                  linsz = n_orbff * POW2(n_spin),
+                  n_kx = m->nk[0], n_ky = m->nk[1], n_kz = m->nk[2];
+    const index_t stride_fft = POW2(linsz);
+
+    const fftw_iodim64 dims[3] = {
+        { .n = n_kx, .is = n_kz*n_ky*stride_fft, .os = n_kz*n_ky*stride_fft, },
+        { .n = n_ky, .is = n_kz*     stride_fft, .os = n_kz*     stride_fft, },
+        { .n = n_kz, .is =           stride_fft, .os =           stride_fft, },
+    };
+    const fftw_iodim64 howmany = { .n = stride_fft, .is = 1, .os = 1 };
+
+    fftw_complex* helper_f = (fftw_complex*)fftw_malloc(POW2(linsz)*nk * sizeof*helper_f);
+    complex128_t* helper = (complex128_t*)helper_f;
+    fftw_plan p = fftw_plan_guru64_dft(3, dims, 1, &howmany, helper_f, helper_f, -1, FFTW_ESTIMATE);
+    ZERO_OUT(helper, POW2(linsz)*nk);
+
+    const index_t* mi_to_tuffidx = V->tu_data->mi_to_tuffidx;
+    index_t* tuffidx_to_mi = calloc(n_orbff, sizeof*tuffidx_to_mi);
+    for (index_t i=0; i<n_orbff; ++i) tuffidx_to_mi[i] = i;
+    mergesort_index_r(tuffidx_to_mi, n_orbff, (void*)mi_to_tuffidx, diverge_omp_num_threads(), 0);
+
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t v=0; v<vcnt; ++v) {
+        const index_t* R = zvert[v].R;
+        const index_t z_id = (R[2]<0) ? n_kz + R[2] : R[2],
+                      y_id = (R[1]<0) ? n_ky + R[1] : R[1],
+                      x_id = (R[0]<0) ? n_kx + R[0] : R[0];
+        const index_t Ridx = IDX3(x_id,y_id,z_id, n_ky,n_kz);
+        const index_t f1 = tuffidx_to_mi[zvert[v].o1],
+                      f2 = tuffidx_to_mi[zvert[v].o2],
+                      s1 = zvert[v].s1, s2 = zvert[v].s2,
+                      s3 = zvert[v].s3, s4 = zvert[v].s4;
+        const index_t ml = IDX3(s2,s4,f2, n_spin,n_orbff),
+                      mr = IDX3(s3,s1,f1, n_spin,n_orbff);
+        helper[IDX3(Ridx,ml,mr,linsz,linsz)] += zvert[v].V;
+    }
+    fftw_execute(p);
+    fftw_destroy_plan(p);
+    free(tuffidx_to_mi);
+
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t iq=0; iq<my_nk; ++iq) {
+        index_t q = my_nk_off + iq;
+        for (index_t lr=0; lr<POW2(linsz); ++lr)
+            V->Dch[IDX2(iq,lr,POW2(linsz))] += helper[IDX2(q,lr,POW2(linsz))];
+    }
+    if (enforce_exchange) {
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t iq=0; iq<my_nk; ++iq) {
+            index_t q = my_nk_off + iq;
+            for (index_t lr=0; lr<POW2(linsz); ++lr)
+                V->Cch[IDX2(iq,lr,POW2(linsz))] -= helper[IDX2(q,lr,POW2(linsz))];
+        }
+    }
+
+    fftw_free(helper_f);
 }
 
 void tu_vertex_project_fullV( const tu_vertex_t* V, const diverge_model_t* model, complex128_t* full_V ) {
