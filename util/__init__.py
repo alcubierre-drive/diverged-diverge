@@ -1693,6 +1693,24 @@ if not _libs["divERGe"] is None:
     fnanf_isnan.argtypes = [ c_float ]
     fnanf_isnan.restype = c_int
 
+    class tu_formfactor_idx_t(Structure):
+        pass
+    tu_formfactor_idx_t.__slots__ = [ 't', 'd' ]
+    tu_formfactor_idx_t._fields_ = [ ('t', index_t), ('d', c_double) ]
+
+    tu_formfactor_map_free            = _libs["divERGe"].get("tu_formfactor_map_free"   , "cdecl")
+    tu_formfactor_map_free.argtypes   = [c_voidp]
+    tu_formfactor_map_free.restype    = None
+    tu_formfactor_map_get             = _libs["divERGe"].get("tu_formfactor_map_get"    , "cdecl")
+    tu_formfactor_map_get.argtypes    = [c_voidp, index_t, index_t, index_t, index_t, index_t]
+    tu_formfactor_map_get.restype     = tu_formfactor_idx_t
+    tu_formfactor_map_get_tu          = _libs["divERGe"].get("tu_formfactor_map_get_tu" , "cdecl")
+    tu_formfactor_map_get_tu.argtypes = [c_voidp, tu_formfactor_t]
+    tu_formfactor_map_get.restype     = tu_formfactor_idx_t
+    tu_formfactor_map_init            = _libs["divERGe"].get("tu_formfactor_map_init"   , "cdecl")
+    tu_formfactor_map_init.argtypes   = [POINTER(model_t)]
+    tu_formfactor_map_init.restype    = c_voidp
+
     # redo the typedefs
     rs_hopping_t = struct_rs_hopping_t
     rs_vertex_t = struct_rs_vertex_t
