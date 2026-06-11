@@ -7,7 +7,9 @@
 #include "../misc/mpi_functions.h"
 #include "../misc/zstd_file.h"
 
-#define VERTEX_FILE_MAGIC_NUMBER 'V'
+#ifndef DIVERGE_POST_MAGIC_NUMBER_NPATCH
+#define DIVERGE_POST_MAGIC_NUMBER_NPATCH 'V'
+#endif
 
 int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_output_post_config_t* ocfg, const char* fname ) {
 
@@ -23,7 +25,7 @@ int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_outpu
     memset( header, 0, sizeof(header) );
 
     int i=0;
-    header[i++] = VERTEX_FILE_MAGIC_NUMBER;
+    header[i++] = DIVERGE_POST_MAGIC_NUMBER_NPATCH;
     // v->V
     header[i] = 128; i++;
     header[i++] = ocfg->V ? v->size*2 : 0;

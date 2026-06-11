@@ -154,17 +154,10 @@ __global__ void loop_gen_gf_krnl( const cu_gf_complex_t* __restrict__ d_E_fine,
     E.x = Lambda.x - d_E_fine[kidx*nb+b].x;
     E.y = Lambda.y - d_E_fine[kidx*nb+b].y;
 
-    #ifdef DIVERGE_MODEL_USE_O2B_C_ORDER
-    U1.x =  d_U_fine[kidx*nb*nb+o1*nb+b].x;
-    U1.y = -d_U_fine[kidx*nb*nb+o1*nb+b].y;
-    U2.x =  d_U_fine[kidx*nb*nb+o2*nb+b].x;
-    U2.y =  d_U_fine[kidx*nb*nb+o2*nb+b].y;
-    #else
     U1.x =  d_U_fine[kidx*nb*nb+o1+nb*b].x;
     U1.y = -d_U_fine[kidx*nb*nb+o1+nb*b].y;
     U2.x =  d_U_fine[kidx*nb*nb+o2+nb*b].x;
     U2.y =  d_U_fine[kidx*nb*nb+o2+nb*b].y;
-    #endif
 
     U1 = cuCmul( U1, U2 );
     cache[o1*nb*nb+o2*nb+b] = cuCdiv( U1, E );

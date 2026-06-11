@@ -5,8 +5,8 @@
 #include "../diverge_common.h"
 #include "../misc/mpi_functions.h"
 
-#ifndef MAGIC_NUMBER_POST_PROCESSING
-#define MAGIC_NUMBER_POST_PROCESSING 'P'
+#ifndef DIVERGE_POST_MAGIC_NUMBER_GRID
+#define DIVERGE_POST_MAGIC_NUMBER_GRID 'P'
 #endif
 
 #ifdef __cplusplus
@@ -33,7 +33,7 @@ void grid_postproc_communicate( grid_postproc_t* p );
 /* header is index_t[64], and all displacement/size information is in
  * units of 64bit (i.e. double); must be freed by user
  *
- * header[0] - MAGIC_NUMBER_POST_PROCESSING
+ * header[0] - DIVERGE_POST_MAGIC_NUMBER_GRID
  * header[60-61] - file format version string [displ, size]. if both are
  *                 zero, default to v0.4 for diverge.output.read().
  *
@@ -51,7 +51,7 @@ void grid_postproc_communicate( grid_postproc_t* p );
  * header[19] - lin gap num values/vectors
  * header[20] - lin gap matrix size (one leg, i.e., nk*nb*nb)
  *
- * header[62] - MAGIC_NUMBER_POST_PROCESSING
+ * header[62] - DIVERGE_POST_MAGIC_NUMBER_GRID
  * header[63] - total file size (in 64bit units)
  */
 const index_t* grid_postproc_to_file( grid_postproc_t* p, const char* fname );

@@ -65,7 +65,7 @@ struct tu_projection_t {
 typedef struct tu_projection_t tu_projection_t;
 
 void tu_projection_configure_implementation( int hashtable );
-void tu_projection_configure_permutation( int inplace );
+void tu_projection_set_permutation_algorithm( int fast );
 tu_projection_t* tu_projection_init( const diverge_model_t* model );
 void tu_projection_free( tu_projection_t* p );
 

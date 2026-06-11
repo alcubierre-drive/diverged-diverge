@@ -104,7 +104,7 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         tu_projection_configure_implementation( !strcmp(val, "hashtable") );
     }
     CHECKKEY("tu_proj_perm_impl") {
-        tu_projection_configure_permutation( !strcmp(val, "inplace") );
+        tu_projection_set_permutation_algorithm( strcmp(val, "inplace") );
     }
     CHECKKEY("tu_phonons_ignore_imag_freq") {
         INTERNALS->tu_phonons_ignore_imag_freq = atoi(val);

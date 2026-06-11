@@ -4,8 +4,8 @@
 
 #include "../diverge_common.h"
 
-#ifndef TU_MAGIC_NUMBER_POST_PROCESSING
-#define TU_MAGIC_NUMBER_POST_PROCESSING 'T'
+#ifndef DIVERGE_POST_MAGIC_NUMBER_TU
+#define DIVERGE_POST_MAGIC_NUMBER_TU 'T'
 #endif
 
 #ifdef __cplusplus
