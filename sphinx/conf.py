@@ -16,15 +16,17 @@ copyright = f'{datetime.date.today().year}, Jonas B. Profe, Lennart Klebl'
 author = 'Jonas B. Profe, Lennart Klebl'
 
 # getting some release info
-_tag = subprocess.check_output( ['bash', '-c', 'git tag --list "v*.*" | tail -n1'] )
+_tag = subprocess.check_output( ['bash', '-c', 'git tag --list "v*.*" | sort -V | tail -n1'] )
 _commit = subprocess.check_output( ['bash', '-c', 'git rev-parse --short HEAD'] )
 _dirty = subprocess.check_output( ['bash', '-c', "(git diff --quiet && git diff --cached --exit-code --quiet) || echo ':dirty'"] )
 _branch = subprocess.check_output( ['bash', '-c', 'git rev-parse --abbrev-ref HEAD'] )
 
-release = _tag.decode('utf8')[1:-1]
+release_clean = _tag.decode('utf8')[1:-1]
 branch = _branch.decode('utf8')[:-1]
 if branch == 'pages':
     branch = 'master'
+
+release = release_clean if branch == 'master' else (release_clean + f' ({branch})')
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -51,7 +53,7 @@ hawkmoth_source_uri = 'https://codeberg.org/lennart_klebl/divERGe/src/branch/%s/
 
 # links
 extlinks = {
-        'release_version': ('https://codeberg.org/lennart_klebl/divERGe/raw/branch/' + branch + '/public/releases/v' + release + '/%s', None),
+        'release_version': ('https://codeberg.org/lennart_klebl/divERGe/raw/branch/' + branch + '/public/releases/v' + release_clean + '/%s', None),
         'release_tree': ('https://codeberg.org/lennart_klebl/divERGe/src/branch/' + branch + '/%s', None),
 }
 extlinks_detect_hardcoded_links = True
