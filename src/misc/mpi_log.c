@@ -316,10 +316,10 @@ static char** mpi_string_gather( const char* str ) {
         displs[r] = sizeof(int)*r;
     }
 
-    int* lengths = (int*)calloc( nranks, sizeof(int) );
-    lengths[rank] = strlen(str)+1;
-
-    diverge_mpi_gatherv_bytes( lengths + rank, sizeof(int), lengths, counts, displs, 0 );
+    int* lengths = calloc( nranks, sizeof(int) );
+    int length = strlen(str)+1;
+    lengths[rank] = length;
+    diverge_mpi_gatherv_bytes( &length, sizeof(int), lengths, counts, displs, 0 );
 
     int ltot = 0;
     for (int r=0; r<nranks; ++r) {
@@ -327,8 +327,7 @@ static char** mpi_string_gather( const char* str ) {
         counts[r] = lengths[r];
         displs[r] = r==0 ? 0 : counts[r-1]+displs[r-1];
     }
-    char* strbuf = (char*)calloc( ltot, 1 );
-
+    char* strbuf = calloc( ltot, 1 );
     diverge_mpi_gatherv_bytes( str, lengths[rank], strbuf, counts, displs, 0 );
 
     if (rank == 0) {
