@@ -6,6 +6,7 @@
 #include "../diverge_model.h"
 #include "../diverge_internals_struct.h"
 #include "../misc/shared_mem.h"
+#include "../misc/mergesort.h"
 
 // global var
 unsigned propagator_cpu_mpi_planning_patience = FFTW_MEASURE;
@@ -60,25 +61,27 @@ static inline index_t kidx_to_local( const tu_mpi_loop_t* t, index_t k ) {
     return (kx - t->kx_displ) * t->dims[1]*t->dims[2] + kyz;
 }
 
-static inline int sort_send( const void* pa, const void* pb ) {
-    const kmap_t* a = (const kmap_t*)(pa);
-    const kmap_t* b = (const kmap_t*)(pb);
-    int result = 0;
+static inline index_t kmap_cmp_send(const kmap_t* a, const kmap_t* b) {
+    index_t result = 0;
     if ((result = (a->target_rank - b->target_rank))) return result;
     if ((result = (a->q - b->q))) return result;
     if ((result = (a->k - b->k))) return result;
     return result;
 }
+#undef MERGESORT_COMP
+#define MERGESORT_COMP(x,y) kmap_cmp_send(&(x),&(y))
+MERGESORT_IMPL(kmap_sendsort, kmap_t)
 
-static inline int sort_recv( const void* pa, const void* pb ) {
-    const kmap_t* a = (const kmap_t*)(pa);
-    const kmap_t* b = (const kmap_t*)(pb);
-    int result = 0;
+static inline index_t kmap_cmp_recv(const kmap_t* a, const kmap_t* b) {
+    index_t result = 0;
     if ((result = (a->source_rank - b->source_rank))) return result;
     if ((result = (a->q - b->q))) return result;
     if ((result = (a->k - b->k))) return result;
     return result;
 }
+#undef MERGESORT_COMP
+#define MERGESORT_COMP(x,y) kmap_cmp_recv(&(x),&(y))
+MERGESORT_IMPL(kmap_recvsort, kmap_t)
 
 tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
         index_t chunksize_max, const index_t* c2fmap, index_t my_nk,
@@ -155,17 +158,19 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     // kcomms contains the missing indices on *this rank*
     kmap_t* kcomms = calloc(t->my_nk, sizeof(kmap_t));
     index_t kcomms_size = 0;
-    t->c2fmap_local = calloc(t->my_nk, sizeof(int));
-    alloc_print( sizeof(int)*t->my_nk );
+    t->c2fmap_local = bitary_alloc(t->my_nk);
+    alloc_print( bitary_nbytes(t->my_nk) );
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
     for (index_t q=0; q<t->my_nk; ++q) {
         index_t k_want = t->c2fmap[q];
         int r = find_rank( t, k_want );
         if (r != t->rank) {
+            kmap_t kpush = {.k=k_want, .q=q, .source_rank=r, .target_rank=t->rank};
             #pragma omp critical
-            kcomms[kcomms_size++] = (kmap_t){.k=k_want, .q=q, .source_rank=r, .target_rank=t->rank};
+            kcomms[kcomms_size++] = kpush;
         } else {
-            t->c2fmap_local[q] = 1;
+            #pragma omp atomic
+            BITARY_SET(t->c2fmap_local, q);
         }
     }
     // shrink kcomms
@@ -235,8 +240,8 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
 
     // sort the send and receive descriptors
     tick = diverge_mpi_wtime();
-    qsort( t->kc_send, t->kc_send_count, sizeof(kmap_t), &sort_send );
-    qsort( t->kc_recv, t->kc_recv_count, sizeof(kmap_t), &sort_recv );
+    kmap_sendsort( t->kc_send, t->kc_send_count, diverge_omp_num_threads(), 0 );
+    kmap_recvsort( t->kc_recv, t->kc_recv_count, diverge_omp_num_threads(), 0 );
     tock = diverge_mpi_wtime();
     mpi_vrb_printf( "TU-MPI prop: %.2fs for sort\n", tock-tick );
 
@@ -419,7 +424,7 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
             index_t mo3 = simple ? ((taskoff+m)/t->n_orbff) : t->unique_mi_r[m+taskoff];
             index_t mo1 = simple ? ((taskoff+m)-mo3*t->n_orbff) : t->unique_mi_l[m+taskoff];
             for (index_t q=0; q<t->my_nk; ++q) {
-                if (t->c2fmap_local[q]) {
+                if (bitary_get(t->c2fmap_local, q)) {
                     index_t idx_to = pp ?
                         mo1+t->n_orbff*(s1+s2*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(
                                         s3+s4*t->n_spin+POW2(t->n_spin)*q))) :
@@ -445,9 +450,11 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
         // put from result_buf into send_buf
         for (index_t i=0; i<t->kc_send_count; ++i) {
             index_t kidx = kidx_to_local( t, t->kc_send[i].k );
+            #ifndef NDEBUG
             if (find_rank( t, t->kc_send[i].k ) != t->rank) {
                 printf( "rank of k index (%i) not me (%i) :(\n", find_rank( t, t->kc_send[i].k ), t->rank );
             }
+            #endif
             for (index_t j=0; j<chunksize; ++j)
                 send_buf[IDX2(i,j,elemsize)] = MY_BUFFER_GGM_IDX_POST( j, kidx );
         }
@@ -473,7 +480,7 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
             // put from result_buf into loop
             for (index_t i=0; i<t->kc_recv_count; ++i) {
                 index_t q = t->kc_recv[i].q;
-                if (!t->c2fmap_local[q]) {
+                if (!bitary_get(t->c2fmap_local, q)) {
                     index_t idx_to = pp ?
                         mo1+t->n_orbff*(s1+s2*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(
                                         s3+s4*t->n_spin+POW2(t->n_spin)*q))) :
