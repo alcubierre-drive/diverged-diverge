@@ -4,6 +4,7 @@
 
 #include "../diverge_common.h"
 #include "../misc/mpi_functions.h"
+#include "../misc/bitary.h"
 #include <fftw3.h>
 
 #ifdef __cplusplus
@@ -81,7 +82,7 @@ typedef struct {
     int enable_timings;
 
     // boolean array that tracks whether c2fmap content is local
-    int* c2fmap_local;
+    cbyte_t* c2fmap_local;
 
     // loop info
     index_t my_nk;
