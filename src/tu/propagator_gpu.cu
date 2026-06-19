@@ -253,7 +253,7 @@ void ph_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
         const index_t* const __restrict__ mi_to_ofrom, const index_t* const __restrict__ mi_to_oto,
         const index_t* const __restrict__ mi_to_Rin, const index_t* const __restrict__ umi_l,
         const index_t* const __restrict__ umi_r, const index_t n_unique_pairs,
-        cbyte_t* __restrict__ L_touched_map ) {
+        cbytes_t* __restrict__ L_touched_map ) {
     cuda_setup();
     memset(L,0,POW4(n_spin)*POW2(n_orbff)*my_nk*sizeof(complex128_t));
     tu_gpu_info_t ii = tu_gpu_info();
@@ -362,7 +362,7 @@ void pp_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
         const index_t* const __restrict__ mi_to_ofrom, const index_t* const __restrict__ mi_to_oto,
         const index_t* const __restrict__ mi_to_Rin, const index_t* const __restrict__ umi_l,
         const index_t* const __restrict__ umi_r, const index_t n_unique_pairs,
-        cbyte_t* __restrict__ L_touched_map ) {
+        cbytes_t* __restrict__ L_touched_map ) {
     cuda_setup();
     memset(L,0,POW4(n_spin)*POW2(n_orbff)*my_nk*sizeof(complex128_t));
     tu_gpu_info_t ii = tu_gpu_info();

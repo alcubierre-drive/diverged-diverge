@@ -35,7 +35,7 @@ CT_TEST(FPLO_reader) {
     remove( fname_FPLO ); free( fname_FPLO );
     remove( fname_W90 ); free( fname_W90 );
 
-    cbyte_t* masked_hoppings = bitary_alloc( len );
+    cbytes_t* masked_hoppings = bitary_alloc( len );
     for (rs_hopping_t* h=fplo_model->hop; h!=fplo_model->hop+fplo_model->n_hop; ++h) {
         for (index_t i=0; i<len; ++i) {
             rs_hopping_t* t = w90_hop+i;

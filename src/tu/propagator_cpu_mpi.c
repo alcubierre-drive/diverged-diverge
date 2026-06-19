@@ -159,14 +159,17 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     kmap_t* kcomms = calloc(t->my_nk, sizeof(kmap_t));
     index_t kcomms_size = 0;
     t->c2fmap_local = bitary_alloc(t->my_nk);
-    alloc_print( bitary_nbytes(t->my_nk) );
+    alloc_print( bitary_nwords(t->my_nk) * sizeof(cbtyes_t) );
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
     for (index_t q=0; q<t->my_nk; ++q) {
         index_t k_want = t->c2fmap[q];
         int r = find_rank( t, k_want );
         if (r != t->rank) {
+            #pragma omp critical
             kcomms[kcomms_size++] = (kmap_t){.k=k_want, .q=q, .source_rank=r, .target_rank=t->rank};
         } else {
-            bitary_set(t->c2fmap_local, q);
+            #pragma omp atomic update
+            BITARY_SET(t->c2fmap_local, q);
         }
     }
     // shrink kcomms

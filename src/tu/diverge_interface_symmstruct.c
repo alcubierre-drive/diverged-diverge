@@ -131,7 +131,7 @@ static void init_ibz( diverge_model_t* model ) {
     index_t nk = kdim(model->nk);
 
     index_t* mom_maps_to = model->internals->symm_map_mom_crs;
-    cbyte_t* is_mapped_to_ibz = bitary_alloc(nk);
+    cbytes_t* is_mapped_to_ibz = bitary_alloc(nk);
 
     complex128_t* orb_symmetries = model->orb_symmetries;
     double* rs_symmetries = (double*)model->rs_symmetries;

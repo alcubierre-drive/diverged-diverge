@@ -31,7 +31,7 @@ tu_prop_gpu_mpi_dist_t* tu_prop_gpu_mpi_dist_init( index_t my_nk,
 void tu_prop_gpu_mpi_dist_free( tu_prop_gpu_mpi_dist_t* t );
 void tu_prop_gpu_mpi_dist_comm( tu_prop_gpu_mpi_dist_t* t, complex128_t* L );
 
-cbyte_t* tu_prop_gpu_mpi_dist_cuda_kernel_bitary( tu_prop_gpu_mpi_dist_t* t );
+cbytes_t* tu_prop_gpu_mpi_dist_cuda_kernel_bitary( tu_prop_gpu_mpi_dist_t* t );
 
 index_t tu_prop_gpu_mpi_dist_timing_num( const tu_prop_gpu_mpi_dist_t* t );
 double tu_prop_gpu_mpi_dist_timing( const tu_prop_gpu_mpi_dist_t* t, index_t i );

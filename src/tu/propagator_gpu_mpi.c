@@ -42,7 +42,7 @@ static inline void align_pack_sizes( index_t* send_counts, index_t* recv_counts,
 
 struct tu_prop_gpu_mpi_dist_t {
 
-    cbyte_t* touched;
+    cbytes_t* touched;
 
     index_t n_touched;
     index_t* touched_to_idx;
@@ -148,7 +148,7 @@ EXPORT_TU_GPU_MPI_ALLOC_PRINT void* realloc_print_( void* ptr, size_t sz, int li
 #define realloc_print realloc
 #endif
 
-cbyte_t* tu_prop_gpu_mpi_dist_cuda_kernel_bitary( tu_prop_gpu_mpi_dist_t* t ) {
+cbytes_t* tu_prop_gpu_mpi_dist_cuda_kernel_bitary( tu_prop_gpu_mpi_dist_t* t ) {
     return t->first_pass ? t->touched : NULL;
 }
 
