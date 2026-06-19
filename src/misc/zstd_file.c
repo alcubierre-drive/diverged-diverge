@@ -31,10 +31,16 @@ struct zstd_file_t {
     ZSTD_CCtx *cctx;
     void *outBuf;
     size_t outBufSize;
+    int isNormalFile;
 };
 
 zstd_file_t* zstd_fopen(const char *path, const char *mode, int compressionLevel) {
     zstd_file_t *zf = calloc(1, sizeof(*zf));
+    if (compressionLevel == 0) {
+        zf->fp = fopen(path, mode);
+        zf->isNormalFile = 1;
+        return zf;
+    }
     if (!zf) goto error;
 
     zf->fp = fopen(path, mode);
@@ -62,6 +68,7 @@ error:
 }
 
 size_t zstd_fwrite(const void *ptr, size_t size, size_t nmemb, zstd_file_t *zf) {
+    if (zf->isNormalFile) return fwrite(ptr, size, nmemb, zf->fp);
     size_t totalBytes = size * nmemb;
 
     ZSTD_inBuffer input = {
@@ -89,6 +96,7 @@ size_t zstd_fwrite(const void *ptr, size_t size, size_t nmemb, zstd_file_t *zf) 
 }
 
 int zstd_fflush(zstd_file_t *zf) {
+    if (zf->isNormalFile) return fflush(zf->fp);
     size_t remaining = -1;
     do {
         ZSTD_outBuffer output = {
@@ -108,6 +116,11 @@ int zstd_fflush(zstd_file_t *zf) {
 int zstd_fclose(zstd_file_t *zf) {
     int result = 0;
     if (!zf) return EOF;
+    if (zf->isNormalFile) {
+        result = fclose(zf->fp);
+        free(zf);
+        return result;
+    }
 
     size_t remaining = -1;
     do {
