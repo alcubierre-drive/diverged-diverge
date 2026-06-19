@@ -160,17 +160,13 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     index_t kcomms_size = 0;
     t->c2fmap_local = bitary_alloc(t->my_nk);
     alloc_print( bitary_nbytes(t->my_nk) );
-    #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
     for (index_t q=0; q<t->my_nk; ++q) {
         index_t k_want = t->c2fmap[q];
         int r = find_rank( t, k_want );
         if (r != t->rank) {
-            kmap_t kpush = {.k=k_want, .q=q, .source_rank=r, .target_rank=t->rank};
-            #pragma omp critical
-            kcomms[kcomms_size++] = kpush;
+            kcomms[kcomms_size++] = (kmap_t){.k=k_want, .q=q, .source_rank=r, .target_rank=t->rank};
         } else {
-            #pragma omp atomic
-            BITARY_SET(t->c2fmap_local, q);
+            bitary_set(t->c2fmap_local, q);
         }
     }
     // shrink kcomms
@@ -541,14 +537,6 @@ tu_mpi_gf_t* tu_mpi_gf_init( const index_t nk[3], const index_t nkf[3], index_t 
     return t;
 }
 
-static inline index_t* displ_count_gen( index_t total_size, index_t nranks ) {
-    index_t* counts = calloc(2*nranks, sizeof(index_t));
-    index_t* displs = counts + nranks;
-    for (index_t s=0; s<total_size; ++s) counts[s%nranks]++;
-    for (index_t r=1; r<nranks; ++r) displs[r] = displs[r-1] + counts[r-1];
-    return counts;
-}
-
 void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
     double tick = 0, tock = 0;
 
@@ -567,7 +555,7 @@ void tu_mpi_gf_fft_and_transpose( tu_mpi_gf_t* t, gf_complex_t* gf_buf_ ) {
         free( shm_counts );
         shm_size = shared_malloc_size();
         shm_rank = shared_malloc_rank();
-        shm_counts = displ_count_gen( kdimtot, shm_size );
+        shm_counts = diverge_distribute( kdimtot, shm_size );
         shm_displs = shm_counts + shm_size;
     }
 
