@@ -552,7 +552,7 @@ void diverge_patching_symmetrize_refinement( diverge_model_t* mod, mom_patching_
     index_t* bz_to_ibz = calloc(np, sizeof*bz_to_ibz);
     for (index_t p=0; p<np; ++p) bz_to_ibz[p] = -1;
 
-    cbyte_t* reached = bitary_alloc( np );
+    cbytes_t* reached = bitary_alloc( np );
     index_t* patches = patch->patches;
     // count how large the IBZ is
     index_t ibz_count = 0;
@@ -916,7 +916,7 @@ static index_t* find_ibz_pts( diverge_model_t* m, index_t* nibz ) {
     const claM3d_t latt = claM3d_map(m->lattice[0]);
     claM3d_t syms[ns]; memcpy(syms, m->rs_symmetries, sizeof(double)*9*ns);
     const double* kmesh = m->internals->kmesh;
-    cbyte_t* reached = bitary_alloc(nk);
+    cbytes_t* reached = bitary_alloc(nk);
     for (index_t k=0; k<nk; ++k) {
         if (!bitary_get(reached, k)) {
             VECTOR_PUSH_BACK( ibz, k );

@@ -673,7 +673,7 @@ static index_t* sort_permutation( const claV2ll_t* to, index_t to_sz ) {
 }
 
 static inline void apply_permutation_in_place( claV2ll_t* vec, const index_t* p, index_t p_sz ) {
-    cbyte_t* done = bitary_alloc(p_sz);
+    cbytes_t* done = bitary_alloc(p_sz);
     for (index_t i=0; i<p_sz; ++i) {
         if (bitary_get(done, i)) continue;
         bitary_set(done,i);

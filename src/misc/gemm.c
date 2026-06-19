@@ -43,7 +43,7 @@ void transpose_inplace_rect_any( void* vdata, index_t data_sz, index_t rows, ind
     unsigned char* data = vdata;
     index_t size = rows * cols;
     index_t visited_count = 0;
-    cbyte_t* visited = bitary_alloc(size);
+    cbytes_t* visited = bitary_alloc(size);
 
     for (index_t start=0; visited_count<size; ++start) {
         if (bitary_get(visited,start)) continue;

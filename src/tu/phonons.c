@@ -144,7 +144,7 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
     *last = Lambda;
 
     const double* E = t->pmod->internals->E;
-    const cbyte_t* E_imag = t->pmod->internals->model_phonons_imag_freq;
+    const cbytes_t* E_imag = t->pmod->internals->model_phonons_imag_freq;
 
     if (refined) {
         #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())

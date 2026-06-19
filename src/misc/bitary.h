@@ -6,26 +6,19 @@
 #include <cstddef>
 #include <cstdlib>
 #include <climits>
+#include <cstdint>
 #else // __cplusplus
 #include <stddef.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <stdint.h>
 #endif // __cplusplus
 
-#if (CHAR_BIT == 8)
-#define CHAR_MOD(x) ((x)&7)
-#else
-#define CHAR_MOD(x) ((x)%CHAR_BIT)
-#endif
+#define BITS_MOD(x) ((x)&63)
+#define BITS_DIV(x) ((x)>>6)
 
-#if (CHAR_BIT == 8)
-#define CHAR_DIV(x) ((x)>>3)
-#else
-#define CHAR_DIV(x) ((x)/CHAR_BIT)
-#endif
-
-typedef unsigned char cbit;
-typedef unsigned char cbyte_t;
+typedef uint64_t cbit;
+typedef uint64_t cbytes_t;
 
 #ifdef __CUDACC__
 #define BITARY_HOST_DEV __host__ __device__
@@ -34,73 +27,73 @@ typedef unsigned char cbyte_t;
 #endif
 
 /** set bit number ``bit`` of byte ``b`` to one */
-BITARY_HOST_DEV static inline void bit_set( cbyte_t* b, cbit bit ) {
-    *b |= 1 << bit;
+BITARY_HOST_DEV static inline void bit_set( cbytes_t* b, cbit bit ) {
+    *b |= 1ULL << bit;
 }
 
 /** set bit number ``bit`` of byte ``b`` to zero */
-BITARY_HOST_DEV static inline void bit_unset( cbyte_t* b, cbit bit ) {
-    *b &= ~(1 << bit);
+BITARY_HOST_DEV static inline void bit_unset( cbytes_t* b, cbit bit ) {
+    *b &= ~(1ULL << bit);
 }
 
 /** toggle bit number ``bit`` of byte ``b`` */
-BITARY_HOST_DEV static inline void bit_toggle( cbyte_t* b, cbit bit ) {
-    *b ^= 1 << bit;
+BITARY_HOST_DEV static inline void bit_toggle( cbytes_t* b, cbit bit ) {
+    *b ^= 1ULL << bit;
 }
 
 /** get bit number ``bit`` of byte ``b`` */
-BITARY_HOST_DEV static inline cbit bit_get( const cbyte_t* b, cbit bit ) {
-    return (*b >> bit) & 1;
+BITARY_HOST_DEV static inline cbit bit_get( const cbytes_t* b, cbit bit ) {
+    return (*b >> bit) & 1ULL;
 }
 
 /** get number of bytes required to represent ``nbit`` contiguous bits in memory */
-BITARY_HOST_DEV static inline size_t bitary_nbytes( size_t nbit ) {
-    return CHAR_DIV(nbit)+(CHAR_MOD(nbit) != 0);
+BITARY_HOST_DEV static inline size_t bitary_nwords( size_t nbit ) {
+    return BITS_DIV(nbit)+(BITS_MOD(nbit) != 0);
 }
 
 /**
  * allocate a bit array with at least ``nbit`` bits, all set to zero. The
  * returnet memory must be free'd with ``free`` or :c:func:`diverge_mem_free`.
  */
-BITARY_HOST_DEV static inline cbyte_t* bitary_alloc( size_t nbit ) {
-    cbyte_t* result = (cbyte_t*)calloc(bitary_nbytes(nbit), sizeof(cbyte_t));
+BITARY_HOST_DEV static inline cbytes_t* bitary_alloc( size_t nbit ) {
+    cbytes_t* result = (cbytes_t*)calloc(bitary_nwords(nbit), sizeof(cbytes_t));
     return result;
 }
 
 /** set the :math:`n`-th bit (``bitidx``) of the bit array ``ary`` to one */
-BITARY_HOST_DEV static inline void bitary_set( cbyte_t* ary, size_t bitidx ) {
-    bit_set( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
+BITARY_HOST_DEV static inline void bitary_set( cbytes_t* ary, size_t bitidx ) {
+    bit_set( ary + BITS_DIV(bitidx), BITS_MOD(bitidx));
 }
 // required for omp atomic operation
 #define BITARY_SET( ary, bitidx ) \
-    (ary)[CHAR_DIV(bitidx)] |= CHAR_MOD(bitidx)
+    (ary)[BITS_DIV(bitidx)] |= (1ULL << BITS_MOD(bitidx))
 
 /** set the :math:`n`-th bit (``bitidx``) of the bit array ``ary`` to zero */
-BITARY_HOST_DEV static inline void bitary_unset( cbyte_t* ary, size_t bitidx ) {
-    bit_unset( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
+BITARY_HOST_DEV static inline void bitary_unset( cbytes_t* ary, size_t bitidx ) {
+    bit_unset( ary + BITS_DIV(bitidx), BITS_MOD(bitidx));
 }
 
 /** toggle the :math:`n`-th bit (``bitidx``) of the bit array ``ary`` */
-BITARY_HOST_DEV static inline void bitary_toggle( cbyte_t* ary, size_t bitidx ) {
-    bit_toggle( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
+BITARY_HOST_DEV static inline void bitary_toggle( cbytes_t* ary, size_t bitidx ) {
+    bit_toggle( ary + BITS_DIV(bitidx), BITS_MOD(bitidx));
 }
 
 /** get the :math:`n`-th bit (``bitidx``) of the bit array ``ary`` */
-BITARY_HOST_DEV static inline cbit bitary_get( const cbyte_t* ary, size_t bitidx ) {
-    return bit_get( ary + CHAR_DIV(bitidx), CHAR_MOD(bitidx));
+BITARY_HOST_DEV static inline cbit bitary_get( const cbytes_t* ary, size_t bitidx ) {
+    return bit_get( ary + BITS_DIV(bitidx), BITS_MOD(bitidx));
 }
 
 /** set the first ``nbit`` bits of the bit array ``ary`` to one */
-BITARY_HOST_DEV static inline void bitary_set_all( cbyte_t* ary, size_t nbit ) {
+BITARY_HOST_DEV static inline void bitary_set_all( cbytes_t* ary, size_t nbit ) {
     for (size_t i=0; i<nbit; ++i) bitary_set( ary, i );
 }
 
 /** set the first ``nbit`` bits of the bit array ``ary`` to zero */
-BITARY_HOST_DEV static inline void bitary_unset_all( cbyte_t* ary, size_t nbit ) {
+BITARY_HOST_DEV static inline void bitary_unset_all( cbytes_t* ary, size_t nbit ) {
     for (size_t i=0; i<nbit; ++i) bitary_unset( ary, i );
 }
 
 /** toggle the first ``nbit`` bits of the bit array ``ary`` */
-BITARY_HOST_DEV static inline void bitary_toggle_all( cbyte_t* ary, size_t nbit ) {
+BITARY_HOST_DEV static inline void bitary_toggle_all( cbytes_t* ary, size_t nbit ) {
     for (size_t i=0; i<nbit; ++i) bitary_toggle( ary, i );
 }

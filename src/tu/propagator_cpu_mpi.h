@@ -82,7 +82,7 @@ typedef struct {
     int enable_timings;
 
     // boolean array that tracks whether c2fmap content is local
-    cbyte_t* c2fmap_local;
+    cbytes_t* c2fmap_local;
 
     // loop info
     index_t my_nk;

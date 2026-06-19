@@ -162,7 +162,7 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
             (void)t;
             #pragma omp ordered
             {
-                cbyte_t* sel = bitary_alloc(wsdata.irvec_sz);
+                cbytes_t* sel = bitary_alloc(wsdata.irvec_sz);
                 for (index_t w=0; w<wsdata.irvec_sz; ++w) {
                     int dim_invalid = 0;
                     for (int d=dim; d<3; ++d)

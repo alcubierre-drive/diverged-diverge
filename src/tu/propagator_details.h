@@ -181,7 +181,7 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* cons
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
     const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
-    const index_t n_unique_pairs, cbyte_t* L_touched_map );
+    const index_t n_unique_pairs, cbytes_t* L_touched_map );
 void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* const L,
     const complex128_t* const GF, const complex128_t* const GFconj,
     const index_t n_orb,
@@ -189,7 +189,7 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* cons
     const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
     const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
-    const index_t n_unique_pairs, cbyte_t* L_touched_map );
+    const index_t n_unique_pairs, cbytes_t* L_touched_map );
 #endif // USE_CUDA
 
 #ifdef __cplusplus
