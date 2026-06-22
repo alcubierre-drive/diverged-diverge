@@ -16,6 +16,7 @@
 
 #define BITS_MOD(x) ((x)&63)
 #define BITS_DIV(x) ((x)>>6)
+#define BITS_PER_WORD 64
 
 typedef uint64_t cbit;
 typedef uint64_t cbytes_t;
@@ -107,19 +108,24 @@ BITARY_HOST_DEV static inline cbit bitary_get( const cbytes_t* ary, size_t bitid
 
 /** set the first ``nbit`` bits of the bit array ``ary`` to one */
 BITARY_HOST_DEV static inline void bitary_set_all( cbytes_t* ary, size_t nbit ) {
-    for (size_t i=0; i<nbit; ++i) bitary_set( ary, i );
+    const size_t nw = bitary_nwords(nbit);
+    for (size_t w=0; w<nw; ++w) ary[w] = (cbytes_t)(-1ULL);
+    for (size_t i=nbit; i<nw*BITS_PER_WORD; ++i) bitary_unset(ary, i);
 }
 
 /** set the first ``nbit`` bits of the bit array ``ary`` to zero */
 BITARY_HOST_DEV static inline void bitary_unset_all( cbytes_t* ary, size_t nbit ) {
-    for (size_t i=0; i<nbit; ++i) bitary_unset( ary, i );
+    ZERO_OUT(ary, bitary_nwords(nbit));
 }
 
 /** toggle the first ``nbit`` bits of the bit array ``ary`` */
 BITARY_HOST_DEV static inline void bitary_toggle_all( cbytes_t* ary, size_t nbit ) {
-    for (size_t i=0; i<nbit; ++i) bitary_toggle( ary, i );
+    const size_t nw = bitary_nwords(nbit);
+    for (size_t w=0; w<nw; ++w) ary[w] ^= (cbytes_t)(-1ULL);
+    for (size_t i=nbit; i<nw*BITS_PER_WORD; ++i) bitary_unset(ary, i);
 }
 
+/** count the number of nonzero bits in ary, using fast __builtin_popcountll if available */
 BITARY_HOST_DEV static inline size_t bitary_count( cbytes_t* ary, size_t nbit ) {
     const size_t nw = bitary_nwords(nbit);
     size_t cnt = 0;
@@ -127,6 +133,7 @@ BITARY_HOST_DEV static inline size_t bitary_count( cbytes_t* ary, size_t nbit ) 
     return cnt;
 }
 
+/** same as :c:func:`bitary_count` but with omp parallelization ``nthr``-threaded */
 static inline size_t bitary_count_parallel( cbytes_t* ary, size_t nbit, int nthr ) {
     const size_t nw = bitary_nwords(nbit);
     size_t cnt = 0;

@@ -1,4 +1,4 @@
-#define CT_SUITE_NAME bitary
+#define CT_SUITE_NAME bit_arrays
 #include "../ctest.h"
 
 #ifndef DIVERGE_SKIP_TESTS
@@ -9,26 +9,30 @@
 #include <omp.h>
 
 CT_TEST(bitary) {
-    index_t size = 1024*8;
+    size_t size = 1024*8 + 1751*7;
     cbytes_t* bits = bitary_alloc(size);
     int* check = calloc(size, sizeof*check);
 
+    mpi_log_printf("random set…\n");
     mt19937_64_t rng = mt64_init(12345);
     for (index_t i=0; i<1024; ++i) {
         index_t idx = mt64_next(&rng)%size;
         bitary_set(bits, idx);
         check[idx] = 1;
     }
+    mpi_log_printf("random unset…\n");
     for (index_t i=0; i<1024; ++i) {
         index_t idx = mt64_next(&rng)%size;
         bitary_unset(bits, idx);
         check[idx] = 0;
     }
+    mpi_log_printf("random toggle…\n");
     for (index_t i=0; i<1024; ++i) {
         index_t idx = mt64_next(&rng)%size;
         bitary_toggle(bits, idx);
         check[idx] = !check[idx];
     }
+    mpi_log_printf("parallel random set…\n");
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<1024*8; ++i) {
         index_t idx = -1;
@@ -41,12 +45,42 @@ CT_TEST(bitary) {
         check[idx] = 1;
     }
 
-    index_t nset = 0;
-    for (index_t i=0; i<size; ++i) if (bitary_get(bits, i)) nset++;
-    mpi_log_printf( "#bits set = %li/%li\n", nset, size );
+    mpi_log_printf("popcount trivial\n");
+    size_t nset = 0;
+    for (size_t i=0; i<size; ++i) if (bitary_get(bits, i)) nset++;
+    mpi_log_printf("#bits set = %li/%li\n", nset, size);
 
-    for (index_t i=0; i<size; ++i)
+    mpi_log_printf("popcount func\n");
+    size_t nset_cnt = bitary_count(bits, size),
+           nset_cnt_par = bitary_count_parallel(bits, size, diverge_omp_num_threads());
+
+    CT_CHECK( nset == nset_cnt );
+    CT_CHECK( nset == nset_cnt_par );
+
+    mpi_log_printf("element-wise check\n");
+    for (size_t i=0; i<size; ++i)
         CT_CHECK( !!bitary_get(bits, i) == !!check[i] );
+
+    mpi_log_printf("toggle_all\n");
+    bitary_toggle_all(bits, size);
+    nset_cnt = bitary_count(bits, size);
+    nset_cnt_par = bitary_count_parallel(bits, size, diverge_omp_num_threads());
+    CT_CHECK( nset_cnt == nset_cnt_par );
+    CT_CHECK( nset_cnt == size-nset );
+
+    mpi_log_printf("unset_all\n");
+    bitary_unset_all(bits, size);
+    nset = bitary_count(bits, size);
+    CT_CHECK( nset == 0 );
+
+    mpi_log_printf("set_all\n");
+    bitary_set_all(bits, size);
+    nset = bitary_count(bits, size);
+    CT_CHECK( nset == size );
+
+    bitary_toggle_all(bits, size);
+    nset = bitary_count(bits, size);
+    CT_CHECK( nset == 0 );
 
     free(bits);
     free(check);
