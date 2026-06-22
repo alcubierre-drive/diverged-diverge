@@ -30,6 +30,7 @@ typedef uint64_t cbytes_t;
 
 #ifdef __CUDACC__
 #define BITARY_HOST_DEV __host__ __device__
+#undef HAVE_BUILTIN_POPCOUNTLL
 #define HAVE_BUILTIN_POPCOUNTLL 0
 #else
 #define BITARY_HOST_DEV
@@ -38,7 +39,7 @@ typedef uint64_t cbytes_t;
 #if defined(HAVE_BUILTIN_POPCOUNTLL)
     #define DVG_POPCOUNT64(x) __builtin_popcountll(x)
 #else
-    static inline int generic_popcount64(uint64_t x) {
+    BITARY_HOST_DEV static inline int generic_popcount64(uint64_t x) {
         x -= (x >> 1) & 0x5555555555555555ULL;
         x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
         x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
@@ -126,7 +127,7 @@ BITARY_HOST_DEV static inline size_t bitary_count( cbytes_t* ary, size_t nbit ) 
     return cnt;
 }
 
-BITARY_HOST_DEV static inline size_t bitary_count_parallel( cbytes_t* ary, size_t nbit, int nthr ) {
+static inline size_t bitary_count_parallel( cbytes_t* ary, size_t nbit, int nthr ) {
     const size_t nw = bitary_nwords(nbit);
     size_t cnt = 0;
     #pragma omp parallel for num_threads(nthr) reduction(+:cnt)
