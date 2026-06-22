@@ -81,8 +81,14 @@ static uint64_t       bpit_default_seed = 1234;
 void power_iteration_batched_cfg_seed( uint64_t seed ) { bpit_default_seed = seed; }
 
 static inline void fill_random(complex128_t* v, index_t N, mt19937_64_t* rng) {
-    for (index_t i=0; i<N; ++i)
-        v[i] = mt64_next_dbl(rng) * cexp(2.*M_PI*mt64_next_dbl(rng));
+    for (index_t i=0; i<N; ++i) {
+        // Box-Miller
+        double U1 = 0.0; while (U1 <= 0.0) U1 = mt64_next_dbl(rng);
+        double U2 = 0.0; while (U2 <= 0.0) U2 = mt64_next_dbl(rng);
+        double Zx = sqrt(-2.0*log(U1)) * cos(2.*M_PI*U2),
+               Zy = sqrt(-2.0*log(U1)) * sin(2.*M_PI*U2);
+        v[i] = Zx + I*Zy;
+    }
 }
 static inline void normalize_noblas(complex128_t* v, index_t N) {
     double nrm2 = 0.0;
