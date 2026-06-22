@@ -341,16 +341,7 @@ static void tu_prop_gpu_mpi_dist_comm_first_pass( tu_prop_gpu_mpi_dist_t* t, com
 
     // find the touched indices
     // accumulate the number of touched indices
-    {
-        index_t t_n_touched = 0;
-        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:t_n_touched)
-        for (index_t i=0; i<t->L_tot; ++i) {
-            if (bitary_get(t->touched, i)) {
-                t_n_touched++;
-            }
-        }
-        t->n_touched = t_n_touched;
-    }
+    t->n_touched = bitary_count_parallel(t->touched, t->L_tot, diverge_omp_num_threads());
 
     // realloc the array of touched indices. This should be a no-op after first
     // iteration.
