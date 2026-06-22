@@ -124,9 +124,16 @@ CT_TEST_HIDDEN(speed) {
     tock = diverge_mpi_wtime();
     mpi_tim_printf( "bit-sum /pcnpar: %.3fs\n", tock-tick );
 
+    tick = diverge_mpi_wtime();
+    index_t bit_sum_popcnt_g = 0;
+    for (size_t w=0; w<bitary_nwords(size); ++w) bit_sum_popcnt_g += generic_popcount64(bits[w]);
+    tock = diverge_mpi_wtime();
+    mpi_tim_printf( "bit-sum /pcngen: %.3fs\n", tock-tick );
+
     CT_CHECK( bit_sum==bool_sum );
     CT_CHECK( bit_sum==bit_sum_popcount );
     CT_CHECK( bit_sum==bit_sum_popcnt_p );
+    CT_CHECK( bit_sum==bit_sum_popcnt_g );
 
     for (index_t i=0; i<size; ++i) ibits[i] = !ibits[i];
     bitary_toggle_all(bits, size);
