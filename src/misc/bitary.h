@@ -31,7 +31,6 @@ typedef uint64_t cbytes_t;
 #ifdef __CUDACC__
 #define BITARY_HOST_DEV __host__ __device__
 #undef HAVE_BUILTIN_POPCOUNTLL
-#define HAVE_BUILTIN_POPCOUNTLL 0
 #else
 #define BITARY_HOST_DEV
 #endif
@@ -39,14 +38,15 @@ typedef uint64_t cbytes_t;
 #if defined(HAVE_BUILTIN_POPCOUNTLL)
     #define DVG_POPCOUNT64(x) __builtin_popcountll(x)
 #else
-    BITARY_HOST_DEV static inline int generic_popcount64(uint64_t x) {
-        x -= (x >> 1) & 0x5555555555555555ULL;
-        x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
-        x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
-        return (int)((x * 0x0101010101010101ULL) >> 56);
-    }
     #define DVG_POPCOUNT64(x) generic_popcount64(x)
 #endif
+
+BITARY_HOST_DEV static inline int generic_popcount64(uint64_t x) {
+    x -= (x >> 1) & 0x5555555555555555ULL;
+    x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
+    x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
+    return (int)((x * 0x0101010101010101ULL) >> 56);
+}
 
 /** set bit number ``bit`` of byte ``b`` to one */
 BITARY_HOST_DEV static inline void bit_set( cbytes_t* b, cbit bit ) {
