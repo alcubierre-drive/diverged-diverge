@@ -2,7 +2,7 @@
 #ifdef CT_SKIP_INITIALIZERS
 void ct__register__suite__BHK(void);
 void ct__register__suite__HK(void);
-void ct__register__suite__bitary(void);
+void ct__register__suite__bit_arrays(void);
 void ct__register__suite__containers(void);
 void ct__register__suite__greens(void);
 void ct__register__suite__grid_sym(void);
@@ -64,8 +64,8 @@ void ct__register__test__BHK_diverge_flow_bhk_triangular_pxpy_tu_sym(void);
 void ct__register__test__HK_onedim_twoorb_TU(void);
 void ct__register__test__HK_onedim_twoorb_grid(void);
 void ct__register__test__HK_onedim_twoorb_mom(void);
-void ct__register__test__bitary_bitary(void);
-void ct__register__test__bitary_speed(void);
+void ct__register__test__bit_arrays_bitary(void);
+void ct__register__test__bit_arrays_speed(void);
 void ct__register__test__containers_dict_vtree_hashtable(void);
 void ct__register__test__containers_dv_vector_automatic_growth(void);
 void ct__register__test__containers_dv_vector_init_and_basic_properties(void);
@@ -164,7 +164,7 @@ void ct__register__all(void) {
 #ifdef CT_SKIP_INITIALIZERS
 ct__register__suite__BHK();
 ct__register__suite__HK();
-ct__register__suite__bitary();
+ct__register__suite__bit_arrays();
 ct__register__suite__containers();
 ct__register__suite__greens();
 ct__register__suite__grid_sym();
@@ -226,8 +226,8 @@ ct__register__test__BHK_diverge_flow_bhk_triangular_pxpy_tu_sym();
 ct__register__test__HK_onedim_twoorb_TU();
 ct__register__test__HK_onedim_twoorb_grid();
 ct__register__test__HK_onedim_twoorb_mom();
-ct__register__test__bitary_bitary();
-ct__register__test__bitary_speed();
+ct__register__test__bit_arrays_bitary();
+ct__register__test__bit_arrays_speed();
 ct__register__test__containers_dict_vtree_hashtable();
 ct__register__test__containers_dv_vector_automatic_growth();
 ct__register__test__containers_dv_vector_init_and_basic_properties();
