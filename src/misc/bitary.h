@@ -20,10 +20,31 @@
 typedef uint64_t cbit;
 typedef uint64_t cbytes_t;
 
+#if defined(__has_builtin)
+    #if __has_builtin(__builtin_popcountll)
+        #define HAVE_BUILTIN_POPCOUNTLL 1
+    #endif
+#elif defined(__GNUC__) && ((__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
+    #define HAVE_BUILTIN_POPCOUNTLL 1
+#endif
+
 #ifdef __CUDACC__
 #define BITARY_HOST_DEV __host__ __device__
+#define HAVE_BUILTIN_POPCOUNTLL 0
 #else
 #define BITARY_HOST_DEV
+#endif
+
+#if defined(HAVE_BUILTIN_POPCOUNTLL)
+    #define DVG_POPCOUNT64(x) __builtin_popcountll(x)
+#else
+    static inline int generic_popcount64(uint64_t x) {
+        x -= (x >> 1) & 0x5555555555555555ULL;
+        x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
+        x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
+        return (int)((x * 0x0101010101010101ULL) >> 56);
+    }
+    #define DVG_POPCOUNT64(x) generic_popcount64(x)
 #endif
 
 /** set bit number ``bit`` of byte ``b`` to one */
@@ -96,4 +117,19 @@ BITARY_HOST_DEV static inline void bitary_unset_all( cbytes_t* ary, size_t nbit 
 /** toggle the first ``nbit`` bits of the bit array ``ary`` */
 BITARY_HOST_DEV static inline void bitary_toggle_all( cbytes_t* ary, size_t nbit ) {
     for (size_t i=0; i<nbit; ++i) bitary_toggle( ary, i );
+}
+
+BITARY_HOST_DEV static inline size_t bitary_count( cbytes_t* ary, size_t nbit ) {
+    const size_t nw = bitary_nwords(nbit);
+    size_t cnt = 0;
+    for (size_t w=0; w<nw; ++w) cnt += DVG_POPCOUNT64(ary[w]);
+    return cnt;
+}
+
+BITARY_HOST_DEV static inline size_t bitary_count_parallel( cbytes_t* ary, size_t nbit, int nthr ) {
+    const size_t nw = bitary_nwords(nbit);
+    size_t cnt = 0;
+    #pragma omp parallel for num_threads(nthr) reduction(+:cnt)
+    for (size_t w=0; w<nw; ++w) cnt += DVG_POPCOUNT64(ary[w]);
+    return cnt;
 }
