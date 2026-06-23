@@ -91,28 +91,34 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
                 TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
                             s->internal_vertex->bubble_helper ) );
                 if (s->channel_selection[2] && s->channel_selection[1]) {
+                    // C projection in Dch, memory efficiency
                     if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch,  1.0 );
                     TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->Dch, v, s->proj) );
                     if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
 
+                    // C diagram saved into Cch array
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
                                 s->internal_vertex->Dch, s->internal_vertex->ph_bubble_int,
                                 v->product_helper, s->prodsize,s->my_nk,s->norm[1],
                                 true, s->internal_vertex->GPU_gemm_buffer) );
 
+                    // D projection in projection_helper
                     if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, 0.0, v->Dch,  1.0 );
                     TICK_TOCK( s->w_time_projection, D_projection(v->projection_helper, v, s->proj) );
                     if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, 0.0, v->Dch, -1.0 );
 
+                    // complete the square with the C projected vertex (which resides in Dch array!)
                     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
                     for (index_t ii=0; ii<v->full_vert_size; ++ii)
                         s->internal_vertex->projection_helper[ii] -= 0.5*s->internal_vertex->Dch[ii];
 
+                    // calcualte the D diagrams and save into Dch array
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Dch,
                                 s->internal_vertex->projection_helper,
                                 s->internal_vertex->ph_bubble_int,v->product_helper,
                                 s->prodsize,s->my_nk,s->norm[2], true, s->internal_vertex->GPU_gemm_buffer) );
 
+                    // and finally complete the completed sqare by adding 1/2 the C diagram
                     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
                     for (index_t ii=0; ii<v->full_vert_size; ++ii)
                         s->internal_vertex->Dch[ii] += 0.5*s->internal_vertex->Cch[ii];
