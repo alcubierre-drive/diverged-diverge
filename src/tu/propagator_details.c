@@ -62,6 +62,7 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
     const index_t* vnkf = t->model->nkf;
     int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]), (int)(vnk[2]*vnkf[2])};
 
+    mpi_vrb_printf( "TU_prop CPU init greens…\n" );
     switch (greens) {
         case tu_fft_algorithm_mpi_new:
             if (!t->mpi_gf)
@@ -83,6 +84,7 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
             break;
     }
 
+    mpi_vrb_printf( "TU_prop CPU init loop…\n" );
     tu_fft_algorithm_t simple_red_algos[] = {simple, red};
     for (int i=0; i<2; ++i) switch (simple_red_algos[i]) {
         case tu_fft_algorithm_mpi_new:
@@ -154,6 +156,7 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
             #endif
             break;
     }
+    mpi_vrb_printf( "TU_prop CPU init done\n" );
 }
 
 void cpu_fft_algorithm_cleanup( tu_prop_t* t ) {
