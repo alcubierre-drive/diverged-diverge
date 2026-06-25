@@ -18,7 +18,7 @@ void diverge_model_unique_distances_set_precision( double prec ) {
         unique_distance_equal = prec;
         unique_distance_relative = 0;
     } else {
-        unique_distance_equal = prec;
+        unique_distance_equal = -prec;
         unique_distance_relative = 1;
     }
 }
