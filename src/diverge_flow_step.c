@@ -412,7 +412,8 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                 chan != 'm' && chan != 'h' &&
                 toupper(chan) != 'X' &&
                 toupper(chan) != 'L' &&
-                toupper(chan) != 'K') {
+                toupper(chan) != 'K' &&
+                chan != '0' && chan != '1' && chan != '2') {
                 mpi_wrn_printf("for TUFRG vertex chan must be one of 'PCDSpcdsmh'. default: 'D'.\n");
                 result.channel = chan = 'D';
             }
@@ -436,10 +437,14 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
             }
 
             if (toupper(chan) != 'S') {
-                if (isupper(chan)) {
+                if (isupper(chan) || chan == '0' || chan == '1' || chan == '2') {
                     result.ary = (chan == 'P') ? tu_V->Pch :
                                  (chan == 'C') ? tu_V->Cch :
-                                /*chan == 'D'*/  tu_V->Dch;
+                                 (chan == 'D') ? tu_V->Dch :
+                                 (chan == '0') ? tu_stepper_internal_vertex(st->tu_step)->Pch :
+                                 (chan == '1') ? tu_stepper_internal_vertex(st->tu_step)->Cch :
+                                 (chan == '2') ? tu_stepper_internal_vertex(st->tu_step)->Dch :
+                                                 NULL;
                 } else if (chan != 'm' && chan != 'h') {
                     result.ary = tu_V->projection_helper;
                     if (chan == 'p') P_projection(tu_V->projection_helper, tu_V, tu_Proj);
@@ -454,7 +459,8 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                         complex128_t* helper = calloc(tu_V->full_vert_size, sizeof*helper);
                         D_projection(helper, tu_V, tu_Proj);
                         const double factor = tu_V->C_flow ? 2.0 : 1.0;
-                        for (index_t i=0; i<tu_V->full_vert_size; ++i) tu_V->projection_helper[i] += factor*helper[i];
+                        for (index_t i=0; i<tu_V->full_vert_size; ++i)
+                            tu_V->projection_helper[i] += factor*helper[i];
                         free( helper );
                     }
                 }

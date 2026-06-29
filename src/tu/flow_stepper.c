@@ -1,6 +1,7 @@
 /* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "flow_stepper.h"
+#include "flow_stepper_details.h"
 
 #include "vertex.h"
 #include "vertex_details.h"
@@ -13,26 +14,6 @@
 #include "selfenergy.h"
 #include "phonons.h"
 #include "../grid/helpers.h" // TICK_TOCK macro
-
-struct tu_stepper_t {
-    double w_time_GF, w_time_full, w_time_loop, w_time_product,
-           w_time_projection, w_time_add_find_max, w_time_self;
-
-    tu_selfenergy_t* self;
-    tu_vertex_t* internal_vertex;
-    tu_prop_t* loop;
-    tu_projection_t* proj;
-    bool channel_selection[4];
-    double norm[3];
-    index_t prodsize;
-    index_t nk;
-    index_t my_nk;
-    index_t num_calls;
-    complex128_t* coarseGF;
-    bool tu_selfenergy_flow;
-
-    diverge_timing_t timings[64];
-};
 
 tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex_t* vert ) {
     tu_stepper_t* s = calloc(1, sizeof*s);
@@ -55,6 +36,7 @@ tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex
         s->norm[2] =  1.0;
     }
     s->internal_vertex = tu_vertex_copy(vert);
+    s->loop_func = NULL;
 
     if (s->channel_selection[3]) {
         s->coarseGF = calloc(s->nk*POW2(vert->n_orb*vert->n_spin),sizeof(complex128_t));
@@ -80,7 +62,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
     if (s->channel_selection[3]) {
         tu_prop_GF_zero_T(s->loop, lambda*I, v->self_en);
         tu_prop_GF_for_self(s->loop, s->coarseGF);
-    } else {
+    } else if (s->loop_func == NULL) {
         tu_prop_GF_zero_T(s->loop, lambda*I, NULL);
     }
 
@@ -88,8 +70,13 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
     if (!s->tu_selfenergy_flow) {
         if (v->SU2) {
             if (s->channel_selection[1] || s->channel_selection[2]) {
-                TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
-                            s->internal_vertex->bubble_helper ) );
+                if (s->loop_func == NULL) {
+                    TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
+                               s->internal_vertex->bubble_helper ) );
+                } else {
+                    TICK_TOCK( s->w_time_loop, (*s->loop_func)('H', s->internal_vertex->ph_bubble_int,
+                               s->loop_func_ctx) );
+                }
                 if (s->channel_selection[2] && s->channel_selection[1]) {
                     // C projection in Dch, memory efficiency
                     if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch,  1.0 );
@@ -155,9 +142,15 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
                 if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph,    0.0, v->Cch,  1.0 );
             }
 
-            if (s->channel_selection[1] || s->channel_selection[2])
-                TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
-                            s->internal_vertex->bubble_helper ) );
+            if (s->channel_selection[1] || s->channel_selection[2]) {
+                if (s->loop_func == NULL) {
+                    TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
+                               s->internal_vertex->bubble_helper ) );
+                } else {
+                    TICK_TOCK( s->w_time_loop, (*s->loop_func)('H', s->internal_vertex->ph_bubble_int,
+                               s->loop_func_ctx) );
+                }
+            }
 
             if (s->channel_selection[1])
                 TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
@@ -187,8 +180,13 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
             if (v->elph && v->ph_to_P)            tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
             if (v->elph && v->ph_to_P && !v->SU2) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Cch,  1.0 );
 
-            TICK_TOCK( s->w_time_loop, tu_prop_pp_loop( s->loop, s->internal_vertex->pp_bubble_int,
-                        s->internal_vertex->bubble_helper ) );
+            if (s->loop_func == NULL) {
+                TICK_TOCK( s->w_time_loop, tu_prop_pp_loop( s->loop, s->internal_vertex->pp_bubble_int,
+                           s->internal_vertex->bubble_helper ) );
+            } else {
+                TICK_TOCK( s->w_time_loop, (*s->loop_func)('P', s->internal_vertex->pp_bubble_int,
+                           s->loop_func_ctx) );
+            }
 
             TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Pch,
                         v->projection_helper, s->internal_vertex->pp_bubble_int,v->product_helper,
