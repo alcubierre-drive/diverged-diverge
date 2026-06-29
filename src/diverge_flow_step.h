@@ -224,7 +224,8 @@ typedef struct {
  *          symmetry-reduced vertex to the full BZ on all ranks. This goes along
  *          with a reordering of indices from (q,f,g) to (f,g,q). Be aware. The
  *          channels map as ``chan-8``.
- *        .. note :: (> v0.10)
+ *
+ *         .. note :: (> v0.10)
  *          to obtain differential vertices in the three channels, pass '0' (P),
  *          '1' (C), '2' (D)
  *
