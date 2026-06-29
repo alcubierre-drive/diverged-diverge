@@ -1,6 +1,7 @@
 /* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "flow_stepper.h"
+#include "flow_stepper_details.h"
 
 #include "vertex.h"
 #include "vertex_details.h"
@@ -12,26 +13,6 @@
 #include "diverge_interface.h"
 #include "selfenergy.h"
 #include "../grid/helpers.h" // TICK_TOCK macro
-
-struct tu_stepper_t {
-    double w_time_GF, w_time_full, w_time_loop, w_time_product,
-           w_time_projection, w_time_add_find_max, w_time_self;
-
-    tu_selfenergy_t* self;
-    tu_vertex_t* internal_vertex;
-    tu_prop_t* loop;
-    tu_projection_t* proj;
-    bool channel_selection[4];
-    double norm[3];
-    index_t prodsize;
-    index_t nk;
-    index_t my_nk;
-    index_t num_calls;
-    complex128_t* coarseGF;
-    bool tu_selfenergy_flow;
-
-    diverge_timing_t timings[64];
-};
 
 tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex_t* vert ) {
     tu_stepper_t* s = calloc(1, sizeof*s);
@@ -54,6 +35,7 @@ tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex
         s->norm[2] =  1.0;
     }
     s->internal_vertex = tu_vertex_copy(vert);
+    s->loop_func = NULL;
 
     if (s->channel_selection[3]) {
         s->coarseGF = calloc(s->nk*POW2(vert->n_orb*vert->n_spin),sizeof(complex128_t));
@@ -79,15 +61,20 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
     if (s->channel_selection[3]) {
         tu_prop_GF_zero_T(s->loop, lambda*I, inout->self_en);
         tu_prop_GF_for_self(s->loop, s->coarseGF);
-    } else {
+    } else if (s->loop_func == NULL) {
         tu_prop_GF_zero_T(s->loop, lambda*I, NULL);
     }
     s->w_time_GF += diverge_mpi_wtime()-flow_step_tick;
     if (!s->tu_selfenergy_flow) {
         if (inout->SU2) {
             if (s->channel_selection[1] || s->channel_selection[2]) {
-                TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
-                            s->internal_vertex->bubble_helper ) );
+                if (s->loop_func == NULL) {
+                    TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
+                               s->internal_vertex->bubble_helper ) );
+                } else {
+                    TICK_TOCK( s->w_time_loop, (*s->loop_func)('H', s->internal_vertex->ph_bubble_int,
+                               s->loop_func_ctx) );
+                }
                 if (s->channel_selection[2] && s->channel_selection[1]) {
                     TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->Dch, inout, s->proj) );
 
@@ -134,9 +121,15 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                 TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->projection_helper,
                             inout, s->proj) );
 
-            if (s->channel_selection[1] || s->channel_selection[2])
-                TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
-                            s->internal_vertex->bubble_helper ) );
+            if (s->channel_selection[1] || s->channel_selection[2]) {
+                if (s->loop_func == NULL) {
+                    TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
+                               s->internal_vertex->bubble_helper ) );
+                } else {
+                    TICK_TOCK( s->w_time_loop, (*s->loop_func)('H', s->internal_vertex->ph_bubble_int,
+                               s->loop_func_ctx) );
+                }
+            }
 
             if (s->channel_selection[1])
                 TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
@@ -157,8 +150,13 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
         if (s->channel_selection[0]) {
             TICK_TOCK( s->w_time_projection, P_projection(inout->projection_helper, inout, s->proj) );
 
-            TICK_TOCK( s->w_time_loop, tu_prop_pp_loop( s->loop, s->internal_vertex->pp_bubble_int,
-                        s->internal_vertex->bubble_helper ) );
+            if (s->loop_func == NULL) {
+                TICK_TOCK( s->w_time_loop, tu_prop_pp_loop( s->loop, s->internal_vertex->pp_bubble_int,
+                           s->internal_vertex->bubble_helper ) );
+            } else {
+                TICK_TOCK( s->w_time_loop, (*s->loop_func)('P', s->internal_vertex->pp_bubble_int,
+                           s->loop_func_ctx) );
+            }
 
             TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Pch,
                         inout->projection_helper, s->internal_vertex->pp_bubble_int,inout->product_helper,

@@ -212,6 +212,10 @@ typedef struct {
  *          symmetry-reduced vertex to the full BZ on all ranks. This goes along
  *          with a reordering of indices from (q,f,g) to (f,g,q). Be aware. The
  *          channels map as ``chan-8``.
+ *        .. note :: (> v0.10)
+ *          to obtain differential vertices in the three channels, pass '0' (P),
+ *          '1' (C), '2' (D)
+ *
  * :grid FRG: chan can be 'P', 'C', 'D', or 'V', both upper and lower case. In
  *            general, lower case references the differential vertex and upper
  *            case the full vertex. The three channels are returned in

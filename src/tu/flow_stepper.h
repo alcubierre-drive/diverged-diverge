@@ -24,7 +24,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
 diverge_timing_t* tu_stepper_timings( tu_stepper_t* s, int* num );
 index_t tu_stepper_num_calls( const tu_stepper_t* s );
 
-// only neede for postproc
+// only needed for postproc
 tu_vertex_t* tu_stepper_internal_vertex( tu_stepper_t* s );
 
 #ifdef __cplusplus
