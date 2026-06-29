@@ -489,10 +489,30 @@ static inline int ct_run( char** filters ) {
     return !(successes == ct_nsuites_nz);
 }
 
+static inline int ct_print_help( char** argv ) {
+    CT_PRINTF(
+"Usage: %s [OPTIONS]\n"
+"  OPTIONS include:\n"
+"    -h          print this help\n"
+"    -l [FILTER] list tests (with FILTERs)\n"
+"    [FILTER]    run tests (with FILTERs)\n"
+"  Filtering works as follows: Each test (with one or more names) belongs to a\n"
+"  suite. Filters are applied to both suite and test names. The default for a\n"
+"  set of filters is to match any of them (i.e., OR). Each filter can be prefixed\n"
+"  with a control character, which changes the filtering logic:\n"
+"    &FILTER     every test has to match this filter (AND)\n"
+"    +FILTER     alias for &FILTER (AND)\n"
+"    !FILTER     no test must match this filter (NOT)\n"
+"    ~FILTER     alias for !FILTER (NOT)\n"
+    , argv[0] );
+    return 0;
+}
+
 static inline int ct_list_or_run( int argc, char** argv ) {
     argv[argc] = NULL;
     if (argc <= 1) return ct_run(argv+argc);
 
-    if (!strcmp(argv[1],"-l")) return ct_list(argv+2);
-    else                       return ct_run(argv+1);
+    if (!strcmp(argv[1],"-l"))      return ct_list(argv+2);
+    else if (!strcmp(argv[1],"-h")) return ct_print_help(argv);
+    else                            return ct_run(argv+1);
 }
