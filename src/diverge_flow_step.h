@@ -159,10 +159,10 @@ double diverge_flow_step_lambda( diverge_flow_step_t* st );
 double diverge_flow_step_dlambda( diverge_flow_step_t* st );
 
 /**
- * perform rpa for the q=0 SC channel (only possible without refinement) with
- * TUFRG vertex; only use the k indices given in this function; useful to
- * constrain mesh to roughly the Fermi surface and get faster eigensolution and
- * reasonable memory footprint in postprocessing.
+ * perform rpa for the q=0 SC channel with TUFRG vertex; only use the k indices
+ * given in this function (wrt coarse mesh!); useful to constrain mesh to
+ * roughly the Fermi surface and get faster eigensolution and reasonable memory
+ * footprint in postprocessing.
  */
 void diverge_flow_step_attach_rpa( diverge_flow_step_t* s, index_t* kidx,
         index_t n_kidx );

@@ -51,10 +51,6 @@ tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_ki
         return NULL;
     }
     diverge_model_t* m = s->mod;
-    if (kdim(m->nkf) != 1) {
-        mpi_err_printf( "tu-rpa only possible with nkf=1\n" );
-        return NULL;
-    }
     tu_rpa_t* t = calloc(1, sizeof*t);
     t->s = s;
     t->m = m;
@@ -82,14 +78,16 @@ void tu_rpa_step( tu_rpa_t* t, double Lambda, double dLambda ) {
     complex128_t cLambda = I*Lambda;
     gf_complex_t* gbuf = m->internals->greens;
     (*m->gfill)(m, cLambda*t->chi_pp_Lambda_factor, gbuf);
-    const index_t NK = kdim(m->nk);
+    const index_t NK = kdimtot(m->nk, m->nkf);
     const double prefac = dLambda/(2.*M_PI);
 
     const index_t nso = m->n_orb*m->n_spin;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t ik=0; ik<t->n_kidx; ++ik) {
-        index_t kk = t->kidx[ik];
-        index_t mk = k1m2(0,kk,m->nk);
+        index_t kk_ = t->kidx[ik];
+        index_t mk_ = k1m2(0,kk_,m->nk);
+        index_t kk = kidxc2f(kk_, m->nk, m->nkf),
+                mk = kidxc2f(mk_, m->nk, m->nkf);
         for (index_t so1=0; so1<nso; ++so1)
         for (index_t so2=0; so2<nso; ++so2)
         for (index_t so3=0; so3<nso; ++so3)
