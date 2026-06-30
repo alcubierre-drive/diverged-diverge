@@ -381,6 +381,9 @@ void lingap_ff( tu_postproduction_t* p ) {
     p->tu_n_singular_valuesP = (p->vertex->P_flow) ? p->c.tu_n_singular_values : 0;
     p->tu_n_singular_valuesC = (p->vertex->C_flow) ? p->c.tu_n_singular_values : 0;
     p->tu_n_singular_valuesD = (p->vertex->D_flow) ? p->c.tu_n_singular_values : 0;
+    p->tu_n_singular_valuesP = MIN(p->tu_n_singular_valuesP, linsize);
+    p->tu_n_singular_valuesC = MIN(p->tu_n_singular_valuesC, linsize);
+    p->tu_n_singular_valuesD = MIN(p->tu_n_singular_valuesD, linsize);
     if (diverge_mpi_comm_rank()==0) {
         p->Sgap_sc = malloc(p->tu_n_singular_valuesP*sizeof(double));
         p->Sgap_mag = malloc(p->tu_n_singular_valuesC*sizeof(double));
