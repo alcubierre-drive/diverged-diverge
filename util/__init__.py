@@ -1337,7 +1337,7 @@ if not _libs["divERGe"] is None:
         ('tu_susceptibilities_full', c_bool),
         ('tu_susceptibilities_ff', c_bool),
         ('tu_selfenergy', c_int),
-        ('tu_channels', c_bool),
+        ('tu_channels', c_int),
         ('tu_symmetry_maps', c_bool),
         ('tu_n_decomp_values', index_t),
         ('tu_lingap_atscale', c_bool),

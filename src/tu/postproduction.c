@@ -852,7 +852,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
     header[i] = size_self,++i;
     header[i] = header[i-2] + header[i-1]*(hop_self ? sizeof(rs_hopping_t) : sizeof(complex128_t)), ++i;
-    if (p->c.save_full && !tu_data->tu_selfenergy_flow) {
+    if (p->c.save_full && !tu_data->tu_selfenergy_flow) { // TODO why self?
         header[i] = p->vertex->P_flow ? POW2(linsize)*p->vertex->nk: 0,++i;
         header[i] = header[i-2] + header[i-1]*sizeof(complex128_t), ++i;
         header[i] = p->vertex->C_flow ? POW2(linsize)*p->vertex->nk: 0,++i;
@@ -1057,19 +1057,34 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         diverge_mpi_write_byte_to_file_master(file, hop_self, sizeof(rs_hopping_t)*size_self);
         free(hop_self);
     }
-    if (p->c.save_full && !tu_data->tu_selfenergy_flow) {
+    if (p->c.save_full && !tu_data->tu_selfenergy_flow) { // TODO why not saved with selfenergies?
         index_t vsize = POW2(linsize)*p->vertex->nk*sizeof(complex128_t);
         complex128_t* helper = (complex128_t*)malloc(vsize);
-        if(p->vertex->P_flow) {
-            diverge_tu_vertex_reco(p->vertex, 'P', helper, NULL);
+        if (p->vertex->P_flow) {
+            if (p->c.save_full < 0) {
+                P_projection(p->vertex->projection_helper, p->vertex, p->proj);
+                diverge_tu_vertex_reco(p->vertex, 'P', helper, p->vertex->projection_helper);
+            } else {
+                diverge_tu_vertex_reco(p->vertex, 'P', helper, NULL);
+            }
             diverge_mpi_write_byte_to_file_master(file, helper, vsize);
         }
-        if(p->vertex->C_flow) {
-            diverge_tu_vertex_reco(p->vertex, 'C', helper, NULL);
+        if (p->vertex->C_flow) {
+            if (p->c.save_full < 0) {
+                C_projection(p->vertex->projection_helper, p->vertex, p->proj);
+                diverge_tu_vertex_reco(p->vertex, 'C', helper, p->vertex->projection_helper);
+            } else {
+                diverge_tu_vertex_reco(p->vertex, 'C', helper, NULL);
+            }
             diverge_mpi_write_byte_to_file_master(file, helper, vsize);
         }
-        if(p->vertex->D_flow) {
-            diverge_tu_vertex_reco(p->vertex, 'D', helper, NULL);
+        if (p->vertex->D_flow) {
+            if (p->c.save_full < 0) {
+                D_projection(p->vertex->projection_helper, p->vertex, p->proj);
+                diverge_tu_vertex_reco(p->vertex, 'D', helper, p->vertex->projection_helper);
+            } else {
+                diverge_tu_vertex_reco(p->vertex, 'D', helper, NULL);
+            }
             diverge_mpi_write_byte_to_file_master(file, helper, vsize);
         }
         if(p->vertex->P_flow) {

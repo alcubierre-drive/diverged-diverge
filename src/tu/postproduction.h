@@ -34,7 +34,7 @@ typedef struct {
     bool susc_full;
     bool lingap_atscale;
     int save_self;
-    bool save_full;
+    int save_full;
     bool save_symmetries;
 
     char rpa_chans[8];
@@ -63,7 +63,7 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .susc_full = false,
     .lingap_atscale = false,
     .save_self = 0,
-    .save_full = false,
+    .save_full = 0,
     .save_symmetries = false,
     .rpa_chans = "CD",
     .rpa_nev = 10,
