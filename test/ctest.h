@@ -257,15 +257,27 @@ static inline int ct_matches_filters( char** filters, ct_suite_t* s, int i ) {
         int len = strlen(filt);
         int is_neg = (len > 1) && (*f[0] == '~' || *f[0] == '!'),
             is_and = (len > 1) && (*f[0] == '&' || *f[0] == '+');
-        if (is_neg || is_and) filt++;
+        if (is_neg || is_and) {
+            filt++;
+            len--;
+        }
+        int is_suite = (len > 2) && !strncmp(filt, "S=", 2),
+            is_case = (len > 2) && !strncmp(filt, "C=", 2);
+        if (is_suite || is_case) {
+            filt += 2;
+            len -= 2;
+        }
 
-        // case keywords
         ct_strsit_iter_ctx_t ctx = { 0, 0, filt };
-        ct_strsit( s->tests[i].name, CT_NAME_DELIM, ct_strsit_iter, (void*)&ctx );
 
-        // suite name
-        ctx.nkeywords++;
-        if (!strcmp(s->name, filt)) ctx.nmatches++;
+        if (!is_suite) // we're not just filtering suites
+            ct_strsit( s->tests[i].name, CT_NAME_DELIM, ct_strsit_iter, (void*)&ctx );
+
+        if (!is_case) { // we're not just filtering cases
+            // suite name
+            ctx.nkeywords++;
+            if (!strcmp(s->name, filt)) ctx.nmatches++;
+        }
 
         ct_filter_eval_t fev_cur = { ctx.nkeywords, ctx.nmatches, is_neg, is_and };
         fev[nfilters++] = fev_cur;
@@ -499,11 +511,16 @@ static inline int ct_print_help( char** argv ) {
 "  Filtering works as follows: Each test (with one or more names) belongs to a\n"
 "  suite. Filters are applied to both suite and test names. The default for a\n"
 "  set of filters is to match any of them (i.e., OR). Each filter can be prefixed\n"
-"  with a control character, which changes the filtering logic:\n"
+"  with control characters that change the filtering logic:\n"
 "    &FILTER     every test has to match this filter (AND)\n"
 "    +FILTER     alias for &FILTER (AND)\n"
 "    !FILTER     no test must match this filter (NOT)\n"
 "    ~FILTER     alias for !FILTER (NOT)\n"
+"    C=FILTER    apply FILTER only to cases\n"
+"    S=FILTER    apply FILTER only to suites\n"
+"  Note that `C=FILTER` and `S=FILTER` can be combined with the other control\n"
+"  characters, i.e., you can, e.g., pass `+C=FILTER1 +S=FILTER2` to filter for\n"
+"  cases `FILTER1` AND suites `FILTER2`.\n"
     , argv[0] );
     return 0;
 }
