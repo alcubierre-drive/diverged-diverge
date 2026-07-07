@@ -629,11 +629,11 @@ static inline void apply_permutation( claV2ll_t* vec, const index_t* p, index_t 
     free( new_vec );
 }
 
-#ifdef DIVERGE_TU_FAST_PERMUTE
-static void (*permutation_func)( claV2ll_t*, const index_t*, index_t ) = &apply_permutation;
-#else // DIVERGE_TU_FAST_PERMUTE
+#ifdef DIVERGE_TU_INPLACE_PERMUTE
 static void (*permutation_func)( claV2ll_t*, const index_t*, index_t ) = &apply_permutation_in_place;
-#endif // DIVERGE_TU_FAST_PERMUTE
+#else // DIVERGE_TU_INPLACE_PERMUTE
+static void (*permutation_func)( claV2ll_t*, const index_t*, index_t ) = &apply_permutation;
+#endif // DIVERGE_TU_INPLACE_PERMUTE
 
 void tu_projection_set_permutation_algorithm( int fast ) {
     permutation_func = fast ? &apply_permutation : &apply_permutation_in_place;
