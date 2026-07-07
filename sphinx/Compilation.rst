@@ -348,7 +348,8 @@ written (i.e., the variable can be either *defined* or *not*), or
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_QNAN_DISABLE_CLANG_OPTS``               | disable compiler optimizations for :ref:`IEEE 754 Quiet NaN`, may be needed for ``CC := clang``   |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
-|``DIVERGE_TU_FAST_PERMUTE``                       | enable fast permutation algorithm (out-of-place) for TU projection initialization by default      |
+|``DIVERGE_TU_INPLACE_PERMUTE``                    | enable in-place permutation algorithm for TU projection initialization by default (slower,        |
+|                                                  | deprecated)                                                                                       |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_TU_GF_COARSIFY_FFT``                    | set the coarsification of the Green's function to happen via FFTs (in the selfenergy kernel).     |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
