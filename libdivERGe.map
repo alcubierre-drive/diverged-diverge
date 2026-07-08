@@ -55,6 +55,7 @@ DIVERGE_0.10 {
         diverge_generate_symm_maps_set_precision_global;
         diverge_generate_symm_trafo;
         diverge_greensfunc_generator_default;
+        diverge_hack;
         diverge_hamilton_generator_add;
         diverge_hamilton_generator_default;
         diverge_hamilton_generator_set_fftw_options;
@@ -167,6 +168,7 @@ DIVERGE_0.10 {
         diverge_postprocess_and_write_finegrained;
         diverge_postprocess_conf_defaults_CPP;
         diverge_postprocess_conf_tu_storing_threshold_qrelative;
+        diverge_print_hacks;
         diverge_qgt;
         diverge_qgt_tensor;
         diverge_read_W90;

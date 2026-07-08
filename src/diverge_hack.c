@@ -42,10 +42,13 @@ static int hacking_keys_setup = 0;
     if (!strcmp(key,ckey)) key_set = true; \
     if (!strcmp(key,ckey))
 
+void diverge_hack( void* object, const char* key, const char* val ) { diverge_model_hack( object, key, val ); }
+
 void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val ) {
 
     #define INTERNALS (m->internals)
     #define TU_INTERNALS ((tu_data_t*)m->internals->tu_data)
+    #define STEP ((diverge_flow_step_t*)m)
 
     char key[48] = {0};
     if (key_)
@@ -94,6 +97,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("tu_channelize") {
         TU_INTERNALS->tu_channelize = val[0];
+    }
+    CHECKKEY("tu_rpa_chi_pp_Lambda_factor") {
+        STEP->tu_rpa->chi_pp_Lambda_factor = atof(val);
     }
     CHECKKEY("npatch_gpu_workshare") {
         INTERNALS->patch_gpu_workshare = atof(val);
@@ -222,6 +228,8 @@ void diverge_model_print_hacks( void ) {
     for (int i=0; i<-hacking_keys_setup; ++i)
         mpi_scc_printf( "'%s'\n", hacking_keys[i] );
 }
+
+void diverge_print_hacks( void ) { diverge_model_print_hacks(); }
 
 static int parse_vector_int( int* out_i, int n_out, const char* s ) {
     const char* separator = ",;| ";
