@@ -18,8 +18,14 @@ typedef struct diverge_model_t diverge_model_t;
  */
 void diverge_model_hack( diverge_model_t* m, const char* key, const char* val );
 
+/** same as :c:func:`diverge_model_hack` but without restriction to model pointer */
+void diverge_hack( void* object, const char* key, const char* val );
+
 /** print which keys are available */
 void diverge_model_print_hacks( void );
+
+/** alias for :c:func:`diverge_model_print_hacks` */
+void diverge_print_hacks( void );
 
 #ifdef __cplusplus
 }

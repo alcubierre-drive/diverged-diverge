@@ -1624,10 +1624,16 @@ if not _libs["divERGe"] is None:
     model_hack = _libs["divERGe"].get("diverge_model_hack", "cdecl")
     model_hack.argtypes = [POINTER(model_t), String, String]
     model_hack.restype = None
-
     model_print_hacks = _libs["divERGe"].get("diverge_model_print_hacks", "cdecl")
     model_print_hacks.argtypes = None
     model_print_hacks.restype = None
+
+    hack = _libs["divERGe"].get("diverge_hack", "cdecl")
+    hack.argtypes = [c_voidp, String, String]
+    hack.restype = None
+    print_hacks = _libs["divERGe"].get("diverge_print_hacks", "cdecl")
+    print_hacks.argtypes = None
+    print_hacks.restype = None
 
     # shared memory...
     shared_malloc = _libs['divERGe'].get('shared_malloc', 'cdecl')
