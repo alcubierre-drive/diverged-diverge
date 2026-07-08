@@ -98,7 +98,7 @@ int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_outpu
     const char* version = tag_version();
     // need to find minimal string size in 64bit units... should change in
     // future version :)
-    index_t version_sz = ceil( (double)strlen(version)/(double)(sizeof(double)) );
+    index_t version_sz = ceil( (double)(strlen(version)+1)/(double)(sizeof(double)) );
     void* version_mem = calloc( version_sz, sizeof(double) );
     memcpy( version_mem, version, strlen(version) );
     header[125] = header[i-1] + header[i-2];

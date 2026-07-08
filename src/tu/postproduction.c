@@ -904,7 +904,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         header[i] = 0;++i;
     }
     header[i] = header[i-2] + header[i-1]*sizeof(complex128_t); ++i;
-    header[i] = strlen(version); ++i;
+    header[i] = strlen(version)+1; ++i;
 
     header[i] = header[i-2] + header[i-1]*sizeof(char); ++i;
     if (p->c.save_symmetries && symm->use_symmetries)
@@ -1108,7 +1108,7 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
         diverge_mpi_write_byte_to_file_master(file, p->mi_map_pref_in_out, scdou*p->mi_map_pref_in_out_sz);
     }
 
-    diverge_mpi_write_byte_to_file_master(file, version, strlen(version));
+    diverge_mpi_write_byte_to_file_master(file, version, strlen(version)+1);
 
     if (p->c.save_symmetries && symm->use_symmetries) {
         diverge_mpi_write_byte_to_file_master(file, symm->kmaps_to, symm->nk * sindex);

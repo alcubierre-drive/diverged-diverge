@@ -115,9 +115,9 @@
     \draw[Fblue, ->, thick] (0.5,\dbuf) -- ++(0,-0.05);
   \end{scope}
   \begin{scope}[shift={(0.48,-0.089)}, yscale=0.98, xscale=0.06]
-    \EcolorizeBox{67}{76}{gray!30!white}
+    \EcolorizeBox{67}{75}{gray!30!white}
 
-    \EcolorizeBox{76}{78}{ForangeRed!30!white}
+    \EcolorizeBox{75}{78}{ForangeRed!30!white}
     \EcolorizeBox{78}{79}{ForangeRed!30!white}
 
     \tikzmath{
@@ -180,8 +180,9 @@
     \draw (cell19.west) -- ++(-0.05,-0.01) node {$N_v$ (\tp{grid\_n\_singular\_values})};
     \draw (cell20.west) -- ++(-0.05,-0.02) node {$N_k \cdot {N_b}^2$};
 
-    \EbracketTwo{61}{62}{\ipd{file format version}}
-    \EbracketOne{63}{magic number (\texttt{'P'==80})}
+    \EbracketTwo{60}{61}{\ipd{file format version}}
+    \draw (Ecell62.east) -- ++(0.05,0.0) node[anchor=west] {magic number (\texttt{'P'==80})};
+    \draw (Ecell63.east) -- ++(0.05,-0.01) node[anchor=west] {total file size};
 
     \tikzmath{real \spaceBuf; \spaceBuf = 0.0058;}
 
