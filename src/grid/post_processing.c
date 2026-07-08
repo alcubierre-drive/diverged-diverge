@@ -179,7 +179,7 @@ const index_t* grid_postproc_to_file( grid_postproc_t* p, const char* fname ) {
     // file format version string
     header[60] = total_size;
     const char* version = tag_version();
-    index_t version_sz = ceil( (double)strlen(version)/(double)(sizeof(double)) );
+    index_t version_sz = ceil( (double)(strlen(version)+1)/(double)(sizeof(double)) );
     void* version_mem = calloc( version_sz, sizeof(double) );
     memcpy( version_mem, version, strlen(version) );
     header[61] = version_sz;

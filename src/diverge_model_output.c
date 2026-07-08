@@ -292,7 +292,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         // file format version
         idx = 125;
         const char* version = tag_version();
-        ADD_ARRAY_TO_IBUF( strlen(version) );
+        ADD_ARRAY_TO_IBUF( strlen(version)+1 );
 
         // information on whether numerics is OK
         uindex_t checkmask = 0;
