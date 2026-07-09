@@ -15,7 +15,7 @@ int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_outpu
 
     if (diverge_mpi_comm_rank() != 0) return 0;
 
-    zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+    diverge_zstd_file_t* f = diverge_zstd_fopen_default(fname, "wb");
     if (!f) {
         mpi_err_printf("could not open file %s. aborting\n", fname );
         return 1;
@@ -104,28 +104,28 @@ int npatch_output_post( npatch_vertex_t* v, npatch_loop_t* l, const npatch_outpu
     header[125] = header[i-1] + header[i-2];
     header[126] = version_sz;
 
-    zstd_fwrite(header, sizeof(header), 1, f);
+    diverge_zstd_fwrite(header, sizeof(header), 1, f);
 
     if (ocfg->V)
-        zstd_fwrite(v->V, sizeof(complex128_t), v->size, f);
+        diverge_zstd_fwrite(v->V, sizeof(complex128_t), v->size, f);
     if (ocfg->Lp)
-        zstd_fwrite(l->Lp, sizeof(complex128_t), v->size, f);
+        diverge_zstd_fwrite(l->Lp, sizeof(complex128_t), v->size, f);
     if (ocfg->Lm)
-        zstd_fwrite(l->Lm, sizeof(complex128_t), v->size, f);
+        diverge_zstd_fwrite(l->Lm, sizeof(complex128_t), v->size, f);
     if (ocfg->dV)
-        zstd_fwrite(v->dV, sizeof(complex128_t), v->size, f);
+        diverge_zstd_fwrite(v->dV, sizeof(complex128_t), v->size, f);
 
     for (int c=0; c<3; ++c) {
         if (qmat_mem[c] != NULL) {
-            zstd_fwrite(qmat_mem[c], sizeof(uindex_t), qmat_mem_sz[c], f);
+            diverge_zstd_fwrite(qmat_mem[c], sizeof(uindex_t), qmat_mem_sz[c], f);
             free(qmat_mem[c]);
         }
     }
 
-    zstd_fwrite( version_mem, sizeof(double), version_sz, f );
+    diverge_zstd_fwrite( version_mem, sizeof(double), version_sz, f );
     free( version_mem );
 
-    zstd_fclose(f);
+    diverge_zstd_fclose(f);
     return 0;
 }
 

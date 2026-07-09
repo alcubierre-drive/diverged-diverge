@@ -287,6 +287,14 @@ DIVERGE_UNSTABLE {
         diverge_qnanf_gen;
         diverge_qnanf_get;
         diverge_qnanf_isnan;
+        diverge_zstd_fclose;
+        diverge_zstd_fflush;
+        diverge_zstd_file_get_default_compression_level;
+        diverge_zstd_file_set_default_compression_level;
+        diverge_zstd_fopen;
+        diverge_zstd_fopen_default;
+        diverge_zstd_fprintf;
+        diverge_zstd_fwrite;
         matrix_invert;
         power_iteration;
         power_iteration_batched;

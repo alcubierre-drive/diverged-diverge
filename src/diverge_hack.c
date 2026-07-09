@@ -208,7 +208,7 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         diverge_flow_step_eigchan_piter_tol = atof(val);
     }
     CHECKKEY("output_compression_level") {
-        DIVERGE_OUTPUT_COMPRESSION_LEVEL = atoi(val);
+        diverge_zstd_file_set_default_compression_level(atoi(val));
     }
 
     if (key_) {
