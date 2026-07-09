@@ -2,22 +2,39 @@
 
 #include "zstd_file.h"
 #include <stdio.h>
+#include <stdarg.h>
 
-int DIVERGE_OUTPUT_COMPRESSION_LEVEL = 3;
+static int ZSTD_FILE_DEFAULT_COMPRESSION_LEVEL = 3;
+void diverge_zstd_file_set_default_compression_level(int compressionLevel) {
+    ZSTD_FILE_DEFAULT_COMPRESSION_LEVEL = compressionLevel;
+}
+int diverge_zstd_file_get_default_compression_level(void) {
+    return ZSTD_FILE_DEFAULT_COMPRESSION_LEVEL;
+}
+diverge_zstd_file_t* diverge_zstd_fopen_default(const char* path, const char* mode) {
+    return diverge_zstd_fopen(path, mode, ZSTD_FILE_DEFAULT_COMPRESSION_LEVEL);
+}
 
 #ifndef USE_COMPRESSED_OUTPUT
 
-zstd_file_t* zstd_fopen(const char *path, const char *mode, int compressionLevel) {
+diverge_zstd_file_t* diverge_zstd_fopen(const char* path, const char* mode, int compressionLevel) {
     (void)compressionLevel;
-    return (zstd_file_t*)fopen(path, mode);
+    return (diverge_zstd_file_t*)fopen(path, mode);
 }
-size_t zstd_fwrite(const void *ptr, size_t size, size_t nmemb, zstd_file_t *zf) {
+size_t diverge_zstd_fwrite(const void* ptr, size_t size, size_t nmemb, diverge_zstd_file_t* zf) {
     return fwrite(ptr, size, nmemb, (FILE*)zf);
 }
-int zstd_fflush(zstd_file_t *zf) {
+int diverge_zstd_fprintf(diverge_zstd_file_t* zf, const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int result = vfprintf((FILE*)zf, fmt, ap);
+    va_end(ap);
+    return result;
+}
+int diverge_zstd_fflush(diverge_zstd_file_t* zf) {
     return fflush((FILE*)zf);
 }
-int zstd_fclose(zstd_file_t *zf) {
+int diverge_zstd_fclose(diverge_zstd_file_t* zf) {
     return fclose((FILE*)zf);
 }
 
@@ -26,16 +43,19 @@ int zstd_fclose(zstd_file_t *zf) {
 #include <stdlib.h>
 #include <zstd.h>
 
-struct zstd_file_t {
-    FILE *fp;
-    ZSTD_CCtx *cctx;
-    void *outBuf;
+struct diverge_zstd_file_t {
+    FILE* fp;
+    ZSTD_CCtx* cctx;
+    void* outBuf;
     size_t outBufSize;
     int isNormalFile;
+
+    FILE* tmpfile;
+    void* tmpfile_buf;
 };
 
-zstd_file_t* zstd_fopen(const char *path, const char *mode, int compressionLevel) {
-    zstd_file_t *zf = calloc(1, sizeof(*zf));
+diverge_zstd_file_t* diverge_zstd_fopen(const char* path, const char* mode, int compressionLevel) {
+    diverge_zstd_file_t* zf = calloc(1, sizeof*zf);
     if (compressionLevel == 0) {
         zf->fp = fopen(path, mode);
         zf->isNormalFile = 1;
@@ -56,18 +76,22 @@ zstd_file_t* zstd_fopen(const char *path, const char *mode, int compressionLevel
     zf->outBuf = malloc(zf->outBufSize);
     if (!zf->outBuf) goto error;
 
+    zf->tmpfile = tmpfile();
+    if (!zf->tmpfile) goto error;
+
     return zf;
 error:
     if (zf) {
         if (zf->cctx) ZSTD_freeCCtx(zf->cctx);
         if (zf->fp) fclose(zf->fp);
         free(zf->outBuf);
+        if (zf->tmpfile) fclose(zf->tmpfile);
         free(zf);
     }
     return NULL;
 }
 
-size_t zstd_fwrite(const void *ptr, size_t size, size_t nmemb, zstd_file_t *zf) {
+size_t diverge_zstd_fwrite(const void* ptr, size_t size, size_t nmemb, diverge_zstd_file_t* zf) {
     if (zf->isNormalFile) return fwrite(ptr, size, nmemb, zf->fp);
     size_t totalBytes = size * nmemb;
 
@@ -95,7 +119,20 @@ size_t zstd_fwrite(const void *ptr, size_t size, size_t nmemb, zstd_file_t *zf) 
     return nmemb;
 }
 
-int zstd_fflush(zstd_file_t *zf) {
+int diverge_zstd_fprintf(diverge_zstd_file_t* zf, const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    size_t nbytes = vfprintf(zf->tmpfile, fmt, ap);
+    va_end(ap);
+
+    rewind(zf->tmpfile);
+    zf->tmpfile_buf = realloc(zf->tmpfile_buf, nbytes);
+    fread(zf->tmpfile_buf, 1, nbytes, zf->tmpfile);
+    rewind(zf->tmpfile);
+    return diverge_zstd_fwrite(zf->tmpfile_buf, 1, nbytes, zf);
+}
+
+int diverge_zstd_fflush(diverge_zstd_file_t* zf) {
     if (zf->isNormalFile) return fflush(zf->fp);
     size_t remaining = -1;
     do {
@@ -113,7 +150,7 @@ int zstd_fflush(zstd_file_t *zf) {
     return fflush(zf->fp);
 }
 
-int zstd_fclose(zstd_file_t *zf) {
+int diverge_zstd_fclose(diverge_zstd_file_t* zf) {
     int result = 0;
     if (!zf) return EOF;
     if (zf->isNormalFile) {
@@ -148,6 +185,8 @@ int zstd_fclose(zstd_file_t *zf) {
 
     ZSTD_freeCCtx(zf->cctx);
     free(zf->outBuf);
+    fclose(zf->tmpfile);
+    free(zf->tmpfile_buf);
     free(zf);
 
     return result;

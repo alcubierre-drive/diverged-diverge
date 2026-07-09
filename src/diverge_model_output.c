@@ -425,12 +425,12 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         lmd5sum = strlen(md5sum);
 
         // write to file
-        zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+        diverge_zstd_file_t* f = diverge_zstd_fopen_default(fname, "wb");
         if (!f) {
             mpi_err_printf( "could not open file %s. no output.\n", fname );
         } else {
-            zstd_fwrite(buf, sizeof(char), ibuf[125]+ibuf[126], f);
-            zstd_fclose(f);
+            diverge_zstd_fwrite(buf, sizeof(char), ibuf[125]+ibuf[126], f);
+            diverge_zstd_fclose(f);
         }
 
         // and free the buffer

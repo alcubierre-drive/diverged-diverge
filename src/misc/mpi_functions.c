@@ -233,7 +233,7 @@ void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int d
         for (int i=0; i<size; ++i) ranks[i] = i;
         indirect_int_sort_r(ranks, size, displs, 0, 0);
         complex128_t* buf = NULL;
-        zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+        diverge_zstd_file_t* f = diverge_zstd_fopen_default(fname, "wb");
         for (int r=0; r<size; ++r) {
             buf = realloc(buf, sizeof*buf * counts[ranks[r]]);
             if (ranks[r] != rank) {
@@ -243,9 +243,9 @@ void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int d
             } else {
                 memcpy(buf, data, sizeof*buf * count);
             }
-            zstd_fwrite(buf, sizeof*buf, counts[ranks[r]], f);
+            diverge_zstd_fwrite(buf, sizeof*buf, counts[ranks[r]], f);
         }
-        zstd_fclose(f);
+        diverge_zstd_fclose(f);
         free(buf);
         free(ranks);
     } else {
@@ -276,7 +276,7 @@ void diverge_mpi_write_byte_to_file(void* file, const void* data, index_t displ,
             } else {
                 memcpy(buf, data, sizeof*buf * count);
             }
-            zstd_fwrite(buf, sizeof*buf, counts[ranks[r]], file);
+            diverge_zstd_fwrite(buf, sizeof*buf, counts[ranks[r]], file);
         }
         free(buf);
         free(ranks);
@@ -289,20 +289,20 @@ void diverge_mpi_write_byte_to_file(void* file, const void* data, index_t displ,
 
 void diverge_mpi_write_byte_to_file_master(void* file, const void* data, index_t count) {
     MPICHK();
-    if (diverge_mpi_comm_rank() == 0) zstd_fwrite(data, 1, count, file);
+    if (diverge_mpi_comm_rank() == 0) diverge_zstd_fwrite(data, 1, count, file);
 }
 
 void* diverge_mpi_open_file(const char* fname) {
     MPICHK();
     if (diverge_mpi_comm_rank() == 0)
-        return zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+        return diverge_zstd_fopen_default(fname, "wb");
     else
         return NULL;
 }
 
 void diverge_mpi_close_file(void* file) {
     MPICHK();
-    if (file) zstd_fclose(file);
+    if (file) diverge_zstd_fclose(file);
 }
 
 void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count ) {
@@ -510,13 +510,13 @@ void diverge_mpi_gatherv_cdoub( const void* send, int count, void* recv, int* co
 }
 
 void diverge_mpi_write_cdoub_to_file( const char* fname, const void* data, int displ, int count ) {
-    zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+    diverge_zstd_file_t* f = diverge_zstd_fopen_default(fname, "wb");
     if (!f) {
         mpi_err_printf("could not open file %s. aborting\n", fname );
         return;
     }
-    zstd_fwrite( (const char*)data+sizeof(complex128_t)*displ, sizeof(complex128_t), count, f );
-    zstd_fclose(f);
+    diverge_zstd_fwrite( (const char*)data+sizeof(complex128_t)*displ, sizeof(complex128_t), count, f );
+    diverge_zstd_fclose(f);
 }
 
 void diverge_mpi_write_byte_to_file( void* file, const void* data, index_t displ, index_t count){
@@ -524,7 +524,7 @@ void diverge_mpi_write_byte_to_file( void* file, const void* data, index_t displ
     if (!file) {
         mpi_err_printf("got NULL as file argument. returning 0.\n");
     } else {
-        zstd_fwrite( (const char*)data, 1, count, (zstd_file_t*)file );
+        diverge_zstd_fwrite( (const char*)data, 1, count, (diverge_zstd_file_t*)file );
     }
 }
 void diverge_mpi_write_byte_to_file_master( void* file, const void* data, index_t count) {
@@ -532,7 +532,7 @@ void diverge_mpi_write_byte_to_file_master( void* file, const void* data, index_
 }
 
 void* diverge_mpi_open_file(const char* fname) {
-    zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+    diverge_zstd_file_t* f = diverge_zstd_fopen_default(fname, "wb");
     if (!f) {
         mpi_err_printf("could not open file %s. returning NULL.\n", fname );
         return NULL;
@@ -544,7 +544,7 @@ void diverge_mpi_close_file(void* file) {
         mpi_err_printf("got NULL as file argument. returning.\n");
         return;
     }
-    zstd_fclose((zstd_file_t*)file);
+    diverge_zstd_fclose((diverge_zstd_file_t*)file);
 }
 
 void diverge_mpi_alltoall_index( const void* send, void* recv, index_t count ) {

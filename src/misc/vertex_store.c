@@ -190,19 +190,19 @@ void vertex_storage_to_file( vertex_storage_t* t, const char* fname ) {
     if (!check_8bit_char())     *phealth |= firstbit >> 3;
     if (!check_enum_int())      *phealth |= firstbit >> 4;
 
-    zstd_file_t* f = zstd_fopen(fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+    diverge_zstd_file_t* f = diverge_zstd_fopen_default(fname, "wb");
     if (!f) {
         mpi_err_printf( "could not open file %s\n", fname );
         return;
     }
 
-    zstd_fwrite( header, sizeof header, 1, f );
-    zstd_fwrite( t->qpts, sizeof*t->qpts, t->n_qpts, f );
-    zstd_fwrite( t->memory, sizeof*t->memory, t->n_steps*t->n_qpts*POW2(t->linsz), f );
-    zstd_fwrite( t->Lambda, sizeof*t->Lambda, t->n_steps, f );
-    zstd_fwrite( t->chans, sizeof*t->chans, t->n_steps, f );
-    zstd_fwrite( version, 1, strlen(version)+1, f );
-    zstd_fclose( f );
+    diverge_zstd_fwrite( header, sizeof header, 1, f );
+    diverge_zstd_fwrite( t->qpts, sizeof*t->qpts, t->n_qpts, f );
+    diverge_zstd_fwrite( t->memory, sizeof*t->memory, t->n_steps*t->n_qpts*POW2(t->linsz), f );
+    diverge_zstd_fwrite( t->Lambda, sizeof*t->Lambda, t->n_steps, f );
+    diverge_zstd_fwrite( t->chans, sizeof*t->chans, t->n_steps, f );
+    diverge_zstd_fwrite( version, 1, strlen(version)+1, f );
+    diverge_zstd_fclose( f );
 }
 
 void vertex_storage_free( vertex_storage_t* t ) {

@@ -190,36 +190,36 @@ const index_t* grid_postproc_to_file( grid_postproc_t* p, const char* fname ) {
 
     if (diverge_mpi_comm_rank() != 0) return header;
 
-    zstd_file_t* outfile = zstd_fopen( fname, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL);
+    diverge_zstd_file_t* outfile = diverge_zstd_fopen_default(fname, "wb");
     if (!outfile) {
         mpi_err_printf( "could not open file '%s'\n", fname );
         return header;
     }
-    zstd_fwrite( header, sizeof(index_t), 64, outfile );
-    zstd_fwrite( p->L->formfac, sizeof(double), header[6], outfile );
+    diverge_zstd_fwrite( header, sizeof(index_t), 64, outfile );
+    diverge_zstd_fwrite( p->L->formfac, sizeof(double), header[6], outfile );
 
-    zstd_fwrite( p->V->vertex_buffers[1], sizeof(double), header[8], outfile );
+    diverge_zstd_fwrite( p->V->vertex_buffers[1], sizeof(double), header[8], outfile );
     if (lP) {
-        zstd_fwrite( lP, sizeof(double), header[10], outfile );
+        diverge_zstd_fwrite( lP, sizeof(double), header[10], outfile );
         free(lP);
     }
 
-    zstd_fwrite( p->V->vertex_buffers[2], sizeof(double), header[12], outfile );
+    diverge_zstd_fwrite( p->V->vertex_buffers[2], sizeof(double), header[12], outfile );
     if (lC) {
-        zstd_fwrite( lC, sizeof(double), header[14], outfile );
+        diverge_zstd_fwrite( lC, sizeof(double), header[14], outfile );
         free(lC);
     }
 
-    zstd_fwrite( p->V->vertex_buffers[3], sizeof(double), header[16], outfile );
+    diverge_zstd_fwrite( p->V->vertex_buffers[3], sizeof(double), header[16], outfile );
     if (lD) {
-        zstd_fwrite( lD, sizeof(double), header[18], outfile );
+        diverge_zstd_fwrite( lD, sizeof(double), header[18], outfile );
         free(lD);
     }
 
-    zstd_fwrite( version_mem, sizeof(double), version_sz, outfile );
+    diverge_zstd_fwrite( version_mem, sizeof(double), version_sz, outfile );
     free( version_mem );
 
-    zstd_fclose( outfile );
+    diverge_zstd_fclose( outfile );
     return header;
 }
 
@@ -312,13 +312,13 @@ static void grid_lingap_calc( grid_lingap_t* l, double T, char chan, bool use_lo
 
     index_t N = l->nk * POW2(l->nb);
     if (vertex_file && strcmp(vertex_file,"")) {
-        zstd_file_t* v = zstd_fopen( vertex_file, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL );
+        diverge_zstd_file_t* v = diverge_zstd_fopen_default(vertex_file, "wb");
         mpi_log_printf( "writing MF q=0 '%c' vertex to file\n", chan )
         if (!v) {
             mpi_err_printf( "could not open file %s\n", vertex_file );
         } else {
-            zstd_fwrite( l->V->vertex_buffers[1], sizeof(complex128_t), POW2(N), v );
-            zstd_fclose( v );
+            diverge_zstd_fwrite( l->V->vertex_buffers[1], sizeof(complex128_t), POW2(N), v );
+            diverge_zstd_fclose( v );
         }
     }
 
@@ -337,13 +337,13 @@ static void grid_lingap_calc( grid_lingap_t* l, double T, char chan, bool use_lo
     if (loop) {
         batched_gemm_vertex_loop( l->V->vertex_buffers[1], loop, l->qsize, l->nk, l->nb );
         if (vertex_loop_file && strcmp(vertex_loop_file,"")) {
-            zstd_file_t* v = zstd_fopen( vertex_loop_file, "wb", DIVERGE_OUTPUT_COMPRESSION_LEVEL );
+            diverge_zstd_file_t* v = diverge_zstd_fopen_default(vertex_loop_file, "wb");
             mpi_log_printf( "writing MF q=0 '%c' vertex×loop to file\n", chan )
             if (!v) {
                 mpi_err_printf( "could not open file %s\n", vertex_loop_file );
             } else {
-                zstd_fwrite( l->V->vertex_buffers[1], sizeof(complex128_t), POW2(N), v );
-                zstd_fclose( v );
+                diverge_zstd_fwrite( l->V->vertex_buffers[1], sizeof(complex128_t), POW2(N), v );
+                diverge_zstd_fclose( v );
             }
         }
     }
