@@ -1,6 +1,7 @@
 0               lequad      145
 >1016           lequad      0       divERGe model file
->>(8.q)         string      x       \b, name="%s"
+>>(8.q)         byte        !0
+>>>(8.q)        string      x       \b "%s"
 >>(1000.q)      string      x       \b (%s)
 
 0               lequad      84
