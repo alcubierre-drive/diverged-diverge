@@ -25,7 +25,7 @@ must write all the FFI wrappers yourself.
 # [Documentation](https://lennart_klebl.codeberg.page/divERGe/public/)
 [https://lennart_klebl.codeberg.page/divERGe/public/](https://lennart_klebl.codeberg.page/divERGe/public/)
 
-# [Download CPU release](https://codeberg.org/lennart_klebl/divERGe/raw/branch/master/public/releases/v0.10/divERGe.tar.gz)
+# [Download CPU release](https://codeberg.org/lennart_klebl/divERGe/raw/branch/master/public/releases/v0.11/divERGe.tar.gz)
 Generic linux (amd64) builds (GLIBC>=2.17, this should be given almost anywhere
 to date) can be downloaded
 [here](https://codeberg.org/lennart_klebl/divERGe/src/branch/master/public/releases).
