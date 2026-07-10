@@ -37,7 +37,9 @@ typedef struct {
     int save_full;
     bool save_symmetries;
 
-    char rpa_chans[8];
+    char rpa_chans[6];
+    char rpa_include_chi_pp;
+    char rpa_include_V_pp;
     int rpa_nev;
     int rpa_ncv;
     int rpa_maxiter;
@@ -66,6 +68,8 @@ static const tu_postproduction_conf_t tu_postproduction_conf_defaults = {
     .save_full = 0,
     .save_symmetries = false,
     .rpa_chans = "CD",
+    .rpa_include_chi_pp = 0,
+    .rpa_include_V_pp = 0,
     .rpa_nev = 10,
     .rpa_ncv = 100,
     .rpa_maxiter = 100,

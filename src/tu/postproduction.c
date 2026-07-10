@@ -948,6 +948,20 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[127] = header[i-1]*sizeof(index_t)+header[i-2];
 
     i = 128;
+    if (p->rpa) {
+        index_t rpa_nos2 = p->rpa->legdim/p->rpa->n_kidx;
+        if (p->c.rpa_include_chi_pp) {
+            header[i] = header[127]; ++i;
+            header[i] = sizeof(complex128_t) * p->rpa->n_kidx * POW2(rpa_nos2); ++i;
+        }
+        if (p->c.rpa_include_V_pp) {
+            header[i] = header[i-1] + header[i-2]; ++i;
+            header[i] = sizeof(complex128_t) * POW2(p->rpa->n_kidx * rpa_nos2); ++i;
+        }
+        header[127] = header[i-1] + header[i-2]; // redo total filesize
+    }
+
+    i = 192;
     header[i++] = sizeof(diverge_postprocess_conf_t);
     header[i++] = offsetof(diverge_postprocess_conf_t, patch_q_matrices);
     header[i++] = offsetof(diverge_postprocess_conf_t, patch_q_matrices_use_dV);
@@ -983,6 +997,8 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_channel_calc_project);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_which_solver_mode_hermiticity_limit);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_chans);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_include_chi_pp);
+    header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_include_V_pp);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_nev);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_ncv);
     header[i++] = offsetof(diverge_postprocess_conf_t, tu_rpa_maxiter);
@@ -1146,6 +1162,11 @@ static void to_file( tu_postproduction_t* p, const char* filename ) {
     }
 
     diverge_mpi_write_byte_to_file_master(file, rs_hopping_dtype, sizeof(rs_hopping_dtype));
+
+    if (p->rpa && p->c.rpa_include_chi_pp)
+        diverge_mpi_write_byte_to_file_master(file, p->rpa->chi_pp, header[129]);
+    if (p->rpa && p->c.rpa_include_V_pp)
+        diverge_mpi_write_byte_to_file_master(file, p->rpa->V_pp, header[131]);
 
     diverge_mpi_close_file(file);
 }
