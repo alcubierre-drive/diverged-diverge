@@ -204,7 +204,7 @@ class diverge_model:
         self.name = self._displ_count( 1 ).tobytes().decode().rstrip('\x00')
 
         #: diverge tag version (serves as file format version)
-        self.version = self._displ_count( 125 ).tobytes().decode()
+        self.version = self._displ_count( 125 ).tobytes().decode().rstrip('\x00')
 
         # we don't do anything with the extended header yet, but this doesn't
         # really matter. It's implemented such that we won't run out of space
@@ -819,7 +819,7 @@ class diverge_post_tu:
         if self.symm_o2m_Cpref.size > 0: self.symm_o2m_Cpref = self.symm_o2m_Cpref.reshape((-1,self.nkibz))
 
         #: diverge tag version (serves as file format version)
-        self.version = get_array_header( iL, np.byte ).tobytes().decode()
+        self.version = get_array_header( iL, np.byte ).tobytes().decode().rstrip('\x00')
 
         # we don't do anything with the extended header yet, but this doesn't
         # really matter. It's implemented such that we won't run out of space
@@ -849,6 +849,21 @@ class diverge_post_tu:
             self.rpa_vecs = self.rpa_vecs.reshape((self.rpa_vals.size, -1, n_spin,n_orb,n_spin,n_orb))
         #: rpa attachment (enabled for version>0.9); k indices
         self.rpa_kidx = get_array_header( iL, np.int64 )
+
+        if d_header[125] and version_compare(self.version, "v0.11") >= 0:
+            iL[0] = 128
+            n_so = n_spin * n_orb
+            n_kk = self.rpa_kidx.size
+
+            #: rpa attachment (enabled for version>0.10); particle-particle bubble
+            self.rpa_chi_pp = get_array_header( iL, np.byte ).view( dtype=np.complex128 )
+            if self.rpa_chi_pp.size > 0:
+                self.rpa_chi_pp = self.rpa_chi_pp.reshape((n_kk, n_so,n_so, n_so,n_so))
+
+            #: rpa attachment (enabled for version>0.10); pairing vertex
+            self.rpa_V_pp = get_array_header( iL, np.byte ).view( dtype=np.complex128 )
+            if self.rpa_V_pp.size > 0:
+                self.rpa_V_pp = self.rpa_V_pp.reshape((n_kk,n_so,n_so, n_kk,n_so,n_so))
 
 class vertex_store:
     """
@@ -918,7 +933,7 @@ class vertex_store:
         self.chans = self._displ_count( 13 ).view(dtype='S1')
 
         #: diverge tag version (serves as file format version)
-        self.version = self._displ_count( 125 ).tobytes().decode()
+        self.version = self._displ_count( 125 ).tobytes().decode().rstrip('\x00')
 
 def read( fname ):
     r"""

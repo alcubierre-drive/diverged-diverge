@@ -168,7 +168,14 @@ struct diverge_postprocess_conf_t {
      * attachment. must be particle-hole channels; naming follows
      * :c:func:`diverge_flow_step_vertex`.
      */
-    char tu_rpa_chans[8];
+    char tu_rpa_chans[6];
+
+    /** include the particle-particle bubble calculated explicitly in k space */
+    char tu_rpa_include_chi_pp;
+
+    /** include the pairing vertex in kk' space */
+    char tu_rpa_include_V_pp;
+
     /**
      * number of eigenvalues to calculate in RPA attachment. Unless
      * ``-DUSE_ARPACK_EIGENSOLVER`` is used at compile time (and the library is
@@ -250,6 +257,8 @@ static const diverge_postprocess_conf_t diverge_postprocess_conf_defaults = {
     .tu_channel_calc_project = 0,
     .tu_which_solver_mode_hermiticity_limit = 1.e-11,
     .tu_rpa_chans = "CD",
+    .tu_rpa_include_chi_pp = 0,
+    .tu_rpa_include_V_pp = 0,
     .tu_rpa_nev = 10,
     .tu_rpa_ncv = 100,
     .tu_rpa_maxiter = 100,

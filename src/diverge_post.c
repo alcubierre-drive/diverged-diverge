@@ -128,6 +128,8 @@ static void tu_pp( diverge_flow_step_t* st,
     tc.save_symmetries = pc->tu_symmetry_maps;
     // RPA attachment
     memcpy( tc.rpa_chans, pc->tu_rpa_chans, sizeof(pc->tu_rpa_chans) );
+    tc.rpa_include_chi_pp = pc->tu_rpa_include_chi_pp;
+    tc.rpa_include_V_pp   = pc->tu_rpa_include_V_pp;
     tc.rpa_nev     = pc->tu_rpa_nev;
     tc.rpa_ncv     = pc->tu_rpa_ncv;
     tc.rpa_maxiter = pc->tu_rpa_maxiter;

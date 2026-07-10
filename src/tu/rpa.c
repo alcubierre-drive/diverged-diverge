@@ -131,9 +131,6 @@ void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter,
     }
     single_eigen_sort_part( t->vecs, t->vals, t->legdim, tu_rpa_post_sorting, t->nev );
 
-    free( t->V_pp );   t->V_pp   = NULL;
-    free( t->chi_pp ); t->chi_pp = NULL;
-
     TOCK(time_post_eigen)
 #define TPRINT(WHICH) \
     if (t->time_##WHICH > 0.0) \
@@ -146,10 +143,10 @@ void tu_rpa_post( tu_rpa_t* t, const char* chans, int nev, int ncv, int maxiter,
 
 void tu_rpa_free( tu_rpa_t* t ) {
     free( t->kidx );
-    if (t->chi_pp) free( t->chi_pp );
-    if (t->V_pp) free( t->V_pp );
-    if (t->vals) free( t->vals );
-    if (t->vecs) free( t->vecs );
+    free( t->chi_pp );
+    free( t->V_pp );
+    free( t->vals );
+    free( t->vecs );
     free( t );
 }
 
