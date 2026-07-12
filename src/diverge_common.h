@@ -129,7 +129,11 @@ typedef uint64_t uindex_t;
 
 /** swap operands using the XOR-swap algorithm, fails if applied on the same element. */
 #define XORSWAP_UNSAFE(a, b) ((a) ^= (b), (b) ^= (a), (a) ^= (b))
-/** swap operands using the XOR-swap algorithm, but first check if their addresses are equal. */
+/**
+ * swap operands using the XOR-swap algorithm, but first check if their
+ * addresses are equal. Return value equals the second argument *before*
+ * swapping.
+ */
 #define XORSWAP(a, b) ((&(a) == &(b)) ? (a) : XORSWAP_UNSAFE(a, b))
 
 // do not use those macros unless you really know what you're doing...
