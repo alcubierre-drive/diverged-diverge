@@ -310,7 +310,6 @@ DIVERGE_UNSTABLE {
         diverge_wigner_config_defaults_CPP;
         diverge_zstd_fclose;
         diverge_zstd_fflush;
-        diverge_zstd_file_get_default_compression_level;
         diverge_zstd_file_set_default_compression_level;
         diverge_zstd_fopen;
         diverge_zstd_fopen_default;

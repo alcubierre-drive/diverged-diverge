@@ -1,24 +1,23 @@
 /* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
 #include "zstd_file.h"
+#include "../diverge_common.h"
 #include <stdio.h>
 #include <stdarg.h>
 
-static int ZSTD_FILE_DEFAULT_COMPRESSION_LEVEL = 3;
-void diverge_zstd_file_set_default_compression_level(int compressionLevel) {
-    ZSTD_FILE_DEFAULT_COMPRESSION_LEVEL = compressionLevel;
-}
-int diverge_zstd_file_get_default_compression_level(void) {
-    return ZSTD_FILE_DEFAULT_COMPRESSION_LEVEL;
+static int DEFAULT_COMPRESSION_LEVEL = 3;
+int diverge_zstd_file_set_default_compression_level(int level) {
+    if (level >= 0) return XORSWAP(level, DEFAULT_COMPRESSION_LEVEL);
+    return DEFAULT_COMPRESSION_LEVEL;
 }
 diverge_zstd_file_t* diverge_zstd_fopen_default(const char* path, const char* mode) {
-    return diverge_zstd_fopen(path, mode, ZSTD_FILE_DEFAULT_COMPRESSION_LEVEL);
+    return diverge_zstd_fopen(path, mode, DEFAULT_COMPRESSION_LEVEL);
 }
 
 #ifndef USE_COMPRESSED_OUTPUT
 
-diverge_zstd_file_t* diverge_zstd_fopen(const char* path, const char* mode, int compressionLevel) {
-    (void)compressionLevel;
+diverge_zstd_file_t* diverge_zstd_fopen(const char* path, const char* mode, int level) {
+    (void)level;
     return (diverge_zstd_file_t*)fopen(path, mode);
 }
 size_t diverge_zstd_fwrite(const void* ptr, size_t size, size_t nmemb, diverge_zstd_file_t* zf) {
@@ -54,9 +53,9 @@ struct diverge_zstd_file_t {
     void* tmpfile_buf;
 };
 
-diverge_zstd_file_t* diverge_zstd_fopen(const char* path, const char* mode, int compressionLevel) {
+diverge_zstd_file_t* diverge_zstd_fopen(const char* path, const char* mode, int level) {
     diverge_zstd_file_t* zf = calloc(1, sizeof*zf);
-    if (compressionLevel == 0) {
+    if (level == 0) {
         zf->fp = fopen(path, mode);
         zf->isNormalFile = 1;
         return zf;
@@ -69,7 +68,7 @@ diverge_zstd_file_t* diverge_zstd_fopen(const char* path, const char* mode, int 
     zf->cctx = ZSTD_createCCtx();
     if (!zf->cctx) goto error;
 
-    size_t rc = ZSTD_CCtx_setParameter(zf->cctx, ZSTD_c_compressionLevel, compressionLevel);
+    size_t rc = ZSTD_CCtx_setParameter(zf->cctx, ZSTD_c_compressionLevel, level);
     if (ZSTD_isError(rc)) goto error;
 
     zf->outBufSize = ZSTD_CStreamOutSize();
