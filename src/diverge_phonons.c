@@ -271,8 +271,7 @@ static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t
 }
 
 int diverge_phonons_asr_vertex_set_sorted_mode( int sorted ) {
-    XORSWAP( DIVERGE_PHONONS_ASR_VERTEX_USE_COUNT_DISPL_SORTED, sorted );
-    return sorted;
+    return XORSWAP(sorted, DIVERGE_PHONONS_ASR_VERTEX_USE_COUNT_DISPL_SORTED);
 }
 
 double diverge_phonons_enable_refinement( diverge_model_t* el, int enable_refinement, double eps_mesh ) {
