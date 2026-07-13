@@ -145,6 +145,21 @@ typedef uint64_t uindex_t;
  */
 #define XORSWAP_PTR(a, b) ( (&(a) == &(b)) ? (a) : XORSWAP_PTR_UNSAFE_(a, b) )
 
+
+#ifndef __cplusplus
+static inline void MEMSWAP__( void* a, void* b, size_t sz ) {
+    char tmp[sz]; memcpy(tmp, a, sz); memcpy(a, b, sz); memcpy(b, tmp, sz);
+}
+/**
+ * swap operands using memcpy and stack-based va-array in C, std::swap in C++
+ * (safe only for small types). May be faster than :c:macro:`XORSWAP` or
+ * :c:macro:`XORSWAP_PTR` *and* is able to swap arbitrary (non-xor-able) types.
+ */
+#define MEMSWAP(x,y) MEMSWAP__(&(x), &(y), sizeof(x))
+#else // __cplusplus
+#define MEMSWAP(x,y) std::swap((x),(y))
+#endif // __cplusplus
+
 /**
  * zero out an array of arbitrary POD type (pointed to by ``ptr``) with ``sz``
  * elements by calling ``memset``
