@@ -160,6 +160,9 @@ static inline void MEMSWAP__( void* a, void* b, size_t sz ) {
 #define MEMSWAP(x,y) std::swap((x),(y))
 #endif // __cplusplus
 
+/** same as :c:macro:`MEMSWAP`, but including a return value analogous to :c:macro:`XORSWAP`. */
+#define MEMSWAP_RET(x,y) (MEMSWAP(x,y), (x))
+
 /**
  * zero out an array of arbitrary POD type (pointed to by ``ptr``) with ``sz``
  * elements by calling ``memset``
