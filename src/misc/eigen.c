@@ -11,7 +11,14 @@
 #define DIVERGE_DEFINE_ZDOTC
 #endif
 #else // USE_MKL
+#if defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 #include <cblas.h>
+#if defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 #include <lapacke.h>
 #endif // USE_MKL
 

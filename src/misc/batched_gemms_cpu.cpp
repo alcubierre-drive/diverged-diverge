@@ -12,7 +12,14 @@ using std::vector;
 extern "C" { int mkl_serv_intel_cpu_true() { return 1; } }
 #endif
 #else // USE_MKL
+#if defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 #include <cblas.h>
+#if defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 #endif // USE_MKL
 
 #if defined(USE_LAPACKE) && !defined(USE_MKL)
