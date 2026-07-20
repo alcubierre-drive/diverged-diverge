@@ -6,7 +6,14 @@
 #ifdef USE_MKL
 #include <mkl.h>
 #else // USE_MKL
+#if defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 #include <cblas.h>
+#if defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 #endif // USE_MKL
 
 void single_gemm( const complex128_t* A, const complex128_t* B, complex128_t* C,
