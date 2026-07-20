@@ -7,6 +7,8 @@
 #include "../../src/diverge_common.h"
 #include "../../src/misc/mt19937.h"
 
+#include "../../src/diverge_model.h"
+
 typedef struct {
     int i1, i2, i3;
     double d1, d2, d3;
@@ -14,7 +16,7 @@ typedef struct {
     void *ptr;
 } swap_t;
 
-CT_TEST(swap) {
+CT_TEST_NAME(swap, "xorswap,memswap") {
     mt19937_64_t rng = mt64_init(12345);
     swap_t A = {0}, B = {0};
     int ndbl = sizeof(swap_t) / sizeof(double) + 1;
@@ -46,6 +48,34 @@ CT_TEST(swap) {
     CT_CHECK(i1 == A.i2);
     CT_CHECK(i2 == A.i1);
     CT_CHECK(i2 == i2_cpy);
+}
+
+CT_TEST(modelswap) {
+    diverge_model_t *m1 = diverge_model_init(),
+                    *m2 = diverge_model_init();
+
+    void *p1 = m1->internals,
+         *p2 = m2->internals;
+
+    MEMSWAP(*m1, *m2);
+    CT_CHECK( m1->internals == p2 );
+    CT_CHECK( m2->internals == p1 );
+
+    MEMSWAP(m1, m2);
+    CT_CHECK( m1->internals == p1 );
+    CT_CHECK( m2->internals == p2 );
+
+    XORSWAP_PTR(m1, m2);
+    CT_CHECK( m1->internals == p2 );
+    CT_CHECK( m2->internals == p1 );
+
+    diverge_model_t m3 = MEMSWAP_RET(*m1, *m2);
+    CT_CHECK( m1->internals == p1 );
+    CT_CHECK( m2->internals == p2 );
+    CT_CHECK( m1->internals == m3.internals );
+
+    diverge_model_free(m1);
+    diverge_model_free(m2);
 }
 
 #endif
