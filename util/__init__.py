@@ -1014,6 +1014,30 @@ if not _libs["divERGe"] is None:
     flow_step_free.argtypes = [POINTER(flow_step_t)]
     flow_step_free.restype = None
 
+    # Vertex Storage #TODO incomplete
+    class struct_vertex_storage_t(Structure):
+        pass
+    vertex_storage_t = struct_vertex_storage_t
+    vertex_storage_init = _libs["divERGe"].get("vertex_storage_init", "cdecl")
+    vertex_storage_init.argtypes = [POINTER(flow_step_t), c_char, c_voidp, index_t]
+    vertex_storage_init.restype = POINTER(vertex_storage_t)
+
+    vertex_storage_snap = _libs["divERGe"].get("vertex_storage_snap", "cdecl")
+    vertex_storage_snap.argtypes = [POINTER(vertex_storage_t)]
+    vertex_storage_snap.restype = None
+
+    vertex_storage_lsnap = _libs["divERGe"].get("vertex_storage_lsnap", "cdecl")
+    vertex_storage_lsnap.argtypes = [POINTER(vertex_storage_t), c_double]
+    vertex_storage_lsnap.restype = None
+
+    vertex_storage_free = _libs["divERGe"].get("vertex_storage_free", "cdecl")
+    vertex_storage_free.argtypes = [POINTER(vertex_storage_t)]
+    vertex_storage_free.restype = None
+
+    vertex_storage_to_file = _libs["divERGe"].get("vertex_storage_to_file", "cdecl")
+    vertex_storage_to_file.argtypes = [POINTER(vertex_storage_t), String]
+    vertex_storage_to_file.restype = None
+
     class struct_flow_step_vertex_t(Structure):
         pass
     flow_step_vertex_t = struct_flow_step_vertex_t
