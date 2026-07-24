@@ -80,6 +80,7 @@ void diverge_mpi_allreduce_complex_sum( const void* sendbuf, void* recvbuf, int 
 void diverge_mpi_allreduce_complex_sum_inplace( void* sendrecvbuf, int num );
 void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num );
 void diverge_mpi_allreduce_index_sum_inplace( void* buf, int num );
+void diverge_mpi_allreduce_64_bor_inplace( void* sendrecvbuf, int num );
 
 void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num );
 void diverge_mpi_allgather_index( const void* sendbuf, void* recvbuf, int num );
