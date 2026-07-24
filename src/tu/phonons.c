@@ -111,13 +111,8 @@ void tu_data_phonons_free( tu_data_phonons_t* t ) {
 static double PHONON_FREQ_REGULATOR = 1.e-7;
 
 double tu_data_phonons_change_regulator( double reg ) {
-    if (qnan_isnan(reg)) {
-        return PHONON_FREQ_REGULATOR;
-    } else {
-        double old = PHONON_FREQ_REGULATOR;
-        PHONON_FREQ_REGULATOR = reg;
-        return old;
-    }
+    if (qnan_isnan(reg)) return PHONON_FREQ_REGULATOR;
+    return MEMSWAP_RET(reg, PHONON_FREQ_REGULATOR);
 }
 
 void tu_data_phonons_set_vertex_generator( tu_data_phonons_t* t,
