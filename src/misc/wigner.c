@@ -23,10 +23,10 @@ typedef struct {
     int sgn; // needed for further operation
     index_t n_orb; // needed for iteration
 } wsdata_t;
-wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
+static wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
         const double* lattice, const double* positions, index_t n_orb,
         const diverge_wigner_config_t* wc );
-void wsdata_free( wsdata_t w );
+static void wsdata_free( wsdata_t w );
 
 // this struct reads in the ifc file
 typedef struct {
@@ -41,12 +41,12 @@ typedef struct {
     int64_t nq[3];
     double* data; // (nq[0],nq[1],nq[2], n_at,3, n_at,3)
 } ifc_t;
-ifc_t* read_ifc_file( const char* fname );
-void ifc_free( ifc_t* ifc );
+static ifc_t* read_ifc_file( const char* fname );
+static void ifc_free( ifc_t* ifc );
 
 diverge_wigner_config_t diverge_wigner_config_defaults_CPP( void ) { return diverge_wigner_config_defaults; }
 
-void wsdata_free( wsdata_t w ) {
+static void wsdata_free( wsdata_t w ) {
     VECTOR_FREE( w.irvec ); VECTOR_FREE( w.ndegen ); VECTOR_FREE( w.wslen );
 }
 
@@ -74,7 +74,7 @@ static inline void wsdata_iter( vtree_node_t* node, void* ctx ) {
     free( ndeg_ary ); node->val = 0;
 }
 
-wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
+static wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
         const double* lattice, const double* positions, index_t n_orb,
         const diverge_wigner_config_t* wc ) {
 
@@ -194,9 +194,8 @@ wsdata_t wsdata_construct( index_t nr1, index_t nr2, index_t nr3,
 
 static void lattice_from_ibrav( int ibrav, const double celldm[6], double* lat );
 
-diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wigner_config_t* wc_ ) {
-    const diverge_wigner_config_t wc_defaults = diverge_wigner_config_defaults;
-    const diverge_wigner_config_t* wc = wc_ ? wc_ : &wc_defaults;
+diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wigner_config_t* wc ) {
+    if (!wc) wc = &diverge_wigner_config_defaults;
 
     diverge_model_t* m = diverge_model_init();
     ifc_t* ifc = read_ifc_file( fname );
@@ -263,7 +262,7 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
     if (!(cond)) { mpi_err_printf( "%s\n", #cond ); errors++; } \
 }
 
-ifc_t* read_ifc_file( const char* fname ) {
+static ifc_t* read_ifc_file( const char* fname ) {
     FILE* f = fopen(fname, "r");
     if (!f) {
         mpi_err_printf( "could not open file %s for reading\n", fname );
@@ -348,7 +347,7 @@ ifc_t* read_ifc_file( const char* fname ) {
     return ifc;
 }
 
-void ifc_free( ifc_t* ifc ) {
+static void ifc_free( ifc_t* ifc ) {
     if (ifc) {
         free( ifc->names );
         free( ifc->masses );
@@ -721,6 +720,7 @@ double* diverge_phonons_model_get_masses( diverge_model_t* m ) {
 diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
         const char* wigner, const char* epmatwp, double maxrel,
         const diverge_wigner_config_t* wc ) {
+    if (!wc) wc = &diverge_wigner_config_defaults;
     diverge_model_t* m = diverge_phonons_read_ifc( ifc, wc );
 
     int prev_asr_algorithm = diverge_phonons_asr_vertex_set_sorted_mode(
