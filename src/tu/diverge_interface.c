@@ -309,22 +309,27 @@ void init_ff_struct(const double max_dist, diverge_model_t* model) {
     VECTOR_INIT( claV3i_t, real_ff );
     VECTOR_INIT( double, dist_from );
 
-    claV3i_t delta;
-    claM3d_t UCV = claM3d_map(model->lattice[0]);
+    const claM3d_t UCV = claM3d_map(model->lattice[0]);
 
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
+    {
+    VECTOR_INIT(claV4d_t, bond_lookup);
+
+    #pragma omp for
     for (index_t sfrom=0; sfrom<n_orb; ++sfrom) {
         claV3d_t _from = claV3d_map(model->positions[sfrom]);
         for (index_t sto=0; sto<n_orb; ++sto) {
-            VECTOR_INIT( claV4d_t, bond_lookup );
+
+            bond_lookup_sz = 0; // lazy resize
+
             for (index_t uc_1=0; uc_1<model->nk[0]; ++uc_1)
             for (index_t uc_2=0; uc_2<model->nk[1]; ++uc_2)
             for (index_t uc_3=0; uc_3<model->nk[2]; ++uc_3)  {
-                claV3d_t to = claV3d_map(model->positions[sto]);
-
-                claV3d_t from = claV3d_add( _from, claM3d_vecmat( (claV3d_t){{uc_1,uc_2,uc_3}}, UCV ) );
+                const claV3d_t to = claV3d_map(model->positions[sto]);
+                const claV3d_t from = claV3d_add( _from, claM3d_vecmat( (claV3d_t){{uc_1,uc_2,uc_3}}, UCV ) );
                 claV3d_t dist = claV3d_sub( to, from );
 
-                delta.v[0] = uc_1, delta.v[1] = uc_2, delta.v[2] = uc_3;
+                const claV3i_t delta = {{uc_1, uc_2, uc_3}};
 
                 for (int in=-periodic_iter[0]; in<=periodic_iter[0]; in++)
                 for (int im=-periodic_iter[1]; im<=periodic_iter[1]; im++)
@@ -336,12 +341,10 @@ void init_ff_struct(const double max_dist, diverge_model_t* model) {
                         dist = trial;
                 }
 
-                claV4d_t helper;
-                claV3d_rmap( dist, helper.v );
-                helper.v[3] = sto;
+                const claV4d_t helper = {{dist.v[0], dist.v[1], dist.v[2], sto}};
 
                 if (claV3d_norm(dist) < max_dist+1e-10 && !contains_claV4d_t(bond_lookup,bond_lookup_sz,helper)) {
-                    #pragma omp critical(write_into)
+                    #pragma omp critical
                     {
                         VECTOR_PUSH_BACK( bond_lookup, helper );
                         VECTOR_PUSH_BACK( real_ff, delta );
@@ -351,8 +354,10 @@ void init_ff_struct(const double max_dist, diverge_model_t* model) {
                     }
                 }
             }
-            VECTOR_FREE( bond_lookup );
         }
+    }
+
+    VECTOR_FREE( bond_lookup );
     }
 
     model->n_tu_ff = real_ff_sz;
