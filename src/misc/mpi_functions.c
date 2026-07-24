@@ -157,6 +157,11 @@ void diverge_mpi_allreduce_index_sum_inplace( void* buf, int num ) {
     MPI_Allreduce( MPI_IN_PLACE, buf, num, MPI_LONG_LONG, MPI_SUM, diverge_mpi_comm );
 }
 
+void diverge_mpi_allreduce_64_bor_inplace( void* sendrecvbuf, int num ) {
+    MPICHK();
+    MPI_Allreduce( MPI_IN_PLACE, sendrecvbuf, sizeof(uint64_t)*num, MPI_BYTE, MPI_BOR, diverge_mpi_comm );
+}
+
 void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num ) {
     MPICHK();
     MPI_Allgather( sendbuf, num, MPI_INT, recvbuf, num, MPI_INT, diverge_mpi_comm );
@@ -454,6 +459,10 @@ void diverge_mpi_allreduce_complex_bor_inplace( void* sendrecvbuf, int num ) {
 
 void diverge_mpi_allreduce_index_sum_inplace( void* buf, int num ) {
     (void)buf; (void)num;
+}
+
+void diverge_mpi_allreduce_64_bor_inplace( void* sendrecvbuf, int num ) {
+    (void)sendrecvbuf; (void)num;
 }
 
 void diverge_mpi_allgather_int( const int* sendbuf, int* recvbuf, int num ) {
