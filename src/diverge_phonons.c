@@ -63,21 +63,30 @@ void diverge_phonons_apply_asr( diverge_model_t* m ) {
 void* diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {
     assert( m->n_spin == 1 );
     double* E = diverge_model_internals_get_E(m);
+    const index_t nkb = kdimtot(m->nk,m->nkf)*m->n_orb;
     if (!m->internals->model_phonons_imag_freq)
-        m->internals->model_phonons_imag_freq = bitary_alloc(kdimtot(m->nk,m->nkf)*m->n_orb);
-    int nimag = 0;
-    if (shared_exclusive_enter(E)) for (index_t k=0; k<kdimtot(m->nk,m->nkf)*m->n_orb; ++k) {
+        m->internals->model_phonons_imag_freq = bitary_alloc(nkb);
+    if (shared_exclusive_enter(E)) for (index_t k=0; k<nkb; ++k) {
         int isimag = (E[k] < -DIVERGE_EPS_MESH);
-        if (isimag) {
+        if (isimag)
             bitary_set(m->internals->model_phonons_imag_freq, k);
-            nimag++;
-        }
         E[k] = (isimag?-1.0:1.0) * sqrt(fabs(E[k]));
     }
     shared_exclusive_wait(E);
-    diverge_mpi_allreduce_int_max_inplace( &nimag, 1 );
+
+    index_t sz = shared_malloc_size();
+    diverge_mpi_allgather_index_inplace(&sz, 1);
+    if (sz > 1) {
+        diverge_mpi_allreduce_64_bor_inplace(
+                m->internals->model_phonons_imag_freq,
+                bitary_nwords(nkb)
+        );
+    }
+
+    size_t nimag = bitary_count_parallel(m->internals->model_phonons_imag_freq,
+            nkb, diverge_omp_num_threads());
     if (nimag)
-        mpi_wrn_printf( "found %li imaginary phonon frequencies\n", nimag );
+        mpi_wrn_printf("found %lu imaginary phonon frequencies\n", nimag);
     return m->internals->model_phonons_imag_freq;
 }
 
