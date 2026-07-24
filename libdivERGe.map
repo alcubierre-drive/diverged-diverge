@@ -121,6 +121,7 @@ DIVERGE_0.11 {
         diverge_mpi_allgatherv_bytes;
         diverge_mpi_allgatherv_double;
         diverge_mpi_allgatherv_index;
+        diverge_mpi_allreduce_64_bor_inplace;
         diverge_mpi_allreduce_complex_bor_inplace;
         diverge_mpi_allreduce_complex_sum;
         diverge_mpi_allreduce_complex_sum_inplace;
