@@ -132,6 +132,14 @@ void diverge_phonons_apply_asr( diverge_model_t* m );
 void* diverge_phonons_apply_sgnsqrt( diverge_model_t* m );
 
 /**
+ * same as :c:func:`diverge_phonons_apply_sgnsqrt` but for an arbitrary 2D array
+ * (nk,nb). The last nb_ignore bands (of index b) are not considered. Imaginary
+ * frequencies are NaN-masked using :c:func:`fnan_gen`, with the value put in
+ * the NaN payload.
+ */
+void diverge_phonons_sgnsqrt( double* E, index_t nk, index_t nb, index_t nb_ignore );
+
+/**
  * return a bit-array (cf. :c:func:`bitary_get`) of shape (nk, nb) that tracks
  * whether at a certain k point and mode the phonon frequency is *imaginary*.
  */

@@ -302,6 +302,7 @@ DIVERGE_UNSTABLE {
         diverge_phonons_read_ifc;
         diverge_phonons_read_ifc_and_elph;
         diverge_phonons_set_vertex_generator;
+        diverge_phonons_sgnsqrt;
         diverge_qnan_gen;
         diverge_qnan_get;
         diverge_qnan_isnan;

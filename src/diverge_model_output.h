@@ -206,6 +206,12 @@ typedef struct diverge_model_output_conf_t {
      * orbital-band matrices (cf. :c:func:`diverge_model_internals_get_U`)!
      */
     int fatbands;
+    /**
+     * when the band structure is explicitly calculated and not taken from
+     * internals (see :c:member:`diverge_model_output_conf_t.npath` != -1) then
+     * the dispersion can be ``square rooted'' to resemble phonon energies.
+     */
+    int apply_sgnsqrt;
 } diverge_model_output_conf_t;
 
 #if !defined(__cplusplus) && !defined(CTYPESGEN)
@@ -220,6 +226,7 @@ static const diverge_model_output_conf_t diverge_model_output_conf_defaults = {
     .E = 0,
     .npath = 0,
     .fatbands = 0,
+    .apply_sgnsqrt = 0,
 };
 #endif // __cplusplus
 
