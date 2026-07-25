@@ -94,14 +94,14 @@ void* diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {
 void diverge_phonons_sgnsqrt( double* E, index_t nk, index_t nb, index_t nb_ignore ) {
     const index_t nb_cut = nb-nb_ignore;
     index_t n_imag = 0;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_imag)
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2) reduction(+:n_imag)
     for (index_t k=0; k<nk; ++k)
     for (index_t b=0; b<nb_cut; ++b) {
         const index_t kb = IDX2(k,b,nb);
         const int isimag = (E[kb] < -DIVERGE_EPS_MESH);
-        E[k] = sqrt(fabs(E[kb]));
+        E[kb] = sqrt(fabs(E[kb]));
         if (isimag) {
-            E[k] = fnan_gen(-E[kb]);
+            E[kb] = fnan_gen(-E[kb]);
             n_imag++;
         }
     }

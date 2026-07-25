@@ -539,7 +539,7 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
 
         // map back
         for (index_t x=ntot_m1; x>=0; --x) {
-            for (index_t b=0; b<nb; ++b) buf[IDX2(x,b,nb+3)] = E[IDX2(x,b,nb)];
+            for (index_t b=0; b<nb; ++b) buf[IDX2(x,b,nb+3)] = E[IDX2(x,b,nb)] - mod->internals->mu;
             for (index_t d=0; d<3; ++d) buf[IDX2(x,d+nb,nb+3)] = K[IDX2(x,d,3)];
         }
 
@@ -548,8 +548,7 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
         free(K);
         nk = ntot_m1 + 1;
     }
-    if (apply_sgnsqrt)
-        diverge_phonons_sgnsqrt(buf, nk, nb+3, 3);
+    if (apply_sgnsqrt) diverge_phonons_sgnsqrt(buf, nk, nb+3, 3);
 }
 
 static void* kmesh_to_bands_serialize( diverge_model_t* mod, bool crs, index_t* psize ) {
