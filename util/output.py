@@ -970,8 +970,8 @@ def bandstructure_bands_ph( model ):
     as tuple.
     """
     import diverge
-    fnan_isnan = np.vectorize(diverge.fnan_isnan)
-    fnan_get = np.vectorize(diverge.fnan_get)
+    fnan_isnan = np.vectorize(diverge.fnan_isnan, otypes=[np.int32])
+    fnan_get = np.vectorize(diverge.fnan_get, otypes=[np.float64])
     B = np.copy(bandstructure_bands(model))
     sel = fnan_isnan(B) == 1
     B[sel] = fnan_get(B[sel])
