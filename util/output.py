@@ -961,6 +961,22 @@ def read( fname ):
         print(f"magic number {magic} ('{chr(magic)}') unknown")
         return None
 
+def bandstructure_bands_ph( model ):
+    r"""
+    function that implements the same functionality as
+    :func:`bandstructure_bands` but deals with imaginary frequencies contained
+    in the save. requires diverge python library. returns the bands *and* a
+    boolean array that indicates where imaginary phonon frequencies are located;
+    as tuple.
+    """
+    import diverge
+    fnan_isnan = np.vectorize(diverge.fnan_isnan)
+    fnan_get = np.vectorize(diverge.fnan_get)
+    B = np.copy(bandstructure_bands(model))
+    sel = fnan_isnan(B) == 1
+    B[sel] = fnan_get(B[sel])
+    return B, sel
+
 def bandstructure_bands( model ):
     r"""
     return the bands array (nk,nb) from the band  structure obtained from a
