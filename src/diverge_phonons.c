@@ -71,7 +71,7 @@ void* diverge_phonons_apply_sgnsqrt( diverge_model_t* m ) {
         int isimag = (E[k] < -DIVERGE_EPS_MESH);
         if (isimag)
             bitary_set(m->internals->model_phonons_imag_freq, k);
-        E[k] = (isimag?-1.0:1.0) * sqrt(fabs(E[k]));
+        E[k] = diverge_sgnsqrt(E[k]);
     }
     shared_exclusive_wait(E);
 
@@ -98,10 +98,10 @@ void diverge_phonons_sgnsqrt( double* E, index_t nk, index_t nb, index_t nb_igno
     for (index_t k=0; k<nk; ++k)
     for (index_t b=0; b<nb_cut; ++b) {
         const index_t kb = IDX2(k,b,nb);
-        const int isimag = (E[kb] < -DIVERGE_EPS_MESH);
-        E[kb] = sqrt(fabs(E[kb]));
+        int isimag = E[kb] < -DIVERGE_EPS_MESH;
+        E[kb] = diverge_sgnsqrt(E[kb]);
         if (isimag) {
-            E[kb] = fnan_gen(-E[kb]);
+            E[kb] = fnan_gen(E[kb]);
             n_imag++;
         }
     }

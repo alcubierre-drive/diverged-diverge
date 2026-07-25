@@ -131,6 +131,11 @@ void diverge_phonons_apply_asr( diverge_model_t* m );
  */
 void* diverge_phonons_apply_sgnsqrt( diverge_model_t* m );
 
+/** signed square root for a single double */
+static inline double diverge_sgnsqrt( const double x ) {
+    return ((x >= 0) ? 1.0 : -1.0) * sqrt(fabs(x));
+}
+
 /**
  * same as :c:func:`diverge_phonons_apply_sgnsqrt` but for an arbitrary 2D array
  * (nk,nb). The last nb_ignore bands (of index b) are not considered. Imaginary
