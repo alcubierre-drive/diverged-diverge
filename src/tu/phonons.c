@@ -31,8 +31,10 @@ struct tu_data_phonons_t {
     index_t n_vtx;
 
     complex128_t* g_ob_qO; // (my_nk, n_spin,n_spin,n_orbff, nO)
+    complex128_t* g_ob_qO_fullmesh; // only present if requested (nk, n_spin,n_spin,n_orbff, nO)
 
     int ignore_imag_freq;
+    int save_g_on_full_qmesh;
     complex128_t *gbuf, *gbuf_zero; // (my_nk, nO)
     double gbuf_last_Lambda, gbuf_zero_last_Lambda;
 
@@ -65,7 +67,7 @@ static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
         const double Lambda, const bool ignore_imag_freq, bool refined );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
-        bool ignore_imag_freq, bool enable_refinement ) {
+        bool ignore_imag_freq, bool enable_refinement, bool save_g_on_full_qmesh ) {
     tu_data_phonons_t* t = calloc(1, sizeof*t);
     t->V = NULL;
     t->pmod = ph;
@@ -81,6 +83,7 @@ tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* e
     t->vtx = (ph_vertex_t*)t->pmod->vert;
     t->n_vtx = t->pmod->n_vert;
     t->ignore_imag_freq = ignore_imag_freq;
+    t->save_g_on_full_qmesh = save_g_on_full_qmesh;
     t->gbuf_last_Lambda = t->gbuf_zero_last_Lambda = t->gbuf_ref_last_Lambda =
         t->gbuf_ref_zero_last_Lambda = t->Dch_last_Lambda = t->Dch_zero_last_Lambda = -1.0;
 
@@ -104,6 +107,7 @@ void tu_data_phonons_free( tu_data_phonons_t* t ) {
     free(t->Dch);
     free(t->Dch_zero);
     free(t->g_ob_qO);
+    free(t->g_ob_qO_fullmesh);
     free(t->g_ob_qO_refined);
     free(t);
 }
@@ -340,9 +344,16 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
     t->g_ob_qO = calloc(t->my_nk * linsz * t->nO, sizeof*t->g_ob_qO);
     if (!t->g_ob_qO)
         mpi_err_printf( "cant allocate t->g_ob_qO(%li,%li,%li) array\n", t->my_nk, linsz, t->nO );
+    // optinal: save to fullmesh
+    if (t->save_g_on_full_qmesh) {
+        t->g_ob_qO_fullmesh = calloc(nk * linsz * t->nO, sizeof*t->g_ob_qO_fullmesh);
+        if (!t->g_ob_qO_fullmesh)
+            mpi_err_printf( "cant allocate t->g_ob_qO_fullmesh(%li,%li,%li) array\n", nk, linsz, t->nO );
+    }
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     { complex128_t* ffbuf = calloc(linsz * t->nO, sizeof*ffbuf);
       complex128_t* Ubuf = calloc(POW2(t->nO), sizeof*Ubuf);
+
     #pragma omp for
     for (index_t kk=0; kk<t->my_nk; ++kk) {
         const index_t q = t->idx_ibz_in_fullmesh[kk + t->my_nk_off];
@@ -363,8 +374,32 @@ static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
             }
         }
         single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO+kk*linsz*t->nO, linsz, t->nO, t->nO, 1.0, 0.0 );
-    } free( ffbuf );
-      free( Ubuf ); }
+    }
+
+    if (t->save_g_on_full_qmesh) {
+        #pragma omp for
+        for (index_t q=0; q<nk; ++q) {
+            transpose_outofplace( Ubuf, U+POW2(t->nO)*kidxc2f(q,t->nk,t->nkf), t->nO );
+            ZERO_OUT( ffbuf, linsz * t->nO );
+            for (index_t f=0; f<dv_vec_sz(formfacs); ++f) {
+                const index_t mi = ph_vertex_to_mi_map[f];
+                if (mi != -1) {
+                    const index_t s1s2_ff[] = {formfacs[f].s1, formfacs[f].s2};
+                    const index_t s1s2_m1[] = {0,0, 1,1};
+                    const index_t* si = (s1s2_ff[0] == -1) ? s1s2_m1 : s1s2_ff;
+                    const index_t nsi = (s1s2_ff[0] == -1 && !SU2) ? 2 : 1;
+                    for (index_t s=0; s<nsi; ++s) {
+                        const index_t s1 = si[IDX2(s,0,2)],
+                                      s2 = si[IDX2(s,1,2)];
+                        ffbuf[IDX4(s2,s1,mi,formfacs[f].OA, t->n_spin,t->n_orbff,t->nO)] += fftw_cbuf[IDX2(f,q,nk)];
+                    }
+                }
+            }
+            single_gemm_serial( ffbuf, Ubuf, t->g_ob_qO_fullmesh+q*linsz*t->nO, linsz, t->nO, t->nO, 1.0, 0.0 );
+        }
+    }
+
+    free( ffbuf ); free( Ubuf ); }
 
     // and do some allocation
     t->Dch = calloc(t->my_nk * POW2(linsz), sizeof*t->Dch);
@@ -451,10 +486,12 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
 }
 
 diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t ) { return t->pmod; }
-complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t ) { return t->g_ob_qO; }
+complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t, int fullmesh ) {
+    return fullmesh ? t->g_ob_qO_fullmesh : t->g_ob_qO;
+}
 
-void tu_data_phonons_get_g_dim( tu_data_phonons_t* t, index_t g_dim[3] ) {
-    g_dim[0] = t->my_nk;
+void tu_data_phonons_get_g_dim( tu_data_phonons_t* t, int fullmesh, index_t g_dim[3] ) {
+    g_dim[0] = fullmesh ? kdim(t->nk) : t->my_nk;
     g_dim[1] = POW2(t->n_spin)*t->n_orbff;
     g_dim[2] = t->nO;
 }

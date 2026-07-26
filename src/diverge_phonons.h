@@ -157,9 +157,14 @@ void* diverge_phonons_get_ifrq( diverge_model_t* m );
  * applied to the RG flow (*this is the actual buffer, not a copy*). May return
  * NULL in case phonon internals are not initialized.
  *
- * ``if (refined)``, return the *refined* electron-phonon coupling buffer, size
- * being (n_refine, n_spin, n_spin, n_orbff, nO). The size of refinement can be
- * returned with :c:func:`diverge_phonons_get_refine`.
+ * ``if (refined > 0)``, return the *refined* electron-phonon coupling buffer,
+ * size being (n_refine, n_spin, n_spin, n_orbff, nO). The size of refinement
+ * can be returned with :c:func:`diverge_phonons_get_refine`.
+ *
+ * ``if (refined < 0)``, return the *full qmesh* EPC buffer (in case it was
+ * allocated. The first dimension returned by
+ * :c:func:`diverge_phonons_get_g_dim` is not correct in this case and has to be
+ * replaced by ``kdim(m->nk)``.
  */
 complex128_t* diverge_phonons_get_g( diverge_model_t* m, int refined );
 

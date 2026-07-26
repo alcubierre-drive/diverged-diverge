@@ -124,7 +124,8 @@ diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
     m->internals->tu_phonon_model_dont_free = 1;
     tu_data_phonons_t* p = tu_data_phonons_init( m, model,
             model->internals->tu_phonons_ignore_imag_freq,
-            model->internals->tu_phonons_refined );
+            model->internals->tu_phonons_refined,
+            model->internals->tu_phonons_save_g_on_fullmesh );
     // set the phonon pointer into tu_data; do not modify (but you can use it!)
     ((tu_data_t*)(model->internals->tu_data))->phonons_reference = p;
     model->internals->tu_data_phonons = p;

@@ -21,15 +21,15 @@ double tu_data_phonons_change_regulator( double reg );
 double tu_data_phonons_change_refinement_eps( double eps );
 
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
-        bool ignore_imag_freq, bool enable_refinement );
+        bool ignore_imag_freq, bool enable_refinement, bool save_g_on_full_qmesh );
 void tu_data_phonons_free( tu_data_phonons_t* t );
 
 // generates D channel vertex scaled by fac, adds to existing content of buffer
 void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
         complex128_t* out, double fac );
 diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t );
-complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t );
-void tu_data_phonons_get_g_dim( tu_data_phonons_t* t, index_t g_dim[3] );
+complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t, int fullmesh );
+void tu_data_phonons_get_g_dim( tu_data_phonons_t* t, int fullmesh, index_t g_dim[3] );
 
 // we expose an interface to the refined g
 complex128_t* tu_data_phonons_get_g_ref( tu_data_phonons_t* t );

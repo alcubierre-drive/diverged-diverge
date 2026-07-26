@@ -115,14 +115,14 @@ void* diverge_phonons_get_ifrq( diverge_model_t* m ) {
 
 complex128_t* diverge_phonons_get_g( diverge_model_t* m, int refined ) {
     tu_data_phonons_t* p = m->internals->tu_data_phonons;
-    return p ? (refined ? tu_data_phonons_get_g_ref(p) : tu_data_phonons_get_g(p)) : NULL;
+    return p ? (refined > 0 ? tu_data_phonons_get_g_ref(p) : tu_data_phonons_get_g(p, refined)) : NULL;
 }
 
 void diverge_phonons_get_g_dim( diverge_model_t* m, index_t g_dim[3] ) {
     tu_data_phonons_t* p = m->internals->tu_data_phonons;
     if (!p) return;
     if (!g_dim) return;
-    tu_data_phonons_get_g_dim(p, g_dim);
+    tu_data_phonons_get_g_dim(p, 0, g_dim); // TODO fullmesh not accessible
 }
 
 double diverge_phonons_change_regulator( double eta ) {
