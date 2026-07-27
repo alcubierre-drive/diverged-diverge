@@ -270,12 +270,12 @@ static inline void chomp_line(char* str) {
     char *src = str;
 
     // strip front
-    while (*src && isspace(*src)) src++;
+    while (*src && isspace((unsigned char)*src)) src++;
 
     // compress
     int in_space = 0;
     while (*src) {
-        if (isspace(*src)) {
+        if (isspace((unsigned char)*src)) {
             if (!in_space) {
                 *dst++ = ' ';
                 in_space = 1;
