@@ -7,6 +7,8 @@
 #include "text_io.h"
 #include "gemm.h"
 
+#include <ctype.h>
+
 #define LINALG_NO_LAPACKE
 #include "linalg.h"
 LINALG_IMPLEMENT
@@ -262,6 +264,37 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
     if (!(cond)) { mpi_err_printf( "%s\n", #cond ); errors++; } \
 }
 
+static inline void chomp_line(char* str) {
+    if (str == NULL) return;
+    char *dst = str;
+    char *src = str;
+
+    // strip front
+    while (*src && isspace(*src)) src++;
+
+    // compress
+    int in_space = 0;
+    while (*src) {
+        if (isspace(*src)) {
+            if (!in_space) {
+                *dst++ = ' ';
+                in_space = 1;
+            }
+        } else {
+            *dst++ = *src;
+            in_space = 0;
+        }
+        src++;
+    }
+
+    // strip back
+    if (dst > str && *(dst - 1) == ' ') {
+        *(dst - 1) = '\0';
+    } else {
+        *dst = '\0';
+    }
+}
+
 static ifc_t* read_ifc_file( const char* fname ) {
     FILE* f = fopen(fname, "r");
     if (!f) {
@@ -301,9 +334,45 @@ static ifc_t* read_ifc_file( const char* fname ) {
     }
 
     char line[DIVERGE_GETLINE_MAX] = {0}; diverge_getline( line, f );
-    nread = fscanf( f, "%li %li %li\n", &ifc->nq[0], &ifc->nq[1], &ifc->nq[2] );
-    VRB_ASSERT( nread == 3 );
+    if (line[0] == 'T') { // we have some distance to cover to reach the qpts
+        mpi_log_printf( "ifc: discarding lines\n" );
+        mpi_log_printf( "=====================\n%s", line );
+        for (int i=0; i<3; ++i) { // that's the lattice
+            diverge_getline(line, f);
+            if (mpi_loglevel_get()>=mpi_loglevel_log) mpi_eprintf( "%s", line );
+        }
+        for (int a=0; a<ifc->n_at; ++a) { // and now the Born charges
+            diverge_getline(line, f);
+            if (mpi_loglevel_get()>=mpi_loglevel_log) mpi_eprintf( "%s", line );
+            for (int i=0; i<3; ++i) {
+                diverge_getline(line, f);
+                if (mpi_loglevel_get()>=mpi_loglevel_log) mpi_eprintf( "%s", line );
+            }
+        }
 
+        int64_t q1 = -1, q2 = -1, q3 = -1;
+        char line_cmp[1024] = {0};
+        char line_cpy[1024] = {0};
+rescan_next_line:
+        diverge_getline(line, f);
+        strcpy(line_cpy, line);
+        nread = sscanf(line_cpy, "%li %li %li\n", &q1, &q2, &q3);
+        chomp_line(line_cpy);
+        sprintf(line_cmp, "%li %li %li", q1, q2, q3);
+        if (!strcmp(line_cmp, line_cpy)) { // actually found three integers
+            ifc->nq[0] = q1;
+            ifc->nq[1] = q2;
+            ifc->nq[2] = q3;
+            mpi_log_printf( "=====================\n" );
+            goto stop_rescan;
+        } else {
+            if (mpi_loglevel_get()>=mpi_loglevel_log) mpi_eprintf( "%s", line );
+            goto rescan_next_line;
+        }
+    }
+
+stop_rescan:
+    {}
     int64_t nq = ifc->nq[0]*ifc->nq[1]*ifc->nq[2];
     ifc->data = calloc(nq*POW2(ifc->n_at*3), sizeof*ifc->data);
     for (int64_t x=0; x<3; ++x)
