@@ -356,7 +356,7 @@ static ifc_t* read_ifc_file( const char* fname ) {
 rescan_next_line:
         diverge_getline(line, f);
         strcpy(line_cpy, line);
-        nread = sscanf(line_cpy, "%li %li %li\n", &q1, &q2, &q3);
+        nread = sscanf(line_cpy, "%li %li %li", &q1, &q2, &q3);
         chomp_line(line_cpy);
         sprintf(line_cmp, "%li %li %li", q1, q2, q3);
         if (!strcmp(line_cmp, line_cpy)) { // actually found three integers
@@ -369,10 +369,12 @@ rescan_next_line:
             if (mpi_loglevel_get()>=mpi_loglevel_log) mpi_eprintf( "%s", line );
             goto rescan_next_line;
         }
+    } else {
+        nread = fscanf(f, "%li %li %li", &ifc->nq[0], &ifc->nq[1], &ifc->nq[2]);
     }
 
 stop_rescan:
-    {}
+    VRB_ASSERT( nread == 3 );
     int64_t nq = ifc->nq[0]*ifc->nq[1]*ifc->nq[2];
     ifc->data = calloc(nq*POW2(ifc->n_at*3), sizeof*ifc->data);
     for (int64_t x=0; x<3; ++x)
