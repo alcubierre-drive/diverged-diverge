@@ -14,9 +14,7 @@
 LINALG_IMPLEMENT
 
 static const double Rydberg = 13.605693122994,
-                    Rydberg_3_2 = 50.18581794358572,
-                    Rydberg_2 = 185.11488535708622,
-                    Bohr = 0.529177;
+                    Bohr    =  0.529177000000;
 
 // this is needed for the interpretation of the ifc file
 typedef struct {
@@ -201,8 +199,7 @@ static void lattice_from_ibrav( int ibrav, const double celldm[6], double* lat )
 diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wigner_config_t* wc ) {
     if (!wc) wc = &diverge_wigner_config_defaults;
 
-    if (fabs(Rydberg_2 - POW2(Rydberg)) > 1.e-10)
-        mpi_err_printf("units are broken\n");
+    const double Rydberg_2 = POW2(Rydberg);
 
     diverge_model_t* m = diverge_model_init();
     ifc_t* ifc = read_ifc_file( fname );
@@ -729,8 +726,7 @@ static ph_vertex_t* epmatwp_to_ph_vertex_t( const complex128_t* data,
         claV3i_t* Rk, index_t nRk, claV3i_t* Rg, index_t nRg,
         index_t n_orb_ph, index_t n_orb_el, double maxrel, index_t* p_vtx_sz ) {
 
-    if (fabs(Rydberg_3_2 - pow(Rydberg, 1.5)) > 1.e-10)
-        mpi_err_printf("units are broken\n");
+    const double Rydberg_3_2 = pow(Rydberg, 1.5);
 
     double vtx_max = 0.0;
     index_t ntot = nRg * n_orb_ph * nRk * POW2(n_orb_el);
