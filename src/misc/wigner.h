@@ -36,6 +36,20 @@ typedef struct ph_vertex_t ph_vertex_t;
 #define DIVERGE_WIGNER_CONFIG_APPLY_ASR_NO_ORBDETECT 0x8
 
 /**
+ * if this constant is bit-or activated in
+ * :c:member:`diverge_wigner_config_t.apply_rydberg` the IFC data is rescaled
+ * with (Ry=13.6eV)^2.
+ */
+#define DIVERGE_WIGNER_CONFIG_APPLY_RYDBERG_2_IFC 0x1
+
+/**
+ * if this constant is bit-or activated in
+ * :c:member:`diverge_wigner_config_t.apply_rydberg` the EPC data is rescaled
+ * with (Ry=13.6eV)^(3/2).
+ */
+#define DIVERGE_WIGNER_CONFIG_APPLY_RYDBERG_3_2_G 0x2
+
+/**
  * configuration for reading wigner(.fmt) files. defaults in
  * :c:var:`diverge_wigner_config_default` (or
  * :c:func:`diverge_wigner_config_defaults_CPP`).
@@ -60,15 +74,26 @@ typedef struct {
     int apply_ndegen;
     /** apply mass division */
     int apply_massdiv;
-    /** apply energy rescale from rydberg to eV */
+    /**
+     * apply energy rescale from rydberg to eV (bit-or of
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_RYDBERG_2_IFC` and
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_RYDBERG_3_2_G`)
+     */
     int apply_rydberg;
 } diverge_wigner_config_t;
 
 #ifndef __cplusplus
 /** defaults for :c:type:`diverge_wigner_config_t` */
 static const diverge_wigner_config_t diverge_wigner_config_defaults = {
-    .nsc = 2, .sgn = -1, .eps = 1.e-7, .dim = -1, .apply_asr = 0,
-    .apply_ndegen = 1, .apply_massdiv = 1, .apply_rydberg = 1,
+    .nsc = 2,
+    .sgn = -1,
+    .eps = 1.e-7,
+    .dim = -1,
+    .apply_asr = 0,
+    .apply_ndegen = 1,
+    .apply_massdiv = 1,
+    .apply_rydberg = DIVERGE_WIGNER_CONFIG_APPLY_RYDBERG_2_IFC |
+                     DIVERGE_WIGNER_CONFIG_APPLY_RYDBERG_3_2_G,
 };
 #endif
 /**
@@ -97,12 +122,14 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
  * :param index_t* p_vtx_sz: length of the returned array.
  * :param int apply_asr: apply the vertex acoustic sum rule (cf.
  *      :c:func:`diverge_phonons_asr_vertex`).
+ * :param int apply_rydberg: apply the (Ry=13.6eV)^(3/2) rescaling of g
  *
  * :returns: array of type :c:type:`ph_vertex_t` with the real-space elph
  *      elements, shape (``*p_vtx_sz``,).
  */
 ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
-        const double* masses, double maxrel, index_t* p_vtx_sz, int apply_asr );
+        const double* masses, double maxrel, index_t* p_vtx_sz, int apply_asr,
+        int apply_rydberg );
 
 /**
  * provide the memory region where atom masses are stored in a phonon model

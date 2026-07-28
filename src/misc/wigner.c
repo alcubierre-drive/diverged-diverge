@@ -199,7 +199,8 @@ static void lattice_from_ibrav( int ibrav, const double celldm[6], double* lat )
 diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wigner_config_t* wc ) {
     if (!wc) wc = &diverge_wigner_config_defaults;
 
-    const double Rydberg_2 = POW2(Rydberg);
+    const double Rydberg_2 = (wc->apply_rydberg & DIVERGE_WIGNER_CONFIG_APPLY_RYDBERG_2_IFC) ?
+        POW2(Rydberg) : 1.0;
 
     diverge_model_t* m = diverge_model_init();
     ifc_t* ifc = read_ifc_file( fname );
@@ -242,7 +243,7 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
             if (ndg) {
                 tmp /= (double)ndg;
                 VECTOR_PUSH_BACK( hop, (rs_hopping_t){ .R={R.v[0],R.v[1],R.v[2]},
-                        .o1=o2, .o2=o1, .t=tmp*(wc->apply_rydberg ? Rydberg_2 : 1.0)/
+                        .o1=o2, .o2=o1, .t=tmp * Rydberg_2 /
                         sqrt(wc->apply_massdiv ? masses[o1]*masses[o2] : 1.0) } );
             }
         }
@@ -726,8 +727,6 @@ static ph_vertex_t* epmatwp_to_ph_vertex_t( const complex128_t* data,
         claV3i_t* Rk, index_t nRk, claV3i_t* Rg, index_t nRg,
         index_t n_orb_ph, index_t n_orb_el, double maxrel, index_t* p_vtx_sz ) {
 
-    const double Rydberg_3_2 = pow(Rydberg, 1.5);
-
     double vtx_max = 0.0;
     index_t ntot = nRg * n_orb_ph * nRk * POW2(n_orb_el);
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:vtx_max)
@@ -758,21 +757,25 @@ static ph_vertex_t* epmatwp_to_ph_vertex_t( const complex128_t* data,
         if (cabs(data[i]) >= l_vtx) {
             VECTOR_PUSH_BACK( vtx, (ph_vertex_t){ .R12={Rk[k].v[0], Rk[k].v[1], Rk[k].v[2]},
                     .o1=o1, .o2=o2, .OA=OA, .RA={Rg[g].v[0], Rg[g].v[1], Rg[g].v[2]},
-                    .g=data[i] * Rydberg_3_2 } );
+                    .g=data[i]} );
         }
     }
     return vtx;
 }
 
 ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
-        const double* masses, double maxrel, index_t* p_vtx_sz, int apply_asr ) {
+        const double* masses, double maxrel, index_t* p_vtx_sz, int apply_asr,
+        int apply_rydberg ) {
     qe_wigner_t* q = qe_wigner_read( wigner );
     complex128_t* g = epmatwp_read( epmatwp, q );
     ph_vertex_t* pv = NULL;
+
+    const double Rydberg_3_2 = apply_rydberg ? pow(Rydberg, 1.5) : 1.0;
+
     if (g) {
         pv = epmatwp_to_ph_vertex_t( g, q->irvec_k, q->nrr_k, q->irvec_g,
                 q->nrr_g, q->dims2*3, q->dims, maxrel, p_vtx_sz );
-        for (index_t i=0; i<*p_vtx_sz; ++i) pv[i].g /= sqrt(masses[pv[i].OA]);
+        for (index_t i=0; i<*p_vtx_sz; ++i) pv[i].g *= Rydberg_3_2/sqrt(masses[pv[i].OA]);
         free( g );
 
         if (apply_asr > 0)
@@ -802,7 +805,8 @@ diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
     if (!(wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES)) apply_asr_n_orb = 0;
 
     m->vert = (rs_vertex_t*)diverge_phonons_read_elph( wigner, epmatwp,
-            diverge_phonons_model_get_masses(m), maxrel, &m->n_vert, apply_asr_n_orb );
+            diverge_phonons_model_get_masses(m), maxrel, &m->n_vert,
+            apply_asr_n_orb, wc->apply_rydberg & DIVERGE_WIGNER_CONFIG_APPLY_RYDBERG_3_2_G);
 
     diverge_phonons_asr_vertex_set_sorted_mode(prev_asr_algorithm);
 
