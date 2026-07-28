@@ -14,6 +14,8 @@
 LINALG_IMPLEMENT
 
 static const double Rydberg = 13.605693122994,
+                    Rydberg_3_2 = 50.18581794358572,
+                    Rydberg_2 = 185.11488535708622,
                     Bohr = 0.529177;
 
 // this is needed for the interpretation of the ifc file
@@ -199,6 +201,9 @@ static void lattice_from_ibrav( int ibrav, const double celldm[6], double* lat )
 diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wigner_config_t* wc ) {
     if (!wc) wc = &diverge_wigner_config_defaults;
 
+    if (fabs(Rydberg_2 - POW2(Rydberg)) > 1.e-10)
+        mpi_err_printf("units are broken\n");
+
     diverge_model_t* m = diverge_model_init();
     ifc_t* ifc = read_ifc_file( fname );
     if (!ifc) return NULL;
@@ -240,7 +245,7 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
             if (ndg) {
                 tmp /= (double)ndg;
                 VECTOR_PUSH_BACK( hop, (rs_hopping_t){ .R={R.v[0],R.v[1],R.v[2]},
-                        .o1=o2, .o2=o1, .t=tmp*(wc->apply_rydberg ? POW2(Rydberg) : 1.0)/
+                        .o1=o2, .o2=o1, .t=tmp*(wc->apply_rydberg ? Rydberg_2 : 1.0)/
                         sqrt(wc->apply_massdiv ? masses[o1]*masses[o2] : 1.0) } );
             }
         }
@@ -334,7 +339,10 @@ static ifc_t* read_ifc_file( const char* fname ) {
     }
 
     char line[DIVERGE_GETLINE_MAX] = {0}; diverge_getline( line, f );
-    if (line[0] == 'T') { // we have some distance to cover to reach the qpts
+    char line_cmp[DIVERGE_GETLINE_MAX] = {0};
+    char line_cpy[DIVERGE_GETLINE_MAX] = {0};
+    strcpy(line_cpy, line); chomp_line(line_cpy);
+    if (line_cpy[0] == 'T') { // we have some distance to cover to reach the qpts
         mpi_log_printf( "ifc: discarding lines\n" );
         mpi_log_printf( "=====================\n%s", line );
         for (int i=0; i<3; ++i) { // that's the lattice
@@ -350,21 +358,14 @@ static ifc_t* read_ifc_file( const char* fname ) {
             }
         }
 
-        int64_t q1 = -1, q2 = -1, q3 = -1;
-        char line_cmp[1024] = {0};
-        char line_cpy[1024] = {0};
 rescan_next_line:
         diverge_getline(line, f);
-        strcpy(line_cpy, line);
-        nread = sscanf(line_cpy, "%li %li %li", &q1, &q2, &q3);
-        chomp_line(line_cpy);
-        sprintf(line_cmp, "%li %li %li", q1, q2, q3);
+        strcpy(line_cpy, line); chomp_line(line_cpy);
+        nread = sscanf(line_cpy, "%li %li %li", &ifc->nq[0], &ifc->nq[1], &ifc->nq[2]);
+        sprintf(line_cmp, "%li %li %li", ifc->nq[0], ifc->nq[1], ifc->nq[2]);
         if (!strcmp(line_cmp, line_cpy)) { // actually found three integers
-            ifc->nq[0] = q1;
-            ifc->nq[1] = q2;
-            ifc->nq[2] = q3;
             mpi_log_printf( "=====================\n" );
-            goto stop_rescan;
+            goto rescan_stop;
         } else {
             if (mpi_loglevel_get()>=mpi_loglevel_log) mpi_eprintf( "%s", line );
             goto rescan_next_line;
@@ -373,7 +374,7 @@ rescan_next_line:
         nread = fscanf(f, "%li %li %li", &ifc->nq[0], &ifc->nq[1], &ifc->nq[2]);
     }
 
-stop_rescan:
+rescan_stop:
     VRB_ASSERT( nread == 3 );
     int64_t nq = ifc->nq[0]*ifc->nq[1]*ifc->nq[2];
     ifc->data = calloc(nq*POW2(ifc->n_at*3), sizeof*ifc->data);
@@ -728,6 +729,9 @@ static ph_vertex_t* epmatwp_to_ph_vertex_t( const complex128_t* data,
         claV3i_t* Rk, index_t nRk, claV3i_t* Rg, index_t nRg,
         index_t n_orb_ph, index_t n_orb_el, double maxrel, index_t* p_vtx_sz ) {
 
+    if (fabs(Rydberg_3_2 - pow(Rydberg, 1.5)) > 1.e-10)
+        mpi_err_printf("units are broken\n");
+
     double vtx_max = 0.0;
     index_t ntot = nRg * n_orb_ph * nRk * POW2(n_orb_el);
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:vtx_max)
@@ -758,7 +762,7 @@ static ph_vertex_t* epmatwp_to_ph_vertex_t( const complex128_t* data,
         if (cabs(data[i]) >= l_vtx) {
             VECTOR_PUSH_BACK( vtx, (ph_vertex_t){ .R12={Rk[k].v[0], Rk[k].v[1], Rk[k].v[2]},
                     .o1=o1, .o2=o2, .OA=OA, .RA={Rg[g].v[0], Rg[g].v[1], Rg[g].v[2]},
-                    .g=data[i] * Rydberg } );
+                    .g=data[i] * Rydberg_3_2 } );
         }
     }
     return vtx;
