@@ -976,13 +976,16 @@ if not _libs["divERGe"] is None:
     WIGNER_CONFIG_APPLY_ASR_HOPPINGS = 0x1
     WIGNER_CONFIG_APPLY_ASR_VERTICES = 0x2
     WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED = 0x4
+    WIGNER_CONFIG_APPLY_ASR_NO_ORBDETECT = 0x8
+    WIGNER_CONFIG_APPLY_RYDBERG_2_IFC = 0x1
+    WIGNER_CONFIG_APPLY_RYDBERG_3_2_G = 0x2
 
     phonons_read_ifc = _libs["divERGe"].get("diverge_phonons_read_ifc", "cdecl")
     phonons_read_ifc.argtypes = [String, c_voidp]
     phonons_read_ifc.restype = POINTER(model_t)
 
     phonons_read_elph = _libs["divERGe"].get("diverge_phonons_read_elph", "cdecl")
-    phonons_read_elph.argtypes = [String, String, c_voidp, c_double, c_voidp, c_int]
+    phonons_read_elph.argtypes = [String, String, c_voidp, c_double, c_voidp, c_int, c_int]
     phonons_read_elph.restype = c_voidp
 
     phonons_model_get_masses = _libs["divERGe"].get("diverge_phonons_model_get_masses", "cdecl")
