@@ -137,29 +137,69 @@ static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t
 // this is a thin wrapper around the above function. Legacy issues.
 ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb ) {
     mpi_log_printf( "ASR (vertices) with phonon orb index -> (site, xyz)\n" );
-
-    index_t n_vert_nontriv = 0;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:n_vert_nontriv)
-    for (index_t v=0; v<*n_vtx; ++v) if (vtx[v].mode) n_vert_nontriv++;
-
-    if (n_vert_nontriv)
-        mpi_wrn_printf( "found %li non-FFT elph components (.mode!=0), ASR maybe broken\n", n_vert_nontriv );
-
     return diverge_phonons_asr_vertex_sorted( vtx, n_vtx, n_orb );
 }
 
 #undef MERGESORT_COMP
-static inline int ph_vertex_cmp( ph_vertex_t A, ph_vertex_t B ) {
-    A.OA %= 3; // reduce to cart dim
-    B.OA %= 3;
+static inline int ph_vertex_cmp( const ph_vertex_t A, const ph_vertex_t B ) {
     return memcmp( &A, &B, offsetof(ph_vertex_t, RA_pos) );
 }
 #define MERGESORT_COMP ph_vertex_cmp
 MERGESORT_IMPL( ph_vertex_sort, ph_vertex_t )
 
+// combine repeated elements into one
+static ph_vertex_t* ph_vertex_reduce( ph_vertex_t* vtx, index_t* n_vtx ) {
+    ph_vertex_sort(vtx, *n_vtx, diverge_omp_num_threads(), 0);
+    cbytes_t* is_repeated = bitary_alloc(*n_vtx);
+    for (index_t i=1; i<*n_vtx; ++i)
+        if (!ph_vertex_cmp(vtx[i], vtx[i-1]))
+            bitary_set(is_repeated, i);
+    index_t n_rep = bitary_count_parallel(is_repeated, *n_vtx, diverge_omp_num_threads());
+    if (n_rep) {
+        ph_vertex_t* vtx_app = vtx;
+        for (index_t i=1; i<*n_vtx; ++i) {
+            if (bitary_get(is_repeated, i))
+                vtx_app->g += vtx[i].g;
+            else
+                *(++vtx_app) = vtx[i];
+        }
+        vtx = realloc(vtx, sizeof*vtx * (*n_vtx - n_rep));
+        mpi_vrb_printf( "cleaned %li/%li=%.1f%% repeated elements\n", n_rep, *n_vtx,
+                (double)n_rep/(double)(*n_vtx)*100.0 );
+        *n_vtx -= n_rep;
+    }
+    free(is_repeated);
+    return vtx;
+}
+
+#undef MERGESORT_COMP
+static inline int ph_vertex_asr_cmp( ph_vertex_t A, ph_vertex_t B ) {
+    A.OA %= 3; // reduce to cart dim
+    B.OA %= 3;
+    return memcmp( &A, &B, offsetof(ph_vertex_t, RA_pos) );
+}
+#define MERGESORT_COMP ph_vertex_asr_cmp
+MERGESORT_IMPL( ph_vertex_asr_sort, ph_vertex_t )
+
 static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb ) {
-    // sort vertices according to the comparison function ph_vertex_cmp
-    ph_vertex_sort( vtx, *n_vtx, diverge_omp_num_threads(), 0 );
+    // sort vertices according to the comparison function ph_vertex_asr_cmp
+    ph_vertex_asr_sort(vtx, *n_vtx, diverge_omp_num_threads(), 0);
+
+    // check for nontrivial vertices
+    index_t offset_mode_nontriv = 0;
+    for (;offset_mode_nontriv<*n_vtx; ++offset_mode_nontriv)
+        if (vtx[offset_mode_nontriv].mode)
+            break;
+    index_t n_vtx_nontriv = *n_vtx - offset_mode_nontriv;
+    ph_vertex_t* vtx_nontriv = NULL;
+    if (n_vtx_nontriv) {
+        mpi_wrn_printf( "found %li non-FFT ph_vertex_t (.mode!=0); ASR not applied for these.\n", n_vtx_nontriv );
+        // split up arrays
+        vtx_nontriv = calloc(n_vtx_nontriv, sizeof*vtx_nontriv);
+        memcpy(vtx_nontriv, vtx+offset_mode_nontriv, sizeof*vtx_nontriv * n_vtx_nontriv);
+        *n_vtx -= n_vtx_nontriv;
+        vtx = realloc(vtx, sizeof*vtx * (*n_vtx));
+    }
 
     int find_orbs = (n_orb <= -1);
 
@@ -221,6 +261,15 @@ static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t
 
     VECTOR_FREE( asr_ff );
 
+    vtx = ph_vertex_reduce(vtx, n_vtx);
+
+    if (n_vtx_nontriv) {
+        // re append nontrivial vertices
+        vtx = realloc(vtx, sizeof*vtx * (*n_vtx + n_vtx_nontriv));
+        memcpy(vtx+(*n_vtx), vtx_nontriv, sizeof*vtx * n_vtx_nontriv);
+        free(vtx_nontriv);
+        *n_vtx += n_vtx_nontriv;
+    }
     return vtx;
 }
 
