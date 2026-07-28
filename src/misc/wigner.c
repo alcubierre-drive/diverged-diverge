@@ -797,9 +797,6 @@ diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
     if (!wc) wc = &diverge_wigner_config_defaults;
     diverge_model_t* m = diverge_phonons_read_ifc( ifc, wc );
 
-    int prev_asr_algorithm = diverge_phonons_asr_vertex_set_sorted_mode(
-            wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED);
-
     // logic to enable/disable orbital detection
     int apply_asr_n_orb = (wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_NO_ORBDETECT) ? (-m->n_orb) : 1;
     if (!(wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES)) apply_asr_n_orb = 0;
@@ -807,8 +804,6 @@ diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
     m->vert = (rs_vertex_t*)diverge_phonons_read_elph( wigner, epmatwp,
             diverge_phonons_model_get_masses(m), maxrel, &m->n_vert,
             apply_asr_n_orb, wc->apply_rydberg & DIVERGE_WIGNER_CONFIG_APPLY_RYDBERG_3_2_G);
-
-    diverge_phonons_asr_vertex_set_sorted_mode(prev_asr_algorithm);
 
     return m;
 }

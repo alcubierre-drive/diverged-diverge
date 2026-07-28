@@ -228,7 +228,6 @@ double diverge_phonons_change_regulator( double eta );
  * :returns ph_vertex_t*: vertex array, reallocated.
  */
 ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx );
-// XXX: The vertex-asr functions might be broken. Something is not right.
 
 /**
  * same as :c:func:`diverge_phonons_asr_vertex` but with explicit control over
@@ -236,19 +235,6 @@ ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx );
  * :c:func:`diverge_phonons_asr_n_orb`)
  */
 ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb );
-// XXX: The vertex-asr functions might be broken. Something is not right.
-
-/**
- * change implementation behavior of :c:func:`diverge_phonons_asr_vertex` to an
- * implementation that sorts all vertex elements and then looks at
- * displacements/counts of unequal 'formfactor' components in order to sum them
- * up and thus executes in parallel. should be faster for very large models, but
- * slower for small models. returns previous mode (in order to save/restore
- * state).
- */
-int diverge_phonons_asr_vertex_set_sorted_mode( int sorted );
-// XXX: The vertex-asr functions might be broken. Something is not right.
-
 
 /**
  * enable refinement of the Gamma point D channel vertex value, must be called
