@@ -70,6 +70,7 @@ typedef struct {
      * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED`)
      */
     int apply_asr;
+    // XXX: The vertex-asr functions might be broken. Something is not right.
     /** apply supercell degeneracy map */
     int apply_ndegen;
     /** apply mass division */
