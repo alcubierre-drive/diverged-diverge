@@ -141,38 +141,6 @@ ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx,
 }
 
 #undef MERGESORT_COMP
-static inline int ph_vertex_cmp( const ph_vertex_t A, const ph_vertex_t B ) {
-    return memcmp( &A, &B, offsetof(ph_vertex_t, RA_pos) );
-}
-#define MERGESORT_COMP ph_vertex_cmp
-MERGESORT_IMPL( ph_vertex_sort, ph_vertex_t )
-
-// combine repeated elements into one
-static ph_vertex_t* ph_vertex_reduce( ph_vertex_t* vtx, index_t* n_vtx ) {
-    ph_vertex_sort(vtx, *n_vtx, diverge_omp_num_threads(), 0);
-    cbytes_t* is_repeated = bitary_alloc(*n_vtx);
-    for (index_t i=1; i<*n_vtx; ++i)
-        if (!ph_vertex_cmp(vtx[i], vtx[i-1]))
-            bitary_set(is_repeated, i);
-    index_t n_rep = bitary_count_parallel(is_repeated, *n_vtx, diverge_omp_num_threads());
-    if (n_rep) {
-        ph_vertex_t* vtx_app = vtx;
-        for (index_t i=1; i<*n_vtx; ++i) {
-            if (bitary_get(is_repeated, i))
-                vtx_app->g += vtx[i].g;
-            else
-                *(++vtx_app) = vtx[i];
-        }
-        vtx = realloc(vtx, sizeof*vtx * (*n_vtx - n_rep));
-        mpi_vrb_printf( "cleaned %li/%li=%.1f%% repeated elements\n", n_rep, *n_vtx,
-                (double)n_rep/(double)(*n_vtx)*100.0 );
-        *n_vtx -= n_rep;
-    }
-    free(is_repeated);
-    return vtx;
-}
-
-#undef MERGESORT_COMP
 static inline int ph_vertex_asr_cmp( ph_vertex_t A, ph_vertex_t B ) {
     A.OA %= 3; // reduce to cart dim
     B.OA %= 3;
@@ -217,7 +185,7 @@ static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t
                 VECTOR_PUSH_BACK( asr_ff, *prev_ff );
                 VECTOR_PUSH_BACK( asr_ff_displ, v );
             } else {
-                if (ph_vertex_cmp( *prev_ff, vtx[v] )) {
+                if (ph_vertex_asr_cmp( *prev_ff, vtx[v] )) {
                     prev_ff = vtx+v;
                     VECTOR_PUSH_BACK( asr_ff, *prev_ff );
                     VECTOR_PUSH_BACK( asr_ff_displ, v );
@@ -260,8 +228,6 @@ static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t
     }
 
     VECTOR_FREE( asr_ff );
-
-    vtx = ph_vertex_reduce(vtx, n_vtx);
 
     if (n_vtx_nontriv) {
         // re append nontrivial vertices
