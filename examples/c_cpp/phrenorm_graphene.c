@@ -34,13 +34,14 @@ static void add_symmetries( diverge_model_t* m ) {
 int main(int argc, char** argv) {
 
     diverge_init(&argc, &argv);
+    mpi_loglevel_set(mpi_loglevel_all);
 
     double U = 0.0;
     index_t nk = 24,
             nkf = 1;
-    index_t maxiter = 1;
-    double maxdist = 2.01,
-           phabs = 0.0;
+    index_t maxiter = 100;
+    double maxdist = 0.81,
+           phabs = 0.001;
     int ignore_sym = 1;
 
     DIR* dir = opendir("phrenorm_graphene");
@@ -55,11 +56,10 @@ int main(int argc, char** argv) {
     diverge_model_t* e = diverge_read_W90_model( "phrenorm_graphene/graphene_hr.dat",
             "phrenorm_graphene/graphene.wout", "phrenorm_graphene/graphene_wsvec.dat", 0 );
 
+    // read the phonon model (+elph)
     diverge_wigner_config_t wc = diverge_wigner_config_defaults;
     wc.apply_asr = DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS |
-                   DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES |
-                   DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES_SORTED;
-    // read the phonon model (+elph)
+                   DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES;
     diverge_model_t* p = diverge_phonons_read_ifc_and_elph( "phrenorm_graphene/dfpt.ifc",
             "phrenorm_graphene/wigner.fmt", "phrenorm_graphene/dfpt.epmatwp", phabs, &wc );
 
@@ -147,6 +147,8 @@ int main(int argc, char** argv) {
     pp->data = NULL;
 
     diverge_euler_t eu = diverge_euler_defaults;
+    // eu.Lambda = 0.2;
+    eu.dLambda = -eu.Lambda * eu.dLambda_fac;
     eu.maxiter = maxiter;
     double maxvert = 0;
     do {
