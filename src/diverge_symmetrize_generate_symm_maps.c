@@ -254,6 +254,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         model->internals->symm_map_orb &&
         model->internals->symm_pref &&
         model->n_sym > 0) return;
+    if (model->n_sym == 0) return;
     mpi_vrb_printf("generate symmetries with %d elements\n", model->n_sym)
 
     index_t nk = kdim(model->nk);

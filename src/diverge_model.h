@@ -465,6 +465,10 @@ void diverge_hamilton_generator_add(const diverge_model_t* model,
 greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* model,
         complex128_t Lambda, gf_complex_t* buf);
 
+/** symmetry-reduced :c:type:`greensfunc_generator_t` */
+greensfunc_op_t diverge_greensfunc_generator_ibz(const diverge_model_t* model,
+        complex128_t Lambda, gf_complex_t* buf);
+
 /**
  * The standard :c:type:`channel_vertex_generator_t` that reads real space vertex
  * elements :c:member:`diverge_model_t.vert` and Fourier transforms them to
