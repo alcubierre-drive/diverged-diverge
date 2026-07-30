@@ -91,6 +91,7 @@ DIVERGE_0.11 {
         diverge_model_internals_get_U;
         diverge_model_internals_get_dim;
         diverge_model_internals_get_greens;
+        diverge_model_internals_get_ibz;
         diverge_model_internals_get_kfmesh;
         diverge_model_internals_get_kmesh;
         diverge_model_internals_get_rlattice;

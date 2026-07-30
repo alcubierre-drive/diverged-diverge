@@ -164,6 +164,20 @@ double diverge_symmetrize_mom_fine( diverge_model_t* model, double* buf, index_t
 rs_hopping_t* diverge_symmetrize_hoppings( diverge_model_t* model,
         rs_hopping_t* hop, index_t* n_hop, double hoplim );
 
+typedef struct diverge_ibz_t diverge_ibz_t;
+struct diverge_ibz_t {
+    // nk
+    index_t nk;
+    index_t* kmaps_to; // (nk,)
+    index_t* which_sym; // (nk,2)
+    // nkibz/indexed
+    index_t nkibz;
+    index_t* bz_map_off; // (nkibz,)
+    index_t* bz_map_len; // (nkibz,)
+    index_t* bz_map; // (off/len, 2) -> (idx,k|sym)
+};
+void _diverge_ibz_free( diverge_ibz_t* ibz );
+
 #ifdef __cplusplus
 }
 #endif

@@ -6,6 +6,8 @@
 #include "diverge_momentum_gen.h"
 #include "misc/mpi_functions.h"
 #include "misc/merge_orb_w_rs_symm.h"
+#include "misc/bitary.h"
+#include "misc/gemm.h"
 
 #define LINALG_NO_LAPACKE
 #include "misc/linalg.h"
@@ -115,6 +117,132 @@ static index_t check_orbital_equivalence( diverge_model_t* m ) {
     }
 
     return eqpos;
+}
+
+static inline int approx_id( const double* A, index_t sz ) {
+    double maxdiff = 0.0;
+    for (index_t i=0; i<sz; ++i)
+    for (index_t j=0; j<sz; ++j) {
+        double diff = fabs(A[IDX2(i,j,sz)] - ((i==j)?1.0:0.0));
+        maxdiff = MAX(diff,maxdiff);
+    }
+    // printf( "%.5e\n", maxdiff );
+    return maxdiff < 1.e-3;
+}
+static inline int capprox_id( const complex128_t* A, index_t sz ) {
+    double maxdiff = 0.0;
+    for (index_t i=0; i<sz; ++i)
+    for (index_t j=0; j<sz; ++j) {
+        double diff = cabs( A[IDX2(i,j,sz)] - (((i==j)?1.0:0.0)) );
+        maxdiff = MAX(diff,maxdiff);
+    }
+    // printf( "%.5e\n", maxdiff );
+    return maxdiff < 1.e-3;
+}
+
+static diverge_ibz_t* find_ibz( diverge_model_t* m, int coarse ) {
+    const index_t n_sym = m->n_sym;
+    const index_t nk = coarse ? kdim(m->nk) : kdimtot(m->nk,m->nkf);
+
+    const double* rs_sym = m->rs_symmetries[0][0];
+    const complex128_t* orb_sym = m->orb_symmetries;
+    index_t n_sorb = m->n_orb * m->n_spin;
+
+    const index_t* mom_maps_to = coarse ? m->internals->symm_map_mom_crs :
+                                          m->internals->symm_map_mom_fine;
+    index_t* symm_inv = calloc(n_sym, sizeof*symm_inv);
+    index_t errors = 0;
+    index_t symm_identity = -1;
+    for (index_t s=0; s<n_sym; ++s) {
+        if (approx_id(rs_sym+s*POW2(3),3) && capprox_id(orb_sym+s*POW2(n_sorb),n_sorb))
+            symm_identity = s;
+
+        symm_inv[s] = -1;
+        for (index_t t=0; t<n_sym; ++t) {
+            complex128_t o_st[POW2(n_sorb)];
+            single_square_gemm(orb_sym+s*POW2(n_sorb),0, orb_sym+t*POW2(n_sorb),0, o_st, n_sorb);
+            claM3d_t r_st = claM3d_matmul(claM3d_map(rs_sym+s*POW2(3)), claM3d_map(rs_sym+t*POW2(3)));
+            if (approx_id(r_st.m[0],3) && capprox_id(o_st,n_sorb)) {
+                symm_inv[s] = t;
+                break;
+            }
+        }
+        if (symm_inv[s] == -1) {
+            mpi_err_printf( "inverse for symmetry %li missing; ibz mapping won't work.\n", s );
+            errors++;
+        }
+    }
+    if (symm_identity == -1) {
+        mpi_err_printf( "identity missing\n" );
+        errors++;
+    }
+
+    if (errors) {
+        free(symm_inv);
+        return NULL;
+    }
+
+    cbytes_t* is_mapped_to_ibz = bitary_alloc(nk);
+    diverge_ibz_t* ibz = calloc(1, sizeof*ibz);
+    ibz->kmaps_to = calloc(nk, sizeof*ibz->kmaps_to);
+    ibz->which_sym = calloc(nk, sizeof*ibz->which_sym*2);
+
+    for (index_t k=0; k<nk; ++k) {
+        if (!bitary_get(is_mapped_to_ibz, k)) {
+            bitary_set(is_mapped_to_ibz, k);
+            ibz->which_sym[k*2+0] = symm_identity;
+            ibz->which_sym[k*2+1] = symm_identity;
+            ibz->kmaps_to[k] = ibz->nkibz;
+            for (index_t s=0; s<n_sym; ++s) {
+                index_t idx = mom_maps_to[s+n_sym*k];
+                if (!bitary_get(is_mapped_to_ibz, idx)) {
+                    bitary_set(is_mapped_to_ibz, idx);
+                    ibz->which_sym[idx*2+0] = s;
+                    ibz->which_sym[idx*2+1] = symm_inv[s];
+                    ibz->kmaps_to[idx] = ibz->nkibz;
+                }
+            }
+            ibz->nkibz++;
+        }
+    }
+    index_t nk_mapped = bitary_count_parallel(is_mapped_to_ibz, nk, diverge_omp_num_threads());
+    if (nk_mapped != nk) {
+        mpi_err_printf( "not all points mapped to ibz (%li vs. %li); errors?\n", nk_mapped, nk );
+    }
+    free(is_mapped_to_ibz);
+
+    ibz->bz_map_off = calloc(ibz->nkibz, sizeof*ibz->bz_map_off);
+    ibz->bz_map_len = calloc(ibz->nkibz, sizeof*ibz->bz_map_len);
+    ibz->bz_map = calloc(nk, sizeof*ibz->bz_map*2);
+    // count
+    for (index_t k=0; k<nk; ++k) ibz->bz_map_len[ibz->kmaps_to[k]]++;
+    // displ
+    for (index_t i=1; i<ibz->nkibz; ++i)
+        ibz->bz_map_off[i] = ibz->bz_map_len[i-1]+ibz->bz_map_off[i-1];
+    // map (modifies displ)
+    for (index_t k=0; k<nk; ++k) {
+        claV2ll_t bz_map = {{ibz->kmaps_to[k], ibz->which_sym[IDX2(k,1,2)]}};
+        ibz->bz_map[IDX2(ibz->bz_map_off[bz_map.v[0]],0,2)] = bz_map.v[0];
+        ibz->bz_map[IDX2(ibz->bz_map_off[bz_map.v[0]],1,2)] = bz_map.v[1];
+        ibz->bz_map_off[bz_map.v[0]]++;
+    }
+    // redo displ
+    for (index_t i=1; i<ibz->nkibz; ++i)
+        ibz->bz_map_off[i] = ibz->bz_map_len[i-1]+ibz->bz_map_off[i-1];
+
+    ibz->nk = nk;
+    return ibz;
+}
+
+void _diverge_ibz_free( diverge_ibz_t* ibz ) {
+    if (ibz) {
+        free(ibz->kmaps_to);
+        free(ibz->which_sym);
+        free(ibz->bz_map_off);
+        free(ibz->bz_map_len);
+        free(ibz->bz_map);
+        free(ibz);
+    }
 }
 
 void diverge_generate_symm_maps( diverge_model_t* model ) {
@@ -319,6 +447,9 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
 
     mpi_vrb_printf( "merging realspace orbitals…\n" );
     merge_rs_orb(model);
+
+    model->internals->ibz_crs = find_ibz(model, 1);
+    model->internals->ibz_fine = find_ibz(model, 0);
 
     if (model->internals->symcheck_mpi) {
         // serialization and communication
