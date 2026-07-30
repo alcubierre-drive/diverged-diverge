@@ -22,11 +22,6 @@ typedef struct ph_vertex_t ph_vertex_t;
  * for model read by :c:func:`diverge_phonons_read_ifc_and_elph`
  */
 #define DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES 0x2
-/**
- * bit-or this constant with the other ones to use the wigner data's #orbitals
- * instead of automatic detection
- */
-#define DIVERGE_WIGNER_CONFIG_APPLY_ASR_NO_ORBDETECT 0x8
 
 /**
  * if this constant is bit-or activated in

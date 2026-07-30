@@ -133,109 +133,65 @@ ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx ) {
     return diverge_phonons_asr_vertex_n_orb( vtx, n_vtx, -1 );
 }
 
-static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb );
-// this is a thin wrapper around the above function. Legacy issues.
-ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb ) {
-    mpi_log_printf( "ASR (vertices) with phonon orb index -> (site, xyz)\n" );
-    return diverge_phonons_asr_vertex_sorted( vtx, n_vtx, n_orb );
-}
-
 #undef MERGESORT_COMP
 static inline int ph_vertex_asr_cmp( ph_vertex_t A, ph_vertex_t B ) {
-    A.OA %= 3; // reduce to cart dim
+    A.OA %= 3;
     B.OA %= 3;
-    return memcmp( &A, &B, offsetof(ph_vertex_t, RA_pos) );
+    return memcmp(&A, &B, offsetof(ph_vertex_t, RA));
 }
 #define MERGESORT_COMP ph_vertex_asr_cmp
 MERGESORT_IMPL( ph_vertex_asr_sort, ph_vertex_t )
 
-static ph_vertex_t* diverge_phonons_asr_vertex_sorted( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb ) {
+ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb ) {
+    mpi_log_printf( "ASR (vertices) with phonon orb index -> (site, xyz)\n" );
     // sort vertices according to the comparison function ph_vertex_asr_cmp
     ph_vertex_asr_sort(vtx, *n_vtx, diverge_omp_num_threads(), 0);
 
-    // check for nontrivial vertices
-    index_t offset_mode_nontriv = 0;
-    for (;offset_mode_nontriv<*n_vtx; ++offset_mode_nontriv)
-        if (vtx[offset_mode_nontriv].mode)
-            break;
-    index_t n_vtx_nontriv = *n_vtx - offset_mode_nontriv;
-    ph_vertex_t* vtx_nontriv = NULL;
-    if (n_vtx_nontriv) {
-        mpi_wrn_printf( "found %li non-FFT ph_vertex_t (.mode!=0); ASR not applied for these.\n", n_vtx_nontriv );
-        // split up arrays
-        vtx_nontriv = calloc(n_vtx_nontriv, sizeof*vtx_nontriv);
-        memcpy(vtx_nontriv, vtx+offset_mode_nontriv, sizeof*vtx_nontriv * n_vtx_nontriv);
-        *n_vtx -= n_vtx_nontriv;
-        vtx = realloc(vtx, sizeof*vtx * (*n_vtx));
-    }
-
     int find_orbs = (n_orb <= -1);
-
-    // count unique "formfactors" and the number of orbitals
-    VECTOR_INIT( ph_vertex_t, asr_ff );
-    VECTOR_INIT( index_t, asr_ff_displ );
-    VECTOR_INIT( index_t, asr_ff_count );
-    if (find_orbs) n_orb = 0;
-    {
-        ph_vertex_t* prev_ff = NULL;
-        for (index_t v=0; v<*n_vtx; ++v) {
-            if (find_orbs) n_orb = MAX(n_orb, vtx[v].OA);
-            if (!prev_ff) {
-                prev_ff = vtx + v;
-                VECTOR_PUSH_BACK( asr_ff, *prev_ff );
-                VECTOR_PUSH_BACK( asr_ff_displ, v );
-            } else {
-                if (ph_vertex_asr_cmp( *prev_ff, vtx[v] )) {
-                    prev_ff = vtx+v;
-                    VECTOR_PUSH_BACK( asr_ff, *prev_ff );
-                    VECTOR_PUSH_BACK( asr_ff_displ, v );
-                }
-            }
-        }
-    }
     if (find_orbs) {
+        n_orb = 0;
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:n_orb)
+        for (index_t v=0; v<*n_vtx; ++v) n_orb = MAX(n_orb, vtx[v].OA);
         n_orb = (n_orb + 1)/3;
         mpi_vrb_printf( "found (%li,3) orbitals\n", n_orb );
     } else {
         n_orb /= 3;
     }
 
-    VECTOR_SHRINK_TO_FIT( asr_ff )
-    VECTOR_PUSH_BACK( asr_ff_displ, *n_vtx ); // in order to easily count :)
-    VECTOR_SHRINK_TO_FIT( asr_ff_displ )
-    for (index_t a=0; a<asr_ff_sz; ++a) VECTOR_PUSH_BACK( asr_ff_count, asr_ff_displ[a+1] - asr_ff_displ[a] );
-    VECTOR_SHRINK_TO_FIT( asr_ff_count )
-
-    double gmax = 0.0;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:gmax)
-    for (index_t a=0; a<asr_ff_sz; ++a) {
-        asr_ff[a].OA %= 3;
-        asr_ff[a].g = 0.0;
-        for (index_t c=0; c<asr_ff_count[a]; ++c)
-            asr_ff[a].g -= vtx[asr_ff_displ[a] + c].g / (double)n_orb;
-        gmax = MAX(gmax, cabs(asr_ff[a].g));
+    VECTOR_INIT(ph_vertex_t, asr_elem);
+    ph_vertex_t* prev = NULL;
+    for (index_t i=0; i<*n_vtx; ++i) {
+        if (!prev || ph_vertex_asr_cmp(*prev, vtx[i])) {
+            VECTOR_PUSH_BACK(asr_elem, vtx[i]);
+            prev = &vtx[i];
+            asr_elem[asr_elem_sz-1].OA %= 3;
+            asr_elem[asr_elem_sz-1].RA[0] = asr_elem[asr_elem_sz-1].RA[1] = asr_elem[asr_elem_sz-1].RA[2] = 0;
+        } else {
+            asr_elem[asr_elem_sz-1].g += vtx[i].g;
+        }
     }
-    mpi_log_printf( "ASR (vertices) maximal restoring element value: %.5e\n", gmax );
-    VECTOR_FREE( asr_ff_count );
-    VECTOR_FREE( asr_ff_displ );
+    VECTOR_SHRINK_TO_FIT(asr_elem);
 
-    vtx = realloc(vtx, sizeof*vtx * (*n_vtx + n_orb * asr_ff_sz));
-    for (index_t a=0; a<asr_ff_sz; ++a)
+    VECTOR_INIT(ph_vertex_t, asr_append);
+    double maxval = 0.0;
+    for (index_t a=0; a<asr_elem_sz; ++a)
     for (index_t o=0; o<n_orb; ++o) {
-        ph_vertex_t asr_v = asr_ff[a];
-        asr_v.OA = IDX2(o,asr_v.OA,3);
-        vtx[(*n_vtx)++] = asr_v;
+        ph_vertex_t pv = asr_elem[a];
+        pv.OA = IDX2(o,pv.OA,3);
+        pv.g *= -1./(double)n_orb;
+        maxval = MAX(maxval, cabs(pv.g));
+        VECTOR_PUSH_BACK(asr_append, pv);
     }
+    VECTOR_FREE(asr_elem);
+    VECTOR_SHRINK_TO_FIT(asr_append);
 
-    VECTOR_FREE( asr_ff );
+    mpi_log_printf( "ASR (vertices) maximal restoring force value: %.5e\n", maxval );
 
-    if (n_vtx_nontriv) {
-        // re append nontrivial vertices
-        vtx = realloc(vtx, sizeof*vtx * (*n_vtx + n_vtx_nontriv));
-        memcpy(vtx+(*n_vtx), vtx_nontriv, sizeof*vtx * n_vtx_nontriv);
-        free(vtx_nontriv);
-        *n_vtx += n_vtx_nontriv;
-    }
+    vtx = realloc(vtx, sizeof*vtx * (*n_vtx + asr_append_sz));
+    memcpy(vtx + (*n_vtx), asr_append, sizeof*vtx * asr_append_sz);
+    *n_vtx += asr_append_sz;
+    VECTOR_FREE(asr_append);
+
     return vtx;
 }
 

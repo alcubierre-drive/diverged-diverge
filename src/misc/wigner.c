@@ -251,12 +251,8 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
     wsdata_free( ws );
     ifc_free( ifc );
 
-    if (wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS) {
-        if (wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_NO_ORBDETECT)
-            hop = diverge_phonons_asr_n_orb( hop, &hop_sz, m->n_orb );
-        else
-            hop = diverge_phonons_asr( hop, &hop_sz );
-    }
+    if (wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS)
+        hop = diverge_phonons_asr_n_orb( hop, &hop_sz, m->n_orb );
     m->hop = hop;
     m->n_hop = hop_cap = hop_sz;
 
@@ -798,8 +794,7 @@ diverge_model_t* diverge_phonons_read_ifc_and_elph( const char* ifc,
     diverge_model_t* m = diverge_phonons_read_ifc( ifc, wc );
 
     // logic to enable/disable orbital detection
-    int apply_asr_n_orb = (wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_NO_ORBDETECT) ? (-m->n_orb) : 1;
-    if (!(wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES)) apply_asr_n_orb = 0;
+    int apply_asr_n_orb = (wc->apply_asr & DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES) ? -m->n_orb : 0;
 
     m->vert = (rs_vertex_t*)diverge_phonons_read_elph( wigner, epmatwp,
             diverge_phonons_model_get_masses(m), maxrel, &m->n_vert,
