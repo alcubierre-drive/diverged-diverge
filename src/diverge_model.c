@@ -141,7 +141,7 @@ greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* mode
 
     const index_t nkf = kdimtot(model->nk, model->nkf);
     const index_t nb = model->n_spin * model->n_orb;
-    const complex128_t* U = (const complex128_t*) model->internals->U;
+    const complex128_t* U = model->internals->U;
     const double* E = model->internals->E;
 
     for (int sign=0; sign<2; ++sign) {
@@ -157,6 +157,11 @@ greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* mode
         }
     }
     return greensfunc_op_cpu;
+}
+
+greensfunc_op_t diverge_greensfunc_generator_ibz(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf) {
+    // TODO write this function
+    return diverge_greensfunc_generator_default(model, Lambda, buf);
 }
 
 #undef MERGESORT_COMP
