@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+typedef struct diverge_ibz_t diverge_ibz_t;
+
 /**
  * Check for errors in the user defined model
  */
@@ -218,6 +220,13 @@ gf_complex_t* diverge_model_internals_get_greens( const diverge_model_t* model )
 index_t       diverge_model_internals_get_dim(    const diverge_model_t* model );
 /** return the reciprocal lattice (:c:func:`diverge_model_internals_common` should be called prior) */
 diverge_lattice_t diverge_model_internals_get_rlattice( const diverge_model_t* model );
+
+/**
+ * get the ibz structure that is attached to a given model for coarse or fine
+ * mesh.
+ * .. note:: not yet documented, not yet 100% compatible with TUFRG.
+ */
+diverge_ibz_t* diverge_model_internals_get_ibz(const diverge_model_t* m, int crs);
 
 #ifdef __cplusplus
 }

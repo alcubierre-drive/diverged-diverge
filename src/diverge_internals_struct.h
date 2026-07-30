@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 typedef void (*internals_destructor_t)(void*);
+typedef struct diverge_ibz_t diverge_ibz_t;
 
 struct internals_t {
     // common internals
@@ -105,6 +106,9 @@ struct internals_t {
     index_t* symm_orb_off;
     index_t* symm_orb_len;
     complex128_t* symm_pref;
+    // ibz data
+    diverge_ibz_t* ibz_crs;
+    diverge_ibz_t* ibz_fine;
 
     int symcheck_mpi;
 };

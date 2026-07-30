@@ -288,6 +288,8 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     free(model->internals->symm_orb_off);
     free(model->internals->symm_orb_len);
     free(model->internals->symm_pref);
+    _diverge_ibz_free(model->internals->ibz_crs);
+    _diverge_ibz_free(model->internals->ibz_fine);
 
     int dim = model->internals->dim;
     for (int d=dim; d<3; ++d) model->nk[d] = model->nkf[d] = 0;
@@ -428,4 +430,7 @@ index_t       diverge_model_internals_get_dim( const diverge_model_t* model ) {
 }
 diverge_lattice_t diverge_model_internals_get_rlattice( const diverge_model_t* model ) {
     return model->internals->rlattice;
+}
+diverge_ibz_t* diverge_model_internals_get_ibz(const diverge_model_t* m, int crs) {
+    return crs ? m->internals->ibz_crs : m->internals->ibz_fine;
 }

@@ -20,7 +20,8 @@ phonon_included_files=( ${phonon_included_files_self[@]/#/src/} )
 exported_symbols=( $(ctags -o- --kinds-C=p ${included_files[@]} |\
     grep -v "^!" | grep -v VECTOR | awk '{print $1}' |\
     grep -v "shared_malloc_init$" |\
-    grep -v "shared_malloc_finalize$") )
+    grep -v "shared_malloc_finalize$" |\
+    grep -v "_diverge_ibz_free$") )
 
 exported_cpp_symbols=$(cat <<EOF
 EOF
