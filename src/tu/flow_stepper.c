@@ -14,6 +14,11 @@
 #include "selfenergy.h"
 #include "../grid/helpers.h" // TICK_TOCK macro
 
+#define PRODIGNORE_P  0x1ULL
+#define PRODIGNORE_C  0x2ULL
+#define PRODIGNORE_D  0x4ULL
+#define PRODIGNORE_CD 0x8ULL
+
 tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex_t* vert ) {
     tu_stepper_t* s = calloc(1, sizeof*s);
     s->loop = loop;
@@ -76,6 +81,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                                s->loop_func_ctx) );
                 }
                 if (s->channel_selection[2] && s->channel_selection[1]) {
+                if (!(s->channel_product_ignore_map & PRODIGNORE_CD)) {
                     TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->Dch, inout, s->proj) );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
@@ -98,7 +104,8 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                     for (index_t ii=0; ii<inout->full_vert_size; ++ii)
                         s->internal_vertex->Dch[ii] += 0.5*s->internal_vertex->Cch[ii];
 
-                } else if (s->channel_selection[1]) {
+                }} else if (s->channel_selection[1]) {
+                if (!(s->channel_product_ignore_map & PRODIGNORE_C)) {
                     TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->projection_helper,
                                 inout, s->proj) );
 
@@ -106,7 +113,8 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                                 s->internal_vertex->projection_helper,
                                 s->internal_vertex->ph_bubble_int,inout->product_helper,
                                 s->prodsize,s->my_nk,s->norm[1], true, s->internal_vertex->GPU_gemm_buffer) );
-                } else {
+                }} else {
+                if (!(s->channel_product_ignore_map & PRODIGNORE_D)) {
                     TICK_TOCK( s->w_time_projection, D_projection(s->internal_vertex->projection_helper,
                                 inout, s->proj) );
 
@@ -114,12 +122,14 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                                 s->internal_vertex->projection_helper,
                                 s->internal_vertex->ph_bubble_int,inout->product_helper,
                                 s->prodsize,s->my_nk,s->norm[2], true, s->internal_vertex->GPU_gemm_buffer) );
-                }
+                }}
             }
         } else {
-            if (s->channel_selection[1])
+            if (s->channel_selection[1]) {
+            if (!(s->channel_product_ignore_map & PRODIGNORE_C)) {
                 TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->projection_helper,
                             inout, s->proj) );
+            }}
 
             if (s->channel_selection[1] || s->channel_selection[2]) {
                 if (s->loop_func == NULL) {
@@ -131,24 +141,32 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                 }
             }
 
-            if (s->channel_selection[1])
+            if (s->channel_selection[1]) {
+            if (!(s->channel_product_ignore_map & PRODIGNORE_C)) {
                 TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
                             s->internal_vertex->projection_helper, s->internal_vertex->ph_bubble_int,
                             inout->product_helper, s->prodsize,s->my_nk,s->norm[1], true,
                             s->internal_vertex->GPU_gemm_buffer) );
+            }}
 
-            if (s->channel_selection[2])
+            if (s->channel_selection[2]) {
+            if (!(s->channel_product_ignore_map & PRODIGNORE_D)) {
                 TICK_TOCK( s->w_time_projection, D_projection(s->internal_vertex->projection_helper,
                             inout, s->proj) );
+            }}
 
-            if (s->channel_selection[2])
+            if (s->channel_selection[2]) {
+            if (!(s->channel_product_ignore_map & PRODIGNORE_D)) {
                 TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Dch,
                             s->internal_vertex->projection_helper, s->internal_vertex->ph_bubble_int,
                             inout->product_helper, s->prodsize,s->my_nk,s->norm[2], true,
                             s->internal_vertex->GPU_gemm_buffer) );
+            }}
         }
         if (s->channel_selection[0]) {
+        if (!(s->channel_product_ignore_map & PRODIGNORE_P)) {
             TICK_TOCK( s->w_time_projection, P_projection(inout->projection_helper, inout, s->proj) );
+        }
 
             if (s->loop_func == NULL) {
                 TICK_TOCK( s->w_time_loop, tu_prop_pp_loop( s->loop, s->internal_vertex->pp_bubble_int,
@@ -158,10 +176,11 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                            s->loop_func_ctx) );
             }
 
+        if (!(s->channel_product_ignore_map & PRODIGNORE_P)) {
             TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Pch,
                         inout->projection_helper, s->internal_vertex->pp_bubble_int,inout->product_helper,
                         s->prodsize,s->my_nk,s->norm[0], true, s->internal_vertex->GPU_gemm_buffer) );
-        }
+        }}
     } else {
         if (s->channel_selection[0]) ZERO_OUT( s->internal_vertex->Pch, s->internal_vertex->full_vert_size );
         if (s->channel_selection[1]) ZERO_OUT( s->internal_vertex->Dch, s->internal_vertex->full_vert_size );
@@ -202,4 +221,8 @@ index_t tu_stepper_num_calls( const tu_stepper_t* s ) {
 
 tu_vertex_t* tu_stepper_internal_vertex( tu_stepper_t* s ) {
     return s->internal_vertex;
+}
+
+uint64_t tu_stepper_prodignore( tu_stepper_t* s, uint64_t chans ) {
+    return XORSWAP(chans, s->channel_product_ignore_map);
 }

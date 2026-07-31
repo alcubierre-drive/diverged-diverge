@@ -33,6 +33,8 @@ struct tu_stepper_t {
     void* loop_func_ctx;
 
     diverge_timing_t timings[64];
+
+    uint64_t channel_product_ignore_map;
 };
 
 #ifdef __cplusplus
