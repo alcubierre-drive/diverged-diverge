@@ -127,6 +127,10 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("tu_rpa_chi_pp_Lambda_factor") {
         STEP->tu_rpa->chi_pp_Lambda_factor = atof(val);
     }
+    CHECKKEY("tu_channel_product_ignore_map") {
+        uint64_t prev = tu_stepper_prodignore(STEP->tu_step, atoi(val));
+        mpi_scc_printf("previous product ignore value was %lu\n", prev);
+    }
     CHECKKEY("npatch_gpu_workshare") {
         INTERNALS->patch_gpu_workshare = atof(val);
     }
