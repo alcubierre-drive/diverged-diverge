@@ -140,6 +140,8 @@ static inline int capprox_id( const complex128_t* A, index_t sz ) {
     return maxdiff < 1.e-3;
 }
 
+// TODO the inverse mapping should be performed in the generation function, but
+// for some reason things break when doing that...
 static diverge_ibz_t* find_ibz( diverge_model_t* m, int coarse ) {
     const index_t n_sym = m->n_sym;
     const index_t nk = coarse ? kdim(m->nk) : kdimtot(m->nk,m->nkf);
@@ -168,16 +170,17 @@ static diverge_ibz_t* find_ibz( diverge_model_t* m, int coarse ) {
             }
         }
         if (symm_inv[s] == -1) {
-            mpi_err_printf( "inverse for symmetry %li missing; ibz mapping won't work.\n", s );
+            // mpi_err_printf( "inverse for symmetry %li missing; ibz mapping won't work.\n", s );
             errors++;
         }
     }
     if (symm_identity == -1) {
-        mpi_err_printf( "identity missing\n" );
+        // mpi_err_printf( "identity missing\n" );
         errors++;
     }
 
     if (errors) {
+        mpi_wrn_printf( "identity or inverse symmetry missing, no ibz mapping.\n" );
         free(symm_inv);
         return NULL;
     }
