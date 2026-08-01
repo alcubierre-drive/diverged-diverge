@@ -294,6 +294,7 @@ DIVERGE_UNSTABLE {
         diverge_phonons_asr_vertex_n_orb;
         diverge_phonons_change_regulator;
         diverge_phonons_enable_refinement;
+        diverge_phonons_fetch_sym;
         diverge_phonons_get_g;
         diverge_phonons_get_g_dim;
         diverge_phonons_get_ifrq;

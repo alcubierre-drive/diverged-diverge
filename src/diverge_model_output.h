@@ -209,7 +209,7 @@ typedef struct diverge_model_output_conf_t {
     /**
      * when the band structure is explicitly calculated and not taken from
      * internals (see :c:member:`diverge_model_output_conf_t.npath` != -1) then
-     * the dispersion can be ``square rooted'' to resemble phonon energies.
+     * the dispersion can be "square rooted" to resemble phonon energies.
      */
     int apply_sgnsqrt;
 } diverge_model_output_conf_t;

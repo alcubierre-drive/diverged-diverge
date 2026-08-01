@@ -271,9 +271,22 @@ void diverge_phonons_set_vertex_generator( diverge_model_t* el,
         diverge_phonon_vertex_generator_t V, diverge_flow_step_t* step, void* ctx );
 
 /**
+ * copy symmetry operations from electronic model to phonon model,
+ * assuming (n_sites,xyz) in phonon space. Allocates ph->orb_symmetries
+ * accordingly.
+ */
+void diverge_phonons_fetch_sym( diverge_model_t* el, diverge_model_t* ph );
+
+/**
  * symmetrize the EPC (ph->vert, ph->n_vert) in the electronic (el) and
  * phononic (ph) sectors. Both models need symmetries attached and common
  * internals called. Does not consider :c:member:`ph_vertex_t.mode` != 0.
+ *
+ * .. note:: To obtain a properly symmetric vertex that also fulfills the ASR
+ *           you might be required to call
+ *           :c:func:`diverge_phonons_symmetrize_epc` and
+ *           :c:func:`diverge_phonons_asr_vertex` in a loop until convergence is
+ *           reached.
  */
 void diverge_phonons_symmetrize_epc( diverge_model_t* el, diverge_model_t* ph );
 

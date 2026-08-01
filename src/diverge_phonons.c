@@ -364,3 +364,19 @@ void diverge_phonons_symmetrize_epc( diverge_model_t* el, diverge_model_t* ph ) 
     ph->n_vert = it.pv_sym_sz;
     return;
 }
+
+void diverge_phonons_fetch_sym( diverge_model_t* el, diverge_model_t* ph ) {
+    const index_t n_sym = labs(el->n_sym);
+    if (n_sym == 0) return;
+    const index_t n_phorb = ph->n_orb / 3;
+    ph->orb_symmetries = calloc(n_sym * POW2(n_phorb*3), sizeof*ph->orb_symmetries);
+    for (index_t s=0; s<n_sym; ++s) {
+        memcpy(ph->rs_symmetries[s][0], el->rs_symmetries[s][0], sizeof(double)*9);
+        for (index_t o1=0; o1<n_phorb; ++o1)
+        for (index_t x1=0; x1<3; ++x1)
+        for (index_t o2=0; o2<n_phorb; ++o2)
+        for (index_t x2=0; x2<3; ++x2)
+            ph->orb_symmetries[IDX5(s, o1,x1, o2,x2, n_phorb,3,n_phorb,3)] = ph->rs_symmetries[s][x1][x2];
+    }
+    ph->n_sym = n_sym;
+}
