@@ -227,12 +227,12 @@ typedef struct {
 } Rvecs_t;
 #define vtree_key_t Rvecs_t
 #define vtree_val_t index_t
-#define vtree_padding_bytes 8
+#define vtree_padding_bytes 4
 #include "misc/vtree.h"
 
 static inline Rvecs_t ph_vertex_to_Rvecs( ph_vertex_t pv ) {
     return (Rvecs_t){ .R12={.v1=pv.R12[0], .v2=pv.R12[1], .v3=pv.R12[2]},
-                      .RA={.v1=pv.RA[0], .v2=pv.RA[1], .v3=pv.RA[2]} };
+                      .RA ={.v1= pv.RA[0], .v2= pv.RA[1], .v3= pv.RA[2]} };
 }
 
 static inline claV3i_t claV3d_to_i( claV3d_t R ) {
