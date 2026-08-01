@@ -1,5 +1,8 @@
 /* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
 
+#include "misc/linalg.h"
+LINALG_IMPLEMENT
+
 #include "diverge_phonons.h"
 #include "diverge_common.h"
 #include "diverge_model.h"
@@ -211,4 +214,153 @@ void diverge_phonons_set_vertex_generator( diverge_model_t* m,
     tu_data_phonons_t* p = m->internals->tu_data_phonons;
     if (!p) return;
     tu_data_phonons_set_vertex_generator( p, V, step, ctx );
+}
+
+typedef struct {
+    int32_t v1:11;
+    int32_t v2:11;
+    int32_t v3:10;
+} V3i32_t;
+typedef struct {
+    V3i32_t R12;
+    V3i32_t RA;
+} Rvecs_t;
+#define vtree_key_t Rvecs_t
+#define vtree_val_t index_t
+#define vtree_padding_bytes 8
+#include "misc/vtree.h"
+
+static inline Rvecs_t ph_vertex_to_Rvecs( ph_vertex_t pv ) {
+    return (Rvecs_t){ .R12={.v1=pv.R12[0], .v2=pv.R12[1], .v3=pv.R12[2]},
+                      .RA={.v1=pv.RA[0], .v2=pv.RA[1], .v3=pv.RA[2]} };
+}
+
+static inline claV3i_t claV3d_to_i( claV3d_t R ) {
+    return (claV3i_t){{lroundl(R.v[0]),lroundl(R.v[1]),lroundl(R.v[2])}};
+}
+
+typedef struct {
+    complex128_t* g_array;
+    index_t n_os;
+    index_t n_sp;
+    index_t n_OA;
+    VECTOR_DECL(ph_vertex_t, pv_sym)
+} Rtree_iter_t;
+static inline void Rtree_g_array_push( vtree_node_t* node, void* ctx_ ) {
+    Rtree_iter_t* ctx = ctx_;
+    index_t iR = node->val;
+    Rvecs_t Rv = node->key;
+    complex128_t* g_array = ctx->g_array;
+    for (index_t o1=0; o1<ctx->n_os; ++o1)
+    for (index_t o2=0; o2<ctx->n_os; ++o2)
+    for (index_t OA=0; OA<ctx->n_OA; ++OA) {
+        index_t g_idx = IDX4(iR, o1,o2,OA, ctx->n_os,ctx->n_os,ctx->n_OA);
+        complex128_t zero = 0;
+        if (memcmp(&g_array[g_idx], &zero, sizeof(zero))) {
+            VECTOR_PUSH_BACK(ctx->pv_sym, (ph_vertex_t){
+                    .R12={Rv.R12.v1,Rv.R12.v2,Rv.R12.v3},
+                    .o1=o1/ctx->n_sp,
+                    .s1=o1%ctx->n_sp,
+                    .o2=o2/ctx->n_sp,
+                    .s2=o2%ctx->n_sp,
+                    .OA=OA,
+                    .RA={Rv.RA.v1,Rv.RA.v2,Rv.RA.v3},
+                    .g=g_array[g_idx]
+            });
+        }
+    }
+}
+
+void diverge_phonons_symmetrize_epc( diverge_model_t* el, diverge_model_t* ph ) {
+    const index_t n_os = el->n_orb * el->n_spin,
+                  n_sp = el->n_spin;
+    const index_t n_OA = ph->n_orb;
+    const index_t n_sym = el->n_sym;
+    if (ph->n_sym != el->n_sym) {
+        mpi_err_printf( "must have same # of symmetries (el,ph)=(%li,%li)\n", el->n_sym, ph->n_sym );
+        return;
+    }
+
+    ph_vertex_t* pv = (ph_vertex_t*)ph->vert;
+    index_t n_pv = ph->n_vert;
+
+    xvtree_t* Rtree = xvtree_init( MAX(n_pv/POW2(n_os)/n_OA, 1024) );
+    index_t n_Rv = 0;
+    for (index_t v=0; v<n_pv; ++v) {
+        Rvecs_t Rv = ph_vertex_to_Rvecs(pv[v]);
+        vtree_node_t* Rv_node = xvtree_find(Rtree, Rv);
+        if (!Rv_node) {
+            Rv_node = xvtree_insert(Rtree, Rv);
+            Rv_node->val = n_Rv++;
+        }
+    }
+    mpi_vrb_printf("found %li unique Rvector combis before sym\n", n_Rv);
+
+    complex128_t* g_array = calloc(n_Rv * POW2(n_os) * n_OA, sizeof*g_array);
+    double norm = 1./(double)n_sym;
+
+    const double *el_symm_beyond_UC = el->internals->symm_beyond_UC,
+                 *ph_symm_beyond_UC = ph->internals->symm_beyond_UC;
+    const complex128_t *el_symm_pref = el->internals->symm_pref,
+                       *ph_symm_pref = ph->internals->symm_pref;
+    const index_t *el_symm_orb_off = el->internals->symm_orb_off,
+                  *el_symm_orb_len = el->internals->symm_orb_len,
+                  *el_symm_orb_map = el->internals->symm_map_orb,
+                  *ph_symm_orb_off = ph->internals->symm_orb_off,
+                  *ph_symm_orb_len = ph->internals->symm_orb_len,
+                  *ph_symm_orb_map = ph->internals->symm_map_orb;
+    const claM3d_t el_inv_L = claM3d_scale(claM3d_map(el->internals->rlattice.v[0]), 1./(2.*M_PI)),
+                   ph_inv_L = claM3d_scale(claM3d_map(ph->internals->rlattice.v[0]), 1./(2.*M_PI));
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2)
+    for (index_t v=0; v<n_pv; ++v)
+    for (index_t s=0; s<n_sym; ++s) {
+        const index_t el_o1 = IDX2(pv[v].o1,pv[v].s1, n_sp),
+                      el_o2 = IDX2(pv[v].o2,pv[v].s2, n_sp);
+        const index_t el_osym1 = IDX2(el_o1,s, n_sym),
+                      el_osym2 = IDX2(el_o2,s, n_sym),
+                      ph_osym = IDX2(pv[v].OA,s, n_sym);
+        const double *R1 = el_symm_beyond_UC+3*IDX2(pv[v].o1,s, n_sym),
+                     *R2 = el_symm_beyond_UC+3*IDX2(pv[v].o2,s, n_sym),
+                     *RA = ph_symm_beyond_UC+3*IDX2(pv[v].OA,s, n_sym);
+        const claV3i_t R1_i = claV3d_to_i(claM3d_matvec(el_inv_L, claV3d_map(R1))),
+                       R2_i = claV3d_to_i(claM3d_matvec(el_inv_L, claV3d_map(R2))),
+                       RA_i = claV3d_to_i(claM3d_matvec(ph_inv_L, claV3d_map(RA)));
+        const claV3i_t R12_new = claV3i_sub(R2_i,R1_i),
+                       RA_new = claV3i_sub(RA_i,R1_i);
+        const Rvecs_t Rv = { .R12={.v1=R12_new.v[0], .v2=R12_new.v[1], .v3=R12_new.v[2]},
+                             .RA ={.v1= RA_new.v[0], .v2= RA_new.v[1],. v3= RA_new.v[2]} };
+        vtree_node_t* Rv_node = xvtree_find(Rtree, Rv);
+        if (!Rv_node) {
+            #pragma omp critical
+            {
+                Rv_node = xvtree_insert(Rtree, Rv);
+                Rv_node->val = n_Rv++;
+                g_array = realloc(g_array, sizeof*g_array * n_Rv * POW2(n_os) * n_OA);
+                ZERO_OUT(g_array + (n_Rv-1)*POW2(n_os)*n_OA, POW2(n_os)*n_OA);
+            }
+        }
+        const index_t iR = Rv_node->val;
+        for (index_t i=0; i<el_symm_orb_len[el_osym1]; ++i)
+        for (index_t j=0; j<el_symm_orb_len[el_osym2]; ++j)
+        for (index_t k=0; k<ph_symm_orb_len[ph_osym]; ++k) {
+            const index_t xo1 = el_symm_orb_off[el_osym1] + i,
+                          xo2 = el_symm_orb_off[el_osym2] + j,
+                          xOA = ph_symm_orb_off[ph_osym] + k;
+            g_array[IDX4(iR,el_symm_orb_map[xo1],el_symm_orb_map[xo2],ph_symm_orb_map[xOA],
+                    n_os,n_os,n_OA)] += pv[v].g * norm * el_symm_pref[xo1] *
+                                                    conj(el_symm_pref[xo2]) * ph_symm_pref[xOA];
+        }
+    }
+
+    mpi_vrb_printf("found %li unique Rvector combis after sym\n", xvtree_size(Rtree));
+
+    Rtree_iter_t it = {.g_array=g_array, .n_os=n_os, .n_sp=n_sp, .n_OA=n_OA};
+    xvtree_iter( Rtree, &Rtree_g_array_push, &it );
+    free( g_array );
+    xvtree_free( Rtree );
+
+    free(ph->vert);
+    ph->vert = (rs_vertex_t*)it.pv_sym;
+    ph->n_vert = it.pv_sym_sz;
+    return;
 }

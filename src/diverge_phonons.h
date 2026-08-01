@@ -217,7 +217,8 @@ double diverge_phonons_change_regulator( double eta );
  *  \sum_{\boldsymbol{R}_A, o_A} g_{xy}(\boldsymbol{R}_A, (o_A, d_A)) = 0
  *
  * with :math:`x,y` electronic indices (orbital, spin, formfactor) and
- * :math:`o_A, d_A` the phononic sites/directions.
+ * :math:`o_A, d_A` the phononic sites/directions. Does not consider
+ * :c:member:`ph_vertex_t.mode` != 0.
  *
  * :param ph_vertex_t* vtx: vertex array, must be allocated via
  *      calloc/malloc/realloc (or their divERGe wrappers) because we use realloc
@@ -232,7 +233,8 @@ ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx );
 /**
  * same as :c:func:`diverge_phonons_asr_vertex` but with explicit control over
  * the number of 'orbitals' (cf. :c:func:`diverge_phonons_asr`,
- * :c:func:`diverge_phonons_asr_n_orb`)
+ * :c:func:`diverge_phonons_asr_n_orb`).  Does not consider
+ * :c:member:`ph_vertex_t.mode` != 0.
  */
 ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb );
 
@@ -267,6 +269,13 @@ typedef void (*diverge_phonon_vertex_generator_t)( diverge_flow_step_t* step,
  */
 void diverge_phonons_set_vertex_generator( diverge_model_t* el,
         diverge_phonon_vertex_generator_t V, diverge_flow_step_t* step, void* ctx );
+
+/**
+ * symmetrize the EPC (ph->vert, ph->n_vert) in the electronic (el) and
+ * phononic (ph) sectors. Both models need symmetries attached and common
+ * internals called. Does not consider :c:member:`ph_vertex_t.mode` != 0.
+ */
+void diverge_phonons_symmetrize_epc( diverge_model_t* el, diverge_model_t* ph );
 
 #ifdef __cplusplus
 }

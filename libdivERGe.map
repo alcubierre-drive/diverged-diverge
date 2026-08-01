@@ -56,6 +56,7 @@ DIVERGE_0.11 {
         diverge_generate_symm_maps_set_precision_global;
         diverge_generate_symm_trafo;
         diverge_greensfunc_generator_default;
+        diverge_greensfunc_generator_ibz;
         diverge_hack;
         diverge_hamilton_generator_add;
         diverge_hamilton_generator_default;
@@ -303,6 +304,7 @@ DIVERGE_UNSTABLE {
         diverge_phonons_read_ifc_and_elph;
         diverge_phonons_set_vertex_generator;
         diverge_phonons_sgnsqrt;
+        diverge_phonons_symmetrize_epc;
         diverge_qnan_gen;
         diverge_qnan_get;
         diverge_qnan_isnan;

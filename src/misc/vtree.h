@@ -23,6 +23,7 @@ struct vtree_node_t {
     vtree_key_t key;
     vtree_val_t val;
     vtree_node_t* parent;
+    int32_t height;
 #ifndef VTREE_PADDING_DISABLED
     char _padding[vtree_padding_bytes];
 #endif
@@ -57,6 +58,21 @@ static inline void vtree_node_iter( vtree_node_t* head, void (*iter)(vtree_node_
         vtree_node_iter( head->children[vtree_right], iter, ctx );
         (*iter)( head, ctx );
     }
+}
+
+static inline int vtree_height(vtree_node_t *n) {
+    return n ? n->height : 0;
+}
+
+static inline void vtree_update_height(vtree_node_t *n) {
+    int hl = vtree_height(n->children[vtree_left]);
+    int hr = vtree_height(n->children[vtree_right]);
+    n->height = (hl > hr ? hl : hr) + 1;
+}
+
+static inline int vtree_balance(vtree_node_t *n) {
+    return vtree_height(n->children[vtree_left])
+         - vtree_height(n->children[vtree_right]);
 }
 
 static inline vtree_node_t* vtree_node_minimum( vtree_node_t* head ) {
@@ -117,6 +133,75 @@ static inline xvtree_t* xvtree_init( size_t nreserve ) {
     return x;
 }
 
+static inline void vtree_rotate_left(xvtree_t *x, vtree_node_t *a) {
+    vtree_node_t* b = a->children[vtree_right];
+
+    a->children[vtree_right] = b->children[vtree_left];
+    if (b->children[vtree_left])
+        b->children[vtree_left]->parent = a;
+
+    b->parent = a->parent;
+
+    if (!a->parent)
+        x->head = b;
+    else if (a == a->parent->children[vtree_left])
+        a->parent->children[vtree_left] = b;
+    else
+        a->parent->children[vtree_right] = b;
+
+    b->children[vtree_left] = a;
+    a->parent = b;
+
+    vtree_update_height(a);
+    vtree_update_height(b);
+}
+
+static inline void vtree_rotate_right(xvtree_t *x, vtree_node_t *a) {
+    vtree_node_t* b = a->children[vtree_left];
+
+    a->children[vtree_left] = b->children[vtree_right];
+    if (b->children[vtree_right])
+        b->children[vtree_right]->parent = a;
+
+    b->parent = a->parent;
+
+    if (!a->parent)
+        x->head = b;
+    else if (a == a->parent->children[vtree_left])
+        a->parent->children[vtree_left] = b;
+    else
+        a->parent->children[vtree_right] = b;
+
+    b->children[vtree_right] = a;
+    a->parent = b;
+
+    vtree_update_height(a);
+    vtree_update_height(b);
+}
+
+static inline void vtree_rebalance(xvtree_t *x, vtree_node_t *n) {
+    while (n) {
+        vtree_update_height(n);
+
+        int b = vtree_balance(n);
+
+        if (b > 1) {
+            if (vtree_balance(n->children[vtree_left]) < 0)
+                vtree_rotate_left(x, n->children[vtree_left]);
+
+            vtree_rotate_right(x, n);
+        } else if (b < -1) {
+            if (vtree_balance(n->children[vtree_right]) > 0)
+                vtree_rotate_right(x, n->children[vtree_right]);
+
+            vtree_rotate_left(x, n);
+        }
+
+        n = n->parent;
+    }
+}
+
+
 static inline vtree_node_t* xvtree_next_slot( xvtree_t* x ) {
     if (++(x->mem_idx) < x->mem_sz) {
         return x->mem[x->i_mem] + x->mem_idx;
@@ -161,6 +246,9 @@ static inline vtree_node_t* xvtree_insert( xvtree_t* x, vtree_key_t key ) {
 
     tmp_parent->children[where] = node;
     node->parent = tmp_parent;
+
+    node->height = 1;
+    vtree_rebalance(x, node->parent);
     return node;
 }
 
@@ -182,6 +270,9 @@ static inline vtree_node_t* xvtree_find_or_insert( xvtree_t* x, vtree_key_t key 
     tmp_parent->children[where] = node;
     node->key = key;
     node->parent = tmp_parent;
+
+    node->height = 1;
+    vtree_rebalance(x, node->parent);
     return node;
 }
 
