@@ -208,6 +208,7 @@ static diverge_ibz_t* find_ibz( diverge_model_t* m, int coarse ) {
             ibz->nkibz++;
         }
     }
+    free(symm_inv);
     index_t nk_mapped = bitary_count_parallel(is_mapped_to_ibz, nk, diverge_omp_num_threads());
     if (nk_mapped != nk) {
         mpi_err_printf( "not all points mapped to ibz (%li vs. %li); errors?\n", nk_mapped, nk );
