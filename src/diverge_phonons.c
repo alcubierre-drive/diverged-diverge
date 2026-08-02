@@ -226,8 +226,10 @@ typedef struct {
     V3i32_t RA;
 } Rvecs_t;
 static inline index_t Rvecs_cmp( Rvecs_t A, Rvecs_t B ) {
-    union {index_t i; Rvecs_t R;} uA={.R=A}, uB={.R=B};
-    return uA.i-uB.i;
+    assert(sizeof(Rvecs_t) == sizeof(index_t));
+    index_t iA = 0; memcpy(&iA, &A, sizeof(iA));
+    index_t iB = 0; memcpy(&iB, &B, sizeof(iB));
+    return iA - iB;
 }
 #define vtree_key_t Rvecs_t
 #define vtree_val_t index_t
