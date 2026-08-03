@@ -4,6 +4,7 @@
 #include "../diverge_internals_struct.h"
 #include "mpi_functions.h"
 #include "shared_mem.h"
+#include "qnan.h"
 #include <omp.h>
 #include "mergesort.h"
 #include "dos.cu.h"
@@ -266,6 +267,8 @@ double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
 }
 
 double* diverge_energy_fill_gaps( double* omega, index_t* p_n_omega, double d_omega_min ) {
+    int mask_gaps = fnan_isnan(d_omega_min);
+    if (mask_gaps) d_omega_min = fnan_get(d_omega_min);
     index_t n_omega = *p_n_omega;
     index_t n_add = 0;
     for (index_t w=0; w<n_omega-1; ++w) {
@@ -281,8 +284,10 @@ double* diverge_energy_fill_gaps( double* omega, index_t* p_n_omega, double d_om
             index_t n_add_this = lroundl(d_omega / d_omega_min);
             double d_omega_this = d_omega / ((double)n_add_this + 1.0);
             memmove( omega+w+1+n_add_this, omega+w+1, (n_omega-(w+1)) * sizeof*omega );
-            for (index_t n=0; n<n_add_this; ++n)
+            for (index_t n=0; n<n_add_this; ++n) {
                 omega[w+1+n] = omega_0 + d_omega_this * (double)(n + 1);
+                if (mask_gaps) omega[w+1+n] = fnan_gen(omega[w+1+n]);
+            }
             n_omega += n_add_this;
             w += n_add_this;
         }

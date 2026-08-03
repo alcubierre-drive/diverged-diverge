@@ -43,7 +43,9 @@ double* diverge_filling_to_energy( const diverge_model_t* m, const double* E,
 /**
  * fill the gaps of a frequency array such that the spacing is always larger
  * than ``d_omega_min``. return the *reallocated* array, and change
- * ``*p_n_omega`` according to the new size
+ * ``*p_n_omega`` according to the new size. If ``fnan_isnan(d_omega_min)``, use
+ * ``fnan_get(d_omega_min)`` as omega_min and mask
+ * the padded values as ``fnan_gen(omega[pad_idx])`` (see :ref:`IEEE 754 Quiet NaN`)
  */
 double* diverge_energy_fill_gaps( double* omega, index_t* p_n_omega, double d_omega_min );
 
