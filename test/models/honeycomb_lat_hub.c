@@ -83,8 +83,8 @@ diverge_model_t* gen_honeycomb_lat_hub( index_t nkx, index_t nky, index_t lx,
 }
 
 diverge_model_t* gen_honeycomb_lat_hub_sym( index_t nkx, index_t nky,
-        index_t nkxf, index_t nkyf,
-        double t, double tp, double U, double mu) {
+        index_t nkxf, index_t nkyf, double t, double tp, double U, double mu,
+        index_t nsym) {
     diverge_model_t* model = diverge_model_init();
     model->n_orb = 2;
     model->SU2 = true;
@@ -203,6 +203,7 @@ diverge_model_t* gen_honeycomb_lat_hub_sym( index_t nkx, index_t nky,
                 curr_symm, 3,&(model->rs_symmetries[cnt][0][0]),model->orb_symmetries+cnt*symsize);
     }
     model->n_sym = cnt;
+    if (nsym == -1) model->n_sym *= -1;
     diverge_model_internals_common( model );
     return model;
 }

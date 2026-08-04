@@ -190,12 +190,14 @@ static diverge_ibz_t* find_ibz( diverge_model_t* m, int coarse ) {
     ibz->kmaps_to = calloc(nk, sizeof*ibz->kmaps_to);
     ibz->which_sym = calloc(nk, sizeof*ibz->which_sym*2);
 
+    VECTOR_INIT(index_t, ibz_maps_to);
     for (index_t k=0; k<nk; ++k) {
         if (!bitary_get(is_mapped_to_ibz, k)) {
             bitary_set(is_mapped_to_ibz, k);
             ibz->which_sym[k*2+0] = symm_identity;
             ibz->which_sym[k*2+1] = symm_identity;
             ibz->kmaps_to[k] = ibz->nkibz;
+            VECTOR_PUSH_BACK(ibz_maps_to, k);
             for (index_t s=0; s<n_sym; ++s) {
                 index_t idx = mom_maps_to[s+n_sym*k];
                 if (!bitary_get(is_mapped_to_ibz, idx)) {
@@ -208,7 +210,9 @@ static diverge_ibz_t* find_ibz( diverge_model_t* m, int coarse ) {
             ibz->nkibz++;
         }
     }
-    free(symm_inv);
+    VECTOR_SHRINK_TO_FIT(ibz_maps_to);
+    ibz->symm_inv = symm_inv;
+    ibz->nsym = n_sym;
     index_t nk_mapped = bitary_count_parallel(is_mapped_to_ibz, nk, diverge_omp_num_threads());
     if (nk_mapped != nk) {
         mpi_err_printf( "not all points mapped to ibz (%li vs. %li); errors?\n", nk_mapped, nk );
@@ -225,15 +229,17 @@ static diverge_ibz_t* find_ibz( diverge_model_t* m, int coarse ) {
         ibz->bz_map_off[i] = ibz->bz_map_len[i-1]+ibz->bz_map_off[i-1];
     // map (modifies displ)
     for (index_t k=0; k<nk; ++k) {
-        claV2ll_t bz_map = {{ibz->kmaps_to[k], ibz->which_sym[IDX2(k,1,2)]}};
-        ibz->bz_map[IDX2(ibz->bz_map_off[bz_map.v[0]],0,2)] = bz_map.v[0];
-        ibz->bz_map[IDX2(ibz->bz_map_off[bz_map.v[0]],1,2)] = bz_map.v[1];
-        ibz->bz_map_off[bz_map.v[0]]++;
+        index_t i = ibz->kmaps_to[k];
+        ibz->bz_map[IDX2(ibz->bz_map_off[i],0,2)] = k;
+        ibz->bz_map[IDX2(ibz->bz_map_off[i],1,2)] = ibz->which_sym[IDX2(k,1,2)];
+        ibz->bz_map_off[i]++;
     }
     // redo displ
+    ibz->bz_map_off[0] = 0;
     for (index_t i=1; i<ibz->nkibz; ++i)
         ibz->bz_map_off[i] = ibz->bz_map_len[i-1]+ibz->bz_map_off[i-1];
 
+    ibz->bz_map_self = ibz_maps_to;
     ibz->nk = nk;
     return ibz;
 }
@@ -245,6 +251,8 @@ void _diverge_ibz_free( diverge_ibz_t* ibz ) {
         free(ibz->bz_map_off);
         free(ibz->bz_map_len);
         free(ibz->bz_map);
+        free(ibz->bz_map_self);
+        free(ibz->symm_inv);
         free(ibz);
     }
 }

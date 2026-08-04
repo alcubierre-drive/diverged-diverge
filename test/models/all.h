@@ -71,7 +71,8 @@ diverge_model_t* KWARGS_DECL(gen_square_lat_hub_sym, index_t nkx, index_t nky,
 diverge_model_t* KWARGS_DECL(gen_square_lat_rashba_sym, index_t nkx, index_t nky,
         index_t nkxf, index_t nkyf, double t, double tp, double U, double mu, double alpha);
 diverge_model_t* KWARGS_DECL(gen_honeycomb_lat_hub_sym, index_t nkx, index_t nky,
-        index_t nkxf, index_t nkyf, double t, double tp, double U, double mu);
+        index_t nkxf, index_t nkyf, double t, double tp, double U, double mu,
+        index_t nsym);
 diverge_model_t* KWARGS_DECL(gen_triangular_pxpy_sym, index_t nkx, index_t nky,
         bool to_ppm);
 diverge_model_t* KWARGS_DECL(gen_triangular_lat_rashba, index_t nkx, index_t nky);

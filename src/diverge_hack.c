@@ -159,6 +159,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
             INTERNALS->U = NULL;
         }
     }
+    CHECKKEY("model_ibz_map_E_U") {
+        INTERNALS->ibz_map_E_U = atoi(val);
+    }
     CHECKKEY("model_shared_gf") {
         if (m->gfill != &diverge_greensfunc_generator_default) {
             mpi_wrn_printf( "shared GF buffer for custom GF generator must be taken care of manually\n" );
