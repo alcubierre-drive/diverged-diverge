@@ -27,18 +27,10 @@ void tu_data_phonons_free( tu_data_phonons_t* t );
 // generates D channel vertex scaled by fac, adds to existing content of buffer
 void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
         complex128_t* out, double fac );
-diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t );
-complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t, int fullmesh );
+
 void tu_data_phonons_get_g_dim( tu_data_phonons_t* t, int fullmesh, index_t g_dim[3] );
 
-// we expose an interface to the refined g
-complex128_t* tu_data_phonons_get_g_ref( tu_data_phonons_t* t );
-
-// and to the refinement itself
-refinement_t* tu_data_phonons_get_refine( tu_data_phonons_t* t, index_t* n_refine );
-
 typedef struct diverge_flow_step_t diverge_flow_step_t;
-
 // interface for custom ph vert generation (non-refined)
 void tu_data_phonons_set_vertex_generator( tu_data_phonons_t* t,
         diverge_phonon_vertex_generator_t V, diverge_flow_step_t* step, void* ctx );

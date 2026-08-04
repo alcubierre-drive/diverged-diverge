@@ -8,6 +8,7 @@ LINALG_IMPLEMENT
 #include "diverge_model.h"
 #include "misc/mpi_functions.h"
 #include "tu/phonons.h"
+#include "tu/phonons_details.h"
 
 #include "misc/shared_mem.h"
 #include "misc/bitary.h"
@@ -118,7 +119,10 @@ void* diverge_phonons_get_ifrq( diverge_model_t* m ) {
 
 complex128_t* diverge_phonons_get_g( diverge_model_t* m, int refined ) {
     tu_data_phonons_t* p = m->internals->tu_data_phonons;
-    return p ? (refined > 0 ? tu_data_phonons_get_g_ref(p) : tu_data_phonons_get_g(p, refined)) : NULL;
+    if (!p) return NULL;
+    if (refined > 0) return p->g_ob_qO_refined;
+    if (refined < 0) return p->g_ob_qO_fullmesh;
+    return p->g_ob_qO;
 }
 
 void diverge_phonons_get_g_dim( diverge_model_t* m, index_t g_dim[3] ) {
@@ -206,7 +210,8 @@ double diverge_phonons_enable_refinement( diverge_model_t* el, int enable_refine
 refinement_t* diverge_phonons_get_refine( diverge_model_t* m, index_t* n_refine ) {
     tu_data_phonons_t* p = m->internals->tu_data_phonons;
     if (!p) return NULL;
-    return tu_data_phonons_get_refine( p, n_refine );
+    if (n_refine) *n_refine = p->n_refine;
+    return p->refine;
 }
 
 void diverge_phonons_set_vertex_generator( diverge_model_t* m,

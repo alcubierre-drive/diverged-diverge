@@ -448,11 +448,6 @@ void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
     for (index_t i=0; i<my_nk*POW2(linsz); ++i) out[i] += fac * buf[i];
 }
 
-diverge_model_t* tu_data_phonons_get_model( tu_data_phonons_t* t ) { return t->pmod; }
-complex128_t* tu_data_phonons_get_g( tu_data_phonons_t* t, int fullmesh ) {
-    return fullmesh ? t->g_ob_qO_fullmesh : t->g_ob_qO;
-}
-
 void tu_data_phonons_get_g_dim( tu_data_phonons_t* t, int fullmesh, index_t g_dim[3] ) {
     g_dim[0] = fullmesh ? kdim(t->nk) : t->my_nk;
     g_dim[1] = POW2(t->n_spin)*t->n_orbff;
@@ -586,8 +581,3 @@ static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t )
     return result;
 }
 
-refinement_t* tu_data_phonons_get_refine( tu_data_phonons_t* t, index_t* n_refine ) {
-    if (n_refine) *n_refine = t->n_refine;
-    return t->refine;
-}
-complex128_t* tu_data_phonons_get_g_ref( tu_data_phonons_t* t ) { return t->g_ob_qO_refined; }
