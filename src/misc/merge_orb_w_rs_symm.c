@@ -6,25 +6,24 @@
 #include "linalg.h"
 LINALG_IMPLEMENT
 
-void merge_rs_orb(diverge_model_t* model) {
+void diverge_merge_rs_orb(diverge_model_t* model) {
     if (!model->orb_symmetries || model->n_sym == 0) return;
+    mpi_vrb_printf( "merging realspace orbitals…\n" );
     complex128_t* orb_symmetries = model->orb_symmetries;
-    index_t n_orb = model->n_orb;
-    index_t n_spin = model->n_spin;
-    index_t n_sym = model->n_sym;
-    if (n_sym < 0) n_sym *= -1;
-    index_t n_mi = n_orb * n_spin;
+    const index_t n_orb = model->n_orb,
+                  n_spin = model->n_spin,
+                  n_sym = labs(model->n_sym),
+                  n_mi = model->n_orb * model->n_spin;
 
     complex128_t* orb_cpy = malloc( POW2(n_mi)*n_sym*sizeof(*orb_cpy) );
     memcpy( orb_cpy, orb_symmetries, POW2(n_mi)*n_sym*sizeof(*orb_cpy) );
-    memset( orb_symmetries, 0, POW2(n_mi)*n_sym*sizeof(*orb_symmetries) );
+    ZERO_OUT( orb_symmetries, n_sym * POW2(n_mi) );
 
-    int periodic_iter[3];
-    periodic_iter[0] = model->internals->periodic_direction[0] ? 3 : 0;
-    periodic_iter[1] = model->internals->periodic_direction[1] ? 3 : 0;
-    periodic_iter[2] = model->internals->periodic_direction[2] ? 3 : 0;
+    const int periodic_iter[3] = { model->internals->periodic_direction[0] ? 3 : 0,
+                                   model->internals->periodic_direction[1] ? 3 : 0,
+                                   model->internals->periodic_direction[2] ? 3 : 0, };
 
-    claM3d_t UC = claM3d_map(model->lattice[0]);
+    const claM3d_t UC = claM3d_map(model->lattice[0]);
 
     for (index_t s=0; s<n_sym; ++s)
     for (index_t o1=0; o1<n_orb; ++o1) {

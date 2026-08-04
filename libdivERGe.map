@@ -73,6 +73,7 @@ DIVERGE_0.11 {
         diverge_mem_alloc_rs_vertex_t;
         diverge_mem_alloc_tu_formfactor_t;
         diverge_mem_free;
+        diverge_merge_rs_orb;
         diverge_model_free;
         diverge_model_free_set_options;
         diverge_model_generate_meshes;
@@ -192,7 +193,6 @@ DIVERGE_0.11 {
         diverge_symmetrize_hoppings;
         diverge_symmetrize_mom_coarse;
         diverge_symmetrize_mom_fine;
-        merge_rs_orb;
         mpi_dbg_printf;
         mpi_dbg_printf_all;
         mpi_eprintf;

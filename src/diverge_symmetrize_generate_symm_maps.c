@@ -8,6 +8,7 @@
 #include "misc/merge_orb_w_rs_symm.h"
 #include "misc/bitary.h"
 #include "misc/gemm.h"
+#include "misc/invert.h"
 
 #define LINALG_NO_LAPACKE
 #include "misc/linalg.h"
@@ -126,8 +127,7 @@ static inline int approx_id( const double* A, index_t sz ) {
         double diff = fabs(A[IDX2(i,j,sz)] - ((i==j)?1.0:0.0));
         maxdiff = MAX(diff,maxdiff);
     }
-    // printf( "%.5e\n", maxdiff );
-    return maxdiff < 1.e-3;
+    return maxdiff < SYMNORM_MATRIX_ZERO;
 }
 static inline int capprox_id( const complex128_t* A, index_t sz ) {
     double maxdiff = 0.0;
@@ -136,12 +136,9 @@ static inline int capprox_id( const complex128_t* A, index_t sz ) {
         double diff = cabs( A[IDX2(i,j,sz)] - (((i==j)?1.0:0.0)) );
         maxdiff = MAX(diff,maxdiff);
     }
-    // printf( "%.5e\n", maxdiff );
-    return maxdiff < 1.e-3;
+    return maxdiff < SYMNORM_MATRIX_ZERO;
 }
 
-// TODO the inverse mapping should be performed in the generation function, but
-// for some reason things break when doing that...
 static diverge_ibz_t* find_ibz( diverge_model_t* m, int coarse ) {
     const index_t n_sym = m->n_sym;
     const index_t nk = coarse ? kdim(m->nk) : kdimtot(m->nk,m->nkf);
@@ -257,6 +254,73 @@ void _diverge_ibz_free( diverge_ibz_t* ibz ) {
     }
 }
 
+// returns inverse symmetry mapping
+static index_t* ensure_inverse_symmetries_and_id( diverge_model_t* model ) {
+    index_t n_sym = model->n_sym;
+
+    const index_t nb = model->n_orb * model->n_spin;
+
+    VECTOR_INIT(index_t, sym_inv);
+    index_t sym_id = -1;
+    index_t n_missing = 0;
+    for (index_t s=0; s<n_sym; ++s) {
+        const complex128_t* os = model->orb_symmetries + s*POW2(nb);
+        const double* rs = model->rs_symmetries[s][0];
+        if (approx_id(rs, 3) && capprox_id(os, nb)) {
+            sym_id = s;
+            VECTOR_PUSH_BACK(sym_inv, s);
+            continue;
+        }
+        int found = 0;
+        for (index_t t=0; t<n_sym; ++t) {
+            const complex128_t* ot = model->orb_symmetries + t*POW2(nb);
+            const double* rt = model->rs_symmetries[t][0];
+            complex128_t ost[POW2(nb)];
+            single_square_gemm(os,0, ot,0, ost, nb);
+            claM3d_t rst = claM3d_matmul(claM3d_map(rs), claM3d_map(rt));
+            if (approx_id(rst.m[0], 3) && capprox_id(ost, nb)) {
+                found = 1;
+                VECTOR_PUSH_BACK(sym_inv, t);
+                break;
+            }
+        }
+        if (!found) {
+            n_missing++;
+            VECTOR_PUSH_BACK(sym_inv, -1);
+        }
+    }
+
+    if (sym_id == -1) n_missing++;
+
+    if (n_missing) {
+        mpi_wrn_printf( "%li symmetry operations missing (inverse/identity)\n", n_missing );
+        complex128_t* osym = model->orb_symmetries = realloc(model->orb_symmetries,
+                sizeof*model->orb_symmetries * POW2(nb) * (n_sym + n_missing));
+        if (sym_id == -1) {
+            for (index_t i=0; i<nb; ++i)
+            for (index_t j=0; j<nb; ++j)
+                osym[IDX3(n_sym,i,j, nb,nb)] = (i==j) ? 1.0 : 0.0;
+            claM3d_rmap(claM3d_id(), model->rs_symmetries[n_sym][0]);
+            n_sym++;
+        }
+        for (index_t s=0; s<model->n_sym; ++s) { // use model->n_sym here, beacuse n_sym is updated
+            if (sym_inv[s] == -1) {
+                cmatrix_invert(osym+s*POW2(nb), nb, osym+n_sym*POW2(nb));
+                matrix_invert(model->rs_symmetries[s][0], 3, model->rs_symmetries[n_sym][0]);
+                sym_inv[s] = n_sym;
+                sym_inv[n_sym] = s;
+                n_sym++;
+                mpi_wrn_printf( "symmetry #%2li missing inverse, adding…\n", s );
+            }
+        }
+        model->n_sym = n_sym;
+        mpi_wrn_printf( "added %li missing inverse/identity operations, n_sym=%li\n", n_missing, model->n_sym );
+    }
+
+    VECTOR_SHRINK_TO_FIT(sym_inv);
+    return sym_inv;
+}
+
 void diverge_generate_symm_maps( diverge_model_t* model ) {
     if (model->internals->symm_orb_off &&
         model->internals->symm_orb_len &&
@@ -268,6 +332,10 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
         model->n_sym > 0) return;
     if (model->n_sym == 0) return;
     mpi_vrb_printf("generate symmetries with %d elements\n", model->n_sym)
+
+    diverge_merge_rs_orb(model);
+    index_t* inv_sym = ensure_inverse_symmetries_and_id(model);
+    free( inv_sym ); // TODO
 
     index_t nk = kdim(model->nk);
     index_t nktot = kdimtot(model->nk, model->nkf);
@@ -330,14 +398,12 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     VECTOR_INIT( complex128_t, orbmaps_to_prefac )
     claV3d_t* mapped_pos = calloc(n_orb*n_sym, sizeof(claV3d_t));
 
-    int periodic_iter[3];
-    periodic_iter[0] = model->internals->periodic_direction[0] ? 3:0;
-    periodic_iter[1] = model->internals->periodic_direction[1] ? 3:0;
-    periodic_iter[2] = model->internals->periodic_direction[2] ? 3:0;
-
-    claV3d_t UC1 = claV3d_map(model->lattice[0]);
-    claV3d_t UC2 = claV3d_map(model->lattice[1]);
-    claV3d_t UC3 = claV3d_map(model->lattice[2]);
+    const int periodic_iter[3] = { model->internals->periodic_direction[0] ? 3:0,
+                                   model->internals->periodic_direction[1] ? 3:0,
+                                   model->internals->periodic_direction[2] ? 3:0 };
+    const claV3d_t UC1 = claV3d_map(model->lattice[0]);
+    const claV3d_t UC2 = claV3d_map(model->lattice[1]);
+    const claV3d_t UC3 = claV3d_map(model->lattice[2]);
 
     index_t eqpos = check_orbital_equivalence( model );
     if (eqpos)
@@ -457,9 +523,6 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
     free( orbmaps_to );
     free( orbmaps_to_prefac );
     free( mapped_pos );
-
-    mpi_vrb_printf( "merging realspace orbitals…\n" );
-    merge_rs_orb(model);
 
     model->internals->ibz_crs = find_ibz(model, 1);
     model->internals->ibz_fine = find_ibz(model, 0);
