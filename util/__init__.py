@@ -1618,7 +1618,7 @@ if not _libs["divERGe"] is None:
     symmetrize_hoppings.restype = c_voidp
 
     # Additional symmetry related stuff
-    merge_rs_orb = _libs["divERGe"].get("merge_rs_orb", "cdecl")
+    merge_rs_orb = _libs["divERGe"].get("diverge_merge_rs_orb", "cdecl")
     merge_rs_orb.argtypes = [POINTER(model_t)]
     merge_rs_orb.restype = None
 

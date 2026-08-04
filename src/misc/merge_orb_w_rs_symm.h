@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 /** this function only is in this header to be in the public interface */
-void merge_rs_orb(diverge_model_t* model);
+void diverge_merge_rs_orb(diverge_model_t* model);
 
 #ifdef __cplusplus
 }
