@@ -83,7 +83,40 @@ CT_TEST(largemat) {
     for (index_t o1=0; o1<3; ++o1)
     for (index_t o2=0; o2<3; ++o2)
         maxerr = MAX(maxerr, cabs(xbuf[IDX4(l,k,o1,o2,nk,3,3)] - gbuf[IDX4(l,k,o1,o2,nk,3,3)]));
+    mpi_scc_printf("%.5e\n", maxerr);
     CT_CHECK( maxerr < 1e-12 );
+
+    diverge_model_free(m);
+    diverge_model_free(l);
+}
+
+CT_TEST(symm) {
+    if (sizeof(gf_complex_t) != sizeof(complex128_t)) return;
+    const complex128_t Lambda = I;
+
+    diverge_model_t* m = KWARGS(gen_honeycomb_lat_hub_sym, .nkx=6, .nky=6);
+    m->gfill(m, Lambda, diverge_model_internals_get_greens(m));
+
+    diverge_model_t* l = KWARGS(gen_honeycomb_lat_hub_sym, .nkx=6, .nky=6);
+    diverge_model_internals_reset(l);
+    diverge_model_hack(l, "model_ibz_map_E_U", "1");
+    diverge_model_internals_common(l);
+    diverge_model_hack(l, "model_free_hamiltonian", "1");
+    diverge_model_hack(l, "model_free_hamiltonian", "eigen");
+    diverge_greensfunc_generator_ibz(l, Lambda, diverge_model_internals_get_greens(l));
+
+    double maxerr = 0.0;
+    complex128_t *gbuf = (complex128_t*)diverge_model_internals_get_greens(m),
+                 *xbuf = (complex128_t*)diverge_model_internals_get_greens(l);
+    index_t nk = kdimtot(m->nk,m->nkf);
+    for (index_t l=0; l<2; ++l)
+    for (index_t k=0; k<nk; ++k)
+    for (index_t o1=0; o1<m->n_orb; ++o1)
+    for (index_t o2=0; o2<m->n_orb; ++o2)
+        maxerr = MAX(maxerr, cabs(xbuf[IDX4(l,k,o1,o2,nk,m->n_orb,m->n_orb)] -
+                                  gbuf[IDX4(l,k,o1,o2,nk,m->n_orb,m->n_orb)]));
+    mpi_scc_printf("%.5e\n", maxerr);
+    CT_CHECK( maxerr < 1e-8 );
 
     diverge_model_free(m);
     diverge_model_free(l);

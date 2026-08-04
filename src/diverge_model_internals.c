@@ -235,6 +235,30 @@ void diverge_model_internals_common( diverge_model_t* model ) {
         }
         shared_exclusive_wait( intls->U );
     }
+
+    if (intls->ibz_fine && intls->ibz_map_E_U) {
+        diverge_ibz_t* ibz = intls->ibz_fine;
+        const index_t nb = model->n_orb * model->n_spin;
+        intls->ibz_E = shared_malloc(sizeof*intls->ibz_E * ibz->nkibz * nb   );
+        intls->ibz_U = shared_malloc(sizeof*intls->ibz_U * ibz->nkibz * nb*nb);
+        index_t icount = 0, idispl = 0;
+        {
+            int size = shared_malloc_size(),
+                rank = shared_malloc_rank();
+            index_t* counts_displs = diverge_distribute( ibz->nkibz, size );
+            icount = counts_displs[rank];
+            idispl = counts_displs[size+rank];
+            free( counts_displs );
+        }
+        shared_malloc_barrier();
+        for (index_t ic=0; ic<icount; ++ic) {
+            index_t i = idispl + ic;
+            index_t k = ibz->bz_map_self[i];
+            memcpy( intls->ibz_E + i*nb,    intls->E + k*nb,    sizeof(*intls->ibz_E)*nb    );
+            memcpy( intls->ibz_U + i*nb*nb, intls->U + k*nb*nb, sizeof(*intls->ibz_U)*nb*nb );
+        }
+        shared_malloc_barrier();
+    }
 }
 
 void diverge_model_internals_reset( diverge_model_t* model ) {
@@ -290,6 +314,8 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     free(model->internals->symm_pref);
     _diverge_ibz_free(model->internals->ibz_crs);
     _diverge_ibz_free(model->internals->ibz_fine);
+    if (model->internals->ibz_E) shared_free(model->internals->ibz_E);
+    if (model->internals->ibz_U) shared_free(model->internals->ibz_U);
 
     int dim = model->internals->dim;
     for (int d=dim; d<3; ++d) model->nk[d] = model->nkf[d] = 0;

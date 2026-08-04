@@ -11,6 +11,8 @@
 #include "misc/qnan.h"
 #include "misc/init_internal_libs.h"
 #include "misc/mergesort.h"
+#include "diverge_symmetrize.h"
+#include "misc/gemm.h"
 #include <fftw3.h>
 #include <assert.h>
 
@@ -166,9 +168,77 @@ greensfunc_op_t diverge_greensfunc_generator_default(const diverge_model_t* mode
     return greensfunc_op_cpu;
 }
 
+// calculates (A-B)*C
+static inline double sub_dot_3( const double* A, const double* B, const double* C ) {
+    return (A[0]-B[0])*C[0] + (A[1]-B[1])*C[1] + (A[2]-B[2])*C[2];
+}
+
 greensfunc_op_t diverge_greensfunc_generator_ibz(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf) {
-    // TODO write this function
-    return diverge_greensfunc_generator_default(model, Lambda, buf);
+    const diverge_ibz_t* ibz = model->internals->ibz_fine;
+    const double* E_ibz = model->internals->ibz_E;
+    const complex128_t* U_ibz = model->internals->ibz_U;
+    if (!ibz || !E_ibz || !U_ibz) {
+        mpi_wrn_printf( "no IBZ/data found, using default gfill\n" );
+        return diverge_greensfunc_generator_default(model, Lambda, buf);
+    }
+
+    const index_t nkf = kdimtot(model->nk, model->nkf),
+                  no = model->n_orb,
+                  ns = model->n_spin,
+                  nb = model->n_spin * model->n_orb;
+    const index_t n_sym = labs(model->n_sym);
+    const double* kmesh = model->internals->kfmesh;
+    const double* symm_beyond_UC = model->internals->symm_beyond_UC;
+    const index_t* symm_map_orb = model->internals->symm_map_orb;
+    const index_t* symm_orb_off = model->internals->symm_orb_off;
+    const index_t* symm_orb_len = model->internals->symm_orb_len;
+    const complex128_t* symm_pref = model->internals->symm_pref;
+
+    ZERO_OUT(buf, 2*nkf*POW2(nb));
+
+    for (int sign=0; sign<2; ++sign) {
+        complex128_t L = sign ? Lambda : conj(Lambda);
+
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<ibz->nkibz; ++i) {
+            index_t k = ibz->bz_map_self[i];
+            complex128_t* buf_from = buf + sign*nkf*POW2(nb) + k*POW2(nb);
+            for (index_t o=0; o<nb; ++o)
+            for (index_t p=0; p<nb; ++p) {
+                complex128_t tmp = 0.0;
+                for (index_t b=0; b<nb; ++b)
+                    tmp += U_ibz[IDX3(i,b,o,nb,nb)] * conj(U_ibz[IDX3(i,b,p,nb,nb)]) / (L - E_ibz[IDX2(i,b,nb)]);
+                buf_from[IDX2(o,p, nb)] = tmp;
+            }
+            for (index_t l=0; l<ibz->bz_map_len[i]; ++l) {
+                index_t idx = ibz->bz_map_off[i]+l;
+                index_t ks = ibz->bz_map[IDX2(idx,0, 2)],
+                         s = ibz->bz_map[IDX2(idx,1, 2)];
+                complex128_t* buf_to = buf + sign*nkf*POW2(nb) + ks*POW2(nb);
+                if (buf_from == buf_to) continue;
+                for (index_t oo1=0; oo1<no; ++oo1)
+                for (index_t ss1=0; ss1<ns; ++ss1)
+                for (index_t oo2=0; oo2<no; ++oo2)
+                for (index_t ss2=0; ss2<ns; ++ss2) {
+                    const index_t o1 = IDX2(ss1,oo1, no),
+                                  o2 = IDX2(ss2,oo2, no);
+                    const index_t osym1 = IDX2(o1,s, n_sym),
+                                  osym2 = IDX2(o2,s, n_sym);
+                    for (index_t x=0; x<symm_orb_len[osym1]; ++x)
+                    for (index_t y=0; y<symm_orb_len[osym2]; ++y) {
+                        const index_t xo1 = symm_orb_off[osym1] + x,
+                                      xo2 = symm_orb_off[osym2] + y;
+                        double k_dot_dR = sub_dot_3(symm_beyond_UC+3*IDX2(oo1,s,n_sym),
+                                                    symm_beyond_UC+3*IDX2(oo2,s,n_sym),
+                                                    kmesh+3*k);
+                        buf_to[IDX2(o1,o2,nb)] += buf_from[IDX2(symm_map_orb[xo1],symm_map_orb[xo2],nb)] *
+                            symm_pref[xo1] * conj(symm_pref[xo2]) * (cos(k_dot_dR)-I*sin(k_dot_dR));
+                    }
+                }
+            }
+        }
+    }
+    return greensfunc_op_cpu;
 }
 
 #undef MERGESORT_COMP

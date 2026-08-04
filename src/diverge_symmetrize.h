@@ -175,6 +175,10 @@ struct diverge_ibz_t {
     index_t* bz_map_off; // (nkibz,)
     index_t* bz_map_len; // (nkibz,)
     index_t* bz_map; // (off/len, 2) -> (idx,k|sym)
+    index_t* bz_map_self; // (nkibz,)
+    // nsym
+    index_t nsym;
+    index_t* symm_inv;
 };
 void _diverge_ibz_free( diverge_ibz_t* ibz );
 

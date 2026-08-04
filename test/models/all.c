@@ -93,7 +93,8 @@ KWARG_WRAP(gen_honeycomb_lat_hub_sym)
     KWARG_GET(double, tp);
     KWARG_GET(double, U);
     KWARG_GET(double, mu);
-    return gen_honeycomb_lat_hub_sym(nkx, nky, nkxf, nkyf, t, tp, U, mu);
+    KWARG_GET(index_t, nsym);
+    return gen_honeycomb_lat_hub_sym(nkx, nky, nkxf, nkyf, t, tp, U, mu, nsym);
 KWARG_WRAP_END
 
 KWARG_WRAP(gen_triangular_pxpy_sym)

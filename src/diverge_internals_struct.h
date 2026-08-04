@@ -106,9 +106,13 @@ struct internals_t {
     index_t* symm_orb_off;
     index_t* symm_orb_len;
     complex128_t* symm_pref;
+
     // ibz data
     diverge_ibz_t* ibz_crs;
     diverge_ibz_t* ibz_fine;
+    double* ibz_E;
+    complex128_t* ibz_U;
+    int ibz_map_E_U;
 
     int symcheck_mpi;
 };
