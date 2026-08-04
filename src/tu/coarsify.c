@@ -10,6 +10,7 @@ struct greensfunc_coarse_t {
 };
 
 greensfunc_coarse_t* greensfunc_coarse_init( const index_t* nk, const index_t* nkf, index_t nb, int dim ) {
+    mpi_vrb_printf( "greensfunc_coarse_init…\n" );
     greensfunc_coarse_t* g = calloc(1, sizeof*g);
     memcpy( g->nk, nk, sizeof(g->nk) );
     memcpy( g->nkf, nkf, sizeof(g->nkf) );
@@ -38,6 +39,7 @@ greensfunc_coarse_t* greensfunc_coarse_init( const index_t* nk, const index_t* n
         g->fftw_plans_set = 1;
     }
     return g;
+    mpi_vrb_printf( "greensfunc_coarse_init done\n" );
 }
 
 void greensfunc_coarse_free( greensfunc_coarse_t* g ) {
