@@ -433,3 +433,9 @@ diverge_lattice_t diverge_model_internals_get_rlattice( const diverge_model_t* m
 diverge_ibz_t* diverge_model_internals_get_ibz(const diverge_model_t* m, int crs) {
     return crs ? m->internals->ibz_crs : m->internals->ibz_fine;
 }
+double* diverge_model_internals_get_E_ibz(const diverge_model_t* model) {
+    return model->internals->ibz_E;
+}
+complex128_t* diverge_model_internals_get_U_ibz(const diverge_model_t* model) {
+    return model->internals->ibz_U;
+}

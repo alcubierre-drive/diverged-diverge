@@ -204,6 +204,12 @@ diverge_lattice_t diverge_model_internals_get_rlattice( const diverge_model_t* m
  */
 diverge_ibz_t* diverge_model_internals_get_ibz(const diverge_model_t* m, int crs);
 
+/** get the ibz energy array (only if allocated) */
+double* diverge_model_internals_get_E_ibz(const diverge_model_t* model);
+
+/** get the ibz Bloch state array (only if allocated) */
+complex128_t* diverge_model_internals_get_U_ibz(const diverge_model_t* model);
+
 #ifdef __cplusplus
 }
 #endif
