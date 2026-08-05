@@ -292,6 +292,7 @@ DIVERGE_UNSTABLE {
         diverge_qnanf_gen;
         diverge_qnanf_get;
         diverge_qnanf_isnan;
+        diverge_read_respack_vertices;
         diverge_zstd_fclose;
         diverge_zstd_fflush;
         diverge_zstd_file_set_default_compression_level;
