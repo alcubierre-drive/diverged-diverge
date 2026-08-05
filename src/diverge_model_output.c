@@ -313,7 +313,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
 
         // copy over the arrays
         #define COPY_ARY_TO_BUF( ary ) { \
-        if (ibuf[idx+1] > 0) { memcpy( buf + ibuf[idx], ary, ibuf[idx+1] ); } \
+        if (ibuf[idx+1] > 0) { if (ary) memcpy( buf + ibuf[idx], ary, ibuf[idx+1] ); else mpi_wrn_printf("COPY_ARY_TO_BUF("#ary") failed\n"); } \
         idx+=2; \
         }
         idx = 1;
