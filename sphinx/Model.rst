@@ -21,6 +21,7 @@ appropriately release all allocated memory.
    Meshing
    Wannier90
    FPLO
+   RESPACK
    Patching
    Symmetries
    Symmetrization
