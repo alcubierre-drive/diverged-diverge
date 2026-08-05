@@ -263,37 +263,6 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
     if (!(cond)) { mpi_err_printf( "%s\n", #cond ); errors++; } \
 }
 
-static inline void chomp_line(char* str) {
-    if (str == NULL) return;
-    char *dst = str;
-    char *src = str;
-
-    // strip front
-    while (*src && isspace((unsigned char)*src)) src++;
-
-    // compress
-    int in_space = 0;
-    while (*src) {
-        if (isspace((unsigned char)*src)) {
-            if (!in_space) {
-                *dst++ = ' ';
-                in_space = 1;
-            }
-        } else {
-            *dst++ = *src;
-            in_space = 0;
-        }
-        src++;
-    }
-
-    // strip back
-    if (dst > str && *(dst - 1) == ' ') {
-        *(dst - 1) = '\0';
-    } else {
-        *dst = '\0';
-    }
-}
-
 static ifc_t* read_ifc_file( const char* fname ) {
     FILE* f = fopen(fname, "r");
     if (!f) {
@@ -335,7 +304,7 @@ static ifc_t* read_ifc_file( const char* fname ) {
     char line[DIVERGE_GETLINE_MAX] = {0}; diverge_getline( line, f );
     char line_cmp[DIVERGE_GETLINE_MAX] = {0};
     char line_cpy[DIVERGE_GETLINE_MAX] = {0};
-    strcpy(line_cpy, line); chomp_line(line_cpy);
+    strcpy(line_cpy, line); diverge_chomp_inplace(line_cpy);
     if (line_cpy[0] == 'T') { // we have some distance to cover to reach the qpts
         mpi_log_printf( "ifc: discarding lines\n" );
         mpi_log_printf( "=====================\n%s", line );
@@ -354,7 +323,7 @@ static ifc_t* read_ifc_file( const char* fname ) {
 
 rescan_next_line:
         diverge_getline(line, f);
-        strcpy(line_cpy, line); chomp_line(line_cpy);
+        strcpy(line_cpy, line); diverge_chomp_inplace(line_cpy);
         nread = sscanf(line_cpy, "%li %li %li", &ifc->nq[0], &ifc->nq[1], &ifc->nq[2]);
         sprintf(line_cmp, "%li %li %li", ifc->nq[0], ifc->nq[1], ifc->nq[2]);
         if (!strcmp(line_cmp, line_cpy)) { // actually found three integers

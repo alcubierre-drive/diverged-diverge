@@ -314,6 +314,7 @@ DIVERGE_UNSTABLE {
         diverge_qnanf_gen;
         diverge_qnanf_get;
         diverge_qnanf_isnan;
+        diverge_read_respack_vertices;
         diverge_wigner_config_defaults_CPP;
         diverge_zstd_fclose;
         diverge_zstd_fflush;
