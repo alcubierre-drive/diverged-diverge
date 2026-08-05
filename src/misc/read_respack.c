@@ -55,6 +55,7 @@ rs_vertex_t* diverge_read_respack_vertices( const char* filename, index_t* len )
         if (!is_R_line) {
             rs_vertex_t V = {.chan='R'};
             nread = sscanf(line, "%li %li %lf %lf", &V.o1, &V.o2, ((double*)&V.V), ((double*)&V.V)+1);
+            V.o1 -= 1; V.o2 -= 1; // one-based indexing
             if (nread == 4) {
                 V.R[0] = R[0]; V.R[1] = R[1]; V.R[2] = R[2];
                 if (swap_orbitals) XORSWAP(V.o1, V.o2);
