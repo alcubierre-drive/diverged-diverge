@@ -471,22 +471,43 @@ void tu_vertex_init_U( tu_vertex_t* V, bool enforce_exchange ) {
 static inline index_t index_comp_r(index_t i, index_t j, const index_t* ctx) { return ctx[i]-ctx[j]; }
 MERGESORT_IMPL_R(mergesort_index, index_t)
 
+static void tu_vertex_init_U_ff_impl( tu_vertex_t* V, bool enforce_exchange,
+        const rs_vertex_t* zvert, const index_t vcnt, char chan );
+
 void tu_vertex_init_U_ff( tu_vertex_t* V, bool enforce_exchange ) {
     diverge_model_t* m = V->model;
     const index_t voff = m->n_vert_chan[0] + m->n_vert_chan[1] + m->n_vert_chan[2];
     const index_t vcnt = m->n_vert - voff;
     if (!vcnt) return;
-    mpi_vrb_printf( "generating formfactor space D-vertex from %li real-space elements\n", vcnt );
-    if (!V->D_flow) {
-        mpi_err_printf( "D channel required for non-PCD native vertices\n" );
-        return;
+    const rs_vertex_t* xyzvert = m->vert + voff;
+    index_t nP = 0, nC = 0, nD = 0;
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) \
+            reduction(+:nP) reduction(+:nC) reduction(+:nD)
+    for (index_t v=0; v<vcnt; ++v) {
+        nP += (xyzvert[v].chan == 'X');
+        nC += (xyzvert[v].chan == 'Y');
+        nD += (xyzvert[v].chan == 'Z');
     }
+    if ((nP + nC + nD) != vcnt)
+        mpi_wrn_printf( "counts of XYZ vertices (%li,%li,%li) not right (+ != %li)\n",
+            nP, nC, nD, vcnt );
+    if (nP && V->P_flow) tu_vertex_init_U_ff_impl(V, enforce_exchange, xyzvert,       nP, 'P');
+    if (nC && V->C_flow) tu_vertex_init_U_ff_impl(V, enforce_exchange, xyzvert+nP,    nC, 'C');
+    if (nD && V->D_flow) tu_vertex_init_U_ff_impl(V, enforce_exchange, xyzvert+nP+nC, nC, 'D');
+}
+
+static void tu_vertex_init_U_ff_impl( tu_vertex_t* V, bool enforce_exchange,
+        const rs_vertex_t* zvert, const index_t vcnt, char chan ) {
+    diverge_model_t* m = V->model;
+    mpi_vrb_printf( "generating formfactor space %c-vertex from %li real-space elements\n", chan, vcnt );
     if (V->SU2) enforce_exchange = false;
+
     if (!V->SU2 && enforce_exchange && !V->C_flow) {
         enforce_exchange = false;
         mpi_err_printf( "U_ff exchange requires C_flow, D_flow, and !SU2\n" );
+        if (chan != 'D')
+            mpi_wrn_printf("U_ff non-SU2 enforce exchange probably broken with channel '%c'\n", chan);
     }
-    const rs_vertex_t* zvert = m->vert + voff;
 
     const index_t n_orbff = V->n_orbff,
                   n_spin = V->n_spin,
@@ -533,12 +554,19 @@ void tu_vertex_init_U_ff( tu_vertex_t* V, bool enforce_exchange ) {
     fftw_destroy_plan(p);
     free(tuffidx_to_mi);
 
+    complex128_t* out = (chan == 'P') ? V->Pch :
+                        (chan == 'C') ? V->Cch :
+                      /*(chan == 'D')*/ V->Dch;
+    complex128_t* out_x = (chan == 'P') ? V->Pch :
+                          (chan == 'C') ? V->Dch :
+                        /*(chan == 'D')*/ V->Cch;
+
     const double fac = enforce_exchange ? 0.5 : 1.0;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t iq=0; iq<my_nk; ++iq) {
         index_t q = my_nk_off + iq;
         for (index_t lr=0; lr<POW2(linsz); ++lr)
-            V->Dch[IDX2(iq,lr,POW2(linsz))] += fac * helper[IDX2(q,lr,POW2(linsz))];
+            out[IDX2(iq,lr,POW2(linsz))] += fac * helper[IDX2(q,lr,POW2(linsz))];
     }
     if (enforce_exchange) {
         mpi_vrb_printf( "enforcing exchange\n" );
@@ -546,7 +574,7 @@ void tu_vertex_init_U_ff( tu_vertex_t* V, bool enforce_exchange ) {
         for (index_t iq=0; iq<my_nk; ++iq) {
             index_t q = my_nk_off + iq;
             for (index_t lr=0; lr<POW2(linsz); ++lr)
-                V->Cch[IDX2(iq,lr,POW2(linsz))] -= fac * helper[IDX2(q,lr,POW2(linsz))];
+                out_x[IDX2(iq,lr,POW2(linsz))] -= fac * helper[IDX2(q,lr,POW2(linsz))];
         }
     }
 
