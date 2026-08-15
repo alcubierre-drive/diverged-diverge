@@ -589,7 +589,7 @@ void diverge_tu_vertex_reco( const tu_vertex_t* V, char chan, complex128_t* buf_
             const index_t idx_TO = q + V->my_nk_off+ V->nk*(mo1+V->n_orbff*(s1+V->n_spin*
                                 (s2+V->n_spin*(mo3+V->n_orbff*(s3+V->n_spin*
                                                     s4)))));
-            if (channel == 'P') {
+            if (channel == 'P') { // from: q,3,1 --- to: 3,1,q
                 buf_q[idx_TO] = helper[mo1+V->n_orbff*(s1+V->n_spin*
                                     (s2+V->n_spin*(mo3+V->n_orbff*(s3+V->n_spin*
                                                         (s4+V->n_spin*q)))))];

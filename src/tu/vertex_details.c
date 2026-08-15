@@ -488,12 +488,14 @@ void tu_vertex_init_U_ff( tu_vertex_t* V, bool enforce_exchange ) {
         nC += (xyzvert[v].chan == 'Y');
         nD += (xyzvert[v].chan == 'Z');
     }
+    mpi_vrb_printf( "formfactor vertices in channels P:%li, C:%li, D:%li\n",
+            nP, nC, nD );
     if ((nP + nC + nD) != vcnt)
         mpi_wrn_printf( "counts of XYZ vertices (%li,%li,%li) not right (+ != %li)\n",
             nP, nC, nD, vcnt );
     if (nP && V->P_flow) tu_vertex_init_U_ff_impl(V, enforce_exchange, xyzvert,       nP, 'P');
     if (nC && V->C_flow) tu_vertex_init_U_ff_impl(V, enforce_exchange, xyzvert+nP,    nC, 'C');
-    if (nD && V->D_flow) tu_vertex_init_U_ff_impl(V, enforce_exchange, xyzvert+nP+nC, nC, 'D');
+    if (nD && V->D_flow) tu_vertex_init_U_ff_impl(V, enforce_exchange, xyzvert+nP+nC, nD, 'D');
 }
 
 static void tu_vertex_init_U_ff_impl( tu_vertex_t* V, bool enforce_exchange,
