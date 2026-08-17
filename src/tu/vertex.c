@@ -8,8 +8,6 @@
 #include "../misc/gemm.h"
 #include "../diverge_patching_helpers.h" // atomic_add
 
-struct transpose_plan_t { fftw_plan p; int has; complex128_t* buf; };
-
 tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu_prop_t* loop,
         bool P/*=true*/, bool C/*=true*/, bool D/*=true*/, bool self/*=false*/ ) {
     tu_vertex_t* V = calloc(1, sizeof*V);
@@ -32,8 +30,6 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
     V->C_flow = C || (!V->SU2 && D);
     V->D_flow = D || (!V->SU2 && C);
     V->use_self = self;
-
-    V->transpose_plan = calloc(1, sizeof*V->transpose_plan);
 
     // set all crossprojections to true
     V->C_to_P = V->D_to_P = V->P_to_C = V->D_to_C = V->P_to_D = V->C_to_D = true;
@@ -171,13 +167,6 @@ void tu_vertex_free( tu_vertex_t* V ) {
 #ifdef TU_VERTEX_RECO_GPU_ZGEMM
     if (V->owns) single_gemm_Xt_free( V->GPU_reco_gemm );
 #endif
-    if (V->owns) {
-        if (V->transpose_plan->has) {
-            fftw_destroy_plan(V->transpose_plan->p);
-            fftw_free(V->transpose_plan->buf);
-        }
-        free(V->transpose_plan);
-    }
     free( V );
 }
 
@@ -241,7 +230,6 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
         V->GPU_gemm_buffer[i][j] = O->GPU_gemm_buffer[i][j];
     }
     V->GPU_reco_gemm = O->GPU_reco_gemm;
-    V->transpose_plan = O->transpose_plan;
 
     return V;
 }
@@ -415,20 +403,7 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
         const index_t my_nk_in_bz = V->symm->my_nk_in_bz;
         const index_t my_nk_in_bz_off = V->symm->my_nk_in_bz_off;
 
-        if (!V->transpose_plan->has) {
-            V->transpose_plan->has = 1;
-            index_t rows = my_nk_in_bz, cols = rest;
-            fftw_iodim howmany_dims[2] = {
-                { .n = rows, .is = cols, .os = 1,   },
-                { .n = cols, .is = 1,    .os = rows },
-            };
-            V->transpose_plan->buf = (complex128_t*)fftw_malloc(rows*cols*sizeof(complex128_t));
-            V->transpose_plan->p = fftw_plan_guru_dft(0, NULL, 2, howmany_dims,
-                    (fftw_complex*)V->transpose_plan->buf, (fftw_complex*)buf_q, 0, FFTW_MEASURE);
-        }
-
-        complex128_t* buf_T = V->transpose_plan->buf;
-        ZERO_OUT(buf_T,rest*my_nk_in_bz);
+        ZERO_OUT(buf_q,rest*my_nk_in_bz);
         const index_t nsq = POW2(n_spin);
         const index_t legdim = nsq*n_orbff;
 
@@ -462,14 +437,15 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
 
                 const complex128_t add_val = symm_prefactor_symmX[l+symm_o2m_map_off[lidx]] *
                                         conj(symm_prefactor_symmX[r+symm_o2m_map_off[ridx]])* Xch[idx_FROM];
-                atomic_add( buf_T+idx_TO, &add_val );
+                atomic_add( buf_q+idx_TO, &add_val );
             }
         }
-        fftw_execute_dft(V->transpose_plan->p, (fftw_complex*)buf_T, (fftw_complex*)buf_q);
 #ifdef TU_VERTEX_RECO_GPU_ZGEMM
-        single_gemm_Xt(V->GPU_reco_gemm,buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
+        single_gemm_Xt_Afortran(V->GPU_reco_gemm,buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
 #else
-        single_gemm(buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
+        // this is a hack that allows to skip the warning message
+        single_gemm_Xt_t* quiet_handle = (single_gemm_Xt_t*)((ptrdiff_t)-1);
+        single_gemm_Xt_Afortran(quiet_handle,buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
 #endif
     } else {
         #pragma omp parallel for collapse(6) num_threads(diverge_omp_num_threads())

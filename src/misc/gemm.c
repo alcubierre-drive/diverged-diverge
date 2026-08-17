@@ -122,6 +122,23 @@ void single_gemm_Xt( single_gemm_Xt_t* x, const complex128_t* A,
     }
 }
 
+void single_gemm_Xt_Afortran( single_gemm_Xt_t* x, const complex128_t* A,
+        const complex128_t* B, complex128_t* C, index_t M, index_t N, index_t K,
+        complex128_t alpha, complex128_t beta ) {
+    ptrdiff_t px = x;
+    const index_t LDA = N, LDB = M, LDC = M;
+    if (x && px != -1) {
+        CUBLAS_CHECK( cublasXtZgemm( x->t, CUBLAS_OP_N, CUBLAS_OP_T, M, N, K, (const cuDoubleComplex*)&alpha,
+                (const cuDoubleComplex*)B, LDB, (const cuDoubleComplex*)A, LDA, (const cuDoubleComplex*)&beta,
+                (cuDoubleComplex*)C, LDC ));
+    } else {
+        if (px != -1)
+            mpi_wrn_printf("Xt GEMM not initialized, fallback to standard gemm\n");
+        cblas_zgemm(CblasColMajor, CblasNoTrans, CblasTrans, M, N, K, &alpha,
+                B, LDB, A, LDA, &beta, C, LDC );
+    }
+}
+
 #else // USE_CUDA
 
 single_gemm_Xt_t* single_gemm_Xt_init( void ) { return NULL; }
@@ -131,6 +148,14 @@ void single_gemm_Xt( single_gemm_Xt_t* x, const complex128_t* A,
         complex128_t alpha, complex128_t beta ) {
     (void)x;
     single_gemm( A, B, C, M, N, K, alpha, beta );
+}
+void single_gemm_Xt_Afortran( single_gemm_Xt_t* x, const complex128_t* A,
+        const complex128_t* B, complex128_t* C, index_t M, index_t N, index_t K,
+        complex128_t alpha, complex128_t beta ) {
+    (void)x;
+    const index_t LDA = N, LDB = M, LDC = M;
+    cblas_zgemm(CblasColMajor, CblasNoTrans, CblasTrans, M, N, K, &alpha,
+                B, LDB, A, LDA, &beta, C, LDC );
 }
 
 #endif // USE_CUDA

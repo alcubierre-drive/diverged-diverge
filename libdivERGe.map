@@ -333,6 +333,7 @@ DIVERGE_UNSTABLE {
         single_eigen_sort_part;
         single_gemm;
         single_gemm_Xt;
+        single_gemm_Xt_Afortran;
         single_gemm_Xt_free;
         single_gemm_Xt_init;
         single_gemm_adjoint;
