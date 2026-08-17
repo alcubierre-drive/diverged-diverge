@@ -1065,6 +1065,54 @@ if not _libs["divERGe"] is None:
     flow_step_vertex.argtypes = [POINTER(flow_step_t), c_char]
     flow_step_vertex.restype = struct_flow_step_vertex_t
 
+    def flow_step_loop_PY( step, which='lm', full_bz=False ):
+        r"""
+        Lambda-integrated bare bubble of the TU backend; the objects whose
+        maxima are reported by :c:func:`diverge_flow_step_loopmax` as Lp/Lm.
+
+        :param step: flow step handle
+        :param which: ``'lp'`` (particle-particle) or ``'lm'`` (particle-hole)
+        :param full_bz: if ``False`` (default), return the symmetry-reduced,
+                        MPI-local slice without copying overhead. If ``True``,
+                        reconstruct to the full BZ on every rank (allocates and
+                        frees a ``nk*(n_orbff*n_spin**2)**2`` buffer internally).
+
+        :return: ``(L, q_full)``. ``L`` has shape ``(nq, n_orbff, n_orbff,
+                 n_spin, n_spin, n_spin, n_spin)`` indexed
+                 ``[q, mo1, mo3, s1, s2, s3, s4]`` with canonical leg labels;
+                 for ``'lm'`` this is :math:`L_{1234}=G_{13}G_{24}`, with ``mo1``
+                 the bond spanning legs (1,4) and ``mo3`` the bond spanning
+                 legs (3,2). ``q_full`` gives the coarse-mesh index of each
+                 stored q.
+        :rtype: (numpy array of complex128, numpy array of int64)
+        """
+        chan = { ('lp', False): b'3', ('lm', False): b'4',
+                 ('lp', True ): b'5', ('lm', True ): b'6' }[(which, full_bz)]
+        v = flow_step_vertex( step, chan )
+        if v.backend == b'I':
+            raise RuntimeError( f"loop '{which}' not available" )
+        ns, nf = v.n_spin, v.n_orbff
+
+        if full_bz:
+            nk  = v.nk
+            ary = view_array( v.ary, dtype=np.complex128,
+                              shape=(ns, ns, nf, ns, ns, nf, nk) )
+            L   = np.ascontiguousarray( ary.transpose(6, 5, 2, 4, 3, 1, 0) )
+            mem_free( v.ary )
+            q_full = np.arange( nk, dtype=np.int64 )
+        else:
+            nq  = v.q_1 - v.q_0
+            ary = view_array( v.ary, dtype=np.complex128,
+                              shape=(nq, ns, ns, nf, ns, ns, nf) )
+            perm = (0, 6, 3, 5, 4, 2, 1) if which == 'lp' else (0, 6, 3, 5, 1, 2, 4)
+            L   = np.ascontiguousarray( ary.transpose(*perm) )
+            n_ibz  = flow_step_n_ibz( step )
+            ibz    = view_array( flow_step_ibz(step), dtype=np.int64, shape=(n_ibz,) )
+            q_full = np.copy( ibz[v.q_0:v.q_1] )
+
+        return L, q_full
+
+
     flow_step_mi_to_tuffidx = _libs["divERGe"].get("diverge_flow_step_mi_to_tuffidx")
     flow_step_mi_to_tuffidx.argtypes = [POINTER(flow_step_t)]
     flow_step_mi_to_tuffidx.restype = POINTER(index_t)
