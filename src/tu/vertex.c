@@ -7,7 +7,7 @@
 #include "../misc/gemm.h"
 #include "../diverge_patching_helpers.h" // atomic_add
 
-struct transpose_plan_t { fftw_plan p; int has; };
+struct transpose_plan_t { fftw_plan p; int has; complex128_t* buf; };
 
 tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu_prop_t* loop,
         bool P/*=true*/, bool C/*=true*/, bool D/*=true*/, bool self/*=false*/ ) {
@@ -171,7 +171,10 @@ void tu_vertex_free( tu_vertex_t* V ) {
     if (V->owns) single_gemm_Xt_free( V->GPU_reco_gemm );
 #endif
     if (V->owns) {
-        if (V->transpose_plan->has) fftw_destroy_plan(V->transpose_plan->p);
+        if (V->transpose_plan->has) {
+            fftw_destroy_plan(V->transpose_plan->p);
+            fftw_free(V->transpose_plan->buf);
+        }
         free(V->transpose_plan);
     }
     free( V );
@@ -412,13 +415,16 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
                 { .n = rows, .is = cols, .os = 1,   },
                 { .n = cols, .is = 1,    .os = rows },
             };
+            V->transpose_plan->buf = (complex128_t*)fftw_malloc(rows*cols*sizeof(complex128_t));
             V->transpose_plan->p = fftw_plan_guru_dft(0, NULL, 2, howmany_dims,
-                    buf_q, buf_q, 0, FFTW_MEASURE);
+                    (fftw_complex*)V->transpose_plan->buf, (fftw_complex*)buf_q, 0, FFTW_MEASURE);
         }
 
-        ZERO_OUT(buf_q,rest*my_nk_in_bz);
+        complex128_t* buf_T = V->transpose_plan->buf;
+        ZERO_OUT(buf_T,rest*my_nk_in_bz);
         const index_t nsq = POW2(n_spin);
         const index_t legdim = nsq*n_orbff;
+
         #pragma omp parallel for collapse(7) num_threads(diverge_omp_num_threads())
         for (index_t q=0; q<my_nk_in_bz; ++q)
         for (index_t s4=0; s4<n_spin; ++s4)
@@ -449,10 +455,10 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
 
                 const complex128_t add_val = symm_prefactor_symmX[l+symm_o2m_map_off[lidx]] *
                                         conj(symm_prefactor_symmX[r+symm_o2m_map_off[ridx]])* Xch[idx_FROM];
-                atomic_add( buf_q+idx_TO, &add_val );
+                atomic_add( buf_T+idx_TO, &add_val );
             }
         }
-        fftw_execute_dft(V->transpose_plan->p, (fftw_complex*)buf_q, (fftw_complex*)buf_q);
+        fftw_execute_dft(V->transpose_plan->p, (fftw_complex*)buf_T, (fftw_complex*)buf_q);
 #ifdef TU_VERTEX_RECO_GPU_ZGEMM
         single_gemm_Xt(V->GPU_reco_gemm,buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
 #else
