@@ -217,6 +217,17 @@ typedef struct {
  *          to obtain differential vertices in the three channels, pass '0' (P),
  *          '1' (C), '2' (D)
  *
+ *         .. note :: (> v0.11)
+ *          to obtain the Lambda-integrated bare bubbles (i.e. the bare
+ *          susceptibilities), pass '3' (particle-particle) or '4'
+ *          (particle-hole). These are the objects behind
+ *          :c:func:`diverge_flow_step_loopmax`, returned as borrowed pointers
+ *          in the channel's own (q,f,g) order, symmetry reduced and MPI
+ *          distributed, exactly as 'P'/'C'/'D'. Passing '5'/'6' instead
+ *          returns the same objects recombined to the full BZ on all ranks,
+ *          with the same allocation and ordering conventions as 'X','K','L'
+ *          (newly allocated buffer in (f,g,q) order, user frees).
+ * 
  * :grid FRG: chan can be 'P', 'C', 'D', or 'V', both upper and lower case. In
  *            general, lower case references the differential vertex and upper
  *            case the full vertex. The three channels are returned in
