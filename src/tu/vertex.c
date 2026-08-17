@@ -5,6 +5,9 @@
 #include "propagator_details.h"
 #include "../misc/batched_gemms.h"
 #include "../misc/gemm.h"
+#include "../diverge_patching_helpers.h" // atomic_add
+
+struct transpose_plan_t { fftw_plan p; int has; };
 
 tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu_prop_t* loop,
         bool P/*=true*/, bool C/*=true*/, bool D/*=true*/, bool self/*=false*/ ) {
@@ -28,6 +31,8 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
     V->C_flow = C || (!V->SU2 && D);
     V->D_flow = D || (!V->SU2 && C);
     V->use_self = self;
+
+    V->transpose_plan = calloc(1, sizeof*V->transpose_plan);
 
     // set all crossprojections to true
     V->C_to_P = V->D_to_P = V->P_to_C = V->D_to_C = V->P_to_D = V->C_to_D = true;
@@ -165,6 +170,10 @@ void tu_vertex_free( tu_vertex_t* V ) {
 #ifdef TU_VERTEX_RECO_GPU_ZGEMM
     if (V->owns) single_gemm_Xt_free( V->GPU_reco_gemm );
 #endif
+    if (V->owns) {
+        if (V->transpose_plan->has) fftw_destroy_plan(V->transpose_plan->p);
+        free(V->transpose_plan);
+    }
     free( V );
 }
 
@@ -222,6 +231,7 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
         V->GPU_gemm_buffer[i][j] = O->GPU_gemm_buffer[i][j];
     }
     V->GPU_reco_gemm = O->GPU_reco_gemm;
+    V->transpose_plan = O->transpose_plan;
 
     return V;
 }
@@ -384,79 +394,65 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
     const index_t* restrict symm_o2m_map_len = V->symm->o2m_map_len;
     const index_t* restrict symm_o2m_map_off = V->symm->o2m_map_off;
     const index_t* restrict symm_idx_map_symm = V->symm->idx_map_symm;
-    const complex128_t* restrict symm_prefactor_symmP = V->symm->prefactor_symmP;
-    const complex128_t* restrict symm_prefactor_symmCD = V->symm->prefactor_symmCD;
-    const complex128_t* restrict Pch = V->Pch;
-    const complex128_t* restrict Cch = V->Cch;
-    const complex128_t* restrict Dch = V->Dch;
+    const complex128_t* restrict symm_prefactor_symmX = channel == 'P' ? V->symm->prefactor_symmP :
+                                                        /* 'C' || 'D' */ V->symm->prefactor_symmCD;
+    const complex128_t* restrict Xch = channel == 'P' ? V->Pch :
+                                       channel == 'C' ? V->Cch :
+                                     /*channel == 'D'*/ V->Dch;
 
     const index_t rest = POW2(n_orbff*POW2(n_spin));
     if (V->symm->use_symmetries) {
         const index_t my_nk_in_bz = V->symm->my_nk_in_bz;
         const index_t my_nk_in_bz_off = V->symm->my_nk_in_bz_off;
 
+        if (!V->transpose_plan->has) {
+            V->transpose_plan->has = 1;
+            index_t rows = my_nk_in_bz, cols = rest;
+            fftw_iodim howmany_dims[2] = {
+                { .n = rows, .is = cols, .os = 1,   },
+                { .n = cols, .is = 1,    .os = rows },
+            };
+            V->transpose_plan->p = fftw_plan_guru_dft(0, NULL, 2, howmany_dims,
+                    buf_q, buf_q, 0, FFTW_MEASURE);
+        }
+
         ZERO_OUT(buf_q,rest*my_nk_in_bz);
         const index_t nsq = POW2(n_spin);
         const index_t legdim = nsq*n_orbff;
-        #pragma omp parallel for collapse(6) num_threads(diverge_omp_num_threads())
+        #pragma omp parallel for collapse(7) num_threads(diverge_omp_num_threads())
+        for (index_t q=0; q<my_nk_in_bz; ++q)
         for (index_t s4=0; s4<n_spin; ++s4)
         for (index_t s3=0; s3<n_spin; ++s3)
         for (index_t mo3=0; mo3<n_orbff; ++mo3)
         for (index_t s2=0; s2<n_spin; ++s2)
         for (index_t s1=0; s1<n_spin; ++s1)
-        for (index_t mo1=0; mo1<n_orbff; ++mo1)
-        for (index_t q=0; q<my_nk_in_bz; ++q) {
+        for (index_t mo1=0; mo1<n_orbff; ++mo1) {
             const index_t q_in_full = symm_from_ibz_2_bz[q + my_nk_in_bz_off];
             const index_t qFROM_IBZ = symm_kmaps_to[q_in_full] - my_nk_off;
-            const index_t idx_TO = q + my_nk_in_bz*(mo1 + n_orbff*((s1+n_spin*s2)+nsq*
-                    (mo3 + n_orbff*(s3+n_spin*s4))));
+            const index_t idx_TO = IDX7(q, s4,s3,mo3, s2,s1,mo1,
+                    n_spin,n_spin,n_orbff, n_spin,n_spin,n_orbff);
 
-            if (channel == 'P') {
-                index_t lidx = IDX4(s2,s1,mo1,q,n_spin,n_orbff,my_nk_in_bz);
-                index_t ridx = IDX4(s4,s3,mo3,q,n_spin,n_orbff,my_nk_in_bz);
-
-                for(index_t l=0; l < symm_o2m_map_len[lidx]; ++l)
-                for(index_t r=0; r < symm_o2m_map_len[ridx]; ++r) {
-                    const index_t idx_FROM =
-                        symm_idx_map_symm[l+symm_o2m_map_off[lidx]] + legdim * (
-                            symm_idx_map_symm[r+symm_o2m_map_off[ridx]]
-                            +legdim * (qFROM_IBZ));
-
-                    buf_q[idx_TO] += symm_prefactor_symmP[l+symm_o2m_map_off[lidx]]*
-                                conj(symm_prefactor_symmP[r+symm_o2m_map_off[ridx]])* Pch[idx_FROM];
-                }
+            index_t lidx, ridx;
+            switch (channel) {
+                case 'P': lidx = IDX4(s2,s1,mo1,q,n_spin,n_orbff,my_nk_in_bz);
+                          ridx = IDX4(s4,s3,mo3,q,n_spin,n_orbff,my_nk_in_bz); break;
+                case 'C': lidx = IDX4(s4,s1,mo1,q,n_spin,n_orbff,my_nk_in_bz);
+                          ridx = IDX4(s2,s3,mo3,q,n_spin,n_orbff,my_nk_in_bz); break;
+                default:
+                case 'D': lidx = IDX4(s3,s1,mo1,q,n_spin,n_orbff,my_nk_in_bz);
+                          ridx = IDX4(s2,s4,mo3,q,n_spin,n_orbff,my_nk_in_bz); break;
             }
-            if (channel == 'C') {
-                index_t lidx = IDX4(s4,s1,mo1,q,n_spin,n_orbff,my_nk_in_bz);
-                index_t ridx = IDX4(s2,s3,mo3,q,n_spin,n_orbff,my_nk_in_bz);
+            for (index_t l=0; l<symm_o2m_map_len[lidx]; ++l)
+            for (index_t r=0; r<symm_o2m_map_len[ridx]; ++r) {
+                const index_t idx_FROM = IDX3(qFROM_IBZ, symm_idx_map_symm[r+symm_o2m_map_off[ridx]],
+                        symm_idx_map_symm[l+symm_o2m_map_off[lidx]], legdim, legdim);
 
-                for(index_t l=0; l < symm_o2m_map_len[lidx]; ++l)
-                for(index_t r=0; r < symm_o2m_map_len[ridx]; ++r) {
-                    const index_t idx_FROM =
-                        symm_idx_map_symm[l+symm_o2m_map_off[lidx]] + legdim * (
-                            symm_idx_map_symm[r+symm_o2m_map_off[ridx]]
-                            +legdim * (qFROM_IBZ));
-
-                    buf_q[idx_TO] += symm_prefactor_symmCD[l+symm_o2m_map_off[lidx]]*
-                                conj(symm_prefactor_symmCD[r+symm_o2m_map_off[ridx]])* Cch[idx_FROM];
-                }
-            }
-            if (channel == 'D') {
-                index_t lidx = IDX4(s3,s1,mo1,q,n_spin,n_orbff,my_nk_in_bz);
-                index_t ridx = IDX4(s2,s4,mo3,q,n_spin,n_orbff,my_nk_in_bz);
-
-                for(index_t l=0; l < symm_o2m_map_len[lidx]; ++l)
-                for(index_t r=0; r < symm_o2m_map_len[ridx]; ++r) {
-                    const index_t idx_FROM =
-                        symm_idx_map_symm[l+symm_o2m_map_off[lidx]] + legdim * (
-                            symm_idx_map_symm[r+symm_o2m_map_off[ridx]]
-                            +legdim * (qFROM_IBZ));
-
-                    buf_q[idx_TO] += symm_prefactor_symmCD[l+symm_o2m_map_off[lidx]]*
-                                conj(symm_prefactor_symmCD[r+symm_o2m_map_off[ridx]])* Dch[idx_FROM];
-                }
+                const complex128_t add_val = symm_prefactor_symmX[l+symm_o2m_map_off[lidx]] *
+                                        conj(symm_prefactor_symmX[r+symm_o2m_map_off[ridx]])* Xch[idx_FROM];
+                atomic_add( buf_q+idx_TO, &add_val );
             }
         }
+        fftw_execute_dft(V->transpose_plan->p, (fftw_complex*)buf_q, (fftw_complex*)buf_q);
 #ifdef TU_VERTEX_RECO_GPU_ZGEMM
         single_gemm_Xt(V->GPU_reco_gemm,buf_q,existing_r_exp,buf,nr,rest,my_nk_in_bz,1./(double)V->nk,0.0);
 #else
@@ -474,17 +470,17 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
             const index_t idx_TO = q + V->my_nk*(mo1+n_orbff*(s1+n_spin*
                                 (s2+n_spin*(mo3+n_orbff*(s3+n_spin*s4)))));
             if (channel == 'P') {
-                buf_q[idx_TO] = Pch[mo1+n_orbff*(s1+n_spin*
+                buf_q[idx_TO] = Xch[mo1+n_orbff*(s1+n_spin*
                                     (s2+n_spin*(mo3+n_orbff*(s3+n_spin*
                                                         (s4+n_spin*q)))))];
             }
             if (channel == 'C') {
-                buf_q[idx_TO] = Cch[mo1+n_orbff*(s1+n_spin*
+                buf_q[idx_TO] = Xch[mo1+n_orbff*(s1+n_spin*
                                     (s4+n_spin*(mo3+n_orbff*(s3+n_spin*
                                                         (s2+n_spin*q)))))];
             }
             if (channel == 'D') {
-                buf_q[idx_TO] = Dch[mo1+n_orbff*(s1+n_spin*
+                buf_q[idx_TO] = Xch[mo1+n_orbff*(s1+n_spin*
                                     (s3+n_spin*(mo3+n_orbff*(s4+n_spin*
                                                         (s2+n_spin*q)))))];
             }
