@@ -413,7 +413,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                 toupper(chan) != 'X' &&
                 toupper(chan) != 'L' &&
                 toupper(chan) != 'K' &&
-                chan != '0' && chan != '1' && chan != '2') {
+                chan != '0' && chan != '1' && chan != '2' && chan != '3' && chan != '4' && chan != '5' && chan != '6') {
                 mpi_wrn_printf("for TUFRG vertex chan must be one of 'PCDSpcdsmh'. default: 'D'.\n");
                 result.channel = chan = 'D';
             }
@@ -429,6 +429,42 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                         sizeof*result.ary );
                 diverge_tu_vertex_reco( tu_V, toupper(chan-8), result.ary,
                         (!isupper(chan))?tu_V->projection_helper:NULL );
+                result.nk = tu_V->nk;
+                result.n_orbff = tu_V->n_orbff;
+                result.n_spin = tu_V->n_spin;
+                result.backend = 't';
+                break;
+            }
+
+            // '3' == lp: Lambda-integrated pp bubble (bare pp susceptibility)
+            // '4' == lm: Lambda-integrated ph bubble (bare ph susceptibility)
+            if (chan == '3' || chan == '4') {
+                result.ary = (chan == '3') ? tu_V->pp_bubble_int : tu_V->ph_bubble_int;
+                if (!result.ary) {
+                    mpi_wrn_printf("loop '%c' not allocated (channel not flowing)\n", chan);
+                    break;                      // leaves backend == 'I'
+                }
+                result.q_0 = tu_V->my_nk_off;
+                result.q_1 = tu_V->my_nk_off + tu_V->my_nk;
+                result.nk  = 0;
+                result.n_orbff = tu_V->n_orbff;
+                result.n_spin  = mod->n_spin;
+                result.backend = 'T';
+                break;
+            }
+
+            // '5'/'6': as '3'/'4', but reconstructed to the full BZ on every rank.
+            // Newly allocated, user frees. Canonical leg order, (f,g,q).
+            if (chan == '5' || chan == '6') {
+                const complex128_t* src = (chan == '5') ? tu_V->pp_bubble_int
+                                                        : tu_V->ph_bubble_int;
+                if (!src) {
+                    mpi_wrn_printf("loop '%c' not allocated\n", chan);
+                    break;
+                }
+                result.ary = calloc( tu_V->nk*POW2(tu_V->n_orbff*POW2(tu_V->n_spin)),
+                        sizeof*result.ary );
+                diverge_tu_vertex_reco( tu_V, (chan == '5') ? 'P' : 'C', result.ary, src );
                 result.nk = tu_V->nk;
                 result.n_orbff = tu_V->n_orbff;
                 result.n_spin = tu_V->n_spin;
