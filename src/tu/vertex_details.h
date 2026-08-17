@@ -15,8 +15,6 @@
 extern "C" {
 #endif
 
-typedef struct transpose_plan_t transpose_plan_t;
-
 struct tu_vertex_t {
     complex128_t *Pch, *Cch, *Dch;
     complex128_t *pp_bubble_int, *ph_bubble_int;
@@ -43,7 +41,6 @@ struct tu_vertex_t {
     char* GPU_gemm_buffer[32][3];
     bool has_gpu_memory;
     single_gemm_Xt_t* GPU_reco_gemm;
-    transpose_plan_t* transpose_plan;
 
     bool P_flow, C_flow, D_flow;
     bool C_to_P, D_to_P, P_to_C, D_to_C, P_to_D, C_to_D;

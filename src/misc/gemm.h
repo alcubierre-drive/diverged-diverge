@@ -61,6 +61,9 @@ void single_gemm_Xt_free( single_gemm_Xt_t* x );
 void single_gemm_Xt( single_gemm_Xt_t* x, const complex128_t* A,
         const complex128_t* B, complex128_t* C, index_t M, index_t N, index_t K,
         complex128_t alpha, complex128_t beta );
+void single_gemm_Xt_Afortran( single_gemm_Xt_t* x, const complex128_t* A,
+        const complex128_t* B, complex128_t* C, index_t M, index_t N, index_t K,
+        complex128_t alpha, complex128_t beta );
 
 #ifdef __cplusplus
 }
