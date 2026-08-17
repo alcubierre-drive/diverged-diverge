@@ -125,7 +125,7 @@ void single_gemm_Xt( single_gemm_Xt_t* x, const complex128_t* A,
 void single_gemm_Xt_Afortran( single_gemm_Xt_t* x, const complex128_t* A,
         const complex128_t* B, complex128_t* C, index_t M, index_t N, index_t K,
         complex128_t alpha, complex128_t beta ) {
-    ptrdiff_t px = x;
+    ptrdiff_t px = (ptrdiff_t)x;
     const index_t LDA = N, LDB = M, LDC = M;
     if (x && px != -1) {
         CUBLAS_CHECK( cublasXtZgemm( x->t, CUBLAS_OP_N, CUBLAS_OP_T, M, N, K, (const cuDoubleComplex*)&alpha,
