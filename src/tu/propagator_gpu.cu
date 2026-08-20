@@ -36,13 +36,8 @@ __global__ void to_loop_simple(cuDoubleComplex* __restrict__ const loop,
                     const cuDoubleComplex* __restrict__ const res,const index_t my_nk,
                     const index_t* const idx_map);
 
-__global__ void fold_to_coarse_fused(cuDoubleComplex* __restrict__ const coarse,
-                    const cuDoubleComplex* __restrict__ const fine,
-                    const index_t Nx, const index_t Ny, const index_t Nz,
-                    const index_t Ncx, const index_t Ncy, const index_t Ncz);
-
 // see fold_to_coarse() in propagator_cpu.c for the "FFT trick" reduction
-static void fold_to_coarse_fused_launch(cuda_prop_descr_t* __restrict__ cp, int dev, cudaStream_t stream,
+static void fold_to_coarse_gemv(cuda_prop_descr_t* __restrict__ cp, int dev, cudaStream_t stream,
                     const index_t* __restrict__ nkref, const index_t* __restrict__ nkref_coarse);
 
 
@@ -137,7 +132,7 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* __restrict__ cp,
                                 nkdev,cp->n_kblocks, cp->nk_per_thread);
             CUDA_CHECK( cudaStreamSynchronize( up ) );
 
-            fold_to_coarse_fused_launch(cp, dev, down, nkref, nkref_coarse);
+            fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
             CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], loopfft_coarse, loopfft_coarse, CUFFT_INVERSE));
             to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                             dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
@@ -245,7 +240,7 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* __restrict__ cp,
                                 nkdev,cp->n_kblocks, cp->nk_per_thread);
             CUDA_CHECK( cudaStreamSynchronize( up ) );
 
-            fold_to_coarse_fused_launch(cp, dev, down, nkref, nkref_coarse);
+            fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
             CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], loopfft_coarse, loopfft_coarse, CUFFT_FORWARD));
             to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                         dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
@@ -349,7 +344,7 @@ void ph_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
                                 GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
                                 nkdev,cp->n_kblocks, cp->nk_per_thread);
             CUDA_CHECK( cudaStreamSynchronize( up ) );
-            fold_to_coarse_fused_launch(cp, dev, down, nkref, nkref_coarse);
+            fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
             CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], loopfft_coarse, loopfft_coarse, CUFFT_INVERSE));
 
             to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
@@ -461,7 +456,7 @@ void pp_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
                                 GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
                                 nkdev,cp->n_kblocks, cp->nk_per_thread);
             CUDA_CHECK( cudaStreamSynchronize( up ) );
-            fold_to_coarse_fused_launch(cp, dev, down, nkref, nkref_coarse);
+            fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
             CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], loopfft_coarse, loopfft_coarse, CUFFT_FORWARD));
 
             to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
@@ -558,56 +553,44 @@ __global__ void to_loop_simple(cuDoubleComplex* __restrict__ const loop,
                         const index_t* __restrict__ const idx_map)
 {
     index_t q = mem_offset_tu();
-    if (q>=my_nk) return;
+    if(q>=my_nk) return;
     loop[q] = res[idx_map[q]];
 }
 
 // FFT trick: put \sum_{a=0}^{M} G[i+N*a] into G_c[i] and do FFT of G_c (see
-// fold_to_coarse() in propagator_cpu.c). Kernel launch relies on block/grid
-// settings, which are given below
-__global__ void fold_to_coarse_fused(cuDoubleComplex* __restrict__ const coarse,
-                    const cuDoubleComplex* __restrict__ const fine,
-                    const index_t Nx, const index_t Ny, const index_t Nz,
-                    const index_t Ncx, const index_t Ncy, const index_t Ncz)
-{
-    const index_t Ncoarse = Ncx*Ncy*Ncz;
-    const index_t tid = blockIdx.x*(index_t)blockDim.x + threadIdx.x;
-    if (tid >= Ncoarse) return;
-
-    const index_t cz = tid % Ncz;
-    const index_t tmp = tid / Ncz;
-    const index_t cy = tmp % Ncy;
-    const index_t cx = tmp / Ncy;
-
-    const index_t M0 = Nx/Ncx, M1 = Ny/Ncy, M2 = Nz/Ncz;
-
-    double accx = 0.0, accy = 0.0;
-    for (index_t a0 = 0; a0 < M0; ++a0) {
-        const index_t x = cx + a0*Ncx;
-        for (index_t a1 = 0; a1 < M1; ++a1) {
-            const index_t base = Nz*((cy + a1*Ncy) + Ny*x);
-            for (index_t a2 = 0; a2 < M2; ++a2) {
-                const cuDoubleComplex v = fine[base + cz + a2*Ncz];
-                accx += v.x;
-                accy += v.y;
-            }
-        }
-    }
-    coarse[tid] = make_cuDoubleComplex(accx, accy);
-}
-
-#define FOLD_T 1024 // threads per block; grid scales to cover Ncx*Ncy*Ncz cells
-
-static void fold_to_coarse_fused_launch(cuda_prop_descr_t* __restrict__ cp, int dev, cudaStream_t stream,
+// fold_to_coarse() in propagator_cpu.c). We can implement the sum over all
+// k dimensions as consecutive strided batched zgemv operations with
+// ones-vectors.
+static void fold_to_coarse_gemv(cuda_prop_descr_t* __restrict__ cp, int dev, cudaStream_t stream,
                     const index_t* __restrict__ nkref, const index_t* __restrict__ nkref_coarse)
 {
     const index_t Nx = nkref[0], Ny = nkref[1], Nz = nkref[2];
     const index_t Ncx = nkref_coarse[0], Ncy = nkref_coarse[1], Ncz = nkref_coarse[2];
-    const index_t Ncoarse = Ncx*Ncy*Ncz;
+    const index_t M0 = Nx/Ncx, M1 = Ny/Ncy, M2 = Nz/Ncz;
 
-    dim3 grid((unsigned)((Ncoarse + FOLD_T - 1)/FOLD_T), 1, 1);
-    dim3 block(FOLD_T, 1, 1);
+    cublasHandle_t handle = cp->cublas_handle[dev];
+    CUBLAS_CHECK( cublasSetStream(handle, stream) );
+    const cuDoubleComplex one  = make_cuDoubleComplex(1.0, 0.0);
+    const cuDoubleComplex zero = make_cuDoubleComplex(0.0, 0.0);
+    const cuDoubleComplex* ones = cp->fold_ones[dev];
 
-    fold_to_coarse_fused<<<grid, block, 0, stream>>>(
-        cp->buf_GG_coarse[dev], cp->buf_GG[dev], Nx, Ny, Nz, Ncx, Ncy, Ncz);
+    cuDoubleComplex* buf    = cp->buf_GG[dev];
+    cuDoubleComplex* coarse = cp->buf_GG_coarse[dev];
+
+    // x: buf (Nx,Ny,Nz) -> coarse (Ncx,Ny,Nz)
+    const index_t K0 = Ncx*Ny*Nz;
+    CUBLAS_CHECK( cublasZgemvStridedBatched(handle, CUBLAS_OP_N, (int)K0, (int)M0, &one,
+                buf, (int)K0, (long long)K0, ones, 1, 0, &zero, coarse, 1, (long long)K0, 1) );
+
+    // y: coarse (Ncx,Ny,Nz) -> buf (Ncx,Ncy,Nz), batched over Ncx
+    const index_t K1 = Ncy*Nz;
+    CUBLAS_CHECK( cublasZgemvStridedBatched(handle, CUBLAS_OP_N, (int)K1, (int)M1, &one,
+                coarse, (int)K1, (long long)(Ny*Nz), ones, 1, 0, &zero, buf, 1, (long long)K1, (int)Ncx) );
+
+    // z: buf (Ncx,Ncy,Nz) -> coarse (Ncx,Ncy,Ncz), batched over Ncx*Ncy;
+    // this is the final result cufftExecZ2Z() reads
+    const index_t K2 = Ncz;
+    const index_t batch = Ncx*Ncy;
+    CUBLAS_CHECK( cublasZgemvStridedBatched(handle, CUBLAS_OP_N, (int)K2, (int)M2, &one,
+                buf, (int)K2, (long long)Nz, ones, 1, 0, &zero, coarse, 1, (long long)K2, (int)batch) );
 }
