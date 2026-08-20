@@ -1,3 +1,5 @@
+/* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "mpi_functions.h"
 #include "mergesort.h"
 #include "hartree_fock.h"
@@ -134,7 +136,8 @@ static void diverge_hartree_fock_exec( diverge_hartree_fock_t* m, gf_complex_t* 
         dbuf[i] = cabs(Lambda)==0.0 ? fermi_zero(m->E[i]) : fermi(m->E[i], cabs(Lambda));
 
     // calculate the 'orbital space' Fermi function
-    batched_zgemd_r( dest, m->U, dbuf, 1.0, 0.0, m->nb, m->nk );
+    // XXX this is where USE_GF_FLOATS breaks; be aware
+    batched_zgemd_r( (complex128_t*)dest, m->U, dbuf, 1.0, 0.0, m->nb, m->nk );
 
     // and copy it over to the -Lambda GF (TODO: not needed?!)
     memcpy( dest + nk_nb2, dest, sizeof*dest * nk_nb2 );
@@ -165,6 +168,7 @@ void diverge_hartree_fock_step( diverge_hartree_fock_t* m, double T ) {
     // do a flow step by -M_PI (\dd\Lambda vs. 1/2\pi\int\dd\omega, the factor
     // of two cancels due to the two GFs)
     diverge_flow_step_euler( m->step, T, -M_PI );
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t i=0; i<nk_nb2; ++i) m->flow_step_sigma[i] -= m->internal_sigma[i];
     if (hf_normalize) diverge_hartree_fock_normalize_sigma( m );
 }
