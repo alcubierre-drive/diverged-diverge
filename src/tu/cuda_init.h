@@ -13,6 +13,7 @@
 typedef struct cufftHandle cufftHandle;
 typedef struct cudaStream_t cudaStream_t;
 typedef struct cuDoubleComplex cuDoubleComplex;
+typedef struct cublasHandle_t cublasHandle_t;
 #endif
 
 #ifdef __cplusplus
@@ -46,6 +47,11 @@ struct cuda_prop_descr_t {
     cufftHandle* gpu_fft_coarse;
     size_t worksize_fft_coarse[32];
     long long int dims_coarse[3];
+
+    // fold_to_coarse is equivalent to 3 strided-batched GEMVs vs. ones-vector,
+    // this is what the cublas_handle and fold_ones buffers are for.
+    cublasHandle_t* cublas_handle;
+    cuDoubleComplex* fold_ones[32];
 
     index_t* mi_to_R[32];
     index_t* c_to_c_q[32];
@@ -81,6 +87,9 @@ static const cuda_prop_descr_t cuda_prop_defaults = {
     .gpu_fft_coarse = NULL,
     .worksize_fft_coarse = {0},
     .dims_coarse = {1,1,0},
+
+    .cublas_handle = NULL,
+    .fold_ones = {0},
 
     .mi_to_R = {0},
     .c_to_c_q = {0},
