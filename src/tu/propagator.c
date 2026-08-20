@@ -95,7 +95,7 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
     index_t tasks_dist = t->tu_data->use_reduced_loop ? t->tu_data->unique_mi_l_sz : POW2(t->n_orbff);
     index_t nkff[3]; for (int i=0; i<3; ++i) nkff[i] = model->nk[i] * model->nkf[i];
 
-    cuda_setup_prop_descr(&t->cuda_descr, task_spin, tasks_dist, nkff, t->tu_data->offload_cpu);
+    cuda_setup_prop_descr(&t->cuda_descr, task_spin, tasks_dist, nkff, model->nk, t->tu_data->offload_cpu);
 
     mpi_vrb_printf( "TU-loop: using GF of %.2fGiB\n",
             (double)(sizeof(complex128_t)*t->nktot*POW2(t->n_spin*t->n_orb)) / (1024.*1024.*1024.) );
@@ -132,13 +132,18 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
     #endif // USE_CUDA
 
     t->c2fmap = calloc(t->my_nk, sizeof*t->c2fmap);
+    t->c2cmap = calloc(t->my_nk, sizeof*t->c2cmap);
     t->c2fmap_sz = t->my_nk;
     if (t->tu_data->symm->use_symmetries) {
-        for (index_t i=0; i<t->my_nk; ++i)
-            t->c2fmap[i] = kidxc2f(t->tu_data->symm->idx_ibz_in_fullmesh[i+t->my_nk_off], model->nk, model->nkf);
+        for (index_t i=0; i<t->my_nk; ++i) {
+            t->c2cmap[i] = t->tu_data->symm->idx_ibz_in_fullmesh[i+t->my_nk_off];
+            t->c2fmap[i] = kidxc2f(t->c2cmap[i], model->nk, model->nkf);
+        }
     } else {
-        for (index_t i=0; i<t->my_nk; ++i)
-            t->c2fmap[i] = kidxc2f(i+t->my_nk_off, model->nk, model->nkf);
+        for (index_t i=0; i<t->my_nk; ++i) {
+            t->c2cmap[i] = i+t->my_nk_off;
+            t->c2fmap[i] = kidxc2f(t->c2cmap[i], model->nk, model->nkf);
+        }
     }
     cpu_fft_algorithm_init( t, t->which_fft_greens, t->which_fft_simple, t->which_fft_red );
 
@@ -153,13 +158,15 @@ void tu_prop_free( tu_prop_t* t ) {
     if (t->cuda_descr.prop_memory_set_local) {
         for (int i=0; i<tu_gpu_info().tu_num_of_devices; ++i) {
             CUDA_CHECK( cudaFree(t->cuda_descr.mi_to_R[i]) );
-            CUDA_CHECK( cudaFree(t->cuda_descr.c_to_f_q[i]) );
             CUDA_CHECK( cudaFree(t->cuda_descr.nkdev[i]) );
             CUDA_CHECK( cudaFree(t->cuda_descr.GF_fft[i]) );
             CUDA_CHECK( cudaFree(t->cuda_descr.GF_fft_conj[i]) );
             CUDA_CHECK( cudaFree(t->cuda_descr.buf_GG[i]) );
             CUDA_CHECK( cudaFree(t->cuda_descr.buf_res[i]) );
-            CUDA_CHECK( cudaFree(t->cuda_descr.fft_workspace[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.c_to_c_q[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.nkcdev[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.buf_GG_coarse[i]) );
+            CUDA_CHECK( cudaFree(t->cuda_descr.fft_workspace_coarse[i]) );
         }
     }
     CUDA_CHECK(cudaHostUnregister(t->GF_fft_plus));
@@ -191,7 +198,8 @@ void tu_prop_free( tu_prop_t* t ) {
     if (t->gpu_mpi_dist_ph) tu_prop_gpu_mpi_dist_free(t->gpu_mpi_dist_ph);
 
     free( t->c2fmap );
-    free( t->c2fmap_full );
+    free( t->c2cmap );
+    free( t->c2cmap_full );
 
     if (t->coarsify) greensfunc_coarse_free(t->coarsify);
 

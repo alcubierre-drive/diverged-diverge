@@ -4,6 +4,37 @@
 
 unsigned fftw_mpi_plan_patience = FFTW_MEASURE;
 
+void mpi_fold_to_coarse_distributed(
+        const complex128_t* restrict fine_local, index_t fine_chunk_stride,
+        complex128_t* restrict scratch, complex128_t* restrict dst,
+        index_t kx_start, index_t kx_count, const index_t nk[3], const index_t dims[3],
+        index_t chunksize, index_t chunksize_max, const int* coarse_recvcounts ) {
+
+    const index_t ny = nk[1], nz = nk[2];
+    const index_t coarse_total = nk[0]*ny*nz;
+    ZERO_OUT( scratch, coarse_total*chunksize_max );
+
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t rx=0; rx<nk[0]; ++rx) {
+        index_t fx0 = kx_start + (((rx - kx_start) % nk[0]) + nk[0]) % nk[0];
+        for (index_t fx=fx0; fx<kx_start+kx_count; fx+=nk[0]) {
+            index_t lx = fx - kx_start;
+            for (index_t ry=0; ry<ny; ++ry)
+            for (index_t rz=0; rz<nz; ++rz) {
+                complex128_t* dstp = scratch + ((rx*ny+ry)*nz+rz)*chunksize_max;
+                for (index_t fy=ry; fy<dims[1]; fy+=ny)
+                for (index_t fz=rz; fz<dims[2]; fz+=nz) {
+                    const complex128_t* srcp = fine_local + (lx*dims[1]+fy)*dims[2]+fz;
+                    for (index_t i=0; i<chunksize; ++i)
+                        dstp[i] += srcp[i*fine_chunk_stride];
+                }
+            }
+        }
+    }
+
+    diverge_mpi_reduce_scatter_complex_sum( scratch, dst, coarse_recvcounts );
+}
+
 struct fftw_mpi_plan_t {
     bool timings_enabled:1;
     bool free_buf:1;
@@ -196,6 +227,7 @@ void fftw_mpi_plan_free( fftw_mpi_plan_t* p ) {
     free(p->displs);
     free(p);
 }
+
 #else // USE_MPI_FFTW && USE_MPI
 fftw_mpi_plan_t* fftw_mpi_plan_init_l( index_t dims_[3], index_t howmany_,
         complex128_t* in_, complex128_t* out_, int dir, complex128_t* buf_ ) {
@@ -257,4 +289,5 @@ void fftw_mpi_plan_free( fftw_mpi_plan_t* p ) {
     fftw_destroy_plan(p->p);
     free(p);
 }
+
 #endif // USE_MPI_FFTW && USE_MPI
