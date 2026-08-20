@@ -202,7 +202,7 @@ greensfunc_op_t diverge_greensfunc_generator_ibz(const diverge_model_t* model, c
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t i=0; i<ibz->nkibz; ++i) {
             index_t k = ibz->bz_map_self[i];
-            complex128_t* buf_from = buf + sign*nkf*POW2(nb) + k*POW2(nb);
+            gf_complex_t* buf_from = buf + sign*nkf*POW2(nb) + k*POW2(nb);
             for (index_t o=0; o<nb; ++o)
             for (index_t p=0; p<nb; ++p) {
                 complex128_t tmp = 0.0;
@@ -214,7 +214,7 @@ greensfunc_op_t diverge_greensfunc_generator_ibz(const diverge_model_t* model, c
                 index_t idx = ibz->bz_map_off[i]+l;
                 index_t ks = ibz->bz_map[IDX2(idx,0, 2)],
                          s = ibz->bz_map[IDX2(idx,1, 2)];
-                complex128_t* buf_to = buf + sign*nkf*POW2(nb) + ks*POW2(nb);
+                gf_complex_t* buf_to = buf + sign*nkf*POW2(nb) + ks*POW2(nb);
                 if (buf_from == buf_to) continue;
                 for (index_t oo1=0; oo1<no; ++oo1)
                 for (index_t ss1=0; ss1<ns; ++ss1)
