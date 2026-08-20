@@ -563,81 +563,51 @@ __global__ void to_loop_simple(cuDoubleComplex* __restrict__ const loop,
 }
 
 // FFT trick: put \sum_{a=0}^{M} G[i+N*a] into G_c[i] and do FFT of G_c (see
-// fold_to_coarse() in propagator_cpu.c). One block per kc (three dimensional
-// pays off!).
+// fold_to_coarse() in propagator_cpu.c). Kernel launch relies on block/grid
+// settings, which are given below
 __global__ void fold_to_coarse_fused(cuDoubleComplex* __restrict__ const coarse,
                     const cuDoubleComplex* __restrict__ const fine,
                     const index_t Nx, const index_t Ny, const index_t Nz,
                     const index_t Ncx, const index_t Ncy, const index_t Ncz)
 {
-    const index_t M0 = Nx/Ncx, M1 = Ny/Ncy, M2 = Nz/Ncz;
-    const index_t Mtot = M0*M1*M2;
+    const index_t Ncoarse = Ncx*Ncy*Ncz;
+    const index_t tid = blockIdx.x*(index_t)blockDim.x + threadIdx.x;
+    if (tid >= Ncoarse) return;
 
-    const index_t cx = blockIdx.x, cy = blockIdx.y, cz = blockIdx.z;
+    const index_t cz = tid % Ncz;
+    const index_t tmp = tid / Ncz;
+    const index_t cy = tmp % Ncy;
+    const index_t cx = tmp / Ncy;
+
+    const index_t M0 = Nx/Ncx, M1 = Ny/Ncy, M2 = Nz/Ncz;
 
     double accx = 0.0, accy = 0.0;
-    for (index_t idx = threadIdx.x; idx < Mtot; idx += blockDim.x) {
-        const index_t a0  = idx / (M1*M2);
-        const index_t rem = idx - a0*(M1*M2);
-        const index_t a1  = rem / M2;
-        const index_t a2  = rem - a1*M2;
-
+    for (index_t a0 = 0; a0 < M0; ++a0) {
         const index_t x = cx + a0*Ncx;
-        const index_t y = cy + a1*Ncy;
-        const index_t z = cz + a2*Ncz;
-        const cuDoubleComplex v = fine[z+Nz*(y+Ny*x)];
-        accx += v.x;
-        accy += v.y;
-    }
-
-    // block reduction (power of two for blockDim.x!)
-    extern __shared__ double sdata[];
-    double* sx = sdata;
-    double* sy = sdata + blockDim.x;
-    sx[threadIdx.x] = accx;
-    sy[threadIdx.x] = accy;
-    __syncthreads();
-    for (index_t s = blockDim.x/2; s > 0; s >>= 1) {
-        if (threadIdx.x < s) {
-            sx[threadIdx.x] += sx[threadIdx.x+s];
-            sy[threadIdx.x] += sy[threadIdx.x+s];
+        for (index_t a1 = 0; a1 < M1; ++a1) {
+            const index_t base = Nz*((cy + a1*Ncy) + Ny*x);
+            for (index_t a2 = 0; a2 < M2; ++a2) {
+                const cuDoubleComplex v = fine[base + cz + a2*Ncz];
+                accx += v.x;
+                accy += v.y;
+            }
         }
-        __syncthreads();
     }
-    if (threadIdx.x == 0) {
-        coarse[cz+Ncz*(cy+Ncy*cx)] = make_cuDoubleComplex(sx[0], sy[0]);
-    }
+    coarse[tid] = make_cuDoubleComplex(accx, accy);
 }
 
-#define FOLD_T_MAX 512
-static inline unsigned fold_next_pow2_u(unsigned v) {
-    if (v <= 1) return 1;
-    v--;
-    v |= v >> 1; v |= v >> 2; v |= v >> 4; v |= v >> 8; v |= v >> 16;
-    return v + 1;
-}
-
-// block size T chosen to scale with refinement size (Mtot) and a power of 2,
-// capped at FOLD_T_MAX, always one warp
-static int fold_block_size(index_t Mtot) {
-    unsigned t = fold_next_pow2_u((unsigned)Mtot);
-    if (t > FOLD_T_MAX) t = FOLD_T_MAX;
-    if (t < 32) t = 32; // never less than one warp
-    return (int)t;
-}
+#define FOLD_T 1024 // threads per block; grid scales to cover Ncx*Ncy*Ncz cells
 
 static void fold_to_coarse_fused_launch(cuda_prop_descr_t* __restrict__ cp, int dev, cudaStream_t stream,
                     const index_t* __restrict__ nkref, const index_t* __restrict__ nkref_coarse)
 {
     const index_t Nx = nkref[0], Ny = nkref[1], Nz = nkref[2];
     const index_t Ncx = nkref_coarse[0], Ncy = nkref_coarse[1], Ncz = nkref_coarse[2];
-    const index_t Mtot = (Nx/Ncx) * (Ny/Ncy) * (Nz/Ncz);
+    const index_t Ncoarse = Ncx*Ncy*Ncz;
 
-    const int T = fold_block_size(Mtot);
-    dim3 grid((unsigned)Ncx, (unsigned)Ncy, (unsigned)Ncz);
-    dim3 block(T, 1, 1);
-    const size_t shmem = 2*(size_t)T*sizeof(double);
+    dim3 grid((unsigned)((Ncoarse + FOLD_T - 1)/FOLD_T), 1, 1);
+    dim3 block(FOLD_T, 1, 1);
 
-    fold_to_coarse_fused<<<grid, block, shmem, stream>>>(
+    fold_to_coarse_fused<<<grid, block, 0, stream>>>(
         cp->buf_GG_coarse[dev], cp->buf_GG[dev], Nx, Ny, Nz, Ncx, Ncy, Ncz);
 }
