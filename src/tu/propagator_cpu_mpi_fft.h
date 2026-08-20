@@ -29,6 +29,12 @@ complex128_t* fftw_mpi_plan_get_out( fftw_mpi_plan_t* p );
 
 extern unsigned fftw_mpi_plan_patience;
 
+void mpi_fold_to_coarse_distributed(
+        const complex128_t* fine_local, index_t fine_chunk_stride,
+        complex128_t* scratch, complex128_t* dst,
+        index_t kx_start, index_t kx_count, const index_t nk[3], const index_t dims[3],
+        index_t chunksize, index_t chunksize_max, const int* coarse_recvcounts );
+
 #ifdef __cplusplus
 }
 #endif

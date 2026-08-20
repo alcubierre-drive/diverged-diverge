@@ -29,15 +29,15 @@ void S_loop_static_red_gpu_mpi( tu_prop_t* t, complex128_t* L, bool pp ) {
         }
     }
 
-    if (!t->c2fmap_full) {
-        t->c2fmap_full_sz = t->nkibz;
-        t->c2fmap_full = calloc( t->c2fmap_full_sz, sizeof*t->c2fmap_full );
+    if (!t->c2cmap_full) {
+        t->c2cmap_full_sz = t->nkibz;
+        t->c2cmap_full = calloc( t->c2cmap_full_sz, sizeof*t->c2cmap_full );
         if (t->tu_data->symm->use_symmetries) {
             for (index_t i=0; i<t->nkibz; ++i)
-                t->c2fmap_full[i] = kidxc2f(t->tu_data->symm->idx_ibz_in_fullmesh[i], vnk, vnkf);
+                t->c2cmap_full[i] = t->tu_data->symm->idx_ibz_in_fullmesh[i];
         } else {
             for (index_t i=0; i<t->nk; ++i)
-                t->c2fmap_full[i] = kidxc2f(i, vnk, vnkf);
+                t->c2cmap_full[i] = i;
         }
     }
 
@@ -53,7 +53,8 @@ void S_loop_static_red_gpu_mpi( tu_prop_t* t, complex128_t* L, bool pp ) {
         }
         pp_bubble_momenta_handler_fft_red( &t->cuda_descr, L,
                 t->GF_fft_plus, t->GF_fft_conj_plus, t->n_orb, t->n_orbff, t->n_spin, t->nktot,
-                t->nkibz, t->c2fmap_full, dims, t->mi_to_ofrom, t->mi_to_oto, t->mi_to_R,
+                t->nkibz, dims, t->c2cmap_full, t->model->nk,
+                t->mi_to_ofrom, t->mi_to_oto, t->mi_to_R,
                 t->tu_data->unique_mi_l, t->tu_data->unique_mi_r,
                 t->tu_data->unique_mi_l_sz, tu_prop_gpu_mpi_dist_cuda_kernel_bitary(t->gpu_mpi_dist_pp) );
     } else {
@@ -63,7 +64,8 @@ void S_loop_static_red_gpu_mpi( tu_prop_t* t, complex128_t* L, bool pp ) {
         }
         ph_bubble_momenta_handler_fft_red( &t->cuda_descr, L, t->GF_fft_plus,
                 t->GF_fft_conj_plus, t->n_orb, t->n_orbff, t->n_spin, t->nktot,
-                t->nkibz, t->c2fmap_full, dims, t->mi_to_ofrom, t->mi_to_oto, t->mi_to_R,
+                t->nkibz, dims, t->c2cmap_full, t->model->nk,
+                t->mi_to_ofrom, t->mi_to_oto, t->mi_to_R,
                 t->tu_data->unique_mi_l, t->tu_data->unique_mi_r,
                 t->tu_data->unique_mi_l_sz, tu_prop_gpu_mpi_dist_cuda_kernel_bitary(t->gpu_mpi_dist_ph) );
     }

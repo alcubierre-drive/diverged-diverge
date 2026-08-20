@@ -79,8 +79,10 @@ void cuda_delete_prop_descr(cuda_prop_descr_t* cp) {
     if(!cp->prop_has_gpu_setup)
         return;
     cp->prop_has_gpu_setup = false;
-    for(int i = 0; i<tu_gpu_info_global.tu_num_of_devices;++i) {CUFFT_CHECK(cufftDestroy(cp->gpu_fft[i]));}
-    free(cp->gpu_fft);
+    for(int i = 0; i<tu_gpu_info_global.tu_num_of_devices;++i) {
+        CUFFT_CHECK(cufftDestroy(cp->gpu_fft_coarse[i]));
+    }
+    free(cp->gpu_fft_coarse);
 }
 
 #else // USE_CUDA
@@ -96,7 +98,7 @@ void cuda_reset_prop_descr(cuda_prop_descr_t* cp,index_t tasks_spin, index_t tas
         return ;
     }
     cuda_delete_prop_descr(cp);
-    cuda_setup_prop_descr(cp,tasks_spin,tasks_dist,NULL,offload_cpu);
+    cuda_setup_prop_descr(cp,tasks_spin,tasks_dist,NULL,NULL,offload_cpu);
 }
 
 void cuda_setup_projections(cuda_proj_descr_t* cp,index_t ntasks, index_t my_nk) {
@@ -129,9 +131,10 @@ void cuda_setup_projections(cuda_proj_descr_t* cp,index_t ntasks, index_t my_nk)
 }
 
 void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
-                index_t tasks_dist, const index_t* nkpts, double offload_cpu) {
+                index_t tasks_dist, const index_t* nkpts, const index_t* nkpts_coarse,
+                double offload_cpu) {
 #ifndef USE_CUDA
-    (void)tasks_spin,(void)tasks_dist,(void)nkpts,(void)offload_cpu;
+    (void)tasks_spin,(void)tasks_dist,(void)nkpts,(void)nkpts_coarse,(void)offload_cpu;
     cp->_tasks_cpu = tasks_dist;
     cp->_off_cpu = 0;
 #else // USE_CUDA
@@ -158,6 +161,8 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
     if(!cp->dims_set) {
         cp->dims[0] = nkpts[0], cp->dims[1] = nkpts[1],
         cp->dims[2] = nkpts[2];
+        cp->dims_coarse[0] = nkpts_coarse[0], cp->dims_coarse[1] = nkpts_coarse[1],
+        cp->dims_coarse[2] = nkpts_coarse[2];
         cp->dims_set = true;
     }
     double numt = cp->nthread[0]*cp->nthread[1]*cp->nthread[2];
@@ -165,15 +170,19 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
     cp->nblock[0] =(int)min_blocks; cp->nblock[1] = cp->nblock[2] = 1;
 
     long long int nk = cp->dims[0]*cp->dims[1]*cp->dims[2];
-    cp->gpu_fft = (cufftHandle*)malloc(sizeof(cufftHandle)*tu_gpu_info_global.tu_num_of_devices);
+    long long int nkc = cp->dims_coarse[0]*cp->dims_coarse[1]*cp->dims_coarse[2];
+    cp->gpu_fft_coarse = (cufftHandle*)malloc(sizeof(cufftHandle)*tu_gpu_info_global.tu_num_of_devices);
     for(int i = 0; i<tu_gpu_info_global.tu_num_of_devices;++i) {
         CUDA_CHECK( cudaSetDevice(tu_gpu_info_global.tu_deviceid[i]) );
-        CUFFT_CHECK(cufftCreate(&(cp->gpu_fft[i])));
-        CUFFT_CHECK(cufftSetAutoAllocation(cp->gpu_fft[i], false));
-        CUFFT_CHECK(cufftMakePlanMany64(cp->gpu_fft[i], 3, cp->dims, NULL,
-                    1, nk, NULL, 1, nk, CUFFT_Z2Z, 1,
-                    &(cp->worksize_fft[i])));
-        CUFFT_CHECK(cufftGetSize(cp->gpu_fft[i], &(cp->worksize_fft[i])));
+
+        // only the coarse-mesh companion plan is ever executed -- see the
+        // comment on dims_coarse in cuda_init.h
+        CUFFT_CHECK(cufftCreate(&(cp->gpu_fft_coarse[i])));
+        CUFFT_CHECK(cufftSetAutoAllocation(cp->gpu_fft_coarse[i], false));
+        CUFFT_CHECK(cufftMakePlanMany64(cp->gpu_fft_coarse[i], 3, cp->dims_coarse, NULL,
+                    1, nkc, NULL, 1, nkc, CUFFT_Z2Z, 1,
+                    &(cp->worksize_fft_coarse[i])));
+        CUFFT_CHECK(cufftGetSize(cp->gpu_fft_coarse[i], &(cp->worksize_fft_coarse[i])));
     }
     CUDA_CHECK( cudaSetDevice(0) );
 
@@ -181,6 +190,7 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
         cp->nk_per_thread -= 1;
     }
     cp->n_kblocks = nk/cp->nk_per_thread;
-    mpi_vrb_printf("TU prop GPU setup: nblock=%d, nk_per_thread=%d, nk=%d\n", cp->n_kblocks, cp->nk_per_thread, nk);
+    mpi_vrb_printf("TU prop GPU setup: nblock=%d, nk_per_thread=%d, nk=%d, nk_coarse=%d\n",
+            cp->n_kblocks, cp->nk_per_thread, nk, nkc);
 #endif // USE_CUDA
 }

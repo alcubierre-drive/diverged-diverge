@@ -119,6 +119,8 @@ void diverge_mpi_alltoallv_bytes_packed( const void* s, const int* sc, const int
                                                index_t numbytes );
 void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcounts, const int* senddispls,
                                           complex128_t* recv, const int* recvcounts, const int* recvdispls );
+void diverge_mpi_reduce_scatter_complex_sum( const complex128_t* send, complex128_t* recv,
+                                                   const int* recvcounts );
 
 void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rdsp );
 void diverge_mpi_allgatherv_double( double* recv, const int* rcnt, const int* rdsp );
