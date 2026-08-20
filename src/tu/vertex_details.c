@@ -102,9 +102,7 @@ void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_
         index_t prop_memtype[10] = {0};
         const index_t _GF_size = sizeof(cuDoubleComplex)*V->n_orb*V->n_spin*nktot*V->n_orb*V->n_spin;
         cuda_prop_descr_t* cloop = &(loop->cuda_descr);
-        // buf_GG_coarse is used as scratch buffer for fold_to_coarse_gemv(), so
-        // it must fit the largest intermediate size and not only nkcoarse
-        const index_t bufsz = cloop->dims_coarse[0]*cloop->dims[1]*cloop->dims[2];
+        const index_t bufsz = cloop->dims_coarse[0]*cloop->dims_coarse[1]*cloop->dims_coarse[2];
 
         index_t my_nk_tot = (V->tu_data->use_reduced_loop && V->tu_data->use_cuda_mpi_loop) ? V->nk : V->my_nk;
         prop_memsize[0] = ensure_align(sizeof(index_t)*V->n_orbff*3); // mi_to_R
