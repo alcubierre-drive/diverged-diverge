@@ -44,7 +44,8 @@ void allocate_GPU_memory( tu_prop_t* t ) {
 
     index_t prop_memsize[10] = {0};
     const index_t _GF_size = sizeof(cuDoubleComplex)*t->n_orb*t->n_spin*t->nktot*t->n_orb*t->n_spin;
-    const index_t nk_coarse = t->model->nk[0]*t->model->nk[1]*t->model->nk[2];
+    // buf_GG_coarse also used as scratch buffer for fold_to_coarse_gemv(), so it is larger than nkcoarse
+    const index_t bufsz = t->cuda_descr.dims_coarse[0]*t->cuda_descr.dims[1]*t->cuda_descr.dims[2];
 
     for (int i=0; i<tu_gpu_info().tu_num_of_devices; ++i) {
         CUDA_CHECK( cudaSetDevice(i) );
@@ -57,7 +58,7 @@ void allocate_GPU_memory( tu_prop_t* t ) {
         prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*my_nk_tot); // buf_res 0
         prop_memsize[6] = ensure_align(sizeof(index_t)*my_nk_tot); // c_to_c_q
         prop_memsize[7] = ensure_align(sizeof(index_t)*3); // nkcdev
-        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*nk_coarse); // buf_GG_coarse
+        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*bufsz); // buf_GG_coarse
         prop_memsize[9] = ensure_align(sizeof(cuDoubleComplex)*t->cuda_descr.worksize_fft_coarse[i]); // fft_workspace_coarse
 
         CUDA_CHECK( cudaMalloc((void**)&(t->cuda_descr.mi_to_R[i]), prop_memsize[0]) );

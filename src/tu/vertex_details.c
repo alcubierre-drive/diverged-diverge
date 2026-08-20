@@ -102,7 +102,9 @@ void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_
         index_t prop_memtype[10] = {0};
         const index_t _GF_size = sizeof(cuDoubleComplex)*V->n_orb*V->n_spin*nktot*V->n_orb*V->n_spin;
         cuda_prop_descr_t* cloop = &(loop->cuda_descr);
-        const index_t nk_coarse = V->nk;
+        // buf_GG_coarse is used as scratch buffer for fold_to_coarse_gemv(), so
+        // it must fit the largest intermediate size and not only nkcoarse
+        const index_t bufsz = cloop->dims_coarse[0]*cloop->dims[1]*cloop->dims[2];
 
         index_t my_nk_tot = (V->tu_data->use_reduced_loop && V->tu_data->use_cuda_mpi_loop) ? V->nk : V->my_nk;
         prop_memsize[0] = ensure_align(sizeof(index_t)*V->n_orbff*3); // mi_to_R
@@ -113,7 +115,7 @@ void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_
         prop_memsize[5] = ensure_align(sizeof(cuDoubleComplex)*my_nk_tot); // buf_res 0
         prop_memsize[6] = ensure_align(sizeof(index_t)*my_nk_tot); // c_to_c_q
         prop_memsize[7] = ensure_align(sizeof(index_t)*3); // nkcdev
-        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*nk_coarse); // buf_GG_coarse
+        prop_memsize[8] = ensure_align(sizeof(cuDoubleComplex)*bufsz); // buf_GG_coarse
         prop_memsize[9] = ensure_align(sizeof(cuDoubleComplex)*loop->cuda_descr.worksize_fft_coarse[i]); // fft_workspace_coarse
         index_t all_propmem = 0;
         for (index_t mem = 0; mem < 10; ++mem)

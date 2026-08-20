@@ -80,9 +80,14 @@ void cuda_delete_prop_descr(cuda_prop_descr_t* cp) {
         return;
     cp->prop_has_gpu_setup = false;
     for(int i = 0; i<tu_gpu_info_global.tu_num_of_devices;++i) {
+        CUDA_CHECK( cudaSetDevice(i) );
         CUFFT_CHECK(cufftDestroy(cp->gpu_fft_coarse[i]));
+        CUBLAS_CHECK(cublasDestroy(cp->cublas_handle[i]));
+        CUDA_CHECK(cudaFree(cp->fold_ones[i]));
     }
+    CUDA_CHECK( cudaSetDevice(0) );
     free(cp->gpu_fft_coarse);
+    free(cp->cublas_handle);
 }
 
 #else // USE_CUDA
@@ -171,19 +176,35 @@ void cuda_setup_prop_descr(cuda_prop_descr_t* cp,  index_t tasks_spin,
 
     long long int nk = cp->dims[0]*cp->dims[1]*cp->dims[2];
     long long int nkc = cp->dims_coarse[0]*cp->dims_coarse[1]*cp->dims_coarse[2];
+
+    // maximum size of ones-vector for fold_to_coarse_gemv()
+    index_t fold_max_m = 1;
+    for (int d=0; d<3; ++d) {
+        index_t m = cp->dims[d]/cp->dims_coarse[d];
+        if (m > fold_max_m) fold_max_m = m;
+    }
+    cuDoubleComplex* fold_ones_host = (cuDoubleComplex*)malloc(sizeof(cuDoubleComplex)*fold_max_m);
+    for (index_t i=0; i<fold_max_m; ++i) fold_ones_host[i] = make_cuDoubleComplex(1.0,0.0);
+
     cp->gpu_fft_coarse = (cufftHandle*)malloc(sizeof(cufftHandle)*tu_gpu_info_global.tu_num_of_devices);
+    cp->cublas_handle = (cublasHandle_t*)malloc(sizeof(cublasHandle_t)*tu_gpu_info_global.tu_num_of_devices);
     for(int i = 0; i<tu_gpu_info_global.tu_num_of_devices;++i) {
         CUDA_CHECK( cudaSetDevice(tu_gpu_info_global.tu_deviceid[i]) );
 
-        // only the coarse-mesh companion plan is ever executed -- see the
-        // comment on dims_coarse in cuda_init.h
+        // only the coarse-mesh plan is ever executed
         CUFFT_CHECK(cufftCreate(&(cp->gpu_fft_coarse[i])));
         CUFFT_CHECK(cufftSetAutoAllocation(cp->gpu_fft_coarse[i], false));
         CUFFT_CHECK(cufftMakePlanMany64(cp->gpu_fft_coarse[i], 3, cp->dims_coarse, NULL,
                     1, nkc, NULL, 1, nkc, CUFFT_Z2Z, 1,
                     &(cp->worksize_fft_coarse[i])));
         CUFFT_CHECK(cufftGetSize(cp->gpu_fft_coarse[i], &(cp->worksize_fft_coarse[i])));
+
+        CUBLAS_CHECK( cublasCreate(&(cp->cublas_handle[i])) );
+        CUDA_CHECK( cudaMalloc((void**)&(cp->fold_ones[i]), sizeof(cuDoubleComplex)*fold_max_m) );
+        CUDA_CHECK( cudaMemcpy(cp->fold_ones[i], fold_ones_host, sizeof(cuDoubleComplex)*fold_max_m,
+                    cudaMemcpyHostToDevice) );
     }
+    free(fold_ones_host);
     CUDA_CHECK( cudaSetDevice(0) );
 
     while(nk%cp->nk_per_thread!=0 && cp->nk_per_thread>1) {
