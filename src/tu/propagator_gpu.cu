@@ -593,14 +593,16 @@ __global__ void fold_to_coarse_gpu(const cuDoubleComplex* __restrict__ const fin
     const index_t nktot = nkdev[0]*nkdev[1]*nkdev[2];
     if (idx >= nktot) return;
 
-    const index_t nkref[3] = {nkdev[0]/nkcdev[0], nkdev[1]/nkcdev[1], nkdev[2]/nkcdev[2]};
-
     const index_t rx = idx / (nkdev[1]*nkdev[2]);
     const index_t rem = idx - rx*nkdev[1]*nkdev[2];
     const index_t ry = rem / nkdev[2];
     const index_t rz = rem - ry*nkdev[2];
 
-    const index_t rx_c = rx/nkref[0], ry_c = ry/nkref[1], rz_c = rz/nkref[2];
+    // M: nkref
+    // const index_t nkref[3] = {nkdev[0]/nkcdev[0], nkdev[1]/nkcdev[1], nkdev[2]/nkcdev[2]};
+    // N: nkc
+    // FFT trick: put \sum_{a=0}^{M} G[i+N*a] into G_c[i] and do FFT of G_c
+    const index_t rx_c = rx%nkcdev[0], ry_c = ry%nkcdev[1], rz_c = rz%nkcdev[2];
     const index_t rc = IDX3(rx_c, ry_c, rz_c, nkcdev[1], nkcdev[2]);
 
     double* coarse_out_ptr = (double*)(coarse + rc);
