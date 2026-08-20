@@ -44,8 +44,7 @@ void allocate_GPU_memory( tu_prop_t* t ) {
 
     index_t prop_memsize[10] = {0};
     const index_t _GF_size = sizeof(cuDoubleComplex)*t->n_orb*t->n_spin*t->nktot*t->n_orb*t->n_spin;
-    // buf_GG_coarse also used as scratch buffer for fold_to_coarse_gemv(), so it is larger than nkcoarse
-    const index_t bufsz = t->cuda_descr.dims_coarse[0]*t->cuda_descr.dims[1]*t->cuda_descr.dims[2];
+    const index_t bufsz = t->cuda_descr.dims_coarse[0]*t->cuda_descr.dims_coarse[1]*t->cuda_descr.dims_coarse[2];
 
     for (int i=0; i<tu_gpu_info().tu_num_of_devices; ++i) {
         CUDA_CHECK( cudaSetDevice(i) );
