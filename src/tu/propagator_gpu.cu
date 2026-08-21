@@ -36,8 +36,9 @@ __global__ void to_loop_simple(cuDoubleComplex* __restrict__ const loop,
                     const cuDoubleComplex* __restrict__ const res,const index_t my_nk,
                     const index_t* const idx_map);
 
-// see fold_to_coarse() in propagator_cpu.c for the "FFT trick" reduction
-static void fold_to_coarse_gemv(cuda_prop_descr_t* __restrict__ cp, int dev, cudaStream_t stream,
+// see fold_to_coarse() in propagator_cpu.c for the "FFT trick" reduction,
+// returns whether the result resides in GG_coarse (0) or in GG (1)
+static int fold_to_coarse_gemv(cuda_prop_descr_t* __restrict__ cp, int dev, cudaStream_t stream,
                     const index_t* __restrict__ nkref, const index_t* __restrict__ nkref_coarse);
 
 
@@ -68,7 +69,6 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* __restrict__ cp,
         const index_t nkbyte = sizeof(cuDoubleComplex)*nktot;
         index_t off_GF1 = 0;
         index_t off_GF2 = (n_spin*n_orb > 1) ? nktot : 0;
-        cufftDoubleComplex* loopfft_coarse = (cufftDoubleComplex*) cp->buf_GG_coarse[dev];
         CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft_coarse[dev], cp->fft_workspace_coarse[dev]));
         CUFFT_CHECK(cufftSetStream(cp->gpu_fft_coarse[dev], down));
 
@@ -132,11 +132,13 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* __restrict__ cp,
                                 nkdev,cp->n_kblocks, cp->nk_per_thread);
             CUDA_CHECK( cudaStreamSynchronize( up ) );
 
-            fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
-            CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], loopfft_coarse, loopfft_coarse, CUFFT_INVERSE));
+            int use_fine_buf = fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
+            cuDoubleComplex* fft_buf = use_fine_buf ? cp->buf_GG[dev] : cp->buf_GG_coarse[dev];
+
+            CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], fft_buf, fft_buf, CUFFT_INVERSE));
             to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
                             dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                        cp->buf_res[dev], cp->buf_GG_coarse[dev],my_nk,c_to_c_q);
+                                        cp->buf_res[dev], fft_buf, my_nk, c_to_c_q);
 
             const index_t loop_idx = mo1+n_orbff*(s1+s4*n_spin
                                 +POW2(n_spin)*(mo3+n_orbff*
@@ -176,7 +178,6 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* __restrict__ cp,
         const index_t nkbyte = sizeof(cuDoubleComplex)*nktot;
         index_t off_GF1 = 0;
         index_t off_GF2 = (n_spin*n_orb > 1) ? nktot : 0;
-        cufftDoubleComplex* loopfft_coarse = (cufftDoubleComplex*) cp->buf_GG_coarse[dev];
         CUFFT_CHECK(cufftSetWorkArea(cp->gpu_fft_coarse[dev], cp->fft_workspace_coarse[dev]));
         CUFFT_CHECK(cufftSetStream(cp->gpu_fft_coarse[dev], down));
 
@@ -240,11 +241,14 @@ void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* __restrict__ cp,
                                 nkdev,cp->n_kblocks, cp->nk_per_thread);
             CUDA_CHECK( cudaStreamSynchronize( up ) );
 
-            fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
-            CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], loopfft_coarse, loopfft_coarse, CUFFT_FORWARD));
+            int use_fine_buf = fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
+            cuDoubleComplex* fft_buf = use_fine_buf ? cp->buf_GG[dev] : cp->buf_GG_coarse[dev];
+
+            CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], fft_buf, fft_buf, CUFFT_FORWARD));
             to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                        dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                        cp->buf_res[dev], cp->buf_GG_coarse[dev],my_nk,c_to_c_q);
+                            dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
+                                        cp->buf_res[dev], fft_buf, my_nk, c_to_c_q);
+
             const index_t loop_idx = mo1+n_orbff*(s1+s2*n_spin
                                 +POW2(n_spin)*(mo3+n_orbff*
                                 (s3 + s4*n_spin)));
@@ -298,7 +302,6 @@ void ph_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
 
         index_t off_old1 = -1;
         index_t off_old2 = -1;
-        cufftDoubleComplex* loopfft_coarse = (cufftDoubleComplex*) cp->buf_GG_coarse[dev];
         for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
             index_t offmq = block +cp->_off_prop[dev];
             const index_t s4 = offmq/(n_unique_pairs*n_spin*n_spin*n_spin);
@@ -344,12 +347,16 @@ void ph_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
                                 GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
                                 nkdev,cp->n_kblocks, cp->nk_per_thread);
             CUDA_CHECK( cudaStreamSynchronize( up ) );
-            fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
-            CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], loopfft_coarse, loopfft_coarse, CUFFT_INVERSE));
+
+            int use_fine_buf = fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
+            cuDoubleComplex* fft_buf = use_fine_buf ? cp->buf_GG[dev] : cp->buf_GG_coarse[dev];
+
+            CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], fft_buf, fft_buf, CUFFT_INVERSE));
 
             to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                         dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                        cp->buf_res[dev], cp->buf_GG_coarse[dev],my_nk,c_to_c_q);
+                            dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
+                                        cp->buf_res[dev], fft_buf, my_nk, c_to_c_q);
+
             const index_t loop_idx = mo1+n_orbff*(s1+s4*n_spin
                                     +POW2(n_spin)*(mo3+n_orbff*(s3 + s2*n_spin)));
             cudaMemcpyAsync((cuDoubleComplex*)(L+loop_idx*my_nk),cp->buf_res[dev], my_nk*sizeof(cuDoubleComplex),
@@ -409,7 +416,6 @@ void pp_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
 
         index_t off_old1 = -1;
         index_t off_old2 = -1;
-        cufftDoubleComplex* loopfft_coarse = (cufftDoubleComplex*) cp->buf_GG_coarse[dev];
         for(index_t block = 0; block < cp->_tasks_prop[dev]; ++block) {
             index_t offmq = block+cp->_off_prop[dev];
             const index_t s4 = offmq/(n_unique_pairs*n_spin*n_spin*n_spin);
@@ -456,12 +462,16 @@ void pp_bubble_momenta_handler_fft_red( cuda_prop_descr_t* __restrict__ cp,
                                 GF_fft_conj+off_GF1,GF_fft_conj+off_GF2, R1, R2,
                                 nkdev,cp->n_kblocks, cp->nk_per_thread);
             CUDA_CHECK( cudaStreamSynchronize( up ) );
-            fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
-            CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], loopfft_coarse, loopfft_coarse, CUFFT_FORWARD));
+
+            int use_fine_buf = fold_to_coarse_gemv(cp, dev, down, nkref, nkref_coarse);
+            cuDoubleComplex* fft_buf = use_fine_buf ? cp->buf_GG[dev] : cp->buf_GG_coarse[dev];
+
+            CUFFT_CHECK(cufftExecZ2Z(cp->gpu_fft_coarse[dev], fft_buf, fft_buf, CUFFT_FORWARD));
 
             to_loop_simple<<<dim3(cp->nblock[0],cp->nblock[1],cp->nblock[2]),
-                         dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
-                                        cp->buf_res[dev], cp->buf_GG_coarse[dev],my_nk,c_to_c_q);
+                            dim3(cp->nthread[0],cp->nthread[1],cp->nthread[2]),0,down>>>(
+                                        cp->buf_res[dev], fft_buf, my_nk, c_to_c_q);
+
             const index_t loop_idx = mo1+n_orbff*(s1+s2*n_spin
                                     +POW2(n_spin)*(mo3+n_orbff*(s3 + s4*n_spin)));
             cudaMemcpyAsync((cuDoubleComplex*)(L+loop_idx*my_nk),cp->buf_res[dev], my_nk*sizeof(cuDoubleComplex),
@@ -561,7 +571,7 @@ __global__ void to_loop_simple(cuDoubleComplex* __restrict__ const loop,
 // fold_to_coarse() in propagator_cpu.c). We can implement the sum over all
 // k dimensions as consecutive strided batched zgemv operations with
 // ones-vectors.
-static void fold_to_coarse_gemv(cuda_prop_descr_t* __restrict__ cp, int dev, cudaStream_t stream,
+static int fold_to_coarse_gemv(cuda_prop_descr_t* __restrict__ cp, int dev, cudaStream_t stream,
                     const index_t* __restrict__ nkref, const index_t* __restrict__ nkref_coarse)
 {
     const index_t Nx = nkref[0], Ny = nkref[1], Nz = nkref[2];
@@ -579,18 +589,32 @@ static void fold_to_coarse_gemv(cuda_prop_descr_t* __restrict__ cp, int dev, cud
 
     // x: buf (Nx,Ny,Nz) -> coarse (Ncx,Ny,Nz)
     const index_t K0 = Ncx*Ny*Nz;
-    CUBLAS_CHECK( cublasZgemvStridedBatched(handle, CUBLAS_OP_N, (int)K0, (int)M0, &one,
+    if (M0 > 1) {
+        CUBLAS_CHECK( cublasZgemvStridedBatched(handle, CUBLAS_OP_N, (int)K0, (int)M0, &one,
                 buf, (int)K0, (long long)K0, ones, 1, 0, &zero, coarse, 1, (long long)K0, 1) );
+    } else {
+        MEMSWAP(buf, coarse);
+    }
 
     // y: coarse (Ncx,Ny,Nz) -> buf (Ncx,Ncy,Nz), batched over Ncx
     const index_t K1 = Ncy*Nz;
-    CUBLAS_CHECK( cublasZgemvStridedBatched(handle, CUBLAS_OP_N, (int)K1, (int)M1, &one,
+    if (M1 > 1) {
+        CUBLAS_CHECK( cublasZgemvStridedBatched(handle, CUBLAS_OP_N, (int)K1, (int)M1, &one,
                 coarse, (int)K1, (long long)(Ny*Nz), ones, 1, 0, &zero, buf, 1, (long long)K1, (int)Ncx) );
+    } else {
+        MEMSWAP(buf, coarse);
+    }
 
     // z: buf (Ncx,Ncy,Nz) -> coarse (Ncx,Ncy,Ncz), batched over Ncx*Ncy;
     // this is the final result cufftExecZ2Z() reads
     const index_t K2 = Ncz;
     const index_t batch = Ncx*Ncy;
-    CUBLAS_CHECK( cublasZgemvStridedBatched(handle, CUBLAS_OP_N, (int)K2, (int)M2, &one,
+    if (M2 > 1) {
+        CUBLAS_CHECK( cublasZgemvStridedBatched(handle, CUBLAS_OP_N, (int)K2, (int)M2, &one,
                 buf, (int)K2, (long long)Nz, ones, 1, 0, &zero, coarse, 1, (long long)K2, (int)batch) );
+    } else {
+        MEMSWAP(buf, coarse);
+    }
+
+    return (coarse != cp->buf_GG_coarse[dev]);
 }
