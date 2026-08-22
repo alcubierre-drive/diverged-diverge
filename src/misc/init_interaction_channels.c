@@ -55,9 +55,10 @@ static inline void init_channel_SU2(const diverge_model_t* model, complex128_t* 
         index_t o1 = model->vert[idx].o1,
                 o2 = model->vert[idx].o2;
         const index_t* R = model->vert[idx].R;
-        index_t z_id = (R[2]<0)? nk[2] + R[2] : R[2],
-                y_id = (R[1]<0)? nk[1] + R[1] : R[1],
-                x_id = (R[0]<0)? nk[0] + R[0] : R[0];
+        index_t z_id = R[2], y_id = R[1], x_id = R[0];
+        while (z_id < 0) { z_id += nk[2]; } z_id %= nk[2];
+        while (y_id < 0) { y_id += nk[1]; } y_id %= nk[1];
+        while (x_id < 0) { x_id += nk[0]; } x_id %= nk[0];
         index_t Ridx = IDX3(x_id,y_id,z_id,nk[1],nk[2]);
 
         buf[IDX3(Ridx,o1,o2,no,no)] += model->vert[idx].V;
@@ -78,9 +79,10 @@ static inline void init_C_channel_nonSU2(const diverge_model_t* model, complex12
                 s3 = model->vert[idx].s3,
                 s4 = model->vert[idx].s4;
         const index_t* R = model->vert[idx].R;
-        index_t z_id = (R[2]<0)? nk[2] + R[2] : R[2],
-                y_id = (R[1]<0)? nk[1] + R[1] : R[1],
-                x_id = (R[0]<0)? nk[0] + R[0] : R[0];
+        index_t z_id = R[2], y_id = R[1], x_id = R[0];
+        while (z_id < 0) { z_id += nk[2]; } z_id %= nk[2];
+        while (y_id < 0) { y_id += nk[1]; } y_id %= nk[1];
+        while (x_id < 0) { x_id += nk[0]; } x_id %= nk[0];
         index_t Ridx = IDX3(x_id,y_id,z_id,nk[1],nk[2]);
 
         if (s1 == -1) {
@@ -109,9 +111,10 @@ static inline void init_D_channel_nonSU2(const diverge_model_t* model, complex12
                 s3 = model->vert[idx].s3,
                 s4 = model->vert[idx].s4;
         const index_t* R = model->vert[idx].R;
-        index_t z_id = (R[2]<0)? nk[2] + R[2] : R[2],
-                y_id = (R[1]<0)? nk[1] + R[1] : R[1],
-                x_id = (R[0]<0)? nk[0] + R[0] : R[0];
+        index_t z_id = R[2], y_id = R[1], x_id = R[0];
+        while (z_id < 0) { z_id += nk[2]; } z_id %= nk[2];
+        while (y_id < 0) { y_id += nk[1]; } y_id %= nk[1];
+        while (x_id < 0) { x_id += nk[0]; } x_id %= nk[0];
         index_t Ridx = IDX3(x_id,y_id,z_id,nk[1],nk[2]);
 
         if (s1 == -1) {
@@ -142,9 +145,10 @@ static inline void init_P_channel_nonSU2(const diverge_model_t* model, complex12
                 s3 = model->vert[idx].s3,
                 s4 = model->vert[idx].s4;
         const index_t* R = model->vert[idx].R;
-        index_t z_id = (R[2]<0)? nk[2] + R[2] : R[2],
-                y_id = (R[1]<0)? nk[1] + R[1] : R[1],
-                x_id = (R[0]<0)? nk[0] + R[0] : R[0];
+        index_t z_id = R[2], y_id = R[1], x_id = R[0];
+        while (z_id < 0) { z_id += nk[2]; } z_id %= nk[2];
+        while (y_id < 0) { y_id += nk[1]; } y_id %= nk[1];
+        while (x_id < 0) { x_id += nk[0]; } x_id %= nk[0];
         index_t Ridx = IDX3(x_id,y_id,z_id,nk[1],nk[2]);
         if (s1 == -1) {
             for (index_t si1=0; si1<2; si1++)
