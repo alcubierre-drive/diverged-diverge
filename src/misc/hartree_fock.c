@@ -32,8 +32,7 @@ struct diverge_hartree_fock_t {
 
 static int hf_normalize = 1;
 int diverge_hartree_fock_normalize_configure( int normalize ) {
-    XORSWAP(hf_normalize, normalize);
-    return normalize;
+    return XORSWAP(normalize, hf_normalize);
 }
 
 diverge_flow_step_t* diverge_hartree_fock_get_flow_step( diverge_hartree_fock_t* h ) {
