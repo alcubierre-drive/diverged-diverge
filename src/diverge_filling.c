@@ -39,13 +39,6 @@ void diverge_model_set_chempot( diverge_model_t* model, double* E, index_t nb, d
     model->internals->mu = mu;
 }
 
-static inline int compare_dbl( const void* a_, const void* b_ ) {
-    const double *a = a_, *b = b_;
-    if (*a < *b) return -1;
-    else if (*a > *b) return 1;
-    else return 0;
-}
-
 MERGESORT_IMPL(dblsort, double)
 double diverge_model_set_filling( diverge_model_t* model, double* E, index_t nb, double nu ) {
     if (!model->internals->has_common_internals) mpi_err_printf( "common internals required\n" );
