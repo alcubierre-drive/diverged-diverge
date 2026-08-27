@@ -68,6 +68,11 @@
 
 /* the remaining DEFINEs are pure on/off switches, i.e. they are queried with
  * #ifdef only and may be defined to nothing. map them to 0/1 constants. */
+#ifdef USE_CUDA
+#define HAS_USE_CUDA 1
+#else
+#define HAS_USE_CUDA 0
+#endif
 #ifdef CUDA_CIRCUMVENT_CONSTEXPR
 #define HAS_CUDA_CIRCUMVENT_CONSTEXPR 1
 #else
@@ -329,6 +334,7 @@ diverge_constants_t diverge_constants( void ) {
         ._USE_GF_FLOATS = sizeof(gf_complex_t) != sizeof(complex128_t),
         ._BATCHED_EIGEN_NCHUNKS_AUTONUM = BATCHED_EIGEN_NCHUNKS_AUTONUM,
         ._BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB = BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB,
+        ._USE_CUDA = HAS_USE_CUDA,
         ._BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS = BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS,
         ._CUBLAS_BATCHED_GEMM_CALL = str1024( DIVERGE_STRINGIFY(CUBLAS_BATCHED_GEMM_CALL) ),
         ._CUDA_CIRCUMVENT_CONSTEXPR = HAS_CUDA_CIRCUMVENT_CONSTEXPR,
@@ -495,6 +501,7 @@ void diverge_constants_print( int header ) {
     if (header) printf( "\n// not ABI relevant\n"
                         "#ifdef DIVERGE_CONFIG_ALL\n\n" );
 
+    PRINT_DEF( USE_CUDA );
     PRINT_LI( BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS );
     PRINT_DEF( CUDA_CIRCUMVENT_CONSTEXPR );
     PRINT_DEF( CUDA_DEFINE_ATOMIC_ADD );
