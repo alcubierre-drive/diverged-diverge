@@ -92,7 +92,9 @@ src/diverge_config.h: $(NAME_LIB)
 	$(CC) Makefile.genconfig.c -o Makefile.genconfig.x $(EXEFLAGS)
 	./Makefile.genconfig.x > src/diverge_config.h
 	$(RM) -f Makefile.genconfig.c
+ifndef KEEP_MAKEFILE_GENCONFIG
 	$(RM) -f Makefile.genconfig.x
+endif
 
 -include $(DEP_C) $(DEP_CPP)
 
