@@ -61,6 +61,11 @@
 #define USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE 0
 #endif
 
+/* test/ctest.h turns CT_NO_FORK on for MPI builds, mirror that rule here */
+#if !defined(CT_NO_FORK) && defined(USE_MPI)
+#define CT_NO_FORK
+#endif
+
 /* the remaining DEFINEs are pure on/off switches, i.e. they are queried with
  * #ifdef only and may be defined to nothing. map them to 0/1 constants. */
 #ifdef CUDA_CIRCUMVENT_CONSTEXPR
@@ -117,6 +122,16 @@
 #define HAS_DIVERGE_SKIP_TESTS 1
 #else
 #define HAS_DIVERGE_SKIP_TESTS 0
+#endif
+#ifdef DIVERGE_SKIP_TESTS_LINALG
+#define HAS_DIVERGE_SKIP_TESTS_LINALG 1
+#else
+#define HAS_DIVERGE_SKIP_TESTS_LINALG 0
+#endif
+#ifdef CT_NO_FORK
+#define HAS_CT_NO_FORK 1
+#else
+#define HAS_CT_NO_FORK 0
 #endif
 #ifdef DIVERGE_QNAN_DISABLE_CLANG_OPTS
 #define HAS_DIVERGE_QNAN_DISABLE_CLANG_OPTS 1
@@ -342,6 +357,8 @@ diverge_constants_t diverge_constants( void ) {
         ._BATCHED_SVD_THREAD_CNT_MAX = BATCHED_SVD_THREAD_CNT_MAX,
         ._DIVERGE_GETLINE_MAX = DIVERGE_GETLINE_MAX,
         ._DIVERGE_SKIP_TESTS = HAS_DIVERGE_SKIP_TESTS,
+        ._DIVERGE_SKIP_TESTS_LINALG = HAS_DIVERGE_SKIP_TESTS_LINALG,
+        ._CT_NO_FORK = HAS_CT_NO_FORK,
         ._DIVERGE_QNAN_DISABLE_CLANG_OPTS = HAS_DIVERGE_QNAN_DISABLE_CLANG_OPTS,
         ._DIVERGE_TU_INPLACE_PERMUTE = HAS_DIVERGE_TU_INPLACE_PERMUTE,
         ._DIVERGE_TU_GF_COARSIFY_FFT = HAS_DIVERGE_TU_GF_COARSIFY_FFT,
@@ -501,6 +518,8 @@ void diverge_constants_print( int header ) {
     PRINT_LI( BATCHED_SVD_THREAD_CNT_MAX );
     PRINT_LI( DIVERGE_GETLINE_MAX );
     PRINT_DEF( DIVERGE_SKIP_TESTS );
+    PRINT_DEF( DIVERGE_SKIP_TESTS_LINALG );
+    PRINT_DEF( CT_NO_FORK );
     PRINT_DEF( DIVERGE_TU_INPLACE_PERMUTE );
     PRINT_DEF( DIVERGE_TU_GF_COARSIFY_FFT );
     PRINT_DEF( DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE );
