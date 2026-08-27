@@ -33,6 +33,7 @@ typedef struct {
     bool64_t  _SHARED_MEM_POSIX_IMPL;
 
     // internal to the library, not ABI relevant, informational only
+    bool64_t  _USE_CUDA;
     int64_t   _BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS;
     bool64_t  _CUDA_CIRCUMVENT_CONSTEXPR;
     bool64_t  _CUDA_DEFINE_ATOMIC_ADD;
@@ -95,7 +96,7 @@ typedef struct {
     bool64_t  _XVTREE_ALIGNMENT_PRINT;
 
     // pads to a multiple of 512 bits. adjust when adding a field
-    char      _PADDING[16];
+    char      _PADDING[8];
 
     // char arrays last, so that they stay aligned.
     str1024_t _CUBLAS_BATCHED_GEMM_CALL;

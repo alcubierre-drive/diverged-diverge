@@ -48,6 +48,7 @@ if not _libs["divERGe"] is None:
         '_SHARED_MEM_MPI_IMPL',
         '_SHARED_MEM_POSIX_IMPL',
         # internal to the library, not ABI relevant, informational only
+        '_USE_CUDA',
         '_BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS',
         '_CUDA_CIRCUMVENT_CONSTEXPR',
         '_CUDA_DEFINE_ATOMIC_ADD',
@@ -137,6 +138,7 @@ if not _libs["divERGe"] is None:
         ('_SHARED_MEM_MPI_IMPL',                       c_int64),
         ('_SHARED_MEM_POSIX_IMPL',                     c_int64),
         # internal to the library, not ABI relevant, informational only
+        ('_USE_CUDA',                                  c_int64),
         ('_BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS', c_int64),
         ('_CUDA_CIRCUMVENT_CONSTEXPR',                 c_int64),
         ('_CUDA_DEFINE_ATOMIC_ADD',                    c_int64),
@@ -197,7 +199,7 @@ if not _libs["divERGe"] is None:
         ('_DIVERGE_OLD_W90_READER',                    c_int64),
         ('_DIVERGE_TU_PROJ_TO_R_VTREE',                c_int64),
         ('_XVTREE_ALIGNMENT_PRINT',                    c_int64),
-        ('_PADDING',                                   c_char * 16),
+        ('_PADDING',                                   c_char * 8),
         # char arrays last, so that everything before them stays aligned
         ('_CUBLAS_BATCHED_GEMM_CALL',                  struct_str1024_t),
         ('_CUDA_VERSION_STR',                          struct_str1024_t),
@@ -232,6 +234,7 @@ if not _libs["divERGe"] is None:
     SHARED_MEM_POSIX_IMPL                     = _CONSTANTS_._SHARED_MEM_POSIX_IMPL
 
     # internal to the library, not ABI relevant, informational only
+    USE_CUDA                                  = _CONSTANTS_._USE_CUDA
     BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS = _CONSTANTS_._BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS
     CUDA_CIRCUMVENT_CONSTEXPR                 = _CONSTANTS_._CUDA_CIRCUMVENT_CONSTEXPR
     CUDA_DEFINE_ATOMIC_ADD                    = _CONSTANTS_._CUDA_DEFINE_ATOMIC_ADD
