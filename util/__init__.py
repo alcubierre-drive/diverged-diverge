@@ -19,35 +19,277 @@ def info():
 
 if not _libs["divERGe"] is None:
 
+    class struct_str1024_t(Structure):
+        pass
+    struct_str1024_t.__slots__ = [ 'str', ]
+    struct_str1024_t._fields_ = [ ('str', c_char * 128), ]
+    str1024_t = struct_str1024_t
+
     class struct_constants_t(Structure):
         pass
     struct_constants_t.__slots__ = [
+        # ABI relevant
         '_MAX_N_ORBS',
-        '_USE_GF_FLOATS',
         '_MAX_NAME_LENGTH',
         '_MAX_N_SYM',
         '_MAX_ORBS_PER_SITE',
         '_DIVERGE_EPS_MESH',
+        '_USE_GF_FLOATS',
+        '_BATCHED_EIGEN_NCHUNKS_AUTONUM',
+        '_BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB',
+        '_DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK',
+        '_DIVERGE_MODEL_MAGIC_NUMBER',
+        '_DIVERGE_MODEL_NBANDSTRUCTURE',
+        '_DIVERGE_QNAN_DISABLE_CLANG_OPTS',
+        '_GRID_FF_SHELL_DISTANCE',
+        '_USE_MKL',
+        '_USE_MPI',
+        '_USE_NO_LAPACKE',
+        '_SHARED_MEM_MPI_IMPL',
+        '_SHARED_MEM_POSIX_IMPL',
+        # internal to the library, not ABI relevant, informational only
+        '_BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS',
+        '_CUDA_CIRCUMVENT_CONSTEXPR',
+        '_CUDA_DEFINE_ATOMIC_ADD',
+        '_DIVERGE_GRID_PARALLEL_BATCHED_GEMM',
+        '_DIVERGE_FLOW_STEP_EIGCHAN_PITER_MAXITER',
+        '_DIVERGE_FLOW_STEP_EIGCHAN_PITER_TOL',
+        '_DIVERGE_LOG_COLORLESS',
+        '_DIVERGE_LOG_GRAYSCALE',
+        '_DIVERGE_LOG_NAMELESS',
+        '_DIVERGE_NO_ABORT_ON_GPU_ERROR',
+        '_DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT',
+        '_DIVERGE_OPENBLAS_LIMIT_THREADS',
+        '_DIVERGE_USE_ZHEEVD',
+        '_DIVERGE_SKIP_ZDOTC',
+        '_BATCHED_SVD_THREAD_CNT_MAX',
+        '_DIVERGE_GETLINE_MAX',
+        '_DIVERGE_SKIP_TESTS',
+        '_DIVERGE_TU_INPLACE_PERMUTE',
+        '_DIVERGE_TU_GF_COARSIFY_FFT',
+        '_DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE',
+        '_TU_POST_USE_BATCHED_SVD_U',
+        '_TU_PROJ_TIMING',
+        '_TU_VERTEX_RECO_GPU_ZGEMM',
+        '_LDOS_KERNEL_GPU_DEV_MAXNOS',
+        '_LDOS_KERNEL_GPU_DEV_NTHREADS',
+        '_CLOG_MISSING',
+        '_LEAVE_EIGEN_BROKEN',
+        '_DIVERGE_POST_MAGIC_NUMBER_GRID',
+        '_DIVERGE_POST_MAGIC_NUMBER_NPATCH',
+        '_MAX_THREADS_PER_BLOCK',
+        '_MKL_FORCE_AVX_KERNEL_ON_EPYC',
+        '_NDEBUG',
+        '_NDEBUG_SKIP_ERROR_LINES',
+        '_NPATCH_ALMOST_ZERO',
+        '_NPATCH_PERIODIC_NORM_NG',
+        '_SKIP_EIGEN3_INCLUDE_PREFIX',
+        '_SKIP_FLOW_TIMING',
+        '_DIVERGE_POST_MAGIC_NUMBER_TU',
+        '_USE_ARPACK_EIGENSOLVER',
+        '_USE_COMPRESSED_OUTPUT',
+        '_USE_DYNAMIC_RECONSTRUCT_SCHEDULE',
+        '_MERGESORT_DEFAULT_TASK_SIZE',
+        '_USE_ALTERNATIVE_TIME',
+        '_USE_EIGEN_BATCHED_GEMM',
+        '_USE_EIGEN3_CPU_EIGENSOLVER',
+        '_USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE',
+        '_USE_NO_BLAS_VERTEX_LOOP',
+        '_USE_SERIAL_FFTW',
+        '_USE_SHARED_MEM',
+        '_MEMFD_NOT_SUPPORTED',
+        '_USE_MPI_FFTW',
+        '_PACK_MPI_MULTIPLIER',
+        '_TU_GPU_MPI_ALLOC_PRINT',
+        '_CUDA_MEM_ALIGN',
+        '_MPI_VERBOSE_ALLOCATION_PRINT',
+        '_TRANSPOSE_MPI_FFT_BUFFERS',
+        '_DIVERGE_OLD_W90_READER',
+        '_DIVERGE_TU_PROJ_TO_R_VTREE',
+        '_XVTREE_ALIGNMENT_PRINT',
+        # pads the struct up to a multiple of 512 bits
+        '_PADDING',
+        # char arrays last, so that they are aligned
+        '_CUBLAS_BATCHED_GEMM_CALL',
+        '_CUDA_VERSION_STR',
+        '_DIVERGE_LOG_PREFIX',
     ]
     struct_constants_t._fields_ = [
-        ('_MAX_N_ORBS', c_int64),
-        ('_USE_GF_FLOATS', c_int64),
-        ('_MAX_NAME_LENGTH', c_int64),
-        ('_MAX_N_SYM', c_int64),
-        ('_MAX_ORBS_PER_SITE', c_int64),
-        ('_DIVERGE_EPS_MESH', c_double),
+        # ABI relevant
+        ('_MAX_N_ORBS',                                c_int64),
+        ('_MAX_NAME_LENGTH',                           c_int64),
+        ('_MAX_N_SYM',                                 c_int64),
+        ('_MAX_ORBS_PER_SITE',                         c_int64),
+        ('_DIVERGE_EPS_MESH',                          c_double),
+        ('_USE_GF_FLOATS',                             c_int64),
+        ('_BATCHED_EIGEN_NCHUNKS_AUTONUM',             c_int64),
+        ('_BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB',         c_int64),
+        ('_DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK',    c_int64),
+        ('_DIVERGE_MODEL_MAGIC_NUMBER',                c_int64),
+        ('_DIVERGE_MODEL_NBANDSTRUCTURE',              c_int64),
+        ('_DIVERGE_QNAN_DISABLE_CLANG_OPTS',           c_int64),
+        ('_GRID_FF_SHELL_DISTANCE',                    c_double),
+        ('_USE_MKL',                                   c_int64),
+        ('_USE_MPI',                                   c_int64),
+        ('_USE_NO_LAPACKE',                            c_int64),
+        ('_SHARED_MEM_MPI_IMPL',                       c_int64),
+        ('_SHARED_MEM_POSIX_IMPL',                     c_int64),
+        # internal to the library, not ABI relevant, informational only
+        ('_BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS', c_int64),
+        ('_CUDA_CIRCUMVENT_CONSTEXPR',                 c_int64),
+        ('_CUDA_DEFINE_ATOMIC_ADD',                    c_int64),
+        ('_DIVERGE_GRID_PARALLEL_BATCHED_GEMM',        c_int64),
+        ('_DIVERGE_FLOW_STEP_EIGCHAN_PITER_MAXITER',   c_int64),
+        ('_DIVERGE_FLOW_STEP_EIGCHAN_PITER_TOL',       c_double),
+        ('_DIVERGE_LOG_COLORLESS',                     c_int64),
+        ('_DIVERGE_LOG_GRAYSCALE',                     c_int64),
+        ('_DIVERGE_LOG_NAMELESS',                      c_int64),
+        ('_DIVERGE_NO_ABORT_ON_GPU_ERROR',             c_int64),
+        ('_DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT',      c_int64),
+        ('_DIVERGE_OPENBLAS_LIMIT_THREADS',            c_int64),
+        ('_DIVERGE_USE_ZHEEVD',                        c_int64),
+        ('_DIVERGE_SKIP_ZDOTC',                        c_int64),
+        ('_BATCHED_SVD_THREAD_CNT_MAX',                c_int64),
+        ('_DIVERGE_GETLINE_MAX',                       c_int64),
+        ('_DIVERGE_SKIP_TESTS',                        c_int64),
+        ('_DIVERGE_TU_INPLACE_PERMUTE',                c_int64),
+        ('_DIVERGE_TU_GF_COARSIFY_FFT',                c_int64),
+        ('_DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE',       c_int64),
+        ('_TU_POST_USE_BATCHED_SVD_U',                 c_int64),
+        ('_TU_PROJ_TIMING',                            c_int64),
+        ('_TU_VERTEX_RECO_GPU_ZGEMM',                  c_int64),
+        ('_LDOS_KERNEL_GPU_DEV_MAXNOS',                c_int64),
+        ('_LDOS_KERNEL_GPU_DEV_NTHREADS',              c_int64),
+        ('_CLOG_MISSING',                              c_int64),
+        ('_LEAVE_EIGEN_BROKEN',                        c_int64),
+        ('_DIVERGE_POST_MAGIC_NUMBER_GRID',            c_int64),
+        ('_DIVERGE_POST_MAGIC_NUMBER_NPATCH',          c_int64),
+        ('_MAX_THREADS_PER_BLOCK',                     c_int64),
+        ('_MKL_FORCE_AVX_KERNEL_ON_EPYC',              c_int64),
+        ('_NDEBUG',                                    c_int64),
+        ('_NDEBUG_SKIP_ERROR_LINES',                   c_int64),
+        ('_NPATCH_ALMOST_ZERO',                        c_double),
+        ('_NPATCH_PERIODIC_NORM_NG',                   c_int64),
+        ('_SKIP_EIGEN3_INCLUDE_PREFIX',                c_int64),
+        ('_SKIP_FLOW_TIMING',                          c_int64),
+        ('_DIVERGE_POST_MAGIC_NUMBER_TU',              c_int64),
+        ('_USE_ARPACK_EIGENSOLVER',                    c_int64),
+        ('_USE_COMPRESSED_OUTPUT',                     c_int64),
+        ('_USE_DYNAMIC_RECONSTRUCT_SCHEDULE',          c_int64),
+        ('_MERGESORT_DEFAULT_TASK_SIZE',               c_int64),
+        ('_USE_ALTERNATIVE_TIME',                      c_int64),
+        ('_USE_EIGEN_BATCHED_GEMM',                    c_int64),
+        ('_USE_EIGEN3_CPU_EIGENSOLVER',                c_int64),
+        ('_USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE',      c_int64),
+        ('_USE_NO_BLAS_VERTEX_LOOP',                   c_int64),
+        ('_USE_SERIAL_FFTW',                           c_int64),
+        ('_USE_SHARED_MEM',                            c_int64),
+        ('_MEMFD_NOT_SUPPORTED',                       c_int64),
+        ('_USE_MPI_FFTW',                              c_int64),
+        ('_PACK_MPI_MULTIPLIER',                       c_int64),
+        ('_TU_GPU_MPI_ALLOC_PRINT',                    c_int64),
+        ('_CUDA_MEM_ALIGN',                            c_int64),
+        ('_MPI_VERBOSE_ALLOCATION_PRINT',              c_int64),
+        ('_TRANSPOSE_MPI_FFT_BUFFERS',                 c_int64),
+        ('_DIVERGE_OLD_W90_READER',                    c_int64),
+        ('_DIVERGE_TU_PROJ_TO_R_VTREE',                c_int64),
+        ('_XVTREE_ALIGNMENT_PRINT',                    c_int64),
+        # pads the struct up @512bits, keep in mind when adding things
+        ('_PADDING',                                   c_char * 24),
+        # char arrays last, so that they stay aligned
+        ('_CUBLAS_BATCHED_GEMM_CALL',                  struct_str1024_t),
+        ('_CUDA_VERSION_STR',                          struct_str1024_t),
+        ('_DIVERGE_LOG_PREFIX',                        struct_str1024_t),
     ]
     constants_t = struct_constants_t
     constants = _libs["divERGe"].get("diverge_constants", "cdecl")
     constants.argtypes = []
     constants.restype = constants_t
     _CONSTANTS_ = constants()
-    MAX_N_ORBS = _CONSTANTS_._MAX_N_ORBS
-    USE_GF_FLOATS = _CONSTANTS_._USE_GF_FLOATS
-    MAX_NAME_LENGTH = _CONSTANTS_._MAX_NAME_LENGTH
-    MAX_N_SYM = _CONSTANTS_._MAX_N_SYM
-    MAX_ORBS_PER_SITE = _CONSTANTS_._MAX_ORBS_PER_SITE
-    DIVERGE_EPS_MESH = _CONSTANTS_._DIVERGE_EPS_MESH
+
+    # ABI relevant: a consumer of the library must agree with these
+    MAX_N_ORBS                                = _CONSTANTS_._MAX_N_ORBS
+    MAX_NAME_LENGTH                           = _CONSTANTS_._MAX_NAME_LENGTH
+    MAX_N_SYM                                 = _CONSTANTS_._MAX_N_SYM
+    MAX_ORBS_PER_SITE                         = _CONSTANTS_._MAX_ORBS_PER_SITE
+    DIVERGE_EPS_MESH                          = _CONSTANTS_._DIVERGE_EPS_MESH
+    USE_GF_FLOATS                             = _CONSTANTS_._USE_GF_FLOATS
+    BATCHED_EIGEN_NCHUNKS_AUTONUM             = _CONSTANTS_._BATCHED_EIGEN_NCHUNKS_AUTONUM
+    BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB         = _CONSTANTS_._BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB
+    DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK    = _CONSTANTS_._DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK
+    DIVERGE_MODEL_MAGIC_NUMBER                = _CONSTANTS_._DIVERGE_MODEL_MAGIC_NUMBER
+    DIVERGE_MODEL_NBANDSTRUCTURE              = _CONSTANTS_._DIVERGE_MODEL_NBANDSTRUCTURE
+    DIVERGE_QNAN_DISABLE_CLANG_OPTS           = _CONSTANTS_._DIVERGE_QNAN_DISABLE_CLANG_OPTS
+    GRID_FF_SHELL_DISTANCE                    = _CONSTANTS_._GRID_FF_SHELL_DISTANCE
+    USE_MKL                                   = _CONSTANTS_._USE_MKL
+    USE_MPI                                   = _CONSTANTS_._USE_MPI
+    USE_NO_LAPACKE                            = _CONSTANTS_._USE_NO_LAPACKE
+    SHARED_MEM_MPI_IMPL                       = _CONSTANTS_._SHARED_MEM_MPI_IMPL
+    SHARED_MEM_POSIX_IMPL                     = _CONSTANTS_._SHARED_MEM_POSIX_IMPL
+
+    # internal to the library, not ABI relevant, informational only
+    BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS = _CONSTANTS_._BATCHED_GEMM_N_LL_NUM_EXHAUSTIVE_VARIANTS
+    CUDA_CIRCUMVENT_CONSTEXPR                 = _CONSTANTS_._CUDA_CIRCUMVENT_CONSTEXPR
+    CUDA_DEFINE_ATOMIC_ADD                    = _CONSTANTS_._CUDA_DEFINE_ATOMIC_ADD
+    DIVERGE_GRID_PARALLEL_BATCHED_GEMM        = _CONSTANTS_._DIVERGE_GRID_PARALLEL_BATCHED_GEMM
+    DIVERGE_FLOW_STEP_EIGCHAN_PITER_MAXITER   = _CONSTANTS_._DIVERGE_FLOW_STEP_EIGCHAN_PITER_MAXITER
+    DIVERGE_FLOW_STEP_EIGCHAN_PITER_TOL       = _CONSTANTS_._DIVERGE_FLOW_STEP_EIGCHAN_PITER_TOL
+    DIVERGE_LOG_COLORLESS                     = _CONSTANTS_._DIVERGE_LOG_COLORLESS
+    DIVERGE_LOG_GRAYSCALE                     = _CONSTANTS_._DIVERGE_LOG_GRAYSCALE
+    DIVERGE_LOG_NAMELESS                      = _CONSTANTS_._DIVERGE_LOG_NAMELESS
+    DIVERGE_NO_ABORT_ON_GPU_ERROR             = _CONSTANTS_._DIVERGE_NO_ABORT_ON_GPU_ERROR
+    DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT      = _CONSTANTS_._DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT
+    DIVERGE_OPENBLAS_LIMIT_THREADS            = _CONSTANTS_._DIVERGE_OPENBLAS_LIMIT_THREADS
+    DIVERGE_USE_ZHEEVD                        = _CONSTANTS_._DIVERGE_USE_ZHEEVD
+    DIVERGE_SKIP_ZDOTC                        = _CONSTANTS_._DIVERGE_SKIP_ZDOTC
+    BATCHED_SVD_THREAD_CNT_MAX                = _CONSTANTS_._BATCHED_SVD_THREAD_CNT_MAX
+    DIVERGE_GETLINE_MAX                       = _CONSTANTS_._DIVERGE_GETLINE_MAX
+    DIVERGE_SKIP_TESTS                        = _CONSTANTS_._DIVERGE_SKIP_TESTS
+    DIVERGE_TU_INPLACE_PERMUTE                = _CONSTANTS_._DIVERGE_TU_INPLACE_PERMUTE
+    DIVERGE_TU_GF_COARSIFY_FFT                = _CONSTANTS_._DIVERGE_TU_GF_COARSIFY_FFT
+    DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE       = _CONSTANTS_._DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE
+    TU_POST_USE_BATCHED_SVD_U                 = _CONSTANTS_._TU_POST_USE_BATCHED_SVD_U
+    TU_PROJ_TIMING                            = _CONSTANTS_._TU_PROJ_TIMING
+    TU_VERTEX_RECO_GPU_ZGEMM                  = _CONSTANTS_._TU_VERTEX_RECO_GPU_ZGEMM
+    LDOS_KERNEL_GPU_DEV_MAXNOS                = _CONSTANTS_._LDOS_KERNEL_GPU_DEV_MAXNOS
+    LDOS_KERNEL_GPU_DEV_NTHREADS              = _CONSTANTS_._LDOS_KERNEL_GPU_DEV_NTHREADS
+    CLOG_MISSING                              = _CONSTANTS_._CLOG_MISSING
+    LEAVE_EIGEN_BROKEN                        = _CONSTANTS_._LEAVE_EIGEN_BROKEN
+    DIVERGE_POST_MAGIC_NUMBER_GRID            = _CONSTANTS_._DIVERGE_POST_MAGIC_NUMBER_GRID
+    DIVERGE_POST_MAGIC_NUMBER_NPATCH          = _CONSTANTS_._DIVERGE_POST_MAGIC_NUMBER_NPATCH
+    MAX_THREADS_PER_BLOCK                     = _CONSTANTS_._MAX_THREADS_PER_BLOCK
+    MKL_FORCE_AVX_KERNEL_ON_EPYC              = _CONSTANTS_._MKL_FORCE_AVX_KERNEL_ON_EPYC
+    NDEBUG                                    = _CONSTANTS_._NDEBUG
+    NDEBUG_SKIP_ERROR_LINES                   = _CONSTANTS_._NDEBUG_SKIP_ERROR_LINES
+    NPATCH_ALMOST_ZERO                        = _CONSTANTS_._NPATCH_ALMOST_ZERO
+    NPATCH_PERIODIC_NORM_NG                   = _CONSTANTS_._NPATCH_PERIODIC_NORM_NG
+    SKIP_EIGEN3_INCLUDE_PREFIX                = _CONSTANTS_._SKIP_EIGEN3_INCLUDE_PREFIX
+    SKIP_FLOW_TIMING                          = _CONSTANTS_._SKIP_FLOW_TIMING
+    DIVERGE_POST_MAGIC_NUMBER_TU              = _CONSTANTS_._DIVERGE_POST_MAGIC_NUMBER_TU
+    USE_ARPACK_EIGENSOLVER                    = _CONSTANTS_._USE_ARPACK_EIGENSOLVER
+    USE_COMPRESSED_OUTPUT                     = _CONSTANTS_._USE_COMPRESSED_OUTPUT
+    USE_DYNAMIC_RECONSTRUCT_SCHEDULE          = _CONSTANTS_._USE_DYNAMIC_RECONSTRUCT_SCHEDULE
+    MERGESORT_DEFAULT_TASK_SIZE               = _CONSTANTS_._MERGESORT_DEFAULT_TASK_SIZE
+    USE_ALTERNATIVE_TIME                      = _CONSTANTS_._USE_ALTERNATIVE_TIME
+    USE_EIGEN_BATCHED_GEMM                    = _CONSTANTS_._USE_EIGEN_BATCHED_GEMM
+    USE_EIGEN3_CPU_EIGENSOLVER                = _CONSTANTS_._USE_EIGEN3_CPU_EIGENSOLVER
+    USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE      = _CONSTANTS_._USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE
+    USE_NO_BLAS_VERTEX_LOOP                   = _CONSTANTS_._USE_NO_BLAS_VERTEX_LOOP
+    USE_SERIAL_FFTW                           = _CONSTANTS_._USE_SERIAL_FFTW
+    USE_SHARED_MEM                            = _CONSTANTS_._USE_SHARED_MEM
+    MEMFD_NOT_SUPPORTED                       = _CONSTANTS_._MEMFD_NOT_SUPPORTED
+    USE_MPI_FFTW                              = _CONSTANTS_._USE_MPI_FFTW
+    PACK_MPI_MULTIPLIER                       = _CONSTANTS_._PACK_MPI_MULTIPLIER
+    TU_GPU_MPI_ALLOC_PRINT                    = _CONSTANTS_._TU_GPU_MPI_ALLOC_PRINT
+    CUDA_MEM_ALIGN                            = _CONSTANTS_._CUDA_MEM_ALIGN
+    MPI_VERBOSE_ALLOCATION_PRINT              = _CONSTANTS_._MPI_VERBOSE_ALLOCATION_PRINT
+    TRANSPOSE_MPI_FFT_BUFFERS                 = _CONSTANTS_._TRANSPOSE_MPI_FFT_BUFFERS
+    DIVERGE_OLD_W90_READER                    = _CONSTANTS_._DIVERGE_OLD_W90_READER
+    DIVERGE_TU_PROJ_TO_R_VTREE                = _CONSTANTS_._DIVERGE_TU_PROJ_TO_R_VTREE
+    XVTREE_ALIGNMENT_PRINT                    = _CONSTANTS_._XVTREE_ALIGNMENT_PRINT
+    CUBLAS_BATCHED_GEMM_CALL                  = _CONSTANTS_._CUBLAS_BATCHED_GEMM_CALL.str.decode()
+    CUDA_VERSION_STR                          = _CONSTANTS_._CUDA_VERSION_STR.str.decode()
+    DIVERGE_LOG_PREFIX                        = _CONSTANTS_._DIVERGE_LOG_PREFIX.str.decode()
 
     class struct_complex128_t(Structure):
         pass
