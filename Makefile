@@ -26,7 +26,7 @@ LDSOFLAGS = $(LDFLAGS)
 
 FLAGS = 
 INCLUDES = 
-DEFINES = 
+DEFINES = -DDIVERGE_DONT_HAVE_CONFIG
 LIBS_LAPACK = -llapacke -lcblas
 LIBS = $(LIBS_LAPACK) -lfftw3 -lfftw3_omp
 CULIBS = -lcudart -lcuda -lcufft -lcublas -lcusolver -lcusolverMg
@@ -71,15 +71,28 @@ DEFINE_VERSION ?= -DTAG_VERSION=\"$(shell git tag --list | sort -V | tail -n1)\"
 		  -DGIT_VERSION=\"$(shell git rev-parse --short HEAD)$(shell (git diff --quiet && git diff --cached --exit-code --quiet) || echo ':dirty')\" \
 		  -DGIT_VERSION_BRANCH=\"$(shell git rev-parse --abbrev-ref HEAD)\"
 
-.PHONY: lib test clean types dist dist-src todos doc man pdf $(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
+.PHONY: lib config test clean types dist dist-src todos doc man pdf \
+	$(NAME_GPU) $(NAME_GPU_LINK) src/misc/version.c.o
 
 # resolves nasty circular dependency bug for .cu(.o) files
 .SUFFIXES: 
 .SUFFIXES: .cu .cu.o
 
-lib: types $(NAME_LIB)
+lib: types $(NAME_LIB) config
 
-test: types $(NAME)
+test: types $(NAME) config
+
+# header that contains all DEFINEs
+config: src/diverge_config.h
+src/diverge_config.h: $(NAME_LIB)
+	@echo '#include "src/diverge_constants.h"' \
+		> Makefile.genconfig.c
+	@echo 'int main(int argc, char** argv){(void)argc;(void)argv;diverge_constants_print(1);return 0;}' \
+		>> Makefile.genconfig.c
+	$(CC) Makefile.genconfig.c -o Makefile.genconfig.x $(EXEFLAGS)
+	./Makefile.genconfig.x > src/diverge_config.h
+	$(RM) -f Makefile.genconfig.c
+	$(RM) -f Makefile.genconfig.x
 
 -include $(DEP_C) $(DEP_CPP)
 
@@ -125,6 +138,7 @@ types.vim: $(SRC_C) $(SRC_CPP) $(HEADERS) Makefile $(wildcard Makefile.local Mak
 		awk '{print "syntax keyword Type " $$1}' | uniq > $@
 
 clean:
+	-@$(RM) -rf src/diverge_config.h
 	-@$(RM) -rf $(NAME) $(NAME_GPU) $(NAME_GPU_LINK) $(NAME_LIB) types.vim
 	-@$(RM) -rf $(shell find . -type f -name '*.o' -not -path './build_release/*') $(shell find . -type f -name '*.d' -not -path './build_release/*')
 	-@$(RM) -rf divERGe.tar.gz divERGe_src.tar
