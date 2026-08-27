@@ -22,18 +22,6 @@ unsigned propagator_cpu_mpi_planning_patience = FFTW_MEASURE;
 
 #include <fftw3-mpi.h>
 
-static fftw_plan plan_transpose( int rows, int cols, complex128_t* in, complex128_t* out ) {
-    fftw_iodim howmany_dims[2];
-    howmany_dims[0].n  = rows;
-    howmany_dims[0].is = cols;
-    howmany_dims[0].os = 1;
-    howmany_dims[1].n  = cols;
-    howmany_dims[1].is = 1;
-    howmany_dims[1].os = rows;
-    return fftw_plan_guru_dft( 0, NULL, 2, howmany_dims, (fftw_complex*)in,
-            (fftw_complex*)out, 0, propagator_cpu_mpi_planning_patience);
-}
-
 static GF_FFTW(plan) GF_plan_transpose( int rows, int cols, gf_complex_t* in_out ) {
     GF_FFTW(iodim) howmany_dims[2];
     howmany_dims[0].n  = rows;
@@ -47,18 +35,25 @@ static GF_FFTW(plan) GF_plan_transpose( int rows, int cols, gf_complex_t* in_out
 }
 
 
-static inline int find_rank( const tu_mpi_loop_t* t, index_t k ) {
-    for (int r=0; r<t->size; ++r)
-        if ((t->kx_displs[r]*t->dims[1]*t->dims[2] <= k) &&
-            ((t->kx_displs[r]*t->dims[1]*t->dims[2] + t->kx_counts[r]*t->dims[1]*t->dims[2]) > k))
+static inline int find_rank_g( int size, const int* kx_displs, const int* kx_counts, index_t yz, index_t k ) {
+    for (int r=0; r<size; ++r)
+        if ((kx_displs[r]*yz <= k) && ((kx_displs[r]*yz + kx_counts[r]*yz) > k))
                 return r;
     return -1;
 }
 
-static inline index_t kidx_to_local( const tu_mpi_loop_t* t, index_t k ) {
-    index_t kx = k / (t->dims[1]*t->dims[2]),
-            kyz = k % (t->dims[1]*t->dims[2]);
-    return (kx - t->kx_displ) * t->dims[1]*t->dims[2] + kyz;
+static inline index_t kidx_to_local_g( index_t kx_displ, index_t yz, index_t k ) {
+    index_t kx = k / yz, kyz = k % yz;
+    return (kx - kx_displ) * yz + kyz;
+}
+
+// coarse-mesh (dims = t->vnk) distribution
+static inline int find_rank_c( const tu_mpi_loop_t* t, index_t k ) {
+    return find_rank_g( t->size, t->c_kx_displs, t->c_kx_counts, t->vnk[1]*t->vnk[2], k );
+}
+
+static inline index_t kidx_to_local_c( const tu_mpi_loop_t* t, index_t k ) {
+    return kidx_to_local_g( t->c_kx_displ, t->vnk[1]*t->vnk[2], k );
 }
 
 static inline index_t kmap_cmp_send(const kmap_t* a, const kmap_t* b) {
@@ -84,7 +79,7 @@ static inline index_t kmap_cmp_recv(const kmap_t* a, const kmap_t* b) {
 MERGESORT_IMPL(kmap_recvsort, kmap_t)
 
 tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
-        index_t chunksize_max, const index_t* c2fmap, index_t my_nk,
+        index_t chunksize_max, const index_t* c2cmap, index_t my_nk,
         index_t n_spin, index_t n_orb, index_t n_orbff,
         const index_t* unique_mi_l, index_t unique_mi_l_size,
         const index_t* unique_mi_r, const index_t* mi_to_ofrom,
@@ -109,7 +104,7 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     }
     t->chunksize_max = chunksize_max;
     t->my_nk = my_nk;
-    t->c2fmap = c2fmap;
+    t->c2cmap = c2cmap;
     t->n_spin = n_spin;
     t->n_orb =  n_orb;
     t->n_orbff =  n_orbff;
@@ -133,43 +128,56 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     alloc_print( sizeof(complex128_t)*t->alloc );
     t->ggp_buf = fftw_alloc_complex(t->alloc);
     alloc_print( sizeof(complex128_t)*t->alloc );
-
-    t->fft_forward = fftw_mpi_plan_many_dft( 3, t->dims, t->chunksize_max,
-            FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->ggm_buf, t->ggp_buf,
-            t->comm, FFTW_FORWARD, propagator_cpu_mpi_planning_patience );
-    t->fft_backward = fftw_mpi_plan_many_dft( 3, t->dims, t->chunksize_max,
-            FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->ggm_buf, t->ggp_buf,
-            t->comm, FFTW_BACKWARD, propagator_cpu_mpi_planning_patience );
-    t->fft_transpose = plan_transpose( t->chunksize_max,
-            t->kx_count*t->dims[1]*t->dims[2], t->ggm_buf, t->ggp_buf );
     tock = diverge_mpi_wtime();
-    mpi_vrb_printf( "TU-MPI prop: %.2fs for FFT plans\n", tock-tick );
+    mpi_vrb_printf( "TU-MPI prop: %.2fs for fine-mesh buffers\n", tock-tick );
 
     tick = diverge_mpi_wtime();
-    t->kx_counts = calloc(t->size, sizeof(int));
+    // coarse-mesh distribution + FFT plans
+    const index_t* dims_coarse = t->vnk;
+    t->c_alloc = fftw_mpi_local_size_many( 3, dims_coarse, t->chunksize_max,
+            FFTW_MPI_DEFAULT_BLOCK, t->comm, &t->c_kx_count, &t->c_kx_displ );
+    t->c_ggm_buf = fftw_alloc_complex(t->c_alloc);
+    alloc_print( sizeof(complex128_t)*t->c_alloc );
+    t->c_ggp_buf = fftw_alloc_complex(t->c_alloc);
+    alloc_print( sizeof(complex128_t)*t->c_alloc );
+    t->c_scratch = fftw_alloc_complex( kdim(t->vnk) * t->chunksize_max );
+    alloc_print( sizeof(complex128_t)*kdim(t->vnk)*t->chunksize_max );
+
+    t->c_fft_forward = fftw_mpi_plan_many_dft( 3, dims_coarse, t->chunksize_max,
+            FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->c_ggm_buf, t->c_ggp_buf,
+            t->comm, FFTW_FORWARD, propagator_cpu_mpi_planning_patience );
+    t->c_fft_backward = fftw_mpi_plan_many_dft( 3, dims_coarse, t->chunksize_max,
+            FFTW_MPI_DEFAULT_BLOCK, FFTW_MPI_DEFAULT_BLOCK, t->c_ggm_buf, t->c_ggp_buf,
+            t->comm, FFTW_BACKWARD, propagator_cpu_mpi_planning_patience );
+
+    t->c_kx_counts = calloc(t->size, sizeof(int));
     alloc_print( sizeof(int)*t->size );
-    t->kx_displs = calloc(t->size, sizeof(int));
+    t->c_kx_displs = calloc(t->size, sizeof(int));
     alloc_print( sizeof(int)*t->size );
-    int kx_count_i = t->kx_count;
-    int kx_displ_i = t->kx_displ;
-    diverge_mpi_allgather_int( &kx_count_i, t->kx_counts, 1 );
-    diverge_mpi_allgather_int( &kx_displ_i, t->kx_displs, 1 );
+    int c_kx_count_i = t->c_kx_count;
+    int c_kx_displ_i = t->c_kx_displ;
+    diverge_mpi_allgather_int( &c_kx_count_i, t->c_kx_counts, 1 );
+    diverge_mpi_allgather_int( &c_kx_displ_i, t->c_kx_displs, 1 );
+    t->c_reduce_recvcounts = calloc(t->size, sizeof(int));
+    alloc_print( sizeof(int)*t->size );
+    for (int r=0; r<t->size; ++r)
+        t->c_reduce_recvcounts[r] = t->c_kx_counts[r] * (int)(t->vnk[1]*t->vnk[2]*t->chunksize_max);
 
     // kcomms contains the missing indices on *this rank*
     kmap_t* kcomms = calloc(t->my_nk, sizeof(kmap_t));
     index_t kcomms_size = 0;
-    t->c2fmap_local = bitary_alloc(t->my_nk);
+    t->c2cmap_local = bitary_alloc(t->my_nk);
     alloc_print( bitary_nwords(t->my_nk) * sizeof(cbtyes_t) );
     #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
     for (index_t q=0; q<t->my_nk; ++q) {
-        index_t k_want = t->c2fmap[q];
-        int r = find_rank( t, k_want );
+        index_t k_want = t->c2cmap[q];
+        int r = find_rank_c( t, k_want );
         if (r != t->rank) {
             #pragma omp critical
             kcomms[kcomms_size++] = (kmap_t){.k=k_want, .q=q, .source_rank=r, .target_rank=t->rank};
         } else {
             #pragma omp atomic update
-            BITARY_SET(t->c2fmap_local, q);
+            BITARY_SET(t->c2cmap_local, q);
         }
     }
     // shrink kcomms
@@ -225,14 +233,14 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
 
     // stupid realloc
     index_t realloc_size = MAX(t->kc_recv_count, t->kc_send_count) * t->chunksize_max;
-    if (realloc_size > t->alloc) {
-        mpi_wrn_printf( "more memory for recv (%.2fGiB) than for FFT (%.2fGiB)\n",
+    if (realloc_size > t->c_alloc) {
+        mpi_wrn_printf( "more memory for recv (%.2fGiB) than for coarse FFT (%.2fGiB)\n",
                 (double)(realloc_size*sizeof(complex128_t))/(double)(1024*1024*1024),
-                (double)(t->alloc*sizeof(complex128_t))/(double)(1024*1024*1024) );
-        fftw_free(t->ggp_buf);
-        t->ggp_buf = fftw_alloc_complex(realloc_size);
-        fftw_free(t->ggm_buf);
-        t->ggm_buf = fftw_alloc_complex(realloc_size);
+                (double)(t->c_alloc*sizeof(complex128_t))/(double)(1024*1024*1024) );
+        fftw_free(t->c_ggp_buf);
+        t->c_ggp_buf = fftw_alloc_complex(realloc_size);
+        fftw_free(t->c_ggm_buf);
+        t->c_ggm_buf = fftw_alloc_complex(realloc_size);
     }
     tock = diverge_mpi_wtime();
     mpi_vrb_printf( "TU-MPI prop: %.2fs for kcomms\n", tock-tick );
@@ -274,14 +282,17 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
 
 void tu_mpi_loop_destroy( tu_mpi_loop_t* t ) {
     diverge_mpi_barrier();
-    free( t->kx_counts );
-    free( t->kx_displs );
-    fftw_destroy_plan( t->fft_forward );
-    fftw_destroy_plan( t->fft_backward );
-    fftw_destroy_plan( t->fft_transpose );
     fftw_free( t->ggp_buf );
     fftw_free( t->ggm_buf );
-    free( t->c2fmap_local );
+    fftw_destroy_plan( t->c_fft_forward );
+    fftw_destroy_plan( t->c_fft_backward );
+    fftw_free( t->c_ggp_buf );
+    fftw_free( t->c_ggm_buf );
+    fftw_free( t->c_scratch );
+    free( t->c_kx_counts );
+    free( t->c_kx_displs );
+    free( t->c_reduce_recvcounts );
+    free( t->c2cmap_local );
     free( t->kc_send );
     free( t->kc_recv );
     free( t->sendcounts );
@@ -319,7 +330,7 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
         stack[--idx] = (ptask_t){.s1=s1, .s2=s2, .s3=s3, .s4=s4, .m=m};
     ptask_t* tasks = calloc( t->chunksize_max, sizeof(ptask_t) );
 
-    fftw_plan p = pp ? t->fft_forward : t->fft_backward;
+    fftw_plan p = pp ? t->c_fft_forward : t->c_fft_backward;
     const index_t kx_start = t->kx_displ;
     const index_t kx_stop = t->kx_count + t->kx_displ;
 
@@ -336,8 +347,6 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
 
 #define MY_BUFFER_GGM_IDX( i__, kff__ ) t->ggm_buf[ i__ * t->kx_count*dims[1]*dims[2] + kff__ ]
 #define MY_BUFFER_GGP_IDX( i__, kff__ ) t->ggp_buf[ i__ * t->kx_count*dims[1]*dims[2] + kff__ ]
-#define MY_BUFFER_GGM_IDX_POST( i__, kff__ ) t->ggm_buf[ kff__ * t->chunksize_max + i__ ]
-#define MY_BUFFER_GGP_IDX_POST( i__, kff__ ) t->ggp_buf[ kff__ * t->chunksize_max + i__ ]
 
         // fill buffers
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
@@ -401,13 +410,19 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_loop_timing_reorder] += tock-tick;
 
+#define MY_C_BUFFER_GGM_IDX_POST( i__, kff__ ) t->c_ggm_buf[ kff__ * t->chunksize_max + i__ ]
+#define MY_C_BUFFER_GGP_IDX_POST( i__, kff__ ) t->c_ggp_buf[ kff__ * t->chunksize_max + i__ ]
+
         tick = tock;
-        fftw_execute_dft( t->fft_transpose, t->ggm_buf, t->ggp_buf );
+        // fine real-space buffer (i,local kx,ky,kz) to coarse mesh
+        mpi_fold_to_coarse_distributed( t->ggm_buf, t->kx_count*dims[1]*dims[2],
+                t->c_scratch, t->c_ggm_buf, t->kx_displ, t->kx_count, t->vnk, dims,
+                chunksize, t->chunksize_max, t->c_reduce_recvcounts );
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_loop_timing_transpose] += tock-tick;
 
         tick = tock;
-        fftw_mpi_execute_dft( p, t->ggp_buf, t->ggm_buf );
+        fftw_mpi_execute_dft( p, t->c_ggm_buf, t->c_ggp_buf );
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_loop_timing_fft] += tock-tick;
 
@@ -423,17 +438,17 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
             index_t mo3 = simple ? ((taskoff+m)/t->n_orbff) : t->unique_mi_r[m+taskoff];
             index_t mo1 = simple ? ((taskoff+m)-mo3*t->n_orbff) : t->unique_mi_l[m+taskoff];
             for (index_t q=0; q<t->my_nk; ++q) {
-                if (bitary_get(t->c2fmap_local, q)) {
+                if (bitary_get(t->c2cmap_local, q)) {
                     index_t idx_to = pp ?
                         mo1+t->n_orbff*(s1+s2*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(
                                         s3+s4*t->n_spin+POW2(t->n_spin)*q))) :
                         mo1+t->n_orbff*(s1+s4*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(
                                         s3+s2*t->n_spin+POW2(t->n_spin)*q)));
-                    index_t qff_local = kidx_to_local( t, t->c2fmap[q] );
+                    index_t qff_local = kidx_to_local_c( t, t->c2cmap[q] );
                     if (subtract)
-                        loop[idx_to] -= MY_BUFFER_GGM_IDX_POST( i, qff_local );
+                        loop[idx_to] -= MY_C_BUFFER_GGP_IDX_POST( i, qff_local );
                     else
-                        loop[idx_to] = MY_BUFFER_GGM_IDX_POST( i, qff_local );
+                        loop[idx_to] = MY_C_BUFFER_GGP_IDX_POST( i, qff_local );
                 }
             }
         }
@@ -443,19 +458,19 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
         tick = tock;
         // communicate missing
         index_t elemsize = t->chunksize_max;
-        complex128_t *send_buf = t->ggp_buf,
-                     *result_buf = t->ggm_buf;
+        complex128_t *send_buf = t->c_ggp_buf,
+                     *result_buf = t->c_ggm_buf;
 
         // put from result_buf into send_buf
         for (index_t i=0; i<t->kc_send_count; ++i) {
-            index_t kidx = kidx_to_local( t, t->kc_send[i].k );
+            index_t kidx = kidx_to_local_c( t, t->kc_send[i].k );
             #ifndef NDEBUG
-            if (find_rank( t, t->kc_send[i].k ) != t->rank) {
-                printf( "rank of k index (%i) not me (%i) :(\n", find_rank( t, t->kc_send[i].k ), t->rank );
+            if (find_rank_c( t, t->kc_send[i].k ) != t->rank) {
+                printf( "rank of k index (%i) not me (%i) :(\n", find_rank_c( t, t->kc_send[i].k ), t->rank );
             }
             #endif
             for (index_t j=0; j<chunksize; ++j)
-                send_buf[IDX2(i,j,elemsize)] = MY_BUFFER_GGM_IDX_POST( j, kidx );
+                send_buf[IDX2(i,j,elemsize)] = MY_C_BUFFER_GGP_IDX_POST( j, kidx );
         }
         if (t->enable_timings) tock = diverge_mpi_wtime();
         t->timings[tu_mpi_loop_timing_mpibufprep] += tock-tick;
@@ -479,7 +494,7 @@ void tu_mpi_loop_calc( tu_mpi_loop_t* t, complex128_t* loop, index_t ntasks,
             // put from result_buf into loop
             for (index_t i=0; i<t->kc_recv_count; ++i) {
                 index_t q = t->kc_recv[i].q;
-                if (!bitary_get(t->c2fmap_local, q)) {
+                if (!bitary_get(t->c2cmap_local, q)) {
                     index_t idx_to = pp ?
                         mo1+t->n_orbff*(s1+s2*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(
                                         s3+s4*t->n_spin+POW2(t->n_spin)*q))) :
@@ -630,7 +645,7 @@ void tu_mpi_gf_destroy( tu_mpi_gf_t* t ) {
 #else
 
 tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
-        index_t chunksize_max, const index_t* c2fmap, index_t my_nk,
+        index_t chunksize_max, const index_t* c2cmap, index_t my_nk,
         index_t n_spin, index_t n_orb, index_t n_orbff,
         const index_t* unique_mi_l, index_t unique_mi_l_size,
         const index_t* unique_mi_r, const index_t* mi_to_ofrom,
@@ -640,7 +655,7 @@ tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
     (void)nk;
     (void)nkf;
     (void)chunksize_max;
-    (void)c2fmap;
+    (void)c2cmap;
     (void)my_nk;
     (void)n_spin;
     (void)n_orb;

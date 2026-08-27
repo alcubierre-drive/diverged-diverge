@@ -355,6 +355,12 @@ void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcou
                    recv, recvcounts, recvdispls, MPI_C_DOUBLE_COMPLEX, diverge_mpi_comm );
 }
 
+void diverge_mpi_reduce_scatter_complex_sum( const complex128_t* send, complex128_t* recv,
+                                                   const int* recvcounts ) {
+    MPICHK();
+    MPI_Reduce_scatter( send, recv, recvcounts, MPI_C_DOUBLE_COMPLEX, MPI_SUM, diverge_mpi_comm );
+}
+
 void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rdsp ) {
     MPICHK();
     MPI_Allgatherv( MPI_IN_PLACE, 0, MPI_DOUBLE_COMPLEX, recv, rcnt, rdsp, MPI_DOUBLE_COMPLEX, diverge_mpi_comm );
@@ -582,6 +588,11 @@ void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcou
     assert( sendcounts[0] == recvcounts[0] );
     (void)recvcounts;
     memcpy( recv + recvdispls[0], send + senddispls[0], sendcounts[0] * sizeof(complex128_t) );
+}
+
+void diverge_mpi_reduce_scatter_complex_sum( const complex128_t* send, complex128_t* recv,
+                                                   const int* recvcounts ) {
+    memcpy( recv, send, recvcounts[0] * sizeof(complex128_t) );
 }
 
 void diverge_mpi_allgatherv( complex128_t* recv, const int* rcnt, const int* rdsp ) {

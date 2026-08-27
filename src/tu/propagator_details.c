@@ -48,7 +48,6 @@ static fftw_plan plan_transpose( int rows, int cols, complex128_t* in, complex12
     return fftw_plan_guru_dft( 0, NULL, 2, howmany_dims, (fftw_complex*)in, (fftw_complex*)out, 0, FFTW_MEASURE);
 }
 
-
 void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
         tu_fft_algorithm_t simple, tu_fft_algorithm_t red ) {
 
@@ -61,6 +60,7 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
     const index_t* vnk = t->model->nk;
     const index_t* vnkf = t->model->nkf;
     int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]), (int)(vnk[2]*vnkf[2])};
+    int dims_coarse[] = {(int)vnk[0], (int)vnk[1], (int)vnk[2]};
 
     mpi_vrb_printf( "TU_prop CPU init greens…\n" );
     switch (greens) {
@@ -89,7 +89,7 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
     for (int i=0; i<2; ++i) switch (simple_red_algos[i]) {
         case tu_fft_algorithm_mpi_new:
             if (!t->mpi_loop) t->mpi_loop = tu_mpi_loop_init( t->model->nk, t->model->nkf,
-                    t->chunksize_max, t->c2fmap, t->my_nk, t->n_spin, t->n_orb, t->n_orbff,
+                    t->chunksize_max, t->c2cmap, t->my_nk, t->n_spin, t->n_orb, t->n_orbff,
                     t->tu_data->unique_mi_l, t->tu_data->unique_mi_l_sz,
                     t->tu_data->unique_mi_r, t->mi_to_ofrom, t->mi_to_oto, t->mi_to_R,
                     &t->GF_fft_plus, &t->GF_fft_conj_plus, t, t->model );
@@ -115,15 +115,16 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
                 t->buffer_ggm_many = (complex128_t*)fftw_alloc_complex(t->nktot * t->chunksize_max);
             if (!t->buffer_ggp_many)
                 t->buffer_ggp_many = (complex128_t*)fftw_alloc_complex(t->nktot * t->chunksize_max);
-            if (!t->fft_many_backward)
-                t->fft_many_backward = fftw_plan_many_dft( 3, dims, t->chunksize_max,
-                    (fftw_complex*)t->buffer_ggm_many, dims, 1, t->nktot,
-                    (fftw_complex*)t->buffer_ggp_many, dims, 1, t->nktot,
+            // coarse-mesh-only batched transforms
+            if (!t->fft_many_backward_coarse)
+                t->fft_many_backward_coarse = fftw_plan_many_dft( 3, dims_coarse, t->chunksize_max,
+                    (fftw_complex*)t->buffer_ggp_many, dims_coarse, 1, t->nktot,
+                    (fftw_complex*)t->buffer_ggp_many, dims_coarse, 1, t->nktot,
                     FFTW_BACKWARD, FFTW_MEASURE );
-            if (!t->fft_many_forward)
-                t->fft_many_forward = fftw_plan_many_dft( 3, dims, t->chunksize_max,
-                    (fftw_complex*)t->buffer_ggm_many, dims, 1, t->nktot,
-                    (fftw_complex*)t->buffer_ggp_many, dims, 1, t->nktot,
+            if (!t->fft_many_forward_coarse)
+                t->fft_many_forward_coarse = fftw_plan_many_dft( 3, dims_coarse, t->chunksize_max,
+                    (fftw_complex*)t->buffer_ggp_many, dims_coarse, 1, t->nktot,
+                    (fftw_complex*)t->buffer_ggp_many, dims_coarse, 1, t->nktot,
                     FFTW_FORWARD, FFTW_MEASURE );
             break;
         case tu_fft_algorithm_greedy:
@@ -141,15 +142,16 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
                 for (index_t i=0; i<diverge_omp_num_threads(); ++i)
                     t->buffer_ggp[i] = (complex128_t*)fftw_alloc_complex(t->nktot);
             }
-            if (!t->fft_single_backward)
-                t->fft_single_backward = fftw_plan_many_dft( 3, dims, 1,
-                    (fftw_complex*)t->buffer_ggm[0], dims, 1, t->nktot,
-                    (fftw_complex*)t->buffer_ggp[0], dims, 1, t->nktot,
+            // coarse-mesh-only transforms
+            if (!t->fft_single_backward_coarse)
+                t->fft_single_backward_coarse = fftw_plan_many_dft( 3, dims_coarse, 1,
+                    (fftw_complex*)t->buffer_ggp[0], dims_coarse, 1, t->nk,
+                    (fftw_complex*)t->buffer_ggp[0], dims_coarse, 1, t->nk,
                     FFTW_BACKWARD, FFTW_MEASURE );
-            if (!t->fft_single_forward)
-                t->fft_single_forward = fftw_plan_many_dft( 3, dims, 1,
-                    (fftw_complex*)t->buffer_ggm[0], dims, 1, t->nktot,
-                    (fftw_complex*)t->buffer_ggp[0], dims, 1, t->nktot,
+            if (!t->fft_single_forward_coarse)
+                t->fft_single_forward_coarse = fftw_plan_many_dft( 3, dims_coarse, 1,
+                    (fftw_complex*)t->buffer_ggp[0], dims_coarse, 1, t->nk,
+                    (fftw_complex*)t->buffer_ggp[0], dims_coarse, 1, t->nk,
                     FFTW_FORWARD, FFTW_MEASURE );
             #ifndef USE_SERIAL_FFTW
             fftw_plan_with_nthreads(fftwnthr);
@@ -162,11 +164,11 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
 void cpu_fft_algorithm_cleanup( tu_prop_t* t ) {
     if (t->nktot <= 1) return;
 
-    if (t->fft_single_forward) fftw_destroy_plan(t->fft_single_forward);
-    if (t->fft_single_backward) fftw_destroy_plan(t->fft_single_backward);
+    if (t->fft_single_forward_coarse) fftw_destroy_plan(t->fft_single_forward_coarse);
+    if (t->fft_single_backward_coarse) fftw_destroy_plan(t->fft_single_backward_coarse);
     if (t->fft_nons2_backward) fftw_destroy_plan(t->fft_nons2_backward);
-    if (t->fft_many_forward) fftw_destroy_plan(t->fft_many_forward);
-    if (t->fft_many_backward) fftw_destroy_plan(t->fft_many_backward);
+    if (t->fft_many_forward_coarse) fftw_destroy_plan(t->fft_many_forward_coarse);
+    if (t->fft_many_backward_coarse) fftw_destroy_plan(t->fft_many_backward_coarse);
     if (t->buffer_ggm_many) fftw_free(t->buffer_ggm_many);
     if (t->buffer_ggp_many) fftw_free(t->buffer_ggp_many);
 

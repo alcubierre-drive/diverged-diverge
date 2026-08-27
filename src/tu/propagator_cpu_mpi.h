@@ -56,12 +56,18 @@ typedef struct {
 
     index_t alloc;
 
-    fftw_plan fft_forward,
-              fft_backward,
-              fft_transpose;
-
-    int* kx_counts;
-    int* kx_displs;
+    // coarse-mesh FFT
+    index_t c_kx_count, c_kx_displ;
+    int* c_kx_counts;
+    int* c_kx_displs;
+    // (c_kx_counts[r],nk[1],nk[2],chunksize_max), actual recvcounts
+    int* c_reduce_recvcounts;
+    complex128_t* c_ggm_buf;
+    complex128_t* c_ggp_buf;
+    complex128_t* c_scratch; // reduce_scatter scratch buffer
+    index_t c_alloc;
+    fftw_plan c_fft_forward,
+              c_fft_backward;
 
     // internal info
     int* sendcounts;
@@ -81,12 +87,13 @@ typedef struct {
     double timings[TU_MPI_LOOP_TIMING_NUM];
     int enable_timings;
 
-    // boolean array that tracks whether c2fmap content is local
-    cbytes_t* c2fmap_local;
+    // boolean array that tracks whether c2cmap content is local (in the
+    // coarse distribution)
+    cbytes_t* c2cmap_local;
 
     // loop info
     index_t my_nk;
-    const index_t* c2fmap;
+    const index_t* c2cmap;
 
     index_t n_spin;
     index_t n_orb;
@@ -106,7 +113,7 @@ typedef struct {
 } tu_mpi_loop_t;
 
 tu_mpi_loop_t* tu_mpi_loop_init( const index_t nk[3], const index_t nkf[3],
-        index_t chunksize_max, const index_t* c2fmap, index_t my_nk,
+        index_t chunksize_max, const index_t* c2cmap, index_t my_nk,
         index_t n_spin, index_t n_orb, index_t n_orbff,
         const index_t* unique_mi_l, index_t unique_mi_l_size,
         const index_t* unique_mi_r, const index_t* mi_to_ofrom,

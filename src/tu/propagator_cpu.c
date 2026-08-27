@@ -3,6 +3,29 @@
 
 typedef struct { index_t s1, s2, s3, s4, m; } task_t;
 
+// FFT refinement trick
+static inline void fold_to_coarse( const complex128_t* restrict fine, complex128_t* restrict coarse,
+        const index_t* restrict nk, const index_t* restrict dims ) {
+    for (index_t rx=0; rx<nk[0]; ++rx)
+    for (index_t ry=0; ry<nk[1]; ++ry)
+    for (index_t rz=0; rz<nk[2]; ++rz) {
+        complex128_t sum = 0.0;
+        for (index_t fx=rx; fx<dims[0]; fx+=nk[0])
+        for (index_t fy=ry; fy<dims[1]; fy+=nk[1])
+        for (index_t fz=rz; fz<dims[2]; fz+=nk[2])
+            sum += fine[fz + dims[2]*(fy + dims[1]*fx)];
+        coarse[rz + nk[2]*(ry + nk[1]*rx)] = sum;
+    }
+}
+
+// batched version of fold_to_coarse()
+static inline void fold_to_coarse_many( const complex128_t* restrict fine, complex128_t* restrict coarse,
+        const index_t* restrict nk, const index_t* restrict dims, index_t chunksize, index_t stride ) {
+    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<chunksize; ++i)
+        fold_to_coarse( fine + i*stride, coarse + i*stride, nk, dims );
+}
+
 void S_loop_static_simple( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
         complex128_t* loop, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ ) {
@@ -20,7 +43,7 @@ void S_loop_static_simple( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
     const double prefac = -1.0/(2.0*M_PI);
     const index_t* vnk = t->model->nk;
     const index_t* vnkf = t->model->nkf;
-    int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]), (int)(vnk[2]*vnkf[2])};
+    index_t dims[] = {vnk[0]*vnkf[0], vnk[1]*vnkf[1], vnk[2]*vnkf[2]};
 
     // XXX algorithm choice: greedy XXX
     if (t->which_fft_simple == tu_fft_algorithm_greedy) {
@@ -82,8 +105,9 @@ void S_loop_static_simple( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
             for (index_t kff=0; kff<t->nktot; ++kff)
                 MY_BUFFER_GGm[kff] += MY_BUFFER_GGp[kff];
 
-            fftw_execute_dft( pp ? t->fft_single_forward : t->fft_single_backward,
-                    (fftw_complex*)MY_BUFFER_GGm, (fftw_complex*)MY_BUFFER_GGp );
+            fold_to_coarse( MY_BUFFER_GGm, MY_BUFFER_GGp, vnk, dims );
+            fftw_execute_dft( pp ? t->fft_single_forward_coarse : t->fft_single_backward_coarse,
+                    (fftw_complex*)MY_BUFFER_GGp, (fftw_complex*)MY_BUFFER_GGp );
 
             for (index_t q=0; q<t->my_nk; ++q) {
                 index_t idx_to = pp ?
@@ -92,9 +116,9 @@ void S_loop_static_simple( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
                     mo1+t->n_orbff*(s1+s4*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(s3+s2*t->n_spin+
                                     POW2(t->n_spin)*q)));
                 if (subtract)
-                    loop[idx_to] -= MY_BUFFER_GGp[t->c2fmap[q]];
+                    loop[idx_to] -= MY_BUFFER_GGp[t->c2cmap[q]];
                 else
-                    loop[idx_to] = MY_BUFFER_GGp[t->c2fmap[q]];
+                    loop[idx_to] = MY_BUFFER_GGp[t->c2cmap[q]];
             }
         }
     }
@@ -197,13 +221,15 @@ void S_loop_static_simple( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
         } else {
             double tick = 0, tock = 0;
             if (t->extra_timings_enabled) tick = diverge_mpi_wtime();
-            fftw_execute_dft( pp ? t->fft_many_forward : t->fft_many_backward,
-                (fftw_complex*)t->buffer_ggm_many, (fftw_complex*)t->buffer_ggp_many );
+            fold_to_coarse_many( t->buffer_ggm_many, t->buffer_ggp_many, vnk, dims, chunksize, t->nktot );
+            fftw_execute_dft( pp ? t->fft_many_forward_coarse : t->fft_many_backward_coarse,
+                (fftw_complex*)t->buffer_ggp_many, (fftw_complex*)t->buffer_ggp_many );
             if (t->extra_timings_enabled) tock = diverge_mpi_wtime();
             t_->extra_timings[4].t += tock - tick;
         }
 
         // put into loop
+        const index_t* qmap = (t->which_fft_simple == tu_fft_algorithm_mpi) ? t->c2fmap : t->c2cmap;
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t i=0; i<chunksize; ++i) {
             const index_t s1 = tasks[i].s1, s2 = tasks[i].s2, s3 = tasks[i].s3, s4 = tasks[i].s4, m = tasks[i].m;
@@ -217,9 +243,9 @@ void S_loop_static_simple( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
                     mo1+t->n_orbff*(s1+s4*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(s3 + s2*t->n_spin+
                                     POW2(t->n_spin)*q)));
                 if (subtract)
-                    loop[idx_to] -= MY_BUFFER_GGP_IDX( i, t->c2fmap[q] );
+                    loop[idx_to] -= MY_BUFFER_GGP_IDX( i, qmap[q] );
                 else
-                    loop[idx_to] = MY_BUFFER_GGP_IDX( i, t->c2fmap[q] );
+                    loop[idx_to] = MY_BUFFER_GGP_IDX( i, qmap[q] );
             }
         }
     }
@@ -250,7 +276,7 @@ void S_loop_static_red( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
     const double prefac = -1.0/(2.0*M_PI);
     const index_t* vnk = t->model->nk;
     const index_t* vnkf = t->model->nkf;
-    int dims[] = {(int)(vnk[0]*vnkf[0]), (int)(vnk[1]*vnkf[1]), (int)(vnk[2]*vnkf[2])};
+    index_t dims[] = {vnk[0]*vnkf[0], vnk[1]*vnkf[1], vnk[2]*vnkf[2]};
 
     // XXX algorithm choice: greedy XXX
     if (t->which_fft_red == tu_fft_algorithm_greedy) {
@@ -309,8 +335,9 @@ void S_loop_static_red( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
             for (index_t kff=0; kff<t->nktot; ++kff)
                 MY_BUFFER_GGm[kff] += MY_BUFFER_GGp[kff];
 
-            fftw_execute_dft( pp ? t->fft_single_forward : t->fft_single_backward,
-                    (fftw_complex*)MY_BUFFER_GGm, (fftw_complex*)MY_BUFFER_GGp );
+            fold_to_coarse( MY_BUFFER_GGm, MY_BUFFER_GGp, vnk, dims );
+            fftw_execute_dft( pp ? t->fft_single_forward_coarse : t->fft_single_backward_coarse,
+                    (fftw_complex*)MY_BUFFER_GGp, (fftw_complex*)MY_BUFFER_GGp );
 
             for (index_t q=0; q<t->my_nk; ++q) {
                 index_t idx_to = pp ?
@@ -319,9 +346,9 @@ void S_loop_static_red( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
                     mo1+t->n_orbff*(s1+s4*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(s3 + s2*t->n_spin+
                                     POW2(t->n_spin)*q)));
                 if (subtract)
-                    loop[idx_to] -= MY_BUFFER_GGp[t->c2fmap[q]];
+                    loop[idx_to] -= MY_BUFFER_GGp[t->c2cmap[q]];
                 else
-                    loop[idx_to] = MY_BUFFER_GGp[t->c2fmap[q]];
+                    loop[idx_to] = MY_BUFFER_GGp[t->c2cmap[q]];
             }
         }
     }
@@ -417,13 +444,15 @@ void S_loop_static_red( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
         } else {
             double tick = 0, tock = 0;
             if (t->extra_timings_enabled) tick = diverge_mpi_wtime();
-            fftw_execute_dft( pp ? t->fft_many_forward : t->fft_many_backward,
-                (fftw_complex*)t->buffer_ggm_many, (fftw_complex*)t->buffer_ggp_many );
+            fold_to_coarse_many( t->buffer_ggm_many, t->buffer_ggp_many, vnk, dims, chunksize, t->nktot );
+            fftw_execute_dft( pp ? t->fft_many_forward_coarse : t->fft_many_backward_coarse,
+                (fftw_complex*)t->buffer_ggp_many, (fftw_complex*)t->buffer_ggp_many );
             if (t->extra_timings_enabled) tock = diverge_mpi_wtime();
             t_->extra_timings[4].t += tock-tick;
         }
 
         // put into loop
+        const index_t* qmap = (t->which_fft_red == tu_fft_algorithm_mpi) ? t->c2fmap : t->c2cmap;
         #pragma omp parallel for num_threads(diverge_omp_num_threads()) schedule(dynamic)
         for (index_t i=0; i<chunksize; ++i) {
             const index_t s1 = tasks[i].s1, s2 = tasks[i].s2, s3 = tasks[i].s3, s4 = tasks[i].s4, m = tasks[i].m;
@@ -436,9 +465,9 @@ void S_loop_static_red( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
                     mo1+t->n_orbff*(s1+s4*t->n_spin+POW2(t->n_spin)*(mo3+t->n_orbff*(s3 + s2*t->n_spin+
                                     POW2(t->n_spin)*q)));
                 if (subtract)
-                    loop[idx_to] -= MY_BUFFER_GGP_IDX( i, t->c2fmap[q] );
+                    loop[idx_to] -= MY_BUFFER_GGP_IDX( i, qmap[q] );
                 else
-                    loop[idx_to] = MY_BUFFER_GGP_IDX( i, t->c2fmap[q] );
+                    loop[idx_to] = MY_BUFFER_GGP_IDX( i, qmap[q] );
             }
         }
     }

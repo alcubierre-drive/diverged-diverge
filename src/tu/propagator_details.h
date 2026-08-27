@@ -36,6 +36,7 @@ struct tu_prop_t {
     double* bos_frq;
 
     index_t* c2fmap;
+    index_t* c2cmap;
     index_t c2fmap_sz;
     cuda_prop_descr_t cuda_descr;
 
@@ -51,9 +52,9 @@ struct tu_prop_t {
     // tu_fft_algorithm_greedy
     // greens
     fftw_plan fft_nons2_backward;
-    // simple & red
-    fftw_plan fft_single_backward,
-              fft_single_forward;
+    // simple & red: transform of the coarse mesh only via FFT trick
+    fftw_plan fft_single_backward_coarse,
+              fft_single_forward_coarse;
 
     // to put the GF on a coarse mesh using FFTs
     greensfunc_coarse_t* coarsify;
@@ -62,9 +63,9 @@ struct tu_prop_t {
     index_t buffer_ggmp_sz;
 
     // tu_fft_algorithm_split
-    // simple & red
-    fftw_plan fft_many_backward,
-              fft_many_forward;
+    // simple & red: coarse-mesh-only batched transform via FFT trick
+    fftw_plan fft_many_backward_coarse,
+              fft_many_forward_coarse;
     complex128_t *buffer_ggm_many,
                  *buffer_ggp_many;
 
@@ -100,8 +101,8 @@ struct tu_prop_t {
     int32_t tasks_prop_mpi[32];
     int32_t off_prop_mpi[32];
     bool has_tasks_off_saved;
-    index_t* c2fmap_full;
-    index_t c2fmap_full_sz;
+    index_t c2cmap_full_sz;
+    index_t* c2cmap_full;
     tu_prop_gpu_mpi_dist_t* gpu_mpi_dist_pp;
     tu_prop_gpu_mpi_dist_t* gpu_mpi_dist_ph;
     // those are shared between the two pp/ph
@@ -163,14 +164,16 @@ void ph_bubble_momenta_handler_fft(cuda_prop_descr_t* cp,  complex128_t* const L
     const complex128_t* const GF, const complex128_t* const GFconj,
     const index_t n_orb, const index_t n_bonds, const index_t* const bond_sizes,
     const index_t n_orbff, const index_t n_spin, const index_t nktot,
-    const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
+    const index_t my_nk, const index_t* nkref,
+    const index_t* const c2c_map, const index_t* nkref_coarse,
     const index_t* ofrom, const index_t* oto,
     const index_t* const mi_to_Rin);
 void pp_bubble_momenta_handler_fft(cuda_prop_descr_t* cp, complex128_t* const L,
     const complex128_t* const GF, const complex128_t* const GFconj,
     const index_t n_orb,const index_t n_bonds, const index_t* const bond_sizes,
     const index_t n_orbff, const index_t n_spin, const index_t nktot,
-    const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
+    const index_t my_nk, const index_t* nkref,
+    const index_t* const c2c_map, const index_t* nkref_coarse,
     const index_t* ofrom, const index_t* oto,
     const index_t* const mi_to_Rin);
 
@@ -178,7 +181,8 @@ void pp_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* cons
     const complex128_t* const GF, const complex128_t* const GFconj,
     const index_t n_orb,
     const index_t n_orbff, const index_t n_spin, const index_t nktot,
-    const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
+    const index_t my_nk, const index_t* nkref,
+    const index_t* const c2c_map, const index_t* nkref_coarse,
     const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
     const index_t n_unique_pairs, cbytes_t* L_touched_map );
@@ -186,7 +190,8 @@ void ph_bubble_momenta_handler_fft_red(cuda_prop_descr_t* cp, complex128_t* cons
     const complex128_t* const GF, const complex128_t* const GFconj,
     const index_t n_orb,
     const index_t n_orbff, const index_t n_spin, const index_t nktot,
-    const index_t my_nk, const index_t* const c2f_map, const index_t* nkref,
+    const index_t my_nk, const index_t* nkref,
+    const index_t* const c2c_map, const index_t* nkref_coarse,
     const index_t* const mi_to_ofrom, const index_t* const mi_to_oto,
     const index_t* const mi_to_Rin,const index_t* const umi_l,const index_t* const umi_r,
     const index_t n_unique_pairs, cbytes_t* L_touched_map );

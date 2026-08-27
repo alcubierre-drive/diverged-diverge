@@ -13,6 +13,7 @@
 typedef struct cufftHandle cufftHandle;
 typedef struct cudaStream_t cudaStream_t;
 typedef struct cuDoubleComplex cuDoubleComplex;
+typedef struct cublasHandle_t cublasHandle_t;
 #endif
 
 #ifdef __cplusplus
@@ -39,19 +40,29 @@ struct cuda_prop_descr_t {
     int nblock[3];
     size_t nk_per_thread;
     size_t n_kblocks;
-    cufftHandle* gpu_fft;
-    size_t worksize_fft[32];
     long long int dims[3];
     bool dims_set;
 
+    // see fold_to_coarse() in propagator_cpu.c for FFT reduction identity
+    cufftHandle* gpu_fft_coarse;
+    size_t worksize_fft_coarse[32];
+    long long int dims_coarse[3];
+
+    // fold_to_coarse is equivalent to 3 strided-batched GEMVs vs. ones-vector,
+    // this is what the cublas_handle and fold_ones buffers are for.
+    cublasHandle_t* cublas_handle;
+    cuDoubleComplex* fold_ones[32];
+
     index_t* mi_to_R[32];
-    index_t* c_to_f_q[32];
+    index_t* c_to_c_q[32];
     index_t* nkdev[32];
+    index_t* nkcdev[32];
     cuDoubleComplex* GF_fft[32];
     cuDoubleComplex* GF_fft_conj[32];
     cuDoubleComplex* buf_GG[32];
+    cuDoubleComplex* buf_GG_coarse[32];
     cuDoubleComplex* buf_res[32];
-    cuDoubleComplex* fft_workspace[32];
+    cuDoubleComplex* fft_workspace_coarse[32];
 };
 
 #ifndef __cplusplus
@@ -70,19 +81,26 @@ static const cuda_prop_descr_t cuda_prop_defaults = {
     .nblock = {18,1,1},
     .nk_per_thread = 1,
     .n_kblocks = 1,
-    .gpu_fft = NULL,
-    .worksize_fft = {0},
     .dims = {1,1,0},
     .dims_set = false,
 
+    .gpu_fft_coarse = NULL,
+    .worksize_fft_coarse = {0},
+    .dims_coarse = {1,1,0},
+
+    .cublas_handle = NULL,
+    .fold_ones = {0},
+
     .mi_to_R = {0},
-    .c_to_f_q = {0},
+    .c_to_c_q = {0},
     .nkdev = {0},
+    .nkcdev = {0},
     .GF_fft = {0},
     .GF_fft_conj = {0},
     .buf_GG = {0},
+    .buf_GG_coarse = {0},
     .buf_res = {0},
-    .fft_workspace = {0},
+    .fft_workspace_coarse = {0},
 };
 #endif // __cplusplus
 cuda_prop_descr_t cuda_prop_defaults_CPP( void );
@@ -128,7 +146,8 @@ cuda_proj_descr_t cuda_proj_defaults_CPP( void );
 void cuda_reset_prop_descr( cuda_prop_descr_t* cp, index_t tasks_spin,
         index_t ntasks_dist, double offload/*=0.0*/ );
 void cuda_setup_prop_descr( cuda_prop_descr_t* cp, index_t task_spin,
-        index_t tasks_dist, const index_t* nkpts, double offload_cpu/*=0.1*/ );
+        index_t tasks_dist, const index_t* nkpts, const index_t* nkpts_coarse,
+        double offload_cpu/*=0.1*/ );
 void cuda_delete_prop_descr( cuda_prop_descr_t* cp );
 
 // globals
