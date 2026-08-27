@@ -156,6 +156,7 @@ DIVERGE_0.11 {
         diverge_mpi_open_file;
         diverge_mpi_recv_bytes;
         diverge_mpi_recv_double;
+        diverge_mpi_reduce_scatter_complex_sum;
         diverge_mpi_send_bytes;
         diverge_mpi_send_double;
         diverge_mpi_write_byte_to_file;
