@@ -338,8 +338,6 @@ written (i.e., the variable can be either *defined* or *not*), or
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_USE_ZHEEVD``                            | use LAPACK's ``zheevd`` algorithm instead of the newer ``zheevr`` in :c:func:`single_eigen`       |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
-|``DIVERGE_SKIP_ZDOTC``                            | some MKL versions define ``cblas_zdotc``, others don't.                                           |
-+--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``BATCHED_SVD_THREAD_CNT_MAX=VAL``                | limit the number of threads in :c:func:`batched_svd`                                              |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_GETLINE_MAX=VAL``                       | set the maximum number of characters in a line parsed with the (internal) text_io.h parser        |
