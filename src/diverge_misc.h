@@ -17,6 +17,10 @@
 
 #pragma once
 
+#ifndef DIVERGE_DONT_HAVE_CONFIG
+#include "diverge_config.h"
+#endif
+
 // (batched) linear algebra
 #include "misc/batched_eigen.h"
 #include "misc/batched_svd.h"
