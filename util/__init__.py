@@ -65,6 +65,8 @@ if not _libs["divERGe"] is None:
         '_BATCHED_SVD_THREAD_CNT_MAX',
         '_DIVERGE_GETLINE_MAX',
         '_DIVERGE_SKIP_TESTS',
+        '_DIVERGE_SKIP_TESTS_LINALG',
+        '_CT_NO_FORK',
         '_DIVERGE_TU_INPLACE_PERMUTE',
         '_DIVERGE_TU_GF_COARSIFY_FFT',
         '_DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE',
@@ -107,12 +109,13 @@ if not _libs["divERGe"] is None:
         '_DIVERGE_OLD_W90_READER',
         '_DIVERGE_TU_PROJ_TO_R_VTREE',
         '_XVTREE_ALIGNMENT_PRINT',
-        # pads the struct up to a multiple of 512 bits
         '_PADDING',
-        # char arrays last, so that they are aligned
+        # char arrays last, so that everything before them stays aligned
         '_CUBLAS_BATCHED_GEMM_CALL',
         '_CUDA_VERSION_STR',
         '_DIVERGE_LOG_PREFIX',
+        # pads the struct up to a multiple of 512 bits
+
     ]
     struct_constants_t._fields_ = [
         # ABI relevant
@@ -152,6 +155,8 @@ if not _libs["divERGe"] is None:
         ('_BATCHED_SVD_THREAD_CNT_MAX',                c_int64),
         ('_DIVERGE_GETLINE_MAX',                       c_int64),
         ('_DIVERGE_SKIP_TESTS',                        c_int64),
+        ('_DIVERGE_SKIP_TESTS_LINALG',                 c_int64),
+        ('_CT_NO_FORK',                                c_int64),
         ('_DIVERGE_TU_INPLACE_PERMUTE',                c_int64),
         ('_DIVERGE_TU_GF_COARSIFY_FFT',                c_int64),
         ('_DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE',       c_int64),
@@ -194,12 +199,13 @@ if not _libs["divERGe"] is None:
         ('_DIVERGE_OLD_W90_READER',                    c_int64),
         ('_DIVERGE_TU_PROJ_TO_R_VTREE',                c_int64),
         ('_XVTREE_ALIGNMENT_PRINT',                    c_int64),
-        # pads the struct up @512bits, keep in mind when adding things
-        ('_PADDING',                                   c_char * 24),
-        # char arrays last, so that they stay aligned
+        ('_PADDING',                                   c_char * 8),
+        # char arrays last, so that everything before them stays aligned
         ('_CUBLAS_BATCHED_GEMM_CALL',                  struct_str1024_t),
         ('_CUDA_VERSION_STR',                          struct_str1024_t),
         ('_DIVERGE_LOG_PREFIX',                        struct_str1024_t),
+        # pads the struct up to a multiple of 512 bits
+
     ]
     constants_t = struct_constants_t
     constants = _libs["divERGe"].get("diverge_constants", "cdecl")
@@ -245,6 +251,8 @@ if not _libs["divERGe"] is None:
     BATCHED_SVD_THREAD_CNT_MAX                = _CONSTANTS_._BATCHED_SVD_THREAD_CNT_MAX
     DIVERGE_GETLINE_MAX                       = _CONSTANTS_._DIVERGE_GETLINE_MAX
     DIVERGE_SKIP_TESTS                        = _CONSTANTS_._DIVERGE_SKIP_TESTS
+    DIVERGE_SKIP_TESTS_LINALG                 = _CONSTANTS_._DIVERGE_SKIP_TESTS_LINALG
+    CT_NO_FORK                                = _CONSTANTS_._CT_NO_FORK
     DIVERGE_TU_INPLACE_PERMUTE                = _CONSTANTS_._DIVERGE_TU_INPLACE_PERMUTE
     DIVERGE_TU_GF_COARSIFY_FFT                = _CONSTANTS_._DIVERGE_TU_GF_COARSIFY_FFT
     DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE       = _CONSTANTS_._DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE
@@ -287,6 +295,7 @@ if not _libs["divERGe"] is None:
     DIVERGE_OLD_W90_READER                    = _CONSTANTS_._DIVERGE_OLD_W90_READER
     DIVERGE_TU_PROJ_TO_R_VTREE                = _CONSTANTS_._DIVERGE_TU_PROJ_TO_R_VTREE
     XVTREE_ALIGNMENT_PRINT                    = _CONSTANTS_._XVTREE_ALIGNMENT_PRINT
+    PADDING                                   = _CONSTANTS_._PADDING
     CUBLAS_BATCHED_GEMM_CALL                  = _CONSTANTS_._CUBLAS_BATCHED_GEMM_CALL.str.decode()
     CUDA_VERSION_STR                          = _CONSTANTS_._CUDA_VERSION_STR.str.decode()
     DIVERGE_LOG_PREFIX                        = _CONSTANTS_._DIVERGE_LOG_PREFIX.str.decode()
