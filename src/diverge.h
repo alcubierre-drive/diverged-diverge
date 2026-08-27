@@ -17,6 +17,10 @@
 
 #pragma once
 
+#ifndef DIVERGE_DONT_HAVE_CONFIG
+#include "diverge_config.h"
+#endif
+
 #include "misc/mpi_functions.h"
 #include "misc/mpi_log.h"
 #include "misc/compilation_status.h"

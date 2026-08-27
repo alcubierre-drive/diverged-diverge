@@ -54,3 +54,4 @@ diverge_flow.egg-info/
 search_and_replace.sh
 
 build_release/
+src/diverge_config.h

@@ -7,7 +7,11 @@
 
 int main( int argc, char** argv ) {
     if (argc > 1 && !strcmp(argv[1], "-printconstants")) {
-        diverge_constants_print();
+        diverge_constants_print(0);
+        return 0;
+    }
+    if (argc > 1 && !strcmp(argv[1], "-printheader")) {
+        diverge_constants_print(1);
         return 0;
     }
     diverge_init( &argc, &argv );
