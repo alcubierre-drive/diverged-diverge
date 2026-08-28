@@ -208,6 +208,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("model_internals_only_mesh") {
         INTERNALS->common_internals_mesh_only = 1;
     }
+    CHECKKEY("model_internals_tu_phonons_skip_refinement") {
+        diverge_model_internals_tu_phonons_skip_refinement = atoi(val);
+    }
     CHECKKEY("fftw_mpi_plan_patience") {
         // either set with 'G' (GX) to address fftw_mpi_plan_patience (for
         // GPU/MPI) or without (X) to address

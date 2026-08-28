@@ -108,6 +108,7 @@ extern double SYMNORM_TU_BOND_MAX;
 extern double SYMNORM_MATRIX_ZERO;
 extern int generate_reduced_loop_maps_disabled;
 extern unique_orbff_impl_t tu_data_unique_orbff_impl;
+extern int diverge_model_internals_tu_phonons_skip_refinement;
 
 #ifdef __cplusplus
 }

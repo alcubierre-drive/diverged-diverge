@@ -82,6 +82,8 @@ static void model_phonons_destructor( void* v ) {
     diverge_model_free(m);
 }
 
+int diverge_model_internals_tu_phonons_skip_refinement = 0;
+
 diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
         double max_dist, rs_hopping_t* hop, index_t n_hop, ph_vertex_t* vert,
         index_t n_vert ) {
@@ -91,7 +93,10 @@ diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
 
     diverge_model_t* m = diverge_model_init();
     memcpy( m->nk, model->nk, sizeof(m->nk) );
-    memcpy( m->nkf, model->nkf, sizeof(m->nkf) );
+    if (diverge_model_internals_tu_phonons_skip_refinement)
+        m->nkf[0] = m->nkf[1] = m->nkf[2] = 1;
+    else
+        memcpy( m->nkf, model->nkf, sizeof(m->nkf) );
     for (int d=model->internals->dim; d<3; ++d) m->nk[d] = m->nkf[d] = 0;
     memcpy( m->lattice, model->lattice, sizeof(m->lattice) );
 
