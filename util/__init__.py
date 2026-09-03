@@ -96,6 +96,7 @@ if not _libs["divERGe"] is None:
         '_USE_EIGEN_BATCHED_GEMM',
         '_USE_EIGEN3_CPU_EIGENSOLVER',
         '_USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE',
+        '_BATCHED_EIGEN_FORCE_CPU',
         '_USE_NO_BLAS_VERTEX_LOOP',
         '_USE_SERIAL_FFTW',
         '_USE_SHARED_MEM',
@@ -186,6 +187,7 @@ if not _libs["divERGe"] is None:
         ('_USE_EIGEN_BATCHED_GEMM',                    c_int64),
         ('_USE_EIGEN3_CPU_EIGENSOLVER',                c_int64),
         ('_USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE',      c_int64),
+        ('_BATCHED_EIGEN_FORCE_CPU',                   c_int64),
         ('_USE_NO_BLAS_VERTEX_LOOP',                   c_int64),
         ('_USE_SERIAL_FFTW',                           c_int64),
         ('_USE_SHARED_MEM',                            c_int64),
@@ -199,7 +201,7 @@ if not _libs["divERGe"] is None:
         ('_DIVERGE_OLD_W90_READER',                    c_int64),
         ('_DIVERGE_TU_PROJ_TO_R_VTREE',                c_int64),
         ('_XVTREE_ALIGNMENT_PRINT',                    c_int64),
-        ('_PADDING',                                   c_char * 8),
+        ('_PADDING',                                   c_char * 64),
         # char arrays last, so that everything before them stays aligned
         ('_CUBLAS_BATCHED_GEMM_CALL',                  struct_str1024_t),
         ('_CUDA_VERSION_STR',                          struct_str1024_t),
@@ -282,6 +284,7 @@ if not _libs["divERGe"] is None:
     USE_EIGEN_BATCHED_GEMM                    = _CONSTANTS_._USE_EIGEN_BATCHED_GEMM
     USE_EIGEN3_CPU_EIGENSOLVER                = _CONSTANTS_._USE_EIGEN3_CPU_EIGENSOLVER
     USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE      = _CONSTANTS_._USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE
+    BATCHED_EIGEN_FORCE_CPU                   = _CONSTANTS_._BATCHED_EIGEN_FORCE_CPU
     USE_NO_BLAS_VERTEX_LOOP                   = _CONSTANTS_._USE_NO_BLAS_VERTEX_LOOP
     USE_SERIAL_FFTW                           = _CONSTANTS_._USE_SERIAL_FFTW
     USE_SHARED_MEM                            = _CONSTANTS_._USE_SHARED_MEM

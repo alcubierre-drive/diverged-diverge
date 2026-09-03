@@ -42,7 +42,8 @@ void batched_eigen_set_nthreads( int nthr ) {
 
 void batched_eigen_r( int* devices, int ndevices, complex128_t* H, double* E, index_t n, index_t N ) {
 #ifdef USE_CUDA
-    if (ndevices == 0 && helper_batched_eigen_eigen3cpu) {
+    if ((ndevices == 0 && helper_batched_eigen_eigen3cpu) ||
+            helper_batched_eigen_eigen3cpu == BATCHED_EIGEN_FORCE_CPU) {
 #else
     if (helper_batched_eigen_eigen3cpu) {
 #endif

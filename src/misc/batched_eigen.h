@@ -33,7 +33,14 @@ extern "C" {
  */
 void batched_eigen_r( int* devices, int ndevices, complex128_t* H, double* E, index_t dim, index_t Num );
 
-/** force the CPU eigensolver built with Eigen3 for :c:func:`batched_eigen_r` */
+#ifndef BATCHED_EIGEN_FORCE_CPU
+#define BATCHED_EIGEN_FORCE_CPU 1701276005
+#endif
+/**
+ * force the CPU eigensolver built with Eigen3 for :c:func:`batched_eigen_r`. If
+ * you pass ``use_eigen3 == BATCHED_EIGEN_FORCE_CPU`` this is hard-forced
+ * regardless of ndevices/devices setup
+ */
 void batched_eigen_r_set_eigen3_mode( int use_eigen3 );
 
 /** get what the current mode is */
