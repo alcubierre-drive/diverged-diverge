@@ -12,6 +12,7 @@
 #include "misc/batched_svd_private.h"
 #include "misc/mergesort.h"
 #include "misc/text_io.h"
+#include "misc/batched_eigen.h"
 
 /* defaults that live in a translation unit (or a CUDA-only header) that cannot
  * be included from here. keep in sync with the file given in the comment. */
@@ -390,6 +391,7 @@ diverge_constants_t diverge_constants( void ) {
         ._USE_EIGEN_BATCHED_GEMM = HAS_USE_EIGEN_BATCHED_GEMM,
         ._USE_EIGEN3_CPU_EIGENSOLVER = HAS_USE_EIGEN3_CPU_EIGENSOLVER,
         ._USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE = USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE,
+        ._BATCHED_EIGEN_FORCE_CPU = BATCHED_EIGEN_FORCE_CPU,
         ._USE_MKL = HAS_USE_MKL,
         ._USE_MPI = HAS_USE_MPI,
         ._USE_NO_BLAS_VERTEX_LOOP = HAS_USE_NO_BLAS_VERTEX_LOOP,
@@ -549,6 +551,7 @@ void diverge_constants_print( int header ) {
     PRINT_DEF( USE_EIGEN_BATCHED_GEMM );
     PRINT_DEF( USE_EIGEN3_CPU_EIGENSOLVER );
     PRINT_LI_OPT( USE_EIGEN3_CPU_EIGENSOLVER_EXTENSIVE );
+    PRINT_LI( BATCHED_EIGEN_FORCE_CPU )
     PRINT_DEF( USE_NO_BLAS_VERTEX_LOOP );
     PRINT_DEF( USE_SERIAL_FFTW );
     PRINT_DEF( USE_SHARED_MEM );
