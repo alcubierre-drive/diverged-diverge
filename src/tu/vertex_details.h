@@ -42,6 +42,10 @@ struct tu_vertex_t {
     bool has_gpu_memory;
     single_gemm_Xt_t* GPU_reco_gemm;
 
+    // tables that fuse the symmetry reconstruction into the real space FT,
+    // shared with copies of this vertex (like the helper arrays above)
+    struct tu_reco_fused_t* reco_fused;
+
     bool P_flow, C_flow, D_flow;
     bool C_to_P, D_to_P, P_to_C, D_to_C, P_to_D, C_to_D;
 
