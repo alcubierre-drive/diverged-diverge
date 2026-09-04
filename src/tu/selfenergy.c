@@ -387,8 +387,8 @@ void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) 
     ZERO_OUT( s->ff_helper, s->nktot*POW2(s->n_orb*s->n_spin) );
     const double pref = 1./(double)s->nk;
     const claM3d_t lat = claM3d_map(s->model->lattice[0]);
-    const index_t rx = (nk[2] > 1) ? SE_WS_RANGE : 0,
-                  ry = (nk[2] > 1) ? SE_WS_RANGE : 0,
+    const index_t rx = (nk[0] > 1) ? SE_WS_RANGE : 0,
+                  ry = (nk[1] > 1) ? SE_WS_RANGE : 0,
                   rz = (nk[2] > 1) ? SE_WS_RANGE : 0;
     index_t edge_any = 0;
 
@@ -437,7 +437,7 @@ void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) 
             }
         }
     }
-    if (edge_any) mpi_err_printf( "SE_WS_RANGE=%i too small (%i edges)\n", SE_WS_RANGE, edge_any );
+    if (edge_any) mpi_err_printf( "SE_WS_RANGE=%i too small (%li edges)\n", SE_WS_RANGE, edge_any );
     FFTW_EXECUTE_DFT( s->fft_self_oop_gfmesh, s->ff_helper, self_en);
 }
 
