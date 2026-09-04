@@ -680,7 +680,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
                 const index_t ffidx4 = s->tu_ff[bo4].ffidx;
                 complex128_t tmp2 = 0.0;
                 for (index_t k=0; k<s->nk; ++k) {
-                    tmp2 += s->ffkmesh[IDX2(ffidx4, k, s->nk)] * (
+                    tmp2 += conj(s->ffkmesh[IDX2(ffidx4, k, s->nk)]) * (
                             GF[IDX5(s2, oto4, s4, o4, k, s->n_orb, s->n_spin, s->n_orb, s->nk)]+
                        conj(GF[IDX5(s4, o4, s2, oto4, k, s->n_orb, s->n_spin, s->n_orb, s->nk)]) );
                 }
@@ -709,7 +709,7 @@ static void selfenergy_flow_mom(tu_selfenergy_t* s, complex128_t* self_en,
                 const index_t ffidx1 = s->tu_ff[bo1].ffidx;
                 for (index_t q=0; q<s->nk; ++q)
                     s->ff_helper[IDX5(s3, oto1, s1, o1, q, s->n_orb, s->n_spin, s->n_orb, s->nk)]
-                        -= conj(s->ffkmesh[IDX2(ffidx1, q, s->nk)]) * tmp;
+                        -= s->ffkmesh[IDX2(ffidx1, q, s->nk)] * tmp;
             }
 
             FFTW_EXECUTE_DFT(s->ifft_self_oop,s->ff_helper,self_en);
@@ -871,7 +871,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
                 for (index_t k=0; k<s->nk; ++k) {
                     const complex128_t GF_prefac = (GF[k+s->nk*(o4+s->n_orb*s->tu_ff[s->bond_offsets[o4]+b4].oto)])
                                             +conj(GF[k+s->nk*(s->tu_ff[s->bond_offsets[o4]+b4].oto+s->n_orb*o4)]);
-                    tmp += GF_prefac*s->ffkmesh[k+s->nk*s->tu_ff[s->bond_offsets[o4]+b4].ffidx];
+                    tmp += GF_prefac*conj(s->ffkmesh[k+s->nk*s->tu_ff[s->bond_offsets[o4]+b4].ffidx]);
                 }
                 s->interpol_helper[s->bond_offsets[o4]+b4] += tmp;
             }
@@ -889,7 +889,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
                     tmp += s->interpol_helper[s->bond_offsets[o4]+b4] * 2.0 * D_in[mi1+s->n_orbff*(mi2)];
                 }
                 s->ff_helper[q+s->nk*(o1+s->n_orb*s->tu_ff[s->bond_offsets[o1]+b1].oto)] -=
-                                (tmp)*conj(s->ffkmesh[q+s->nk*s->tu_ff[s->bond_offsets[o1]+b1].ffidx]);
+                                (tmp)*s->ffkmesh[q+s->nk*s->tu_ff[s->bond_offsets[o1]+b1].ffidx];
             }
         }
         if (s->C_flow && C_in) {
@@ -905,7 +905,7 @@ static void selfenergy_flow_mom_SU2(tu_selfenergy_t* s, complex128_t* self_en,
                     tmp -= s->interpol_helper[s->bond_offsets[o4]+b4] * C_in[mi1+s->n_orbff*(mi2)];
                 }
                 s->ff_helper[q+s->nk*(o1+s->n_orb*s->tu_ff[s->bond_offsets[o1]+b1].oto)] -=
-                                (tmp)*conj(s->ffkmesh[q+s->nk*s->tu_ff[s->bond_offsets[o1]+b1].ffidx]);
+                                (tmp)*s->ffkmesh[q+s->nk*s->tu_ff[s->bond_offsets[o1]+b1].ffidx];
             }
         }
         if (s->C_flow || s->D_flow)
