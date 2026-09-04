@@ -6,6 +6,7 @@
 #include "../misc/batched_gemms.h"
 #include "../misc/gemm.h"
 #include "../diverge_patching_helpers.h" // atomic_add
+#include "vertex_reco_fused.h"
 
 tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu_prop_t* loop,
         bool P/*=true*/, bool C/*=true*/, bool D/*=true*/, bool self/*=false*/ ) {
@@ -72,6 +73,9 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
         memsize += 2*V->full_vert_size;
     }
     tu_vertex_initialize_GPU_memory( V, proj, loop );
+#ifndef TU_VERTEX_RECO_GPU_ZGEMM
+    V->reco_fused = tu_reco_fused_init( V->model, proj );
+#endif
     if (V->model->ffill != NULL) {
         tu_vertex_init_U_from_fullV( V, V->model, proj );
     } else {
@@ -154,6 +158,7 @@ void tu_vertex_free( tu_vertex_t* V ) {
         free(V->bubble_helper);
         free(V->product_helper);
         free(V->projection_helper);
+        tu_reco_fused_free(V->reco_fused);
     }
 #ifdef USE_CUDA
     if (V->has_gpu_memory) {
@@ -223,6 +228,7 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
         V->GPU_gemm_buffer[i][j] = O->GPU_gemm_buffer[i][j];
     }
     V->GPU_reco_gemm = O->GPU_reco_gemm;
+    V->reco_fused = O->reco_fused;
 
     return V;
 }
@@ -365,7 +371,7 @@ double tu_vertex_infinity_norm( const tu_vertex_t* V ) {
     return max;
 }
 
-void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* restrict buf,
+void diverge_tu_vertex_reco_ft_ref( const tu_vertex_t* restrict V, char chan, complex128_t* restrict buf,
         const complex128_t* restrict existing_r_exp, index_t nr, complex128_t* restrict buf_q/*=NULL*/ ) {
     const char channel = chan;
     bool was_null = false;
@@ -476,6 +482,162 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
     diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
 
     if (was_null) free(buf_q);
+}
+
+/* The channel enters the reconstruction only through *which* of the spin labels
+ * sit on the left/right leg of the vertex. Relative to the P-like ("canonical")
+ * leg assignment, C and D are hence nothing but a permutation of the outgoing
+ * leg-pair index, and a permutation of the leg-pair index of the q-space vertex
+ * is the very same permutation applied to the rows of its Fourier transform.
+ * Applying it to the (rest,nr) result instead of to the (nk,rest) q-space buffer
+ * is both cheaper (nr << nk) and keeps the channel switch out of the hot loops.
+ * The permutation only shuffles (s4,s3,s2), i.e. it decomposes into independent
+ * blocks of n_spin^3 rows and is the identity for SU(2) (n_spin==1). */
+static void reco_ft_permute_legs( complex128_t* restrict buf, char channel,
+        index_t n_spin, index_t n_orbff, index_t nr ) {
+    if (channel == 'P' || n_spin == 1) return;
+
+    const index_t legdim = POW2(n_spin)*n_orbff;
+    const index_t nspin3 = n_spin*n_spin*n_spin;
+    const index_t stride[3] = { n_spin*n_orbff*legdim, n_orbff*legdim, n_spin*n_orbff };
+
+    // source triple (s4,s3,s2) of the canonical vertex for each target triple
+    index_t src[nspin3];
+    for (index_t s4=0; s4<n_spin; ++s4)
+    for (index_t s3=0; s3<n_spin; ++s3)
+    for (index_t s2=0; s2<n_spin; ++s2) {
+        // 'C': (s4,s3,mo3,s2,s1,mo1) <- (s2,s3,mo3,s4,s1,mo1)
+        // 'D': (s4,s3,mo3,s2,s1,mo1) <- (s2,s4,mo3,s3,s1,mo1)
+        const index_t f4 = s2, f3 = (channel == 'C') ? s3 : s4, f2 = (channel == 'C') ? s4 : s3;
+        src[IDX3(s4,s3,s2,n_spin,n_spin)] = f4*stride[0] + f3*stride[1] + f2*stride[2];
+    }
+
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
+    {
+        complex128_t* tmp = malloc(nspin3*nr*sizeof(complex128_t));
+        #pragma omp for collapse(3)
+        for (index_t mo3=0; mo3<n_orbff; ++mo3)
+        for (index_t s1=0; s1<n_spin; ++s1)
+        for (index_t mo1=0; mo1<n_orbff; ++mo1) {
+            const index_t base = mo3*legdim + s1*n_orbff + mo1;
+            for (index_t t=0; t<nspin3; ++t)
+                memcpy( tmp+t*nr, buf+(base+src[t])*nr, nr*sizeof(complex128_t) );
+            for (index_t t=0; t<nspin3; ++t) {
+                const index_t s4 = t/(n_spin*n_spin), s3 = (t/n_spin)%n_spin, s2 = t%n_spin;
+                memcpy( buf+(base+s4*stride[0]+s3*stride[1]+s2*stride[2])*nr,
+                        tmp+t*nr, nr*sizeof(complex128_t) );
+            }
+        }
+        free(tmp);
+    }
+}
+
+/* symmetry reconstruction of the full-BZ vertex in the canonical (P-like) leg
+ * assignment
+ *      buf_q(q,R,L) = sum_{l,r} pref(l) conj(pref(r)) X(q_ibz(q), map(r), map(l)),
+ * with R,L the two composite legs (s,s,mo). Every (q,R,L) is touched by exactly
+ * one iteration, so neither the zero fill nor the atomic accumulation of the
+ * reference implementation is required, and both symmetry maps are looked up
+ * per leg instead of per matrix element. */
+static void reco_symm_canonical( const tu_vertex_t* restrict V,
+        const complex128_t* restrict Xch, const complex128_t* restrict pref,
+        complex128_t* restrict buf_q ) {
+    const index_t legdim = POW2(V->n_spin)*V->n_orbff;
+    const index_t rest = POW2(legdim);
+    const index_t my_nk_in_bz = V->symm->my_nk_in_bz;
+    const index_t my_nk_in_bz_off = V->symm->my_nk_in_bz_off;
+    const index_t my_nk_off = V->tu_data->my_nk_off;
+
+    const index_t* restrict from_ibz_2_bz = V->symm->from_ibz_2_bz;
+    const index_t* restrict kmaps_to = V->symm->kmaps_to;
+    const index_t* restrict map_len = V->symm->o2m_map_len;
+    const index_t* restrict map_off = V->symm->o2m_map_off;
+    const index_t* restrict idx_map = V->symm->idx_map_symm;
+
+    #pragma omp parallel for collapse(2) schedule(static) num_threads(diverge_omp_num_threads())
+    for (index_t q=0; q<my_nk_in_bz; ++q)
+    for (index_t R=0; R<legdim; ++R) {
+        const complex128_t* restrict Xq =
+            Xch + rest*(kmaps_to[from_ibz_2_bz[q + my_nk_in_bz_off]] - my_nk_off);
+        const index_t ridx = R*my_nk_in_bz + q;
+        const index_t rlen = map_len[ridx], roff = map_off[ridx];
+        complex128_t* restrict out = buf_q + q*rest + R*legdim;
+
+        for (index_t L=0; L<legdim; ++L) {
+            const index_t lidx = L*my_nk_in_bz + q;
+            const index_t llen = map_len[lidx], loff = map_off[lidx];
+            complex128_t sum = 0.0;
+            for (index_t l=0; l<llen; ++l)
+            for (index_t r=0; r<rlen; ++r)
+                sum += pref[loff+l] * conj(pref[roff+r]) *
+                       Xq[IDX2(idx_map[roff+r], idx_map[loff+l], legdim)];
+            out[L] = sum;
+        }
+    }
+}
+
+static void reco_ft_symm( const tu_vertex_t* restrict V, const complex128_t* restrict Xch,
+        const complex128_t* restrict pref, complex128_t* restrict buf,
+        const complex128_t* restrict existing_r_exp, index_t nr,
+        complex128_t* restrict buf_q ) {
+    const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));
+    const index_t my_nk_in_bz = V->symm->my_nk_in_bz;
+
+    const bool was_null = (buf_q == NULL);
+    if (was_null) buf_q = malloc( my_nk_in_bz*rest*sizeof(complex128_t) );
+    reco_symm_canonical( V, Xch, pref, buf_q );
+    // hack that allows to skip the warning message of the non-CUDA fallback
+    single_gemm_Xt_t* quiet_handle = (single_gemm_Xt_t*)((ptrdiff_t)-1);
+    single_gemm_Xt_Afortran( quiet_handle, buf_q, existing_r_exp, buf, nr, rest,
+            my_nk_in_bz, 1./(double)V->nk, 0.0 );
+    if (was_null) free( buf_q );
+}
+
+void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* restrict buf,
+        const complex128_t* restrict existing_r_exp, index_t nr, complex128_t* restrict buf_q/*=NULL*/ ) {
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+    // the fused CPU version below has no GPU counterpart (yet)
+    diverge_tu_vertex_reco_ft_ref( V, chan, buf, existing_r_exp, nr, buf_q );
+#else
+    const char channel = chan;
+    const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));
+    if (V->reco_fused && tu_reco_fused_nr(V->reco_fused) == nr) {
+        tu_reco_fused_ft( V->reco_fused, V, channel, buf );
+        diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
+        return;
+    }
+    const complex128_t* restrict Xch = channel == 'P' ? V->Pch :
+                                       channel == 'C' ? V->Cch :
+                                     /*channel == 'D'*/ V->Dch;
+
+    if (V->symm->use_symmetries) {
+        reco_ft_symm( V, Xch, channel == 'P' ? V->symm->prefactor_symmP :
+                                               V->symm->prefactor_symmCD,
+                buf, existing_r_exp, nr, buf_q );
+    } else {
+        // without symmetries the reconstruction is a pure transposition of the
+        // leg-pair index against q, and Xch(rest,my_nk) already *is* the column
+        // major matrix that the transposing GEMM wants to see: no buffer needed.
+        // (the reference BLAS has a very slow transposing ZGEMM -- define
+        // TU_RECO_FT_NO_TRANSPOSED_GEMM to transpose explicitly instead)
+#ifndef TU_RECO_FT_NO_TRANSPOSED_GEMM
+        (void)buf_q;
+        single_gemm_Xt_Afortran( (single_gemm_Xt_t*)((ptrdiff_t)-1), Xch, existing_r_exp,
+                buf, nr, rest, V->my_nk, 1./(double)V->nk, 0.0 );
+#else
+        const bool was_null = (buf_q == NULL);
+        if (was_null) buf_q = malloc( V->my_nk*rest*sizeof(complex128_t) );
+        #pragma omp parallel for collapse(2) schedule(static) num_threads(diverge_omp_num_threads())
+        for (index_t q=0; q<V->my_nk; ++q)
+        for (index_t j=0; j<rest; ++j) buf_q[IDX2(j,q,V->my_nk)] = Xch[IDX2(q,j,rest)];
+        single_gemm( buf_q, existing_r_exp, buf, nr, rest, V->my_nk, 1./(double)V->nk, 0.0 );
+        if (was_null) free( buf_q );
+#endif
+    }
+    reco_ft_permute_legs( buf, channel, V->n_spin, V->n_orbff, nr );
+
+    diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
+#endif
 }
 
 void diverge_tu_vertex_reco( const tu_vertex_t* V, char chan, complex128_t* buf_q,
