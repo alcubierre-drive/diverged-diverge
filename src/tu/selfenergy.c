@@ -378,72 +378,67 @@ static void apply_circ_cutoff( complex128_t* rs_ary, const index_t* nk,
 
 #define IS_ZERO(x) (fabs(x) < 1e-7)
 
+#define SE_WS_RANGE 2
+
 void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) {
     const index_t nk[] = { s->model->nk[0], s->model->nk[1], s->model->nk[2] };
     const index_t nkff[] = { nk[0]*s->model->nkf[0], nk[1]*s->model->nkf[1], nk[2]*s->model->nkf[2] };
     // pad with zeros
     ZERO_OUT( s->ff_helper, s->nktot*POW2(s->n_orb*s->n_spin) );
     const double pref = 1./(double)s->nk;
+    const index_t nb = s->n_orb * s->n_spin;
+    const double* lat = s->model->lattice[0];
+    const index_t rz = (nk[2] > 1) ? SE_WS_RANGE : 0;
+    int edge_any = 0;
 
-    float hx = (nk[0]>1) ? (float)nk[0]/2. : 2;
-    float hy = (nk[1]>1) ? (float)nk[1]/2. : 2;
-    float hz = (nk[2]>1) ? (float)nk[2]/2. : 2;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(|:edge_any)
     for (index_t r=0; r<POW2(s->n_orb*s->n_spin); ++r) {
+        const index_t o1 = (r % nb) % s->n_orb;
+        const index_t o3 = (r / nb) % s->n_orb;
+        double off[3];
+        for (int a=0; a<3; ++a)
+            off[a] = s->model->positions[o3][a] - s->model->positions[o1][a];
+
         for (index_t x=0; x<nk[0]; ++x)
         for (index_t y=0; y<nk[1]; ++y)
         for (index_t z=0; z<nk[2]; ++z) {
+            const complex128_t val = self_en[IDX4(r, x,y,z, nk[0],nk[1],nk[2])]*pref;
 
-            const index_t xto = (x<=hx) ? x : nkff[0]-(nk[0]-x);
-            const index_t yto = (y<=hy) ? y : nkff[1]-(nk[1]-y);
-            const index_t zto = (z<=hz) ? z : nkff[2]-(nk[2]-z);
-
-            complex128_t helper = self_en[IDX4(r, x,y,z, nk[0],nk[1],nk[2])]*pref;
-            // copy edges and corners
-            if (IS_ZERO(x-hx) && IS_ZERO(y-hy) && IS_ZERO(z-hz)) {
-                helper *= 0.125;
-                const index_t xto2 = nkff[0]-hx, yto2 = nkff[1]-hy, zto2 = nkff[2]-hz;
-                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto ,yto2,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto2,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(x-hx) && IS_ZERO(y-hy)) {
-                helper *= 0.25;
-                const index_t xto2 = nkff[0]-hx, yto2 = nkff[1]-hy;
-                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(x-hx) && IS_ZERO(z-hz)) {
-                helper *= 0.25;
-                const index_t xto2 = nkff[0]-hx, zto2 = nkff[2]-hz;
-                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(y-hy) && IS_ZERO(z-hz)) {
-                helper *= 0.25;
-                const index_t yto2 = nkff[1]-hy, zto2 = nkff[2]-hz;
-                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto ,yto2,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(x-hx)) {
-                helper *= 0.5;
-                const index_t xto2 = nkff[0]-hx;
-                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(z-hz)) {
-                helper *= 0.5;
-                const index_t zto2 = nkff[2]-hz;
-                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(y-hy)) {
-                helper *= 0.5;
-                const index_t yto2 = nkff[1]-hy;
-                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
+            index_t img[32][3];
+            int nimg = 0, edge = 0;
+            double best = -1.0;
+            for (index_t ax=-SE_WS_RANGE; ax<=SE_WS_RANGE; ++ax)
+            for (index_t ay=-SE_WS_RANGE; ay<=SE_WS_RANGE; ++ay)
+            for (index_t az=-rz; az<=rz; ++az) {
+                const index_t Rx = x + ax*nk[0], Ry = y + ay*nk[1], Rz = z + az*nk[2];
+                double d[3];
+                for (int a=0; a<3; ++a)
+                    d[a] = Rx*lat[0*3+a] + Ry*lat[1*3+a] + Rz*lat[2*3+a] + off[a];
+                const double dist = sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
+                if (best < 0.0 || (dist < best && !IS_ZERO(dist-best))) {
+                    best = dist; nimg = 0; edge = 0;
+                }
+                if ((dist < best || IS_ZERO(dist-best)) && nimg < 32) {
+                    img[nimg][0] = Rx; img[nimg][1] = Ry; img[nimg][2] = Rz; ++nimg;
+                    edge |= (labs(ax) == SE_WS_RANGE) || (labs(ay) == SE_WS_RANGE) ||
+                            (rz > 0 && labs(az) == rz);
+                }
             }
-            s->ff_helper[IDX4(r,xto ,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
+
+            edge_any |= edge;
+
+            const complex128_t w = val / (double)nimg;
+            for (int i=0; i<nimg; ++i) {
+                const index_t xt = ((img[i][0] % nkff[0]) + nkff[0]) % nkff[0];
+                const index_t yt = ((img[i][1] % nkff[1]) + nkff[1]) % nkff[1];
+                const index_t zt = ((img[i][2] % nkff[2]) + nkff[2]) % nkff[2];
+                s->ff_helper[IDX4(r, xt,yt,zt, nkff[0],nkff[1],nkff[2])] += w;
+            }
         }
     }
+    if (edge_any)
+        mpi_err_printf( "selfenergy: minimal image touches the +-%d search boundary; "
+                "raise SE_WS_RANGE\n", SE_WS_RANGE );
     FFTW_EXECUTE_DFT( s->fft_self_oop_gfmesh, s->ff_helper, self_en);
 }
 
