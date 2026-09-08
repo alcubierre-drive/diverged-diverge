@@ -30,8 +30,9 @@ static GF_FFTW(plan) GF_plan_transpose( int rows, int cols, gf_complex_t* in_out
     howmany_dims[1].n  = cols;
     howmany_dims[1].is = 1;
     howmany_dims[1].os = rows;
+    // XXX FFTW_UNALIGNED for safety with Katanin. Might need to drop XXX
     return GF_FFTW(plan_guru_dft)( 0, NULL, 2, howmany_dims, in_out, in_out, 0,
-            propagator_cpu_mpi_planning_patience );
+            propagator_cpu_mpi_planning_patience | FFTW_UNALIGNED );
 }
 
 

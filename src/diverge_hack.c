@@ -80,6 +80,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("tu_gf_skip_selfenergy") {
         TU_INTERNALS->tu_gf_skip_selfenergy = (bool)atoi(val);
     }
+    CHECKKEY("tu_katanin") {
+        TU_INTERNALS->tu_katanin = (bool)atoi(val);
+    }
     CHECKKEY("tu_mpifft_chunksize") {
         TU_INTERNALS->mpi_fft_chunksize = atoi(val);
     }
