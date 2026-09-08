@@ -91,6 +91,17 @@ struct tu_prop_t {
     complex128_t* cFRG_GF_fft_plus;
     complex128_t* cFRG_GF_fft_conj_plus;
 
+    // Second set of Green's functions (G2 = [G^{-1} - d\Lambda \dot\Sigma]^{-1})
+    // for Katanin substitution. If !katanin, every pointer is an alias and the
+    // swap function is a no-op.
+    bool katanin;
+    gf_complex_t* gf_buf_kat;
+    complex128_t* GF_fft_plus_kat;
+    complex128_t* GF_fft_conj_plus_kat;
+    gf_complex_t* gf_buf_cfrg_kat;
+    complex128_t* cFRG_GF_fft_plus_kat;
+    complex128_t* cFRG_GF_fft_conj_plus_kat;
+
     gf_complex_t *gf_buf_backup, *gf_buf_backup_cfrg;
     index_t gf_buf_backup_sz;
 

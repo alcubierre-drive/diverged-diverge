@@ -377,6 +377,7 @@ static void apply_circ_cutoff( complex128_t* rs_ary, const index_t* nk,
 }
 
 #define IS_ZERO(x) (fabs(x) < 1e-7)
+#define SE_WS_RANGE 2
 
 void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) {
     const index_t nk[] = { s->model->nk[0], s->model->nk[1], s->model->nk[2] };
@@ -384,66 +385,58 @@ void tu_selfenergy_fft_interpolate( tu_selfenergy_t* s, complex128_t* self_en ) 
     // pad with zeros
     ZERO_OUT( s->ff_helper, s->nktot*POW2(s->n_orb*s->n_spin) );
     const double pref = 1./(double)s->nk;
+    const claM3d_t lat = claM3d_map(s->model->lattice[0]);
+    const index_t rx = (nk[0] > 1) ? SE_WS_RANGE : 0,
+                  ry = (nk[1] > 1) ? SE_WS_RANGE : 0,
+                  rz = (nk[2] > 1) ? SE_WS_RANGE : 0;
+    index_t edge_any = 0;
 
-    float hx = (nk[0]>1) ? (float)nk[0]/2. : 2;
-    float hy = (nk[1]>1) ? (float)nk[1]/2. : 2;
-    float hz = (nk[2]>1) ? (float)nk[2]/2. : 2;
-    #pragma omp parallel for num_threads(diverge_omp_num_threads())
-    for (index_t r=0; r<POW2(s->n_orb*s->n_spin); ++r) {
+    #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(4) reduction(+:edge_any)
+    for (index_t s3=0; s3<s->n_spin; ++s3)
+    for (index_t o3=0; o3<s->n_orb; ++o3)
+    for (index_t s1=0; s1<s->n_spin; ++s1)
+    for (index_t o1=0; o1<s->n_orb; ++o1) {
+        const claV3d_t off = claV3d_sub(claV3d_map(s->model->positions[o3]),
+                                        claV3d_map(s->model->positions[o1]));
+        const index_t r = IDX4(s3,o3,s1,o1, s->n_orb,s->n_spin,s->n_orb);
+
         for (index_t x=0; x<nk[0]; ++x)
         for (index_t y=0; y<nk[1]; ++y)
         for (index_t z=0; z<nk[2]; ++z) {
+            const complex128_t val = self_en[IDX4(r, x,y,z, nk[0],nk[1],nk[2])]*pref;
 
-            const index_t xto = (x<=hx) ? x : nkff[0]-(nk[0]-x);
-            const index_t yto = (y<=hy) ? y : nkff[1]-(nk[1]-y);
-            const index_t zto = (z<=hz) ? z : nkff[2]-(nk[2]-z);
-
-            complex128_t helper = self_en[IDX4(r, x,y,z, nk[0],nk[1],nk[2])]*pref;
-            // copy edges and corners
-            if (IS_ZERO(x-hx) && IS_ZERO(y-hy) && IS_ZERO(z-hz)) {
-                helper *= 0.125;
-                const index_t xto2 = nkff[0]-hx, yto2 = nkff[1]-hy, zto2 = nkff[2]-hz;
-                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto ,yto2,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto2,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(x-hx) && IS_ZERO(y-hy)) {
-                helper *= 0.25;
-                const index_t xto2 = nkff[0]-hx, yto2 = nkff[1]-hy;
-                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(x-hx) && IS_ZERO(z-hz)) {
-                helper *= 0.25;
-                const index_t xto2 = nkff[0]-hx, zto2 = nkff[2]-hz;
-                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto2,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(y-hy) && IS_ZERO(z-hz)) {
-                helper *= 0.25;
-                const index_t yto2 = nkff[1]-hy, zto2 = nkff[2]-hz;
-                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
-                s->ff_helper[IDX4(r,xto ,yto2,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(x-hx)) {
-                helper *= 0.5;
-                const index_t xto2 = nkff[0]-hx;
-                s->ff_helper[IDX4(r,xto2,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(z-hz)) {
-                helper *= 0.5;
-                const index_t zto2 = nkff[2]-hz;
-                s->ff_helper[IDX4(r,xto ,yto ,zto2, nkff[0],nkff[1],nkff[2])] += helper;
-            } else if (IS_ZERO(y-hy)) {
-                helper *= 0.5;
-                const index_t yto2 = nkff[1]-hy;
-                s->ff_helper[IDX4(r,xto ,yto2,zto , nkff[0],nkff[1],nkff[2])] += helper;
+            claV3ll_t img[POW3(SE_WS_RANGE*2+1)];
+            index_t n_img = 0, edge = 0;
+            double best = -1.0;
+            for (index_t ax=-rx; ax<=rx; ++ax)
+            for (index_t ay=-ry; ay<=ry; ++ay)
+            for (index_t az=-rz; az<=rz; ++az) {
+                const index_t Rx = x + ax*nk[0], Ry = y + ay*nk[1], Rz = z + az*nk[2];
+                claV3d_t d = claV3d_add(claM3d_vecmat((claV3d_t){{Rx,Ry,Rz}}, lat), off);
+                double dist = claV3d_norm(d);
+                if (best < 0.0 || (dist < best && !IS_ZERO(dist-best))) {
+                    best = dist; n_img = 0; edge = 0;
+                }
+                if ((dist < best || IS_ZERO(dist-best))) {
+                    img[n_img++] = (claV3ll_t){{Rx,Ry,Rz}};
+                    edge += (rx > 0 && labs(ax) == rx) ||
+                            (ry > 0 && labs(ay) == ry) ||
+                            (rz > 0 && labs(az) == rz);
+                }
             }
-            s->ff_helper[IDX4(r,xto ,yto ,zto , nkff[0],nkff[1],nkff[2])] += helper;
+
+            edge_any += edge;
+
+            const complex128_t w = val / (double)n_img;
+            for (int i=0; i<n_img; ++i) {
+                const index_t xt = ((img[i].v[0] % nkff[0]) + nkff[0]) % nkff[0];
+                const index_t yt = ((img[i].v[1] % nkff[1]) + nkff[1]) % nkff[1];
+                const index_t zt = ((img[i].v[2] % nkff[2]) + nkff[2]) % nkff[2];
+                s->ff_helper[IDX4(r, xt,yt,zt, nkff[0],nkff[1],nkff[2])] += w;
+            }
         }
     }
+    if (edge_any) mpi_err_printf( "SE_WS_RANGE=%i too small (%li edges)\n", SE_WS_RANGE, edge_any );
     FFTW_EXECUTE_DFT( s->fft_self_oop_gfmesh, s->ff_helper, self_en);
 }
 

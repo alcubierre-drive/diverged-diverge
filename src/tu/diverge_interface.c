@@ -30,6 +30,7 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->use_cuda_mpi_loop = false;
     info->tu_selfenergy_flow = false;
     info->tu_gf_skip_selfenergy = false;
+    info->tu_katanin = false;
     info->mpi_fft_chunksize = -1; // auto
     #if defined(USE_MPI) && defined(USE_MPI_FFTW)
     info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_mpi_new;
