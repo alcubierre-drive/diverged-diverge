@@ -36,6 +36,15 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
     t->SU2 = (model->SU2 > 0);
     t->cFRG_loop = (model->gproj != NULL);
     t->skip_selfenergy = t->tu_data->tu_gf_skip_selfenergy;
+    t->katanin = t->tu_data->tu_katanin;
+    if (t->katanin && model->internals->greens_shared) {
+        mpi_err_printf( "TU-loop: tu_katanin is incompatible with model_shared_gf, disabling Katanin\n" );
+        t->katanin = false;
+    }
+    if (t->katanin && t->skip_selfenergy) {
+        mpi_err_printf( "TU-loop: tu_katanin needs the self-energy in G, disabling Katanin\n" );
+        t->katanin = false;
+    }
     t->which_fft_simple = t->tu_data->which_fft_simple;
     t->which_fft_red = t->tu_data->which_fft_red;
     t->which_fft_greens = t->tu_data->which_fft_greens;
@@ -118,6 +127,40 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
         }
     }
 
+    if (t->katanin) {
+        // mirror of the above
+        t->gf_buf_kat = calloc( 2*t->nktot*POW2(t->n_spin*t->n_orb), sizeof*t->gf_buf_kat );
+        if (t->do_GF_fft_allocs) {
+            t->GF_fft_plus_kat = (complex128_t*)fftw_alloc_complex(t->nktot* POW2(t->n_spin*t->n_orb));
+            t->GF_fft_conj_plus_kat = (complex128_t*)fftw_alloc_complex(t->nktot* POW2(t->n_spin*t->n_orb));
+        } else {
+            t->GF_fft_plus_kat = (complex128_t*)t->gf_buf_kat;
+            t->GF_fft_conj_plus_kat = (complex128_t*)(t->gf_buf_kat + t->nktot*POW2(t->n_spin*t->n_orb));
+        }
+        if (t->cFRG_loop) {
+            t->gf_buf_cfrg_kat = calloc( 2*t->nktot*POW2(t->n_spin*t->n_orb), sizeof*t->gf_buf_cfrg_kat );
+            if (t->do_GF_fft_allocs) {
+                t->cFRG_GF_fft_plus_kat = (complex128_t*)fftw_alloc_complex(t->nktot*POW2(t->n_spin*t->n_orb));
+                t->cFRG_GF_fft_conj_plus_kat =
+                    (complex128_t*)fftw_alloc_complex(t->nktot* POW2(t->n_spin*t->n_orb));
+            } else {
+                t->cFRG_GF_fft_plus_kat = (complex128_t*)t->gf_buf_cfrg_kat;
+                t->cFRG_GF_fft_conj_plus_kat =
+                    (complex128_t*)(t->gf_buf_cfrg_kat + t->nktot*POW2(t->n_spin*t->n_orb));
+            }
+        }
+        mpi_vrb_printf( "TU-loop: Katanin enabled, second GF set of %.2fGiB\n",
+                (double)(sizeof(complex128_t)*t->nktot*POW2(t->n_spin*t->n_orb)) / (1024.*1024.*1024.) );
+    } else {
+        // default: just alias
+        t->gf_buf_kat = t->gf_buf;
+        t->GF_fft_plus_kat = t->GF_fft_plus;
+        t->GF_fft_conj_plus_kat = t->GF_fft_conj_plus;
+        t->gf_buf_cfrg_kat = t->gf_buf_cfrg;
+        t->cFRG_GF_fft_plus_kat = t->cFRG_GF_fft_plus;
+        t->cFRG_GF_fft_conj_plus_kat = t->cFRG_GF_fft_conj_plus;
+    }
+
     #ifdef USE_CUDA
     CUDA_CHECK(cudaHostRegister(t->GF_fft_plus, t->nktot*POW2(t->n_spin*t->n_orb)*sizeof(fftw_complex),
                 cudaHostRegisterDefault));
@@ -128,6 +171,18 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
                     cudaHostRegisterDefault));
         CUDA_CHECK(cudaHostRegister( t->cFRG_GF_fft_conj_plus, t->nktot*POW2(t->n_spin*t->n_orb)*
                     sizeof(fftw_complex), cudaHostRegisterDefault));
+    }
+    if (t->katanin) {
+        CUDA_CHECK(cudaHostRegister( t->GF_fft_plus_kat, t->nktot*POW2(t->n_spin*t->n_orb)*sizeof(fftw_complex),
+                    cudaHostRegisterDefault));
+        CUDA_CHECK(cudaHostRegister( t->GF_fft_conj_plus_kat, t->nktot*POW2(t->n_spin*t->n_orb)*
+                    sizeof(fftw_complex), cudaHostRegisterDefault));
+        if (t->cFRG_loop) {
+            CUDA_CHECK(cudaHostRegister( t->cFRG_GF_fft_plus_kat, t->nktot*POW2(t->n_spin*t->n_orb)*
+                        sizeof(fftw_complex), cudaHostRegisterDefault));
+            CUDA_CHECK(cudaHostRegister( t->cFRG_GF_fft_conj_plus_kat, t->nktot*POW2(t->n_spin*t->n_orb)*
+                        sizeof(fftw_complex), cudaHostRegisterDefault));
+        }
     }
     #endif // USE_CUDA
 
@@ -176,6 +231,14 @@ void tu_prop_free( tu_prop_t* t ) {
         CUDA_CHECK(cudaHostUnregister(t->cFRG_GF_fft_plus));
         CUDA_CHECK(cudaHostUnregister(t->cFRG_GF_fft_conj_plus));
     }
+    if (t->katanin) {
+        CUDA_CHECK(cudaHostUnregister(t->GF_fft_plus_kat));
+        CUDA_CHECK(cudaHostUnregister(t->GF_fft_conj_plus_kat));
+        if (t->cFRG_loop) {
+            CUDA_CHECK(cudaHostUnregister(t->cFRG_GF_fft_plus_kat));
+            CUDA_CHECK(cudaHostUnregister(t->cFRG_GF_fft_conj_plus_kat));
+        }
+    }
     #endif // USE_CUDA
 
     if (t->do_GF_fft_allocs) {
@@ -188,6 +251,20 @@ void tu_prop_free( tu_prop_t* t ) {
         if (t->do_GF_fft_allocs) {
             fftw_free(t->cFRG_GF_fft_plus);
             fftw_free(t->cFRG_GF_fft_conj_plus);
+        }
+    }
+    if (t->katanin) { // only owned if Katanin is on, otherwise these alias
+        free(t->gf_buf_kat);
+        if (t->do_GF_fft_allocs) {
+            fftw_free(t->GF_fft_plus_kat);
+            fftw_free(t->GF_fft_conj_plus_kat);
+        }
+        if (t->cFRG_loop) {
+            free(t->gf_buf_cfrg_kat);
+            if (t->do_GF_fft_allocs) {
+                fftw_free(t->cFRG_GF_fft_plus_kat);
+                fftw_free(t->cFRG_GF_fft_conj_plus_kat);
+            }
         }
     }
     cuda_delete_prop_descr(&t->cuda_descr);
@@ -273,6 +350,30 @@ void tu_prop_GF_for_self( tu_prop_t* t, complex128_t* coarseGF ) {
     // deactivate the backup pointers
     if (t->gf_buf_backup)      XORSWAP_PTR(t->gf_buf_backup,      t->gf_buf);
     if (t->gf_buf_backup_cfrg) XORSWAP_PTR(t->gf_buf_backup_cfrg, t->gf_buf_cfrg);
+}
+
+bool tu_prop_katanin( const tu_prop_t* t ) { return t->katanin; }
+
+void tu_prop_GF_zero_T_kat( tu_prop_t* t, complex128_t lambda, complex128_t* self_energy ) {
+    if (!t->katanin) return;
+    // Same as tu_prop_GF_zero_T(), but for other GF set
+    GF_zero_T_any( t, t->model->gfill, lambda, self_energy, t->gf_buf_kat );
+    GF_zero_T_FFT_any( t, t->GF_fft_plus_kat, t->GF_fft_conj_plus_kat, t->gf_buf_kat );
+    if (t->cFRG_loop) {
+        GF_zero_T_any( t, t->model->gproj, lambda, self_energy, t->gf_buf_cfrg_kat );
+        GF_zero_T_FFT_any( t, t->cFRG_GF_fft_plus_kat, t->cFRG_GF_fft_conj_plus_kat, t->gf_buf_cfrg_kat );
+    }
+}
+
+void tu_prop_katanin_swap( tu_prop_t* t ) {
+    if (!t->katanin) return;
+    // We have to do more swaps
+    XORSWAP_PTR( t->GF_fft_plus, t->GF_fft_plus_kat );
+    XORSWAP_PTR( t->GF_fft_conj_plus, t->GF_fft_conj_plus_kat );
+    if (t->cFRG_loop) {
+        XORSWAP_PTR( t->cFRG_GF_fft_plus, t->cFRG_GF_fft_plus_kat );
+        XORSWAP_PTR( t->cFRG_GF_fft_conj_plus, t->cFRG_GF_fft_conj_plus_kat );
+    }
 }
 
 void tu_prop_set_extra_timings( tu_prop_t* t, bool enabled ) { t->extra_timings_enabled = enabled; }

@@ -47,6 +47,25 @@ tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex
         s->coarseGF = calloc(s->nk*POW2(vert->n_orb*vert->n_spin),sizeof(complex128_t));
         s->self = tu_selfenergy_init(vert);
     }
+
+    s->full_vert_size = vert->full_vert_size;
+    s->selfenergy_size = vert->selfenergy_size;
+    s->katanin = tu_prop_katanin( loop );
+    if (s->katanin && !s->channel_selection[3]) {
+        mpi_err_printf( "tu_katanin needs a flowing self-energy (use_self), disabling Katanin\n" );
+        s->katanin = false;
+    }
+    if (s->katanin && s->tu_selfenergy_flow) {
+        mpi_err_printf( "tu_katanin has no effect without a vertex flow, disabling Katanin\n" );
+        s->katanin = false;
+    }
+    if (s->katanin) {
+        if (vert->P_flow)
+            s->kat_pp = calloc( s->full_vert_size, sizeof*s->kat_pp );
+        if (vert->C_flow || vert->D_flow)
+            s->kat_ph = calloc( s->full_vert_size, sizeof*s->kat_ph );
+        s->self_shift = calloc( s->selfenergy_size, sizeof*s->self_shift );
+    }
     return s;
 }
 
@@ -56,7 +75,50 @@ void tu_stepper_free( tu_stepper_t* s ) {
         tu_selfenergy_free(s->self);
         free(s->coarseGF);
     }
+    free( s->kat_pp );
+    free( s->kat_ph );
+    free( s->self_shift );
     free( s );
+}
+
+/* without Katanin this is just the standard loop. Otherwise we compute
+ * L = loop[G]
+ * L2 = loop[G2], G2 = G \dot\Sigma G
+ * LK = L2 - L
+ * s.t. LK contains the Katanin contribution. It's added to acc, and dest gets
+ * L + acc */
+static void stepper_loop( tu_stepper_t* s, char chan, complex128_t* dest, complex128_t* acc ) {
+    void (*prop_loop)( tu_prop_t*, complex128_t*, complex128_t* ) =
+        (chan == 'P') ? &tu_prop_pp_loop : &tu_prop_ph_loop;
+
+    double tick;
+
+    if (s->katanin) {
+        tu_prop_katanin_swap( s->loop );
+        TICK_TOCK( s->w_time_loop, (*prop_loop)( s->loop, dest, s->internal_vertex->bubble_helper ) );
+        tu_prop_katanin_swap( s->loop );
+
+        tick = diverge_mpi_wtime();
+        #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<s->full_vert_size; ++i) acc[i] += dest[i];
+        s->w_time_katanin += diverge_mpi_wtime() - tick;
+    }
+
+    if (s->loop_func == NULL) {
+        TICK_TOCK( s->w_time_loop, (*prop_loop)( s->loop, dest, s->internal_vertex->bubble_helper ) );
+    } else {
+        TICK_TOCK( s->w_time_loop, (*s->loop_func)( chan, dest, s->loop_func_ctx ) );
+    }
+
+    if (s->katanin) {
+        tick = diverge_mpi_wtime();
+        #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<s->full_vert_size; ++i) {
+            acc[i] -= dest[i];   // acc is now \mathcal{K} at the new scale
+            dest[i] += acc[i];   // dest is now \dot L + \mathcal{K}
+        }
+        s->w_time_katanin += diverge_mpi_wtime() - tick;
+    }
 }
 
 void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dlambda, double maxs[6] ) {
@@ -72,16 +134,32 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
     }
 
     s->w_time_GF += diverge_mpi_wtime()-flow_step_tick;
+
+    if (s->katanin && s->loop_func != NULL) {
+        mpi_err_printf( "tu_katanin cannot be combined with a custom loop_func, disabling Katanin\n" );
+        s->katanin = false;
+    }
+
+    // evaluate sigma first, because Katanin needs sigma.
+    if (s->channel_selection[3]) {
+        TICK_TOCK( s->w_time_self, tu_selfenergy_flow( s->self, s->internal_vertex->self_en,
+                    v->Pch, v->Cch, v->Dch, s->coarseGF, 1., lambda ) );
+    }
+
+    if (s->katanin) {
+        double kat_tick = diverge_mpi_wtime();
+        // We compute G + d\Lambda H + O(d\Lambda^2); with H = G \dot\Sigma G.
+        #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
+        for (index_t i=0; i<s->selfenergy_size; ++i)
+            s->self_shift[i] = v->self_en[i] + dlambda * s->internal_vertex->self_en[i];
+        tu_prop_GF_zero_T_kat( s->loop, lambda*I, s->self_shift );
+        s->w_time_katanin += diverge_mpi_wtime() - kat_tick;
+    }
+
     if (!s->tu_selfenergy_flow) {
         if (v->SU2) {
             if (s->channel_selection[1] || s->channel_selection[2]) {
-                if (s->loop_func == NULL) {
-                    TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
-                               s->internal_vertex->bubble_helper ) );
-                } else {
-                    TICK_TOCK( s->w_time_loop, (*s->loop_func)('H', s->internal_vertex->ph_bubble_int,
-                               s->loop_func_ctx) );
-                }
+                stepper_loop( s, 'H', s->internal_vertex->ph_bubble_int, s->kat_ph );
                 if (s->channel_selection[2] && s->channel_selection[1]) {
                 if (!(s->channel_product_ignore_map & PRODIGNORE_CD)) {
                     // C projection in Dch, memory efficiency
@@ -152,13 +230,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
             }}
 
             if (s->channel_selection[1] || s->channel_selection[2]) {
-                if (s->loop_func == NULL) {
-                    TICK_TOCK( s->w_time_loop, tu_prop_ph_loop( s->loop, s->internal_vertex->ph_bubble_int,
-                               s->internal_vertex->bubble_helper ) );
-                } else {
-                    TICK_TOCK( s->w_time_loop, (*s->loop_func)('H', s->internal_vertex->ph_bubble_int,
-                               s->loop_func_ctx) );
-                }
+                stepper_loop( s, 'H', s->internal_vertex->ph_bubble_int, s->kat_ph );
             }
 
             if (s->channel_selection[1]) {
@@ -196,13 +268,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
             if (v->elph && v->ph_to_P && !v->SU2) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Cch,  1.0 );
         }
 
-            if (s->loop_func == NULL) {
-                TICK_TOCK( s->w_time_loop, tu_prop_pp_loop( s->loop, s->internal_vertex->pp_bubble_int,
-                           s->internal_vertex->bubble_helper ) );
-            } else {
-                TICK_TOCK( s->w_time_loop, (*s->loop_func)('P', s->internal_vertex->pp_bubble_int,
-                           s->loop_func_ctx) );
-            }
+            stepper_loop( s, 'P', s->internal_vertex->pp_bubble_int, s->kat_pp );
 
         if (!(s->channel_product_ignore_map & PRODIGNORE_P)) {
             TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Pch,
@@ -214,13 +280,9 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
         if (s->channel_selection[1]) ZERO_OUT( s->internal_vertex->Dch, s->internal_vertex->full_vert_size );
         if (s->channel_selection[2]) ZERO_OUT( s->internal_vertex->Cch, s->internal_vertex->full_vert_size );
     }
-    if (s->channel_selection[3]) {
-        TICK_TOCK( s->w_time_self, tu_selfenergy_flow( s->self, s->internal_vertex->self_en,
-                    v->Pch, v->Cch, v->Dch, s->coarseGF, 1., lambda ) );
-    }
 
-    TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(v, s->internal_vertex, dlambda) );
-    TICK_TOCK( s->w_time_add_find_max, tu_vertex_max(v, maxs) );
+    TICK_TOCK( s->w_time_add_find_max, tu_vertex_add(v, s->internal_vertex, dlambda),
+                                       tu_vertex_max(v, maxs) );
 
     s->w_time_full += diverge_mpi_wtime()-flow_step_tick;
 }
@@ -236,6 +298,7 @@ diverge_timing_t* tu_stepper_timings( tu_stepper_t* s, int* num ) {
     push_timing( product );
     push_timing( add_find_max );
     push_timing( self );
+    push_timing( katanin );
     push_timing( full );
     int nprop = 0;
     diverge_timing_t* tprop = tu_prop_get_extra_timings( s->loop, &nprop );
