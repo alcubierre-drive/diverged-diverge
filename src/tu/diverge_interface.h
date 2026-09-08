@@ -54,6 +54,7 @@ struct tu_data_t {
     double percent_mem_GPU_blocked;
     bool tu_selfenergy_flow;
     bool tu_gf_skip_selfenergy; // do not add \Sigma to G^{-1}
+    bool tu_katanin; // approx. Katanin
     bool GF_fft_coarsify;
     bool selfenergy_circular_cutoff;
     char tu_channelize; // project interactions to single channel if not all
