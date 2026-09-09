@@ -23,7 +23,7 @@ static inline claM2cd_t mult_to_ppm( claM2cd_t in ) {
     return claM2cd_matmul(xy_pm, claM2cd_matmul(in, claM2cd_adjoint(xy_pm)));
 }
 
-diverge_model_t* gen_triangular_pxpy_sym(index_t nkx, index_t nky, bool to_ppm) {
+diverge_model_t* gen_triangular_pxpy_sym(index_t nkx, index_t nky, int to_ppm) {
     diverge_model_t* model = diverge_model_init();
     model->n_orb = 2;
     model->SU2 = true;

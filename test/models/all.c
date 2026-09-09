@@ -8,7 +8,7 @@ model_constructor_opts_t model_constructor_opts_defaults_CPP( void ) {
 }
 
 static inline int kwarg_isset(const char* ptr, unsigned sz) {
-    char cmp[sz]; for (unsigned i=0; i<sz; ++i) cmp[i] = 0;
+    char cmp[sz]; memset(cmp, 0, sizeof(cmp));
     return memcmp(ptr, cmp, sz);
 }
 
@@ -98,8 +98,9 @@ KWARG_WRAP(gen_honeycomb_lat_hub_sym)
 KWARG_WRAP_END
 
 KWARG_WRAP(gen_triangular_pxpy_sym)
-    KWARG_GET(bool, to_ppm);
-    return gen_triangular_pxpy_sym(nkx, nky, to_ppm);
+    KWARG_GET(int, to_ppm);
+    bool to_ppm_real = to_ppm > 0;
+    return gen_triangular_pxpy_sym(nkx, nky, to_ppm_real);
 KWARG_WRAP_END
 
 KWARG_WRAP(gen_triangular_lat_rashba)

@@ -27,7 +27,7 @@ struct model_constructor_opts_t {
     index_t nkxf;
     index_t nkyf;
     index_t nsym;
-    bool to_ppm;
+    int to_ppm;
 };
 
 #ifndef __cplusplus
@@ -48,7 +48,7 @@ static const model_constructor_opts_t model_constructor_opts_defaults = {
     .nkxf = 1,
     .nkyf = 1,
     .nsym = 1,
-    .to_ppm = true,
+    .to_ppm = 1,
 };
 #endif //__cplusplus
 model_constructor_opts_t model_constructor_opts_defaults_CPP( void );
@@ -74,7 +74,7 @@ diverge_model_t* KWARGS_DECL(gen_honeycomb_lat_hub_sym, index_t nkx, index_t nky
         index_t nkxf, index_t nkyf, double t, double tp, double U, double mu,
         index_t nsym);
 diverge_model_t* KWARGS_DECL(gen_triangular_pxpy_sym, index_t nkx, index_t nky,
-        bool to_ppm);
+        int to_ppm);
 diverge_model_t* KWARGS_DECL(gen_triangular_lat_rashba, index_t nkx, index_t nky);
 diverge_model_t* KWARGS_DECL(gen_honeycomb_lat_rash, index_t nkx, index_t nky,
         index_t lx, index_t ly, index_t nkxf, index_t nkyf);
