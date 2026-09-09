@@ -62,6 +62,7 @@ struct tu_data_t {
     bool tu_selfenergy_flow;
     bool tu_gf_skip_selfenergy; // do not add \Sigma to G^{-1}
     bool tu_katanin; // approx. Katanin
+    bool tu_reco_fused; // fused symmetry reconstruction + FT, see src/tu/vertex_reco_fused.c
     bool GF_fft_coarsify;
     bool selfenergy_circular_cutoff;
     char tu_channelize; // project interactions to single channel if not all

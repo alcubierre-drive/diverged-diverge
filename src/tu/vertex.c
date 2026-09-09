@@ -75,7 +75,7 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
     }
     tu_vertex_initialize_GPU_memory( V, proj, loop );
 #ifndef TU_VERTEX_RECO_GPU_ZGEMM
-    V->reco_fused = tu_reco_fused_init( V->model, proj );
+    V->reco_fused = V->tu_data->tu_reco_fused ? tu_reco_fused_init( V->model, proj ) : NULL;
 #endif
     if (V->model->ffill != NULL) {
         tu_vertex_init_U_from_fullV( V, V->model, proj );
@@ -608,11 +608,16 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
 #else
     const char channel = chan;
     const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));
+
+    // the fused kernel is opt-in (hack "tu_reco_fused"); without it, or when the
+    // tables were built for a different nr, the two-step path below runs
     if (V->reco_fused && tu_reco_fused_nr(V->reco_fused) == nr) {
+        // the fused path writes the channel's leg order directly
         tu_reco_fused_ft( V->reco_fused, V, channel, buf );
         diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
         return;
     }
+
     const complex128_t* restrict Xch = channel == 'P' ? V->Pch :
                                        channel == 'C' ? V->Cch :
                                      /*channel == 'D'*/ V->Dch;

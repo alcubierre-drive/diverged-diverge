@@ -12,14 +12,17 @@
 #include "../../src/tu/projection.h"
 #include "../../src/tu/vertex_reco_fused.h"
 #include "../../src/tu/diverge_interface_symmstruct.h"
+#include "../../src/diverge_hack.h"
 #include "../models/all.h"
 #include "../helper_functions.h"
 #include "../../src/misc/mpi_functions.h"
 
 // Average the IBZ vertex over the little group of each of its momenta, using the
 // same relation the reconstruction inverts,
-//   V(q,R,L) = pref(L,q) conj(pref(R,q)) V(q, sigma(R), sigma(L)),
-// so that random test data becomes a legal IBZ vertex.
+//   V(q,R,L) = sum_{l,r} pref(l,q) conj(pref(r,q)) V(q, r, l),
+// with l,r running over the images of L,R, so that random test data becomes a
+// legal IBZ vertex. Multi dimensional orbital irreps have more than one image
+// per leg, which is exactly the case the fused kernel has to cope with.
 static void symmetrize_ibz_vertex( diverge_model_t* model, tu_vertex_t* V,
         complex128_t* X, bool use_in_in ) {
     tu_data_t* tu = model->internals->tu_data;
@@ -52,8 +55,8 @@ static void symmetrize_ibz_vertex( diverge_model_t* model, tu_vertex_t* V,
     for (index_t sy=0; sy<n_sym; ++sy) wsym[sy] = 1.0/(double)csz[cls[sy]];
 
     complex128_t* acc = calloc( rest, sizeof(complex128_t) );
-    complex128_t* pref = calloc( legdim, sizeof(complex128_t) );
-    index_t* map = calloc( legdim, sizeof(index_t) );
+    // indexed by the global map entry, not by the leg
+    complex128_t* pref = calloc( symm->mi_maps_to_sz, sizeof(complex128_t) );
     for (index_t q=0; q<V->my_nk; ++q) {
         const index_t q_in_full = symm->idx_ibz_in_fullmesh[q + tu->my_nk_off];
         const double* kp = model->internals->kmesh + 3*q_in_full;
@@ -65,36 +68,59 @@ static void symmetrize_ibz_vertex( diverge_model_t* model, tu_vertex_t* V,
             nstab += wsym[sy];
             const index_t isym = symm->inv_symmetry[sy];
             for (index_t l=0; l<legdim; ++l) {
-                const index_t off = symm->mi_map_off[l+legdim*isym];
-                double kd = 0.0;
-                for (int e=0; e<3; ++e) {
-                    double d = 0.0;
-                    for (int g=0; g<3; ++g)
-                        d += model->rs_symmetries[sy][e][g]*symm->beyond_UC[3*(l+legdim*isym)+g];
-                    kd += kp[e]*d;
+                const index_t idx = l+legdim*isym;
+                for (index_t e=0; e<symm->mi_map_len[idx]; ++e) {
+                    const index_t ent = symm->mi_map_off[idx]+e;
+                    double kd = 0.0;
+                    for (int c3=0; c3<3; ++c3) {
+                        double d = 0.0;
+                        for (int g=0; g<3; ++g)
+                            d += model->rs_symmetries[sy][c3][g]*symm->beyond_UC[3*ent+g];
+                        kd += kp[c3]*d;
+                    }
+                    pref[ent] = cc[ent]*cexp(-I*kd);
                 }
-                pref[l] = cc[off]*cexp(-I*kd);
-                map[l] = symm->mi_maps_to[off];
             }
             for (index_t R=0; R<legdim; ++R)
-            for (index_t L=0; L<legdim; ++L)
-                acc[IDX2(R,L,legdim)] += wsym[sy]*pref[L]*conj(pref[R])*Xq[IDX2(map[R],map[L],legdim)];
+            for (index_t L=0; L<legdim; ++L) {
+                const index_t Lo = symm->mi_map_off[L+legdim*isym], Ln = symm->mi_map_len[L+legdim*isym];
+                const index_t Ro = symm->mi_map_off[R+legdim*isym], Rn = symm->mi_map_len[R+legdim*isym];
+                complex128_t sum = 0.0;
+                for (index_t li=0; li<Ln; ++li)
+                for (index_t ri=0; ri<Rn; ++ri)
+                    sum += pref[Lo+li]*conj(pref[Ro+ri])*
+                           Xq[IDX2(symm->mi_maps_to[Ro+ri],symm->mi_maps_to[Lo+li],legdim)];
+                acc[IDX2(R,L,legdim)] += wsym[sy]*sum;
+            }
         }
         for (index_t i=0; i<rest; ++i) Xq[i] = acc[i]/nstab;
     }
-    free(acc); free(pref); free(map); free(wsym); free(cls); free(crep); free(csz);
+    free(acc); free(pref); free(wsym); free(cls); free(crep); free(csz);
 }
 
-// A/B check of the fused diverge_tu_vertex_reco_ft() against the two-step
-// reference implementation diverge_tu_vertex_reco_ft_ref()
-static void compare_reco_ft( diverge_model_t* model, double ffcut, int nrep, const char* tag ) {
+// A/B check of diverge_tu_vertex_reco_ft() -- the default two-step path, or the
+// fused one if hack_fused enables it -- against diverge_tu_vertex_reco_ft_ref().
+// The fused kernel is compared to the reference directly either way.
+static void compare_reco_ft( diverge_model_t* model, double ffcut, int nrep, const char* tag,
+        bool hack_fused ) {
     diverge_model_internals_tu( model, ffcut );
+    // the fused kernel is opt-in: only with the hack does the public entry point
+    // use it, otherwise it takes the two-step path
+    if (hack_fused) diverge_model_hack( model, "tu_reco_fused", "1" );
     tu_projection_t* proj = tu_projection_init( model );
     tu_prop_t* loop = tu_prop_init( model );
     tu_vertex_t* V = tu_vertex_init( model, proj, loop, 1,1,1,0 );
 
     const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));
     const index_t nr = proj->nr;
+    CT_CHECK( (V->reco_fused != NULL) == (hack_fused && V->symm->use_symmetries) );
+
+    index_t maxmaplen = 0;
+    if (V->symm->use_symmetries)
+        for (index_t i=0; i<V->symm->mi_cnt; ++i)
+            maxmaplen = MAX( maxmaplen, V->symm->mi_map_len[i] );
+    CT_PRINTF( "%s: max leg map length %li (>1 exercises the general path)\n",
+            tag, (long)maxmaplen );
 
     random_seed( 0xbeef );
     for (index_t i=0; i<V->full_vert_size; ++i) {
@@ -149,9 +175,8 @@ static void compare_reco_ft( diverge_model_t* model, double ffcut, int nrep, con
             t_fus += diverge_mpi_wtime()-t3;
             double fd = 0.0;
             for (index_t i=0; i<rest*nr; ++i) fd = MAX( fd, cabs(ref[i]-fus[i]) );
-            CT_PRINTF( "%s %c: fused nu=%li nslow=%li/%li rel.dev=%.3e\n", tag, channels[c],
-                    (long)tu_reco_fused_nu(fused), (long)tu_reco_fused_nslow(fused),
-                    (long)V->symm->my_nk_in_bz, fd/maxval );
+            CT_PRINTF( "%s %c: fused nu=%li rel.dev=%.3e\n", tag, channels[c],
+                    (long)tu_reco_fused_nu(fused), fd/maxval );
             CT_CHECK( fd <= 1e-12*maxval );
         }
     }
@@ -165,43 +190,106 @@ static void compare_reco_ft( diverge_model_t* model, double ffcut, int nrep, con
 }
 
 CT_TEST_NAME( nosym_spin1, "reco_ft,nosym:nspin1" ) {
-    compare_reco_ft( KWARGS(gen_square_lat_hub, .nkx=12, .nky=12), 1.2, 1, "nosym,nspin1" );
+    compare_reco_ft( KWARGS(gen_square_lat_hub, .nkx=12, .nky=12), 1.2, 1, "nosym,nspin1", false );
 }
 CT_TEST_NAME( sym_spin1, "reco_ft,sym:nspin1" ) {
-    compare_reco_ft( KWARGS(gen_square_lat_hub_sym, .nkx=12, .nky=12), 1.2, 1, "sym,nspin1" );
+    compare_reco_ft( KWARGS(gen_square_lat_hub_sym, .nkx=12, .nky=12), 1.2, 1, "sym,nspin1", false );
 }
 CT_TEST_NAME( nosym_spin2, "reco_ft,nosym:nspin2" ) {
-    compare_reco_ft( KWARGS(gen_square_lat_rashba, .nkx=12, .nky=12), 1.2, 1, "nosym,nspin2" );
+    compare_reco_ft( KWARGS(gen_square_lat_rashba, .nkx=12, .nky=12), 1.2, 1, "nosym,nspin2", false );
 }
 CT_TEST_NAME( sym_spin2, "reco_ft,sym:nspin2" ) {
-    compare_reco_ft( KWARGS(gen_square_lat_rashba_sym, .nkx=12, .nky=12), 1.2, 1, "sym,nspin2" );
+    compare_reco_ft( KWARGS(gen_square_lat_rashba_sym, .nkx=12, .nky=12), 1.2, 1, "sym,nspin2", false );
 }
 
 CT_TEST_NAME( sym_honeycomb, "reco_ft,sym:honeycomb" ) {
-    compare_reco_ft( KWARGS(gen_honeycomb_lat_hub_sym, .nkx=12, .nky=12), 1.6, 1, "sym,honeycomb" );
+    compare_reco_ft( KWARGS(gen_honeycomb_lat_hub_sym, .nkx=12, .nky=12), 1.6, 1, "sym,honeycomb", false );
 }
 CT_TEST_NAME( sym_kagome, "reco_ft,sym:kagome" ) {
-    compare_reco_ft( KWARGS(gen_kagome_model, .nkx=12, .nky=12), 1.2, 1, "sym,kagome" );
+    compare_reco_ft( KWARGS(gen_kagome_model, .nkx=12, .nky=12), 1.2, 1, "sym,kagome", false );
+}
+
+/* p_x/p_y on the triangular lattice: the C3/C6 rotations mix the two orbitals,
+ * so a leg maps onto a superposition and the leg maps are not one-to-one. In the
+ * p_+/p_- basis the same model diagonalises the rotations and the maps collapse
+ * back to one image per leg -- both must reproduce the reference. */
+CT_TEST_NAME( sym_pxpy, "reco_ft,sym:pxpy" ) {
+    compare_reco_ft( KWARGS(gen_triangular_pxpy_sym, .nkx=12, .nky=12, .to_ppm=-1), 1.2, 1, "sym,pxpy", false );
+}
+CT_TEST_NAME( sym_ppm, "reco_ft,sym:ppm" ) {
+    compare_reco_ft( KWARGS(gen_triangular_pxpy_sym, .nkx=12, .nky=12, .to_ppm= 1), 1.2, 1, "sym,ppm", false );
+}
+
+/* With the hack the public entry point routes through the fused kernel, so the
+ * same comparison against the reference now tests the fused path end to end --
+ * once monomial, once with the multi-image leg maps of p_x/p_y. */
+CT_TEST_NAME( hack_sym_spin1, "reco_ft,hack:nspin1" ) {
+    compare_reco_ft( KWARGS(gen_square_lat_hub_sym, .nkx=12, .nky=12), 1.2, 1, "hack,sym,nspin1", true );
+}
+CT_TEST_NAME( hack_sym_pxpy, "reco_ft,hack:pxpy" ) {
+    compare_reco_ft( KWARGS(gen_triangular_pxpy_sym, .nkx=12, .nky=12, .to_ppm=-1), 1.2, 1, "hack,sym,pxpy", true );
 }
 
 // production-sized timing comparison, hidden (run explicitly)
 CT_TEST_NAME_HIDDEN( speed_nosym_spin1, "reco_ft,speed,nosym,nspin1" ) {
-    compare_reco_ft( KWARGS(gen_square_lat_hub, .nkx=64, .nky=64), 3.1, 20, "speed,nosym,nspin1" );
+    compare_reco_ft( KWARGS(gen_square_lat_hub, .nkx=64, .nky=64), 3.1, 20, "speed,nosym,nspin1", false );
 }
 CT_TEST_NAME_HIDDEN( speed_sym_spin1, "reco_ft,speed,sym,nspin1" ) {
-    compare_reco_ft( KWARGS(gen_square_lat_hub_sym, .nkx=64, .nky=64), 3.1, 20, "speed,sym,nspin1" );
+    compare_reco_ft( KWARGS(gen_square_lat_hub_sym, .nkx=64, .nky=64), 3.1, 20, "speed,sym,nspin1", false );
 }
 CT_TEST_NAME_HIDDEN( speed_nosym_spin2, "reco_ft,speed,nosym,nspin2" ) {
-    compare_reco_ft( KWARGS(gen_square_lat_rashba, .nkx=64, .nky=64), 2.1, 5, "speed,nosym,nspin2" );
+    compare_reco_ft( KWARGS(gen_square_lat_rashba, .nkx=64, .nky=64), 2.1, 5, "speed,nosym,nspin2", false );
 }
 CT_TEST_NAME_HIDDEN( speed_sym_spin2, "reco_ft,speed,sym,nspin2" ) {
-    compare_reco_ft( KWARGS(gen_square_lat_rashba_sym, .nkx=64, .nky=64), 2.1, 5, "speed,sym,nspin2" );
+    compare_reco_ft( KWARGS(gen_square_lat_rashba_sym, .nkx=64, .nky=64), 2.1, 5, "speed,sym,nspin2", false );
 }
 CT_TEST_NAME_HIDDEN( speed_sym_hc, "reco_ft,speed,sym,honeycomb" ) {
-    compare_reco_ft( KWARGS(gen_honeycomb_lat_hub_sym, .nkx=48, .nky=48), 2.1, 5, "speed,sym,honeycomb" );
+    compare_reco_ft( KWARGS(gen_honeycomb_lat_hub_sym, .nkx=48, .nky=48), 2.1, 5, "speed,sym,honeycomb", false );
 }
 CT_TEST_NAME_HIDDEN( speed_sym_kag, "reco_ft,speed,sym,kagome" ) {
-    compare_reco_ft( KWARGS(gen_kagome_model, .nkx=48, .nky=48), 1.6, 5, "speed,sym,kagome" );
+    compare_reco_ft( KWARGS(gen_kagome_model, .nkx=48, .nky=48), 1.6, 5, "speed,sym,kagome", false );
+}
+CT_TEST_NAME_HIDDEN( speed_sym_pxpy, "reco_ft,speed,sym,pxpy" ) {
+    compare_reco_ft( KWARGS(gen_triangular_pxpy_sym, .nkx=48, .nky=48, .to_ppm=-1), 2.1, 5, "speed,sym,pxpy", false );
+}
+
+/* Survey of the leg maps the model zoo produces. A leg map with more than one
+ * image is what separates the general reconstruction from a monomial one; this
+ * records which models (if any) reach it. */
+static void survey_map_lengths( diverge_model_t* model, double ffcut, const char* tag ) {
+    diverge_model_internals_tu( model, ffcut );
+    tu_data_t* tu = model->internals->tu_data;
+    const tu_symmstruct_t* symm = tu->symm;
+    index_t maxlen = 0, nmulti = 0;
+    if (symm->use_symmetries)
+        for (index_t i=0; i<symm->mi_cnt; ++i) {
+            maxlen = MAX( maxlen, symm->mi_map_len[i] );
+            if (symm->mi_map_len[i] > 1) nmulti++;
+        }
+    tu_projection_t* proj = tu_projection_init( model );
+    // building the tables exercises the closed-group check inside
+    tu_reco_fused_t* fused = tu_reco_fused_init( model, proj );
+    CT_PRINTF( "%-22s n_sym=%-3li legdim*n_sym=%-6li max map len %li, %li multi-image legs\n",
+            tag, (long)model->n_sym, (long)symm->mi_cnt, (long)maxlen, (long)nmulti );
+    tu_reco_fused_free( fused );
+    tu_projection_free( proj );
+    diverge_model_free( model );
+}
+
+CT_TEST_NAME_HIDDEN( survey, "reco_ft,survey" ) {
+    survey_map_lengths( KWARGS(gen_square_lat_hub_sym, .nkx=12, .nky=12), 1.2, "square" );
+    survey_map_lengths( KWARGS(gen_square_lat_rashba_sym, .nkx=12, .nky=12), 1.2, "rashba" );
+    survey_map_lengths( KWARGS(gen_honeycomb_lat_hub_sym, .nkx=12, .nky=12), 1.6, "honeycomb" );
+    survey_map_lengths( KWARGS(gen_kagome_model, .nkx=12, .nky=12), 1.2, "kagome" );
+    survey_map_lengths( KWARGS(gen_triangular_pxpy_sym, .nkx=12, .nky=12, .to_ppm=-1), 1.2, "pxpy" );
+    survey_map_lengths( KWARGS(gen_triangular_pxpy_sym, .nkx=12, .nky=12, .to_ppm= 1), 1.2, "p+p-" );
+    survey_map_lengths( KWARGS(gen_triangular_lat_rashba, .nkx=12, .nky=12), 1.2, "tri-rashba" );
+    survey_map_lengths( KWARGS(gen_honeycomb_lat_rash, .nkx=12, .nky=12), 1.6, "hc-rashba" );
+    // larger form factor cutoffs pull in bonds whose images can collide
+    survey_map_lengths( KWARGS(gen_honeycomb_lat_hub_sym, .nkx=12, .nky=12), 3.1, "honeycomb ff3.1" );
+    survey_map_lengths( KWARGS(gen_kagome_model, .nkx=12, .nky=12), 2.6, "kagome ff2.6" );
+    survey_map_lengths( KWARGS(gen_triangular_pxpy_sym, .nkx=12, .nky=12, .to_ppm=-1), 3.1, "pxpy ff3.1" );
+    CT_CHECK( 1 );
 }
 
 #endif // DIVERGE_SKIP_TESTS
