@@ -28,6 +28,10 @@ void tu_data_phonons_free( tu_data_phonons_t* t );
 void tu_data_phonons_gen_vert( tu_data_phonons_t* t, double Lambda,
         complex128_t* out, double fac );
 
+// phonon GF on the (rank-local) IBZ (my_nk, my_nk_off)
+complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t, double Lambda,
+        bool ignore_imag_freq, bool refined );
+
 void tu_data_phonons_get_g_dim( tu_data_phonons_t* t, int fullmesh, index_t g_dim[3] );
 
 typedef struct diverge_flow_step_t diverge_flow_step_t;

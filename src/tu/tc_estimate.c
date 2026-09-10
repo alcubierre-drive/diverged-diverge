@@ -15,6 +15,7 @@
 
 static double TC_FS_WEIGHT_MIN = 1.e-10;
 static double TC_OMEGA_MIN = 1e-8;
+static double TC_PROP_Q0 = 0.0;
 
 double tu_tc_estimate_change_fs_weight_min( double w ) {
     if (qnan_isnan(w)) return TC_FS_WEIGHT_MIN;
@@ -24,6 +25,11 @@ double tu_tc_estimate_change_fs_weight_min( double w ) {
 double tu_tc_estimate_change_omega_min( double w ) {
     if (qnan_isnan(w)) return TC_OMEGA_MIN;
     return MEMSWAP_RET(w, TC_OMEGA_MIN);
+}
+
+double tu_tc_estimate_change_propagator_q0( double q0 ) {
+    if (qnan_isnan(q0)) return TC_PROP_Q0;
+    return MEMSWAP_RET(q0, TC_PROP_Q0);
 }
 
 typedef struct {
@@ -41,14 +47,20 @@ typedef struct {
     index_t n_fs;
 
     complex128_t* A;    // (n_orbff,) pair bond amplitude on FS
-    double* wq;         // (my_nk, nO) lambda weights, N0 * P(q) * |c|^2
-    double* omega;      // (my_nk, nO) mode frequencies, <0 if skip
-    index_t n_modes_skipped;
+
+    index_t n_entries;  // my_nk + n_refine
+    double* wq;         // (n_entries, nO) lambda weights, N0 * P(q) * |c|^2
+    double* omega;      // (n_entries, nO) mode frequencies, >=0
+    double* D;          // (n_entries, nO) phonon Green function at TC_PROP_Q0
+    int8_t* mflag;      // (n_entries, nO) TC_MODE_*
+    index_t n_modes_skipped, n_modes_unstable, n_refine_used;
 } tc_work_t;
+
+enum { TC_MODE_OK = 0, TC_MODE_SKIP = 1, TC_MODE_UNSTABLE = 2 };
 
 static void tc_work_free( tc_work_t* w ) {
     if (!w) return;
-    free(w->A); free(w->wq); free(w->omega);
+    free(w->A); free(w->wq); free(w->omega); free(w->D); free(w->mflag);
     free(w);
 }
 
@@ -61,6 +73,23 @@ static inline void unravel3( index_t idx, const index_t* dim, index_t* out ) {
 static inline double cabs2( const complex128_t c ) {
     const double* d = (const double*)&c;
     return POW2(d[0]) + POW2(d[1]);
+}
+
+// classify one (q,mode) entry and store it. om: raw freq, imag: unstable?, D: prop
+static void tc_set_entry( tc_work_t* w, index_t i, double om, bool imag,
+        double weight, double D ) {
+    w->wq[i] = weight;
+    w->omega[i] = fabs(om);
+    w->D[i] = D;
+    if (imag || D >= 0.0) {
+        w->mflag[i] = TC_MODE_UNSTABLE;
+        w->n_modes_unstable++;
+    } else if (fabs(om) < TC_OMEGA_MIN) {
+        w->mflag[i] = TC_MODE_SKIP;
+        w->n_modes_skipped++;
+    } else {
+        w->mflag[i] = TC_MODE_OK;
+    }
 }
 
 // build FS averages
@@ -169,12 +198,27 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing ) {
 
     // weights
     const index_t my_nk = w->ph->my_nk, my_nk_off = w->ph->my_nk_off, nO = w->nO;
+    const index_t n_spin = w->n_spin;
     const complex128_t* gq = w->ph->g_ob_qO;
     const double* Eph = w->ph->pmod->internals->E;
     const cbytes_t* Eimag = w->ph->pmod->internals->model_phonons_imag_freq;
+    const bool ignore_imag = w->ph->ignore_imag_freq;
 
-    w->wq = calloc( my_nk*nO, sizeof*w->wq );
-    w->omega = calloc( my_nk*nO, sizeof*w->omega );
+    // D
+    const complex128_t* Dq = tu_data_phonons_gfill( w->ph, TC_PROP_Q0, ignore_imag, false );
+
+    index_t kk_gamma = -1;
+    if (w->ph->enable_refinement && w->ph->n_refine > 0)
+        for (index_t kk=0; kk<my_nk; ++kk)
+            if (w->ph->idx_ibz_in_fullmesh[kk+my_nk_off] == 0) { kk_gamma = kk; break; }
+    const index_t n_ref = (kk_gamma >= 0) ? w->ph->n_refine : 0;
+    w->n_refine_used = n_ref;
+    w->n_entries = my_nk + n_ref;
+
+    w->wq = calloc( w->n_entries*nO, sizeof*w->wq );
+    w->omega = calloc( w->n_entries*nO, sizeof*w->omega );
+    w->D = calloc( w->n_entries*nO, sizeof*w->D );
+    w->mflag = calloc( w->n_entries*nO, sizeof*w->mflag );
 
     for (index_t kk=0; kk<my_nk; ++kk) {
         const index_t iq = kk + my_nk_off;
@@ -183,28 +227,47 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing ) {
         const double Pw = (iq < nkibz) ? Pibz[iq] : 0.0;
 
         for (index_t b=0; b<nO; ++b) {
-            const double om = Eph[IDX2(qfine,b,nO)];
-            const bool imag = bitary_get(Eimag, IDX2(qfine,b,nO));
-            if (imag || fabs(om) < TC_OMEGA_MIN) {
-                w->omega[IDX2(kk,b,nO)] = -1.0;
-                w->n_modes_skipped++;
+            if (kk == kk_gamma) { // carried by the refinement entries below
+                w->mflag[IDX2(kk,b,nO)] = TC_MODE_SKIP;
                 continue;
             }
             complex128_t c = 0.0;
             for (index_t f=0; f<n_orbff; ++f)
-                c += conj(w->A[f]) * gq[IDX5(kk,0,0,f,b, w->n_spin,w->n_spin,n_orbff,nO)];
+                c += conj(w->A[f]) * gq[IDX5(kk,0,0,f,b, n_spin,n_spin,n_orbff,nO)];
+            tc_set_entry( w, IDX2(kk,b,nO), Eph[IDX2(qfine,b,nO)],
+                    bitary_get(Eimag, IDX2(qfine,b,nO)),
+                    w->N0 * Pw * cabs2(c), creal(Dq[IDX2(kk,b,nO)]) );
+        }
+    }
 
-            w->omega[IDX2(kk,b,nO)] = fabs(om);
-            w->wq[IDX2(kk,b,nO)] = w->N0 * Pw * cabs2(c);
+    if (n_ref > 0) {
+        const complex128_t* gref = w->ph->g_ob_qO_refined;
+        const complex128_t* Dref = tu_data_phonons_gfill( w->ph, TC_PROP_Q0, ignore_imag, true );
+        const index_t iq = kk_gamma + my_nk_off;
+        const double Pw = (iq < nkibz) ? Pibz[iq] : 0.0;
+
+        for (index_t r=0; r<n_ref; ++r) {
+            const index_t qfine = w->ph->refine[r].kf_idx;
+            const double rw = w->ph->refine[r].weight;
+            for (index_t b=0; b<nO; ++b) {
+                complex128_t c = 0.0;
+                for (index_t f=0; f<n_orbff; ++f)
+                    c += conj(w->A[f]) * gref[IDX5(r,0,0,f,b, n_spin,n_spin,n_orbff,nO)];
+                tc_set_entry( w, IDX2(my_nk+r,b,nO), Eph[IDX2(qfine,b,nO)],
+                        bitary_get(Eimag, IDX2(qfine,b,nO)),
+                        w->N0 * Pw * rw * cabs2(c), creal(Dref[IDX2(r,b,nO)]) );
+            }
         }
     }
     free(Pibz);
 
-    diverge_mpi_allreduce_index_sum_inplace( &w->n_modes_skipped, 1 );
+    index_t cnt[2] = { w->n_modes_skipped, w->n_modes_unstable };
+    diverge_mpi_allreduce_index_sum_inplace( cnt, 2 );
+    w->n_modes_skipped = cnt[0];
+    w->n_modes_unstable = cnt[1];
     return w;
 }
 
-// sum_{q,nu} wq / (Lambda^2 + omega^2), reduced over ranks
 static double tc_pair_vertex_fs( diverge_flow_step_t* step, const tc_work_t* w ) {
     diverge_flow_step_vertex_t vv = diverge_flow_step_vertex( step, 'p' );
 
@@ -237,24 +300,41 @@ tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star, do
     out.N0 = w->N0;
     out.n_fs = w->n_fs;
     out.n_modes_skipped = w->n_modes_skipped;
+    out.n_modes_unstable = w->n_modes_unstable;
+    out.n_refine_used = w->n_refine_used;
 
-    // weight per mode is wq/omega**2; omega_log the geometric mean
-    double sums[3] = { 0.0, 0.0, 0.0 }; // lambda, sum w ln(omega), sum w omega**2
-    const index_t nloc = w->ph->my_nk * w->nO;
+    // weight per mode is -wq*D
+    // sums: lambda, lambda_avg, sum w ln(omega), sum w omega**2, lambda_unstable
+    double sums[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+    const index_t nloc = w->n_entries * w->nO;
     for (index_t i=0; i<nloc; ++i) {
-        if (w->omega[i] < 0.0) continue;
-        const double om = w->omega[i];
-        const double ww = w->wq[i] / (om*om);
+        const double ww = -w->wq[i] * w->D[i];
         sums[0] += ww;
-        sums[1] += ww * log(om);
-        sums[2] += ww * om * om;
+        switch (w->mflag[i]) {
+            case TC_MODE_OK:
+                sums[1] += ww;
+                sums[2] += ww * log(w->omega[i]);
+                sums[3] += ww * POW2(w->omega[i]);
+                break;
+            case TC_MODE_UNSTABLE:
+                sums[4] += ww;
+                break;
+            default: break;
+        }
     }
-    diverge_mpi_allreduce_double_sum_inplace( sums, 3 );
+    diverge_mpi_allreduce_double_sum_inplace( sums, 5 );
 
     out.lambda = sums[0];
-    if (out.lambda > 0.0) {
-        out.omega_log = exp( sums[1] / out.lambda );
-        out.omega_rms = sqrt( sums[2] / out.lambda );
+    out.lambda_avg = sums[1];
+    out.lambda_unstable = sums[4];
+    if (out.lambda_avg > 0.0) {
+        out.omega_log = exp( sums[2] / out.lambda_avg );
+        out.omega_rms = sqrt( sums[3] / out.lambda_avg );
+    }
+    if (out.lambda_unstable < 0.0) {
+        mpi_wrn_printf( "unstable phonons contribute %.3e to lambda=%.3e\n",
+                out.lambda_unstable, out.lambda );
+        out.errors++;
     }
 
     out.vpair_fs = tc_pair_vertex_fs( step, w );

@@ -26,9 +26,6 @@ static refinement_t* tu_data_phonons_generate_refinement( tu_data_phonons_t* t )
 
 static void tu_data_phonons_init_vertex( tu_data_phonons_t* t, tu_data_t* d,
         const tu_formfactor_t* tu_ff, index_t n_tu_ff, index_t n_spin, const bool SU2 );
-static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
-        const double Lambda, const bool ignore_imag_freq, bool refined );
-
 tu_data_phonons_t* tu_data_phonons_init( diverge_model_t* ph, diverge_model_t* el,
         bool ignore_imag_freq, bool enable_refinement, bool save_g_on_full_qmesh ) {
     tu_data_phonons_t* t = calloc(1, sizeof*t);
@@ -94,7 +91,7 @@ static inline complex128_t gf_gp_plus_gm( const double E, const bool E_imag,
     double E2 = E_imag ? -POW2(E) : POW2(E);
     return (ignore_imag_freq&&E_imag) ? 0.0 : creal(-1./(POW2(Lambda) - I*PHONON_FREQ_REGULATOR + E2));
 }
-static complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
+complex128_t* tu_data_phonons_gfill( tu_data_phonons_t* t,
         const double Lambda, const bool ignore_imag_freq, bool refined ) {
     if (!t->enable_refinement) refined = false;
     const int iszero = Lambda == 0.0;
