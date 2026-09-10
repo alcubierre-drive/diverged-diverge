@@ -63,10 +63,15 @@ typedef struct {
  *
  * :param double Lambda_star:  the scale the flow was stopped at
  * :param double smearing:     Fermi surface smearing (gaussian)
- *
+ * :param const complex128_t* propagator: Use this array instead of phonon gfill
+ *                                        for D, ignore if NULL. With refinement
+ *                                        you must take care of the refined
+ *                                        section that is appended to the array
+ *                                        on all ranks.
  * :returns tu_tc_result_t: results
  */
-tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star, double smearing );
+tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star,
+        double smearing, const complex128_t* propagator );
 
 /**
  * change the minimum weight that an FS point has to have in order to be

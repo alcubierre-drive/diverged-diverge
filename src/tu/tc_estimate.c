@@ -93,7 +93,8 @@ static void tc_set_entry( tc_work_t* w, index_t i, double om, bool imag,
 }
 
 // build FS averages
-static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing ) {
+static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing,
+        const complex128_t* prop ) {
     tc_work_t* w = calloc(1, sizeof*w);
     w->mod = step->mod;
     w->intls = step->intls;
@@ -205,7 +206,8 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing ) {
     const bool ignore_imag = w->ph->ignore_imag_freq;
 
     // D
-    const complex128_t* Dq = tu_data_phonons_gfill( w->ph, TC_PROP_Q0, ignore_imag, false );
+    const complex128_t* Dq = prop ? prop :
+        tu_data_phonons_gfill( w->ph, TC_PROP_Q0, ignore_imag, false );
 
     index_t kk_gamma = -1;
     if (w->ph->enable_refinement && w->ph->n_refine > 0)
@@ -242,7 +244,8 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing ) {
 
     if (n_ref > 0) {
         const complex128_t* gref = w->ph->g_ob_qO_refined;
-        const complex128_t* Dref = tu_data_phonons_gfill( w->ph, TC_PROP_Q0, ignore_imag, true );
+        const complex128_t* Dref = prop ? prop + my_nk*nO :
+            tu_data_phonons_gfill( w->ph, TC_PROP_Q0, ignore_imag, true );
         const index_t iq = kk_gamma + my_nk_off;
         const double Pw = (iq < nkibz) ? Pibz[iq] : 0.0;
 
@@ -293,9 +296,10 @@ static double tc_pair_vertex_fs( diverge_flow_step_t* step, const tc_work_t* w )
     return v;
 }
 
-tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star, double smearing ) {
+tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star,
+        double smearing, const complex128_t* propagator ) {
     tu_tc_result_t out = {0};
-    tc_work_t* w = tc_work_init( step, smearing );
+    tc_work_t* w = tc_work_init( step, smearing, propagator );
 
     out.N0 = w->N0;
     out.n_fs = w->n_fs;

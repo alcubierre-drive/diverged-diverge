@@ -444,7 +444,7 @@ static diverge_flow_step_t* tc_flow_to( diverge_model_t* m, double Lstar ) {
 static tu_tc_result_t tc_at_q0( diverge_flow_step_t* st, double Lstar,
         double smearing, double q0 ) {
     tu_tc_estimate_change_propagator_q0( q0 );
-    return tu_tc_estimate( st, Lstar, smearing );
+    return tu_tc_estimate( st, Lstar, smearing, NULL );
 }
 
 static void tc_estimate_check( int refine ) {
