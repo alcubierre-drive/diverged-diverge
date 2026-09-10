@@ -172,6 +172,7 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing,
     for (index_t kf=0; kf<nktot; ++kf) Wk[kf] /= wsum;
 
     // FS-FS autocorrelation on coarse mesh
+    const double nkf_norm = (double)kdim( w->mod->nkf );
     double* Pq = calloc( w->nkc, sizeof*Pq );
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t q=0; q<w->nkc; ++q) {
@@ -182,7 +183,7 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing,
             const index_t kpq = k1p2(qf, k, w->nkkf);
             sum += Wk[k] * Wk[kpq];
         }
-        Pq[q] = sum;
+        Pq[q] = sum * nkf_norm;
     }
     free(Wk);
 
