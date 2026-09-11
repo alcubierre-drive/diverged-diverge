@@ -18,6 +18,8 @@ typedef struct {
     double lambda;
     /** that part of :c:member:`lambda` that is from imaginary modes */
     double lambda_unstable;
+    /** EPC strength at Lambda_star */
+    double lambda_at_Lstar;
     /**
      * that part of :c:member:`lambda` which enters :c:member:`omega_log` and
      * :c:member:`omega_rms`, shuold equal :c:member:`lambda`.
@@ -55,11 +57,13 @@ typedef struct {
  * Residual Morel-Anderson log from Lambda* to omega_log is applied on top.
  *
  * This works with the TU-phonons backend only, and only if the P channel is
- * included in the flow.
+ * included in the flow. Intraband weak-coupling assumed.
  *
- * The flow must be run with the phonons switched *off*.
- * (:c:func:`diverge_flow_step_set_interchannel`, "ph:nnn"),
- * standard intraband weak-coupling assumptions are taken.
+ * The flow may be run with the phonons switched off
+ * (:c:func:`diverge_flow_step_set_interchannel`, "ph:nnn") or on ("ph:yyy",
+ * default). With phonons on, :c:member:`lambda_at_Lstar` estimates how much
+ * attraction is generated above Lambda*, the contribution can be removed by
+ * setting ``sub > 0`` in :c:func:`tu_tc_estimate_change_propagator_subtract`.
  *
  * :param double Lambda_star:  the scale the flow was stopped at
  * :param double smearing:     Fermi surface smearing (gaussian)
@@ -68,10 +72,18 @@ typedef struct {
  *                                        you must take care of the refined
  *                                        section that is appended to the array
  *                                        on all ranks.
+ * :param const complex128_t* propagator_at_Lstar: same as ``propagator``, but for D at Lambda* ignore if NULL.
  * :returns tu_tc_result_t: results
  */
 tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star,
-        double smearing, const complex128_t* propagator );
+        double smearing, const complex128_t* propagator,
+        const complex128_t* propagator_at_Lstar );
+
+/**
+ * enable subtraction of the Lambda* phonon propagator from the one at q0 (0).
+ * returns the old value. Does not do anything if ``sub<0``.
+ */
+int tu_tc_estimate_change_propagator_subtract( int sub );
 
 /**
  * change the minimum weight that an FS point has to have in order to be

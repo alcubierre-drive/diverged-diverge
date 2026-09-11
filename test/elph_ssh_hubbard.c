@@ -444,7 +444,7 @@ static diverge_flow_step_t* tc_flow_to( diverge_model_t* m, double Lstar ) {
 static tu_tc_result_t tc_at_q0( diverge_flow_step_t* st, double Lstar,
         double smearing, double q0 ) {
     tu_tc_estimate_change_propagator_q0( q0 );
-    return tu_tc_estimate( st, Lstar, smearing, NULL );
+    return tu_tc_estimate( st, Lstar, smearing, NULL, NULL );
 }
 
 static void tc_estimate_check( int refine ) {
@@ -456,6 +456,9 @@ static void tc_estimate_check( int refine ) {
     tu_tc_result_t r0 = tc_at_q0( st, Lstar, smearing, 0.0 );
     tu_tc_result_t r1 = tc_at_q0( st, Lstar, smearing, 1.0 );
     tu_tc_result_t r2 = tc_at_q0( st, Lstar, smearing, 2.0 );
+    const int sub_old = tu_tc_estimate_change_propagator_subtract( 1 );
+    tu_tc_result_t rs = tc_at_q0( st, Lstar, smearing, 0.0 );
+    tu_tc_estimate_change_propagator_subtract( sub_old );
     tu_tc_estimate_change_propagator_q0( q0_old );
 
     const double u2 = (r1.lambda - 0.5*r0.lambda) / 0.3;
@@ -477,6 +480,13 @@ static void tc_estimate_check( int refine ) {
     CT_CHECK( fabs(pow(2.0, v2/(v1+v2)) - r2.omega_log) < 1.e-8 );
     CT_CHECK( fabs(sqrt((v1 + 4.0*v2)/(v1+v2)) - r2.omega_rms) < 1.e-8 );
     CT_CHECK( r2.omega_log > r0.omega_log );
+
+    // lambda splits exactly into the part above and below Lambda*
+    CT_CHECK( sub_old == 0 );
+    CT_CHECK( r0.lambda_at_Lstar > 1.e-6 );
+    CT_CHECK( fabs(rs.lambda_at_Lstar - r0.lambda_at_Lstar) < 1.e-12 * r0.lambda );
+    CT_CHECK( fabs(rs.lambda + r0.lambda_at_Lstar - r0.lambda) < 1.e-12 * r0.lambda );
+    CT_CHECK( rs.omega_log < r0.omega_log ); // reweighted towards soft modes
 
     diverge_flow_step_free( st );
     diverge_model_free( m );

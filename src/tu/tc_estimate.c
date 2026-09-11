@@ -16,6 +16,7 @@
 static double TC_FS_WEIGHT_MIN = 1.e-10;
 static double TC_OMEGA_MIN = 1e-8;
 static double TC_PROP_Q0 = 0.0;
+static int TC_PROP_SUB = 0;
 
 double tu_tc_estimate_change_fs_weight_min( double w ) {
     if (qnan_isnan(w)) return TC_FS_WEIGHT_MIN;
@@ -30,6 +31,11 @@ double tu_tc_estimate_change_omega_min( double w ) {
 double tu_tc_estimate_change_propagator_q0( double q0 ) {
     if (qnan_isnan(q0)) return TC_PROP_Q0;
     return MEMSWAP_RET(q0, TC_PROP_Q0);
+}
+
+int tu_tc_estimate_change_propagator_subtract( int sub ) {
+    if (sub < 0) return TC_PROP_SUB;
+    return MEMSWAP_RET(sub, TC_PROP_SUB);
 }
 
 typedef struct {
@@ -52,6 +58,7 @@ typedef struct {
     double* wq;         // (n_entries, nO) lambda weights, N0 * P(q) * |c|^2
     double* omega;      // (n_entries, nO) mode frequencies, >=0
     double* D;          // (n_entries, nO) phonon Green function at TC_PROP_Q0
+    complex128_t* Dstar;// (n_entries, nO) phonon Green function at Lambda*
     int8_t* mflag;      // (n_entries, nO) TC_MODE_*
     index_t n_modes_skipped, n_modes_unstable, n_refine_used;
 } tc_work_t;
@@ -60,7 +67,12 @@ enum { TC_MODE_OK = 0, TC_MODE_SKIP = 1, TC_MODE_UNSTABLE = 2 };
 
 static void tc_work_free( tc_work_t* w ) {
     if (!w) return;
-    free(w->A); free(w->wq); free(w->omega); free(w->D); free(w->mflag);
+    free(w->A);
+    free(w->wq);
+    free(w->omega);
+    free(w->D);
+    free(w->Dstar);
+    free(w->mflag);
     free(w);
 }
 
@@ -93,8 +105,8 @@ static void tc_set_entry( tc_work_t* w, index_t i, double om, bool imag,
 }
 
 // build FS averages
-static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing,
-        const complex128_t* prop ) {
+static tc_work_t* tc_work_init( diverge_flow_step_t* step, double Lambda_star,
+        double smearing, const complex128_t* prop, const complex128_t* prop_star ) {
     tc_work_t* w = calloc(1, sizeof*w);
     w->mod = step->mod;
     w->intls = step->intls;
@@ -206,10 +218,6 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing,
     const cbytes_t* Eimag = w->ph->pmod->internals->model_phonons_imag_freq;
     const bool ignore_imag = w->ph->ignore_imag_freq;
 
-    // D
-    const complex128_t* Dq = prop ? prop :
-        tu_data_phonons_gfill( w->ph, TC_PROP_Q0, ignore_imag, false );
-
     index_t kk_gamma = -1;
     if (w->ph->enable_refinement && w->ph->n_refine > 0)
         for (index_t kk=0; kk<my_nk; ++kk)
@@ -221,7 +229,24 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing,
     w->wq = calloc( w->n_entries*nO, sizeof*w->wq );
     w->omega = calloc( w->n_entries*nO, sizeof*w->omega );
     w->D = calloc( w->n_entries*nO, sizeof*w->D );
+    w->Dstar = calloc( w->n_entries*nO, sizeof*w->Dstar );
     w->mflag = calloc( w->n_entries*nO, sizeof*w->mflag );
+
+    // D* (i.e. what already is contained in the FRG flow).
+    if (prop_star) {
+        memcpy( w->Dstar, prop_star, w->n_entries*nO * sizeof*w->Dstar );
+    } else if (Lambda_star > 0.0) {
+        memcpy( w->Dstar, tu_data_phonons_gfill( w->ph, Lambda_star, ignore_imag, false ),
+                my_nk*nO * sizeof*w->Dstar );
+        if (n_ref > 0)
+            memcpy( w->Dstar + my_nk*nO,
+                    tu_data_phonons_gfill( w->ph, Lambda_star, ignore_imag, true ),
+                    n_ref*nO * sizeof*w->Dstar );
+    }
+
+    // D
+    const complex128_t* Dq = prop ? prop :
+        tu_data_phonons_gfill( w->ph, TC_PROP_Q0, ignore_imag, false );
 
     for (index_t kk=0; kk<my_nk; ++kk) {
         const index_t iq = kk + my_nk_off;
@@ -237,9 +262,10 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing,
             complex128_t c = 0.0;
             for (index_t f=0; f<n_orbff; ++f)
                 c += conj(w->A[f]) * gq[IDX5(kk,0,0,f,b, n_spin,n_spin,n_orbff,nO)];
+            const double ds = TC_PROP_SUB ? creal(w->Dstar[IDX2(kk,b,nO)]) : 0.0;
             tc_set_entry( w, IDX2(kk,b,nO), Eph[IDX2(qfine,b,nO)],
-                    bitary_get(Eimag, IDX2(qfine,b,nO)),
-                    w->N0 * Pw * cabs2(c), creal(Dq[IDX2(kk,b,nO)]) );
+                    bitary_get(Eimag, IDX2(qfine,b,nO)), w->N0 * Pw * cabs2(c),
+                    creal(Dq[IDX2(kk,b,nO)]) - ds );
         }
     }
 
@@ -257,9 +283,10 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double smearing,
                 complex128_t c = 0.0;
                 for (index_t f=0; f<n_orbff; ++f)
                     c += conj(w->A[f]) * gref[IDX5(r,0,0,f,b, n_spin,n_spin,n_orbff,nO)];
+                const double ds = TC_PROP_SUB ? creal(w->Dstar[IDX2(my_nk+r,b,nO)]) : 0.0;
                 tc_set_entry( w, IDX2(my_nk+r,b,nO), Eph[IDX2(qfine,b,nO)],
-                        bitary_get(Eimag, IDX2(qfine,b,nO)),
-                        w->N0 * Pw * rw * cabs2(c), creal(Dref[IDX2(r,b,nO)]) );
+                        bitary_get(Eimag, IDX2(qfine,b,nO)), w->N0 * Pw * rw * cabs2(c),
+                        creal(Dref[IDX2(r,b,nO)]) - ds );
             }
         }
     }
@@ -298,9 +325,11 @@ static double tc_pair_vertex_fs( diverge_flow_step_t* step, const tc_work_t* w )
 }
 
 tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star,
-        double smearing, const complex128_t* propagator ) {
+        double smearing, const complex128_t* propagator,
+        const complex128_t* propagator_at_Lstar ) {
     tu_tc_result_t out = {0};
-    tc_work_t* w = tc_work_init( step, smearing, propagator );
+    tc_work_t* w = tc_work_init( step, Lambda_star, smearing, propagator,
+            propagator_at_Lstar );
 
     out.N0 = w->N0;
     out.n_fs = w->n_fs;
@@ -309,12 +338,14 @@ tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star,
     out.n_refine_used = w->n_refine_used;
 
     // weight per mode is -wq*D
-    // sums: lambda, lambda_avg, sum w ln(omega), sum w omega**2, lambda_unstable
-    double sums[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+    // sums: lambda, lambda_avg, sum w ln(omega), sum w omega**2, lambda_unstable,
+    //       lambda_at_Lstar
+    double sums[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
     const index_t nloc = w->n_entries * w->nO;
     for (index_t i=0; i<nloc; ++i) {
         const double ww = -w->wq[i] * w->D[i];
         sums[0] += ww;
+        sums[5] += -w->wq[i] * creal(w->Dstar[i]);
         switch (w->mflag[i]) {
             case TC_MODE_OK:
                 sums[1] += ww;
@@ -327,11 +358,12 @@ tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star,
             default: break;
         }
     }
-    diverge_mpi_allreduce_double_sum_inplace( sums, 5 );
+    diverge_mpi_allreduce_double_sum_inplace( sums, 6 );
 
     out.lambda = sums[0];
     out.lambda_avg = sums[1];
     out.lambda_unstable = sums[4];
+    out.lambda_at_Lstar = sums[5];
     if (out.lambda_avg > 0.0) {
         out.omega_log = exp( sums[2] / out.lambda_avg );
         out.omega_rms = sqrt( sums[3] / out.lambda_avg );
@@ -341,16 +373,24 @@ tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star,
                 out.lambda_unstable, out.lambda );
         out.errors++;
     }
+    if (!TC_PROP_SUB && w->V->elph && w->V->ph_to_P &&
+            fabs(out.lambda_at_Lstar) > 0.1*fabs(out.lambda))
+        mpi_wrn_printf( "phonons already active at Lambda*: %.3e of lambda=%.3e\n",
+                out.lambda_at_Lstar, out.lambda );
 
     out.vpair_fs = tc_pair_vertex_fs( step, w );
     out.mu_star_at_Lstar = w->N0 * out.vpair_fs;
 
-    // rest of scales: Morel-Anderson Lambda* -> omega_log.
+    // Morel-Anderson
     out.mu_star = out.mu_star_at_Lstar;
     if (out.omega_log > 0.0 && Lambda_star > 0.0) {
         const double lg = log( Lambda_star / out.omega_log );
         const double den = 1.0 + out.mu_star_at_Lstar * lg;
-        if (lg > 0.0 && den > 0.0) {
+        if (out.mu_star_at_Lstar <= 0.0) {
+            mpi_wrn_printf( "attractive vertex at Lambda* (%.3e), no Morel-Anderson\n",
+                    out.mu_star_at_Lstar );
+            out.errors++;
+        } else if (lg > 0.0 && den > 0.0) {
             out.mu_star = out.mu_star_at_Lstar / den;
         } else if (lg > 0.0) {
             mpi_wrn_printf( "Morel-Anderson denom <=0 (%.3e)\n", den );
@@ -361,7 +401,7 @@ tu_tc_result_t tu_tc_estimate( diverge_flow_step_t* step, double Lambda_star,
         }
     }
 
-    // McMillan / Allen-Dynes, no strong-coupling corrections
+    // McMillan / Allen-Dynes
     const double den = out.lambda - out.mu_star * (1.0 + 0.62*out.lambda);
     if (out.lambda > 0.0 && den > 0.0) {
         out.Tc = out.omega_log / 1.2 * exp( -1.04 * (1.0 + out.lambda) / den );
