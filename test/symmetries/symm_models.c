@@ -21,12 +21,8 @@
 #include "../helper_functions.h"
 #include "../../src/misc/shared_mem.h"
 
-/* p_x/p_y on a honeycomb under C6 has both a leg mapping onto several image bonds
- * and an off-centre basis, which makes it a suitable test case to verify the 
- * beyond_UC's per-entry storage and the per-leg use of the TU symmetry maps. 
- * U n_i^2 + V n_i n_j over total site densities is invariant
- * by construction, so any deviation from the n_sym == 0 run is the IBZ reduction's
- * own error. */
+// @afischer found a subtle bug in beyond_UC for multiple orbitals on nontrivial
+// Wyckoff positions. This model checks it.
 static diverge_model_t* gen_pxpy_honeycomb( index_t nkx, index_t nky, index_t nsym ) {
     double U = 3.0, V = 0.8, t = 1.0, d_nn2 = 1./3., tol = 1e-9;
 
