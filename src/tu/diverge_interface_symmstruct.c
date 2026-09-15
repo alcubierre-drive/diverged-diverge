@@ -359,7 +359,7 @@ static void init_symmetry_maps_o2m(diverge_model_t* model, const double* beyond_
 
         index_t idx = mi1 + n_orbff*(s1 + n_spin*(s2+n_spin*which_sym));
         claV3d_t kp = claV3d_map(model->internals->kmesh+3*q_in_full);
-        const complex128_t pref_sym = cexp( -I*claV3d_dot(kp,claM3d_matvec(sym_rs,claV3d_map(beyond_UC+3*idx))) );
+        const complex128_t pref_sym = cexp( -I*claV3d_dot(kp,claM3d_matvec(sym_rs,claV3d_map(beyond_UC+3*symm->mi_map_off[idx]))) );
 
         for (index_t to=0; to<symm->mi_map_len[idx]; ++to) {
             VECTOR_PUSH_BACK( symm->idx_map_symm, symm->mi_maps_to[to + symm->mi_map_off[idx]] );
