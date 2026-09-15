@@ -683,7 +683,7 @@ static void construct_multiindex_maps( tu_postproduction_t* p ) {
     for (index_t idx=0; idx<n_orbff*POW2(n_spin)*model->n_sym; ++idx)
     for (index_t q=0; q<nkibz; ++q) {
         claV3d_t kp = claV3d_map( model->internals->kmesh+3*symm->idx_ibz_in_fullmesh[q] );
-        const complex128_t pref_sym = cexp(-I*claV3d_dot(kp, claV3d_map(symm->beyond_UC+3*idx)));
+        const complex128_t pref_sym = cexp(-I*claV3d_dot(kp, claV3d_map(symm->beyond_UC+3*symm->mi_map_off[idx])));
 
         for (index_t to=0; to<symm->mi_map_len[idx]; ++to) {
             p->mi_map_idx[q+nkibz*(to+symm->mi_map_off[idx])] =
