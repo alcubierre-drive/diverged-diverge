@@ -21,6 +21,135 @@
 #include "../helper_functions.h"
 #include "../../src/misc/shared_mem.h"
 
+// @afischer found a subtle bug in beyond_UC for multiple orbitals on nontrivial
+// Wyckoff positions. This model checks it.
+static diverge_model_t* gen_pxpy_honeycomb( index_t nkx, index_t nky, index_t nsym ) {
+    double U = 3.0, V = 0.8, t = 1.0, d_nn2 = 1./3., tol = 1e-9;
+
+    diverge_model_t* model = diverge_model_init();
+    model->n_orb = 4;
+    model->n_spin = 1;
+    model->SU2 = true;
+
+    model->lattice[0][0] = 0.5*sqrt(3.), model->lattice[0][1] = -0.5;
+    model->lattice[1][0] = 0.5*sqrt(3.), model->lattice[1][1] = 0.5;
+    model->lattice[2][2] = 1.0;
+
+    for (index_t o = 0; o < 2; ++o) model->positions[o][0] = sqrt(3.)/3.;
+    for (index_t o = 2; o < 4; ++o) model->positions[o][0] = 2.*sqrt(3.)/3.;
+
+    model->nk[0] = nkx, model->nk[1] = nky;
+    model->nkf[0] = 1, model->nkf[1] = 1;
+
+    model->hop = (rs_hopping_t*)calloc(32, sizeof(rs_hopping_t));
+    model->vert = (rs_vertex_t*)calloc(32, sizeof(rs_vertex_t));
+    for (index_t o1 = 0; o1 < 4; ++o1)
+    for (index_t o2 = 0; o2 < 4; ++o2)
+    for (index_t rx = -2; rx <= 2; ++rx)
+    for (index_t ry = -2; ry <= 2; ++ry) {
+        double d2 = 0.0;
+        for (int c = 0; c < 3; ++c) {
+            double b = model->positions[o2][c] - model->positions[o1][c]
+                     + rx*model->lattice[0][c] + ry*model->lattice[1][c];
+            d2 += b*b;
+        }
+        // same site carries U, the nearest neighbour bond carries V and the hopping
+        if (d2 < tol) {
+            model->vert[model->n_vert].chan = 'D', model->vert[model->n_vert].V = U;
+            model->vert[model->n_vert].o1 = o1, model->vert[model->n_vert].o2 = o2;
+            model->vert[model->n_vert].s1 = -1;
+            model->n_vert += 1;
+        } else if (fabs(d2 - d_nn2) < tol) {
+            model->vert[model->n_vert].chan = 'D', model->vert[model->n_vert].V = V;
+            model->vert[model->n_vert].o1 = o1, model->vert[model->n_vert].o2 = o2;
+            model->vert[model->n_vert].s1 = -1;
+            model->vert[model->n_vert].R[0] = rx, model->vert[model->n_vert].R[1] = ry;
+            model->n_vert += 1;
+            if (o1%2 == o2%2) {
+                model->hop[model->n_hop].t = t;
+                model->hop[model->n_hop].o1 = o1, model->hop[model->n_hop].o2 = o2;
+                model->hop[model->n_hop].R[0] = rx, model->hop[model->n_hop].R[1] = ry;
+                model->n_hop += 1;
+            }
+        }
+    }
+
+    if (nsym > 0) {
+        site_descr_t sites[4] = {0};
+        for (index_t o = 0; o < 4; ++o) {
+            sites[o].n_functions = 1;
+            sites[o].amplitude[0] = 1.;
+            sites[o].function[0] = (o%2) ? orb_py : orb_px;
+        }
+
+        index_t symsize = POW2(model->n_orb*model->n_spin);
+        model->orb_symmetries = (complex128_t*)calloc(nsym*symsize, sizeof(complex128_t));
+        sym_op_t curr_symm[1] = {0};
+        curr_symm[0].type = 'R', curr_symm[0].normal_vector[2] = 1.;
+
+        for (index_t cnt = 0; cnt < nsym; ++cnt) {
+            curr_symm[0].angle = 360./(double)nsym * (double)cnt;
+            diverge_generate_symm_trafo(model->n_spin, sites, model->n_orb,
+                    curr_symm, 1, &(model->rs_symmetries[cnt][0][0]),
+                    model->orb_symmetries+cnt*symsize);
+        }
+        model->n_sym = nsym;
+    }
+
+    diverge_model_internals_common( model );
+    return model;
+}
+
+CT_TEST(pxpy_honeycomb) {
+
+    diverge_model_t* mod1 = gen_pxpy_honeycomb( 6, 6, 6 );
+    diverge_model_t* mod2 = gen_pxpy_honeycomb( 6, 6, 0 );
+    diverge_model_internals_tu( mod1, 1.1 );
+    diverge_model_internals_tu( mod2, 1.1 );
+    diverge_flow_step_t* step1 = diverge_flow_step_init(mod1, "tu", "PCD");
+    diverge_flow_step_t* step2 = diverge_flow_step_init(mod2, "tu", "PCD");
+
+    tu_data_t* tu_data = (tu_data_t*)(mod1->internals->tu_data);
+    tu_symmstruct_t* symm = tu_data->symm;
+
+    // the model has to meet both conditions for this particular check
+    CT_CHECK(tu_data->nkibz < kdim(mod1->nk));
+    index_t one_to_many = 0;
+    for (index_t i = 0; i < symm->mi_cnt; ++i)
+        one_to_many += symm->mi_map_len[i] > 1;
+    CT_CHECK(one_to_many > 0);
+    double bmax = 0.0;
+    for (index_t i = 0; i < symm->beyond_UC_sz; ++i) {
+        double b = fabs(symm->beyond_UC[i]);
+        bmax = b>bmax ? b : bmax;
+    }
+    CT_CHECK(bmax > 1e-9);
+
+    complex128_t* reco_vert1 = (complex128_t*)malloc(step1->tu_vertex->nk *
+                POW2(step1->tu_vertex->n_orbff*POW2(step1->tu_vertex->n_spin)) * sizeof(complex128_t));
+    complex128_t* reco_vert2 = (complex128_t*)malloc(step2->tu_vertex->nk *
+                POW2(step2->tu_vertex->n_orbff*POW2(step2->tu_vertex->n_spin)) * sizeof(complex128_t));
+
+    char chans[] = "PCD";
+    for (int c = 0; c < 3; ++c) {
+        diverge_tu_vertex_reco(step1->tu_vertex, chans[c], reco_vert1, NULL);
+        diverge_tu_vertex_reco(step2->tu_vertex, chans[c], reco_vert2, NULL);
+        double maxdiff = 0.0;
+        for (index_t i = 0; i < step2->tu_vertex->full_vert_size; ++i) {
+            double d = cabs(reco_vert2[i]-reco_vert1[i]);
+            maxdiff = d>maxdiff ? d : maxdiff;
+        }
+        CT_CHECK(maxdiff < 1e-12);
+    }
+
+    diverge_flow_step_free(step1);
+    diverge_flow_step_free(step2);
+    free(reco_vert1);
+    free(reco_vert2);
+    diverge_model_free( mod1 );
+    diverge_model_free( mod2 );
+}
+
 static double dot(double* A, double* B) {
     return A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
 }
