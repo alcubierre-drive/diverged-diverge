@@ -206,7 +206,9 @@ typedef struct diverge_model_output_conf_t {
      * orbital-band matrices (cf. :c:func:`diverge_model_internals_get_U`)!
      */
     int fatbands;
-    /** export hoppings */
+    /** export real space vertices */
+    int vert;
+    /** export real space hoppings */
     int hop;
     /**
      * when the band structure is explicitly calculated and not taken from
@@ -228,6 +230,7 @@ static const diverge_model_output_conf_t diverge_model_output_conf_defaults = {
     .E = 0,
     .npath = 0,
     .fatbands = 0,
+    .vert = 1,
     .hop = 1,
     .apply_sgnsqrt = 0,
 };

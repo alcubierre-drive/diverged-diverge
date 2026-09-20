@@ -1744,7 +1744,7 @@ if not _libs["divERGe"] is None:
     class struct_model_output_conf_t(Structure):
         pass
     struct_model_output_conf_t.__slots__ = [
-        'kc', 'kf', 'kc_ibz_path', 'kf_ibz_path', 'H', 'U', 'E', 'npath', 'fatbands', 'hop',
+        'kc', 'kf', 'kc_ibz_path', 'kf_ibz_path', 'H', 'U', 'E', 'npath', 'fatbands', 'vert', 'hop',
         'apply_sgnsqrt',
     ]
     struct_model_output_conf_t._fields_ = [
@@ -1757,6 +1757,7 @@ if not _libs["divERGe"] is None:
         ('E', c_int),
         ('npath', c_int),
         ('fatbands', c_int),
+        ('vert', c_int),
         ('hop', c_int),
         ('apply_sgnsqrt', c_int),
     ]
