@@ -130,7 +130,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         // realspace symmetries
         ADD_ARRAY_TO_IBUF(sizeof(double)*9*mod->n_sym);
 
-        ibuf[idx++] = mod->n_hop;
+        ibuf[idx++] = cfg->hop ? mod->n_hop : 0;
         // realspace hoppings
         ADD_ARRAY_TO_IBUF(sizeof(rs_hopping_t)*mod->n_hop);
 
@@ -338,7 +338,11 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         COPY_ARY_TO_BUF( mod->rs_symmetries );
 
         idx = 43;
-        COPY_ARY_TO_BUF( mod->hop );
+        if (cfg->hop) {
+            COPY_ARY_TO_BUF( mod->hop );
+        } else {
+            mpi_vrb_printf( "skip hopping export\n" );
+        }
 
         idx = 48;
         COPY_ARY_TO_BUF( mod->vert );
