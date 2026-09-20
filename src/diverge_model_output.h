@@ -206,6 +206,8 @@ typedef struct diverge_model_output_conf_t {
      * orbital-band matrices (cf. :c:func:`diverge_model_internals_get_U`)!
      */
     int fatbands;
+    /** export hoppings */
+    int hop;
 } diverge_model_output_conf_t;
 
 #if !defined(__cplusplus) && !defined(CTYPESGEN)
@@ -220,6 +222,7 @@ static const diverge_model_output_conf_t diverge_model_output_conf_defaults = {
     .E = 0,
     .npath = 0,
     .fatbands = 0,
+    .hop = 1,
 };
 #endif // __cplusplus
 
