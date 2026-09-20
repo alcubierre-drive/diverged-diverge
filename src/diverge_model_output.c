@@ -129,16 +129,16 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         // realspace symmetries
         ADD_ARRAY_TO_IBUF(sizeof(double)*9*mod->n_sym);
 
-        ibuf[idx++] = cfg->hop ? mod->n_hop : 0;
         // realspace hoppings
-        ADD_ARRAY_TO_IBUF(sizeof(rs_hopping_t)*mod->n_hop);
+        ibuf[idx++] = cfg->hop ? mod->n_hop : 0;
+        ADD_ARRAY_TO_IBUF(sizeof(rs_hopping_t)*(cfg->hop ? mod->n_hop : 0));
 
         ibuf[idx++] = mod->SU2;
         ibuf[idx++] = mod->n_spin;
 
-        ibuf[idx++] = mod->n_vert;
         // realspace vertex
-        ADD_ARRAY_TO_IBUF(sizeof(rs_vertex_t)*mod->n_vert);
+        ibuf[idx++] = cfg->vert ? mod->n_vert : 0;
+        ADD_ARRAY_TO_IBUF(sizeof(rs_vertex_t)*(cfg->vert ? mod->n_vert : 0));
 
         ibuf[idx++] = mod->n_tu_ff;
         // formfactors
@@ -344,7 +344,11 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
         }
 
         idx = 48;
-        COPY_ARY_TO_BUF( mod->vert );
+        if (cfg->vert) {
+            COPY_ARY_TO_BUF( mod->vert );
+        } else {
+            mpi_vrb_printf( "skip vertex export\n" );
+        }
 
         idx = 51;
         COPY_ARY_TO_BUF( mod->tu_ff );
