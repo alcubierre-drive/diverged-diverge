@@ -390,7 +390,7 @@ CT_TEST_NAME(epc_honeycomb_lat, "epc,honeycomb_lat") {
     diverge_model_free(p);
 }
 
-static diverge_model_t* holstein_2mode_model( int nk, int refine, double spring2 ) {
+static diverge_model_t* holstein_2mode_model_spin( int nk, int refine, double spring2, int SU2, double U ) {
     const double t=1.0, g=1.0, max_dist=1.01;
     const index_t nkf=5;
 
@@ -399,8 +399,7 @@ static diverge_model_t* holstein_2mode_model( int nk, int refine, double spring2
     m->nk[0] = m->nk[1] = nk;
     m->nkf[0] = m->nkf[1] = nkf;
     m->lattice[0][0] = m->lattice[1][1] = m->lattice[2][2] = 1.0;
-    m->n_spin = 1;
-    m->SU2 = 1;
+    m->n_spin = (m->SU2 = SU2) ? 1 : 2;
     m->n_orb = 1;
 
     m->hop = calloc(64, sizeof*m->hop);
@@ -410,6 +409,7 @@ static diverge_model_t* holstein_2mode_model( int nk, int refine, double spring2
         m->hop[m->n_hop++].t = t;
     }
     m->vert = calloc(1, sizeof*m->vert);
+    if (U != 0.0) m->vert[m->n_vert++] = (rs_vertex_t){ .chan='D', .s1=-1, .V=U };
 
     diverge_model_internals_common(m);
 
@@ -426,6 +426,10 @@ static diverge_model_t* holstein_2mode_model( int nk, int refine, double spring2
     diverge_model_internals_tu_phonons(m, max_dist, phop, sizeof(phop)/sizeof(phop[0]),
             pvert, sizeof(pvert)/sizeof(pvert[0]));
     return m;
+}
+
+static diverge_model_t* holstein_2mode_model( int nk, int refine, double spring2 ) {
+    return holstein_2mode_model_spin( nk, refine, spring2, 1, 0.0 );
 }
 
 static diverge_flow_step_t* tc_flow_to( diverge_model_t* m, double Lstar ) {
@@ -522,6 +526,30 @@ CT_TEST_NAME(tc_estimate_gf_unstable, "tc,green-function,unstable") {
 
     diverge_flow_step_free( sts ); diverge_model_free( ms );
     diverge_flow_step_free( stu ); diverge_model_free( mu );
+}
+
+CT_TEST_NAME(tc_estimate_gf_nonSU2, "tc,green-function,non-SU2") {
+    const double Lstar = 2.0, smearing = 0.3;
+    diverge_model_t* m1 = holstein_2mode_model_spin(8, 0, 4.0, 1, 0.5);
+    diverge_flow_step_t* st1 = tc_flow_to( m1, Lstar );
+    diverge_model_t* m2 = holstein_2mode_model_spin(8, 0, 4.0, 0, 0.5);
+    diverge_flow_step_t* st2 = tc_flow_to( m2, Lstar );
+
+    const double q0_old = tu_tc_estimate_change_propagator_q0( qnan_gen(0) );
+    tu_tc_result_t r1 = tc_at_q0( st1, Lstar, smearing, 0.0 );
+    tu_tc_result_t r2 = tc_at_q0( st2, Lstar, smearing, 0.0 );
+    tu_tc_estimate_change_propagator_q0( q0_old );
+
+    mpi_printf( "SU2: N0=%.10e lambda=%.10e mu=%.10e\n", r1.N0, r1.lambda, r1.mu_star_at_Lstar );
+    mpi_printf( "nSU2: N0=%.10e lambda=%.10e mu=%.10e\n", r2.N0, r2.lambda, r2.mu_star_at_Lstar );
+    CT_CHECK( r1.lambda > 1.e-6 );
+    CT_CHECK( r1.mu_star_at_Lstar > 1.e-6 );
+    CT_CHECK( fabs(r2.N0 - r1.N0) < 1.e-8 * r1.N0 );
+    CT_CHECK( fabs(r2.lambda - r1.lambda) < 1.e-6 * r1.lambda );
+    CT_CHECK( fabs(r2.mu_star_at_Lstar - r1.mu_star_at_Lstar) < 1.e-6 * fabs(r1.mu_star_at_Lstar) );
+
+    diverge_flow_step_free( st1 ); diverge_model_free( m1 );
+    diverge_flow_step_free( st2 ); diverge_model_free( m2 );
 }
 
 #endif

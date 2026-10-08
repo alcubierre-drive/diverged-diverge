@@ -367,6 +367,7 @@ static xvtree_t* wsvec_read( const char* fname ) {
         s.O1--; s.O2--;
         vtree_node_t* v = xvtree_find_or_insert( x, s );
         if (v->val.v_sz == 0) v->val = supvecs;
+        else free( supvecs.v );
     }
     fclose( f );
     return x;
