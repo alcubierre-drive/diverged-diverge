@@ -149,18 +149,17 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double Lambda_star,
     const double spin_deg = (w->n_spin == 1) ? 1.0 : 2.0;
     w->N0 = wsum / ((double)nktot * spin_deg);
 
+    // trs needs to be used for non-SU2 systems. Be aware.
     const index_t sp_up = 0;
-    const index_t sp_dn = (w->n_spin == 1) ? 0 : 1;
+    const double tr_sign = (w->n_spin == 1) ? 1.0 : -1.0;
     const index_t* mi_ofrom = td->mi_to_ofrom;
     const index_t* mi_oto = td->mi_to_oto;
     const index_t* mi_R = td->mi_to_R;
 
     for (index_t kf=0; kf<nktot; ++kf) {
         if (Wk[kf] <= 0.0) continue;
-        index_t ik[3], imk[3];
+        index_t ik[3];
         unravel3( kf, w->nkkf, ik );
-        for (int d=0; d<3; ++d) imk[d] = (w->nkkf[d] - ik[d]) % w->nkkf[d];
-        const index_t mkf = IDX3(imk[0],imk[1],imk[2], w->nkkf[1],w->nkkf[2]);
 
         for (index_t b=0; b<nb; ++b) {
             const double x = E[IDX2(kf,b,nb)] / smearing;
@@ -170,17 +169,19 @@ static tc_work_t* tc_work_init( diverge_flow_step_t* step, double Lambda_star,
 
             for (index_t f=0; f<n_orbff; ++f) {
                 const index_t o1 = mi_ofrom[f] + w->n_orb * sp_up;
-                const index_t o2 = mi_oto[f] + w->n_orb * sp_dn;
+                const index_t o2 = mi_oto[f] + w->n_orb * sp_up;
+                // TRS flips spin, so this is still the singlet in non-SU2
                 const double ph_arg = (double)(ik[0]*mi_R[3*f+0]) / (double)w->nkkf[0] +
                                       (double)(ik[1]*mi_R[3*f+1]) / (double)w->nkkf[1] +
                                       (double)(ik[2]*mi_R[3*f+2]) / (double)w->nkkf[2];
                 w->A[f] += g * conj( U[IDX3(kf,b,o1,nb,nb)] )
-                             * conj( U[IDX3(mkf,b,o2,nb,nb)] )
+                             * tr_sign * U[IDX3(kf,b,o2,nb,nb)]
                              * cexp( 2.*M_PI*I*ph_arg );
             }
         }
     }
-    for (index_t f=0; f<n_orbff; ++f) w->A[f] /= wsum;
+    // normalize spin
+    for (index_t f=0; f<n_orbff; ++f) w->A[f] /= wsum / spin_deg;
     for (index_t kf=0; kf<nktot; ++kf) Wk[kf] /= wsum;
 
     // FS-FS autocorrelation on coarse mesh
@@ -313,8 +314,9 @@ static double tc_pair_vertex_fs( diverge_flow_step_t* step, const tc_work_t* w )
             if (n_spin == 1) {
                 vfg = vv.ary[IDX6(0,0,g,0,0,f, n_spin,n_orbff,n_spin,n_spin,n_orbff)];
             } else {
-                vfg = vv.ary[IDX6(1,0,g,1,0,f, n_spin,n_orbff,n_spin,n_spin,n_orbff)]
-                    - vv.ary[IDX6(0,1,g,1,0,f, n_spin,n_orbff,n_spin,n_spin,n_orbff)];
+                // spin singlet needs D - C, normalize like the vertex
+                vfg = 0.5 * ( vv.ary[IDX6(1,0,g,1,0,f, n_spin,n_orbff,n_spin,n_spin,n_orbff)]
+                            - vv.ary[IDX6(0,1,g,1,0,f, n_spin,n_orbff,n_spin,n_spin,n_orbff)] );
             }
             sum += conj(w->A[f]) * vfg * w->A[g];
         }
