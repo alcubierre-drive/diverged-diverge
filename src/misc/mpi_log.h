@@ -51,6 +51,11 @@ void mpi_dbg_printf( const char* logname, mpi_loglevel_t loglevel,
 #define mpi_log_printf_all( ... ) mpi_dbg_printf_all( "log", mpi_loglevel_log, __FILE__, __LINE__, __VA_ARGS__ );
 /** print log message (loglevel 4) */
 #define mpi_log_printf( ... ) mpi_dbg_printf( "log", mpi_loglevel_log, __FILE__, __LINE__, __VA_ARGS__ );
+/** log message (loglevel 4) for auxiliary allocations of more than ~1GB */
+#define mpi_log_large_alloc( bytes, what ) { \
+    if ((double)(bytes) > 1.e9) \
+        mpi_log_printf( "allocating %.2fGB for %s\n", (double)(bytes)*1.e-9, (what) ); \
+}
 /** print verbose message (loglevel 5, off by default) from all ranks */
 #define mpi_vrb_printf_all( ... ) mpi_dbg_printf_all( "verbose", mpi_loglevel_vrb, __FILE__, __LINE__, __VA_ARGS__ );
 /** print verbose message (loglevel 5, off by default) */

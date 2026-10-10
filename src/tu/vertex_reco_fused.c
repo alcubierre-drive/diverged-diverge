@@ -271,6 +271,8 @@ tu_reco_fused_t* tu_reco_fused_init( const diverge_model_t* model, const tu_proj
 
         // fused exponentials for the generic momenta
         {
+            mpi_log_large_alloc( (f->my_nk + f->rest)*f->nu*(index_t)sizeof(complex128_t),
+                    "the fused reco_ft tables" );
             f->Etil = calloc(f->my_nk*f->nu, sizeof(complex128_t));
             const double* kmesh = model->internals->kmesh;
             #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())

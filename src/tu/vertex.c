@@ -591,7 +591,11 @@ static void reco_ft_symm( const tu_vertex_t* restrict V, const complex128_t* res
     const index_t my_nk_in_bz = V->symm->my_nk_in_bz;
 
     const bool was_null = (buf_q == NULL);
-    if (was_null) buf_q = malloc( my_nk_in_bz*rest*sizeof(complex128_t) );
+    if (was_null) {
+        mpi_log_large_alloc( my_nk_in_bz*rest*(index_t)sizeof(complex128_t),
+                "the reconstructed full-BZ vertex" );
+        buf_q = malloc( my_nk_in_bz*rest*sizeof(complex128_t) );
+    }
     double t0 = diverge_mpi_wtime();
     reco_symm_canonical( V, Xch, pref, buf_q );
     double t1 = diverge_mpi_wtime();
@@ -671,6 +675,8 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
     if (V->reco_fused && tu_reco_fused_nr(V->reco_fused) == nr) {
         complex128_t* ref = NULL;
         if (V->tu_data->tu_reco_fused == 2) {
+            mpi_log_large_alloc( nr*rest*(index_t)sizeof(complex128_t),
+                    "the reco_ft comparison buffer" );
             ref = malloc( nr*rest*sizeof(complex128_t) );
             reco_ft_two_step( V, channel, ref, existing_r_exp, nr, buf_q );
         }
