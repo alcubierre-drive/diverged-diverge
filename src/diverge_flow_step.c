@@ -34,6 +34,8 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
     diverge_flow_step_t* st = (diverge_flow_step_t*)calloc(1, sizeof(diverge_flow_step_t));
     st->mod = mod;
     st->intls = mod->internals;
+    st->step_eig_abort = INFINITY;
+    for (int i=0; i<5; ++i) st->step_eig[i] = -1.0;
 
     dependency_tree_insert_flow(st);
 
@@ -176,6 +178,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
     diverge_timing_t* ttt = NULL;
     st->Lambda = Lambda;
     st->dLambda = dLambda;
+    for (int i=0; i<5; ++i) st->step_eig[i] = -1.0;
     // DEVELOPERS
     //
     // This is where the heavy lifiting happens. Depending on the backend, we
@@ -255,8 +258,9 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             st->niter = grid_flow_step_num_calls( st->grid_step );
             break;
         case diverge_tu:
-            tu_stepper_euler( st->tu_step, st->tu_vertex, Lambda, dLambda, chanmax );
-            if (st->tu_rpa) tu_rpa_step( st->tu_rpa, Lambda, dLambda );
+            if (!tu_stepper_euler( st->tu_step, st->tu_vertex, Lambda, dLambda, chanmax,
+                        st->step_eig_on ? st : NULL ) && st->tu_rpa)
+                tu_rpa_step( st->tu_rpa, Lambda, dLambda );
 
             st->chanmax[0] = chanmax[0];
             st->chanmax[1] = chanmax[1];
@@ -731,8 +735,43 @@ int diverge_flow_step_eigchan_shut_up = 0;
 index_t diverge_flow_step_eigchan_piter_maxiter = DIVERGE_FLOW_STEP_EIGCHAN_PITER_MAXITER;
 double diverge_flow_step_eigchan_piter_tol = DIVERGE_FLOW_STEP_EIGCHAN_PITER_TOL;
 
+static double eigchan_of_vertex( diverge_flow_step_t* st, diverge_flow_step_vertex_t v, int piter );
+static int step_eig_idx( char chan );
+
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter ) {
-    diverge_flow_step_vertex_t v = diverge_flow_step_vertex( st, chan );
+    if (piter == DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP) {
+        int i = step_eig_idx( chan );
+        if (i < 0 && !diverge_flow_step_eigchan_shut_up)
+            mpi_wrn_printf( "channel '%c' not computed within the step\n", chan );
+        return i < 0 ? -1.0 : st->step_eig[i];
+    }
+    return eigchan_of_vertex( st, diverge_flow_step_vertex( st, chan ), piter );
+}
+
+static int step_eig_idx( char chan ) {
+    const char* chans = "pmhcd";
+    const char* c = strchr( chans, chan );
+    return (chan && c) ? (int)(c - chans) : -1;
+}
+
+int diverge_flow_step_eigchan_in_step( diverge_flow_step_t* st, char chan, const complex128_t* buf, double scale ) {
+    tu_vertex_t* tu_V = st->tu_vertex;
+    diverge_flow_step_vertex_t v = {
+        .ary = (complex128_t*)buf, // not written to
+        .q_0 = tu_V->my_nk_off,
+        .q_1 = tu_V->my_nk_off + tu_V->my_nk,
+        .nk = 0,
+        .n_orbff = tu_V->n_orbff,
+        .n_spin = st->mod->n_spin,
+        .backend = 'T',
+        .channel = chan,
+    };
+    double val = fabs(scale) * eigchan_of_vertex( st, v, st->step_eig_piter );
+    st->step_eig[step_eig_idx(chan)] = val;
+    return val > st->step_eig_abort;
+}
+
+static double eigchan_of_vertex( diverge_flow_step_t* st, diverge_flow_step_vertex_t v, int piter ) {
     index_t nq = (v.q_1 - v.q_0);
     index_t linsz = v.backend == 'T' ? v.n_orbff * POW2(v.n_spin) : POW2(v.n_orbff*v.n_spin) * v.nk;
     double tick = diverge_mpi_wtime();

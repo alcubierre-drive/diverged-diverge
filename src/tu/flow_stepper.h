@@ -18,7 +18,11 @@ extern "C" {
 
 tu_stepper_t* tu_stepper_init( tu_projection_t* proj, tu_prop_t* loop, tu_vertex_t* vert );
 void tu_stepper_free( tu_stepper_t* s );
-void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, double dlambda, double maxs[6] );
+// if eig != NULL, the projected vertices are passed to
+// diverge_flow_step_eigchan_in_step (may abort the step). returns nonzero if
+// the step was aborted (vertex unchanged)
+int tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, double dlambda, double maxs[6],
+        diverge_flow_step_t* eig );
 
 // useful if you want to hack around, chans: bitwise P,C,D,CD; returns prev.
 uint64_t tu_stepper_prodignore( tu_stepper_t* s, uint64_t chans );

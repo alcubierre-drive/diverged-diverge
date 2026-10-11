@@ -194,7 +194,7 @@ CT_TEST_NAME(tu_prop_katanin_step, "tu_prop,katanin:step") {
         CT_CHECK( step->katanin );
 
         double maxs[6] = {0};
-        tu_stepper_euler( step, vert, KAT_LAMBDA, dlambda, maxs );
+        tu_stepper_euler( step, vert, KAT_LAMBDA, dlambda, maxs, NULL );
 
         // \mathcal{K} after exactly one shell
         for (index_t i=0; i<step->full_vert_size; ++i)
