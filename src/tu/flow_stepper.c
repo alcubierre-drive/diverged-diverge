@@ -280,8 +280,8 @@ int tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dla
             TICK_TOCK( s->w_time_projection, P_projection(v->projection_helper, v, s->proj) );
             if (v->elph && v->ph_to_P)            tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
             if (v->elph && v->ph_to_P && !v->SU2) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Cch,  1.0 );
+            EIG_HOOK( 'p', v->projection_helper, 1.0 );
         }
-        EIG_HOOK( 'p', v->projection_helper, 1.0 );
 
             stepper_loop( s, 'P', s->internal_vertex->pp_bubble_int, s->kat_pp );
 
