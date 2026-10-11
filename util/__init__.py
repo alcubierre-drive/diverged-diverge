@@ -38,6 +38,7 @@ if not _libs["divERGe"] is None:
         '_BATCHED_EIGEN_NCHUNKS_AUTONUM',
         '_BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB',
         '_DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK',
+        '_DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP',
         '_DIVERGE_MODEL_MAGIC_NUMBER',
         '_DIVERGE_MODEL_NBANDSTRUCTURE',
         '_DIVERGE_QNAN_DISABLE_CLANG_OPTS',
@@ -129,6 +130,7 @@ if not _libs["divERGe"] is None:
         ('_BATCHED_EIGEN_NCHUNKS_AUTONUM',             c_int64),
         ('_BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB',         c_int64),
         ('_DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK',    c_int64),
+        ('_DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP', c_int64),
         ('_DIVERGE_MODEL_MAGIC_NUMBER',                c_int64),
         ('_DIVERGE_MODEL_NBANDSTRUCTURE',              c_int64),
         ('_DIVERGE_QNAN_DISABLE_CLANG_OPTS',           c_int64),
@@ -201,7 +203,7 @@ if not _libs["divERGe"] is None:
         ('_DIVERGE_OLD_W90_READER',                    c_int64),
         ('_DIVERGE_TU_PROJ_TO_R_VTREE',                c_int64),
         ('_XVTREE_ALIGNMENT_PRINT',                    c_int64),
-        ('_PADDING',                                   c_char * 64),
+        ('_PADDING',                                   c_char * 56),
         # char arrays last, so that everything before them stays aligned
         ('_CUBLAS_BATCHED_GEMM_CALL',                  struct_str1024_t),
         ('_CUDA_VERSION_STR',                          struct_str1024_t),
@@ -225,6 +227,7 @@ if not _libs["divERGe"] is None:
     BATCHED_EIGEN_NCHUNKS_AUTONUM             = _CONSTANTS_._BATCHED_EIGEN_NCHUNKS_AUTONUM
     BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB         = _CONSTANTS_._BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB
     DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK    = _CONSTANTS_._DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK
+    DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP = _CONSTANTS_._DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP
     DIVERGE_MODEL_MAGIC_NUMBER                = _CONSTANTS_._DIVERGE_MODEL_MAGIC_NUMBER
     DIVERGE_MODEL_NBANDSTRUCTURE              = _CONSTANTS_._DIVERGE_MODEL_NBANDSTRUCTURE
     DIVERGE_QNAN_DISABLE_CLANG_OPTS           = _CONSTANTS_._DIVERGE_QNAN_DISABLE_CLANG_OPTS
@@ -1358,6 +1361,7 @@ if not _libs["divERGe"] is None:
     flow_step_eigchan.restype = c_double
 
     FLOW_STEP_EIGCHAN_PITER_ARPACK = (-c_uint(-1).value)//2
+    FLOW_STEP_EIGCHAN_PITER_FROM_STEP = FLOW_STEP_EIGCHAN_PITER_ARPACK + 1
 
     flow_step_euler = _libs["divERGe"].get("diverge_flow_step_euler", "cdecl")
     flow_step_euler.argtypes = [POINTER(flow_step_t), c_double, c_double]
