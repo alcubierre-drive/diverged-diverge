@@ -94,12 +94,20 @@ void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
  * eigenvalue. Otherwise use :c:func:`batched_svd`. For how the channels are
  * defined, see :c:func:`diverge_flow_step_vertex`. If you want to use ARPACK
  * (and have it compiled in!), you can pass
- * ``DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK`` for ``piter``
+ * ``DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK`` or
+ * ``DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP`` for ``piter``, with the latter
+ * one depending on (officially unsupported) hacks on the flow step
+ * (``"tu_step_eigchan" -> "piter" ("arpack", "off", "INTEGER")`` and
+ * ``"tu_step_eigchan_abort" -> "threshold")
  */
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter );
 
 #ifndef DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK
 #define DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK INT_MIN
+#endif
+
+#ifndef DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP
+#define DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP (INT_MIN+1)
 #endif
 
 /** Do an euler step starting at :math:`\Lambda` ending at :math:`\Lambda+d_\Lambda` */

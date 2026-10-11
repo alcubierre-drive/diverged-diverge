@@ -11,6 +11,7 @@
 #include "projection_handler.h"
 
 #include "diverge_interface.h"
+#include "../diverge_flow_step_internal.h"
 #include "selfenergy.h"
 #include "phonons.h"
 #include "../grid/helpers.h" // TICK_TOCK macro
@@ -121,7 +122,13 @@ static void stepper_loop( tu_stepper_t* s, char chan, complex128_t* dest, comple
     }
 }
 
-void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dlambda, double maxs[6] ) {
+// eigenvalue of a projected vertex, abort the step if requested
+#define EIG_HOOK( chan, buf, scale ) { \
+    if (eig && diverge_flow_step_eigchan_in_step( eig, chan, buf, scale )) goto step_aborted; \
+}
+
+int tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dlambda, double maxs[6],
+        diverge_flow_step_t* eig ) {
     double flow_step_tick = diverge_mpi_wtime();
     s->num_calls += 1;
     // create GF buffers here s.t. the buffers can be used in
@@ -166,6 +173,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
                     if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch,  1.0 );
                     TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->Dch, v, s->proj) );
                     if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
+                    EIG_HOOK( 'm', s->internal_vertex->Dch, -1.0 );
 
                     // C diagram saved into Cch array
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
@@ -182,6 +190,8 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
                     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
                     for (index_t ii=0; ii<v->full_vert_size; ++ii)
                         s->internal_vertex->projection_helper[ii] -= 0.5*s->internal_vertex->Dch[ii];
+                    // 'h' = 2*P_D - P_C
+                    EIG_HOOK( 'h', s->internal_vertex->projection_helper, 2.0 );
 
                     // calcualte the D diagrams and save into Dch array
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Dch,
@@ -200,6 +210,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
                     TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->projection_helper,
                                 v, s->proj) );
                     if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
+                    EIG_HOOK( 'm', s->internal_vertex->projection_helper, -1.0 );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
                                 s->internal_vertex->projection_helper,
@@ -211,6 +222,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
                     TICK_TOCK( s->w_time_projection, D_projection(s->internal_vertex->projection_helper,
                                 v, s->proj) );
                     if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, 0.0, v->Dch, -1.0 );
+                    EIG_HOOK( 'h', s->internal_vertex->projection_helper, 1.0 );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Dch,
                                 s->internal_vertex->projection_helper,
@@ -227,6 +239,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
                             v, s->proj) );
                 if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
                 if (v->elph && v->ph_to_C) tu_data_phonons_gen_vert( v->tu_ph,    0.0, v->Cch,  1.0 );
+                EIG_HOOK( 'c', s->internal_vertex->projection_helper, 1.0 );
             }}
 
             if (s->channel_selection[1] || s->channel_selection[2]) {
@@ -249,6 +262,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
                             v, s->proj) );
                 if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph,    0.0, v->Dch, -1.0 );
                 if (v->elph && v->ph_to_D) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Cch,  1.0 );
+                EIG_HOOK( 'd', s->internal_vertex->projection_helper, 1.0 );
             }}
 
             if (s->channel_selection[2]) {
@@ -267,6 +281,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
             if (v->elph && v->ph_to_P)            tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Dch, -1.0 );
             if (v->elph && v->ph_to_P && !v->SU2) tu_data_phonons_gen_vert( v->tu_ph, lambda, v->Cch,  1.0 );
         }
+        EIG_HOOK( 'p', v->projection_helper, 1.0 );
 
             stepper_loop( s, 'P', s->internal_vertex->pp_bubble_int, s->kat_pp );
 
@@ -285,6 +300,13 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* v, double lambda, double dl
                                        tu_vertex_max(v, maxs) );
 
     s->w_time_full += diverge_mpi_wtime()-flow_step_tick;
+    return 0;
+
+step_aborted:
+    // vertex untouched, i.e., still at the scale this step started from
+    TICK_TOCK( s->w_time_add_find_max, tu_vertex_max(v, maxs) );
+    s->w_time_full += diverge_mpi_wtime()-flow_step_tick;
+    return 1;
 }
 
 diverge_timing_t* tu_stepper_timings( tu_stepper_t* s, int* num ) {

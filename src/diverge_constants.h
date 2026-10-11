@@ -22,6 +22,7 @@ typedef struct {
     int64_t   _BATCHED_EIGEN_NCHUNKS_AUTONUM;
     int64_t   _BATCHED_EIGEN_NCHUNKS_AUTOSIZE_GB;
     int64_t   _DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK;
+    int64_t   _DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP;
     int64_t   _DIVERGE_MODEL_MAGIC_NUMBER;
     int64_t   _DIVERGE_MODEL_NBANDSTRUCTURE;
     bool64_t  _DIVERGE_QNAN_DISABLE_CLANG_OPTS;
@@ -57,6 +58,7 @@ typedef struct {
     bool64_t  _DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE;
     bool64_t  _TU_POST_USE_BATCHED_SVD_U;
     bool64_t  _TU_PROJ_TIMING;
+    int64_t   _TU_PROJ_BLOCK_BYTES;
     bool64_t  _TU_VERTEX_RECO_GPU_ZGEMM;
     int64_t   _LDOS_KERNEL_GPU_DEV_MAXNOS;
     int64_t   _LDOS_KERNEL_GPU_DEV_NTHREADS;
@@ -97,7 +99,7 @@ typedef struct {
     bool64_t  _XVTREE_ALIGNMENT_PRINT;
 
     // pads to a multiple of 512 bits. adjust when adding a field
-    char      _PADDING[64];
+    char      _PADDING[48];
 
     // char arrays last, so that they stay aligned.
     str1024_t _CUBLAS_BATCHED_GEMM_CALL;

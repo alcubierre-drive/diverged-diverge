@@ -61,7 +61,19 @@ struct diverge_flow_step_t {
     VECTOR_DECL( diverge_timing_t, timings )
 
     double t_eigchan_diag;
+
+    // eigenvalues from within the step (TU only), see
+    // DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP. order: p,m,h,c,d
+    int step_eig_on;
+    int step_eig_piter;
+    double step_eig_abort;
+    double step_eig[5];
 };
+
+// called by the TU stepper with each projected vertex (scale*buf is channel
+// chan, q-local and symmetry reduced) if step_eig_on. stores the eigenvalue,
+// returns nonzero if the step must be aborted
+int diverge_flow_step_eigchan_in_step( diverge_flow_step_t* st, char chan, const complex128_t* buf, double scale );
 
 extern int diverge_flow_step_eigchan_shut_up;
 extern index_t diverge_flow_step_eigchan_piter_maxiter;

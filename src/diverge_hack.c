@@ -240,6 +240,13 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("ldos_kernel_gpu_setsort") {
         ldos_kernel_gpu_setsort(atoi(val));
     }
+    CHECKKEY("tu_step_eigchan") {
+        STEP->step_eig_on = strcmp(val, "off") != 0;
+        STEP->step_eig_piter = !strcmp(val, "arpack") ? DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK : atoi(val);
+    }
+    CHECKKEY("tu_step_eigchan_abort") {
+        STEP->step_eig_abort = atof(val);
+    }
     CHECKKEY("flow_step_eigchan_shut_up") {
         diverge_flow_step_eigchan_shut_up = atoi(val);
     }
