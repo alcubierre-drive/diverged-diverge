@@ -86,7 +86,7 @@ void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
  * ``DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP`` for ``piter``, with the latter
  * one depending on (officially unsupported) hacks on the flow step
  * (``"tu_step_eigchan" -> "piter" ("arpack", "off", "INTEGER")`` and
- * ``"tu_step_eigchan_abort" -> "threshold")
+ * ``"tu_step_eigchan_abort" -> "threshold"``)
  */
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter );
 
