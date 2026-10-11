@@ -11,6 +11,7 @@
 #include "projection_handler.h"
 
 #include "diverge_interface.h"
+#include "../diverge_flow_step_internal.h"
 #include "selfenergy.h"
 #include "../grid/helpers.h" // TICK_TOCK macro
 
@@ -120,7 +121,13 @@ static void stepper_loop( tu_stepper_t* s, char chan, complex128_t* dest, comple
     }
 }
 
-void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, double dlambda, double maxs[6] ) {
+// eigenvalue of a projected vertex, abort the step if requested
+#define EIG_HOOK( chan, buf, scale ) { \
+    if (eig && diverge_flow_step_eigchan_in_step( eig, chan, buf, scale )) goto step_aborted; \
+}
+
+int tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, double dlambda, double maxs[6],
+        diverge_flow_step_t* eig ) {
     double flow_step_tick = diverge_mpi_wtime();
     s->num_calls += 1;
     // create GF buffers here s.t. the buffers can be used in
@@ -161,6 +168,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                 if (s->channel_selection[2] && s->channel_selection[1]) {
                 if (!(s->channel_product_ignore_map & PRODIGNORE_CD)) {
                     TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->Dch, inout, s->proj) );
+                    EIG_HOOK( 'm', s->internal_vertex->Dch, -1.0 );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
                                 s->internal_vertex->Dch, s->internal_vertex->ph_bubble_int,
@@ -172,6 +180,8 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                     #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
                     for (index_t ii=0; ii<inout->full_vert_size; ++ii)
                         s->internal_vertex->projection_helper[ii] -= 0.5*s->internal_vertex->Dch[ii];
+                    // 'h' = 2*P_D - P_C
+                    EIG_HOOK( 'h', s->internal_vertex->projection_helper, 2.0 );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Dch,
                                 s->internal_vertex->projection_helper,
@@ -186,6 +196,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                 if (!(s->channel_product_ignore_map & PRODIGNORE_C)) {
                     TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->projection_helper,
                                 inout, s->proj) );
+                    EIG_HOOK( 'm', s->internal_vertex->projection_helper, -1.0 );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Cch,
                                 s->internal_vertex->projection_helper,
@@ -195,6 +206,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                 if (!(s->channel_product_ignore_map & PRODIGNORE_D)) {
                     TICK_TOCK( s->w_time_projection, D_projection(s->internal_vertex->projection_helper,
                                 inout, s->proj) );
+                    EIG_HOOK( 'h', s->internal_vertex->projection_helper, 1.0 );
 
                     TICK_TOCK( s->w_time_product, tu_vertex_product(s->internal_vertex->Dch,
                                 s->internal_vertex->projection_helper,
@@ -207,6 +219,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
             if (!(s->channel_product_ignore_map & PRODIGNORE_C)) {
                 TICK_TOCK( s->w_time_projection, C_projection(s->internal_vertex->projection_helper,
                             inout, s->proj) );
+                EIG_HOOK( 'c', s->internal_vertex->projection_helper, 1.0 );
             }}
 
             if (s->channel_selection[1] || s->channel_selection[2]) {
@@ -225,6 +238,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
             if (!(s->channel_product_ignore_map & PRODIGNORE_D)) {
                 TICK_TOCK( s->w_time_projection, D_projection(s->internal_vertex->projection_helper,
                             inout, s->proj) );
+                EIG_HOOK( 'd', s->internal_vertex->projection_helper, 1.0 );
             }}
 
             if (s->channel_selection[2]) {
@@ -238,6 +252,7 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
         if (s->channel_selection[0]) {
         if (!(s->channel_product_ignore_map & PRODIGNORE_P)) {
             TICK_TOCK( s->w_time_projection, P_projection(inout->projection_helper, inout, s->proj) );
+            EIG_HOOK( 'p', inout->projection_helper, 1.0 );
         }
 
             stepper_loop( s, 'P', s->internal_vertex->pp_bubble_int, s->kat_pp );
@@ -256,6 +271,13 @@ void tu_stepper_euler( tu_stepper_t* s, tu_vertex_t* inout, double lambda, doubl
                                        tu_vertex_max(inout, maxs) );
 
     s->w_time_full += diverge_mpi_wtime()-flow_step_tick;
+    return 0;
+
+step_aborted:
+    // vertex untouched, i.e., still at the scale this step started from
+    TICK_TOCK( s->w_time_add_find_max, tu_vertex_max(inout, maxs) );
+    s->w_time_full += diverge_mpi_wtime()-flow_step_tick;
+    return 1;
 }
 
 diverge_timing_t* tu_stepper_timings( tu_stepper_t* s, int* num ) {
