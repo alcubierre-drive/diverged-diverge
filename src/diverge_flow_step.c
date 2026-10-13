@@ -7,6 +7,7 @@
 #include "misc/batched_svd.h"
 #include "misc/batched_zgemd.h"
 #include "misc/eigen.h"
+#include "misc/mergesort.h"
 #include "diverge_filling.h"
 #include "diverge_model_internals.h"
 #include "misc/dependency_tree.h"
@@ -23,6 +24,7 @@
 
 #include <float.h>
 #include <limits.h>
+#include <omp.h>
 
 static void diverge_flow_step_select_channels( diverge_flow_step_t* st, const char* chans_ );
 
@@ -771,108 +773,253 @@ int diverge_flow_step_eigchan_in_step( diverge_flow_step_t* st, char chan, const
     return val > st->step_eig_abort;
 }
 
+typedef enum {
+    eigchan_piter,
+    eigchan_arpack,
+    eigchan_gersch,
+    eigchan_svd,
+} eigchan_method_t;
+
+static inline double cabs_fast( const complex128_t z ) {
+    const double* zd = (const double*)&z;
+    return sqrt(POW2(zd[0]) + POW2(zd[1]));
+}
+
+static double eigchan_batched( eigchan_method_t m, const complex128_t* A,
+        index_t linsz, index_t cnt, index_t* nnc ) {
+    double result = 0.0;
+    if (cnt <= 0) return result;
+    switch (m) {
+        case eigchan_piter: {
+            double* tol_ary = calloc(cnt, sizeof*tol_ary);
+            index_t* maxiter_ary = calloc(cnt, sizeof*maxiter_ary);
+            complex128_t* eigen = calloc(cnt, sizeof*eigen);
+
+            #pragma omp parallel for num_threads(diverge_omp_num_threads())
+            for (index_t q=0; q<cnt; ++q) {
+                maxiter_ary[q] = diverge_flow_step_eigchan_piter_maxiter;
+                tol_ary[q] = diverge_flow_step_eigchan_piter_tol;
+            }
+
+            power_iteration_batched( A, NULL, eigen, linsz, cnt, maxiter_ary, tol_ary, NULL );
+
+            index_t nq_not_converged = 0;
+            double maxval = 0.0;
+            #pragma omp parallel for num_threads(diverge_omp_num_threads()) \
+                                     reduction(+:nq_not_converged) \
+                                     reduction(max:maxval)
+            for (index_t q=0; q<cnt; ++q) {
+                if (maxiter_ary[q] == diverge_flow_step_eigchan_piter_maxiter ||
+                    tol_ary[q] > diverge_flow_step_eigchan_piter_tol)
+                        nq_not_converged++;
+                maxval = MAX(maxval, creal(eigen[q] * conj(eigen[q])));
+            }
+            *nnc += nq_not_converged;
+
+            free( tol_ary );
+            free( maxiter_ary );
+            free( eigen );
+
+            result = sqrt(maxval);
+        } break;
+        case eigchan_arpack: {
+            for (index_t q=0; q<cnt; ++q) {
+                int ncv = 10;
+                complex128_t eigvals[ncv];
+                complex128_t eigvecs[ncv*linsz];
+                memset( eigvals, 0, sizeof(eigvals) );
+                memset( eigvecs, 0, sizeof(eigvecs) );
+                char* which = "LM";
+                arnoldi_eigen_dense( which, linsz, 1, ncv, A+q*POW2(linsz), eigvals, eigvecs, 1.e-6, 100 );
+                for (int i=0; i<ncv; ++i)
+                    result = MAX(result, cabs_fast(eigvals[i]));
+            }
+        } break;
+        case eigchan_gersch: {
+            double Vmax = 0.0;
+            #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:Vmax) collapse(2)
+            for (index_t q=0; q<cnt; ++q)
+            for (index_t l=0; l<linsz; ++l) {
+                // Gerschgorin approximant: diagonal element is the disc's center
+                // and the sum of all other elements' absolute value the radius
+                complex128_t C_l = A[IDX3(q,l,l, linsz,linsz)];
+                double R_l = 0.0;
+                for (index_t m=0; m<linsz; ++m)
+                    if (m != l) R_l += cabs_fast(A[IDX3(q,l,m, linsz,linsz)]);
+                // worst case: extend into the direction of the center (which should
+                // be real anyways)
+                double Vmax_l = cabs_fast(cexp(I*carg(C_l))*R_l + C_l);
+                Vmax = MAX(Vmax, Vmax_l);
+            }
+            result = Vmax;
+        } break;
+        case eigchan_svd: {
+            double* singular_values = calloc( cnt * linsz, sizeof* singular_values );
+            // A not written to
+            batched_svd( NULL, -1, (complex128_t*)A, NULL, NULL, singular_values, linsz, cnt );
+            double smax = 0.0;
+            #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:smax)
+            for (index_t i=0; i<linsz*cnt; ++i) smax = MAX(smax, singular_values[i]);
+            free( singular_values );
+            result = smax;
+        } break;
+    }
+    return result;
+}
+
+static void absmatvec( const complex128_t* A, index_t N, const double* w, double* y, int trans ) {
+    if (trans) {
+        ZERO_OUT(y, N);
+        for (index_t i=0; i<N; ++i)
+        for (index_t j=0; j<N; ++j)
+            y[j] += cabs_fast(A[IDX2(i,j,N)]) * w[i];
+    } else {
+        for (index_t i=0; i<N; ++i) {
+            double s = 0.0;
+            for (index_t j=0; j<N; ++j)
+                s += cabs_fast(A[IDX2(i,j,N)]) * w[j];
+            y[i] = s;
+        }
+    }
+}
+
+// aux: (4*N,), return the minumum of (i) Gershgorin rows and columns (or for SVD
+// the Schur bound), (ii) the Frobenius norm, (iii) the Collatz-Wielandt bound,
+// which is essentially power iteration of abs(A) with an all-ones vector w.
+static double eigchan_bound( const complex128_t* A, index_t N, int svd, index_t iter, double* aux ) {
+    double *c = aux, *w = aux+N, *y = aux+2*N, *z = aux+3*N;
+    ZERO_OUT(c, N);
+    double rmax = 0.0, cmax = 0.0, fro = 0.0;
+    for (index_t i=0; i<N; ++i) {
+        double r = 0.0;
+        for (index_t j=0; j<N; ++j) {
+            double a = cabs_fast(A[IDX2(i,j,N)]);
+            r += a;
+            c[j] += a;
+            fro += a*a;
+        }
+        y[i] = r;
+        rmax = MAX(rmax, r);
+    }
+    for (index_t j=0; j<N; ++j) cmax = MAX(cmax, c[j]);
+    double bound = MIN( svd ? sqrt(rmax*cmax) : MIN(rmax, cmax), sqrt(fro) );
+
+    // y = |A| w, fill w with 1s
+    for (index_t i=0; i<N; ++i) w[i] = 1.0;
+    for (index_t k=0; k<iter && bound > 0.0; ++k) {
+        // z = B w
+        if (svd) absmatvec( A, N, y, z, 1 );
+        else memcpy( z, y, sizeof(double)*N );
+        double ratio = 0.0, zmax = 0.0;
+        for (index_t i=0; i<N; ++i) {
+            ratio = MAX(ratio, z[i]/w[i]);
+            zmax = MAX(zmax, z[i]);
+        }
+        bound = MIN( bound, svd ? sqrt(ratio) : ratio );
+        if (k+1 == iter || zmax <= 0.0) break;
+        // power step, w kept strictly positive (zero rows give z_i = 0)
+        for (index_t i=0; i<N; ++i) w[i] = MAX(z[i]/zmax, 1.e-12);
+        absmatvec( A, N, w, y, 0 );
+    }
+    return bound;
+}
+
+typedef struct {
+    double b;
+    index_t q;
+} eigchan_bound_t;
+
+#undef SERISORT_COMP
+#define SERISORT_COMP(x, y) (((x).b < (y).b) - ((y).b < (x).b))
+SERISORT_IMPL(eigchan_bound_sort, eigchan_bound_t)
+
+static double eigchan_iterative( eigchan_method_t m, const complex128_t* A,
+        index_t linsz, index_t nq, index_t* nnc ) {
+    index_t L2 = POW2(linsz);
+    int nthr = diverge_omp_num_threads();
+
+    eigchan_bound_t* bnd = calloc(MAX(nq,1), sizeof*bnd);
+    // aux: (nthr,4*linsz) for eigchan_bound, then (nq,) eigchan_bound_t for sorting
+    double* aux = calloc(MAX(4*linsz*nthr, nq*(index_t)(sizeof(eigchan_bound_t)/sizeof(double))), sizeof*aux);
+    #pragma omp parallel for num_threads(nthr)
+    for (index_t q=0; q<nq; ++q) {
+        bnd[q].q = q;
+        bnd[q].b = eigchan_bound(A+q*L2, linsz, m==eigchan_svd, 3, aux+4*linsz*omp_get_thread_num());
+    }
+    eigchan_bound_sort_s(bnd, nq, (eigchan_bound_t*)aux);
+    free(aux);
+
+    // one per rank
+    double lam = nq > 0 ? eigchan_batched(m, A+bnd[0].q*L2, linsz, 1, nnc) : 0.0;
+    diverge_mpi_allreduce_double_max_inplace(&lam, 1);
+
+    // then the remaining qpts on this rank
+    index_t pos = MIN(nq, 1);
+    for (; pos < nq && bnd[pos].b > lam; ++pos)
+        lam = MAX(lam, eigchan_batched(m, A+bnd[pos].q*L2, linsz, 1, nnc));
+    free(bnd);
+    // and finally communicate each local max
+    diverge_mpi_allreduce_double_max_inplace(&lam, 1);
+
+    return lam;
+}
+
 static double eigchan_of_vertex( diverge_flow_step_t* st, diverge_flow_step_vertex_t v, int piter ) {
     index_t nq = (v.q_1 - v.q_0);
     index_t linsz = v.backend == 'T' ? v.n_orbff * POW2(v.n_spin) : POW2(v.n_orbff*v.n_spin) * v.nk;
     double tick = diverge_mpi_wtime();
-    double result = 0.0;
+
+    int iterative = 1;
+    switch (piter) {
+        case DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_SVD:
+            piter = 0;
+            break;
+        case DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_PITER:
+            piter = 1;
+            break;
+        case DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_ARPACK:
+            piter = DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK;
+            break;
+        default:
+            iterative = 0;
+            break;
+    }
+
+    eigchan_method_t m = eigchan_svd;
     if (piter > 0) {
-        if (0) {
-            piter_LABEL:
-            {}
-        }
-
-        double* tol_ary = calloc(nq, sizeof*tol_ary);
-        index_t* maxiter_ary = calloc(nq, sizeof*maxiter_ary);
-        complex128_t* eigen = calloc(nq, sizeof*eigen);
-
-        #pragma omp parallel for num_threads(diverge_omp_num_threads())
-        for (index_t q=0; q<nq; ++q) {
-            maxiter_ary[q] = diverge_flow_step_eigchan_piter_maxiter;
-            tol_ary[q] = diverge_flow_step_eigchan_piter_tol;
-        }
-
-        power_iteration_batched( v.ary, NULL, eigen, linsz, nq, maxiter_ary, tol_ary, NULL );
-
-        index_t nq_not_converged = 0;
-        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(+:nq_not_converged)
-        for (index_t q=0; q<nq; ++q)
-            if (maxiter_ary[q] == diverge_flow_step_eigchan_piter_maxiter ||
-                tol_ary[q] > diverge_flow_step_eigchan_piter_tol)
-                    nq_not_converged++;
-        diverge_mpi_allreduce_index_sum_inplace(&nq_not_converged, 1);
-        if (nq_not_converged != 0 && !diverge_flow_step_eigchan_shut_up)
-            mpi_wrn_printf( "%li qpts not converged in power iteration\n", nq_not_converged );
-
-        double maxval = 0.0;
-        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:maxval)
-        for (index_t q=0; q<nq; ++q) {
-            double nrm2 = creal(eigen[q] * conj(eigen[q]));
-            maxval = MAX(maxval, nrm2);
-        }
-        diverge_mpi_allreduce_double_max_inplace(&maxval, 1);
-
-        free( tol_ary );
-        free( maxiter_ary );
-        free( eigen );
-
-        result = sqrt(maxval);
+        m = eigchan_piter;
     } else if (piter == DIVERGE_FLOW_STEP_EIGCHAN_PITER_ARPACK) {
+        m = eigchan_arpack;
         if (linsz < 10) {
             if (!diverge_flow_step_eigchan_shut_up) {
                 mpi_wrn_printf( "linsz too small (%li), using power iteration\n", linsz );
             }
-            goto piter_LABEL;
-        }
-        if (!arnoldi_package_compiled_in()) {
+            m = eigchan_piter;
+        } else if (!arnoldi_package_compiled_in()) {
             if (!diverge_flow_step_eigchan_shut_up) {
                 mpi_wrn_printf( "ARPACK not compiled in, using power iteration\n" );
             }
-            goto piter_LABEL;
+            m = eigchan_piter;
         }
-
-        double Vmax = 0.0;
-        for (index_t q=0; q<nq; ++q) {
-            int ncv = 10;
-            complex128_t eigvals[ncv];
-            complex128_t eigvecs[ncv*linsz];
-            memset( eigvals, 0, sizeof(eigvals) );
-            memset( eigvecs, 0, sizeof(eigvecs) );
-            char* which = "LM";
-            arnoldi_eigen_dense( which, linsz, 1, ncv, v.ary+q*POW2(linsz), eigvals, eigvecs, 1.e-6, 100 );
-            for (int i=0; i<ncv; ++i)
-                Vmax = MAX(Vmax, cabs(eigvals[i]));
-        }
-        diverge_mpi_allreduce_double_max_inplace(&Vmax, 1);
-        result = Vmax;
     } else if (piter < 0) {
-        double Vmax = 0.0;
-        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:Vmax) collapse(2)
-        for (index_t q=0; q<nq; ++q)
-        for (index_t l=0; l<linsz; ++l) {
-            // Gerschgorin approximant: diagonal element is the disc's center
-            // and the sum of all other elements' absolute value the radius
-            complex128_t C_l = v.ary[IDX3(q,l,l, linsz,linsz)];
-            double R_l = 0.0;
-            for (index_t m=0; m<linsz; ++m)
-                if (m != l) R_l += cabs(v.ary[IDX3(q,l,m, linsz,linsz)]);
-            // worst case: extend into the direction of the center (which should
-            // be real anyways)
-            double Vmax_l = cabs(cexp(I*carg(C_l))*R_l + C_l);
-            Vmax = MAX(Vmax, Vmax_l);
-        }
-        diverge_mpi_allreduce_double_max_inplace(&Vmax, 1);
-        result = Vmax;
-    } else {
-        double* singular_values = calloc( nq * linsz, sizeof* singular_values );
-        batched_svd( NULL, -1, v.ary, NULL, NULL, singular_values, linsz, nq );
-        double smax = 0.0;
-        #pragma omp parallel for num_threads(diverge_omp_num_threads()) reduction(max:smax)
-        for (index_t i=0; i<linsz*nq; ++i) smax = MAX(smax, singular_values[i]);
-        free( singular_values );
-        diverge_mpi_allreduce_double_max_inplace(&smax, 1);
-        result = smax;
+        m = eigchan_gersch;
     }
+
+    index_t nq_not_converged = 0;
+    double result = 0.0;
+    if (iterative) {
+        result = eigchan_iterative( m, v.ary, linsz, nq, &nq_not_converged );
+    } else {
+        result = eigchan_batched( m, v.ary, linsz, nq, &nq_not_converged );
+        diverge_mpi_allreduce_double_max_inplace(&result, 1);
+    }
+
+    if (m == eigchan_piter) {
+        diverge_mpi_allreduce_index_sum_inplace(&nq_not_converged, 1);
+        if (nq_not_converged != 0 && !diverge_flow_step_eigchan_shut_up)
+            mpi_wrn_printf( "%li qpts not converged in power iteration\n", nq_not_converged );
+    }
+
     double tock = diverge_mpi_wtime();
     st->t_eigchan_diag += tock - tick;
     return result;
