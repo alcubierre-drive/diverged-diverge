@@ -99,6 +99,15 @@ void diverge_flow_step_chanmax( diverge_flow_step_t* st, double chanmax[3] );
  * one depending on (officially unsupported) hacks on the flow step
  * (``"tu_step_eigchan" -> "piter" ("arpack", "off", "INTEGER")`` and
  * ``"tu_step_eigchan_abort" -> "threshold"``)
+ *
+ * The iterative variants ``DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_SVD``
+ * (``INT_MIN+2``), ``DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_PITER``
+ * (``INT_MIN+3``), and ``DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_ARPACK``
+ * (``INT_MIN+4``) do a
+ * cheap Gerschgorin+three Collatz-Wielandt steps for each q, then evaluate the
+ * largest bound exactly, and iterate until no bound is larger than the true
+ * maximum; resulting in the same value as for a full diagonalization of each q
+ * and subsequent maximum filtering.
  */
 double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter );
 
@@ -108,6 +117,18 @@ double diverge_flow_step_eigchan( diverge_flow_step_t* st, char chan, int piter 
 
 #ifndef DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP
 #define DIVERGE_FLOW_STEP_EIGCHAN_PITER_FROM_STEP (INT_MIN+1)
+#endif
+
+#ifndef DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_SVD
+#define DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_SVD (INT_MIN+2)
+#endif
+
+#ifndef DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_PITER
+#define DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_PITER (INT_MIN+3)
+#endif
+
+#ifndef DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_ARPACK
+#define DIVERGE_FLOW_STEP_EIGCHAN_PITER_ITERATIVE_ARPACK (INT_MIN+4)
 #endif
 
 /** Do an euler step starting at :math:`\Lambda` ending at :math:`\Lambda+d_\Lambda` */
