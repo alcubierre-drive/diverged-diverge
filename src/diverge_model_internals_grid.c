@@ -205,7 +205,7 @@ void diverge_model_internals_grid( diverge_model_t* model ) {
         for (index_t k3=0; k3<nk; ++k3)
             (*(model->ffill))( model, V->qdispl+k1, k2, k3, vbuf + IDX3(k1, k2, k3, nk, nk)*no4 );
 
-        grid_vertex_overwrite_transform( V, 0, 1, "D_to_V" );
+        grid_vertex_overwrite_transform( V, 0, 1, "V_to_D" );
         grid_vertex_project_name( V, vbuf, V->vertex_buffers[0], "V_to_D", false, 1.0 );
         grid_vertex_overwrite_transform( V, 0, 1, "D_to_P" );
     } else {
