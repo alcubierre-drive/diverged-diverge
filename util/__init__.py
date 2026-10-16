@@ -1335,6 +1335,11 @@ if not _libs["divERGe"] is None:
     flow_step_vertex.argtypes = [POINTER(flow_step_t), c_char]
     flow_step_vertex.restype = struct_flow_step_vertex_t
 
+    tu_projection_hook_t = CFUNCTYPE(UNCHECKED(None), flow_step_vertex_t, c_voidp)
+    flow_step_set_projection_hook = _libs["divERGe"].get("diverge_flow_step_set_projection_hook", "cdecl")
+    flow_step_set_projection_hook.argtypes = [POINTER(flow_step_t), tu_projection_hook_t, c_voidp]
+    flow_step_set_projection_hook.restype = None
+
     def flow_step_loop_PY( step, which='lm', full_bz=False ):
         r"""
         Lambda-integrated bare bubble of the TU backend; the objects whose
