@@ -772,7 +772,7 @@ const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st ) {
 
 void diverge_flow_step_set_projection_hook( diverge_flow_step_t* st,
         diverge_tu_projection_hook_t hook, void* ctx ) {
-    if (st->type != diverge_tu) {
+    if (st->type != diverge_tu && st->type != diverge_tu_phonons) {
         mpi_err_printf( "projection hooks only available with TU backend\n" );
         return;
     }
