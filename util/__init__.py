@@ -1168,7 +1168,7 @@ if not _libs["divERGe"] is None:
     phonons_asr_n_orb.argtypes = [c_voidp, c_voidp, index_t]
     phonons_asr_n_orb.restype = c_voidp
 
-    phonons_asr_n_orb_massdiv = _libs["divERGe"].get("diverge_phonons_asr_n_orb", "cdecl")
+    phonons_asr_n_orb_massdiv = _libs["divERGe"].get("diverge_phonons_asr_n_orb_massdiv", "cdecl")
     phonons_asr_n_orb_massdiv.argtypes = [c_voidp, c_voidp, index_t, c_voidp]
     phonons_asr_n_orb_massdiv.restype = c_voidp
 
@@ -1209,7 +1209,7 @@ if not _libs["divERGe"] is None:
     phonons_asr_vertex_n_orb.argtypes = [c_voidp, c_voidp, index_t]
     phonons_asr_vertex_n_orb.restype = c_voidp
 
-    phonons_asr_vertex_n_orb_massdiv = _libs["divERGe"].get("diverge_phonons_asr_vertex_n_orb", "cdecl")
+    phonons_asr_vertex_n_orb_massdiv = _libs["divERGe"].get("diverge_phonons_asr_vertex_n_orb_massdiv", "cdecl")
     phonons_asr_vertex_n_orb_massdiv.argtypes = [c_voidp, c_voidp, index_t, c_voidp]
     phonons_asr_vertex_n_orb_massdiv.restype = c_voidp
 
