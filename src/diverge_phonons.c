@@ -19,6 +19,7 @@ LINALG_IMPLEMENT
 #include "diverge_model_internals.h"
 #include "diverge_internals_struct.h"
 #include <assert.h>
+#include <stdatomic.h>
 
 rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop ) {
     index_t n_hop = *n_ph_hop;
@@ -31,6 +32,8 @@ rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop ) {
     mpi_vrb_printf( "found %li=(%li,3) orbitals\n", n_orb, n_orb/3 );
     return diverge_phonons_asr_n_orb( ph_hop, n_ph_hop, n_orb );
 }
+
+_Atomic int _print_massdiv = 0;
 
 rs_hopping_t* diverge_phonons_asr_n_orb( rs_hopping_t* ph_hop, index_t* n_ph_hop,
         index_t n_orb ) {
@@ -55,7 +58,8 @@ rs_hopping_t* diverge_phonons_asr_n_orb( rs_hopping_t* ph_hop, index_t* n_ph_hop
         };
         forcemax = MAX(forcemax, cabs(self_forces[IDX3(o,r1,r2, 3,3)]));
     }
-    mpi_log_printf( "ASR (hoppings) maximal restoring force value: %.5e\n", forcemax );
+    int print_massdiv = atomic_load(&_print_massdiv);
+    mpi_log_printf( "ASR (hoppings%s) maximal restoring force value: %.5e\n", print_massdiv?"*masses":"", forcemax );
 
     free(self_forces);
     return ph_hop;
@@ -192,7 +196,8 @@ ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx,
     VECTOR_FREE(asr_elem);
     VECTOR_SHRINK_TO_FIT(asr_append);
 
-    mpi_log_printf( "ASR (vertices) maximal restoring force value: %.5e\n", maxval );
+    int print_massdiv = atomic_load(&_print_massdiv);
+    mpi_log_printf( "ASR (vertices%s) maximal restoring force value: %.5e\n", print_massdiv?"*masses":"", maxval );
 
     vtx = realloc(vtx, sizeof*vtx * (*n_vtx + asr_append_sz));
     memcpy(vtx + (*n_vtx), asr_append, sizeof*vtx * asr_append_sz);
@@ -415,12 +420,14 @@ rs_hopping_t* diverge_phonons_asr_n_orb_massdiv( rs_hopping_t* ph_hop,
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t h=0; h<*n_ph_hop; ++h)
             ph_hop[h].t *= sqrt(masses[ph_hop[h].o1] * masses[ph_hop[h].o2]);
+        atomic_store(&_print_massdiv, 1);
     }
     ph_hop = diverge_phonons_asr_n_orb(ph_hop, n_ph_hop, n_orb);
     if (masses) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t h=0; h<*n_ph_hop; ++h)
             ph_hop[h].t /= sqrt(masses[ph_hop[h].o1] * masses[ph_hop[h].o2]);
+        atomic_store(&_print_massdiv, 0);
     }
     return ph_hop;
 }
@@ -430,11 +437,13 @@ ph_vertex_t* diverge_phonons_asr_vertex_n_orb_massdiv( ph_vertex_t* vtx,
     if (masses) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t v=0; v<*n_vtx; ++v) vtx[v].g *= sqrt(masses[vtx[v].OA]);
+        atomic_store(&_print_massdiv, 1);
     }
     vtx = diverge_phonons_asr_vertex_n_orb(vtx, n_vtx, n_orb);
     if (masses) {
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t v=0; v<*n_vtx; ++v) vtx[v].g /= sqrt(masses[vtx[v].OA]);
+        atomic_store(&_print_massdiv, 0);
     }
     return vtx;
 }
