@@ -315,6 +315,17 @@ const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st );
 index_t diverge_flow_step_n_ibz( const diverge_flow_step_t* st );
 
 /**
+ * custom access to single TU projections via :c:func:`diverge_flow_step_set_projection_hook`.
+ * such a registered function is called on each TU projection, V.backend holds FROM,
+ * and V.channel holds TO.
+ */
+typedef void (*diverge_tu_projection_hook_t)( diverge_flow_step_vertex_t V, void* ctx );
+
+/** register a :c:type:`diverge_tu_projection_hook_t`, only valid for TU backend. */
+void diverge_flow_step_set_projection_hook( diverge_flow_step_t* st,
+        diverge_tu_projection_hook_t hook, void* ctx );
+
+/**
  * Filling
  * =======
  *

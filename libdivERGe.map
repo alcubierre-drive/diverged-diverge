@@ -36,6 +36,7 @@ DIVERGE_0.11 {
         diverge_flow_step_refill;
         diverge_flow_step_refill_Hself;
         diverge_flow_step_set_interchannel;
+        diverge_flow_step_set_projection_hook;
         diverge_flow_step_timing;
         diverge_flow_step_timing_descr;
         diverge_flow_step_timing_descr_vec;
