@@ -33,7 +33,7 @@ rs_hopping_t* diverge_phonons_asr( rs_hopping_t* ph_hop, index_t* n_ph_hop ) {
     return diverge_phonons_asr_n_orb( ph_hop, n_ph_hop, n_orb );
 }
 
-_Atomic int _print_massdiv = 0;
+static _Atomic int _print_massdiv = 0;
 
 rs_hopping_t* diverge_phonons_asr_n_orb( rs_hopping_t* ph_hop, index_t* n_ph_hop,
         index_t n_orb ) {
