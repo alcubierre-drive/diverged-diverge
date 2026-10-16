@@ -113,12 +113,33 @@ rs_hopping_t* diverge_phonons_asr_n_orb( rs_hopping_t* ph_hop, index_t* n_ph_hop
         index_t n_orb );
 
 /**
+ * same as :c:func:`diverge_phonons_asr_n_orb`, but in addition allows to divide
+ * by square rooted masses before ASR and re-multiply after that. masses has to
+ * be an (n_orb,) array, if NULL resort directly to
+ * :c:func:`diverge_phonons_asr_n_orb`.
+ */
+rs_hopping_t* diverge_phonons_asr_n_orb_massdiv( rs_hopping_t* ph_hop,
+        index_t* n_ph_hop, index_t n_orb, const double* masses );
+
+/**
  * same as :c:func:`diverge_phonons_asr_n_orb` except that it reallocates m->hop
  * and sets m->n_hop, i.e.:
  *
  * .. sourcecode:: C
  *
  *  m->hop = diverge_phonons_asr_n_orb( m->hop, &m->n_hop, m->n_orb );
+ *
+ * If you want this function to behave like
+ * :c:func:`diverge_phonons_asr_n_orb_massdiv` you have to divide and
+ * re-multiply by the masses yourself, bracketed around this call. It is advised
+ * to use
+ *
+ * .. sourcecode:: C
+ *
+ *  m->hop = diverge_phonons_asr_n_orb_massdiv( m->hop, &m->n_hop, m->n_orb,
+ *                  diverge_phonons_model_get_masses(m) );
+ *
+ * instead.
  */
 void diverge_phonons_apply_asr( diverge_model_t* m );
 
@@ -237,6 +258,14 @@ ph_vertex_t* diverge_phonons_asr_vertex( ph_vertex_t* vtx, index_t* n_vtx );
  * :c:member:`ph_vertex_t.mode` != 0.
  */
 ph_vertex_t* diverge_phonons_asr_vertex_n_orb( ph_vertex_t* vtx, index_t* n_vtx, index_t n_orb );
+
+/**
+ * same as :c:func:`diverge_phonons_asr_vertex_n_orb` buf including mass
+ * division and remultiplication. masses has to be an (n_orb,) array. On NULL
+ * input, this call resorts to :c:func:`diverge_phonons_asr_vertex_n_orb`.
+ */
+ph_vertex_t* diverge_phonons_asr_vertex_n_orb_massdiv( ph_vertex_t* vtx,
+        index_t* n_vtx, index_t n_orb, const double* masses );
 
 /**
  * enable refinement of the Gamma point D channel vertex value, must be called
