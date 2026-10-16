@@ -719,6 +719,16 @@ const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st ) {
     return td->symm->idx_ibz_in_fullmesh;
 }
 
+void diverge_flow_step_set_projection_hook( diverge_flow_step_t* st,
+        diverge_tu_projection_hook_t hook, void* ctx ) {
+    if (st->type != diverge_tu) {
+        mpi_err_printf( "projection hooks only available with TU backend\n" );
+        return;
+    }
+    st->tu_proj->hook = hook;
+    st->tu_proj->hook_ctx = ctx;
+}
+
 index_t diverge_flow_step_n_ibz( const diverge_flow_step_t* st ) {
     if (diverge_flow_step_ibz( st )) {
         tu_data_t* td = st->intls->tu_data;

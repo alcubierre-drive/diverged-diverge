@@ -5,6 +5,7 @@
 #include "../diverge_model.h"
 #include "../diverge_common.h"
 #include "../diverge_internals_struct.h"
+#include "../diverge_flow_step.h"
 #include "diverge_interface.h"
 #include "cuda_init.h"
 
@@ -61,6 +62,9 @@ struct tu_projection_t {
     VECTOR_DECL( index_t, DC_r )
     VECTOR_DECL( index_t, DP_r )
     VECTOR_DECL( index_t, PD_r )
+
+    diverge_tu_projection_hook_t hook;
+    void* hook_ctx;
 };
 typedef struct tu_projection_t tu_projection_t;
 
