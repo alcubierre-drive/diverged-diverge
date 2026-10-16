@@ -408,3 +408,33 @@ void diverge_phonons_fetch_sym( diverge_model_t* el, diverge_model_t* ph ) {
     }
     ph->n_sym = n_sym;
 }
+
+rs_hopping_t* diverge_phonons_asr_n_orb_massdiv( rs_hopping_t* ph_hop,
+        index_t* n_ph_hop, index_t n_orb, const double* masses ) {
+    if (masses) {
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t h=0; h<*n_ph_hop; ++h)
+            ph_hop[h].t *= sqrt(masses[ph_hop[h].o1] * masses[ph_hop[h].o2]);
+    }
+    ph_hop = diverge_phonons_asr_n_orb(ph_hop, n_ph_hop, n_orb);
+    if (masses) {
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t h=0; h<*n_ph_hop; ++h)
+            ph_hop[h].t /= sqrt(masses[ph_hop[h].o1] * masses[ph_hop[h].o2]);
+    }
+    return ph_hop;
+}
+
+ph_vertex_t* diverge_phonons_asr_vertex_n_orb_massdiv( ph_vertex_t* vtx,
+        index_t* n_vtx, index_t n_orb, const double* masses ) {
+    if (masses) {
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t v=0; v<*n_vtx; ++v) vtx[v].g *= sqrt(masses[vtx[v].OA]);
+    }
+    vtx = diverge_phonons_asr_vertex_n_orb(vtx, n_vtx, n_orb);
+    if (masses) {
+        #pragma omp parallel for num_threads(diverge_omp_num_threads())
+        for (index_t v=0; v<*n_vtx; ++v) vtx[v].g /= sqrt(masses[vtx[v].OA]);
+    }
+    return vtx;
+}

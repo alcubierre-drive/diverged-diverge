@@ -24,6 +24,22 @@ typedef struct ph_vertex_t ph_vertex_t;
 #define DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES 0x2
 
 /**
+ * bit-or of this constant and the other ones for ASR
+ * (:c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS`,
+ * :c:macro`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES`, ...) to include mass
+ * division in the ASR for hoppings.
+ */
+#define DIVERGE_WIGNER_CONFIG_APPLY_ASR_MASSDIV_H 0x4
+
+/**
+ * bit-or of this constant and the other ones for ASR
+ * (:c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS`,
+ * :c:macro`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES`, ...) to include mass
+ * division in the ASR for vertices.
+ */
+#define DIVERGE_WIGNER_CONFIG_APPLY_ASR_MASSDIV_V 0x8
+
+/**
  * if this constant is bit-or activated in
  * :c:member:`diverge_wigner_config_t.apply_rydberg` the IFC data is rescaled
  * with (Ry=13.6eV)^2.
@@ -53,8 +69,10 @@ typedef struct {
     int dim;
     /**
      * apply the acoustic sum rule to hoppings/vertices (bit-or of
-     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS` and
-     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES`)
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_HOPPINGS`,
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_VERTICES`,
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_MASSDIV_H`, and
+     * :c:macro:`DIVERGE_WIGNER_CONFIG_APPLY_ASR_MASSDIV_V`)
      */
     int apply_asr;
     /** apply supercell degeneracy map */
@@ -107,16 +125,13 @@ diverge_model_t* diverge_phonons_read_ifc( const char* fname, const diverge_wign
  *      this cutoff. Then all elements :math:`g_{Rx}^{R'ab}` that fulfill
  *      :math:`|g_{Rx}^{R'ab}| < RM` are discarded.
  * :param index_t* p_vtx_sz: length of the returned array.
- * :param int apply_asr: apply the vertex acoustic sum rule (cf.
- *      :c:func:`diverge_phonons_asr_vertex`).
  * :param int apply_rydberg: apply the (Ry=13.6eV)^(3/2) rescaling of g
  *
  * :returns: array of type :c:type:`ph_vertex_t` with the real-space elph
  *      elements, shape (``*p_vtx_sz``,).
  */
 ph_vertex_t* diverge_phonons_read_elph( const char* wigner, const char* epmatwp,
-        const double* masses, double maxrel, index_t* p_vtx_sz, int apply_asr,
-        int apply_rydberg );
+        const double* masses, double maxrel, index_t* p_vtx_sz, int apply_rydberg );
 
 /**
  * provide the memory region where atom masses are stored in a phonon model

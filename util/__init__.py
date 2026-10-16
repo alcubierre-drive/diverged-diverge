@@ -1171,6 +1171,10 @@ if not _libs["divERGe"] is None:
     phonons_asr_n_orb.argtypes = [c_voidp, c_voidp, index_t]
     phonons_asr_n_orb.restype = c_voidp
 
+    phonons_asr_n_orb_massdiv = _libs["divERGe"].get("diverge_phonons_asr_n_orb", "cdecl")
+    phonons_asr_n_orb_massdiv.argtypes = [c_voidp, c_voidp, index_t, c_voidp]
+    phonons_asr_n_orb_massdiv.restype = c_voidp
+
     phonons_apply_asr = _libs["divERGe"].get("diverge_phonons_apply_asr", "cdecl")
     phonons_apply_asr.argtypes = [POINTER(model_t)]
     phonons_apply_asr.restype = None
@@ -1208,6 +1212,10 @@ if not _libs["divERGe"] is None:
     phonons_asr_vertex_n_orb.argtypes = [c_voidp, c_voidp, index_t]
     phonons_asr_vertex_n_orb.restype = c_voidp
 
+    phonons_asr_vertex_n_orb_massdiv = _libs["divERGe"].get("diverge_phonons_asr_vertex_n_orb", "cdecl")
+    phonons_asr_vertex_n_orb_massdiv.argtypes = [c_voidp, c_voidp, index_t, c_voidp]
+    phonons_asr_vertex_n_orb_massdiv.restype = c_voidp
+
     phonons_enable_refinement = _libs["divERGe"].get("diverge_phonons_enable_refinement", "cdecl")
     phonons_enable_refinement.argtypes = [POINTER(model_t), c_int, c_double]
     phonons_enable_refinement.restype = c_double
@@ -1240,7 +1248,9 @@ if not _libs["divERGe"] is None:
 
     WIGNER_CONFIG_APPLY_ASR_HOPPINGS = 0x1
     WIGNER_CONFIG_APPLY_ASR_VERTICES = 0x2
-    WIGNER_CONFIG_APPLY_ASR_NO_ORBDETECT = 0x8
+    WIGNER_CONFIG_APPLY_ASR_MASSDIV_H = 0x4
+    WIGNER_CONFIG_APPLY_ASR_MASSDIV_V = 0x8
+
     WIGNER_CONFIG_APPLY_RYDBERG_2_IFC = 0x1
     WIGNER_CONFIG_APPLY_RYDBERG_3_2_G = 0x2
 
@@ -1249,7 +1259,7 @@ if not _libs["divERGe"] is None:
     phonons_read_ifc.restype = POINTER(model_t)
 
     phonons_read_elph = _libs["divERGe"].get("diverge_phonons_read_elph", "cdecl")
-    phonons_read_elph.argtypes = [String, String, c_voidp, c_double, c_voidp, c_int, c_int]
+    phonons_read_elph.argtypes = [String, String, c_voidp, c_double, c_voidp, c_int]
     phonons_read_elph.restype = c_voidp
 
     phonons_model_get_masses = _libs["divERGe"].get("diverge_phonons_model_get_masses", "cdecl")
