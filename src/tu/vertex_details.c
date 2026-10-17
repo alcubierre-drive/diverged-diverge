@@ -587,7 +587,7 @@ static void tu_vertex_init_U_ff_impl( tu_vertex_t* V, bool enforce_exchange,
     const double fac = enforce_exchange ? 0.5 : 1.0;
     #pragma omp parallel for num_threads(diverge_omp_num_threads())
     for (index_t iq=0; iq<my_nk; ++iq) {
-        index_t q = my_nk_off + iq;
+        index_t q = V->symm->idx_ibz_in_fullmesh[my_nk_off + iq];
         for (index_t lr=0; lr<POW2(linsz); ++lr)
             out[IDX2(iq,lr,POW2(linsz))] += fac * helper[IDX2(q,lr,POW2(linsz))];
     }
@@ -595,7 +595,7 @@ static void tu_vertex_init_U_ff_impl( tu_vertex_t* V, bool enforce_exchange,
         mpi_vrb_printf( "enforcing exchange\n" );
         #pragma omp parallel for num_threads(diverge_omp_num_threads())
         for (index_t iq=0; iq<my_nk; ++iq) {
-            index_t q = my_nk_off + iq;
+            index_t q = V->symm->idx_ibz_in_fullmesh[my_nk_off + iq];
             for (index_t lr=0; lr<POW2(linsz); ++lr)
                 out_x[IDX2(iq,lr,POW2(linsz))] -= fac * helper[IDX2(q,lr,POW2(linsz))];
         }
