@@ -373,7 +373,7 @@ static inline void ct_suite_run( ct_suite_t* s, unsigned* nassert,
  * lists all tests of all suites that are active given a list of filters.
  * ignores suites with zero tests.
  */
-static inline int ct_list( char** filters ) {
+static inline int ct_list( char** filters, int suites_only ) {
     for (char** f = filters; *f; f++)
         CT_PRINTF( "%s=== filter '%s' ===%s\n", ct_color_yellow, *f, ct_color_reset );
     unsigned nc_total = 0, nc_total_run = 0;
@@ -388,8 +388,10 @@ static inline int ct_list( char** filters ) {
         for (unsigned i=0; i<ss->ntests; ++i) {
             int nmatches = ct_matches_filters( filters, ss, i );
             if (nmatches) {
-                CT_PRINTF( "%s->%ccase%s %s\n", ss->tests[i].hidden ? ct_color_red : ct_color_green,
-                        ss->tests[i].hidden ? '.' : ' ', ct_color_reset, ss->tests[i].name );
+                if (!suites_only) {
+                    CT_PRINTF( "%s->%ccase%s %s\n", ss->tests[i].hidden ? ct_color_red : ct_color_green,
+                            ss->tests[i].hidden ? '.' : ' ', ct_color_reset, ss->tests[i].name );
+                }
                 nc_run++;
             }
             nc++;
@@ -507,6 +509,7 @@ static inline int ct_print_help( char** argv ) {
 "  OPTIONS include:\n"
 "    -h          print this help\n"
 "    -l [FILTER] list tests (with FILTERs)\n"
+"    -s [FILTER] list suites (with FILTERs)\n"
 "    [FILTER]    run tests (with FILTERs)\n"
 "  Filtering works as follows: Each test (with one or more names) belongs to a\n"
 "  suite. Filters are applied to both suite and test names. The default for a\n"
@@ -529,7 +532,8 @@ static inline int ct_list_or_run( int argc, char** argv ) {
     argv[argc] = NULL;
     if (argc <= 1) return ct_run(argv+argc);
 
-    if (!strcmp(argv[1],"-l"))      return ct_list(argv+2);
+    if (!strcmp(argv[1],"-l"))      return ct_list(argv+2,0);
+    else if (!strcmp(argv[1],"-s")) return ct_list(argv+2,1);
     else if (!strcmp(argv[1],"-h")) return ct_print_help(argv);
     else                            return ct_run(argv+1);
 }

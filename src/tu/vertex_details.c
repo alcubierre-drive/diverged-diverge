@@ -228,115 +228,125 @@ void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_
 }
 
 
-void tu_vertex_init_U_from_fullV( tu_vertex_t* V, diverge_model_t* model, tu_projection_t* proj ) {
-    mpi_wrn_printf("initialization from full\n")
-    double* Rvec = calloc(model->n_tu_ff, sizeof(double)*3);
-    double* kmesh = model->internals->kmesh;
-
+// calculates \sum_{kf, kf'} f(kf,rf) V(k1,k2,k3) conj(f'(kf',rf')) / nk^2 and
+// puts it into the channel vertex, with kf=k1 and kf'=k4(D),k3(C,P).
+static void init_from_fullV_chan( const char chan, tu_vertex_t* V, const diverge_model_t* model,
+        const complex128_t* phase, const complex128_t* phase_c, complex128_t* out ) {
+    const index_t no = V->n_orb, ns = V->n_spin, nk = V->nk, nff = model->n_tu_ff;
+    const index_t N = POW4(no*ns), R = N/no;
+    // f' orbital -> o4 (D), o3 (C,P); st its stride in the ffill buffer
+    const index_t st = chan == 'D' ? 1 : ns*no;
+    const index_t* nkd = model->nk;
     const tu_formfactor_t* tu_ff = model->tu_ff;
     const index_t* bond_sizes = V->tu_data->bond_sizes;
     const index_t* bond_offsets = V->tu_data->bond_offsets;
     const index_t* ob_to_orbff = V->tu_data->ob_to_orbff;
-    fill_Rvec(model,Rvec);
+    const double norm = 1.0/(double)POW2(nk);
+    const index_t scratch = N + nk*N + nff*R;
+    mpi_vrb_printf("TU ffill %c: per thread %.3fGB×%i=%.3fGB\n", chan,
+            (double)(scratch*sizeof(complex128_t))/POW3(1024.), diverge_omp_num_threads(),
+            (double)(scratch*diverge_omp_num_threads()*sizeof(complex128_t))/POW3(1024.));
 
-    complex128_t* buf = calloc(POW4(V->n_orb*V->n_spin), sizeof(complex128_t));
-    const index_t* nkd = model->nk;
-    if (V->D_flow) {
-        ZERO_OUT(V->Dch, V->full_vert_size);
-        // D-channel q = k_1 - k_3 = k_4 - k_2
-        for (index_t q=0; q<V->my_nk; ++q)
-        for (index_t k1=0; k1<V->nk; ++k1)
-        for (index_t k4=0; k4<V->nk; ++k4) {
-            index_t k3 = k1m2(k1,V->symm->idx_ibz_in_fullmesh[q+V->my_nk_off],nkd);
-            index_t k2 = k1m2(k4,V->symm->idx_ibz_in_fullmesh[q+V->my_nk_off],nkd);
-            (*(model->ffill))( model, k1, k2, k3, buf );
-            #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
-            for (index_t s4=0; s4<V->n_spin; ++s4)
-            for (index_t s3=0; s3<V->n_spin; ++s3)
-            for (index_t s2=0; s2<V->n_spin; ++s2)
-            for (index_t s1=0; s1<V->n_spin; ++s1)
-            for (index_t o1=0; o1<V->n_orb; ++o1)
-            for (index_t o4=0; o4<V->n_orb; ++o4)
-            for (index_t b1=0; b1<bond_sizes[o1]; ++b1)
-            for (index_t b4=0; b4<bond_sizes[o4]; ++b4) {
-                index_t o2 = tu_ff[bond_offsets[o4]+b4].oto,
-                        o3 = tu_ff[bond_offsets[o1]+b1].oto;
-                index_t ob1 = ob_to_orbff[b1+V->n_bonds*o1],
-                        ob4 = ob_to_orbff[b4+V->n_bonds*o4];
-                index_t id_buf = IDX8(s1,o1,s2,o2,s3,o3,s4,o4,V->n_orb,V->n_spin,V->n_orb,V->n_spin,V->n_orb,V->n_spin,V->n_orb);
-                index_t iddch = IDX7(q,s2,s4,ob4,s3,s1,ob1,V->n_spin,V->n_spin,V->n_orbff,V->n_spin,V->n_spin,V->n_orbff);
-                V->Dch[iddch] += buf[id_buf] * ff(kmesh+3*k1,Rvec+3*(bond_offsets[o1]+b1))
-                                        * conj(ff(kmesh+3*k4,Rvec+3*(bond_offsets[o4]+b4)))/(double)POW2(V->nk);
-
+    #pragma omp parallel num_threads(diverge_omp_num_threads())
+    {
+    complex128_t* buf = calloc(N, sizeof*buf);
+    complex128_t* M = calloc(nk*N, sizeof*M);
+    complex128_t* T = calloc(nff*R, sizeof*T);
+    #pragma omp for schedule(dynamic)
+    for (index_t q=0; q<V->my_nk; ++q) {
+        const index_t qf = V->symm->idx_ibz_in_fullmesh[q+V->my_nk_off];
+        for (index_t ka=0; ka<nk; ++ka) {
+            for (index_t kb=0; kb<nk; ++kb) {
+                index_t k2, k3;
+                switch (chan) {
+                    case 'D': k3 = k1m2(ka,qf,nkd); k2 = k1m2(kb,qf,nkd); break;
+                    case 'C': k3 = kb; k2 = k1m2(k3,qf,nkd); break;
+                    default:  k3 = kb; k2 = k1m2(qf,ka,nkd); break;
+                }
+                (*(model->ffill))( model, ka, k2, k3, buf );
+                for (index_t id=0; id<N; ++id) {
+                    index_t ob = (id/st) % no, r = (id/(st*no))*st + id%st;
+                    M[(ob*nk + kb)*R + r] = buf[id];
+                }
+            }
+            for (index_t ob=0; ob<no; ++ob) if (bond_sizes[ob] > 0)
+                single_gemm_serial( phase_c + bond_offsets[ob]*nk, M + ob*nk*R,
+                        T + bond_offsets[ob]*R, bond_sizes[ob], nk, R, 1.0, 0.0 );
+            const complex128_t* pa = phase + ka*nff;
+            for (index_t s4=0; s4<ns; ++s4)
+            for (index_t s3=0; s3<ns; ++s3)
+            for (index_t s2=0; s2<ns; ++s2)
+            for (index_t s1=0; s1<ns; ++s1)
+            for (index_t oa=0; oa<no; ++oa)
+            for (index_t ob=0; ob<no; ++ob)
+            for (index_t ba=0; ba<bond_sizes[oa]; ++ba)
+            for (index_t bb=0; bb<bond_sizes[ob]; ++bb) {
+                const index_t ta = bond_offsets[oa]+ba, tb = bond_offsets[ob]+bb;
+                const index_t oba = ob_to_orbff[ba+V->n_bonds*oa],
+                              obb = ob_to_orbff[bb+V->n_bonds*ob];
+                index_t id, iout;
+                switch (chan) {
+                    case 'D': // a: o1->o3, b: o4->o2
+                        id = IDX8(s1,oa,s2,tu_ff[tb].oto,s3,tu_ff[ta].oto,s4,ob,no,ns,no,ns,no,ns,no);
+                        iout = IDX7(q,s2,s4,obb,s3,s1,oba,ns,ns,V->n_orbff,ns,ns,V->n_orbff);
+                        break;
+                    case 'C': // a: o1->o4, b: o3->o2
+                        id = IDX8(s1,oa,s2,tu_ff[tb].oto,s3,ob,s4,tu_ff[ta].oto,no,ns,no,ns,no,ns,no);
+                        iout = IDX7(q,s2,s3,obb,s4,s1,oba,ns,ns,V->n_orbff,ns,ns,V->n_orbff);
+                        break;
+                    default: // a: o1->o2, b: o3->o4
+                        id = IDX8(s1,oa,s2,tu_ff[ta].oto,s3,ob,s4,tu_ff[tb].oto,no,ns,no,ns,no,ns,no);
+                        iout = IDX7(q,s4,s3,obb,s2,s1,oba,ns,ns,V->n_orbff,ns,ns,V->n_orbff);
+                        break;
+                }
+                const index_t r = (id/(st*no))*st + id%st;
+                out[iout] += pa[ta] * T[tb*R + r] * norm;
             }
         }
+    }
+    free(buf);
+    free(M);
+    free(T);
+    }
+}
+
+void tu_vertex_init_U_from_fullV( tu_vertex_t* V, diverge_model_t* model, tu_projection_t* proj ) {
+    mpi_wrn_printf("initialization from full\n")
+    const index_t nk = V->nk, nff = model->n_tu_ff;
+    double* Rvec = calloc(nff*3, sizeof*Rvec);
+    double* kmesh = model->internals->kmesh;
+    fill_Rvec(model,Rvec);
+
+    complex128_t* phase = calloc(nk*nff, sizeof*phase);
+    complex128_t* phase_c = calloc(nk*nff, sizeof*phase_c);
+    #pragma omp parallel for collapse(2) num_threads(diverge_omp_num_threads())
+    for (index_t k=0; k<nk; ++k)
+    for (index_t t=0; t<nff; ++t) {
+        phase[k*nff+t] = ff(kmesh+3*k, Rvec+3*t);
+        phase_c[t*nk+k] = conj(phase[k*nff+t]);
+    }
+
+    if (V->D_flow) {
+        ZERO_OUT(V->Dch, V->full_vert_size);
+        init_from_fullV_chan( 'D', V, model, phase, phase_c, V->Dch );
     }
 
     if (V->C_flow) {
         ZERO_OUT(V->Cch, V->full_vert_size);
         C_projection(V->Cch, V, proj);
         for (index_t i=0; i<V->full_vert_size; ++i) V->Cch[i] *= -1.0;
-        // C-channel q = k_1 - k_4 = k_3 - k_2
-        for (index_t q=0; q<V->my_nk; ++q)
-        for (index_t k1=0; k1<V->nk; ++k1)
-        for (index_t k3=0; k3<V->nk; ++k3) {
-            index_t k2 = k1m2(k3,V->symm->idx_ibz_in_fullmesh[q+V->my_nk_off],nkd);
-            (*(model->ffill))( model, k1, k2, k3, buf );
-            #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
-            for (index_t s4=0; s4<V->n_spin; ++s4)
-            for (index_t s3=0; s3<V->n_spin; ++s3)
-            for (index_t s2=0; s2<V->n_spin; ++s2)
-            for (index_t s1=0; s1<V->n_spin; ++s1)
-            for (index_t o1=0; o1<V->n_orb; ++o1)
-            for (index_t o3=0; o3<V->n_orb; ++o3)
-            for (index_t b1=0; b1<bond_sizes[o1]; ++b1)
-            for (index_t b3=0; b3<bond_sizes[o3]; ++b3) {
-                index_t o2 = tu_ff[bond_offsets[o3]+b3].oto,
-                        o4 = tu_ff[bond_offsets[o1]+b1].oto;
-                index_t ob1 = ob_to_orbff[b1+V->n_bonds*o1],
-                        ob3 = ob_to_orbff[b3+V->n_bonds*o3];
-                index_t id_buf = IDX8(s1,o1,s2,o2,s3,o3,s4,o4,V->n_orb,V->n_spin,V->n_orb,V->n_spin,V->n_orb,V->n_spin,V->n_orb);
-                index_t iddch = IDX7(q,s2,s3,ob3,s4,s1,ob1,V->n_spin,V->n_spin,V->n_orbff,V->n_spin,V->n_spin,V->n_orbff);
-                V->Cch[iddch] += buf[id_buf] * ff(kmesh+3*k1,Rvec+3*(bond_offsets[o1]+b1))
-                                        * conj(ff(kmesh+3*k3,Rvec+3*(bond_offsets[o3]+b3)))/(double)POW2(V->nk);
-
-            }
-        }
+        init_from_fullV_chan( 'C', V, model, phase, phase_c, V->Cch );
     }
 
     if (V->P_flow) {
         ZERO_OUT(V->Pch, V->full_vert_size);
         P_projection(V->Pch,V,proj);
         for (index_t i=0; i<V->full_vert_size; ++i) V->Pch[i] *= -1.0;
-        // P-channel q = k_1 + k_2 = k_3 + k_4
-        for (index_t q=0; q<V->my_nk; ++q)
-        for (index_t k1=0; k1<V->nk; ++k1)
-        for (index_t k3=0; k3<V->nk; ++k3) {
-            index_t k2 = k1m2(V->symm->idx_ibz_in_fullmesh[q+V->my_nk_off], k1, nkd);
-            (*(model->ffill))( model, k1, k2, k3, buf );
-            #pragma omp parallel for collapse(6) schedule(dynamic) num_threads(diverge_omp_num_threads())
-            for (index_t s4=0; s4<V->n_spin; ++s4)
-            for (index_t s3=0; s3<V->n_spin; ++s3)
-            for (index_t s2=0; s2<V->n_spin; ++s2)
-            for (index_t s1=0; s1<V->n_spin; ++s1)
-            for (index_t o1=0; o1<V->n_orb; ++o1)
-            for (index_t o3=0; o3<V->n_orb; ++o3)
-            for (index_t b1=0; b1<bond_sizes[o1]; ++b1)
-            for (index_t b3=0; b3<bond_sizes[o3]; ++b3) {
-                index_t o2 = tu_ff[bond_offsets[o1]+b1].oto,
-                        o4 = tu_ff[bond_offsets[o3]+b3].oto;
-                index_t ob1 = ob_to_orbff[b1+V->n_bonds*o1],
-                        ob3 = ob_to_orbff[b3+V->n_bonds*o3];
-                index_t id_buf = IDX8(s1,o1,s2,o2,s3,o3,s4,o4,V->n_orb,V->n_spin,V->n_orb,V->n_spin,V->n_orb,V->n_spin,V->n_orb);
-                index_t iddch = IDX7(q,s4,s3,ob3,s2,s1,ob1,V->n_spin,V->n_spin,V->n_orbff,V->n_spin,V->n_spin,V->n_orbff);
-                V->Pch[iddch] += buf[id_buf] * ff(kmesh+3*k1,Rvec+3*(bond_offsets[o1]+b1))
-                                        * conj(ff(kmesh+3*k3,Rvec+3*(bond_offsets[o3]+b3)))/(double)POW2(V->nk);
-
-            }
-        }
+        init_from_fullV_chan( 'P', V, model, phase, phase_c, V->Pch );
     }
+    free(phase);
+    free(phase_c);
     free(Rvec);
-    free(buf);
 }
 
 void tu_vertex_init_U( tu_vertex_t* V, bool enforce_exchange ) {
