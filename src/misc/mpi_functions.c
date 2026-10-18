@@ -346,6 +346,7 @@ void diverge_mpi_alltoallv_bytes_packed( const void* s, const int* sc, const int
     MPI_Type_contiguous(numbytes, MPI_BYTE, &dt_bytes);
     MPI_Type_commit(&dt_bytes);
     MPI_Alltoallv( s, sc, sd, dt_bytes, r, rc, rd, dt_bytes, diverge_mpi_comm );
+    MPI_Type_free(&dt_bytes);
 }
 
 void diverge_mpi_alltoallv_complex( const complex128_t* send, const int* sendcounts, const int* senddispls,
