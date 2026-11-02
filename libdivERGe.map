@@ -358,11 +358,6 @@ DIVERGE_UNSTABLE {
         tu_formfactor_map_get_tu_inv;
         tu_formfactor_map_init;
         tu_formfactor_periodicity;
-        tu_tc_estimate;
-        tu_tc_estimate_change_fs_weight_min;
-        tu_tc_estimate_change_omega_min;
-        tu_tc_estimate_change_propagator_q0;
-        tu_tc_estimate_change_propagator_subtract;
         vertex_storage_free;
         vertex_storage_get;
         vertex_storage_init;
