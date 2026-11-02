@@ -15,6 +15,7 @@
 #include "misc/arnoldi.h"
 
 #include "tu/vertex_details.h"
+#include "tu/phonons.h"
 
 #include "grid/vertex_memory.h"
 
@@ -24,6 +25,7 @@
 
 #include <float.h>
 #include <limits.h>
+#include <assert.h>
 #include <omp.h>
 
 static void diverge_flow_step_select_channels( diverge_flow_step_t* st, const char* chans_ );
@@ -33,7 +35,7 @@ diverge_flow_step_t* diverge_flow_step_init_any( diverge_model_t* mod, const cha
 }
 
 diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* method, const char* channels ) {
-    diverge_flow_step_t* st = (diverge_flow_step_t*)calloc(1, sizeof(diverge_flow_step_t));
+    diverge_flow_step_t* st = calloc(1, sizeof(diverge_flow_step_t));
     st->mod = mod;
     st->intls = mod->internals;
     st->step_eig_abort = INFINITY;
@@ -102,9 +104,21 @@ diverge_flow_step_t* diverge_flow_step_init( diverge_model_t* mod, const char* m
                     st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
             st->tu_step = tu_stepper_init(st->tu_proj, st->tu_loop, st->tu_vertex);
             break;
+        case diverge_tu_phonons:
+            if (!st->intls->tu_data || !st->intls->tu_data_phonons) {
+                mpi_err_printf("internals for TU FRG × Phonons not set\n");
+                goto end_error;
+            }
+            st->tu_proj = tu_projection_init(mod);
+            st->tu_loop = tu_prop_init(mod);
+            st->tu_vertex = tu_vertex_init(mod, st->tu_proj, st->tu_loop, st->channel_selection[0],
+                    st->channel_selection[1], st->channel_selection[2], st->channel_selection[3]);
+            tu_vertex_init_phonons(st->tu_vertex, st->intls->tu_data_phonons);
+            st->tu_step = tu_stepper_init(st->tu_proj, st->tu_loop, st->tu_vertex);
+            break;
         default:
         case diverge_flow_type_invalid:
-            mpi_err_printf("invalid flow type '%s'. valid choices are 'grid', 'patch', 'tu'.\n", method);
+            mpi_err_printf("invalid flow type '%s', use 'grid', 'patch', 'tu', 'tu_phonons'.\n", method);
             goto end_error;
             break;
     }
@@ -154,6 +168,7 @@ void diverge_flow_step_free( diverge_flow_step_t* st ) {
             grid_flow_step_free( st->grid_step );
             grid_loop_free( st->grid_loop );
             break;
+        case diverge_tu_phonons:
         case diverge_tu:
             tu_vertex_free( st->tu_vertex );
             tu_projection_free( st->tu_proj );
@@ -259,6 +274,7 @@ void diverge_flow_step_euler( diverge_flow_step_t* st, double Lambda, double dLa
             memcpy(st->timings, grid_flow_step_timings(st->grid_step), sizeof(diverge_timing_t)*6);
             st->niter = grid_flow_step_num_calls( st->grid_step );
             break;
+        case diverge_tu_phonons:
         case diverge_tu:
             if (!tu_stepper_euler( st->tu_step, st->tu_vertex, Lambda, dLambda, chanmax,
                         st->step_eig_on ? st : NULL ) && st->tu_rpa)
@@ -393,6 +409,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
             result.n_spin = mod->n_spin;
             result.backend = 'P';
             break;
+        case diverge_tu_phonons:
         case diverge_tu:
             if (toupper(chan) != 'P' &&
                 toupper(chan) != 'C' &&
@@ -478,8 +495,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
                 } else {
                     result.ary = tu_V->projection_helper;
                     C_projection(tu_V->projection_helper, tu_V, tu_Proj);
-                    for (index_t i=0; i<tu_V->full_vert_size; ++i)
-                        tu_V->projection_helper[i] *= -1.0;
+                    for (index_t i=0; i<tu_V->full_vert_size; ++i) tu_V->projection_helper[i] *= -1.0;
                     if (chan == 'h') {
                         if (!tu_V->C_flow) ZERO_OUT(tu_V->projection_helper, tu_V->full_vert_size);
                         complex128_t* helper = calloc(tu_V->full_vert_size, sizeof*helper);
@@ -513,7 +529,7 @@ diverge_flow_step_vertex_t diverge_flow_step_vertex( diverge_flow_step_t* st, ch
 }
 
 void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspace ) {
-    if (s->type != diverge_tu) {
+    if (s->type != diverge_tu && s->type != diverge_tu_phonons) {
         mpi_err_printf("refill only possible with TUFRG\n");
         return;
     }
@@ -554,7 +570,7 @@ void diverge_flow_step_refill( diverge_flow_step_t* s, double nu, void* workspac
 }
 
 double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* workspace ) {
-    if (s->type != diverge_tu) {
+    if (s->type != diverge_tu && s->type != diverge_tu_phonons) {
         mpi_err_printf("refill_Hself only possible with TUFRG\n");
         return 0;
     }
@@ -596,7 +612,7 @@ double diverge_flow_step_refill_Hself( diverge_flow_step_t* s, double nu, void* 
 
 
 double diverge_flow_step_get_filling_Hself( diverge_flow_step_t* s, void* workspace ) {
-    if (s->type != diverge_tu) {
+    if (s->type != diverge_tu && s->type != diverge_tu_phonons) {
         mpi_err_printf("refill_Hself only possible with TUFRG\n");
         return 0;
     }
@@ -639,7 +655,7 @@ void diverge_flow_step_get_channels( const diverge_flow_step_t* st, int chans[4]
 }
 
 void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* feedback ) {
-    if (st->type != diverge_tu) {
+    if (st->type != diverge_tu && st->type != diverge_tu_phonons) {
         mpi_err_printf( "interchannel feedback control only implemented for TUFRG\n" );
         return;
     }
@@ -652,45 +668,80 @@ void diverge_flow_step_set_interchannel( diverge_flow_step_t* st, const char* fe
         st->tu_vertex->C_to_P = st->tu_vertex->D_to_P = true;
         st->tu_vertex->P_to_C = st->tu_vertex->D_to_C = true;
         st->tu_vertex->C_to_D = st->tu_vertex->P_to_D = true;
+        mpi_vrb_printf( "ph->X feedback enabled (X ∈ {P,C,D})\n" );
+        st->tu_vertex->ph_to_P = st->tu_vertex->ph_to_C = st->tu_vertex->ph_to_D = true;
         return;
     }
-    int target_chan = 0;
-    st->tu_vertex->C_to_P = st->tu_vertex->D_to_P = false;
-    st->tu_vertex->P_to_C = st->tu_vertex->D_to_C = false;
-    st->tu_vertex->C_to_D = st->tu_vertex->P_to_D = false;
-    for (const char* c = feedback; *c; ++c) {
-        if (*c == '|') {
-            target_chan += 1;
-        } else {
-            switch (*c) {
-                case 'P':
-                    if (target_chan == 1) st->tu_vertex->P_to_C = true;
-                    if (target_chan == 2) st->tu_vertex->P_to_D = true;
+    if (!strncmp(feedback, "ph:", 3)) {
+        st->tu_vertex->ph_to_P = st->tu_vertex->ph_to_C = st->tu_vertex->ph_to_D = false;
+        feedback += 3;
+        int target_chan = 0;
+        for (const char* c = feedback; *c; ++c) {
+            bool yes = (*c == 'y' || *c == 'Y' || *c == '1' || *c == '+');
+            bool no  = (*c == 'n' || *c == 'N' || *c == '0' || *c == '-');
+            if (!yes && !no) {
+                mpi_wrn_printf( "cannot parse phonon channel #%i to y|n (%c)\n", target_chan, *c );
+                continue;
+            }
+            assert( no == !yes );
+            switch (target_chan) {
+                case 0:
+                    st->tu_vertex->ph_to_P = yes;
                     break;
-                case 'C':
-                    if (target_chan == 0) st->tu_vertex->C_to_P = true;
-                    if (target_chan == 2) st->tu_vertex->C_to_D = true;
+                case 1:
+                    st->tu_vertex->ph_to_C = yes;
                     break;
-                case 'D':
-                    if (target_chan == 0) st->tu_vertex->D_to_P = true;
-                    if (target_chan == 1) st->tu_vertex->D_to_C = true;
+                case 2:
+                    st->tu_vertex->ph_to_D = yes;
                     break;
                 default:
-                    mpi_wrn_printf( "unknown channel '%c' in feedback to channel #%i\n", *c, target_chan );
+                    mpi_wrn_printf( "too many channels (012->%i)\n", target_chan );
                     break;
             }
+            target_chan++;
         }
+        if (st->tu_vertex->ph_to_P) mpi_vrb_printf("ph->P feedback enabled\n");
+        if (st->tu_vertex->ph_to_C) mpi_vrb_printf("ph->C feedback enabled\n");
+        if (st->tu_vertex->ph_to_D) mpi_vrb_printf("ph->D feedback enabled\n");
+    } else {
+        int target_chan = 0;
+        st->tu_vertex->C_to_P = st->tu_vertex->D_to_P = false;
+        st->tu_vertex->P_to_C = st->tu_vertex->D_to_C = false;
+        st->tu_vertex->C_to_D = st->tu_vertex->P_to_D = false;
+        for (const char* c = feedback; *c; ++c) {
+            if (*c == '|') {
+                target_chan += 1;
+            } else {
+                switch (*c) {
+                    case 'P':
+                        if (target_chan == 1) st->tu_vertex->P_to_C = true;
+                        if (target_chan == 2) st->tu_vertex->P_to_D = true;
+                        break;
+                    case 'C':
+                        if (target_chan == 0) st->tu_vertex->C_to_P = true;
+                        if (target_chan == 2) st->tu_vertex->C_to_D = true;
+                        break;
+                    case 'D':
+                        if (target_chan == 0) st->tu_vertex->D_to_P = true;
+                        if (target_chan == 1) st->tu_vertex->D_to_C = true;
+                        break;
+                    default:
+                        mpi_wrn_printf( "unknown channel '%c' in feedback to channel #%i\n", *c, target_chan );
+                        break;
+                }
+            }
+        }
+        if (st->tu_vertex->C_to_P) mpi_vrb_printf("C->P feedback enabled\n");
+        if (st->tu_vertex->D_to_P) mpi_vrb_printf("D->P feedback enabled\n");
+        if (st->tu_vertex->P_to_C) mpi_vrb_printf("P->C feedback enabled\n");
+        if (st->tu_vertex->D_to_C) mpi_vrb_printf("D->C feedback enabled\n");
+        if (st->tu_vertex->P_to_D) mpi_vrb_printf("P->D feedback enabled\n");
+        if (st->tu_vertex->C_to_D) mpi_vrb_printf("C->D feedback enabled\n");
     }
-    if (st->tu_vertex->C_to_P) mpi_vrb_printf("C->P feedback enabled\n");
-    if (st->tu_vertex->D_to_P) mpi_vrb_printf("D->P feedback enabled\n");
-    if (st->tu_vertex->P_to_C) mpi_vrb_printf("P->C feedback enabled\n");
-    if (st->tu_vertex->D_to_C) mpi_vrb_printf("D->C feedback enabled\n");
-    if (st->tu_vertex->P_to_D) mpi_vrb_printf("P->D feedback enabled\n");
-    if (st->tu_vertex->C_to_D) mpi_vrb_printf("C->D feedback enabled\n");
 }
 
 const index_t* diverge_flow_step_mi_to_tuffidx( const diverge_flow_step_t* st ) {
-    if (st->type != diverge_tu)
+    if (st->type != diverge_tu && st->type != diverge_tu_phonons)
         return NULL;
     tu_data_t* td = st->intls->tu_data;
     if (!td)
@@ -712,7 +763,7 @@ index_t* diverge_flow_step_tuffidx_to_mi( const diverge_flow_step_t* st ) {
 }
 
 const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st ) {
-    if (st->type != diverge_tu) return NULL;
+    if (st->type != diverge_tu && st->type != diverge_tu_phonons) return NULL;
     tu_data_t* td = st->intls->tu_data;
     if (!td) return NULL;
     if (!td->symm) return NULL;
@@ -721,7 +772,7 @@ const index_t* diverge_flow_step_ibz( const diverge_flow_step_t* st ) {
 
 void diverge_flow_step_set_projection_hook( diverge_flow_step_t* st,
         diverge_tu_projection_hook_t hook, void* ctx ) {
-    if (st->type != diverge_tu) {
+    if (st->type != diverge_tu && st->type != diverge_tu_phonons) {
         mpi_err_printf( "projection hooks only available with TU backend\n" );
         return;
     }

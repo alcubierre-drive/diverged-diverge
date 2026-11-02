@@ -38,6 +38,7 @@ void diverge_postprocess_and_write_finegrained( diverge_flow_step_t* st,
     if (pc == NULL) pc = &pc_def;
 
     switch (st->type) {
+        case diverge_tu_phonons:
         case diverge_tu:
             tu_pp( st, pc, file );
             break;

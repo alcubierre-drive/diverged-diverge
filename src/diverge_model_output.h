@@ -210,6 +210,12 @@ typedef struct diverge_model_output_conf_t {
     int vert;
     /** export real space hoppings */
     int hop;
+    /**
+     * when the band structure is explicitly calculated and not taken from
+     * internals (see :c:member:`diverge_model_output_conf_t.npath` != -1) then
+     * the dispersion can be "square rooted" to resemble phonon energies.
+     */
+    int apply_sgnsqrt;
 } diverge_model_output_conf_t;
 
 #if !defined(__cplusplus) && !defined(CTYPESGEN)
@@ -226,6 +232,7 @@ static const diverge_model_output_conf_t diverge_model_output_conf_defaults = {
     .fatbands = 0,
     .vert = 1,
     .hop = 1,
+    .apply_sgnsqrt = 0,
 };
 #endif // __cplusplus
 

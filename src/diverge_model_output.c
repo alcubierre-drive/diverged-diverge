@@ -3,6 +3,7 @@
 #include "diverge_model_output.h"
 #include "diverge_internals_struct.h"
 #include "diverge_model.h"
+#include "diverge_phonons.h"
 #include "misc/number_repr_checks.h"
 #include "misc/mpi_functions.h"
 #include "misc/kmesh_to_bands.h"
@@ -33,7 +34,7 @@ char* diverge_model_to_file_fg( diverge_model_t* mod, const char* fname,
 }
 
 // use batched eigen/alloc if npath < 0
-static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t npath );
+static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t npath, int apply_sgnsqrt );
 static index_t h_diverge_model_nbandstructure = DIVERGE_MODEL_NBANDSTRUCTURE;
 static void* kmesh_to_bands_serialize( diverge_model_t* mod, bool crs, index_t* psize );
 
@@ -63,7 +64,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
     uindex_t lmd5sum = 0;
     if (diverge_mpi_comm_rank() == 0) {
         // allocate the header
-        char* buf = (char*)calloc(256,sizeof(index_t));
+        char* buf = calloc(256,sizeof(index_t));
 
         // print the magic number
         index_t* ibuf = (index_t*)buf;
@@ -404,7 +405,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
                 }
             } else {
                 mpi_vrb_printf("generating bandstructure with %i points per segment\n", npath );
-                generate_bandstructure( mod, (double*)(buf+ibuf[100]), npath );
+                generate_bandstructure( mod, (double*)(buf+ibuf[100]), npath, cfg->apply_sgnsqrt );
             }
         }
 
@@ -455,7 +456,7 @@ char* diverge_model_to_file_finegrained( diverge_model_t* mod, const char* fname
     return md5sum;
 }
 
-static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t npath ) {
+static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t npath, int apply_sgnsqrt ) {
     if (mod->n_ibz_path <= 1) {
         mpi_wrn_printf("bandstructure is bogus. need n_ibz_path > 1\n");
         return;
@@ -465,6 +466,7 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
     diverge_model_generate_mom_basis(mod->lattice[0], Gvec.m[0]);
 
     index_t nb = mod->n_orb * mod->n_spin;
+    index_t nk = 0;
 
     if (npath > 0) {
         complex128_t* H = malloc(sizeof(complex128_t)*POW2(nb));
@@ -501,6 +503,8 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
                 running_idx++;
             }
         }
+
+        nk = running_idx;
 
         free(H);
         free(U);
@@ -543,14 +547,16 @@ static void generate_bandstructure( diverge_model_t* mod, double* buf, index_t n
 
         // map back
         for (index_t x=ntot_m1; x>=0; --x) {
-            for (index_t b=0; b<nb; ++b) buf[IDX2(x,b,nb+3)] = E[IDX2(x,b,nb)];
+            for (index_t b=0; b<nb; ++b) buf[IDX2(x,b,nb+3)] = E[IDX2(x,b,nb)] - mod->internals->mu;
             for (index_t d=0; d<3; ++d) buf[IDX2(x,d+nb,nb+3)] = K[IDX2(x,d,3)];
         }
 
         free(E);
         free(H);
         free(K);
+        nk = ntot_m1 + 1;
     }
+    if (apply_sgnsqrt) diverge_phonons_sgnsqrt(buf, nk, nb+3, 3);
 }
 
 static void* kmesh_to_bands_serialize( diverge_model_t* mod, bool crs, index_t* psize ) {

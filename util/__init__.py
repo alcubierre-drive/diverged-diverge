@@ -76,6 +76,7 @@ if not _libs["divERGe"] is None:
         '_DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE',
         '_TU_POST_USE_BATCHED_SVD_U',
         '_TU_PROJ_TIMING',
+        '_TU_PROJ_BLOCK_BYTES',
         '_TU_VERTEX_RECO_GPU_ZGEMM',
         '_LDOS_KERNEL_GPU_DEV_MAXNOS',
         '_LDOS_KERNEL_GPU_DEV_NTHREADS',
@@ -171,6 +172,7 @@ if not _libs["divERGe"] is None:
         ('_DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE',       c_int64),
         ('_TU_POST_USE_BATCHED_SVD_U',                 c_int64),
         ('_TU_PROJ_TIMING',                            c_int64),
+        ('_TU_PROJ_BLOCK_BYTES',                       c_int64),
         ('_TU_VERTEX_RECO_GPU_ZGEMM',                  c_int64),
         ('_LDOS_KERNEL_GPU_DEV_MAXNOS',                c_int64),
         ('_LDOS_KERNEL_GPU_DEV_NTHREADS',              c_int64),
@@ -209,7 +211,7 @@ if not _libs["divERGe"] is None:
         ('_DIVERGE_OLD_W90_READER',                    c_int64),
         ('_DIVERGE_TU_PROJ_TO_R_VTREE',                c_int64),
         ('_XVTREE_ALIGNMENT_PRINT',                    c_int64),
-        ('_PADDING',                                   c_char * 32),
+        ('_PADDING',                                   c_char * 24),
         # char arrays last, so that everything before them stays aligned
         ('_CUBLAS_BATCHED_GEMM_CALL',                  struct_str1024_t),
         ('_CUDA_VERSION_STR',                          struct_str1024_t),
@@ -272,6 +274,7 @@ if not _libs["divERGe"] is None:
     DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE       = _CONSTANTS_._DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE
     TU_POST_USE_BATCHED_SVD_U                 = _CONSTANTS_._TU_POST_USE_BATCHED_SVD_U
     TU_PROJ_TIMING                            = _CONSTANTS_._TU_PROJ_TIMING
+    TU_PROJ_BLOCK_BYTES                       = _CONSTANTS_._TU_PROJ_BLOCK_BYTES
     TU_VERTEX_RECO_GPU_ZGEMM                  = _CONSTANTS_._TU_VERTEX_RECO_GPU_ZGEMM
     LDOS_KERNEL_GPU_DEV_MAXNOS                = _CONSTANTS_._LDOS_KERNEL_GPU_DEV_MAXNOS
     LDOS_KERNEL_GPU_DEV_NTHREADS              = _CONSTANTS_._LDOS_KERNEL_GPU_DEV_NTHREADS
@@ -625,6 +628,10 @@ if not _libs["divERGe"] is None:
         pass
     rs_vertex_t = struct_rs_vertex_t
 
+    class struct_ph_vertex_t(Structure):
+        pass
+    ph_vertex_t = struct_ph_vertex_t
+
     class struct_mom_patching_t(Structure):
         pass
     mom_patching_t = struct_mom_patching_t
@@ -694,6 +701,31 @@ if not _libs["divERGe"] is None:
         ('s3', index_t),
         ('s4', index_t),
         ('V', complex128_t),
+    ]
+
+    struct_ph_vertex_t.__slots__ = [
+        'mode',
+        'R12',
+        'o1',
+        's1',
+        'o2',
+        's2',
+        'OA',
+        'RA',
+        'RA_pos',
+        'g',
+    ]
+    struct_ph_vertex_t._fields_ = [
+        ('mode', c_char),
+        ('R12', index_t * int(3)),
+        ('o1', c_int),
+        ('s1', c_int),
+        ('o2', c_int),
+        ('s2', c_int),
+        ('OA', index_t),
+        ('RA', c_int * int(3)),
+        ('RA_pos', c_float * int(3)),
+        ('g', complex128_t),
     ]
 
     struct_mom_patching_t.__slots__ = [
@@ -836,8 +868,12 @@ if not _libs["divERGe"] is None:
     read_wout.argtypes = [String,c_voidp,c_voidp]
     read_wout.restype = c_voidp
 
+    W90_apply_wsvec = _libs["divERGe"].get("diverge_W90_apply_wsvec", "cdecl")
+    W90_apply_wsvec.argtypes = [c_voidp, c_voidp, c_int, String]
+    W90_apply_wsvec.restype = c_voidp
+
     read_W90_model = _libs["divERGe"].get("diverge_read_W90_model", "cdecl")
-    read_W90_model.argtypes = [String, String, index_t]
+    read_W90_model.argtypes = [String, String, String, index_t]
     read_W90_model.restype = POINTER(model_t)
 
     W90_READER_SWAP_ORBITALS = -2
@@ -1121,6 +1157,118 @@ if not _libs["divERGe"] is None:
     model_internals_tu = _libs["divERGe"].get("diverge_model_internals_tu", "cdecl")
     model_internals_tu.argtypes = [POINTER(model_t), c_double]
     model_internals_tu.restype = None
+
+    model_internals_tu_phonons = _libs["divERGe"].get("diverge_model_internals_tu_phonons", "cdecl")
+    model_internals_tu_phonons.argtypes = [POINTER(model_t), c_double,
+                                           c_voidp, index_t, c_voidp, index_t]
+    model_internals_tu_phonons.restype = POINTER(model_t)
+
+    phonons_asr = _libs["divERGe"].get("diverge_phonons_asr", "cdecl")
+    phonons_asr.argtypes = [c_voidp, c_voidp]
+    phonons_asr.restype = c_voidp
+
+    phonons_asr_n_orb = _libs["divERGe"].get("diverge_phonons_asr_n_orb", "cdecl")
+    phonons_asr_n_orb.argtypes = [c_voidp, c_voidp, index_t]
+    phonons_asr_n_orb.restype = c_voidp
+
+    phonons_asr_n_orb_massdiv = _libs["divERGe"].get("diverge_phonons_asr_n_orb_massdiv", "cdecl")
+    phonons_asr_n_orb_massdiv.argtypes = [c_voidp, c_voidp, index_t, c_voidp]
+    phonons_asr_n_orb_massdiv.restype = c_voidp
+
+    phonons_apply_asr = _libs["divERGe"].get("diverge_phonons_apply_asr", "cdecl")
+    phonons_apply_asr.argtypes = [POINTER(model_t)]
+    phonons_apply_asr.restype = None
+
+    phonons_apply_sgnsqrt = _libs["divERGe"].get("diverge_phonons_apply_sgnsqrt", "cdecl")
+    phonons_apply_sgnsqrt.argtypes = [POINTER(model_t)]
+    phonons_apply_sgnsqrt.restype = c_voidp
+
+    phonons_get_g = _libs["divERGe"].get("diverge_phonons_get_g", "cdecl")
+    phonons_get_g.argtypes = [POINTER(model_t), c_int]
+    phonons_get_g.restype = c_voidp
+
+    phonons_get_g_dim = _libs["divERGe"].get("diverge_phonons_get_g_dim", "cdecl")
+    phonons_get_g_dim.argtypes = [POINTER(model_t), c_voidp]
+    phonons_get_g_dim.restype = None
+
+    class refinement_t(Structure):
+        pass
+    refinement_t.__slots__ = [ 'kf_idx', 'weight' ]
+    refinement_t._fields_ = [ ('kf_idx', index_t), ('weight', c_double) ]
+
+    phonons_get_refine = _libs["divERGe"].get("diverge_phonons_get_refine", "cdecl")
+    phonons_get_refine.argtypes = [POINTER(model_t), c_voidp]
+    phonons_get_refine.restype = c_voidp
+
+    phonons_change_regulator = _libs["divERGe"].get("diverge_phonons_change_regulator", "cdecl")
+    phonons_change_regulator.argtypes = [c_double]
+    phonons_change_regulator.restype = c_double
+
+    phonons_asr_vertex = _libs["divERGe"].get("diverge_phonons_asr_vertex", "cdecl")
+    phonons_asr_vertex.argtypes = [c_voidp, c_voidp]
+    phonons_asr_vertex.restype = c_voidp
+
+    phonons_asr_vertex_n_orb = _libs["divERGe"].get("diverge_phonons_asr_vertex_n_orb", "cdecl")
+    phonons_asr_vertex_n_orb.argtypes = [c_voidp, c_voidp, index_t]
+    phonons_asr_vertex_n_orb.restype = c_voidp
+
+    phonons_asr_vertex_n_orb_massdiv = _libs["divERGe"].get("diverge_phonons_asr_vertex_n_orb_massdiv", "cdecl")
+    phonons_asr_vertex_n_orb_massdiv.argtypes = [c_voidp, c_voidp, index_t, c_voidp]
+    phonons_asr_vertex_n_orb_massdiv.restype = c_voidp
+
+    phonons_enable_refinement = _libs["divERGe"].get("diverge_phonons_enable_refinement", "cdecl")
+    phonons_enable_refinement.argtypes = [POINTER(model_t), c_int, c_double]
+    phonons_enable_refinement.restype = c_double
+
+    class wigner_config_t(Structure):
+        pass
+    wigner_config_t.__slots__ = [
+        'nsc',
+        'sgn',
+        'eps',
+        'dim',
+        'apply_asr',
+        'apply_ndegen',
+        'apply_massdiv',
+        'apply_rydberg',
+    ]
+    wigner_config_t._fields_ = [
+        ('nsc', index_t),
+        ('sgn', c_int),
+        ('eps', c_double),
+        ('dim', c_int),
+        ('apply_asr', c_int),
+        ('apply_ndegen', c_int),
+        ('apply_massdiv', c_int),
+        ('apply_rydberg', c_int),
+    ]
+    wigner_config_defaults_CPP = _libs["divERGe"].get("diverge_wigner_config_defaults_CPP")
+    wigner_config_defaults_CPP.argtypes = []
+    wigner_config_defaults_CPP.restype = wigner_config_t
+
+    WIGNER_CONFIG_APPLY_ASR_HOPPINGS = 0x1
+    WIGNER_CONFIG_APPLY_ASR_VERTICES = 0x2
+    WIGNER_CONFIG_APPLY_ASR_MASSDIV_H = 0x4
+    WIGNER_CONFIG_APPLY_ASR_MASSDIV_V = 0x8
+
+    WIGNER_CONFIG_APPLY_RYDBERG_2_IFC = 0x1
+    WIGNER_CONFIG_APPLY_RYDBERG_3_2_G = 0x2
+
+    phonons_read_ifc = _libs["divERGe"].get("diverge_phonons_read_ifc", "cdecl")
+    phonons_read_ifc.argtypes = [String, c_voidp]
+    phonons_read_ifc.restype = POINTER(model_t)
+
+    phonons_read_elph = _libs["divERGe"].get("diverge_phonons_read_elph", "cdecl")
+    phonons_read_elph.argtypes = [String, String, c_voidp, c_double, c_voidp, c_int]
+    phonons_read_elph.restype = c_voidp
+
+    phonons_model_get_masses = _libs["divERGe"].get("diverge_phonons_model_get_masses", "cdecl")
+    phonons_model_get_masses.argtypes = [POINTER(model_t)]
+    phonons_model_get_masses.restype = c_voidp
+
+    phonons_read_ifc_and_elph = _libs["divERGe"].get("diverge_phonons_read_ifc_and_elph", "cdecl")
+    phonons_read_ifc_and_elph.argtypes = [String, String, String, c_double, c_voidp]
+    phonons_read_ifc_and_elph.restype = POINTER(model_t)
 
     #Batched eigensolver
     batched_eigen_r = _libs["divERGe"].get("batched_eigen_r", "cdecl")
@@ -1631,6 +1779,7 @@ if not _libs["divERGe"] is None:
         pass
     struct_model_output_conf_t.__slots__ = [
         'kc', 'kf', 'kc_ibz_path', 'kf_ibz_path', 'H', 'U', 'E', 'npath', 'fatbands', 'vert', 'hop',
+        'apply_sgnsqrt',
     ]
     struct_model_output_conf_t._fields_ = [
         ('kc', c_int),
@@ -1644,6 +1793,7 @@ if not _libs["divERGe"] is None:
         ('fatbands', c_int),
         ('vert', c_int),
         ('hop', c_int),
+        ('apply_sgnsqrt', c_int),
     ]
     model_output_conf_t = struct_model_output_conf_t
 
@@ -1948,6 +2098,13 @@ if not _libs["divERGe"] is None:
     tu_formfactor_t = struct_tu_formfactor_t
     flow_step_t = struct_flow_step_t
     euler_t = struct_euler_t
+
+    phonon_vertex_generator_t = CFUNCTYPE(UNCHECKED(None), POINTER(flow_step_t), c_double,
+                                          POINTER(complex128_t), c_voidp)
+    phonons_set_vertex_generator = _libs["divERGe"].get("diverge_phonons_set_vertex_generator", "cdecl")
+    phonons_set_vertex_generator.argtypes = [POINTER(model_t), phonon_vertex_generator_t,
+                                             POINTER(flow_step_t), c_voidp]
+    phonons_set_vertex_generator.restype = None
 
     import numpy as np
     zeros = np.zeros

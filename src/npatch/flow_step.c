@@ -68,7 +68,7 @@ void npatch_flow_step_set_vertex_resym( bool resym ) {
 }
 
 npatch_flow_step_conf_t* npatch_flow_step_conf_init( bool SU2 ) {
-    npatch_flow_step_conf_t* r = (npatch_flow_step_conf_t*)calloc(1,sizeof(npatch_flow_step_conf_t));
+    npatch_flow_step_conf_t* r = calloc(1,sizeof(npatch_flow_step_conf_t));
     r->SU2 = SU2;
     r->P = r->C = r->D = true;
     r->wtime_gpu = r->wtime_cpu = r->wtime_comm = r->wtime_max =
@@ -288,7 +288,7 @@ void npatch_flow_step( npatch_flow_step_conf_t* config, npatch_vertex_t* vertex,
         (!h_npatch_flow_step_ignore_nonSU2_exchange_symmetry)) {
         // we don't want to destroy dV, that's why we symmetrize here and need one more buffer
         if (!dPhi_sym)
-            dPhi_sym = (complex128_t*)calloc( vertex->size + loop->nk, sizeof(complex128_t) );
+            dPhi_sym = calloc( vertex->size + loop->nk, sizeof(complex128_t) );
         npatch_flow_step_enforce_exchange( vertex->dV, dPhi_sym, loop->k3map, np, nb, 0.25 );
     }
     tock = diverge_mpi_wtime();
@@ -305,7 +305,7 @@ void npatch_flow_step( npatch_flow_step_conf_t* config, npatch_vertex_t* vertex,
     if (h_npatch_flow_step_resymmetrize_vertex) {
         // same as above. we don't want to destroy dV
         if (!dPhi_sym)
-            dPhi_sym = (complex128_t*)calloc( vertex->size + loop->nk, sizeof(complex128_t) );
+            dPhi_sym = calloc( vertex->size + loop->nk, sizeof(complex128_t) );
         symmetrize_npatch_vertex( loop->dmod, vertex->V, loop->dpat->patches, np, dPhi_sym );
     }
     tock = diverge_mpi_wtime();

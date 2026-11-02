@@ -387,7 +387,6 @@ CT_TEST(rng_histogram_dbl) {
     free(cnt);
 }
 
-/*
 typedef void* void_ptr;
 #define vtree_key_t index_t
 #define vtree_val_t void_ptr
@@ -417,7 +416,6 @@ CT_TEST_NAME( dict_vtree_hashtable, "dict,vtree,hashtable" ) {
     xvtree_free(xv);
     hashtable_free(ht);
 }
-*/
 
 CT_TEST(dv_vector_init_and_basic_properties) {
     int *v = NULL;

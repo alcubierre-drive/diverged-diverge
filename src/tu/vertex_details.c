@@ -87,10 +87,10 @@ void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_
             proj_mem += (proj_memtype[mem] == 0) ? proj_memsize[mem] : 0;
             proj_mem_managed += (proj_memtype[mem] == 1) ? proj_memsize[mem] : 0;
             if (mem>0) {
-                proj_memoffset[mem] = (proj_memtype[mem-1] == 0) 
+                proj_memoffset[mem] = (proj_memtype[mem-1] == 0)
                                 ? proj_memsize[mem-1] + proj_memoffset[mem-1]
                                 : proj_memoffset[mem-1];
-                proj_memoffset_managed[mem] = (proj_memtype[mem-1] == 1) 
+                proj_memoffset_managed[mem] = (proj_memtype[mem-1] == 1)
                                 ? proj_memsize[mem-1] + proj_memoffset_managed[mem-1]
                                 : proj_memoffset_managed[mem-1];
             }
@@ -170,7 +170,7 @@ void tu_vertex_initialize_GPU_memory( tu_vertex_t* V, tu_projection_t* proj, tu_
         }
         index_t memory_GPU = MAX3( gemm_mem, prop_mem, proj_mem );
         index_t memory_managed = MAX3( gemm_mem_managed, prop_mem_managed, proj_mem_managed );
-        // XXX needed to set the values to sth always >= 0
+        // it is required to set the size of memory >= 0
         memory_GPU = MAX( memory_GPU, 128*16 );
         memory_managed = MAX( memory_managed, 128*16 );
         mpi_vrb_printf("TU GPU pool with %.1f GB on-device and %.1f GB managed\n",

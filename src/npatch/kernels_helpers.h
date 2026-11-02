@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../diverge_common.h"
+#include "../diverge_patching_helpers.h"
 
 #define UNRAVEL_V( idx, x, y, z, a, b, c, d ) \
     index_t x, y, z, a, b, c, d; \
@@ -35,25 +36,4 @@
 #define RAVEL_L3( Pi, P1, P2, o1, o2, o3, o4 ) ((((((Pi*np+P1)*np+P2)*nb+o1)*nb+o2)*nb+o3)*nb+o4)
 #define RAVEL_O4( o1, o2, o3, o4 ) ((o1*nb+o2)*nb+o3)*nb+o4
 
-#ifndef __cplusplus
-#define RESTRICT restrict
-#else
-#define RESTRICT 
-#endif
-static inline void complex128_t_atomic_add( complex128_t* RESTRICT addr, const complex128_t* RESTRICT val ) {
-    double* addr_double = (double*)addr;
-    const double* val_double = (const double*)val;
-    #pragma omp atomic
-    addr_double[0] += val_double[0];
-    #pragma omp atomic
-    addr_double[1] += val_double[1];
-}
-
-static inline void complex128_t_atomic_add_byval( complex128_t* addr, complex128_t val ) {
-    double* addr_double = (double*)addr;
-    const double* val_double = (const double*)&val;
-    #pragma omp atomic
-    addr_double[0] += val_double[0];
-    #pragma omp atomic
-    addr_double[1] += val_double[1];
-}
+static inline void atomic_add_byval( complex128_t* addr, complex128_t val ) { atomic_add( addr, &val ); }

@@ -43,7 +43,7 @@ static double* diverge_qgt_impl_grad( double* lattice_, complex128_t* U,
                   dkz = IDX3(0,0,oneZ,nk[1],nk[2]);
     const index_t dk[] = { dkx, dky, dkz };
 
-    double* result = (double*)calloc(nk_tot, sizeof(double));
+    double* result = calloc(nk_tot, sizeof(double));
 
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
@@ -129,7 +129,7 @@ static complex128_t* diverge_qgt_tensor_impl_grad( double* lattice_, complex128_
                   dkz = IDX3(0,0,oneZ,nk[1],nk[2]);
     const index_t dk[] = { dkx, dky, dkz };
 
-    complex128_t* result = (complex128_t*)calloc(nk_tot * 9, sizeof(complex128_t));
+    complex128_t* result = calloc(nk_tot * 9, sizeof(complex128_t));
 
     #pragma omp parallel num_threads(diverge_omp_num_threads())
     {
@@ -210,13 +210,13 @@ static complex128_t* diverge_qgt_tensor_impl_grad( double* lattice_, complex128_
 
 static complex128_t* diverge_qgt_tensor_impl( complex128_t* U, index_t nb, index_t* nk,
         index_t* which_bands, index_t n_which_bands, qgt_improper_gauge_t* ig ) {
-    claM3d_t lattice = claM3d_id(); 
+    claM3d_t lattice = claM3d_id();
     return diverge_qgt_tensor_impl_grad( lattice.m[0], U, nb, nk, which_bands, n_which_bands, ig );
 }
 
 static double* diverge_qgt_impl( complex128_t* U, index_t nb, index_t* nk,
         index_t* which_bands, index_t n_which_bands, qgt_improper_gauge_t* ig ) {
-    claM3d_t lattice = claM3d_id(); 
+    claM3d_t lattice = claM3d_id();
     return diverge_qgt_impl_grad( lattice.m[0], U, nb, nk, which_bands, n_which_bands, ig );
 }
 

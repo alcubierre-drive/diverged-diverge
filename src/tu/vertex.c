@@ -2,6 +2,7 @@
 
 #include "vertex.h"
 #include "vertex_details.h"
+#include "phonons.h"
 #include "propagator_details.h"
 #include "../misc/batched_gemms.h"
 #include "../misc/gemm.h"
@@ -41,9 +42,9 @@ tu_vertex_t* tu_vertex_init( diverge_model_t* modelin, tu_projection_t* proj, tu
     V->Pch = calloc(V->full_vert_size, sizeof(complex128_t));
     V->pp_bubble_int = calloc(V->full_vert_size, sizeof(complex128_t));
     memsize += 2*2*V->full_vert_size;
-    V->Cch = calloc(V->full_vert_size, sizeof(complex128_t)); 
+    V->Cch = calloc(V->full_vert_size, sizeof(complex128_t));
     memsize += 2*V->full_vert_size;
-    V->Dch = calloc(V->full_vert_size, sizeof(complex128_t)); 
+    V->Dch = calloc(V->full_vert_size, sizeof(complex128_t));
     memsize += 2*V->full_vert_size;
     if (V->use_self) {
         V->self_en = calloc(V->selfenergy_size, sizeof(complex128_t));
@@ -202,6 +203,12 @@ tu_vertex_t* tu_vertex_copy( const tu_vertex_t* O ) {
     V->D_to_C = O->D_to_C;
     V->P_to_D = O->P_to_D;
     V->C_to_D = O->C_to_D;
+
+    V->elph = O->elph;
+    V->ph_to_P = O->ph_to_P;
+    V->ph_to_C = O->ph_to_C;
+    V->ph_to_D = O->ph_to_D;
+    V->tu_ph = O->tu_ph;
 
     V->bubble_helper = O->bubble_helper;
     V->product_helper = O->product_helper;
@@ -579,47 +586,46 @@ static void reco_symm_canonical( const tu_vertex_t* restrict V,
 static void reco_ft_symm( const tu_vertex_t* restrict V, const complex128_t* restrict Xch,
         const complex128_t* restrict pref, complex128_t* restrict buf,
         const complex128_t* restrict existing_r_exp, index_t nr,
-        complex128_t* restrict buf_q ) {
+        complex128_t* restrict buf_q, double* restrict t_symm, double* restrict t_gemm ) {
     const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));
     const index_t my_nk_in_bz = V->symm->my_nk_in_bz;
 
     const bool was_null = (buf_q == NULL);
-    if (was_null) buf_q = malloc( my_nk_in_bz*rest*sizeof(complex128_t) );
+    if (was_null) {
+        mpi_log_large_alloc( my_nk_in_bz*rest*(index_t)sizeof(complex128_t),
+                "the reconstructed full-BZ vertex" );
+        buf_q = malloc( my_nk_in_bz*rest*sizeof(complex128_t) );
+    }
+    double t0 = diverge_mpi_wtime();
     reco_symm_canonical( V, Xch, pref, buf_q );
+    double t1 = diverge_mpi_wtime();
     // hack that allows to skip the warning message of the non-CUDA fallback
     single_gemm_Xt_t* quiet_handle = (single_gemm_Xt_t*)((ptrdiff_t)-1);
     single_gemm_Xt_Afortran( quiet_handle, buf_q, existing_r_exp, buf, nr, rest,
             my_nk_in_bz, 1./(double)V->nk, 0.0 );
+    double t2 = diverge_mpi_wtime();
+    *t_symm = t1-t0;
+    *t_gemm = t2-t1;
     if (was_null) free( buf_q );
 }
 
-void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* restrict buf,
-        const complex128_t* restrict existing_r_exp, index_t nr, complex128_t* restrict buf_q/*=NULL*/ ) {
-#ifdef TU_VERTEX_RECO_GPU_ZGEMM
-    // the fused CPU version below has no GPU counterpart (yet)
-    diverge_tu_vertex_reco_ft_ref( V, chan, buf, existing_r_exp, nr, buf_q );
-#else
-    const char channel = chan;
+/* two-step reconstruction + FT: reconstruct the full-BZ vertex (or transpose,
+ * without symmetries), contract with the plane waves, permute the legs. Leaves
+ * the MPI reduction to the caller. */
+static void reco_ft_two_step( const tu_vertex_t* restrict V, char channel, complex128_t* restrict buf,
+        const complex128_t* restrict existing_r_exp, index_t nr, complex128_t* restrict buf_q ) {
     const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));
-
-    // the fused kernel is opt-in (hack "tu_reco_fused"); without it, or when the
-    // tables were built for a different nr, the two-step path below runs
-    if (V->reco_fused && tu_reco_fused_nr(V->reco_fused) == nr) {
-        // the fused path writes the channel's leg order directly
-        tu_reco_fused_ft( V->reco_fused, V, channel, buf );
-        diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
-        return;
-    }
-
     const complex128_t* restrict Xch = channel == 'P' ? V->Pch :
                                        channel == 'C' ? V->Cch :
                                      /*channel == 'D'*/ V->Dch;
 
+    double t_symm = 0.0, t_gemm = 0.0;
     if (V->symm->use_symmetries) {
         reco_ft_symm( V, Xch, channel == 'P' ? V->symm->prefactor_symmP :
                                                V->symm->prefactor_symmCD,
-                buf, existing_r_exp, nr, buf_q );
+                buf, existing_r_exp, nr, buf_q, &t_symm, &t_gemm );
     } else {
+        double t0 = diverge_mpi_wtime();
         // without symmetries the reconstruction is a pure transposition of the
         // leg-pair index against q, and Xch(rest,my_nk) already *is* the column
         // major matrix that the transposing GEMM wants to see: no buffer needed.
@@ -638,9 +644,60 @@ void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, comple
         single_gemm( buf_q, existing_r_exp, buf, nr, rest, V->my_nk, 1./(double)V->nk, 0.0 );
         if (was_null) free( buf_q );
 #endif
+        t_gemm = diverge_mpi_wtime() - t0;
     }
+    double t0 = diverge_mpi_wtime();
     reco_ft_permute_legs( buf, channel, V->n_spin, V->n_orbff, nr );
+    double t_perm = diverge_mpi_wtime() - t0;
 
+#ifdef TU_PROJ_TIMING
+    const index_t nk_gemm = V->symm->use_symmetries ? V->symm->my_nk_in_bz : V->my_nk;
+    mpi_tim_printf( "reco_ft[2step] %c: symm:%7.3fs gemm:%7.3fs perm:%7.3fs tot:%7.3fs "
+            "(gemm %li x %li x %li)\n", channel, t_symm, t_gemm, t_perm, t_symm+t_gemm+t_perm,
+            (long)nr, (long)rest, (long)nk_gemm );
+#else
+    (void)t_symm; (void)t_gemm; (void)t_perm;
+#endif
+}
+
+void diverge_tu_vertex_reco_ft( const tu_vertex_t* restrict V, char chan, complex128_t* restrict buf,
+        const complex128_t* restrict existing_r_exp, index_t nr, complex128_t* restrict buf_q/*=NULL*/ ) {
+#ifdef TU_VERTEX_RECO_GPU_ZGEMM
+    // the fused CPU version below has no GPU counterpart (yet)
+    diverge_tu_vertex_reco_ft_ref( V, chan, buf, existing_r_exp, nr, buf_q );
+#else
+    const char channel = chan;
+    const index_t rest = POW2(V->n_orbff*POW2(V->n_spin));
+
+    // the fused kernel is opt-in (hack "tu_reco_fused"); without it, or when the
+    // tables were built for a different nr, the two-step path runs. With the
+    // hack set to 2, both run on every call (timing comparison, see below).
+    if (V->reco_fused && tu_reco_fused_nr(V->reco_fused) == nr) {
+        complex128_t* ref = NULL;
+        if (V->tu_data->tu_reco_fused == 2) {
+            mpi_log_large_alloc( nr*rest*(index_t)sizeof(complex128_t),
+                    "the reco_ft comparison buffer" );
+            ref = malloc( nr*rest*sizeof(complex128_t) );
+            reco_ft_two_step( V, channel, ref, existing_r_exp, nr, buf_q );
+        }
+        // the fused path writes the channel's leg order directly
+        tu_reco_fused_ft( V->reco_fused, V, channel, buf );
+        if (ref) {
+            double diff = 0.0, max = 0.0;
+            #pragma omp parallel for reduction(max:diff,max) num_threads(diverge_omp_num_threads())
+            for (index_t i=0; i<nr*rest; ++i) {
+                diff = MAX(diff, cabs(buf[i]-ref[i]));
+                max = MAX(max, cabs(ref[i]));
+            }
+            mpi_tim_printf( "reco_ft[cmp] %c: max|fused-2step| = %.2e (max|2step| = %.2e)\n",
+                    channel, diff, max );
+            free( ref );
+        }
+        diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
+        return;
+    }
+
+    reco_ft_two_step( V, channel, buf, existing_r_exp, nr, buf_q );
     diverge_mpi_allreduce_complex_sum_inplace(buf, nr*rest);
 #endif
 }
@@ -764,4 +821,15 @@ void tu_vertex_product( complex128_t* result, const complex128_t* B,
         batched_gemm(B, C, helper, productsize, 1., 0., nbatch);
         batched_gemm(helper, B, result, productsize, prefac, 0., nbatch);
     }
+}
+
+void tu_vertex_init_phonons( tu_vertex_t* V, tu_data_phonons_t* p ) {
+    int phonons_possible = V->D_flow;
+    if (!V->SU2) phonons_possible = phonons_possible && V->C_flow;
+    if (!phonons_possible) {
+        mpi_err_printf( "cannot use phonon flow without D (&C iff !SU2) channel\n" );
+        return;
+    }
+    V->elph = V->ph_to_P = V->ph_to_C = V->ph_to_D = true;
+    V->tu_ph = p;
 }

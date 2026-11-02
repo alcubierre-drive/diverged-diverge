@@ -20,6 +20,8 @@ static const spherical_harmonic_t real_harmonics_s = {{ 1.,
                                 0.,0.,0.,0.,0.,0.,0.,
                                 0.,0.,0.,0.,0.,0.,0.,0.,0. }};
 
+// TODO do we actually need a minus sign here? Why would phonon bands otherwise
+// transform like (px,py,-pz)?
 static const spherical_harmonic_t real_harmonics_pz = {{ 0.,
                                   0.,1.,0.,
                                   0.,0.,0.,0.,0.,

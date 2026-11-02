@@ -434,7 +434,7 @@ void tu_init_symmetries( diverge_model_t* model ) {
                 *recvdispls = calloc(diverge_mpi_comm_size(),sizeof*recvdispls);
         int to = (diverge_mpi_comm_rank() + 1) % diverge_mpi_comm_size(),
             from = (diverge_mpi_comm_rank() - 1 + diverge_mpi_comm_size()) % diverge_mpi_comm_size();
-        char* other = (char*)calloc( nbytes_ranks[from], 1 );
+        char* other = calloc( nbytes_ranks[from], 1 );
         sendcounts[to] = nbytes;
         recvcounts[from] = nbytes_ranks[from];
         diverge_mpi_alltoallv_bytes( ptr, sendcounts, senddispls, other, recvcounts, recvdispls, 1 );

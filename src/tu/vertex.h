@@ -37,6 +37,9 @@ void tu_vertex_product( complex128_t* result, const complex128_t* B,
         const complex128_t* C, complex128_t* helper, index_t productsize,
         index_t nbatch, double prefac, bool buffered, char* GPUbuffer[32][3] );
 
+typedef struct tu_data_phonons_t tu_data_phonons_t;
+void tu_vertex_init_phonons( tu_vertex_t* V, tu_data_phonons_t* p );
+
 #ifdef __cplusplus
 }
 #endif

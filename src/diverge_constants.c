@@ -52,6 +52,9 @@
 #ifndef PACK_MPI_MULTIPLIER // tu/propagator_gpu_mpi.c
 #define PACK_MPI_MULTIPLIER 128
 #endif
+#ifndef TU_PROJ_BLOCK_BYTES // tu/projection_implementation.c
+#define TU_PROJ_BLOCK_BYTES (256l<<20)
+#endif
 
 /* DEFINEs that carry a value but have no default at all. the 0 below marks
  * them as unset, PRINT_LI_OPT emits #undef/-U for those. */
@@ -370,6 +373,7 @@ diverge_constants_t diverge_constants( void ) {
         ._DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE = HAS_DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE,
         ._TU_POST_USE_BATCHED_SVD_U = HAS_TU_POST_USE_BATCHED_SVD_U,
         ._TU_PROJ_TIMING = HAS_TU_PROJ_TIMING,
+        ._TU_PROJ_BLOCK_BYTES = TU_PROJ_BLOCK_BYTES,
         ._TU_VERTEX_RECO_GPU_ZGEMM = HAS_TU_VERTEX_RECO_GPU_ZGEMM,
         ._LDOS_KERNEL_GPU_DEV_MAXNOS = LDOS_KERNEL_GPU_DEV_MAXNOS,
         ._LDOS_KERNEL_GPU_DEV_NTHREADS = LDOS_KERNEL_GPU_DEV_NTHREADS,
@@ -535,6 +539,7 @@ void diverge_constants_print( int header ) {
     PRINT_DEF( DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE );
     PRINT_DEF( TU_POST_USE_BATCHED_SVD_U );
     PRINT_DEF( TU_PROJ_TIMING );
+    PRINT_LI( TU_PROJ_BLOCK_BYTES );
     PRINT_DEF( TU_VERTEX_RECO_GPU_ZGEMM );
     PRINT_LI( LDOS_KERNEL_GPU_DEV_MAXNOS );
     PRINT_LI( LDOS_KERNEL_GPU_DEV_NTHREADS );

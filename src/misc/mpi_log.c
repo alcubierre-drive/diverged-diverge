@@ -309,8 +309,8 @@ void mpi_py_eprint( const char* str ) {
 static char** mpi_string_gather( const char* str ) {
     int nranks = diverge_mpi_comm_size(),
         rank = diverge_mpi_comm_rank();
-    int* counts = (int*)calloc( nranks, sizeof(int) );
-    int* displs = (int*)calloc( nranks, sizeof(int) );
+    int* counts = calloc( nranks, sizeof(int) );
+    int* displs = calloc( nranks, sizeof(int) );
     for (int r=0; r<nranks; ++r) {
         counts[r] = sizeof(int);
         displs[r] = sizeof(int)*r;

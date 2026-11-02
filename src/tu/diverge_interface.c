@@ -6,13 +6,26 @@ LINALG_IMPLEMENT
 
 // this must follow the LINALG include to pre-define the types
 #include "diverge_interface.h"
+#include "phonons.h"
 
 #include "../misc/qnan.h"
 #include "../diverge_model_internals.h"
 #include "../misc/mergesort.h"
-#include "../misc/btree.h"
+#define vtree_key_t index_t
+#define vtree_val_t index_t
+#include "../misc/vtree.h"
 #include "../misc/hashtable.h"
 #include <assert.h>
+
+int generate_reduced_loop_maps_disabled = 0;
+
+#if   defined(DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE)
+unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_hashtable;
+#elif defined(DIVERGE_UNIQUE_ORBFF_FIND_BTREE)
+unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_btree;
+#else // DIVERGE_UNIQUE_ORBFF_FIND
+unique_orbff_impl_t tu_data_unique_orbff_impl = unique_orbff_impl_mergesort;
+#endif // DIVERGE_UNIQUE_ORBFF_FIND
 
 void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     if (!model->internals->has_common_internals) {
@@ -31,7 +44,7 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->tu_selfenergy_flow = false;
     info->tu_gf_skip_selfenergy = false;
     info->tu_katanin = false;
-    info->tu_reco_fused = false;
+    info->tu_reco_fused = 0;
     info->mpi_fft_chunksize = -1; // auto
     #if defined(USE_MPI) && defined(USE_MPI_FFTW)
     info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_mpi_new;
@@ -39,11 +52,9 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->which_fft_simple = info->which_fft_greens = info->which_fft_red = tu_fft_algorithm_greedy;
     #endif
     info->propagator_extra_cpu_timings = false;
-    #ifdef DIVERGE_UNIQUE_ORBFF_FIND_HASHTABLE
-    info->unique_orbff_hashtable_impl = 1;
-    #else
-    info->unique_orbff_hashtable_impl = 0;
-    #endif
+
+    info->unique_orbff_impl = tu_data_unique_orbff_impl;
+
     model->internals->tu_data = (void*)info;
     model->internals->tu_data_destructor = tu_data_destructor;
 
@@ -57,10 +68,78 @@ void diverge_model_internals_tu( diverge_model_t* model, double max_dist ) {
     info->tu_channelize = -1;
 
     init_ff_struct(max_dist, model);
-    generate_reduced_loop_maps(model);
+    if (!generate_reduced_loop_maps_disabled)
+        generate_reduced_loop_maps(model);
     tu_init_symmetries(model);
     info->offload_cpu = 0.0;
     info->percent_mem_GPU_blocked = 0.9;
+}
+
+static void tu_data_phonons_destructor( void* v ) {
+    tu_data_phonons_free((tu_data_phonons_t*)v);
+}
+static void model_phonons_destructor( void* v ) {
+    diverge_model_t* m = v;
+    m->internals->tu_phonon_model_dont_free = 0;
+    diverge_model_free(m);
+}
+
+int diverge_model_internals_tu_phonons_skip_refinement = 0;
+
+diverge_model_t* diverge_model_internals_tu_phonons( diverge_model_t* model,
+        double max_dist, rs_hopping_t* hop, index_t n_hop, ph_vertex_t* vert,
+        index_t n_vert ) {
+    diverge_model_internals_tu( model, max_dist );
+    strcpy( model->internals->backend, "tu_phonons" );
+    mpi_vrb_printf( "setting up phonon internals\n" );
+
+    diverge_model_t* m = diverge_model_init();
+    memcpy( m->nk, model->nk, sizeof(m->nk) );
+    if (diverge_model_internals_tu_phonons_skip_refinement)
+        m->nkf[0] = m->nkf[1] = m->nkf[2] = 1;
+    else
+        memcpy( m->nkf, model->nkf, sizeof(m->nkf) );
+    for (int d=model->internals->dim; d<3; ++d) m->nk[d] = m->nkf[d] = 0;
+    memcpy( m->lattice, model->lattice, sizeof(m->lattice) );
+
+    m->hop = calloc(n_hop, sizeof*m->hop); memcpy( m->hop, hop, n_hop*sizeof*m->hop );
+    m->n_hop = n_hop;
+    m->vert = calloc(n_vert, sizeof*m->vert); memcpy( m->vert, vert, n_vert*sizeof*m->vert );
+    m->n_vert = n_vert;
+    index_t max_orb = 0;
+    for (index_t i=0; i<n_hop; ++i) {
+        max_orb = MAX(max_orb, m->hop[i].o1);
+        max_orb = MAX(max_orb, m->hop[i].o2);
+    }
+    ph_vertex_t* pvert = (ph_vertex_t*)m->vert;
+    for (index_t i=0; i<n_vert; ++i) {
+        max_orb = MAX(max_orb, pvert[i].OA);
+    }
+    m->n_orb = max_orb + 1;
+    m->n_spin = m->SU2 = 1;
+
+    strncpy(m->name, model->name, sizeof(m->name));
+    strncat(m->name, "_phonons", sizeof(m->name));
+    m->name[sizeof m->name - 1] = 0;
+    memcpy(&m->n_ibz_path, &model->n_ibz_path, sizeof m->n_ibz_path);
+    memcpy(m->ibz_path, model->ibz_path, sizeof m->ibz_path);
+    if (model->n_sym > 0) mpi_log_printf( "symmetries not added to phonon model\n" );
+    if (model->n_orb > 1) mpi_log_printf( "nontrivial basis positions not set in phonon model\n" );
+    diverge_model_internals_common(m);
+    diverge_phonons_apply_sgnsqrt(m);
+
+    m->internals->tu_phonon_model_dont_free = 1;
+    tu_data_phonons_t* p = tu_data_phonons_init( m, model,
+            model->internals->tu_phonons_ignore_imag_freq,
+            model->internals->tu_phonons_refined,
+            model->internals->tu_phonons_save_g_on_fullmesh );
+    // set the phonon pointer into tu_data; do not modify (but you can use it!)
+    ((tu_data_t*)(model->internals->tu_data))->phonons_reference = p;
+    model->internals->tu_data_phonons = p;
+    model->internals->tu_data_phonons_destructor = &tu_data_phonons_destructor;
+    model->internals->model_phonons = m;
+    model->internals->model_phonons_destructor = &model_phonons_destructor;
+    return m;
 }
 
 void tu_data_destructor(void* v) {
@@ -449,6 +528,10 @@ void sort_loopmaps(diverge_model_t* model) {
 
 typedef struct { VECTOR_DECL( claV2ll_t, v ) } vec_claV2ll_t;
 
+#undef MERGESORT_COMP
+#define MERGESORT_COMP( x, y ) ((x).v[2]-(y).v[2])
+MERGESORT_IMPL( mergesort_trial_vecs, claV3ll_t )
+
 void generate_reduced_loop_maps(diverge_model_t* model) {
     tu_data_t* tu_data = model->internals->tu_data;
 
@@ -475,7 +558,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
     VECTOR_INIT_CAP( vec_claV2ll_t, _lmap, MAX(tu_data->n_orbff,1024) );
     index_t nff = tu_data->existing_ff_sz;
     // iterate over all unique pair combinations
-    if (tu_data->unique_orbff_hashtable_impl) {
+    if (tu_data->unique_orbff_impl == unique_orbff_impl_hashtable) {
         hashtable_t* index_to_reduced = hashtable_init( MAX(tu_data->n_orbff*4096,1024), 4 );
         index_t curr_idx = 1;
         for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
@@ -496,8 +579,43 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
             }
         }
         hashtable_free( index_to_reduced );
+    } else if (tu_data->unique_orbff_impl == unique_orbff_impl_mergesort) {
+        claV3ll_t* m1m3_to_trial = calloc(POW2(tu_data->n_orbff), sizeof*m1m3_to_trial);
+        #pragma omp parallel for num_threads(diverge_omp_num_threads()) collapse(2)
+        for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
+        for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
+            index_t fidx1 = mi_to_ffidx[m1];
+            index_t fidx3 = mi_to_ffidx[m3];
+            index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
+                              mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
+                              n_orb,n_orb,n_orb,n_orb);
+            m1m3_to_trial[IDX2(m1,m3, tu_data->n_orbff)] = (claV3ll_t){{ m1,m3, trial }};
+        }
+
+        const index_t n_orbff_2 = POW2(tu_data->n_orbff);
+        mergesort_trial_vecs( m1m3_to_trial, n_orbff_2, diverge_omp_num_threads(), 0 );
+
+        // this is serial...
+        claV3ll_t* prev = NULL;
+        for (index_t i=0; i<n_orbff_2; ++i) {
+            int is_new = prev ? prev->v[2] != m1m3_to_trial[i].v[2] : !prev;
+            if (is_new) {
+                prev = &m1m3_to_trial[i];
+
+                vec_claV2ll_t b = {0};
+                VECTOR_SHRINK_TO_FIT( _lmap[_lmap_sz-1].v );
+                VECTOR_PUSH_BACK( b.v, (claV2ll_t){{m1m3_to_trial[i].v[0], m1m3_to_trial[i].v[1]}} );
+                VECTOR_PUSH_BACK( _lmap, b );
+            } else {
+                VECTOR_PUSH_BACK( _lmap[_lmap_sz-1].v, (claV2ll_t){{m1m3_to_trial[i].v[0], m1m3_to_trial[i].v[1]}} );
+            }
+        }
+        VECTOR_SHRINK_TO_FIT( _lmap );
+        free(m1m3_to_trial);
     } else {
-        xbtree_t* index_to_reduced = xbtree_init( MAX(tu_data->n_orbff,1024) );
+        if (tu_data->unique_orbff_impl != unique_orbff_impl_btree)
+            mpi_err_printf( "invalid unique_orbff_impl (%i), reset to btree\n", tu_data->unique_orbff_impl );
+        xvtree_t* index_to_reduced = xvtree_init( MAX(tu_data->n_orbff,1024) );
         index_t curr_idx = 0;
         for (index_t m1 = 0; m1<tu_data->n_orbff; ++m1)
         for (index_t m3 = 0; m3<tu_data->n_orbff; ++m3) {
@@ -506,9 +624,9 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
             index_t trial = IDX5(tu_data->ff_idx_to_unique_ff_elem[fidx1+nff*fidx3],
                               mi_to_oto[m3],mi_to_ofrom[m3],mi_to_oto[m1],mi_to_ofrom[m1],
                               n_orb,n_orb,n_orb,n_orb);
-            btree_t* found = xbtree_find( index_to_reduced, trial );
+            vtree_node_t* found = xvtree_find( index_to_reduced, trial );
             if (!found) {
-                btree_t* node = xbtree_insert( index_to_reduced, trial );
+                vtree_node_t* node = xvtree_insert( index_to_reduced, trial );
                 node->val = curr_idx++;
                 vec_claV2ll_t b = {0};
                 VECTOR_PUSH_BACK( b.v, (claV2ll_t){{m1,m3}} );
@@ -517,7 +635,7 @@ void generate_reduced_loop_maps(diverge_model_t* model) {
                 VECTOR_PUSH_BACK( _lmap[found->val].v, (claV2ll_t){{m1,m3}} );
             }
         }
-        xbtree_free( index_to_reduced );
+        xvtree_free( index_to_reduced );
     }
 
     VECTOR_RESIZE( tu_data->unique_mi_l, _lmap_sz );

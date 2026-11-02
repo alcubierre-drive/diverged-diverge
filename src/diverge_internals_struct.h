@@ -82,6 +82,16 @@ struct internals_t {
     // tu internals
     void* tu_data;
     internals_destructor_t tu_data_destructor;
+
+    // tu additional phonon internals
+    int tu_phonon_model_dont_free;
+    int tu_phonons_buffered, tu_phonons_ignore_imag_freq, tu_phonons_refined,
+        tu_phonons_save_g_on_fullmesh;
+    void* tu_data_phonons;
+    internals_destructor_t tu_data_phonons_destructor;
+    void* model_phonons;
+    void* model_phonons_imag_freq;
+    internals_destructor_t model_phonons_destructor;
     int tu_symcheck_mpi;
 
     // hartree fock internals
@@ -105,7 +115,6 @@ struct internals_t {
     int ibz_map_E_U;
 
     int symcheck_mpi;
-
 };
 typedef struct internals_t internals_t;
 

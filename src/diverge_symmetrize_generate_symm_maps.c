@@ -541,7 +541,7 @@ void diverge_generate_symm_maps( diverge_model_t* model ) {
                 *recvdispls = calloc( diverge_mpi_comm_size(), sizeof(index_t) );
         int to = (diverge_mpi_comm_rank() + 1) % diverge_mpi_comm_size(),
             from = (diverge_mpi_comm_rank() - 1 + diverge_mpi_comm_size()) % diverge_mpi_comm_size();
-        char* other = (char*)calloc( nbytes_ranks[from], 1 );
+        char* other = calloc( nbytes_ranks[from], 1 );
         sendcounts[to] = nbytes;
         recvcounts[from] = nbytes_ranks[from];
         diverge_mpi_alltoallv_bytes( ptr, sendcounts, senddispls, other, recvcounts, recvdispls, 1 );
@@ -617,7 +617,7 @@ static void syms_serialize( const diverge_model_t* model, char** ptr_, uindex_t*
 }
 
 static internals_t* syms_deserialize( const diverge_model_t* model, char* ptr ) {
-    internals_t* ii = (internals_t*)calloc( 1, sizeof(internals_t) );
+    internals_t* ii = calloc( 1, sizeof(internals_t) );
 
     index_t n_sym = model->n_sym;
     index_t n_os = model->n_orb * model->n_spin;

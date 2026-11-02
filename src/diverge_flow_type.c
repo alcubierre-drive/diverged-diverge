@@ -10,13 +10,12 @@ diverge_flow_type diverge_flow_type_fromstr( const char* mode ) {
     // For a new backend, you must add a selection to your new flow_type in the
     // below if statements.
     char* method = strdup_div(mode);
-    strlwr_div(method);
-    if (!strcmp(method, "grid"))
-        t = diverge_grid;
-    else if (!strcmp(method, "patch"))
-        t = diverge_patch;
-    else if (!strcmp(method, "tu"))
-        t = diverge_tu;
+    strlwr_div(method); for (char* m=method; *m; ++m) if (*m == '-') *m = '_';
+
+    if (!strcmp(method, "grid"))            t = diverge_grid;
+    else if (!strcmp(method, "patch"))      t = diverge_patch;
+    else if (!strcmp(method, "tu"))         t = diverge_tu;
+    else if (!strcmp(method, "tu_phonons")) t = diverge_tu_phonons;
     free(method);
     return t;
 }

@@ -11,6 +11,7 @@ extern "C" {
 typedef struct hashtable_t hashtable_t;
 
 hashtable_t* hashtable_init( index_t width, index_t depth );
+hashtable_t* hashtable_init_fg( index_t width, index_t depth, index_t hashtable_empty_value );
 void hashtable_free( hashtable_t* t );
 
 void hashtable_insert( hashtable_t* t, index_t key, void* val );

@@ -46,7 +46,7 @@ void tu_rpa_post_set_which_ev( char sort ) {
 
 tu_rpa_t* tu_rpa_init( diverge_flow_step_t* s, const index_t* kidx, index_t n_kidx ) {
     diverge_flow_type tp = diverge_flow_step_type(s);
-    if (tp != diverge_tu) {
+    if (tp != diverge_tu && tp != diverge_tu_phonons) {
         mpi_err_printf( "tu-rpa only possible with TUFRG\n" );
         return NULL;
     }

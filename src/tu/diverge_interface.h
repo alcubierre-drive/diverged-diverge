@@ -24,7 +24,14 @@ typedef enum {
     tu_fft_algorithm_mpi_new,
 } tu_fft_algorithm_t;
 
+typedef enum {
+    unique_orbff_impl_btree,
+    unique_orbff_impl_hashtable,
+    unique_orbff_impl_mergesort,
+} unique_orbff_impl_t;
+
 typedef struct tu_data_t tu_data_t;
+typedef struct tu_data_phonons_t tu_data_phonons_t;
 
 struct tu_data_t {
     tu_symmstruct_t* symm;
@@ -55,7 +62,8 @@ struct tu_data_t {
     bool tu_selfenergy_flow;
     bool tu_gf_skip_selfenergy; // do not add \Sigma to G^{-1}
     bool tu_katanin; // approx. Katanin
-    bool tu_reco_fused; // fused symmetry reconstruction + FT, see src/tu/vertex_reco_fused.c
+    int tu_reco_fused; // fused symmetry reconstruction + FT, see src/tu/vertex_reco_fused.c
+                       // (2: additionally run the two-step version and compare timings)
     bool GF_fft_coarsify;
     bool selfenergy_circular_cutoff;
     char tu_channelize; // project interactions to single channel if not all
@@ -66,7 +74,7 @@ struct tu_data_t {
                        which_fft_greens,
                        which_fft_red;
     bool propagator_extra_cpu_timings;
-    bool unique_orbff_hashtable_impl;
+    unique_orbff_impl_t unique_orbff_impl;
 
     // reduction of computational cost of the loop
     VECTOR_DECL( claV3i_t, existing_ff )
@@ -81,6 +89,10 @@ struct tu_data_t {
     VECTOR_DECL( index_t, lmap_r )
     VECTOR_DECL( index_t, lmap_off )
     VECTOR_DECL( index_t, lmap_len )
+
+    // only used to grab the phonons; or see if they are active. Do not modify
+    // yourself (only in diverge_model_internals_tu_phonons)
+    tu_data_phonons_t* phonons_reference;
 };
 
 // tu info struct contains all relevant informations for the TU code
@@ -97,6 +109,9 @@ void tu_data_destructor( void* model );
 // zeros...)
 extern double SYMNORM_TU_BOND_MAX;
 extern double SYMNORM_MATRIX_ZERO;
+extern int generate_reduced_loop_maps_disabled;
+extern unique_orbff_impl_t tu_data_unique_orbff_impl;
+extern int diverge_model_internals_tu_phonons_skip_refinement;
 
 #ifdef __cplusplus
 }

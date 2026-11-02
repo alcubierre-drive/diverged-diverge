@@ -1,3 +1,5 @@
+/* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "helpers.h"
 #include "vertex_memory.h"
 #include "reorder.h"

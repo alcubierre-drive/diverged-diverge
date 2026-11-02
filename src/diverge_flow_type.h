@@ -10,7 +10,9 @@ typedef enum {
     diverge_flow_type_invalid = -1,
     diverge_patch,
     diverge_grid,
-    diverge_tu
+    diverge_tu,
+    diverge_tu_phonons,
+    DIVERGE_FLOW_TYPE_COUNT
 } diverge_flow_type;
 
 diverge_flow_type diverge_flow_type_fromstr( const char* mode );

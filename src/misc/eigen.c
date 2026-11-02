@@ -1,3 +1,5 @@
+/* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "eigen.h"
 #include "mt19937.h"
 #include "mpi_functions.h"
@@ -40,7 +42,7 @@ complex128_t power_iteration( const complex128_t* restrict A, complex128_t* rest
     const index_t maxiter = niter ? *niter : power_iteration_maxiter;
     const double mintol = tol ? *tol : power_iteration_tol;
 
-    complex128_t* w = aux; if (!w) w = (complex128_t*)calloc(2*N, sizeof*w);
+    complex128_t* w = aux; if (!w) w = calloc(2*N, sizeof*w);
     complex128_t* u = w + N;
 
     const complex128_t alpha = 1.0, beta = 0.0;

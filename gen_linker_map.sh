@@ -13,6 +13,10 @@ included_files=( ${included_files_self[@]/#/src/} )
 misc_included_files_self=( $(grep "^#" src/diverge_misc.h | grep -o "[a-z,_,/,A-Z,0-9]*.h") )
 misc_included_files=( ${misc_included_files_self[@]/#/src/} )
 
+phonon_included_files_self=( $(grep "^#" src/diverge_phonons.h | grep -o "[a-z,_,/,A-Z,0-9]*.h") \
+    diverge_phonons.h )
+phonon_included_files=( ${phonon_included_files_self[@]/#/src/} )
+
 exported_symbols=( $(ctags -o- --kinds-C=p ${included_files[@]} |\
     grep -v "^!" | grep -v VECTOR | awk '{print $1}' |\
     grep -v "shared_malloc_init$" |\
@@ -34,7 +38,7 @@ echo "local:
         *;
 };" >> $OUTFILE
 
-exported_unstable_symbols=( $(ctags -o- --kinds-C=p ${misc_included_files[@]} |\
+exported_unstable_symbols=( $(ctags -o- --kinds-C=p ${misc_included_files[@]} ${phonon_included_files[@]} |\
     grep -v "^!" | grep -v VECTOR  | awk '{print $1}' |\
     grep -v "_dos_sort_doubles_$" |\
     grep -v "_dos_sort_doubles_indirect_$") \

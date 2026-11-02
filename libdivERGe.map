@@ -1,5 +1,6 @@
 DIVERGE_0.11 {
     global:
+        diverge_W90_apply_wsvec;
         diverge_channel_vertex_generator_default;
         diverge_compilation_status;
         diverge_compilation_status_cuda;
@@ -105,6 +106,7 @@ DIVERGE_0.11 {
         diverge_model_internals_patch_fg;
         diverge_model_internals_reset;
         diverge_model_internals_tu;
+        diverge_model_internals_tu_phonons;
         diverge_model_output_conf_defaults_CPP;
         diverge_model_output_set_npath;
         diverge_model_print_hacks;
@@ -288,6 +290,28 @@ DIVERGE_UNSTABLE {
         diverge_model_unique_distances;
         diverge_model_unique_distances_length;
         diverge_model_unique_distances_set_precision;
+        diverge_phonons_apply_asr;
+        diverge_phonons_apply_sgnsqrt;
+        diverge_phonons_asr;
+        diverge_phonons_asr_n_orb;
+        diverge_phonons_asr_n_orb_massdiv;
+        diverge_phonons_asr_vertex;
+        diverge_phonons_asr_vertex_n_orb;
+        diverge_phonons_asr_vertex_n_orb_massdiv;
+        diverge_phonons_change_regulator;
+        diverge_phonons_enable_refinement;
+        diverge_phonons_fetch_sym;
+        diverge_phonons_get_g;
+        diverge_phonons_get_g_dim;
+        diverge_phonons_get_ifrq;
+        diverge_phonons_get_refine;
+        diverge_phonons_model_get_masses;
+        diverge_phonons_read_elph;
+        diverge_phonons_read_ifc;
+        diverge_phonons_read_ifc_and_elph;
+        diverge_phonons_set_vertex_generator;
+        diverge_phonons_sgnsqrt;
+        diverge_phonons_symmetrize_epc;
         diverge_qnan_gen;
         diverge_qnan_get;
         diverge_qnan_isnan;
@@ -295,6 +319,7 @@ DIVERGE_UNSTABLE {
         diverge_qnanf_get;
         diverge_qnanf_isnan;
         diverge_read_respack_vertices;
+        diverge_wigner_config_defaults_CPP;
         diverge_zstd_fclose;
         diverge_zstd_fflush;
         diverge_zstd_file_set_default_compression_level;

@@ -1,6 +1,8 @@
+/* Copyright (C) 2026 Jonas B. Profe, Lennart Klebl; GPLv3+ (LICENSE.md) */
+
 #include "hashtable.h"
 
-#define HASHTABLE_EMPTY -1
+#define HASHTABLE_EMPTY_VALUE_DEFAULT -1
 
 typedef struct {
     index_t key;
@@ -11,23 +13,28 @@ struct hashtable_t {
     map_t* tab;
     index_t width;
     index_t depth;
+    index_t hashtable_empty_value;
 };
 
-uint32_t RSHash(const uint8_t* data, size_t size) {
-    uint32_t a = 63689, b = 378551;
-    uint32_t hash = 0;
-    for (uint32_t i=0; i<size; i++) {
-       hash = hash * a + data[i];
-       a *= b;
-    }
-    return hash;
+static inline uint64_t splitmix64(uint64_t x) {
+    x += 0x9E3779B97F4A7C15ULL;
+    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ULL;
+    x = (x ^ (x >> 27)) * 0x94D049BB133111EBULL;
+    x = x ^ (x >> 31);
+    x &= ~(1ULL << 63); // clear the sign bit
+    return x;
 }
-static index_t hash( index_t key ) { return RSHash((const uint8_t*)&key, sizeof(key)); }
+static inline index_t hash( index_t key ) { return splitmix64(key); }
 
 hashtable_t* hashtable_init( index_t width, index_t depth ) {
+    return hashtable_init_fg( width, depth, HASHTABLE_EMPTY_VALUE_DEFAULT );
+}
+
+hashtable_t* hashtable_init_fg( index_t width, index_t depth, index_t hashtable_empty_value ) {
     hashtable_t* t = calloc(1, sizeof*t);
+    t->hashtable_empty_value = hashtable_empty_value;
     t->tab = malloc( width*depth * sizeof*t->tab );
-    for (index_t i=0; i<width*depth; ++i) t->tab[i] = (map_t){.key=HASHTABLE_EMPTY, .val=NULL};
+    for (index_t i=0; i<width*depth; ++i) t->tab[i] = (map_t){.key=t->hashtable_empty_value, .val=NULL};
     t->width = width;
     t->depth = depth;
     return t;
@@ -38,7 +45,7 @@ static void hashtable_increase_depth( hashtable_t* t, index_t depth ) {
     t->tab = realloc( t->tab, sizeof*t->tab * t->width * depth );
     for (; t->depth<depth; ++(t->depth))
     for (index_t i=0; i<t->width; ++i)
-        t->tab[IDX2(t->depth,i,t->width)] = (map_t){.key=HASHTABLE_EMPTY, .val=NULL};
+        t->tab[IDX2(t->depth,i,t->width)] = (map_t){.key=t->hashtable_empty_value, .val=NULL};
 }
 
 void hashtable_free( hashtable_t* t ) {
@@ -50,7 +57,7 @@ void hashtable_insert( hashtable_t* t, index_t key, void* val ) {
     index_t h = hash(key) % t->width;
     index_t d = 0;
     while (d < t->depth) {
-        if (t->tab[IDX2(d,h,t->width)].key == HASHTABLE_EMPTY) break;
+        if (t->tab[IDX2(d,h,t->width)].key == t->hashtable_empty_value) break;
         d++;
     }
     if (d == t->depth)
@@ -62,7 +69,7 @@ void hashtable_insert_safe( hashtable_t* t, index_t key, void* val ) {
     index_t h = hash(key) % t->width;
     index_t d = 0;
     while (d < t->depth) {
-        if (t->tab[IDX2(d,h,t->width)].key == HASHTABLE_EMPTY ||
+        if (t->tab[IDX2(d,h,t->width)].key == t->hashtable_empty_value ||
             t->tab[IDX2(d,h,t->width)].key == key) break;
         d++;
     }
@@ -73,13 +80,13 @@ void hashtable_insert_safe( hashtable_t* t, index_t key, void* val ) {
 
 void hashtable_iterate( hashtable_t* t, void (*func)(index_t, void*, void*), void* ctx ) {
     for (index_t i=0; i<t->width*t->depth; ++i)
-        if (t->tab[i].key != HASHTABLE_EMPTY)
+        if (t->tab[i].key != t->hashtable_empty_value)
             (*func)( t->tab[i].key, t->tab[i].val, ctx );
 }
 
 void hashtable_iterate_addr( hashtable_t* t, void (*func)(index_t*, void**, void*), void* ctx ) {
     for (index_t i=0; i<t->width*t->depth; ++i)
-        if (t->tab[i].key != HASHTABLE_EMPTY)
+        if (t->tab[i].key != t->hashtable_empty_value)
             (*func)( &t->tab[i].key, &t->tab[i].val, ctx );
 }
 
@@ -97,7 +104,7 @@ void* hashtable_pop( hashtable_t* t, index_t key ) {
     for (index_t d=0; d<t->depth; ++d) {
         map_t* c = &t->tab[IDX2(d,h,t->width)];
         if (c->key == key) {
-            c->key = HASHTABLE_EMPTY;
+            c->key = t->hashtable_empty_value;
             return c->val;
         }
     }

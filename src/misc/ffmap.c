@@ -21,7 +21,7 @@ static inline hash_formfac_t hash_formfac_from_tu_formfactor( tu_formfactor_t t,
 #define vhash_val_empty tu_formfactor_idx_invalid
 #define vhash_key_t hash_formfac_t
 #define vhash_key_empty (hash_formfac_t){._invalid=1}
-#define vhash_key_equal(A,B) (!memcmp(&(A),&(B),sizeof(hash_formfac_t)))
+#define vhash_key_cmp(A,B) memcmp(&(A),&(B),sizeof(hash_formfac_t))
 
 #include "vhashtable.h"
 VHASH_IMPLEMENT( hash_formfac_ )

@@ -42,6 +42,10 @@ void diverge_model_free_set_options(diverge_model_t* model, int ignore_hop,
 }
 
 void diverge_model_free(diverge_model_t* model) {
+    if (model->internals->tu_phonon_model_dont_free) {
+        mpi_err_printf( "not allowed to free model %p: it's a phonon model.\n", model );
+        return;
+    }
     dependency_tree_remove_model(model);
 
     if (model->patching) {

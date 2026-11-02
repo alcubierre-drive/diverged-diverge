@@ -12,8 +12,8 @@
 vertex_storage_t* vertex_storage_init_fg( diverge_flow_step_t* s, char chan,
         const vertex_storage_qpt_t* qpts, index_t n_qpts ) {
     diverge_flow_type tp = diverge_flow_step_type(s);
-    if (tp != diverge_tu && tp != diverge_grid) {
-        mpi_err_printf( "cannot store vertices of non-TU backend\n" );
+    if (tp != diverge_tu && tp != diverge_tu_phonons && tp != diverge_grid) {
+        mpi_err_printf( "cannot store vertices of patch backend\n" );
         return NULL;
     }
     assert(n_qpts >= 0);
@@ -24,7 +24,7 @@ vertex_storage_t* vertex_storage_init_fg( diverge_flow_step_t* s, char chan,
     index_t q_0 = -1,
             q_1 = -1;
 
-    if (tp == diverge_tu) {
+    if (tp == diverge_tu || tp == diverge_tu_phonons) {
         tu_vertex_t* tu_V = s->tu_vertex;
         t->linsz = POW2(tu_V->n_spin) * tu_V->n_orbff;
         if (toupper(chan) != 'P' && toupper(chan) != 'C' && toupper(chan) != 'D' && chan != 'm' && chan != 'h') {

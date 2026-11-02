@@ -111,7 +111,7 @@ void* npatch_cpu_flow_step_##su##_##chan ( void* _params ) { \
             for (short p4=0; p4<nb; ++p4) { \
                 const index_t oidx = RAVEL_O4( n, m, p3, p4 ); \
                 const index_t vidx = INVOKE_RAVEL_V( CONTRACT_##chan##_Vr ); \
-                complex128_t_atomic_add_byval( dPhi + pidx, cache[oidx] * V[vidx] ); \
+                atomic_add_byval( dPhi + pidx, cache[oidx] * V[vidx] ); \
             } \
         } \
     } \

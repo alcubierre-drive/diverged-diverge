@@ -6,6 +6,8 @@
 #include "diverge_flow_step_internal.h"
 
 #include "tu/diverge_interface.h"
+#include "tu/projection.h"
+
 #include "npatch/vertex.h"
 #include "npatch/flow_step.h"
 #include "grid/vertex_memory.h"
@@ -16,6 +18,7 @@
 #include "misc/dos.cu.h"
 #include "misc/zstd_file.h"
 
+#include "tu/phonons.h"
 #include "tu/propagator_cpu_mpi.h"
 #include "tu/propagator_cpu_mpi_fft.h"
 
@@ -33,7 +36,7 @@ extern double autofine_gamma;
 static int parse_vector_int( int* vec, int len, const char* str );
 static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf);
 
-static char hacking_keys[48][48] = {{0}};
+static char hacking_keys[128][48] = {{0}};
 static int hacking_keys_setup = 0;
 
 #define CHECKKEY( ckey ) \
@@ -81,7 +84,7 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
         TU_INTERNALS->tu_katanin = (bool)atoi(val);
     }
     CHECKKEY("tu_reco_fused") {
-        TU_INTERNALS->tu_reco_fused = (bool)atoi(val);
+        TU_INTERNALS->tu_reco_fused = atoi(val);
     }
     CHECKKEY("tu_mpifft_chunksize") {
         TU_INTERNALS->mpi_fft_chunksize = atoi(val);
@@ -98,8 +101,31 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("tu_extra_propagator_timings") {
         TU_INTERNALS->propagator_extra_cpu_timings = atoi(val);
     }
+    CHECKKEY("tu_unique_orbff_impl") {
+        if (!strcmp(val, "mergesort"))
+            tu_data_unique_orbff_impl = unique_orbff_impl_mergesort;
+        else if (!strcmp(val, "hashtable"))
+            tu_data_unique_orbff_impl = unique_orbff_impl_hashtable;
+        else if (!strcmp(val, "btree"))
+            tu_data_unique_orbff_impl = unique_orbff_impl_btree;
+    }
+    CHECKKEY("tu_proj_to_r_impl") {
+        tu_projection_configure_implementation( !strcmp(val, "hashtable") );
+    }
+    CHECKKEY("tu_proj_perm_impl") {
+        tu_projection_set_permutation_algorithm( strcmp(val, "inplace") );
+    }
+    CHECKKEY("tu_phonons_ignore_imag_freq") {
+        INTERNALS->tu_phonons_ignore_imag_freq = atoi(val);
+    }
+    CHECKKEY("tu_phonons_save_g_on_fullmesh") {
+        INTERNALS->tu_phonons_save_g_on_fullmesh = atoi(val);
+    }
     CHECKKEY("tu_GF_fft_coarsify") {
         TU_INTERNALS->GF_fft_coarsify = atoi(val);
+    }
+    CHECKKEY("tu_generate_reduced_loop_maps_disabled") {
+        generate_reduced_loop_maps_disabled = atoi(val);
     }
     CHECKKEY("tu_channelize") {
         TU_INTERNALS->tu_channelize = val[0];
@@ -187,6 +213,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("model_internals_only_mesh") {
         INTERNALS->common_internals_mesh_only = 1;
+    }
+    CHECKKEY("model_internals_tu_phonons_skip_refinement") {
+        diverge_model_internals_tu_phonons_skip_refinement = atoi(val);
     }
     CHECKKEY("fftw_mpi_plan_patience") {
         // either set with 'G' (GX) to address fftw_mpi_plan_patience (for

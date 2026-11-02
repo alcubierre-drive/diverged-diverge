@@ -482,3 +482,9 @@ written (i.e., the variable can be either *defined* or *not*), or
 |                                                  | enabled when switching the TU propagator algorithms via :c:func:`diverge_model_hack`              |
 |                                                  | (*unsupported*)                                                                                   |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_OLD_W90_READER``                        | enable old W90 reader (not recommended, might be rendered invalid)                                |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``DIVERGE_TU_PROJ_TO_R_VTREE``                    | use a binary tree implementation for the TU projection generation, might be faster                |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``XVTREE_ALIGNMENT_PRINT``                        | verbose alignment information for generic binary tree implementation                              |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+

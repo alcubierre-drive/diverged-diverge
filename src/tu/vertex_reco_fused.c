@@ -271,6 +271,8 @@ tu_reco_fused_t* tu_reco_fused_init( const diverge_model_t* model, const tu_proj
 
         // fused exponentials for the generic momenta
         {
+            mpi_log_large_alloc( (f->my_nk + f->rest)*f->nu*(index_t)sizeof(complex128_t),
+                    "the fused reco_ft tables" );
             f->Etil = calloc(f->my_nk*f->nu, sizeof(complex128_t));
             const double* kmesh = model->internals->kmesh;
             #pragma omp parallel for schedule(static) num_threads(diverge_omp_num_threads())
@@ -305,8 +307,10 @@ void tu_reco_fused_ft( const tu_reco_fused_t* f, const tu_vertex_t* V, char chan
                   n_sym = f->n_sym, ndmax = f->ndmax;
 
     // F(u,R',L') = 1/nk sum_q exp(i k_q R_u) X(q,R',L')
+    double t0 = diverge_mpi_wtime();
     single_gemm_Xt_Afortran( (single_gemm_Xt_t*)((ptrdiff_t)-1), Xch, f->Etil, f->F,
             nu, rest, f->my_nk, 1./(double)V->nk, 0.0 );
+    double t1 = diverge_mpi_wtime();
 
     // symmetry sum, now in real space. The channel only decides which spin
     // labels sit on which leg, i.e. it is a permutation of the output slot that
@@ -344,4 +348,13 @@ void tu_reco_fused_ft( const tu_reco_fused_t* f, const tu_vertex_t* V, char chan
             }
         }
     }
+    double t2 = diverge_mpi_wtime();
+#ifdef TU_PROJ_TIMING
+    mpi_tim_printf( "reco_ft[fused] %c: gemm:%7.3fs gather:%7.3fs tot:%7.3fs "
+            "(gemm %li x %li x %li, gather rest=%li n_sym=%li n_ent=%li nr=%li)\n",
+            chan, t1-t0, t2-t1, t2-t0, (long)nu, (long)rest, (long)f->my_nk,
+            (long)rest, (long)n_sym, (long)f->n_ent, (long)nr );
+#else
+    (void)t0; (void)t1; (void)t2;
+#endif
 }

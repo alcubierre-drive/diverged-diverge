@@ -33,19 +33,39 @@ void diverge_model_internals_any( diverge_model_t* model, const char* mode, ... 
     mpi_log_printf("internals mode: %s\n", mode);
     va_list ap;
     va_start(ap, mode);
+
+    index_t np = 0;
+    double ffdist = 0;
+    typedef rs_hopping_t* rs_hopping_t_ptr;
+    rs_hopping_t_ptr phop = NULL;
+    index_t nphop = 0;
+    typedef ph_vertex_t* ph_vertex_t_ptr;
+    ph_vertex_t_ptr pvert = NULL;
+    index_t npvert = 0;
+
     switch (t) {
         case diverge_grid:
             diverge_model_internals_grid( model );
             break;
         case diverge_patch:
-            diverge_model_internals_patch( model, va_arg(ap, index_t) );
+            np = va_arg(ap, index_t);
+            diverge_model_internals_patch( model, np );
             break;
         case diverge_tu:
-            diverge_model_internals_tu( model, va_arg(ap, double) );
+            ffdist = va_arg(ap, double);
+            diverge_model_internals_tu( model, ffdist );
+            break;
+        case diverge_tu_phonons:
+            ffdist = va_arg(ap, double);
+            phop = va_arg(ap, rs_hopping_t_ptr);
+            nphop = va_arg(ap, index_t);
+            pvert = va_arg(ap, ph_vertex_t_ptr);
+            npvert = va_arg(ap, index_t);
+            diverge_model_internals_tu_phonons( model, ffdist, phop, nphop, pvert, npvert );
             break;
         case diverge_flow_type_invalid:
         default:
-            mpi_err_printf("invalid flow type '%s' (use tu, grid, patch)\n", mode);
+            mpi_err_printf("invalid flow type '%s' (use tu, tu_phonons, grid, patch)\n", mode);
             goto EndFunc;
             break;
     }
@@ -74,8 +94,8 @@ typedef enum {
 
 static default_spin_index_t check_model_default_spin_index( const diverge_model_t* model ) {
     index_t result = 0;
-    index_t* count_zero_length_C = (index_t*)calloc(POW2(model->n_orb), sizeof(index_t));
-    index_t* count_zero_length_D = (index_t*)calloc(POW2(model->n_orb), sizeof(index_t));
+    index_t* count_zero_length_C = calloc(POW2(model->n_orb), sizeof(index_t));
+    index_t* count_zero_length_D = calloc(POW2(model->n_orb), sizeof(index_t));
     for (index_t idx=0; idx<model->n_vert; ++idx) {
         const rs_vertex_t* vert = model->vert + idx;
         result += vert->s1 == -1;
@@ -128,7 +148,7 @@ void diverge_model_internals_common( diverge_model_t* model ) {
             nktot = kdimtot(model->nk, model->nkf),
             nb = model->n_spin * model->n_orb;
 
-    intls->enforce_exchange = model->SU2 == 0;
+    intls->enforce_exchange = (model->SU2 == 0);
 
     if (nk < diverge_mpi_comm_size() * diverge_omp_num_threads()) {
         int nthr_new = nk / diverge_mpi_comm_size();
@@ -162,7 +182,7 @@ void diverge_model_internals_common( diverge_model_t* model ) {
 
     // the GF does not default to shared, as writing GF generators for
     // node-shared mem is a bit complicated (see diverge_hack.cpp)
-    intls->greens = (gf_complex_t*)calloc(nktot*nb*nb*2,sizeof(gf_complex_t));
+    intls->greens = calloc(nktot*nb*nb*2,sizeof(gf_complex_t));
 
     // we check here whether to symmetrize the Hamiltonian
     int symmetrize_hamiltonian = model->n_sym < 0;
@@ -273,6 +293,13 @@ void diverge_model_internals_reset( diverge_model_t* model ) {
     if ((model->internals->tu_data != NULL) &&
         (model->internals->tu_data_destructor != NULL))
         (*(model->internals->tu_data_destructor))( model->internals->tu_data );
+    if ((model->internals->tu_data_phonons != NULL) &&
+        (model->internals->tu_data_phonons_destructor != NULL))
+        (*(model->internals->tu_data_phonons_destructor))( model->internals->tu_data_phonons );
+    if ((model->internals->model_phonons != NULL) &&
+        (model->internals->model_phonons_destructor != NULL))
+        (*(model->internals->model_phonons_destructor))( model->internals->model_phonons );
+    free(model->internals->model_phonons_imag_freq);
 
     free(model->internals->patch_kmesh);
     free(model->internals->patch_pmesh);

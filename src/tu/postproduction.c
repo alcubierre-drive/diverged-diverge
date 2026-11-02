@@ -109,6 +109,7 @@ void tu_postproduction( tu_vertex_t* vertex, tu_vertex_t* internal_vertex,
         .rpa = rpa,
         .model = model,
     };
+
     if (!p.c.skip_channel_calc) {
         index_t linsize = vertex->n_orbff*POW2(vertex->n_spin);
         p.Pval = calloc(linsize*p.vertex->my_nk,sizeof(double));
