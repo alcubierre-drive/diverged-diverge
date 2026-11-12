@@ -65,6 +65,7 @@ if not _libs["divERGe"] is None:
         '_DIVERGE_NO_ABORT_ON_GPU_ERROR',
         '_DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT',
         '_DIVERGE_OPENBLAS_LIMIT_THREADS',
+        '_USE_OPENBLAS_SINGLE_THREAD_GEMM',
         '_DIVERGE_USE_ZHEEVD',
         '_BATCHED_SVD_THREAD_CNT_MAX',
         '_DIVERGE_GETLINE_MAX',
@@ -160,6 +161,7 @@ if not _libs["divERGe"] is None:
         ('_DIVERGE_NO_ABORT_ON_GPU_ERROR',             c_int64),
         ('_DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT',      c_int64),
         ('_DIVERGE_OPENBLAS_LIMIT_THREADS',            c_int64),
+        ('_USE_OPENBLAS_SINGLE_THREAD_GEMM',           c_int64),
         ('_DIVERGE_USE_ZHEEVD',                        c_int64),
         ('_BATCHED_SVD_THREAD_CNT_MAX',                c_int64),
         ('_DIVERGE_GETLINE_MAX',                       c_int64),
@@ -209,7 +211,7 @@ if not _libs["divERGe"] is None:
         ('_DIVERGE_OLD_W90_READER',                    c_int64),
         ('_DIVERGE_TU_PROJ_TO_R_VTREE',                c_int64),
         ('_XVTREE_ALIGNMENT_PRINT',                    c_int64),
-        ('_PADDING',                                   c_char * 32),
+        ('_PADDING',                                   c_char * 24),
         # char arrays last, so that everything before them stays aligned
         ('_CUBLAS_BATCHED_GEMM_CALL',                  struct_str1024_t),
         ('_CUDA_VERSION_STR',                          struct_str1024_t),
@@ -261,6 +263,7 @@ if not _libs["divERGe"] is None:
     DIVERGE_NO_ABORT_ON_GPU_ERROR             = _CONSTANTS_._DIVERGE_NO_ABORT_ON_GPU_ERROR
     DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT      = _CONSTANTS_._DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT
     DIVERGE_OPENBLAS_LIMIT_THREADS            = _CONSTANTS_._DIVERGE_OPENBLAS_LIMIT_THREADS
+    USE_OPENBLAS_SINGLE_THREAD_GEMM           = _CONSTANTS_._USE_OPENBLAS_SINGLE_THREAD_GEMM
     DIVERGE_USE_ZHEEVD                        = _CONSTANTS_._DIVERGE_USE_ZHEEVD
     BATCHED_SVD_THREAD_CNT_MAX                = _CONSTANTS_._BATCHED_SVD_THREAD_CNT_MAX
     DIVERGE_GETLINE_MAX                       = _CONSTANTS_._DIVERGE_GETLINE_MAX
