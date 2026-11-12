@@ -50,6 +50,7 @@ typedef struct {
     bool64_t  _DIVERGE_NO_ABORT_ON_GPU_ERROR;
     bool64_t  _DIVERGE_NO_REMOVE_COLORS_FILE_OUTPUT;
     int64_t   _DIVERGE_OPENBLAS_LIMIT_THREADS;
+    bool64_t  _USE_OPENBLAS_SINGLE_THREAD_GEMM;
     bool64_t  _DIVERGE_USE_ZHEEVD;
     int64_t   _BATCHED_SVD_THREAD_CNT_MAX;
     int64_t   _DIVERGE_GETLINE_MAX;
@@ -101,7 +102,7 @@ typedef struct {
     bool64_t  _XVTREE_ALIGNMENT_PRINT;
 
     // pads to a multiple of 512 bits. adjust when adding a field
-    char      _PADDING[32];
+    char      _PADDING[24];
 
     // char arrays last, so that they stay aligned.
     str1024_t _CUBLAS_BATCHED_GEMM_CALL;

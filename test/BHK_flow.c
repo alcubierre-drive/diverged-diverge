@@ -14,6 +14,7 @@
 #include "../src/tu/vertex_details.h"
 #include "../src/tu/projection.h"
 #include "../src/npatch/symmetrize_vertex.h"
+#include "../src/diverge_hack.h"
 
 #include "models/all.h"
 #include <sys/stat.h>
@@ -132,7 +133,7 @@ typedef enum {
     bhk_mode_patch,
 } bhk_mode_t;
 
-static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
+static inline complex128_t* BHK_test_run_chans( diverge_model_t* mod, const char* chans ) {
 
     #ifdef BHK_OUTPUT_FILES
     char fname[2048];
@@ -156,7 +157,7 @@ static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
         mpi_err_printf("no mode\n");
         return NULL;
     }
-    diverge_flow_step_t* step = diverge_flow_step_init(mod, mode, "PCD");
+    diverge_flow_step_t* step = diverge_flow_step_init(mod, mode, chans);
 
     double Lambda = BHK_L0;
     double dLambda = -0.1;
@@ -193,6 +194,10 @@ static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
     diverge_flow_step_free(step);
 
     return vertex;
+}
+
+static inline complex128_t* BHK_test_run( diverge_model_t* mod ) {
+    return BHK_test_run_chans( mod, "PCD" );
 }
 
 static inline void compare_vertices( complex128_t* v1, complex128_t* v2, index_t size ) {
@@ -236,6 +241,56 @@ CT_TEST_NAME( diverge_flow_bhk_##model##_##mode1##_##mode2, #model "," #mode1 "-
     complex128_t* v1 = BHK_test_run( mod1 ); \
     complex128_t* v2 = BHK_test_run( mod2 ); \
     compare_vertices( v1, v2, POW3(kdim(mod1->nk)) * POW4(mod1->n_orb * mod1->n_spin) ); \
+    diverge_model_free( mod1 ); \
+    diverge_model_free( mod2 ); \
+    free( v1 ); \
+    free( v2 ); \
+}
+
+// some BHK tests for the TU loop algorithms.
+#ifndef BHK_LOOP_ALGO_TOL
+#define BHK_LOOP_ALGO_TOL 1.e-9
+#endif
+
+#define BHK_diverge_model_internals_tufine( mod ) { \
+    diverge_model_internals_reset( mod ); \
+    mod->nkf[0] = 3, mod->nkf[1] = 2; \
+    diverge_model_internals_common( mod ); \
+    diverge_model_internals_tu( mod, 12.0 ); \
+}
+
+#define BHK_diverge_model_internals_tufinegemm( mod ) { \
+    BHK_diverge_model_internals_tufine( mod ); \
+    diverge_model_hack( mod, "tu_which_fft_red", "4" ); \
+    diverge_model_hack( mod, "tu_which_fft_simple", "4" ); \
+}
+
+static inline void compare_vertices_rel( complex128_t* v1, complex128_t* v2, index_t size, double tol ) {
+    double vmax = 0.0, dmax = 0.0;
+    #pragma omp parallel for reduction(max:vmax,dmax) num_threads(diverge_omp_num_threads())
+    for (index_t i=0; i<size; ++i) {
+        vmax = MAX(vmax, cabs(v1[i]));
+        dmax = MAX(dmax, cabs(v1[i]-v2[i]));
+    }
+    CT_CHECK( vmax > 0.0 );
+    CT_CHECK( dmax <= tol*vmax );
+}
+
+#define create_bhk_loop_algo_test_case( model, chans, label ) \
+CT_TEST_NAME( diverge_flow_bhk_##model##_tu_loop_gemm_##label, #model ",tu,gemm,loop:" #label ) { \
+    if (sizeof(gf_complex_t) != sizeof(complex128_t)) return; \
+    diverge_model_t* mod1 = KWARGS(gen_ ## model, .nkx=BHK_NK, .nky=BHK_NK); \
+    diverge_model_t* mod2 = KWARGS(gen_ ## model, .nkx=BHK_NK, .nky=BHK_NK); \
+    strcpy( mod1->name, #model "_tufine" ); \
+    strcpy( mod2->name, #model "_tufinegemm" ); \
+    BHK_diverge_model_internals_tufine( mod1 ); \
+    diverge_model_validate( mod1 ); \
+    BHK_diverge_model_internals_tufinegemm( mod2 ); \
+    diverge_model_validate( mod2 ); \
+    complex128_t* v1 = BHK_test_run_chans( mod1, chans ); \
+    complex128_t* v2 = BHK_test_run_chans( mod2, chans ); \
+    compare_vertices_rel( v1, v2, POW3(kdim(mod1->nk)) * POW4(mod1->n_orb * mod1->n_spin), \
+            BHK_LOOP_ALGO_TOL ); \
     diverge_model_free( mod1 ); \
     diverge_model_free( mod2 ); \
     free( v1 ); \
@@ -302,6 +357,8 @@ create_bhk_test_case_sym( tu, square_lat_rashba )
 create_bhk_test_case_sym( tu, honeycomb_lat_hub )
 create_bhk_test_case_sym( tu, triangular_pxpy )
 
+create_bhk_loop_algo_test_case( random, "PCD", flow )
+create_bhk_loop_algo_test_case( random, "PCDS", self )
 
 #ifdef BEHAK_ADDITIONAL_TEST_CASES
 create_bhk_test_case( tu, patch, square_lat_hub )

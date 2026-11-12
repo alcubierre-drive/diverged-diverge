@@ -86,6 +86,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     CHECKKEY("tu_mpifft_chunksize") {
         TU_INTERNALS->mpi_fft_chunksize = atoi(val);
     }
+    CHECKKEY("tu_gemm_loop_mem") {
+        TU_INTERNALS->gemm_loop_mem_GiB = atof(val);
+    }
     CHECKKEY("tu_which_fft_greens") {
         TU_INTERNALS->which_fft_greens = (tu_fft_algorithm_t)atoi(val);
     }

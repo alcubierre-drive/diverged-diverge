@@ -22,6 +22,7 @@ typedef enum {
     tu_fft_algorithm_split,
     tu_fft_algorithm_mpi,
     tu_fft_algorithm_mpi_new,
+    tu_fft_algorithm_gemm,
 } tu_fft_algorithm_t;
 
 typedef enum {
@@ -68,6 +69,7 @@ struct tu_data_t {
                         // channels included, see src/tu/vertex.c
 
     index_t mpi_fft_chunksize;
+    double gemm_loop_mem_GiB; // tu_fft_algorithm_gemm: (max) size of the coarse-r result buffer
     tu_fft_algorithm_t which_fft_simple,
                        which_fft_greens,
                        which_fft_red;

@@ -200,6 +200,13 @@ tu_prop_t* tu_prop_init( diverge_model_t* model ) {
             t->c2fmap[i] = kidxc2f(t->c2cmap[i], model->nk, model->nkf);
         }
     }
+    // the gemm algorithm needs real space GFs in its own layout, but all the
+    // other algorithms dont. Only allow if no other algorithm is enabled.
+    t->gemm_gf_layout = t->nktot > 1 && t->do_GF_fft_allocs &&
+        t->which_fft_red == tu_fft_algorithm_gemm && t->which_fft_simple == tu_fft_algorithm_gemm &&
+        t->which_fft_greens != tu_fft_algorithm_mpi && t->which_fft_greens != tu_fft_algorithm_mpi_new &&
+        !t->cuda_descr.prop_has_gpu_setup;
+    if (t->gemm_gf_layout) mpi_vrb_printf( "TU-loop: real-space GFs in gemm layout\n" );
     cpu_fft_algorithm_init( t, t->which_fft_greens, t->which_fft_simple, t->which_fft_red );
 
     t->coarsify = t->tu_data->GF_fft_coarsify ? greensfunc_coarse_init( model->nk,
@@ -378,8 +385,19 @@ void tu_prop_katanin_swap( tu_prop_t* t ) {
 
 void tu_prop_set_extra_timings( tu_prop_t* t, bool enabled ) { t->extra_timings_enabled = enabled; }
 
+static int tu_prop_always_timings( tu_prop_t* t, int n ) {
+    if (t->gemm_loop) {
+        t->extra_timings[n] = (diverge_timing_t){ .t = tu_gemm_loop_plan_time( t->gemm_loop ) };
+        strncpy( t->extra_timings[n++].nam, "loop-gemm plan", 55 );
+    }
+    return n;
+}
+
 diverge_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ) {
-    if (!t->extra_timings_enabled) { *ntimings = 0; return NULL; }
+    if (!t->extra_timings_enabled) {
+        *ntimings = tu_prop_always_timings( t, 0 );
+        return *ntimings ? t->extra_timings : NULL;
+    }
     t->n_extra_timings = 11; // reset
     double tvec[3] = {0};
     if (t->fft_nons2_backward_mpi) {
@@ -460,6 +478,8 @@ diverge_timing_t* tu_prop_get_extra_timings( tu_prop_t* t, int* ntimings ) {
         }
 
     assert( name_idx == t->n_extra_timings );
+    t->n_extra_timings = tu_prop_always_timings( t, t->n_extra_timings );
+    *ntimings = t->n_extra_timings;
     return t->extra_timings;
 }
 
