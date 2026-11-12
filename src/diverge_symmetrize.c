@@ -26,178 +26,95 @@ static double dot(double* A, double* B) {
     return A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
 }
 
-double diverge_symmetrize_2pt_coarse( diverge_model_t* model, complex128_t* buf, complex128_t* aux ) {
-    if (model->n_sym == 0 || model->orb_symmetries == NULL) return -1.0;
-
-    diverge_generate_symm_maps(model);
-    index_t nk = kdim( model->nk );
-    index_t n_os = model->n_orb * model->n_spin;
-    index_t n_spin = model->n_spin;
-    index_t n_orb = model->n_orb;
-    index_t size = POW2(n_os) * nk;
-
-    alloc_aux( sizeof(complex128_t)*size );
-
-    index_t n_sym = model->n_sym;
-    double norm = 1./(double) n_sym;
-
-    index_t* symm_map_mom = model->internals->symm_map_mom_crs;
-    double* symm_beyond_UC = model->internals->symm_beyond_UC;
-    double* kmesh = model->internals->kmesh;
-    index_t* symm_map_orb = model->internals->symm_map_orb;
-    index_t* symm_orb_off = model->internals->symm_orb_off;
-    index_t* symm_orb_len = model->internals->symm_orb_len;
-    complex128_t* symm_pref = model->internals->symm_pref;
-
-    #pragma omp parallel for collapse(5) num_threads(diverge_omp_num_threads())
-    for (index_t k=0; k<nk; ++k)
-    for (index_t oo1=0; oo1<n_orb; ++oo1)
-    for (index_t ss1=0; ss1<n_spin; ++ss1)
-    for (index_t oo2=0; oo2<n_orb; ++oo2)
-    for (index_t ss2=0; ss2<n_spin; ++ss2) {
-        index_t o1 = oo1 + n_orb * ss1;
-        index_t o2 = oo2 + n_orb * ss2;
-        for (index_t s=0; s<n_sym; ++s) {
-            index_t osym1 = IDX2( o1, s, n_sym ),
-                    osym2 = IDX2( o2, s, n_sym ),
-                    ksym = symm_map_mom[IDX2(k,s,n_sym)];
-            for (index_t i=0; i<symm_orb_len[osym1]; ++i)
-            for (index_t j=0; j<symm_orb_len[osym2]; ++j) {
-                index_t xo1 = symm_orb_off[osym1] + i,
-                        xo2 = symm_orb_off[osym2] + j;
-                double kdotR11 = dot(symm_beyond_UC+3*IDX2(oo1,s,n_sym), kmesh+3*ksym);
-                double kdotR22 = dot(symm_beyond_UC+3*IDX2(oo2,s,n_sym), kmesh+3*ksym);
-
-                buf[IDX3(k,o1,o2,n_os,n_os)] += aux[IDX3(ksym,symm_map_orb[xo1],symm_map_orb[xo2], n_os,n_os)] *
-                                                (symm_pref[xo1] * (cos(kdotR11) - I * sin(kdotR11))) *
-                                            conj(symm_pref[xo2] * (cos(kdotR22) - I * sin(kdotR22))) * norm;
-            }
-        }
-    }
-    double max_diff = 0.;
-    #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
-    for (index_t idx=0; idx<nk*n_os*n_os; ++idx)
-        max_diff = MAX(max_diff, cabs(buf[idx]-aux[idx]));
-
-    free_aux();
-    return max_diff;
+// symmetrize a two-point function B (buf) as B(k)_{o1,o2} where o=IDX2(spin,orb,n_orb)
+//      B(k) = 1/N_s \sum_s U_s(k) B(S k) U_s(k)^\dagger
+// U_s(k)_{o,x} = \sum_{i with i such that symmap(offset(o,s)+i) = x}
+//                      prefactor(offset(o,s)+i) exp(-i S k·R(orb(o),s))
+// which can be optimized to be evaluated as two sparse products T = U B, B' = T U^\dagger
+#define SYMMETRIZE_2PT_IMPL( NAME, TYPE, NK_EXPR, MAP_MOM, KMESH ) \
+double NAME( diverge_model_t* model, TYPE* buf, TYPE* aux ) { \
+    if (model->n_sym == 0 || model->orb_symmetries == NULL) return -1.0; \
+    \
+    diverge_generate_symm_maps(model); \
+    const index_t nk = NK_EXPR; \
+    const index_t n_os = model->n_orb * model->n_spin; \
+    const index_t n_orb = model->n_orb; \
+    const index_t size = POW2(n_os) * nk; \
+    \
+    alloc_aux( sizeof(TYPE)*size ); \
+    \
+    const index_t n_sym = model->n_sym; \
+    const double norm = 1./(double) n_sym; \
+    \
+    const index_t* symm_map_mom = model->internals->MAP_MOM; \
+    const double* symm_beyond_UC = model->internals->symm_beyond_UC; \
+    const double* kmesh = model->internals->KMESH; \
+    const index_t* symm_map_orb = model->internals->symm_map_orb; \
+    const index_t* symm_orb_off = model->internals->symm_orb_off; \
+    const index_t* symm_orb_len = model->internals->symm_orb_len; \
+    const complex128_t* symm_pref = model->internals->symm_pref; \
+    \
+    _Pragma("omp parallel num_threads(diverge_omp_num_threads())") \
+    { \
+        complex128_t* T = malloc( sizeof(complex128_t)*(POW2(n_os) + n_os + n_orb + POW2(n_os)) ); \
+        complex128_t* ph = T + POW2(n_os); /* phase per o */ \
+        complex128_t* pho = ph + n_os; /* phase per orbital */ \
+        complex128_t* acc = pho + n_orb; /* result for this k */ \
+        _Pragma("omp for schedule(static)") \
+        for (index_t k=0; k<nk; ++k) { \
+            for (index_t i=0; i<POW2(n_os); ++i) acc[i] = 0.0; \
+            for (index_t s=0; s<n_sym; ++s) { \
+                const index_t ksym = symm_map_mom[IDX2(k,s,n_sym)]; \
+                const double* kv = kmesh+3*ksym; \
+                for (index_t oo=0; oo<n_orb; ++oo) { \
+                    double kdotR = dot((double*)symm_beyond_UC+3*IDX2(oo,s,n_sym), (double*)kv); \
+                    pho[oo] = cos(kdotR) - I * sin(kdotR); \
+                } \
+                for (index_t o=0; o<n_os; ++o) ph[o] = pho[o % n_orb]; \
+                const TYPE* A = aux + IDX3(ksym,0,0,n_os,n_os); \
+                /* T = U A */ \
+                for (index_t o1=0; o1<n_os; ++o1) { \
+                    complex128_t* Tr = T + o1*n_os; \
+                    for (index_t y=0; y<n_os; ++y) Tr[y] = 0.0; \
+                    const index_t osym1 = IDX2( o1, s, n_sym ); \
+                    for (index_t i=0; i<symm_orb_len[osym1]; ++i) { \
+                        const index_t xo1 = symm_orb_off[osym1] + i; \
+                        const complex128_t u = symm_pref[xo1] * ph[o1]; \
+                        const TYPE* Ar = A + symm_map_orb[xo1]*n_os; \
+                        for (index_t y=0; y<n_os; ++y) Tr[y] += u * Ar[y]; \
+                    } \
+                } \
+                /* acc += T U^\dagger */ \
+                for (index_t o2=0; o2<n_os; ++o2) { \
+                    const index_t osym2 = IDX2( o2, s, n_sym ); \
+                    for (index_t j=0; j<symm_orb_len[osym2]; ++j) { \
+                        const index_t xo2 = symm_orb_off[osym2] + j; \
+                        const complex128_t uc = conj(symm_pref[xo2] * ph[o2]); \
+                        const index_t y = symm_map_orb[xo2]; \
+                        for (index_t o1=0; o1<n_os; ++o1) acc[o1*n_os+o2] += T[o1*n_os+y] * uc; \
+                    } \
+                } \
+            } \
+            TYPE* B = buf + IDX3(k,0,0,n_os,n_os); \
+            for (index_t i=0; i<POW2(n_os); ++i) B[i] = acc[i] * norm; \
+        } \
+        free( T ); \
+    } \
+    double max_diff = 0.; \
+    _Pragma("omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())") \
+    for (index_t idx=0; idx<nk*n_os*n_os; ++idx) \
+        max_diff = MAX(max_diff, cabs(buf[idx]-aux[idx])); \
+    \
+    free_aux(); \
+    return max_diff; \
 }
 
-double diverge_symmetrize_2pt_fine( diverge_model_t* model, complex128_t* buf, complex128_t* aux ) {
-    if (model->n_sym == 0 || model->orb_symmetries == NULL) return -1.0;
-
-    diverge_generate_symm_maps(model);
-    index_t nk = kdimtot( model->nk, model->nkf );
-    index_t n_os = model->n_orb * model->n_spin;
-    index_t n_spin = model->n_spin;
-    index_t n_orb = model->n_orb;
-    index_t size = POW2(n_os) * nk;
-
-    alloc_aux( sizeof(complex128_t)*size );
-
-    index_t n_sym = model->n_sym;
-    double norm = 1./(double) n_sym;
-
-    index_t* symm_map_mom = model->internals->symm_map_mom_fine;
-    double* symm_beyond_UC = model->internals->symm_beyond_UC;
-    double* kmesh = model->internals->kfmesh;
-    index_t* symm_map_orb = model->internals->symm_map_orb;
-    index_t* symm_orb_off = model->internals->symm_orb_off;
-    index_t* symm_orb_len = model->internals->symm_orb_len;
-    complex128_t* symm_pref = model->internals->symm_pref;
-
-    #pragma omp parallel for collapse(5) num_threads(diverge_omp_num_threads())
-    for (index_t k=0; k<nk; ++k)
-    for (index_t oo1=0; oo1<n_orb; ++oo1)
-    for (index_t ss1=0; ss1<n_spin; ++ss1)
-    for (index_t oo2=0; oo2<n_orb; ++oo2)
-    for (index_t ss2=0; ss2<n_spin; ++ss2) {
-        index_t o1 = oo1 + n_orb * ss1;
-        index_t o2 = oo2 + n_orb * ss2;
-        for (index_t s=0; s<n_sym; ++s) {
-            index_t osym1 = IDX2( o1, s, n_sym ),
-                    osym2 = IDX2( o2, s, n_sym ),
-                    ksym = symm_map_mom[IDX2(k,s,n_sym)];
-            for (index_t i=0; i<symm_orb_len[osym1]; ++i)
-            for (index_t j=0; j<symm_orb_len[osym2]; ++j) {
-                index_t xo1 = symm_orb_off[osym1] + i,
-                        xo2 = symm_orb_off[osym2] + j;
-                double kdotR11 = dot(symm_beyond_UC+3*IDX2(oo1,s,n_sym), kmesh+3*ksym);
-                double kdotR22 = dot(symm_beyond_UC+3*IDX2(oo2,s,n_sym), kmesh+3*ksym);
-
-                buf[IDX3(k,o1,o2,n_os,n_os)] += aux[IDX3(ksym,symm_map_orb[xo1],symm_map_orb[xo2], n_os,n_os)] *
-                                                (symm_pref[xo1] * (cos(kdotR11) - I * sin(kdotR11))) *
-                                            conj(symm_pref[xo2] * (cos(kdotR22) - I * sin(kdotR22))) * norm;
-            }
-        }
-    }
-    double max_diff = 0.;
-    #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
-    for (index_t idx=0; idx<nk*n_os*n_os; ++idx) {
-        max_diff = MAX(max_diff, cabs(buf[idx]-aux[idx]));
-    }
-
-    free_aux();
-    return max_diff;
-}
-
-double diverge_symmetrize_greens( diverge_model_t* model, gf_complex_t* buf, gf_complex_t* aux ) {
-    if (model->n_sym == 0 || model->orb_symmetries == NULL) return -1.0;
-
-    diverge_generate_symm_maps(model);
-    index_t nk = kdimtot( model->nk, model->nkf );
-    index_t n_os = model->n_orb * model->n_spin;
-    index_t n_spin = model->n_spin;
-    index_t n_orb = model->n_orb;
-    index_t size = POW2(n_os) * nk;
-
-    alloc_aux( sizeof(gf_complex_t)*size );
-
-    index_t n_sym = model->n_sym;
-    double norm = 1./(double) n_sym;
-
-    index_t* symm_map_mom = model->internals->symm_map_mom_fine;
-    double* symm_beyond_UC = model->internals->symm_beyond_UC;
-    double* kmesh = model->internals->kfmesh;
-    index_t* symm_map_orb = model->internals->symm_map_orb;
-    index_t* symm_orb_off = model->internals->symm_orb_off;
-    index_t* symm_orb_len = model->internals->symm_orb_len;
-    complex128_t* symm_pref = model->internals->symm_pref;
-
-    #pragma omp parallel for collapse(5) num_threads(diverge_omp_num_threads())
-    for (index_t k=0; k<nk; ++k)
-    for (index_t oo1=0; oo1<n_orb; ++oo1)
-    for (index_t ss1=0; ss1<n_spin; ++ss1)
-    for (index_t oo2=0; oo2<n_orb; ++oo2)
-    for (index_t ss2=0; ss2<n_spin; ++ss2) {
-        index_t o1 = oo1 + n_orb * ss1;
-        index_t o2 = oo2 + n_orb * ss2;
-        for (index_t s=0; s<n_sym; ++s) {
-            index_t osym1 = IDX2( o1, s, n_sym ),
-                    osym2 = IDX2( o2, s, n_sym ),
-                    ksym = symm_map_mom[IDX2(k,s,n_sym)];
-            for (index_t i=0; i<symm_orb_len[osym1]; ++i)
-            for (index_t j=0; j<symm_orb_len[osym2]; ++j) {
-                index_t xo1 = symm_orb_off[osym1] + i,
-                        xo2 = symm_orb_off[osym2] + j;
-                double kdotR11 = dot(symm_beyond_UC+3*IDX2(oo1,s,n_sym), kmesh+3*ksym);
-                double kdotR22 = dot(symm_beyond_UC+3*IDX2(oo2,s,n_sym), kmesh+3*ksym);
-
-                buf[IDX3(k,o1,o2,n_os,n_os)] += aux[IDX3(ksym,symm_map_orb[xo1],symm_map_orb[xo2], n_os,n_os)] *
-                                                (symm_pref[xo1] * (cos(kdotR11) - I * sin(kdotR11))) *
-                                            conj(symm_pref[xo2] * (cos(kdotR22) - I * sin(kdotR22))) * norm;
-            }
-        }
-    }
-    double max_diff = 0.;
-    #pragma omp parallel for reduction(max:max_diff) num_threads(diverge_omp_num_threads())
-    for (index_t idx=0; idx<nk*n_os*n_os; ++idx) {
-        max_diff = MAX(max_diff, cabs(buf[idx]-aux[idx]));
-    }
-
-    free_aux();
-    return max_diff;
-}
+SYMMETRIZE_2PT_IMPL( diverge_symmetrize_2pt_coarse, complex128_t, kdim( model->nk ),
+        symm_map_mom_crs, kmesh )
+SYMMETRIZE_2PT_IMPL( diverge_symmetrize_2pt_fine, complex128_t, kdimtot( model->nk, model->nkf ),
+        symm_map_mom_fine, kfmesh )
+SYMMETRIZE_2PT_IMPL( diverge_symmetrize_greens, gf_complex_t, kdimtot( model->nk, model->nkf ),
+        symm_map_mom_fine, kfmesh )
 
 double diverge_symmetrize_mom_coarse( diverge_model_t* model, double* buf, index_t sub, double* aux ) {
     if (model->n_sym == 0 || model->orb_symmetries == NULL) return -1.0;

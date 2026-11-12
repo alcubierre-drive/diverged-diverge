@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 typedef struct greensfunc_coarse_t greensfunc_coarse_t;
+typedef struct tu_gemm_loop_t tu_gemm_loop_t;
 
 struct tu_prop_t {
     gf_complex_t* gf_buf;
@@ -79,6 +80,13 @@ struct tu_prop_t {
     // greens
     fftw_mpi_plan_t *fft_nons2_backward_mpi;
 
+    // tu_fft_algorithm_gemm (simple & red): generated on first use
+    tu_gemm_loop_t* gemm_loop;
+    // real-space GFs (GF_fft_*, all copies) are stored in the layout of the
+    // gemm algorithm ([c][r][F]) instead of [c][k]. Set only iff simple & red
+    // are gemm. CPU-only, non-MPI, GF transform
+    bool gemm_gf_layout;
+
     // new MPI algorithms
     tu_mpi_loop_t* mpi_loop;
     tu_mpi_gf_t* mpi_gf;
@@ -139,6 +147,14 @@ void S_loop_static_simple( tu_prop_t* t, bool pp, bool subtract/*=false*/,
 void S_loop_static_red( tu_prop_t* t, bool pp, bool subtract/*=false*/,
         complex128_t* L, index_t ntasks/*=-1*/, index_t taskoff/*=0*/,
         bool rescale/*=true*/ );
+
+// this is in propagator_cpu_gemm.c, initializes tu_gemm_loop_t* in tu_prop_t*
+// lazily
+void S_loop_static_gemm( tu_prop_t* t, bool pp, bool subtract,
+        complex128_t* L, index_t ntasks, index_t taskoff, bool reduced );
+void tu_gemm_loop_free( tu_gemm_loop_t* g );
+double tu_gemm_loop_plan_time( const tu_gemm_loop_t* g );
+void tu_gemm_gf_to_layout( const tu_prop_t* t, complex128_t* gf );
 
 // this is in propagator_gpu_mpi_wrap.h
 void S_loop_static_red_gpu_mpi( tu_prop_t* t, complex128_t* L, bool pp );

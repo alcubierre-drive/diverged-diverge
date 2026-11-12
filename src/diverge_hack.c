@@ -7,6 +7,7 @@
 
 #include "tu/diverge_interface.h"
 #include "tu/projection.h"
+#include "tu/projection_handler.h"
 
 #include "npatch/vertex.h"
 #include "npatch/flow_step.h"
@@ -35,6 +36,15 @@ extern double autofine_gamma;
 
 static int parse_vector_int( int* vec, int len, const char* str );
 static greensfunc_op_t diverge_shared_gf(const diverge_model_t* model, complex128_t Lambda, gf_complex_t* buf);
+
+typedef struct { const char* name; void (*fn)(void); } hack_fnptr_entry_t;
+#define FNPTR_ENTRY( f ) { #f, (void(*)(void))f }
+static const hack_fnptr_entry_t hack_fnptr_table[] = {
+    FNPTR_ENTRY( P_projection ),
+    FNPTR_ENTRY( C_projection ),
+    FNPTR_ENTRY( D_projection ),
+};
+#undef FNPTR_ENTRY
 
 static char hacking_keys[128][48] = {{0}};
 static int hacking_keys_setup = 0;
@@ -88,6 +98,9 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("tu_mpifft_chunksize") {
         TU_INTERNALS->mpi_fft_chunksize = atoi(val);
+    }
+    CHECKKEY("tu_gemm_loop_mem") {
+        TU_INTERNALS->gemm_loop_mem_GiB = atof(val);
     }
     CHECKKEY("tu_which_fft_greens") {
         TU_INTERNALS->which_fft_greens = (tu_fft_algorithm_t)atoi(val);
@@ -259,6 +272,15 @@ void diverge_model_hack( diverge_model_t* m, const char* key_, const char* val )
     }
     CHECKKEY("flow_step_eigchan_piter_tol") {
         diverge_flow_step_eigchan_piter_tol = atof(val);
+    }
+    CHECKKEY("fnptr") {
+        struct { void (*fn)(void); }* f = (void*)m;
+        f->fn = NULL;
+        for (size_t i=0; i<sizeof(hack_fnptr_table)/sizeof(hack_fnptr_table[0]); ++i)
+            if (val && !strcmp(val, hack_fnptr_table[i].name))
+                f->fn = hack_fnptr_table[i].fn;
+        if (!f->fn)
+            mpi_wrn_printf("hacking: fnptr '%s' not available\n", val ? val : "(null)");
     }
 
     if (key_) {

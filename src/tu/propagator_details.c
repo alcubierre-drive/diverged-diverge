@@ -33,6 +33,7 @@ static const char* tu_fft_algorithm_name( tu_fft_algorithm_t algo ) {
         case tu_fft_algorithm_split: return "split";
         case tu_fft_algorithm_mpi: return "mpi";
         case tu_fft_algorithm_mpi_new: return "mpi_new";
+        case tu_fft_algorithm_gemm: return "gemm";
     }
     return "invalid";
 }
@@ -87,6 +88,8 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
     mpi_vrb_printf( "TU_prop CPU init loop…\n" );
     tu_fft_algorithm_t simple_red_algos[] = {simple, red};
     for (int i=0; i<2; ++i) switch (simple_red_algos[i]) {
+        case tu_fft_algorithm_gemm:
+            break; // all buffers are allocated in S_loop_static_gemm
         case tu_fft_algorithm_mpi_new:
             if (!t->mpi_loop) t->mpi_loop = tu_mpi_loop_init( t->model->nk, t->model->nkf,
                     t->chunksize_max, t->c2cmap, t->my_nk, t->n_spin, t->n_orb, t->n_orbff,
@@ -162,6 +165,8 @@ void cpu_fft_algorithm_init( tu_prop_t* t, tu_fft_algorithm_t greens,
 }
 
 void cpu_fft_algorithm_cleanup( tu_prop_t* t ) {
+    tu_gemm_loop_free( t->gemm_loop );
+    t->gemm_loop = NULL;
     if (t->nktot <= 1) return;
 
     if (t->fft_single_forward_coarse) fftw_destroy_plan(t->fft_single_forward_coarse);
@@ -264,5 +269,10 @@ void GF_zero_T_FFT_any( tu_prop_t* t, complex128_t* gfft_plus,
             if (t->extra_timings_enabled) tock = diverge_mpi_wtime(),
                                           t->extra_timings[0].t += tock - tick;
         }
+    }
+    // tu_fft_algorithm_gemm reads the real-space GFs in its own layout
+    if (t->gemm_gf_layout) {
+        tu_gemm_gf_to_layout( t, gfft_plus );
+        tu_gemm_gf_to_layout( t, gfft_conj_plus );
     }
 }

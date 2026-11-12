@@ -16,6 +16,39 @@
 #endif
 #endif // USE_MKL
 
+#if defined(USE_MKL)
+int single_gemm_parallel_begin( void ) {
+    int prev = mkl_get_max_threads();
+    mkl_set_num_threads( 1 );
+    return prev;
+}
+void single_gemm_parallel_end( int handle ) {
+    if (handle > 0) mkl_set_num_threads( handle );
+}
+#elif defined(USE_OPENBLAS_SINGLE_THREAD_GEMM)
+int single_gemm_parallel_begin( void ) {
+    int prev = openblas_get_num_threads();
+    openblas_set_num_threads( 1 );
+    return prev;
+}
+void single_gemm_parallel_end( int handle ) {
+    if (handle > 0) openblas_set_num_threads( handle );
+}
+#else // Eigen3 fallback (single_gemm_serial), nothing to set
+int single_gemm_parallel_begin( void ) { return 0; }
+void single_gemm_parallel_end( int handle ) { (void)handle; }
+#endif
+
+void single_gemm_parallel( const complex128_t* A, const complex128_t* B, complex128_t* C,
+        index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta ) {
+#if defined(USE_MKL) || defined(USE_OPENBLAS_SINGLE_THREAD_GEMM)
+    single_gemm( A, B, C, M, N, K, alpha, beta );
+#else
+    if (beta == 0.0) ZERO_OUT(C, N*M);
+    single_gemm_serial( A, B, C, N, K, M, alpha, beta );
+#endif
+}
+
 void single_gemm( const complex128_t* A, const complex128_t* B, complex128_t* C,
         index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta) {
     const index_t LDA = M, LDB = K, LDC = M;

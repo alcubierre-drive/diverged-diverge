@@ -178,6 +178,13 @@ compile time but rather at runtime; and steered using
 |                                    | algorithm of the TU propagator to the given value; default is|
 |                                    | the value of ``OMP_NUM_THREADS``.                            |
 +------------------------------------+--------------------------------------------------------------+
+|``double tu_gemm_loop_mem``         | maximum size (GiB) of the result buffer in the ``gemm``      |
+|                                    | algorithm (``tu_which_fft_{simple,red}=4``); default 4       |
++------------------------------------+--------------------------------------------------------------+
+|``const char* fnptr``               | object is a ``struct { void (*fn)(void); }*``; stores a      |
+|                                    | pointer to the internal function named by the value (one of  |
+|                                    | ``{P,C,D}_projection``) in its ``fn`` member                 |
++------------------------------------+--------------------------------------------------------------+
 
 .. _CUDA Compilation:
 
@@ -335,6 +342,8 @@ written (i.e., the variable can be either *defined* or *not*), or
 |``DIVERGE_OPENBLAS_LIMIT_THREADS=VAL``            | limit the number of threads to be used in OpenBLAS calls to VAL. useful when the OpenBLAS library |
 |                                                  | is compiled for a certain maximum number of threads that can be exceeded by modern cluster        |
 |                                                  | architectures.                                                                                    |
++--------------------------------------------------+---------------------------------------------------------------------------------------------------+
+|``USE_OPENBLAS_SINGLE_THREAD_GEMM``               | use BLAS GEMM with OpenBLAS limited to one thread (instead of Eigen) for GEMMs in OpenMP loops    |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+
 |``DIVERGE_USE_ZHEEVD``                            | use LAPACK's ``zheevd`` algorithm instead of the newer ``zheevr`` in :c:func:`single_eigen`       |
 +--------------------------------------------------+---------------------------------------------------------------------------------------------------+

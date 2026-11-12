@@ -40,6 +40,22 @@ void single_gemm_adjoint( const complex128_t* A, const complex128_t* B,
 void single_square_gemm( const complex128_t* A, int AconjTrans,
         const complex128_t* B, int BconjTrans, complex128_t* C, index_t n );
 
+/**
+ * :math:`C = \beta C + \alpha A \cdot B` with A(N,K), B(K,M), C(N,M) in C order
+ * (Row Major); same idea as :c:func:`single_gemm_serial`, but optionally
+ * compiled with BLAS/MKL backend if available. Falls back to
+ * :c:func:`single_gemm_serial` if not. Must be wrapped with
+ * :c:func:`single_gemm_parallel_begin` and :c:func:`single_gemm_parallel_end`
+ * to set the number of threads used for in-between GEMM calls to one and allow
+ * wrapping in parallel regions.
+ */
+void single_gemm_parallel( const complex128_t* A, const complex128_t* B, complex128_t* C,
+        index_t M, index_t N, index_t K, complex128_t alpha, complex128_t beta );
+/** get the number of threads before entering */
+int single_gemm_parallel_begin( void );
+/** reset the number of threads after leaving */
+void single_gemm_parallel_end( int handle );
+
 /** in-place transposition of square matrix ``A`` (dimension NxN) */
 void transpose_inplace( complex128_t* A, index_t N );
 

@@ -45,6 +45,10 @@ void S_loop_static_simple( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
     const index_t* vnkf = t->model->nkf;
     index_t dims[] = {vnk[0]*vnkf[0], vnk[1]*vnkf[1], vnk[2]*vnkf[2]};
 
+    // XXX algorithm choice: gemm XXX
+    if (t->which_fft_simple == tu_fft_algorithm_gemm) {
+        S_loop_static_gemm( t_, pp, subtract, loop, ntasks, taskoff, false );
+    } else
     // XXX algorithm choice: greedy XXX
     if (t->which_fft_simple == tu_fft_algorithm_greedy) {
 
@@ -278,6 +282,10 @@ void S_loop_static_red( tu_prop_t* t_, bool pp_, bool subtract_/*=false*/,
     const index_t* vnkf = t->model->nkf;
     index_t dims[] = {vnk[0]*vnkf[0], vnk[1]*vnkf[1], vnk[2]*vnkf[2]};
 
+    // XXX algorithm choice: gemm XXX
+    if (t->which_fft_red == tu_fft_algorithm_gemm) {
+        S_loop_static_gemm( t_, pp, subtract, loop, ntasks, taskoff, true );
+    } else
     // XXX algorithm choice: greedy XXX
     if (t->which_fft_red == tu_fft_algorithm_greedy) {
 
