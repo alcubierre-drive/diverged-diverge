@@ -103,7 +103,7 @@ typedef struct {
     bool64_t  _XVTREE_ALIGNMENT_PRINT;
 
     // pads to a multiple of 512 bits. adjust when adding a field
-    char      _PADDING[24];
+    char      _PADDING[16];
 
     // char arrays last, so that they stay aligned.
     str1024_t _CUBLAS_BATCHED_GEMM_CALL;

@@ -213,7 +213,7 @@ if not _libs["divERGe"] is None:
         ('_DIVERGE_OLD_W90_READER',                    c_int64),
         ('_DIVERGE_TU_PROJ_TO_R_VTREE',                c_int64),
         ('_XVTREE_ALIGNMENT_PRINT',                    c_int64),
-        ('_PADDING',                                   c_char * 24),
+        ('_PADDING',                                   c_char * 16),
         # char arrays last, so that everything before them stays aligned
         ('_CUBLAS_BATCHED_GEMM_CALL',                  struct_str1024_t),
         ('_CUDA_VERSION_STR',                          struct_str1024_t),
