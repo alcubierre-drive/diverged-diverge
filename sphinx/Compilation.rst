@@ -181,6 +181,10 @@ compile time but rather at runtime; and steered using
 |``double tu_gemm_loop_mem``         | maximum size (GiB) of the result buffer in the ``gemm``      |
 |                                    | algorithm (``tu_which_fft_{simple,red}=4``); default 4       |
 +------------------------------------+--------------------------------------------------------------+
+|``const char* fnptr``               | object is a ``struct { void (*fn)(void); }*``; stores a      |
+|                                    | pointer to the internal function named by the value (one of  |
+|                                    | ``{P,C,D}_projection``) in its ``fn`` member                 |
++------------------------------------+--------------------------------------------------------------+
 
 .. _CUDA Compilation:
 
