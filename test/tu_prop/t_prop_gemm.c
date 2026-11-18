@@ -103,7 +103,7 @@ static void gemm_vs_default( diverge_model_t* m ) {
         tu_data->which_fft_red = tu_data->which_fft_simple = tu_fft_algorithm_gemm;
         tu_prop_t* tg = tu_prop_init( m );
         tu_data->which_fft_red = red0, tu_data->which_fft_simple = simple0;
-        CT_CHECK( tg->gemm_gf_layout == (t->nktot > 1) );
+        CT_CHECK( tg->gemm_gf_layout == (t->nktot > 1 && !tg->cuda_descr.prop_has_gpu_setup) );
         for (int use_self=0; use_self<2; ++use_self) {
             tu_prop_GF_zero_T( t, I128*GEMM_LAMBDA, use_self ? self : NULL );
             tu_prop_GF_zero_T( tg, I128*GEMM_LAMBDA, use_self ? self : NULL );
